@@ -7,18 +7,21 @@ types: bump-chart-version
 jobs:
   hello_world_job:
 runs-on: ubuntu-latest
-name: A job to say hello
+name: A job thats bumps the versions of a chart
 steps:
   - name: Checkout
 uses: actions/checkout@v2
-  - name: Bump version
-uses: ./.github/actions/chart-version-bumper # Uses an action in the root directory
+  - name: Bump Chart & App version
+uses: ./.github/actions/chart-version-bumper 
 id: version-bump
 with:
   chart_name: ${{ github.event.client_payload.chart_name }}
   chart_version: ${{  github.event.client_payload.chart_version }}
   app_version: ${{  github.event.client_payload.app_version }}
-  - name: Show changes from bump
-run: echo "The following changes are made to the Chart ${{ steps.version-bump.outputs.changes }}"
-  - name: Show git changes 
-run: git diff
+  - name: Create Pull Request
+uses: peter-evans/create-pull-request@v2
+with:
+  token: "${{ secrets.GITHUB_TOKEN }}"
+  commit-message: ${{ steps.ver}}
+  title: ${{ steps.version-bump.outputs.changeString }}"
+  body: ${{ steps.version-bump.outputs.verboseChangeString }}"

@@ -32,15 +32,14 @@ const currentChartVersion = chartYAML.get("version");
 const currentAppVersion = chartYAML.get("appVersion");
 
 var changes = [] 
+if (chartVersion != "" && currentChartVersion != chartVersion) {
+chartYAML.set("version", chartVersion);
+changes.push({field: "chartVersion", from: currentChartVersion, to: chartVersion}); 
+}
 
 if (appVersion != "" && currentAppVersion != appVersion) {
 chartYAML.set("appVersion", appVersion);
 changes.push({field: "appVersion", from: currentAppVersion, to: appVersion});
-}
-
-if (chartVersion != "" && currentChartVersion != chartVersion) {
-chartYAML.set("version", chartVersion);
-changes.push({field: "chartVersion", from: currentChartVersion, to: chartVersion}); 
 }
 
 fs.writeFileSync(chartPath, chartYAML.toString());

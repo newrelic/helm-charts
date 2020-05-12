@@ -21,7 +21,24 @@ try {
   const chartPath =  `${chartsDir}/${chartName}/Chart.yaml`
   const changes = bumpChartVersion(chartPath, chartVersion, appVersion);
 
-  core.setOutput("changes", changes);
+  if (changes.length == 0) {
+// Make sure the pipeline stops if no changes were made
+core.setFailed("Current Chart versions are already up to date. Aborting pipeline.")
+return
+  }
+  
+  var changeString = changes
+.map(change => { return `${change.field} to ${change.to}`})
+.join(" and ");
+  changeString = `[charts/${chartName}] Automatically bumped ${changeString}`;
+
+  var verboseChangeString = `Automatic version bump:`;
+  for (const {field, from, to} of changes) {
+verboseChangeString += `\n - *${field}* bumped from *${from}* to *${to}*`;
+  }
+
+  core.setOutput("changeString", changeString)
+  core.setOutput("verboseChangeString", verboseChangeString)
 } catch (error) {
   core.setFailed(error.message);
 }

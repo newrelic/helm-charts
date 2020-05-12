@@ -4,12 +4,9 @@ Chart version bumper is a Github Action that increases the Chart & App version o
 
 ## Inputs
 
-### `chart-name`
+### `chart_name`
 
 **Required** The name of the chart. 
 
 ## Outputs
 
-### `time`
-
-Test output
