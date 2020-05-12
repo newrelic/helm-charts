@@ -34,7 +34,7 @@ return
 
   var verboseChangeString = `[charts/${chartName}] the following changes were done:`;
   for (const {field, from, to} of changes) {
-verboseChangeString += `\n - *${field}* bumped from *${from}* to *${to}*`;
+verboseChangeString += `\n - **${field}** bumped from **${from}** to **${to}**`;
   }
 
   core.setOutput("changeString", changeString)
