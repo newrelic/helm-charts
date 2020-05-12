@@ -17,7 +17,7 @@ function loadChart(chartPath) {
 
     var yamlContents;
     try {
-        yamlContents = yaml.parseDocument(contents)
+        yamlContents = yaml.parseDocument(contents, {indentSeq: false})
     } catch(error) {
         throw Error(`Could not parse ${chartPath} as YAML: ${error}`)
     }
