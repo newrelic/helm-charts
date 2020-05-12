@@ -16,16 +16,16 @@ contents = fs.readFileSync(chartPath, 'utf8')
 throw Error(`Could not read Chart.yaml contents: ${error}`)
 }
 
-var yamlContents;
+var doc;
 try {
 // allow unbounded line width
 strOptions.fold.lineWidth = 0
-yamlContents = yaml.parseDocument(contents, {indentSeq: false, })
+doc = yaml.parseDocument(contents, {indentSeq: false, })
 } catch(error) {
 throw Error(`Could not parse ${chartPath} as YAML: ${error}`)
 }
 
-return yamlContents
+return doc
 }
 
 exports.bumpChartVersion = function(chartPath, chartVersion, appVersion) {
