@@ -11,11 +11,14 @@ name: A job to say hello
 steps:
   - name: Checkout
 uses: actions/checkout@v2
-  - name: Hello world action step
+  - name: Bump version
 uses: ./.github/actions/chart-version-bumper # Uses an action in the root directory
-id: hello
+id: version-bump
 with:
   chart_name: ${{ github.event.client_payload.chart_name }}
-  # Use the output from the `hello` step
-  - name: Get the output time
-run: echo "The time was ${{ steps.hello.outputs.time }}"
+  chart_version: ${{  github.event.client_payload.chart_version }}
+  app_version: ${{  github.event.client_payload.app_version }}
+  - name: Show changes from bump
+run: echo "The following changes are made to the Chart ${{ steps.version-bump.outputs.changes }}"
+  - name: Show git changes 
+run: git diff

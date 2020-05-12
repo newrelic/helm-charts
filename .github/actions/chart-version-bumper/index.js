@@ -1,16 +1,27 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
+const path = require('path');
+const { bumpChartVersion } = require('./bump_chart_version.js');
+
+function locateChartsDir() {
+  // Locate the charts dir from this file: 
+  // => remove the 3 parts: [.github, actions, chart-version-bumper], add [charts]
+  // TODO: fix it, quite ugly
+  return path.join(__dirname, '/..', '/..', '/..', 'charts');
+}
 
 try {
   const chartName = core.getInput('chart_name');
-  console.log(`Chart to version bump: ${chartName}!`);
+  const chartVersion = core.getInput('chart_version');
+  const appVersion = core.getInput('app_version');
 
-  const time = (new Date()).toTimeString();
-  core.setOutput("time", time);
+  console.log(`Bumping chart ${chartName} to version ${chartVersion} with app version: ${appVersion}`);
   
-  // Get the JSON webhook payload for the event that triggered the workflow
-  const payload = JSON.stringify(github.context.payload, undefined, 2)
-  console.log(`The event payload: ${payload}`);
+  const chartsDir = locateChartsDir()
+  const chartPath =  `${chartsDir}/${chartName}/Chart.yaml`
+  const changes = bumpChartVersion(chartPath, chartVersion, appVersion);
+
+  core.setOutput("changes", changes);
 } catch (error) {
   core.setFailed(error.message);
 }
