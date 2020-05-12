@@ -1,5 +1,6 @@
 const fs = require('fs');
 const yaml = require("yaml");
+const { strOptions } = require('yaml/types')
 
 // loadChart loads and parses a Chart.yaml at the given path.
 // The parsed document is returned.
@@ -17,7 +18,9 @@ function loadChart(chartPath) {
 
     var yamlContents;
     try {
-        yamlContents = yaml.parseDocument(contents, {indentSeq: false})
+        // allow unbounded line width
+        strOptions.fold.lineWidth = 0
+        yamlContents = yaml.parseDocument(contents, {indentSeq: false, })
     } catch(error) {
         throw Error(`Could not parse ${chartPath} as YAML: ${error}`)
     }
