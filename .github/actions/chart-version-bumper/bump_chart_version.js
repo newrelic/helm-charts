@@ -32,17 +32,16 @@ exports.bumpChartVersion = function(chartPath, chartVersion, appVersion) {
     const currentAppVersion = chartYAML.get("appVersion");
 
     var changes = [] 
-
-    if (appVersion != "" && currentAppVersion != appVersion) {
-        chartYAML.set("appVersion", appVersion);
-        changes.push({field: "appVersion", from: currentAppVersion, to: appVersion});
-    }
-
     if (chartVersion != "" && currentChartVersion != chartVersion) {
         chartYAML.set("version", chartVersion);
         changes.push({field: "chartVersion", from: currentChartVersion, to: chartVersion}); 
     }
 
+    if (appVersion != "" && currentAppVersion != appVersion) {
+        chartYAML.set("appVersion", appVersion);
+        changes.push({field: "appVersion", from: currentAppVersion, to: appVersion});
+    }
+    
     fs.writeFileSync(chartPath, chartYAML.toString());
 
     return changes;
