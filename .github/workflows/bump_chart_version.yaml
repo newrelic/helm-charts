@@ -1,0 +1,21 @@
+name: Bump Chart Version
+
+on: 
+  repository_dispatch:
+types: bump-chart-version
+
+jobs:
+  hello_world_job:
+runs-on: ubuntu-latest
+name: A job to say hello
+steps:
+  - name: Checkout
+uses: actions/checkout@v2
+  - name: Hello world action step
+uses: ../actions/chart-version-bumper # Uses an action in the root directory
+id: hello
+with:
+  chart_name: test
+  # Use the output from the `hello` step
+  - name: Get the output time
+run: echo "The time was ${{ steps.hello.outputs.time }}"
