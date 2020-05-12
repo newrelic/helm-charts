@@ -21,6 +21,6 @@ In order to enable custom test values, create a directory `ci` in the chart's di
 
 Please note that in order to test using the default values when using the `ci` directory, an empty values file must be present in the directory.
 
-For examples, you can take a look at existing tests in this repository (e.g. [Simple Nginx chart](charts/simple_nginx)).
+For examples, you can take a look at existing tests in this repository (e.g. [Simple Nginx chart](charts/simple-nginx)).
 
 Please also note that it is a different concept than "[Helm Chart Test](https://github.com/helm/helm/blob/master/docs/chart_tests.md)", although the Helm Chart test, if defined, will be run by this test tool for each test values.
