@@ -15,7 +15,7 @@ uses: actions/checkout@v2
 uses: ../actions/chart-version-bumper # Uses an action in the root directory
 id: hello
 with:
-  chart_name: test
+  chart_name: ${{ github.event.client_payload.chart_name }}
   # Use the output from the `hello` step
   - name: Get the output time
 run: echo "The time was ${{ steps.hello.outputs.time }}"
