@@ -1,5 +1,5 @@
 <!--
-Thank you for contributing to helm/charts. Before you submit this PR we'd like to
+Thank you for contributing to New Relic's Helm charts. Before you submit this PR we'd like to
 make sure you are aware of our technical requirements:
 
 * https://github.com/newrelic-experimental/helm-charts/blob/master/CONTRIBUTING.md#technical-requirements
