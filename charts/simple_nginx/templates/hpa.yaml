@@ -2,14 +2,14 @@
 apiVersion: autoscaling/v2beta1
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "simple_busybox.fullname" . }}
+  name: {{ include "simple_nginx.fullname" . }}
   labels:
-    {{- include "simple_busybox.labels" . | nindent 4 }}
+    {{- include "simple_nginx.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "simple_busybox.fullname" . }}
+    name: {{ include "simple_nginx.fullname" . }}
   minReplicas: {{ .Values.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.autoscaling.maxReplicas }}
   metrics:

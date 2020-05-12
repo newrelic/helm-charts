@@ -1,16 +1,16 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "simple_busybox.fullname" . }}
+  name: {{ include "simple_nginx.fullname" . }}
   labels:
-    {{- include "simple_busybox.labels" . | nindent 4 }}
+    {{- include "simple_nginx.labels" . | nindent 4 }}
 spec:
 {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
 {{- end }}
   selector:
     matchLabels:
-      {{- include "simple_busybox.selectorLabels" . | nindent 6 }}
+      {{- include "simple_nginxselectorLabels" . | nindent 6 }}
   template:
     metadata:
     {{- with .Values.podAnnotations }}
@@ -18,13 +18,13 @@ spec:
         {{- toYaml . | nindent 8 }}
     {{- end }}
       labels:
-        {{- include "simple_busybox.selectorLabels" . | nindent 8 }}
+        {{- include "simple_nginx.selectorLabels" . | nindent 8 }}
     spec:
       {{- with .Values.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ include "simple_busybox.serviceAccountName" . }}
+      serviceAccountName: {{ include "simple_nginx.serviceAccountName" . }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
