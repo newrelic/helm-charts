@@ -16,6 +16,9 @@ so.
 1. Fork this repository, develop and test your chart's changes.
 1. Ensure your Chart changes follow the [technical](#technical-requirements) and [documentation](#documentation-requirements) guidelines, described below.
 1. Submit a pull request.
+1. Automated builds will run for testing and linting.
+1. A code review will automaticallly be requested by the owners of the chart.
+1. The PR is reviewed, merged and the chart is automatically released.
 
 ***NOTE***: In order to make testing and merging of PRs easier, please submit changes to multiple charts in separate PRs.
 
@@ -24,7 +27,7 @@ so.
 * All Chart dependencies should also be submitted independently
 * Must pass the linter (`helm lint`)
 * Must successfully launch with default values (`helm install .`)
-    * All pods go to the running state (or NOTES.txt provides further instructions if a required value is missing e.g. [minecraft](https://github.com/helm/charts/blob/master/stable/minecraft/templates/NOTES.txt#L3))
+    * All pods go to the running state (or NOTES.txt provides further instructions if a required value is missing).
     * All services have at least one endpoint
 * Must include source GitHub repositories for images used in the Chart
 * Images should not have any major security vulnerabilities
@@ -57,7 +60,9 @@ so.
 
 A Github Workflow will run to lint and test the chart's installation.
 
-A maintainer of the chart will review the changes and eventually approve them. Any change requires at least one review. No pull requests can be merged until at least one maintainer reviews it.
+A maintainer of the chart will review the changes and eventually approve them. Any change requires at least one review.
+No pull requests can be merged until at least one maintainer reviews it. A good guide for what to review
+can be found in the [Review Guidelines](REVIEW_GUIDELINES.md).
 
 Once the Chart has been merged, the release will be automatically made by a Github Workflwo using the Github Pages of this repository.
 
