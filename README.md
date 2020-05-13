@@ -1,3 +1,5 @@
+[![New Relic Experimental header](https://github.com/newrelic/open-source-office/raw/master/examples/categories/images/Experimental.png)](https://github.com/newrelic/open-source-office/blob/master/examples/categories/index.md#new-relic-experimental)
+
 # New Relic Helm charts repository
 
 Official Helm charts for New Relic's products or other charts developed by New Relic.
