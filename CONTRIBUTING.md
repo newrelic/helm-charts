@@ -58,7 +58,8 @@ so.
 
 ### Pull request approval and release process
 
-A Github Workflow will run to lint and test the chart's installation.
+A Github Action will run to lint and test the chart's installation. More information abouut it
+can be found in the [Chart Testing documentation](CHART_TESTING.md).
 
 A maintainer of the chart will review the changes and eventually approve them. Any change requires at least one review.
 No pull requests can be merged until at least one maintainer reviews it. A good guide for what to review

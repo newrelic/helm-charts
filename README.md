@@ -7,11 +7,12 @@ This repository intends to host official Helm charts for New Relic's products or
 You can use the Helm CLI to develop a chart in this repository.
 
 1. [Install Helm](https://helm.sh/docs/intro/install/)
-2. Add/modify the files for the desired chart
-3. Run `helm install dev-chart charts/<YOUR_CHART>` to install it locally.
+1. Add/modify the files for the desired chart
+1. Run `helm install dev-chart charts/<YOUR_CHART>` to install it locally.
    Feel free to add different values to the chart if you wish so.
-4. Verify if the chart works as expected.
-5. Remove the installed chart with `helm uninstall dev-chart`
+1. Verify if the chart works as expected.
+1. Remove the installed chart with `helm uninstall dev-chart`.
+1. Create your pull request and follow the instructions below.
 
 ### Contributing
 
