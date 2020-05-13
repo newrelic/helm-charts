@@ -1,51 +1,31 @@
-const fs = require('fs');
 const yaml = require("yaml");
-const { strOptions } = require('yaml/types')
+const { strOptions } = require('yaml/types');
 
-// loadChart loads and parses a Chart.yaml at the given path.
-// The parsed document is returned.
-function loadChart(chartPath) {
-if (!fs.existsSync(chartPath)){
-throw Error(`Chart.yaml not found at: ${chartPath}. Are you sure the chart exists?`)
-}
-
-var contents;
-try {
-contents = fs.readFileSync(chartPath, 'utf8')
-} catch(error) {
-throw Error(`Could not read Chart.yaml contents: ${error}`)
-}
-
+// bumpChartVersion bumps the chartVersion and appVersion of the given chart.
+exports.bumpChartVersion = function(chartYAML, chartVersion, appVersion) {
 var doc;
 try {
-// allow unbounded line width
+// allow unbounded line width, to prevent us changing the YAML document unnecessary 
 strOptions.fold.lineWidth = 0
-doc = yaml.parseDocument(contents, {indentSeq: false, })
+// indentSeq is set to false, which is similar to standard Helm Chart.yamls indentation 
+doc = yaml.parseDocument(chartYAML, {indentSeq: false, })
 } catch(error) {
-throw Error(`Could not parse ${chartPath} as YAML: ${error}`)
+throw Error(`Could not parse the given document as YAML: ${error}`)
 }
 
-return doc
-}
-
-exports.bumpChartVersion = function(chartPath, chartVersion, appVersion) {
-const chartYAML = loadChart(chartPath)
-
-const currentChartVersion = chartYAML.get("version");
-const currentAppVersion = chartYAML.get("appVersion");
+const currentChartVersion = doc.get("version");
+const currentAppVersion = doc.get("appVersion");
 
 var changes = [] 
 if (chartVersion != "" && currentChartVersion != chartVersion) {
-chartYAML.set("version", chartVersion);
+doc.set("version", chartVersion);
 changes.push({field: "chartVersion", from: currentChartVersion, to: chartVersion}); 
 }
 
 if (appVersion != "" && currentAppVersion != appVersion) {
-chartYAML.set("appVersion", appVersion);
+doc.set("appVersion",  appVersion);
 changes.push({field: "appVersion", from: currentAppVersion, to: appVersion});
 }
-
-fs.writeFileSync(chartPath, chartYAML.toString());
-
-return changes;
+   
+return {newYAML: doc.toString(), changes};
 };
