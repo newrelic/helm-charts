@@ -79,23 +79,13 @@ You can use the Helm CLI to develop a chart in this repository.
 
 Please view [our contributing docs](CONTRIBUTING.md) for more information.
 
-[helm-hub]: https://hub.helm.sh/charts/newrelic
-[helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts
-[helm-install]: https://helm.sh/docs/intro/using_helm/#helm-install-installing-a-package
-[newrelic-kubernetes]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/get-started/introduction-kubernetes-integration
-[newrelic-webhook]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes
-[newrelic-prometheus]: https://docs.newrelic.com/docs/integrations/prometheus-integrations/get-started/new-relic-prometheus-openmetrics-integration-kubernetes
-[newrelic-logs]: https://docs.newrelic.com/docs/logs/enable-logs/enable-logs/kubernetes-plugin-logs
-[ksm]: https://github.com/kubernetes/kube-state-metrics
-[installing-helm]: https://helm.sh/docs/intro/install/
-
 ### Automated version bumps
 
 This repository is configured to accept webhook requests to automatically bump chart versions. If it receives a version bump request, a Github Action will prepare a pull request that contains the requested changes. The PR has to be manually merged after this.
 
 #### Trigger an automated version bump
 
-A repo scoped [GitHub Personal Access Token](https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line) is required.
+A repo scoped [GitHub Personal Access Token][github-personal-access-token] is required.
 
 If you have the Personal Access token, execute the following HTTP POST request:
 
@@ -110,3 +100,15 @@ curl -H "Accept: application/vnd.github.everest-preview+json" \
 Notice the `client_payload` object inside the request body. This specific request will prepare a PR for the `simple-nginx` chart, to update the `app_version` to `1.45.7`, and `chart_version` to `1.2.3`. 
 
 You can configure the client_payload accordingly.
+
+
+[helm-hub]: https://hub.helm.sh/charts/newrelic
+[helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts
+[helm-install]: https://helm.sh/docs/intro/using_helm/#helm-install-installing-a-package
+[newrelic-kubernetes]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/get-started/introduction-kubernetes-integration
+[newrelic-webhook]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes
+[newrelic-prometheus]: https://docs.newrelic.com/docs/integrations/prometheus-integrations/get-started/new-relic-prometheus-openmetrics-integration-kubernetes
+[newrelic-logs]: https://docs.newrelic.com/docs/logs/enable-logs/enable-logs/kubernetes-plugin-logs
+[ksm]: https://github.com/kubernetes/kube-state-metrics
+[installing-helm]: https://helm.sh/docs/intro/install/
+[github-personal-access-token]: https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
