@@ -32,7 +32,7 @@ Described what happened, as detailed as possible and necessary.
 
 **What you expected to happen?**
 
-Describe what you expected to happen. Please, avoid saying "it works".
+Please avoid saying "It should just work".
 
 **How to reproduce it?**
 
