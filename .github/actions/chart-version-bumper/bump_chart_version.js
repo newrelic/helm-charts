@@ -7,8 +7,7 @@ var doc;
 try {
 // allow unbounded line width, to prevent us changing the YAML document unnecessary 
 strOptions.fold.lineWidth = 0
-// indentSeq is set to false, which is similar to standard Helm Chart.yamls indentation 
-doc = yaml.parseDocument(chartYAML, {indentSeq: false, })
+doc = yaml.parseDocument(chartYAML)
 } catch(error) {
 throw Error(`Could not parse the given document as YAML: ${error}`)
 }
