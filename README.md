@@ -1,13 +1,17 @@
-# New Relic Helm charts
+# New Relic Helm charts repository
+
+Official Helm charts for New Relic's products or other charts developed by New Relic.
 
 ## Installing charts
 
 The official New Relic helm charts repository is indexed at
 [Helm Hub][helm-hub], there you can find the list of available charts and their
-documentation.
+documentation. 
 
-To install the official New Relic Helm charts, first, you need to add the
-repository:
+To install the Helm CLI follow the instruction of their [official
+documentation][installing-helm].
+
+To install the New Relic Helm charts, first, you need to add the repository:
 
 ```
 helm repo add newrelic https://helm-charts.newrelic.com
@@ -59,6 +63,22 @@ helm install newrelic/nri-bundle \
   --set ksm.enabled=true
 ```
 
+## Developing a chart
+
+You can use the Helm CLI to develop a chart in this repository.
+
+1. [Install Helm][installing-helm]
+1. Add/modify the files for the desired chart
+1. Run `helm install dev-chart charts/<YOUR_CHART>` to install it locally.
+   Feel free to add different values to the chart if you wish so.
+1. Verify if the chart works as expected.
+1. Remove the installed chart with `helm uninstall dev-chart`.
+1. Create your pull request and follow the instructions below.
+
+### Contributing
+
+Please view [our contributing docs](CONTRIBUTING.md) for more information.
+
 [helm-hub]: https://hub.helm.sh/charts/newrelic
 [helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts
 [helm-install]: https://helm.sh/docs/intro/using_helm/#helm-install-installing-a-package
@@ -67,3 +87,4 @@ helm install newrelic/nri-bundle \
 [newrelic-prometheus]: https://docs.newrelic.com/docs/integrations/prometheus-integrations/get-started/new-relic-prometheus-openmetrics-integration-kubernetes
 [newrelic-logs]: https://docs.newrelic.com/docs/logs/enable-logs/enable-logs/kubernetes-plugin-logs
 [ksm]: https://github.com/kubernetes/kube-state-metrics
+[installing-helm]: https://helm.sh/docs/intro/install/
