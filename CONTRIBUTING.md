@@ -2,6 +2,8 @@
 
 The Kubernetes Charts project accepts contributions via GitHub pull requests. This document outlines the process to help get your contribution accepted.
 
+Note that [our code of conduct](CODE_OF_CONDUCT.md) applies to all platforms and venues related to this project; please follow it in all your interactions with the project and its participants.
+
 ## Contributor's License Agreement (CLA)
 
 To be able to contribute to the New Relic Helm charts repository you have to sign a CLA.
