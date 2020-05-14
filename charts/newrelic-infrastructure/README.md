@@ -45,8 +45,12 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 
 ## Example
 
+Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)
+
+Then, to install this chart, run the following command:
+
 ```sh
-helm install stable/newrelic-infrastructure \
+helm install newrelic/newrelic-infrastructure \
 --set licenseKey=<enter_new_relic_license_key> \
 --set cluster=my-k8s-cluster
 ```

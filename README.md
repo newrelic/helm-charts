@@ -23,7 +23,7 @@ You can list all the available charts from the `newrelic` repository with the
 [`helm search`][helm-search] command:
 
 ```
-helm search repo | grep newrelic/
+helm search repo newrelic/
 ```
 
 To install one of the charts just run the [`helm install`][helm-install]
