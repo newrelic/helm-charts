@@ -5,11 +5,10 @@ The Kubernetes Charts project accepts contributions via GitHub pull requests. Th
 ## Contributor's License Agreement (CLA)
 
 To be able to contribute to the New Relic Helm charts repository you have to sign a CLA.
-The CLA signature process is handled by a bot and is presented to the contributor as a
-check in the pull request.
+The signature process is handled by a bot and is presented to the contributor as a
+check in the pull request. If you didn't sign the CLA yet, follow the procedures in the comment of the bot to do so.
 
-If you didn't sign the CLA yet, follow the procedures in the comment of the bot to do
-so.
+[The CLA is included in this repository in its full version.](cla.md)
 
 ## How to contribute to an existing chart
 
