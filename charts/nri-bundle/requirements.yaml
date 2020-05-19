@@ -1,0 +1,33 @@
+dependencies:
+    - name: newrelic-infrastructure
+      # This finds the newrelic-infrastructure chart if you have the
+      # helm/charts project at the same root directory as the
+      # k8s-config-generator
+      repository: "@stable"
+      condition: infrastructure.enabled
+      version: 0.13.31
+
+    - name: nri-prometheus
+      repository: file://../nri-prometheus
+      condition: prometheus.enabled
+      version: 1.0.1
+
+    - name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      condition: webhook.enabled
+      version: 1.0.0
+
+    - name: kube-state-metrics
+      repository: '@stable'
+      condition: ksm.enabled
+      version: 2.3.0
+
+    - name: nri-kube-events
+      repository: file://../nri-kube-events
+      condition: kubeEvents.enabled
+      version: 1.0.0
+
+    - name: newrelic-logging
+      repository: file://../newrelic-logging
+      condition: logging.enabled
+      version: 1.0.2
