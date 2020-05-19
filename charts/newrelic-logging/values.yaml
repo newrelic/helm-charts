@@ -1,0 +1,73 @@
+# IMPORTANT: Specify your New Relic API key here.
+# licenseKey:
+#
+# or Specify secret which contains New Relic API key
+# customSecretName: secret_name
+# customSecretKey: secret_key
+#
+# The previous values can also be set as global so that they
+# can be shared by other newrelic product's charts
+#
+# global:
+#   licenseKey:
+#   clusterName:
+#   customSecretName:
+#   customSecretKey:
+#
+# IMPORTANT: if you use a kubernetes secret to specify the license,
+# you have to manually provide the correct endpoint depending on
+# whether your account is for the EU region or not.
+#
+# endpoint: https://log-api.newrelic.com/log/v1
+
+fluentBit:
+  bufferSize: "256000"
+  maxRecords: "500"
+  logLevel: "info"
+  path: "/var/log/containers/*.log"
+
+image:
+  repository: newrelic/newrelic-fluentbit-output
+  tag: 1.2.1
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 128Mi
+  requests:
+    cpu: 250m
+    memory: 64Mi
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+# If you wish to provide additional labels to apply to the pod(s), specify
+# them here
+# podLabels:
+
+# Pod scheduling proirity
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+
+# Node labels for pod assignment
+# Ref: https://kubernetes.io/docs/user-guide/node-selection/
+nodeSelector: {}
+
+# These are default tolerations to be able to run the New Relic Kubernetes
+# integration.
+tolerations:
+  - operator: "Exists"
+    effect: "NoSchedule"
+  - operator: "Exists"
+    effect: "NoExecute"
+
+updateStrategy: RollingUpdate
