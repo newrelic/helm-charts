@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+data:
+  config.yaml: |-
+    sinks:
+    {{- if .Values.sinks.stdout }}
+    - name: stdout
+    {{- end }}
+    - name: newRelicInfra
+      config:
+        agentEndpoint: http://localhost:8001/v1/data
+        clusterName: {{ include "nri-kube-events.cluster" . }}
+        agentHTTPTimeout: {{ .Values.agentHTTPTimeout }}
+metadata:
+  name: {{ template "nri-kube-events.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "nri-kube-events.labels" . | indent 4 }}
