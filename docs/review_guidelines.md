@@ -29,8 +29,8 @@ Stable charts must start at `1.0.0` (for increased maintainability, do not creat
 
 Breaking (backwards incompatible) changes to a chart must:
 
-1. Bump the MAJOR version
-2. Be documented in the README, under a section called _Upgrading_, with the steps necessary to upgrade to the new (specified) MAJOR version
+1. Bump the MAJOR version.
+2. Be documented in the README, under a section called _Upgrading_, with the steps necessary to upgrade to the new (specified) MAJOR version.
 
 ##  3. <a name='Compatibility'></a>Compatibility
 
