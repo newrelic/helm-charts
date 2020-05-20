@@ -16,7 +16,7 @@ Before submitting an Issue, please search for similar ones in the [closed issues
 ### Requirements
 
 * Check our [review guidelines](REVIEW_GUIDELINES.md).
-* Ensure your change adhere to the [technical](#technical-requirements) and [documentation](#documentation-requirements) requirements.
+* Ensure your change adhere to the [technical and documentation requirements](docs/requirements.md).
 * Open separate pull requests to submit changes to multiple charts.
 
 ### Approval and release process
@@ -27,7 +27,7 @@ Pull requests approvals go through the following steps:
 2. A maintainer [reviews](docs/review_guidelines.md) the changes. Any change requires at least one review.
 3. The pull request can be merged when at least one maintainer approves it.
 
-Once the Chart has been merged, it is automatically released.
+Once the chart has been merged, it is automatically released.
 
 ## Contributor License Agreement
 
