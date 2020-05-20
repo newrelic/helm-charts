@@ -1,77 +1,37 @@
-# Contributing Guidelines
+# Contributing
 
-The Kubernetes Charts project accepts contributions via GitHub pull requests. This document outlines the process to help get your contribution accepted.
+Contributions are always welcome. Before contributing please read the
+[code of conduct](./CODE_OF_CONDUCT.md) and [search the issue tracker](issues); your issue may have already been discussed or fixed in `master`. To contribute, [fork](https://help.github.com/articles/fork-a-repo/) this repository, commit your changes, and [send a Pull Request](https://help.github.com/articles/using-pull-requests/).
 
-Note that [our code of conduct](CODE_OF_CONDUCT.md) applies to all platforms and venues related to this project; please follow it in all your interactions with the project and its participants.
+Note that our [code of conduct](./CODE_OF_CONDUCT.md) applies to all platforms and venues related to this project; please follow it in all your interactions with the project and its participants.
 
-## Contributor's License Agreement (CLA)
+## Feature requests
 
-To be able to contribute to the New Relic Helm charts repository you have to sign a CLA.
-The signature process is handled by a bot and is presented to the contributor as a
-check in the pull request. If you didn't sign the CLA yet, follow the procedures in the comment of the bot to do so.
+Feature requests should be submitted in the [Issue tracker](../../issues), with a description of the expected behavior & use case, where they’ll remain closed until sufficient interest, [e.g. :+1: reactions](https://help.github.com/articles/about-discussions-in-issues-and-pull-requests/), has been [shown by the community](../../issues?q=label%3A%22votes+needed%22+sort%3Areactions-%2B1-desc).
 
-[The CLA is included in this repository in its full version.](cla.md)
+Before submitting an Issue, please search for similar ones in the [closed issues](../../issues?q=is%3Aissue+is%3Aclosed+label%3Aenhancement).
 
-## How to contribute to an existing chart
+## Pull requests
 
-1. Fork this repository, develop and test your chart's changes.
-1. Ensure your Chart changes follow the [technical](#technical-requirements) and [documentation](#documentation-requirements) guidelines, described below.
-1. Submit a pull request.
-1. Automated builds will run for testing and linting.
-1. A code review will automaticallly be requested by the owners of the chart.
-1. The PR is reviewed, merged and the chart is automatically released.
+### Requirements
 
-***NOTE***: In order to make testing and merging of PRs easier, please submit changes to multiple charts in separate PRs.
+* Check our [review guidelines](REVIEW_GUIDELINES.md).
+* Ensure your change adhere to the [technical and documentation requirements](docs/requirements.md).
+* Open separate pull requests to submit changes to multiple charts.
 
-### Technical requirements
+### Approval and release process
 
-* All Chart dependencies should also be submitted independently
-* Must pass the linter (`helm lint`)
-* Must successfully launch with default values (`helm install .`)
-* All pods go to the running state (or NOTES.txt provides further instructions if a required value is missing).
-* All services have at least one endpoint
-* Must include source GitHub repositories for images used in the Chart
-* Images should not have any major security vulnerabilities
-* Must be up-to-date with the latest stable Helm/Kubernetes features
-* Use Deployments in favor of ReplicationControllers
-* Should follow Kubernetes best practices
-* Include Health Checks wherever practical
-* Allow configurable [resource requests and limits](http://kubernetes.io/docs/user-guide/compute-resources/#resource-requests-and-limits-of-pod-and-container)
-* Provide a method for data persistence (if applicable)
-* Support application upgrades
-* Allow customization of the application configuration
-* Provide a secure default configuration
-* Do not leverage alpha features of Kubernetes
-* Includes a [NOTES.txt](https://helm.sh/docs/topics/charts/#chart-license-readme-and-notes) explaining how to use the application after install
-* Follows [best practices](https://helm.sh/docs/chart_best_practices/)
-  (especially for [labels](https://helm.sh/docs/chart_best_practices/labels/)
-  and [values](https://helm.sh/docs/chart_best_practices/values/))
+Pull requests approvals go through the following steps:
 
-### Documentation requirements
+1. A GitHub action is triggered to lint and test the chart's installation. For more information, see [Chart testing](docs/chart_testing.md).
+2. A maintainer [reviews](docs/review_guidelines.md) the changes. Any change requires at least one review.
+3. The pull request can be merged when at least one maintainer approves it.
 
-* Must include an in-depth `README.md`, including:
-* Short description of the Chart
-* Any prerequisites or requirements
-* Customization: explaining options in `values.yaml` and their defaults
-* Must include a short `NOTES.txt`, including:
-* Any relevant post-installation information for the Chart
-* Instructions on how to access the application or service provided by the Chart
+Once the chart has been merged, it is automatically released.
 
-### Pull request approval and release process
+## Contributor License Agreement
 
-A Github Action will run to lint and test the chart's installation. More information abouut it
-can be found in the [Chart Testing documentation](CHART_TESTING.md).
+Keep in mind that when you submit your pull request, you'll need to sign the [CLA](cla.md) via the click-through using CLA-Assistant. If you'd like to execute our corporate CLA, or if you have any questions, please drop us an email at opensource@newrelic.com.
 
-A maintainer of the chart will review the changes and eventually approve them. Any change requires at least one review.
-No pull requests can be merged until at least one maintainer reviews it. A good guide for what to review
-can be found in the [Review Guidelines](REVIEW_GUIDELINES.md).
-
-Once the Chart has been merged, the release will be automatically made by a Github Workflwo using the Github Pages of this repository.
-
-## Support Channels
-
-Whether you are a user or contributor, official support channels include:
-
-- GitHub issues: https://github.com/newrelic-experimental/charts/issues
-
-Before opening a new issue or submitting a new pull request, it's helpful to search the project - it's likely that another user has already reported the issue you're facing, or it's a known issue that we're already aware of.
+For more information about CLAs, please check out Alex Russell’s excellent post,
+[“Why Do I Need to Sign This?”](https://infrequently.org/2008/06/why-do-i-need-to-sign-this/).
