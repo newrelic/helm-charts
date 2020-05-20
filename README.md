@@ -122,12 +122,6 @@ If you can't find what you're looking for there, reach out to us on our [support
 
 Found a bug? Contact us at [support.newrelic.com](http://support.newrelic.com/)
 
-### <a name='Community'></a>Community
-
-New Relic hosts and moderates an online forum where customers can interact with New Relic employees as well as other customers to get help and share best practices. Like all official New Relic open source projects, there's a related Community topic in the New Relic Explorers Hub. You can find this project's topic/threads here:
-
-https://discuss.newrelic.com/c/support-products-agents/new-relic-infrastructure
-
 ### <a name='IssuesEnhancementRequests'></a>Issues / Enhancement Requests
 
 Issues and enhancement requests can be submitted in the [Issues tab of this repository](../../issues). Please search for and review the existing open issues before submitting a new issue.
