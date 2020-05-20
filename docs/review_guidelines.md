@@ -4,33 +4,18 @@ The process to get a pull request merged is fairly simple. First, all required t
 
 If problems arise with some part of the test, such as timeout issues, contact one of the [repository maintainers](CODEOWNERS).
 
-<!-- vscode-markdown-toc -->
 1. [Immutability](#Immutability)
 2. [Versioning](#Versioning)
 3. [Compatibility](#Compatibility)
 4. [Chart metadata](#Chartmetadata)
 5. [Dependencies](#Dependencies)
-6. [Names and Labels](#NamesandLabels)
-	6.1. [Metadata](#Metadata)
+6. [Metadata](#Metadata)
 7. [Labels](#Labels)
-	7.1. [Deployments, StatefulSets, DaemonSets Selectors](#DeploymentsStatefulSetsDaemonSetsSelectors)
-	7.2. [Service selectors](#Serviceselectors)
-	7.3. [Persistence Labels](#PersistenceLabels)
 8. [Configuration](#Configuration)
 9. [Features](#Features)
-	9.1. [Kubernetes native workloads](#Kubernetesnativeworkloads)
-	9.2. [Persistence](#Persistence)
-	9.3. [AutoScaling / HorizontalPodAutoscaler](#AutoScalingHorizontalPodAutoscaler)
-	9.4. [Ingress](#Ingress)
 10. [Formatting](#Formatting)
 11. [Documentation](#Documentation)
 12. [Tests](#Tests)
-
-<!-- vscode-markdown-toc-config
-	numbering=true
-	autoSave=true
-	/vscode-markdown-toc-config -->
-<!-- /vscode-markdown-toc -->
 
 ##  1. <a name='Immutability'></a>Immutability
 
@@ -70,9 +55,7 @@ The following fields are **mandatory**:
 
 Stable charts should not depend on charts in the incubator.
 
-##  6. <a name='NamesandLabels'></a>Names and Labels
-
-###  6.1. <a name='Metadata'></a>Metadata
+##  6. <a name='Metadata'></a>Metadata
 
 Resources and labels should follow some conventions. The standard resource metadata (`metadata.labels` and `spec.template.metadata.labels`) should be this:
 
