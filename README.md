@@ -116,12 +116,6 @@ See [our Contributing docs](CONTRIBUTING.md) and our [review guidelines](docs/re
 
 ## <a name='Support'></a>Support
 
-Need help? See our [troubleshooting page](troubleshooting.md). You can find more detailed documentation [on the New Relic docs site](http://newrelic.com/docs).
-
-If you can't find what you're looking for there, reach out to us on our [support site](http://support.newrelic.com/) or our [community forum](http://forum.newrelic.com) and we'll be happy to help you.
-
-Found a bug? Contact us at [support.newrelic.com](http://support.newrelic.com/)
-
 ### <a name='IssuesEnhancementRequests'></a>Issues / Enhancement Requests
 
 Issues and enhancement requests can be submitted in the [Issues tab of this repository](../../issues). Please search for and review the existing open issues before submitting a new issue.
