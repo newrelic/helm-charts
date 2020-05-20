@@ -6,11 +6,13 @@ data:
     {{- if .Values.sinks.stdout }}
     - name: stdout
     {{- end }}
+    {{- if .Values.sinks.newRelicInfra}}
     - name: newRelicInfra
       config:
         agentEndpoint: http://localhost:8001/v1/data
         clusterName: {{ include "nri-kube-events.cluster" . }}
         agentHTTPTimeout: {{ .Values.agentHTTPTimeout }}
+    {{- end }}
 metadata:
   name: {{ template "nri-kube-events.fullname" . }}-config
   namespace: {{ .Release.Namespace }}
