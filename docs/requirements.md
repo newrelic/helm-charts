@@ -15,7 +15,7 @@ Contributions to this repository must adhere to the following technical and docu
 * Must be up-to-date with the latest stable Helm/Kubernetes features.
     * Use Deployments instead of ReplicationControllers.
 
-#### Nice to haves
+#### Nice-to-haves
 
 * Images should not have any major security vulnerabilities.
 * Should follow Kubernetes best practices.
