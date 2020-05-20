@@ -4,18 +4,21 @@ The process to get a pull request merged is fairly simple. First, all required t
 
 If problems arise with some part of the test, such as timeout issues, contact one of the [repository maintainers](CODEOWNERS).
 
-1. [Immutability](#Immutability)
-2. [Versioning](#Versioning)
-3. [Compatibility](#Compatibility)
-4. [Chart metadata](#Chartmetadata)
-5. [Dependencies](#Dependencies)
-6. [Metadata](#Metadata)
-7. [Labels](#Labels)
-8. [Configuration](#Configuration)
-9. [Features](#Features)
-10. [Formatting](#Formatting)
-11. [Documentation](#Documentation)
-12. [Tests](#Tests)
+1.  [Immutability](#Immutability)
+2.  [Versioning](#Versioning)
+3.  [Compatibility](#Compatibility)
+4.  [Chart metadata](#Chartmetadata)
+5.  [Dependencies](#Dependencies)
+6.  [Resource Metadata Labels](#Metadata)
+7.  [Labels](#Labels)
+8.  [Configuration](#Configuration)
+9.  [Kubernetes Native Workfloads](#Kubernetesnativeworkloads)
+10. [Persistence](#Persistence)
+11. [AutoScaling / HorizontalPodAutoscaler](#AutoScalingHorizontalPodAutoscaler)
+12. [Ingress](#Ingress)
+13. [Formatting](#Formatting)
+14. [Documentation](#Documentation)
+15. [Tests](#Tests)
 
 ##  1. <a name='Immutability'></a>Immutability
 
@@ -34,13 +37,13 @@ Breaking (backwards incompatible) changes to a chart must:
 
 ##  3. <a name='Compatibility'></a>Compatibility
 
-We officially support compatibility with the current and the previous minor version of Kubernetes. Generated resources should use the latest possible API versions compatible with these versions. 
+We officially support compatibility with the current and the previous minor version of Kubernetes. Generated resources should use the latest possible API versions compatible with these versions.
 
 For extended backwards compatibility, conditional logic based on capabilities may be used (see [built-in objects](https://github.com/helm/helm/blob/master/docs/chart_template_guide/builtin_objects.md)).
 
 ##  4. <a name='Chartmetadata'></a>Chart metadata
 
-The accompanying `Chart.yaml` file should be as complete as possible. 
+The accompanying `Chart.yaml` file should be as complete as possible.
 
 The following fields are **mandatory**:
 
@@ -55,7 +58,7 @@ The following fields are **mandatory**:
 
 Stable charts should not depend on charts in the incubator.
 
-##  6. <a name='Metadata'></a>Metadata
+##  6. <a name='Metadata'></a>Resource Metadata Labels
 
 Resources and labels should follow some conventions. The standard resource metadata (`metadata.labels` and `spec.template.metadata.labels`) should be this:
 
@@ -68,7 +71,7 @@ labels:
   helm.sh/chart: {{ include "myapp.chart" . }}
 ```
 
-If a chart has multiple components, the `app.kubernetes.io/component` label should be added (for example, `app.kubernetes.io/component: server`). 
+If a chart has multiple components, the `app.kubernetes.io/component` label should be added (for example, `app.kubernetes.io/component: server`).
 
 The resource name should get the component as suffix (for example, `name: {{ include "myapp.fullname" . }}-server`).
 
@@ -150,9 +153,8 @@ image:
 * The use of the `default` function should be avoided if possible in favor of defaults in `values.yaml`.
 * It is usually best to not specify defaults for resources and to just provide sensible values that are commented out as a recommendation, especially when resources are rather high. This makes it easier to test charts on small clusters or Minikube. Setting resources should generally be a conscious choice of the user.
 
-##  9. <a name='Features'></a>Features
 
-###  9.1. <a name='Kubernetesnativeworkloads'></a>Kubernetes native workloads
+##  9. <a name='Kubernetesnativeworkloads'></a>Kubernetes native workloads
 
 When reviewing charts that contain workloads such as [Deployments](https://kubernetes.io/docs/concepts/workloads/controllers/deployment/), [StatefulSets](https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/), [DaemonSets](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), and [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/jobs-run-to-completion/) the below points should be considered.  These are to be seen as best practices rather than strict rules.
 
@@ -167,7 +169,7 @@ When reviewing charts that contain workloads such as [Deployments](https://kuber
 * Do not provide hard [resource limits](https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/#resource-requests-and-limits-of-pod-and-container) to workloads and leave them configurable unless required.
 * Configure complex pre-app setups using [init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) when possible.
 
-###  9.2. <a name='Persistence'></a>Persistence
+###  10. <a name='Persistence'></a>Persistence
 
 * Persistence should be enabled by default
 * PVCs should support specifying an existing claim
@@ -233,7 +235,7 @@ spec:
 {{- end }}
 ```
 
-###  9.3. <a name='AutoScalingHorizontalPodAutoscaler'></a>AutoScaling / HorizontalPodAutoscaler
+###  11. <a name='AutoScalingHorizontalPodAutoscaler'></a>AutoScaling / HorizontalPodAutoscaler
 
 * Autoscaling should be disabled by default
 * All options should be shown in the README
@@ -282,7 +284,7 @@ spec:
 {{- end }}
 ```
 
-###  9.4. <a name='Ingress'></a>Ingress
+###  12. <a name='Ingress'></a>Ingress
 
 * See the [Ingress resource documentation](https://kubernetes.io/docs/concepts/services-networking/ingress/) for an overview.
 * Ingress should be disabled by default.
@@ -358,16 +360,16 @@ Sample prepend logic for getting an application URL in `NOTES.txt`:
 {{- end }}
 ```
 
-##  10. <a name='Formatting'></a>Formatting
+##  13. <a name='Formatting'></a>Formatting
 
 * Use two-space indentation when editing YAML files.
 * Keep list indentation style consistent within files.
 * Add a single space after `{{` and before `}}`.
 
-##  11. <a name='Documentation'></a>Documentation
+##  14. <a name='Documentation'></a>Documentation
 
 `README.md` and `NOTES.txt` files are mandatory. `README.md` should contain a table listing all configuration options. `NOTES.txt` should provide accurate and useful information on how the chart can be used/accessed.
 
-##  12. <a name='Tests'></a>Tests
+##  15. <a name='Tests'></a>Tests
 
 See the [chart testing documentation](CHART_TESTING.md).
