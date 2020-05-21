@@ -1,0 +1,15 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  name: {{ template "newrelic-logging.fullname" . }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "newrelic-logging.fullname" . }}
+subjects:
+- kind: ServiceAccount
+  name: {{ template "newrelic-logging.serviceAccountName" . }}
+  namespace: {{ .Release.Namespace }}
+{{- end -}}
