@@ -1,0 +1,13 @@
+kind: ConfigMap
+metadata:
+  name: {{ template "nri-prometheus.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "nri-prometheus.labels" . | indent 4 }}
+apiVersion: v1
+data:
+  config.yaml: |
+    cluster_name: {{ include "nri-prometheus.cluster" . }}
+{{- if .Values.config }}
+{{ toYaml .Values.config | indent 4 -}}
+{{ end }}
