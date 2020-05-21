@@ -1,0 +1,70 @@
+# Default values for nri-kube-events.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# - Specify either the New Relic license key or the secret which
+#   contains it.
+#
+# - Specify the Kubernetes cluster name.
+#   https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+#
+# licenseKey:
+# customSecretName:
+# customSecretLicenseKey:
+# cluster:
+#
+# IMPORTANT: the previous values can also be set as global so that they
+# can be shared by other newrelic product's charts
+#
+# global:
+#   licenseKey:
+#   customSecretName:
+#   customSecretLicenseKey:
+#   cluster:
+
+agentHTTPTimeout: "30s"
+
+sinks:
+  # Enable the stdout sink to also see all events in the logs.
+  stdout: false
+  # The newRelicInfra sink sends all events to New relic.
+  newRelicInfra: true
+
+nameOverride: ""
+
+image:
+  kubeEvents:
+repository: newrelic/nri-kube-events
+tag: 1.1.0
+  infraAgent:
+repository: newrelic/k8s-events-forwarder
+tag: 1.11.24
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the name template
+  name: ""
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
