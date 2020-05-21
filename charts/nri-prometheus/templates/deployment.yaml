@@ -1,0 +1,65 @@
+{{- if (include "nri-prometheus.areValuesValid" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "nri-prometheus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "nri-prometheus.labels" . | indent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "nri-prometheus.name" . }}
+  template:
+    metadata:
+      labels:
+{{ include "nri-prometheus.labels" . | indent 8 }}
+    spec:
+      serviceAccountName: {{ template "nri-prometheus.serviceAccountName" . }}
+      containers:
+      - name: nri-prometheus
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        args:
+          - "--configfile=/etc/nri-prometheus/config.yaml"
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/nri-prometheus/
+        env:
+          - name: "LICENSE_KEY"
+            valueFrom:
+                secretKeyRef:
+                  {{- if (include "nri-prometheus.licenseKey" .) }}
+                  name: {{ template "nri-prometheus.fullname" . }}-config
+                  key: licenseKey
+                  {{- else }}
+                  name: {{ include "nri-prometheus.customSecretName" . }}
+                  key: {{ include "nri-prometheus.customSecretLicenseKey" . }}
+                  {{- end }}
+          - name: "BEARER_TOKEN_FILE"
+            value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
+          - name: "CA_FILE"
+            value: "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
+        {{- if .Values.resources }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        {{- end }}
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ template "nri-prometheus.fullname" . }}-config
+      {{- if $.Values.nodeSelector }}
+      nodeSelector:
+{{ toYaml $.Values.nodeSelector | indent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+{{ toYaml .Values.tolerations | indent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+{{ toYaml .Values.affinity | indent 8 }}
+      {{- end }}
+{{- end }}
