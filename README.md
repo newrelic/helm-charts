@@ -35,7 +35,7 @@ helm repo add newrelic https://helm-charts.newrelic.com
 You can list all the available charts from the `newrelic` repository using [`helm search`][helm-search]:
 
 ```sh
-helm search repo | grep newrelic/
+helm search repo newrelic/
 ```
 
 To install one of the charts, run [`helm install`][helm-install] passing the name of the chart to install and the values you want to set as arguments. You can find a list of all the values and their defaults in the documentation of each chart.
