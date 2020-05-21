@@ -1,4 +1,4 @@
-# newrelic-mutation-webhook
+# newrelic-metadata-injection
 
 ## Chart Details
 
