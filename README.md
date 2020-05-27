@@ -26,6 +26,8 @@ This is the official Helm charts repository for New Relic. It is indexed at [Hel
 
 ## <a name='Installthecharts'></a>Install
 
+  > Important: These installation instructions are not yet functional. We are actively working to officially deploy our Helm charts. Stay tuned!
+
 To install the New Relic Helm charts, add the official repository first:
 
 ```sh
