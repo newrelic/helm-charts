@@ -15,6 +15,9 @@ jobs:
       - name: Fetch history
         run: git fetch --prune --unshallow
 
+      - name: Add stable repository
+        run: helm repo add stable https://kubernetes-charts.storage.googleapis.com
+
       - name: Configure Git
         run: |
           git config user.name "$GITHUB_ACTOR"
