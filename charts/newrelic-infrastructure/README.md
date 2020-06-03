@@ -98,3 +98,26 @@ The default set of relations assigned to our daemonset is shown below:
 # Config file
 
 If you wish to provide your own `newrelic.yml` you may do so under `config`. There are a few notable exceptions you should be aware of. Some options have been omitted because they are handled either by variables, or a secret. They are `display_name`, `license_key`, `log_file` and `verbose`.
+
+
+# Past Contributors
+
+This chart started as a community project in the [stable Helm chart repository](github.com/helm/charts/). New Relic is very thankful 
+for all the 15+ community members that contributed and helped maintain the chart there over the years:
+
+* coreypobrien
+* sstarcher
+* jmccarty3
+* slayerjain
+* ryanhope2
+* rk295
+* michaelajr
+* isindir
+* idirouhab
+* ismferd
+* enver
+* diclophis
+* jeffdesc
+* costimuraru
+* verwilst
+* ezelenka
