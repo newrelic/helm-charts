@@ -7,7 +7,7 @@ metadata:
   labels:
 {{- include "nri-metadata-injection.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicas }}
   selector:
 matchLabels:
   {{- include "nri-metadata-injection.appLabel" . | nindent 6 }}
