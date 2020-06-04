@@ -156,6 +156,44 @@ entries:
   nri-bundle:
   - apiVersion: v1
     appVersion: "1.0"
+    created: "2020-06-04T15:39:45.966121628Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: file://../newrelic-infrastructure
+      version: 0.13.36
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: file://../nri-prometheus
+      version: 1.0.2
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      version: 1.0.2
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes-charts.storage.googleapis.com
+      version: 2.3.0
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: file://../nri-kube-events
+      version: 1.0.1
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: file://../newrelic-logging
+      version: 1.0.5
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: fd6ba9fd8049b87a1e383809a05e348fba0abbf31172eb1d65c5f7db9327de0f
+    home: https://github.com/newrelic/helm-charts
+    maintainers:
+    - name: douglascamata
+    - name: jorik
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-0.1.2/nri-bundle-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v1
+    appVersion: "1.0"
     created: "2020-06-04T12:03:11.524328145Z"
     dependencies:
     - condition: infrastructure.enabled
