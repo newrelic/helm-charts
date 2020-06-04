@@ -112,6 +112,10 @@ secretKeyRef:
 - name: "NRIA_EVENT_QUEUE_DEPTH"
   value: {{ .Values.eventQueueDepth | quote }}
 {{- end }}
+{{- if .Values.nrStaging }}
+- name: STAGING
+  value: "true"
+{{- end }}
 - name: "NRIA_DISPLAY_NAME"
   valueFrom:
 fieldRef:
