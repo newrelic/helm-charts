@@ -16,6 +16,7 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `imageJob.repository`         | The job container to pull.                                   | `newrelic/k8s-webhook-cert-manager` |
 | `imageJob.pullPolicy`         | The job pull policy.                                         | `IfNotPresent`                      |
 | `imageJob.tag`                | The job version of the container to pull.                    | `1.2.1`                             |
+| `replicas`                    | Number of replicas in the deployment                         | `1`                                 |
 | `resources`                   | Any resources you wish to assign to the pod.                 | See Resources below                 |
 | `serviveAccount.create`       | If true a service account would be created and assigned for the webhook and the job. | `true` |
 | `serviveAccount.name`         | The service account to assign to the webhook and the job. If `serviveAccount.create` is true then this name will be used when creating the service account; if this value is not set or it evaluates to false, then when creating the account the returned value from the template `nr-metadata-injection.fullname` will be used as name. | |
