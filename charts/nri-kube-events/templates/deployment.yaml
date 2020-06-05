@@ -49,6 +49,10 @@ spec:
                   name: {{ include "nri-kube-events.customSecretName" . }}
                   key: {{ include "nri-kube-events.customSecretLicenseKey" . }}
                   {{- end }}
+            {{- if .Values.nrStaging }}
+            - name: NRIA_STAGING
+              value: "true"
+            {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
               name: tmpfs-data
