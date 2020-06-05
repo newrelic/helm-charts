@@ -16,9 +16,9 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `sinks.stdout` | When enabled all routed events are also logged.| `false` |
 | `nameOverride` | The name that should be used for the deployment.   | |
 | `image.kubeEvents.repository`  | The events-router image name.  | `newrelic/nri-kube-events`  |
-| `image.kubeEvents.tag` | The events-router image tag.   | `1.1.0` |
+| `image.kubeEvents.tag` | The events-router image tag.   | `1.2.0` |
 | `image.infraAgent.repository`  | The infra-agent image name.| `newrelic/k8s-events-forwarder` |
-| `image.infraAgent.tag` | The infra-agent image tag. | `1.11.24`|
+| `image.infraAgent.tag` | The infra-agent image tag. | `1.11.45`|
 | `resources`| A yaml defining the resources for the events-router container. | {}  |
 | `rbac.create`  | Enable Role-based authentication   | `true`  |
 | `serviveAccount.create`| If true, a service account would be created and assigned to the deployment | true|
@@ -26,6 +26,7 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `nodeSelector` | Node label to use for scheduling   | `{}`|
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)   | `[]`|
 | `affinity` | Node affinity to use for scheduling| `{}`|
+| `nrStaging`| Send data to staging (requires a staging license key). | false |
 
 ## Example
 
