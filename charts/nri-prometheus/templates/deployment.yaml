@@ -38,6 +38,10 @@ spec:
                   name: {{ include "nri-prometheus.customSecretName" . }}
                   key: {{ include "nri-prometheus.customSecretLicenseKey" . }}
                   {{- end }}
+          {{- if .Values.nrStaging }}
+          - name: "METRIC_API_URL"
+            value: "https://staging-metric-api.newrelic.com/metric/v1/infra"
+          {{- end }}
           - name: "BEARER_TOKEN_FILE"
             value: "/var/run/secrets/kubernetes.io/serviceaccount/token"
           - name: "CA_FILE"
