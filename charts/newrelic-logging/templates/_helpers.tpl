@@ -124,6 +124,13 @@ Return the customSecretLicenseKey
 {{- end -}}
 
 {{/*
+Returns nrStaging
+*/}}
+{{- define "newrelic.nrStaging" -}}
+{{- or .Values.global.nrStaging .Values.nrStaging }}
+{{- end -}}
+
+{{/*
 Returns if the template should render, it checks if the required values are set.
 */}}
 {{- define "newrelic-logging.areValuesValid" -}}

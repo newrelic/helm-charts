@@ -24,6 +24,7 @@ See [values.yaml](values.yaml) for the default values
 | `updateStrategy`                               | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)                                                                                                                                                                                       | `RollingUpdate`                      |
 | `serviveAccount.create`                        | If true, a service account would be created and assigned to the deployment                                                                                                                                                                        | true                                 |
 | `serviveAccount.name`                          | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account                                                                                                 |                                      |
+| `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                                                                 | false                                  |
 
 ## Example
 
