@@ -49,7 +49,7 @@ spec:
                   name: {{ include "nri-kube-events.customSecretName" . }}
                   key: {{ include "nri-kube-events.customSecretLicenseKey" . }}
                   {{- end }}
-            {{- if .Values.nrStaging }}
+            {{- if (include "newrelic.nrStaging" .) }}
             - name: NRIA_STAGING
               value: "true"
             {{- end }}
