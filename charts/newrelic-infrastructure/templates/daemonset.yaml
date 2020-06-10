@@ -112,7 +112,7 @@ spec:
             - name: "NRIA_EVENT_QUEUE_DEPTH"
               value: {{ .Values.eventQueueDepth | quote }}
             {{- end }}
-            {{- if .Values.nrStaging }}
+            {{- if eq (include "newrelic.nrStaging" .) "true" }}
             - name: "NRIA_STAGING"
               value: "true"
             {{- end }}
