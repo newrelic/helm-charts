@@ -101,17 +101,25 @@ Return the customSecretName
 {{- end -}}
 
 {{/*
-Return the customSecretKey
+Return the customSecretLicenseKey
 */}}
 {{- define "newrelic-logging.customSecretKey" -}}
 {{- if .Values.global }}
-  {{- if .Values.global.customSecretKey }}
-      {{- .Values.global.customSecretKey -}}
+  {{- if .Values.global.customSecretLicenseKey }}
+      {{- .Values.global.customSecretLicenseKey -}}
+  {{- else -}}
+    {{- if .Values.global.customSecretKey }}
+        {{- .Values.global.customSecretKey -}}
+    {{- else -}}
+        {{- .Values.customSecretKey | default "" -}}
+    {{- end -}}
+  {{- end -}}
+{{- else -}}
+  {{- if .Values.customSecretLicenseKey }}
+      {{- .Values.customSecretLicenseKey -}}
   {{- else -}}
       {{- .Values.customSecretKey | default "" -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
