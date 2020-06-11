@@ -35,6 +35,7 @@ chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 mode: {{ template "newrelic.mode" . }}
+{{- if .Values.windowsEnabled -}}kubernetes.io/os: windows{{- end }}
 {{- end }}
 
 {{/*
@@ -64,6 +65,13 @@ Create the image name depending on the "privileged" flag
 {{- else -}}
 "{{ .Values.image.repository }}:{{ .Values.image.tag }}-unprivileged"
 {{- end -}}
+{{- end -}}
+
+{{/*
+Create the Windows image name
+*/}}
+{{- define "newrelic.windowsImage" -}}
+"{{ .Values.image.repository }}:{{ .Values.image.windowsTag }}"
 {{- end -}}
 
 {{/*
@@ -130,7 +138,15 @@ Return the customSecretLicenseKey
 Returns nrStaging
 */}}
 {{- define "newrelic.nrStaging" -}}
-{{- or .Values.global.nrStaging .Values.nrStaging }}
+{{- if .Values.global }}
+  {{- if .Values.global.nrStaging }}
+    {{ .Values.global.nrStaging }}
+  {{- end -}}
+{{- else if .Values.nrStaging }}
+  {{ .Values.nrStaging }}
+{{- else }}
+  false
+{{- end -}}
 {{- end -}}
 
 {{/*
