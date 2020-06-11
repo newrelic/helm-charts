@@ -26,7 +26,7 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `nodeSelector` | Node label to use for scheduling   | `{}`|
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)   | `[]`|
 | `affinity` | Node affinity to use for scheduling| `{}`|
-| `nrStaging`| Send data to staging (requires a staging license key). | false |
+| `global.nrStaging` - `nrStaging`| Send data to staging (requires a staging license key). | false |
 
 ## Example
 
