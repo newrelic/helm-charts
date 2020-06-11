@@ -140,12 +140,10 @@ Returns nrStaging
 {{- define "newrelic.nrStaging" -}}
 {{- if .Values.global }}
   {{- if .Values.global.nrStaging }}
-    {{ .Values.global.nrStaging }}
+    {{- .Values.global.nrStaging -}}
   {{- end -}}
 {{- else if .Values.nrStaging }}
-  {{ .Values.nrStaging }}
-{{- else }}
-  false
+  {{- .Values.nrStaging -}}
 {{- end -}}
 {{- end -}}
 
