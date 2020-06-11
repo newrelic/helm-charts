@@ -127,7 +127,13 @@ Return the customSecretLicenseKey
 Returns nrStaging
 */}}
 {{- define "newrelic.nrStaging" -}}
-{{- or .Values.global.nrStaging .Values.nrStaging }}
+{{- if .Values.global }}
+  {{- if .Values.global.nrStaging }}
+{{- .Values.global.nrStaging -}}
+  {{- end -}}
+{{- else if .Values.nrStaging }}
+  {{- .Values.nrStaging -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

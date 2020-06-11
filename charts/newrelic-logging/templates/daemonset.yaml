@@ -36,7 +36,7 @@ spec:
   imagePullPolicy: "{{ .Values.image.pullPolicy }}"
   env:
 - name: ENDPOINT
-  {{- if eq (include "newrelic.nrStaging" .) "true" }}
+  {{- if (include "newrelic.nrStaging" .) }}
   value: "https://staging-log-api.newrelic.com/log/v1"
   {{- else if .Values.endpoint }}
   value: {{ .Values.endpoint }}
