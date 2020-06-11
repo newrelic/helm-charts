@@ -127,6 +127,8 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
 
 ### Windows Limitations
 
+* The Windows agent only sends the Kubernetes samples (`K8sNodeSample`, `K8sPodSample`, etc.)
+    * `SystemSample`, `StorageSample`, `NetworkSample`, and `ProcessSample` are not generated.
 * Some [Kubernetes metrics](https://docs.newrelic.com/docs/integrations/kubernetes-integration/understand-use-data/understand-use-data#metrics) are missing because the Windows kubelet doesn’t have them:
     * Node:
         * `fsInodes`: not sent
