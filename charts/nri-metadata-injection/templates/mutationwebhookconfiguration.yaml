@@ -17,9 +17,9 @@ caBundle: ""
 apiGroups: [""]
 apiVersions: ["v1"]
 resources: ["pods"]
-  {{- if .Values.injectOnlyLabeledNamespaces }}
-namespaceSelector:
-  matchLabels:
-newrelic-metadata-injection: enabled
-  {{- end }}
+{{- if .Values.injectOnlyLabeledNamespaces }}
+  namespaceSelector:
+matchLabels:
+  newrelic-metadata-injection: enabled
+{{- end }}
   failurePolicy: Ignore
