@@ -112,7 +112,7 @@ secretKeyRef:
 - name: "NRIA_EVENT_QUEUE_DEPTH"
   value: {{ .Values.eventQueueDepth | quote }}
 {{- end }}
-{{- if eq (include "newrelic.nrStaging" .) "true" }}
+{{- if (include "newrelic.nrStaging" .) }}
 - name: "NRIA_STAGING"
   value: "true"
 {{- end }}
