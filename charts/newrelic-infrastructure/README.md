@@ -125,6 +125,30 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
 	ReleaseId	REG_SZ	1809
 ```
 
+### Windows Limitations
+
+* Some [Kubernetes metrics](https://docs.newrelic.com/docs/integrations/kubernetes-integration/understand-use-data/understand-use-data#metrics) are missing because the Windows kubelet doesn’t have them:
+    * Node:
+        * `fsInodes`: not sent
+        * `fsInodesFree`: not sent
+        * `fsInodesUsed`: not sent
+        * `memoryMajorPageFaultsPerSecond`: always returns zero as a value
+        * `memoryPageFaults`: always returns zero as a value
+        * `memoryRssBytes`: always returns zero as a value
+        * `runtimeInodes`: not sent
+        * `runtimeInodesFree`: not sent
+        * `runtimeInodesUsed`: not sent
+    * Pod:
+        * `net.errorsPerSecond`: not sent
+        * `net.rxBytesPerSecond`: not sent
+        * `net.txBytesPerSecond`: not sent
+    * Container:
+        * `containerID`: not sent
+        * `containerImageID`: not sent
+        * `memoryUsedBytes`: in the UI, this is displayed in the pod card that appears when you click on a pod, and will show no data. We will soon fix this by updating our charts to use memoryWorkingSetBytes instead.
+    * Volume:
+        * `fsUsedBytes`: zero, so fsUsedPercent is zero
+
 # Config file
 
 If you wish to provide your own `newrelic.yml` you may do so under `config`. There are a few notable exceptions you should be aware of. Some options have been omitted because they are handled either by variables, or a secret. They are `display_name`, `license_key`, `log_file` and `verbose`.
