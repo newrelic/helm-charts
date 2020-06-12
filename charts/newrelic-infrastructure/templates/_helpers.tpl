@@ -35,7 +35,6 @@ chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 mode: {{ template "newrelic.mode" . }}
-{{- if .Values.windowsEnabled -}}kubernetes.io/os: windows{{- end }}
 {{- end }}
 
 {{/*
