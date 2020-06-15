@@ -67,6 +67,13 @@ Create the image name depending on the "privileged" flag
 {{- end -}}
 
 {{/*
+Create the Windows image name
+*/}}
+{{- define "newrelic.windowsImage" -}}
+"{{ .Values.image.repository }}:{{ .Values.image.windowsTag }}"
+{{- end -}}
+
+{{/*
 Return the licenseKey
 */}}
 {{- define "newrelic.licenseKey" -}}

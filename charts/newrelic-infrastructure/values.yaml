@@ -22,6 +22,10 @@
 # Only HTTP is accepted. This is an example value: http://172.17.0.3:8080
 # disableKubeStateMetrics - disables KSM parsing by the DaemonSet. Defaults to "false" if not provided.
 
+enableLinux: true
+
+enableWindows: false
+
 verboseLog: false
 
 # This can be set, the default is shown below
@@ -30,6 +34,7 @@ verboseLog: false
 image:
   repository: newrelic/infrastructure-k8s
   tag: 1.23.0
+  windowsTag: 1.21.0-windows-1809-alpha
   pullPolicy: IfNotPresent
 
 resources:
@@ -96,6 +101,9 @@ serviceAccount:
 # Node labels for pod assignment
 # Ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
+
+windowsNodeSelector:
+  kubernetes.io/os: windows
 
 # These are default tolerations to be able to run the New Relic Kubernetes
 # integration.
