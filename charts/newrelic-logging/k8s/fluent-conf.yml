@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: default
+  labels:
+k8s-app: newrelic-logging
+data:
+  # Configuration files: server, input, filters and output
+  # ======================================================
+  fluent-bit.conf: |
+[SERVICE]
+Flush 1
+Log_Level ${LOG_LEVEL}
+Daemonoff
+Parsers_File  parsers.conf
+HTTP_Server   On
+HTTP_Listen   0.0.0.0
+HTTP_Port 2020
+
+@INCLUDE input-kubernetes.conf
+@INCLUDE output-newrelic.conf
+@INCLUDE filter-kubernetes.conf
+
+  input-kubernetes.conf: |
+[INPUT]
+Name  tail
+Tag   kube.*
+Path  ${PATH}
+Parserdocker
+DB/var/log/flb_kube.db
+Mem_Buf_Limit 7MB
+Skip_Long_Lines   On
+Refresh_Interval  10
+
+  filter-kubernetes.conf: |
+[FILTER]
+Name record_modifier
+Match *
+Record cluster_name ${CLUSTER_NAME}
+
+[FILTER]
+Name   kubernetes
+Match  kube.*
+Kube_URL   https://kubernetes.default.svc.cluster.local:443
+Merge_JSON_Log Off
+
+  output-newrelic.conf: |
+[OUTPUT]
+Name  newrelic
+Match *
+licenseKey ${LICENSE_KEY}
+endpoint ${ENDPOINT}
+maxBufferSize ${BUFFER_SIZE}
+maxRecords ${MAX_RECORDS}
+
+  parsers.conf: |
+[PARSER]
+Name   json
+Format json
+Time_Key time
+Time_Format %d/%b/%Y:%H:%M:%S %z
+
+[PARSER]
+Namedocker
+Format  json
+Time_Keytime
+Time_Format %Y-%m-%dT%H:%M:%S.%L
+Time_Keep   On
+# Command  |  Decoder | Field | Optional Action
+# =============|==================|=================
+Decode_Field_As   escapedlog
