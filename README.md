@@ -120,6 +120,26 @@ See [our Contributing docs](CONTRIBUTING.md) and our [review guidelines](docs/re
 
 Issues and enhancement requests can be submitted in the [Issues tab of this repository](../../issues). Please search for and review the existing open issues before submitting a new issue.
 
+## <a name='Troubleshoot'></a>Troubleshoot
+
+### <a name='TroubleshootCannotLoadRepos'></a>Getting "Couldn't load repositories file" (Helm 2)
+
+You need to initialize Helm with:
+```sh
+helm init
+```
+
+### <a name='TroubleshootCannotLoadRepos'></a>Getting "namespaces 'default' is forbidden" (Helm 2)
+
+If your cluster uses role-based access, create a service account for tiller (Helm's service which runs inside the Kubernetes cluster) using:
+```sh
+kubectl --namespace kube-system create serviceaccount tiller
+kubectl create clusterrolebinding tiller-cluster-rule \
+ --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+kubectl --namespace kube-system patch deploy tiller-deploy \
+ -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+```
+
 ## <a name='License'></a>License
 
 The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
