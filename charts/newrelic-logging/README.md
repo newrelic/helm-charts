@@ -2,7 +2,7 @@
 
 ## Chart Details
 
-New Relic offers a [Fluent Bit](https://fluentbit.io/)  output [plugin](https://github.com/newrelic/newrelic-fluent-bit-output)  to easily forward your logs to [New Relic Logs](https://docs.newrelic.com/docs/logs/new-relic-logs/get-started/introduction-new-relic-logs). This plugin is also provided in a standalone Docker image that can be installed in a [Kubernetes](https://kubernetes.io/)  cluster in the form of a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), which we refer as the Kubernetes plugin.
+New Relic offers a [Fluent Bit](https://fluentbit.io/) output [plugin](https://github.com/newrelic/newrelic-fluent-bit-output) to easily forward your logs to [New Relic Logs](https://docs.newrelic.com/docs/logs/new-relic-logs/get-started/introduction-new-relic-logs). This plugin is also provided in a standalone Docker image that can be installed in a [Kubernetes](https://kubernetes.io/) cluster in the form of a [DaemonSet](https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/), which we refer as the Kubernetes plugin.
 
 This document explains how to install it in your cluster, either using a [Helm](https://helm.sh/) chart (recommended), or manually by applying Kubernetes manifests.
 
@@ -12,7 +12,7 @@ This document explains how to install it in your cluster, either using a [Helm](
 
  1. Install Helm following the [official instructions](https://helm.sh/docs/intro/install/).
 
- 2. Add the New Relic official Helm chart repository following [these instructinos](../../README.md#installing-charts)
+ 2. Add the New Relic official Helm chart repository following [these instructions](../../README.md#installing-charts)
 
  3. Run the following command to install the New Relic Logging Kubernetes plugin via Helm, replacing the placeholder value `YOUR_LICENSE_KEY` with your [New Relic license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key):
     * Helm 3
