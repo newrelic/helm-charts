@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: kube-events
-          image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag }}
+          image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag | default .Chart.AppVersion }}
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
