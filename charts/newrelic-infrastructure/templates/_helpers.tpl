@@ -60,9 +60,9 @@ Create the image name depending on the "privileged" flag
 */}}
 {{- define "newrelic.image" -}}
 {{- if .Values.privileged -}}
-"{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+"{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion}}"
 {{- else -}}
-"{{ .Values.image.repository }}:{{ .Values.image.tag }}-unprivileged"
+"{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}-unprivileged"
 {{- end -}}
 {{- end -}}
 
