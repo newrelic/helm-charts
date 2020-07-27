@@ -12,10 +12,10 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `injectOnlyLabeledNamespaces` | Limit the injection of metadata only to specific namespaces that match the label `newrelic-metadata-injection: enabled`. | false |
 | `image.repository`| The container to pull.   | `newrelic/k8s-metadata-injection`   |
 | `image.pullPolicy`| The pull policy. | `IfNotPresent`  |
-| `image.tag`   | The version of the container to pull.| `1.2.0` |
+| `image.tag`   | The version of the container to pull.| `1.3.0` |
 | `imageJob.repository` | The job container to pull.   | `newrelic/k8s-webhook-cert-manager` |
 | `imageJob.pullPolicy` | The job pull policy. | `IfNotPresent`  |
-| `imageJob.tag`| The job version of the container to pull.| `1.2.1` |
+| `imageJob.tag`| The job version of the container to pull.| `1.3.0` |
 | `replicas`| Number of replicas in the deployment | `1` |
 | `resources`   | Any resources you wish to assign to the pod. | See Resources below |
 | `serviveAccount.create`   | If true a service account would be created and assigned for the webhook and the job. | `true` |
