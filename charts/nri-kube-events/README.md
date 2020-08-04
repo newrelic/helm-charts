@@ -21,8 +21,8 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `image.infraAgent.tag` | The infra-agent image tag. | `1.12.0`|
 | `resources`| A yaml defining the resources for the events-router container. | {}  |
 | `rbac.create`  | Enable Role-based authentication   | `true`  |
-| `serviveAccount.create`| If true, a service account would be created and assigned to the deployment | true|
-| `serviveAccount.name`  | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account  | |
+| `serviceAccount.create`| If true, a service account would be created and assigned to the deployment | true|
+| `serviceAccount.name`  | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account  | |
 | `priorityClassName`| Scheduling priority of the pod | `nil`   |
 | `nodeSelector` | Node label to use for scheduling   | `{}`|
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)   | `[]`|
