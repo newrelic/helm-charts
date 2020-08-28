@@ -58,6 +58,7 @@ See [values.yaml](values.yaml) for the default values
 | `global.customSecretName` - `customSecretName` | Name of the Secret object where the license key is stored |  |
 | `global.customSecretLicenseKey` - `customSecretLicenseKey`   | Key in the Secret object where the license key is stored. |  |
 | `rbac.create`  | Enable Role-based authentication  | `true`   |
+| `rbac.pspEnabled`  | Enable pod security policy support| `false` | 
 | `image.repository` | The container to pull.| `newrelic/newrelic-fluentbit-output` |
 | `image.pullPolicy` | The pull policy.  | `IfNotPresent`   |
 | `image.tag`| The version of the container to pull. | See value in [values.yaml]`  |
