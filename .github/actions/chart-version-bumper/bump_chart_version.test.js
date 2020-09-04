@@ -70,3 +70,16 @@ test("changing both chartVersion and appVersion", () => {
     expect(changes.length).toBe(2);
     expect(newYAML).toEqual(expectedYAML);
 });
+
+test("changing appVersion increase chartVersion by 1", () => {
+    const [oldChartVersion, newChartVersion] = ['1.21.19', '1.21.20'];
+    const [oldAppVersion, newAppVersion] = ['0.1', '0.2'];
+    
+    const givenYAML = createChart(oldChartVersion, quoted(oldAppVersion));
+    const expectedYAML = createChart(newChartVersion, quoted(newAppVersion));
+    
+    const {changes, newYAML} = bumpChartVersion(givenYAML, '', newAppVersion);
+
+    expect(changes.length).toBe(2);
+    expect(newYAML).toEqual(expectedYAML);
+});
