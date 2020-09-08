@@ -78,7 +78,11 @@ Return the clusterName
   {{- if .Values.global.clusterName }}
       {{- .Values.global.clusterName -}}
   {{- else -}}
+    {{- if .Values.global.cluster }}
+      {{- .Values.global.cluster -}}
+    {{- else -}}
       {{- .Values.clusterName | default "" -}}
+    {{- end -}}
   {{- end -}}
 {{- else -}}
     {{- .Values.clusterName | default "" -}}
