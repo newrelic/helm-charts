@@ -97,7 +97,7 @@ This repository is configured to accept webhook requests to bump chart versions.
 A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
 
 `chart_name`: (required) Name of the helm chart to be bumped.
-`chart_version`: (optional) If specified the chart version will be set with this value. If empty the version of the chart will be bumped by 1 e.g: 1.2.19 -> 1.2.20
+`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
 `app_version`: (required) Version of the application.
 
 ```sh
