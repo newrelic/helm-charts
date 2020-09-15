@@ -96,12 +96,16 @@ This repository is configured to accept webhook requests to bump chart versions.
 
 A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
 
+`chart_name`: (required) Name of the helm chart to be bumped.
+`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
+`app_version`: (required) Version of the application.
+
 ```sh
 curl -H "Accept: application/vnd.github.everest-preview+json" \
      -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
      --request POST \
      --data '{"event_type": "bump-chart-version", "client_payload": { "chart_name": "simple-nginx", "chart_version": "1.2.3", "app_version": "1.45.7"}}' \
-     https://api.github.com/repos/newrelic-experimental/helm-charts/dispatches
+     https://api.github.com/repos/newrelic/helm-charts/dispatches
 ```
 
 Notice the sample `client_payload` object in the request body: the request generates a pull request for the `simple-nginx` chart to update `app_version` to `1.45.7` and `chart_version` to `1.2.3`.
