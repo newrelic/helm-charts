@@ -15,6 +15,13 @@ throw Error(`Could not parse the given document as YAML: ${error}`)
 const currentChartVersion = doc.get("version");
 const currentAppVersion = doc.get("appVersion");
 
+// if no chartVersion has been specified it will be bumped by 1
+if (chartVersion == ""){
+v = currentChartVersion.split('.')
+v[v.length - 1] = parseInt(v[v.length - 1]) + 1
+chartVersion = v.join('.')
+}
+
 var changes = [] 
 if (chartVersion != "" && currentChartVersion != chartVersion) {
 doc.set("version", chartVersion);
