@@ -13,6 +13,10 @@ spec:
       app.kubernetes.io/name: {{ template "nri-kube-events.name" . }}
   template:
     metadata:
+    {{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8}}
+    {{- end }}
       labels:
 {{ include "nri-kube-events.labels" . | indent 8 }}
     spec:
