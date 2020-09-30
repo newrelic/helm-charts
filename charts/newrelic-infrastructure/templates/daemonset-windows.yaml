@@ -113,16 +113,17 @@ spec:
             - name: "NRIA_STAGING"
               value: "true"
             {{- end }}
-            - name: "NRIA_DISPLAY_NAME"
-              valueFrom:
-                fieldRef:
-                  apiVersion: "v1"
-                  fieldPath: "spec.nodeName"
             - name: "NRK8S_NODE_NAME"
               valueFrom:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            - name: "NRIA_DISPLAY_NAME"
+            {{- if .Values.prefixNodeWithCluster }}
+              value: "$(CLUSTER_NAME):$(NRK8S_NODE_NAME)"
+            {{- else }}
+              value: "$(NRK8S_NODE_NAME)"
+            {{- end }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
               value: '{"clusterName":"$(CLUSTER_NAME)"}'
             - name: "NRIA_PASSTHROUGH_ENVIRONMENT"
