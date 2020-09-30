@@ -21,6 +21,9 @@ This chart bundles multiple New Relic products helm-charts.
 | `kubeEvents.enabled`             | Install the [`nri-kube-events` chart][6] | false |
 | `logging.enabled`                | Install the [`newrelic-logging` chart][7] | false |
 
+## Upgrade dependency version
+
+Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_dependency/). In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` command to update chart packages under `/charts` and also the `requirements.lock` file  
 
 ## Example
 
