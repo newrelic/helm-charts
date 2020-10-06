@@ -112,24 +112,34 @@ spec:
             - name: "NRIA_EVENT_QUEUE_DEPTH"
               value: {{ .Values.eventQueueDepth | quote }}
             {{- end }}
+            {{- if .Values.discoveryCacheTTL }}
+            - name: "DISCOVERY_CACHE_TTL"
+              value: {{ .Values.discoveryCacheTTL | quote }}
+            {{- end }}
             {{- if (include "newrelic.nrStaging" .) }}
             - name: "NRIA_STAGING"
               value: "true"
             {{- end }}
-            - name: "NRIA_DISPLAY_NAME"
-              valueFrom:
-                fieldRef:
-                  apiVersion: "v1"
-                  fieldPath: "spec.nodeName"
             - name: "NRK8S_NODE_NAME"
               valueFrom:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            {{- if .Values.useNodeNameAsDisplayName }}
+            - name: "NRIA_DISPLAY_NAME"
+            {{- if .Values.prefixDisplayNameWithCluster }}
+              value: "{{ include "newrelic.cluster" . }}:$(NRK8S_NODE_NAME)"
+            {{- else }}
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            {{- end }}
+            {{- end }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
               value: {{ .Values.customAttributes }}
             - name: "NRIA_PASSTHROUGH_ENVIRONMENT"
-              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,KUBE_STATE_METRICS_POD_LABEL,TIMEOUT,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,KUBE_STATE_METRICS_SCHEME,KUBE_STATE_METRICS_PORT,SCHEDULER_ENDPOINT_URL,ETCD_ENDPOINT_URL,CONTROLLER_MANAGER_ENDPOINT_URL,API_SERVER_ENDPOINT_URL,DISABLE_KUBE_STATE_METRICS"
+              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,KUBE_STATE_METRICS_POD_LABEL,TIMEOUT,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,KUBE_STATE_METRICS_SCHEME,KUBE_STATE_METRICS_PORT,SCHEDULER_ENDPOINT_URL,ETCD_ENDPOINT_URL,CONTROLLER_MANAGER_ENDPOINT_URL,API_SERVER_ENDPOINT_URL,DISABLE_KUBE_STATE_METRICS,DISCOVERY_CACHE_TTL"
             {{- if .Values.verboseLog }}
             - name: NRIA_VERBOSE
               value: "1"
