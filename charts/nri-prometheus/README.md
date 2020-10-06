@@ -19,6 +19,7 @@ This chart will deploy the New Relic's Prometheus OpenMetrics Integration.
 | `rbac.create`  | Enable Role-based authentication  | `true` |
 | `serviveAccount.create`| If true, a service account would be created and assigned to the deployment| true   |
 | `serviveAccount.name`  | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account ||
+| `serviveAccount.annotations`   | The annotations to add to the service account if `serviveAccount.create` is set to true.  ||
 | `priorityClassName`| Scheduling priority of the pod| `nil` |
 | `nodeSelector` | Node label to use for scheduling  | `{}`   |
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)  | `[]`   |
