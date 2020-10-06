@@ -23,7 +23,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `kubeStateMetricsScheme`       | If `kubeStateMetricsPodLabel` is present, it changes the scheme used to send to request to the pod.                                                                                                                                               | `http`                          |
 | `kubeStateMetricsPort`         | If `kubeStateMetricsPodLabel` is present, it changes the port queried in the pod.                                                                                                                                                                 | 8080                            |
 | `rbac.create`                  | Enable Role-based authentication                                                                                                                                                                                                                  | `true`                          |
-| `rbac.pspEnabled`              | Enable pod security policy support                                                                                                                                                                                                                | `false`                         | 
+| `rbac.pspEnabled`              | Enable pod security policy support                                                                                                                                                                                                                | `false`                         |
 | `privileged`                   | Enable privileged mode.                                                                                                                                                                                                                           | `true`                          |
 | `image.repository`             | The container to pull.                                                                                                                                                                                                                            | `newrelic/infrastructure-k8s`   |
 | `image.pullPolicy`             | The pull policy.                                                                                                                                                                                                                                  | `IfNotPresent`                  |
@@ -38,6 +38,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `updateStrategy`               | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)                                                                                                                                                                                       | `RollingUpdate`                 |
 | `serviveAccount.create`        | If true, a service account would be created and assigned to the deployment                                                                                                                                                                        | true                            |
 | `serviveAccount.name`          | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account                                                                                                 |                                 |
+| `serviveAccount.annotations`   | The annotations to add to the service account if `serviveAccount.create` is set to true.                                                                                                                                                          |                                 |
 | `etcdTlsSecretName`            | Name of the secret containing the cacert, cert and key used for setting the mTLS config for retrieving metrics from ETCD.                                                                                                                         |                                 |
 | `etcdTlsSecretNamespace`       | Namespace where the secret specified in `etcdTlsSecretName` was created.                                                                                                                                                                          | `default`                       |
 | `etcdEndpointUrl`              | Explicitly sets the etcd component url.                                                                                                                                                                                                           |                                 |
@@ -103,20 +104,20 @@ The default set of relations assigned to our daemonset is shown below:
 
 ## Running on Windows
 
-When using containers in Windows, the container host version and the container image version must be the same. Our Kubernetes integration support Windows versions 1809 and 1909. 
+When using containers in Windows, the container host version and the container image version must be the same. Our Kubernetes integration support Windows versions 1809 and 1909.
 
 To check your Windows version:
 
 * Open a command windows
 * Run the following command:
 ```powershell
-Reg Query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v 
+Reg Query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v
 ReleaseIdcmd.exe
 ```
 
 ### Example: Get Kubernetes for Windows from a BusyBox container
 ```bash
-$ kubectl exec -it busybox1-766bb4d6cc-rmsnj -- Reg Query 
+$ kubectl exec -it busybox1-766bb4d6cc-rmsnj -- Reg Query
     "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion" /v ReleaseId
 ```
 
@@ -159,7 +160,7 @@ If you wish to provide your own `newrelic.yml` you may do so under `config`. The
 
 # Past Contributors
 
-This chart started as a community project in the [stable Helm chart repository](github.com/helm/charts/). New Relic is very thankful 
+This chart started as a community project in the [stable Helm chart repository](github.com/helm/charts/). New Relic is very thankful
 for all the 15+ community members that contributed and helped maintain the chart there over the years:
 
 * coreypobrien
