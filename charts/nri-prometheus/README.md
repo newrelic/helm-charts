@@ -17,16 +17,16 @@ This chart will deploy the New Relic's Prometheus OpenMetrics Integration.
 | `image.tag`| The prometheus openmetrics integration image tag. | `2.2.0`|
 | `resources`| A yaml defining the resources for the events-router container.| {} |
 | `rbac.create`  | Enable Role-based authentication  | `true` |
-| `serviveAccount.create`| If true, a service account would be created and assigned to the deployment| true   |
-| `serviveAccount.name`  | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account ||
-| `serviveAccount.annotations`   | The annotations to add to the service account if `serviveAccount.create` is set to true.  ||
+| `serviceAccount.create`| If true, a service account would be created and assigned to the deployment| true   |
+| `serviceAccount.name`  | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account ||
+| `serviceAccount.annotations`   | The annotations to add to the service account if `serviceAccount.create` is set to true.  ||
 | `priorityClassName`| Scheduling priority of the pod| `nil` |
 | `nodeSelector` | Node label to use for scheduling  | `{}`   |
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)  | `[]`   |
 | `affinity` | Node affinity to use for scheduling   | `{}`   |
 | `prometheusScrape` | Value for `prometheus.io/scrape` label| true   |
 | `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key) | false  |
-
+| `config.*`   | Set values used in the configMap |   |
 ## Example
 
 
