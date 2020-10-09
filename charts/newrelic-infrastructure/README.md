@@ -47,6 +47,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `schedulerEndpointUrl`         | Explicitly sets the scheduler component url.                                                                                                                                                                                                      |                                 |
 | `controllerManagerEndpointUrl` | Explicitly sets the controller manager component url.                                                                                                                                                                                             |                                 |
 | `eventQueueDepth`              | Increases the in-memory cache of the agent to accommodate for more samples at a time. | |
+| `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `false` |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` | |
 
