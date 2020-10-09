@@ -109,6 +109,10 @@ secretKeyRef:
 - name: "DISCOVERY_CACHE_TTL"
   value: {{ .Values.discoveryCacheTTL | quote }}
 {{- end }}
+{{- if .Values.enableProcessMetrics }}
+- name: "NRIA_ENABLE_PROCESS_METRICS"
+  value: {{ .Values.enableProcessMetrics | quote }}
+{{- end }}
 {{- if (include "newrelic.nrStaging" .) }}
 - name: "NRIA_STAGING"
   value: "true"
