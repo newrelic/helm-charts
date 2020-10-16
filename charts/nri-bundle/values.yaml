@@ -2,23 +2,40 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# enables newrelic-infrastructure
 infrastructure:
   enabled: true
 
+# enables nri-prometheus
 prometheus:
   enabled: false
 
+# enables nri-metadata-injection
 webhook:
   enabled: true
 
+# enables kube-state-metrics
 ksm:
   enabled: false
 
+# enables nri-kube-events
 kubeEvents:
   enabled: false
 
+# enables newrelic-logging
 logging:
   enabled: false
+
+# It is possible to configure dependencies values from this chart.  
+# For example you can configure verboseLog variable of the newrelic-infrastructure chart installed ad a dependency as follows.
+
+# newrelic-infrastructure:
+#   verboseLog: false
+
+# The same approach can be followed to update any of the dependencies. 
+# https://helm.sh/docs/chart_template_guide/subcharts_and_globals
+
+
 
 # IMPORTANT: the following values are set as global so that they
 # can be shared by other newrelic product's charts
