@@ -37,6 +37,41 @@ $ helm upgrade --reuse-values -f values.yaml [RELEASE] [CHART]
 
 The same approach can be followed to update any of the dependencies. [Official documentation](https://helm.sh/docs/chart_template_guide/subcharts_and_globals)
 
+### Monitor on host integrations
+
+If you wish to monitor services running on Kubernetes you can provide integrations
+configuration under integrations_config that it will passed down to the newrelic-infrastructure chart. You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
+the integration configuration. The name must end in ".yaml" as this will be the
+filename generated and the Infrastructure agent only looks for YAML files. The data
+part is the actual integration configuration as described in the spec here:
+https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
+
+In a second example we see how to monitor a Redis integration
+
+```yaml
+# For example, if you wanted do to monitor a Redis instance that has a label "app=redis"
+# you could do so by adding following entry:
+# 
+newrelic-infrastructure:
+  integrations_config:
+    - name: nri-redis.yaml
+      data:
+        discovery:
+          command:
+            # Run NRI Discovery for Kubernetes
+            # https://github.com/newrelic/nri-discovery-kubernetes
+            exec: /var/db/newrelic-infra/nri-discovery-kubernetes
+            match:
+              label.app: redis
+        integrations:
+          - name: nri-redis
+            env:
+              # using the discovered IP as the hostname address
+              HOSTNAME: ${discovery.ip}
+              PORT: 6379
+            labels:
+              env: test
+```
 ## Upgrade dependency version
 
 Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_dependency/). In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` command to update chart packages under `/charts` and also the `requirements.lock` file  
