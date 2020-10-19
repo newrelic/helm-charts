@@ -24,7 +24,7 @@ This chart bundles multiple New Relic products helm-charts.
 ## Configure Dependencies
 
 It is possible to configure dependencies values from this chart.  
-For example you can configure verboseLog variable of the newrelic-infrastructure chart installed as a dependency as follows.
+For example you can configure `verboseLog` variable of the newrelic-infrastructure chart installed as a dependency as follows.
 
 ``` yaml
 newrelic-infrastructure:
@@ -40,7 +40,7 @@ The same approach can be followed to update any of the dependencies. [Official d
 ### Monitor on host integrations
 
 If you wish to monitor services running on Kubernetes you can provide integrations
-configuration under integrations_config that it will passed down to the newrelic-infrastructure chart. 
+configuration under `integrations_config` that it will passed down to the `newrelic-infrastructure` chart.
 
 You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
 the integration configuration. The name must end in ".yaml" as this will be the
