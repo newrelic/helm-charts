@@ -40,18 +40,18 @@ The same approach can be followed to update any of the dependencies. [Official d
 ### Monitor on host integrations
 
 If you wish to monitor services running on Kubernetes you can provide integrations
-configuration under integrations_config that it will passed down to the newrelic-infrastructure chart. You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
+configuration under integrations_config that it will passed down to the newrelic-infrastructure chart. 
+
+You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
 the integration configuration. The name must end in ".yaml" as this will be the
-filename generated and the Infrastructure agent only looks for YAML files. The data
-part is the actual integration configuration as described in the spec here:
+filename generated and the Infrastructure agent only looks for YAML files. 
+
+The data part is the actual integration configuration as described in the spec here:
 https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
 
-In a second example we see how to monitor a Redis integration
+In the following example you can see how to monitor a Redis integration with autodiscovery
 
 ```yaml
-# For example, if you wanted do to monitor a Redis instance that has a label "app=redis"
-# you could do so by adding following entry:
-# 
 newrelic-infrastructure:
   integrations_config:
     - name: nri-redis.yaml
