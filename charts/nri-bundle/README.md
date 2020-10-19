@@ -24,7 +24,7 @@ This chart bundles multiple New Relic products helm-charts.
 ## Configure Dependencies
 
 It is possible to configure dependencies values from this chart.  
-For example you can configure verboseLog variable of the newrelic-infrastructure chart installed ad a dependency as follows.
+For example you can configure verboseLog variable of the newrelic-infrastructure chart installed as a dependency as follows.
 
 ``` yaml
 newrelic-infrastructure:
