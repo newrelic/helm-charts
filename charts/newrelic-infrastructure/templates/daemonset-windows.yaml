@@ -31,6 +31,10 @@ spec:
         mode: {{ template "newrelic.mode" . }}
     spec:
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
         - name: {{ template "newrelic.name" . }}
           image: {{ template "newrelic.windowsImage" . }}
