@@ -53,12 +53,12 @@ kubectl apply -f .
 See [values.yaml](values.yaml) for the default values
 
 | Parameter  | Description   | Default  |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `global.licenseKey` - `licenseKey` | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified. |  |
 | `global.customSecretName` - `customSecretName` | Name of the Secret object where the license key is stored |  |
-| `global.customSecretLicenseKey` - `customSecretLicenseKey`   | Key in the Secret object where the license key is stored. |  |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the license key is stored. |  |
 | `rbac.create`  | Enable Role-based authentication  | `true`   |
-| `rbac.pspEnabled`  | Enable pod security policy support| `false` | 
+| `rbac.pspEnabled`  | Enable pod security policy support| `false`  |
 | `image.repository` | The container to pull.| `newrelic/newrelic-fluentbit-output` |
 | `image.pullPolicy` | The pull policy.  | `IfNotPresent`   |
 | `image.tag`| The version of the container to pull. | See value in [values.yaml]`  |
@@ -67,9 +67,9 @@ See [values.yaml](values.yaml) for the default values
 | `nodeSelector` | Node label to use for scheduling  | `nil`|
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)  | See Tolerations below|
 | `updateStrategy`   | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)   | `RollingUpdate`  |
-| `serviveAccount.create`| If true, a service account would be created and assigned to the deployment| true |
-| `serviveAccount.name`  | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account |  |
-| `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key) | false  |
+| `serviceAccount.create`| If true, a service account would be created and assigned to the deployment| true |
+| `serviceAccount.name`  | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account |  |
+| `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key) | false|
 
 
 ## Uninstall the Kubernetes plugin
