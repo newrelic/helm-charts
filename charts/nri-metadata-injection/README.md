@@ -23,6 +23,7 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `customTLSCertificate`        | Use custom TLS certificate. Setting this options means that you will have to do some post install work as detailed in the *Manage custom certificates* section of the [official docs][1]. | `false` |
 | `priorityClassName`           | Scheduling priority of the pod                               | `nil`                               |
 | `nodeSelector`                | Node label to use for scheduling                             | `{}`                                |
+| `timeoutSeconds`              | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds| `10`                             |
 | `tolerations`                 | List of node taints to tolerate (requires Kubernetes >= 1.6) | `[]`                                |
 | `affinity`                    | Node affinity to use for scheduling                          | `{}`                                |
 
