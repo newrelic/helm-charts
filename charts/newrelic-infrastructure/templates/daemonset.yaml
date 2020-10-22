@@ -31,6 +31,10 @@ spec:
   hostNetwork: true
   dnsPolicy: ClusterFirstWithHostNet
   {{- end }}
+  {{- if .Values.image.pullSecrets }}
+  imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+  {{- end }}
   containers:
 - name: {{ template "newrelic.name" . }}
   image: {{ template "newrelic.image" . }}
