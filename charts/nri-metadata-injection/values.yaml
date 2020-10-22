@@ -15,6 +15,16 @@ jobImage:
   repository: newrelic/k8s-webhook-cert-manager
   tag: 1.3.0
   pullPolicy: IfNotPresent
+  # Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies
+  # Enforce a read-only root.
+  volumeMounts: []
+  #  - name: tmp
+  #mountPath: /tmp
+
+  # Volumes to add to the job container
+  volumes: []
+  #  - name: tmp
+  #emptyDir: {}
 
 replicas: 1
 
@@ -35,6 +45,13 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+
+# Configure podSecurityContext
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsGroup: 1001
 
 # Use custom tls certificates for the webhook, or let the chart handle it
 # automatically.

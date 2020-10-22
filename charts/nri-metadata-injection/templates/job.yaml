@@ -28,6 +28,14 @@ args:
   - {{ template "nri-metadata-injection.fullname" . }}
   - "--namespace"
   - {{ .Release.Namespace }}
+{{- if .Values.jobImage.volumeMounts }}
+volumeMounts:
+{{- include "tplvalues.render" ( dict "value" .Values.jobImage.volumeMounts "context" $ ) | nindent 10 }}
+{{- end }}
   restartPolicy: Never
+  {{- if .Values.jobImage.volumes }}
+  volumes:
+  {{- include "tplvalues.render" ( dict "value" .Values.jobImage.volumes "context" $ ) | nindent 8 }}
+  {{- end }}
   backoffLimit: 1
 {{- end }}

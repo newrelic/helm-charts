@@ -16,11 +16,17 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `imageJob.repository` | The job container to pull.   | `newrelic/k8s-webhook-cert-manager` |
 | `imageJob.pullPolicy` | The job pull policy. | `IfNotPresent`  |
 | `imageJob.tag`| The job version of the container to pull.| `1.3.0` |
+| `imageJob.volumeMounts`   | Additional Volume mounts for Cert Job| `[]`|
+| `imageJob.volumes`| Additional Volumes for Cert Job  | `[]`|
 | `replicas`| Number of replicas in the deployment | `1` |
 | `resources`   | Any resources you wish to assign to the pod. | See Resources below |
 | `serviveAccount.create`   | If true a service account would be created and assigned for the webhook and the job. | `true` |
 | `serviveAccount.name` | The service account to assign to the webhook and the job. If `serviveAccount.create` is true then this name will be used when creating the service account; if this value is not set or it evaluates to false, then when creating the account the returned value from the template `nr-metadata-injection.fullname` will be used as name. | |
 | `customTLSCertificate`| Use custom TLS certificate. Setting this options means that you will have to do some post install work as detailed in the *Manage custom certificates* section of the [official docs][1]. | `false` |
+| `podSecurityContext.enabled`  | Enable custom Pod Security Context   | `false` |
+| `podSecurityContext.fsGroup`  | fsGroup for Pod Security Context | `1001`  |
+| `podSecurityContext.runAsUser`| runAsUser UID for Pod Security Context   | `1001`  |
+| `podSecurityContext.runAsGroup`| runAsUser GID for Pod Security Context  | `1001`  |
 | `priorityClassName`   | Scheduling priority of the pod   | `nil`   |
 | `nodeSelector`| Node label to use for scheduling | `{}`|
 | `timeoutSeconds`  | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds| `10` |
