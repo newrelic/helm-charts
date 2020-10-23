@@ -12,6 +12,7 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `injectOnlyLabeledNamespaces` | Limit the injection of metadata only to specific namespaces that match the label `newrelic-metadata-injection: enabled`. | false |
 | `image.repository`            | The container to pull.                                       | `newrelic/k8s-metadata-injection`   |
 | `image.pullPolicy`            | The pull policy.                                             | `IfNotPresent`                      |
+| `image.pullSecrets`           | Image pull secrets.                                          | `nil`                               |
 | `image.tag`                   | The version of the container to pull.                        | `1.3.0`                             |
 | `imageJob.repository`         | The job container to pull.                                   | `newrelic/k8s-webhook-cert-manager` |
 | `imageJob.pullPolicy`         | The job pull policy.                                         | `IfNotPresent`                      |
