@@ -19,6 +19,12 @@ spec:
       {{- if not .Values.customTLSCertificate }}
       serviceAccountName: {{ template "nri-metadata-injection.serviceAccountName" . }}
       {{- end }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
+      {{- end }}
       containers:
       - name: {{ template "nri-metadata-injection.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
