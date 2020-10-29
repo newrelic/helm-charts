@@ -25,6 +25,10 @@ spec:
         runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
         fsGroup: {{ .Values.podSecurityContext.fsGroup }}
       {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
       - name: {{ template "nri-metadata-injection.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
