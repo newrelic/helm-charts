@@ -15,6 +15,7 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `image.tag`   | The version of the container to pull.| `1.3.0` |
 | `imageJob.repository` | The job container to pull.   | `newrelic/k8s-webhook-cert-manager` |
 | `imageJob.pullPolicy` | The job pull policy. | `IfNotPresent`  |
+| `image.pullSecrets`   | Image pull secrets.  | `nil`   |
 | `imageJob.tag`| The job version of the container to pull.| `1.3.0` |
 | `imageJob.volumeMounts`   | Additional Volume mounts for Cert Job| `[]`|
 | `imageJob.volumes`| Additional Volumes for Cert Job  | `[]`|
