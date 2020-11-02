@@ -16,6 +16,10 @@ spec:
       labels:
 {{ include "nri-kube-events.labels" . | indent 8 }}
     spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
         - name: kube-events
           image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag | default .Chart.AppVersion }}
