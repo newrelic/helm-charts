@@ -34,9 +34,9 @@ This document explains how to install it in your cluster, either using a [Helm](
      ```sh
     curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/fluent-conf.yml > fluent-conf.yml
     curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/new-relic-fluent-plugin.yml > new-relic-fluent-plugin.yml
-    curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/rbac.yml > rbac.yml 
+    curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/rbac.yml > rbac.yml
      ```
-    
+
  2. In the downloaded `new-relic-fluent-plugin.yml` file, replace the placeholder value `LICENSE_KEY` with your [New Relic license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key).
     > For EU users, replace the ENDPOINT environment variable to https://log-api.eu.newrelic.com/log/v1.
 
@@ -61,6 +61,7 @@ See [values.yaml](values.yaml) for the default values
 | `rbac.pspEnabled`                                          | Enable pod security policy support                                                                                                                                                                                                                | `false`                              |
 | `image.repository`                                         | The container to pull.                                                                                                                                                                                                                            | `newrelic/newrelic-fluentbit-output` |
 | `image.pullPolicy`                                         | The pull policy.                                                                                                                                                                                                                                  | `IfNotPresent`                       |
+| `image.pullSecrets`                                        | Image pull secrets.                                                                                                                                                                                                                               | `nil`                                |
 | `image.tag`                                                | The version of the container to pull.                                                                                                                                                                                                             | See value in [values.yaml]`          |
 | `resources`                                                | Any resources you wish to assign to the pod.                                                                                                                                                                                                      | See Resources below                  |
 | `priorityClassName`                                        | Scheduling priority of the pod                                                                                                                                                                                                                    | `nil`                                |
