@@ -17,6 +17,10 @@ metadata:
 {{ include "nri-prometheus.labels" . | indent 8 }}
 spec:
   serviceAccountName: {{ template "nri-prometheus.serviceAccountName" . }}
+  {{- if .Values.image.pullSecrets }}
+  imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+  {{- end }}
   containers:
   - name: nri-prometheus
 image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
