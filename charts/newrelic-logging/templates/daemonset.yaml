@@ -67,6 +67,8 @@ secretKeyRef:
   value: {{ .Values.fluentBit.logLevel | quote }}
 - name: PATH
   value: {{ .Values.fluentBit.path | quote }}
+- name: K8S_LOGGING_EXCLUDE
+  value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
   command:
 - /fluent-bit/bin/fluent-bit
 - -c
