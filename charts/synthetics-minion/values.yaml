@@ -1,0 +1,102 @@
+# Default values for synthetics-minion.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+appVersionOverride: ""
+
+synthetics:
+  privateLocationKey: ""
+  minionLogLevel: "INFO"
+  heavyWorkers: "2"
+  lightweightWorkers: "50"
+  #  minionApiEndpoint: ""
+  #  minionDockerRunnerRegistryEndpoint: ""
+  #  minionVsePassphrase: ""
+  #  minionApiProxy: ""
+  #  minionApiProxySelfSignedCert: ""
+  #  minionApiProxyAuth: ""
+  #  minionCheckTimeout: ""
+  #  minionUserDefinedEnvVariable: ""
+  #  minionJVMOpts: "-XX:-UsePerfData"
+  #  A minion is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
+  #  minionNetworkHealthCheckDisabled: "false"
+
+image:
+  repository: quay.io/newrelic/synthetics-minion
+  pullPolicy: IfNotPresent
+
+persistence:
+  # The name of the PVC to use
+  # If undefined or not set Statefulset will dynamically create a PVC for each replica
+  #
+  # claimName: ""
+
+  ## Override the StorageClass for VolumeClaimTemplates (relevant only if claimName is undefined or empty )
+  ## If defined and claimName is empty, storageClassName: <storageClass>, i.e the PVC can be bound to the PVs
+  ## having <storageClass> Storage class.
+  ## If set to "-", storageClassName: "", i.e the PVC can bound to the PVs that have no class (dynamic provisioning is
+  ## disabled)
+  ## If undefined (the default) or set to null, no storageClassName is set, i.e the PVC can bound to the PVs having
+  ## Default Storage class.
+  ##
+  ## For more details see https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+  ##
+  # storageClass: "-"
+
+  # Access mode to be defined for the PVC (relevant only if claimName is undefined or empty )
+  accessMode: ReadWriteOnce
+
+  # Annotations to add to the PVC (relevant only if claimName is undefined or empty )
+  annotations: {}
+
+  # Size to be defined for the PVC (relevant only if claimName is undefined or empty )
+  size: 10Gi
+
+  ## Path on the volume to the permanent data storage directory
+  # permanentData: "permanent-data-storage"
+
+  ## Path on the volume to the custom modules directory
+  # customModules: "custom-modules"
+
+  ## Path on the volume to the user-defined-variable.json file
+  # userDefinedVariables: "user-defined-variables.json"
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+
+  # Annotations to add to the service account
+  annotations: {}
+
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+headlessService:
+  # The name of the headless service to associate to the statefulSet.
+  # If not set a name is generated using the fullname template
+  serviceName:
+
+# Assigning a uid which will be defaulted to 2379, this can be changed as needed
+podSecurityContextRunAsUser: 2379
+
+#appArmorProfileName: ""
+
+resources:
+  requests:
+    cpu: 0.5
+    memory: 800Mi
+  limits:
+    cpu: 0.75
+    memory: 1.6Gi
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

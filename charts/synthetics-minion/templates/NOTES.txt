@@ -1,0 +1,12 @@
+Your deployment of the Synthetics Kubernetes Containerized Private Minion is complete.
+
+Your release is named {{ .Release.Name }} in the {{ .Release.Namespace }} namespace.
+
+You can check on the progress of this by running the following command:
+
+  $ kubectl get statefulset -o wide -w --namespace {{ .Release.Namespace }} {{ template "synthetics-minion.fullname" . }}
+
+To learn more about the release, try:
+
+  $ helm status {{ .Release.Name }} --namespace {{ .Release.Namespace }}
+  $ helm get all {{ .Release.Name }} --namespace {{ .Release.Namespace }}
