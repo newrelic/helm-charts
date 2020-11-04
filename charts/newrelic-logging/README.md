@@ -71,6 +71,7 @@ See [values.yaml](values.yaml) for the default values
 | `serviceAccount.create`                                    | If true, a service account would be created and assigned to the deployment                                                                                                                                                                        | true                                 |
 | `serviceAccount.name`                                      | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account                                                                                                 |                                      |
 | `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                                                                             | false                                |
+| `fluentBit.k8sLoggingExclude`                  | Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude.                                                                                                                          | `Off`                                |
 
 
 ## Uninstall the Kubernetes plugin
