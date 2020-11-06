@@ -68,6 +68,31 @@ serviceAccount:
   # Specify any annotations to add to the ServiceAccount
   annotations:
 
+# For unprivileged mode.  Default is 1000.
+# Can also be modified for OpenShift clusters. 
+# https://www.openshift.com/blog/a-guide-to-openshift-and-uids
+runAsUser:
+
+### Openshift ###
+# Set openshift: true if installing in an OpenShift Cluster
+openshift: false
+
+# Openshift control plane endpoints
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#openshift-4x-configuration
+# schedulerEndpointUrl: "https://localhost:10259"
+# etcdEndpointUrl: "https://localhost:9979"
+# controllerManagerEndpointUrl: "https://localhost:10257"
+# apiServerEndpointUrl: "https://localhost:6443"
+
+# ETCD mTLS
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#mtls-how-to
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#mtls-how-to-openshift
+# etcdTlsSecretName: newrelic-infra-etcd-tls-secret
+# etcdTlsSecretNamespace: newrelic
+
+# Custom CA bundle
+# caBundleFile: "/etc/newrelic-infra/certs/ca-chain-bundle.pem"
+
 # If you wish to provide additional labels to apply to the pod(s), specify
 # them here
 # podLabels:
@@ -127,9 +152,6 @@ updateStrategy: RollingUpdate
 
 # Custom attributes to be passed to the New Relic agent
 customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
-
-# etcdTlsSecretName: newrelic-infra-etcd-tls-secret
-etcdTlsSecretNamespace: default
 
 # If you wish to monitor services running on Kubernetes you can provide integrations
 # configuration under integrations_config. You just need to create a new entry where
