@@ -16,16 +16,13 @@ spec:
       labels:
 {{ include "nri-kube-events.labels" . | indent 8 }}
     spec:
-<<<<<<< HEAD
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
       {{- end }}
-=======
       securityContext:
         runAsUser: 1000 # nri-kube-events
         runAsNonRoot: true
->>>>>>> Configure entire Pod to run as user 1000 (nri-kube-events) and make the security contexts of both containers equivalent.
       containers:
         - name: kube-events
           image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag | default .Chart.AppVersion }}
