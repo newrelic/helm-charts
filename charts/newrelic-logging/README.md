@@ -14,14 +14,14 @@ This document explains how to install it in your cluster, either using a [Helm](
 
  2. Add the New Relic official Helm chart repository following [these instructions](../../README.md#installing-charts)
 
- 3. Run the following command to install the New Relic Logging Kubernetes plugin via Helm, replacing the placeholder value `YOUR_LICENSE_KEY` with your [New Relic license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key):
+ 3. Run the following command to install the New Relic Logging Kubernetes plugin via Helm, replacing the placeholder value `YOUR_LICENSE_KEY` with your [New Relic license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) and `YOUR_CLUSTER_NAME` with your cluster name:
     * Helm 3
         ```sh
-        helm install newrelic-logging newrelic/newrelic-logging --set licenseKey=YOUR_LICENSE_KEY
+        helm install newrelic-logging newrelic/newrelic-logging --set licenseKey=YOUR_LICENSE_KEY --set cluster=YOUR_CLUSTER_NAME
         ```
     * Helm 2
         ```sh
-        helm install newrelic/newrelic-logging --name newrelic-logging --set licenseKey=YOUR_LICENSE_KEY
+        helm install newrelic/newrelic-logging --name newrelic-logging --set licenseKey=YOUR_LICENSE_KEY --set cluster=YOUR_CLUSTER_NAME
         ```
 
 > For EU users, add `--set endpoint=https://log-api.eu.newrelic.com/log/v1 to any of the helm install commands above.
@@ -55,6 +55,7 @@ See [values.yaml](values.yaml) for the default values
 | Parameter                                                  | Description                                                                                                                                                                                                                                       | Default                              |
 | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
 | `global.licenseKey` - `licenseKey`                         | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified. |                                      |
+| `global.cluster` - `cluster`                         | The name of your Kubernetes cluster |                                      |
 | `global.customSecretName` - `customSecretName`             | Name of the Secret object where the license key is stored                                                                                                                                                                                         |                                      |
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the license key is stored.                                                                                                                                                                                         |                                      |
 | `rbac.create`                                              | Enable Role-based authentication                                                                                                                                                                                                                  | `true`                               |
