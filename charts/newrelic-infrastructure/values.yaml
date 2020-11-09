@@ -68,30 +68,41 @@ serviceAccount:
   # Specify any annotations to add to the ServiceAccount
   annotations:
 
-# For unprivileged mode.  Default is 1000.
-# Can also be modified for OpenShift clusters.
+# For unprivileged mode - default is 1000.
+# Can also be modified for OpenShift clusters where the runAsUser range
+# may be restricted.  See OpenShift docs for more information.
 # https://www.openshift.com/blog/a-guide-to-openshift-and-uids
 runAsUser:
 
 ### Openshift 4.x ###
 # Set openshift: true if installing in an OpenShift 4.x Cluster
+# This setting will enable /var/run/crio.sock instead of /var/run/docker.sock
+# when running in privileged mode. It also automatically enables 
+# the OpenShift Control Plane Endpoints.
 openshift: false
 
-# Openshift 4.x control plane endpoints
-# https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#openshift-4x-configuration
+### Customize the Control Plane Endpoints ###
+# The New Relic Kubernetest daemonset will attempt to automatically discover the Control Plane endpoints.  
+#
+# See docs for more details and default values:
+#  https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#discover-nodes-components
+#
+# If you need to customize the endpoint URLs, enable the following variables and configure based upon your environment.
+#  https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#openshift-4x-configuration
+#
 # schedulerEndpointUrl: "https://localhost:10259"
 # etcdEndpointUrl: "https://localhost:9979"
 # controllerManagerEndpointUrl: "https://localhost:10257"
 # apiServerEndpointUrl: "https://localhost:6443"
 
-# ETCD mTLS
+### ETCD mTLS
+# In order to set mTLS for querying ETCD, use the follow configuration options.
+#
 # https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#mtls-how-to
 # https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#mtls-how-to-openshift
+#
 # etcdTlsSecretName: newrelic-infra-etcd-tls-secret
 # etcdTlsSecretNamespace: newrelic
-
-# Custom CA bundle
-# caBundleFile: "/etc/newrelic-infra/certs/ca-chain-bundle.pem"
 
 # If you wish to provide additional labels to apply to the pod(s), specify them here
 # podLabels:
