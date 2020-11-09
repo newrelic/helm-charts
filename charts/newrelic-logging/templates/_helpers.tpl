@@ -71,21 +71,21 @@ Return the licenseKey
 {{- end -}}
 
 {{/*
-Return the clusterName
+Return the cluster name
 */}}
-{{- define "newrelic-logging.clusterName" -}}
+{{- define "newrelic-logging.cluster" -}}
 {{- if .Values.global}}
-  {{- if .Values.global.clusterName }}
-      {{- .Values.global.clusterName -}}
+  {{- if .Values.global.cluster }}
+      {{- .Values.global.cluster -}}
   {{- else -}}
     {{- if .Values.global.cluster }}
       {{- .Values.global.cluster -}}
     {{- else -}}
-      {{- .Values.clusterName | default "" -}}
+      {{- .Values.cluster | default "" -}}
     {{- end -}}
   {{- end -}}
 {{- else -}}
-    {{- .Values.clusterName | default "" -}}
+    {{- .Values.cluster | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -107,7 +107,7 @@ Return the customSecretName
 {{/*
 Return the customSecretLicenseKey
 */}}
-{{- define "newrelic-logging.customSecretKey" -}}
+{{- define "newrelic-logging.customSecretLicenseKey" -}}
 {{- if .Values.global }}
   {{- if .Values.global.customSecretLicenseKey }}
       {{- .Values.global.customSecretLicenseKey -}}
@@ -145,7 +145,8 @@ Returns if the template should render, it checks if the required values are set.
 */}}
 {{- define "newrelic-logging.areValuesValid" -}}
 {{- $licenseKey := include "newrelic-logging.licenseKey" . -}}
+{{- $cluster := include "newrelic-logging.cluster" . -}}
 {{- $customSecretName := include "newrelic-logging.customSecretName" . -}}
-{{- $customSecretKey := include "newrelic-logging.customSecretKey" . -}}
-{{- and (or $licenseKey (and $customSecretName $customSecretKey))}}
+{{- $customSecretLicenseKey := include "newrelic-logging.customSecretLicenseKey" . -}}
+{{- and (or $licenseKey (and $customSecretName $customSecretLicenseKey)) $cluster}}
 {{- end -}}

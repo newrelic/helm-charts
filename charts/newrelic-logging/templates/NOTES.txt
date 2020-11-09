@@ -4,15 +4,16 @@ Your deployment of the New Relic Kubernetes Logging is complete. You can check o
     kubectl get daemonset -o wide -w --namespace {{ .Release.Namespace }} {{ template "newrelic-logging.fullname" . }}
 {{- else -}}
 ##############################################################################
-####     ERROR: You did not set a license key.                            ####
+####       ERROR: You did not set a licenseKey and/or cluster name.       ####
 ##############################################################################
 
-This deployment will be incomplete until you get your API key from New Relic.
+This deployment will be incomplete until you set your New Relic license key and a cluster name.
 
 Then run:
 
     helm upgrade {{ .Release.Name }} \
-        --set licenseKey=(your-license-key) \
+        --set licenseKey=YOUR-KEY-HERE \
+        --set cluster=YOUR-CLUSTER-NAME \
         newrelic/newrelic-logging
 
 {{- end -}}
