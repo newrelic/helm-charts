@@ -62,6 +62,10 @@ spec:
             - name: NRIA_STAGING
               value: "true"
             {{- end }}
+            {{- if .Values.proxy }}
+            - name: NRIA_PROXY
+              value: "{{ .Values.proxy }}"
+            {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
               name: tmpfs-data
