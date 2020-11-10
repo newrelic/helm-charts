@@ -20,9 +20,16 @@ spec:
       imagePullSecrets:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
       {{- end }}
+      securityContext:
+        runAsUser: 1000 # nri-kube-events
+        runAsNonRoot: true
       containers:
         - name: kube-events
           image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag | default .Chart.AppVersion }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -36,8 +43,6 @@ spec:
           image: {{ .Values.image.infraAgent.repository }}:{{ .Values.image.infraAgent.tag }}
           securityContext:
             privileged: false
-            runAsUser: 1000 # nri-kube-events
-            runAsNonRoot: false
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
