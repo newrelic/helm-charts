@@ -44,13 +44,15 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `etcdTlsSecretNamespace`   | Namespace where the secret specified in `etcdTlsSecretName` was created.  | `default`   |
 | `etcdEndpointUrl`  | Explicitly sets the etcd component url.   | |
 | `apiServerSecurePort`  | Set to query the API Server over a secure port.   | |
-| `apiServerEndpointUrl` | Explicitly sets the api server componenturl.  | |
+| `apiServerEndpointUrl` | Explicitly sets the api server component url. | |
 | `schedulerEndpointUrl` | Explicitly sets the scheduler component url.  | |
 | `controllerManagerEndpointUrl` | Explicitly sets the controller manager component url. | |
 | `eventQueueDepth`  | Increases the in-memory cache of the agent to accommodate for more samples at a time. | |
 | `enableProcessMetrics` | Enables the sending of process metrics to New Relic.  | `false` |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
-| `discoveryCacheTTL`| Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` | |
+| `discoveryCacheTTL`| Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
+| `openshift` | Enables OpenShift configuration options including OpenShift specific Control Plane endpoints | `false` |
+| `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
 
 ## Example
 
