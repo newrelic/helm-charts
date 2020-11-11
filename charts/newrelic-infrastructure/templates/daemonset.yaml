@@ -95,13 +95,13 @@ spec:
             {{- if .Values.openshift }}
             # OpenShift defaults
             - name: "ETCD_ENDPOINT_URL"
-              value: "https://localhost:9979"
+              value: {{ .Values.etcdEndpointUrl | quote | default "https://localhost:9979" }}
             - name: "API_SERVER_ENDPOINT_URL"
-              value: "https://localhost:6443"
+              value: {{ .Values.apiServerEndpointUrl | quote | default "https://localhost:6443" }}
             - name: "SCHEDULER_ENDPOINT_URL"
-              value: "https://localhost:10259"
+              value: {{ .Values.schedulerEndpointUrl | quote | default "https://localhost:10259" }}
             - name: "CONTROLLER_MANAGER_ENDPOINT_URL"
-              value: "https://localhost:10257"
+              value: {{ .Values.controllerManagerEndpointUrl | quote | default "https://localhost:10257" }}
             {{- else }}
             {{- if .Values.etcdEndpointUrl }}
             - name: "ETCD_ENDPOINT_URL"
