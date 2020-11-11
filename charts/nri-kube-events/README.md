@@ -29,8 +29,9 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `nodeSelector`                                             | Node label to use for scheduling                                                                                                                                                                                                               | `{}`                            |
 | `tolerations`                                              | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                   | `[]`                            |
 | `affinity`                                                 | Node affinity to use for scheduling                                                                                                                                                                                                            | `{}`                            |
-| `global.nrStaging` - `nrStaging`                    | Send data to staging (requires a staging license key). | false |
-| `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
+| `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key).                                                                                                                                                                                         | false                           |
+| `runAsUser`                                                | Set when running in unprivileged mode or when hitting UID constraints in OpenShift.                                                                                                                                                            | `1000`                          |
+| `proxy`                                                    | Set proxy if you required as Kube-events-forwarder / infra-agent needs to send metrics to New Relic One.                                                                                                                                       |                                 |
 
 ## Example
 
