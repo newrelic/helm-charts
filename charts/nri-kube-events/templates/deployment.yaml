@@ -21,7 +21,7 @@ spec:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
       {{- end }}
       securityContext:
-        runAsUser: 1000 # nri-kube-events
+        runAsUser: {{ .Values.runAsUser | default 1000 }}
         runAsNonRoot: true
       containers:
         - name: kube-events
@@ -61,6 +61,10 @@ spec:
             {{- if (include "newrelic.nrStaging" .) }}
             - name: NRIA_STAGING
               value: "true"
+            {{- end }}
+            {{- if .Values.proxy }}
+            - name: NRIA_PROXY
+              value: "{{ .Values.proxy }}"
             {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
