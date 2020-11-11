@@ -30,6 +30,7 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `tolerations`                                              | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                   | `[]`                            |
 | `affinity`                                                 | Node affinity to use for scheduling                                                                                                                                                                                                            | `{}`                            |
 | `global.nrStaging` - `nrStaging`                    | Send data to staging (requires a staging license key). | false |
+| `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
 
 ## Example
 
