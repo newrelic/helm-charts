@@ -24,6 +24,10 @@
 
 agentHTTPTimeout: "30s"
 
+# Kube-events container will spin up a infra-agent(event-forwarder) as a sidecar container to forward
+# events to New Relic One endpoint. However, due to security restrictions, some users might require
+# to use an http proxy to route traffic over the internet. If this is the case for you, set this value
+# to your http proxy endpoint.
 proxy: {}
 
 sinks:
@@ -44,7 +48,7 @@ image:
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
-    # - name: regsecret
+  # - name: regsecret
 
 # For unprivileged mode - default is 1000.
 # Can also be modified for OpenShift clusters where the runAsUser range
@@ -52,7 +56,8 @@ image:
 # https://www.openshift.com/blog/a-guide-to-openshift-and-uids
 runAsUser:
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
