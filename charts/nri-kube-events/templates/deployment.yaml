@@ -21,7 +21,7 @@ spec:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
   {{- end }}
   securityContext:
-runAsUser: 1000 # nri-kube-events
+runAsUser: {{ .Values.runAsUser | default 1000 }}
 runAsNonRoot: true
   containers:
 - name: kube-events
