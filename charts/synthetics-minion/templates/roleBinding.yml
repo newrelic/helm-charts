@@ -1,0 +1,12 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: RoleBinding
+metadata:
+  name: synthetics-minion-role-binding
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+name: {{ include "synthetics-minion.serviceAccountName" . }}
+roleRef:
+  kind: Role
+  name: synthetics-minion-role
+  apiGroup: rbac.authorization.k8s.io

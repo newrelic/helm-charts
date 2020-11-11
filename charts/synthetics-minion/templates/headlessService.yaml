@@ -1,0 +1,21 @@
+# This is the headless service which StatefulSet mandates to initialize.
+# This service is referenced in the statefulset.yaml spec.serviceName.
+# Minion itself is not using this service, however if spec.serviceName is not specified then helm would throw validation error.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{- include "synthetics-minion.headlessServiceName" . | nindent 4 }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{- include "synthetics-minion.selectorLabels" . | nindent 6 }}
+spec:
+  ports:
+- port: 8080
+  name: http
+  protocol: TCP
+- port: 8180
+  name: admin
+  protocol: TCP
+  clusterIP: None
+  selector:
+{{- include "synthetics-minion.selectorLabels" . | nindent 6 }}
