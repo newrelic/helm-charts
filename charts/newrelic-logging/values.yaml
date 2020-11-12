@@ -23,11 +23,15 @@
 fluentBit:
   logLevel: "info"
   path: "/var/log/containers/*.log"
+  k8sLoggingExclude: "Off"
 
 image:
   repository: newrelic/newrelic-fluentbit-output
   tag: ""
   pullPolicy: IfNotPresent
+  ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  # pullSecrets:
+    # - name: regsecret
 
 resources:
   limits:
