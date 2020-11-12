@@ -51,7 +51,8 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `false` |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
-| `openshift` | Enables OpenShift configuration options including OpenShift specific Control Plane endpoints | `false` |
+| `openshift.enabled` | Enables OpenShift configuration options. | `false` |
+| `openshift.version` | OpenShift version for witch enable specific configuration options. Values supported ["3.x","4.x"]. For 4.x it includes OpenShift specific Control Plane endpoints and CRI-O runtime |  |
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
 
 ## Example
