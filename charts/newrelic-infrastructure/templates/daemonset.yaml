@@ -92,7 +92,7 @@ secretKeyRef:
 - name: ETCD_TLS_SECRET_NAMESPACE
   value: {{ .Values.etcdTlsSecretNamespace | quote }}
 {{- end }}
-{{- if .Values.openshift }}
+{{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
 # OpenShift defaults
 - name: "ETCD_ENDPOINT_URL"
   value: {{ .Values.etcdEndpointUrl | quote | default "https://localhost:9979" }}
@@ -181,7 +181,7 @@ fieldRef:
 {{- if .Values.privileged }}
 - name: dev
   mountPath: /dev
-{{- if .Values.openshift }}
+{{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
 - name: host-crio-socket
   mountPath: /var/run/crio.sock
 {{- else }}
@@ -212,7 +212,7 @@ fieldRef:
 - name: dev
   hostPath:
 path: /dev
-{{- if .Values.openshift }}
+{{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
 - name: host-crio-socket
   hostPath:
 path: /var/run/crio.sock
