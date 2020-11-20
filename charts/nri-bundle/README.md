@@ -85,6 +85,7 @@ Then, to install this chart, run the following command:
 ```sh
 helm install newrelic/nri-bundle \
 --set global.licenseKey=<enter_new_relic_license_key> \
+--set global.insightsKey=<enter_new_relic_insights_key> \
 --set global.cluster=my-k8s-cluster
 --set infrastructure.enabled=true
 --set prometheus.enabled=true
@@ -92,12 +93,15 @@ helm install newrelic/nri-bundle \
 --set ksm.enabled=true
 --set kubeEvents.enabled=true
 --set logging.enabled=true
+--set statsd.enabled=true
 ```
 
 [1]: https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key
-[2]: https://github.com/helm/charts/tree/master/stable/kube-state-metrics
-[3]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure
-[4]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-prometheus
-[5]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-metadata-injection
-[6]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-kube-events
-[7]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+[2]: https://docs.newrelic.com/docs/apis/get-started/intro-apis/types-new-relic-api-keys#insights-insert-key
+[3]: https://github.com/helm/charts/tree/master/stable/kube-state-metrics
+[4]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure
+[5]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-prometheus
+[6]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-metadata-injection
+[7]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-kube-events
+[8]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+[9]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-statsd
