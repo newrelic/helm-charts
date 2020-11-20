@@ -25,9 +25,11 @@ For general querying information, see:
 We default to tailing `/var/log/containers/*.log`. If you want to change what's tailed, just update the `PATH` 
 value in `new-relic-fluent-plugin.yml`.
 
+By default, and to ensure backwards compatibility, we assume that `kubelet` communicates with the `Docker` container engine. With the introduction of the [CRI](https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/), logs placed under `/var/log/containers/*.log` follow a different format, even if they are originally produced in JSON format by the container. If you are using CRI, to be able to parse these logs correctly, you must set `LOG_PARSER` to `"cri"` in `new-relic-fluent-plugin.yml`.
+
 ## Parsing
 
-We currently support parsing json and docker logs. If you want more parsing, feel free to add more parsers in `fluent-conf.yml`.
+We currently support parsing Docker (JSON) and [CRI](https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/) logs. If you want more parsing, feel free to add more parsers in `fluent-conf.yml`.
 
 Here are some parsers for your parsing pleasure. 
 
