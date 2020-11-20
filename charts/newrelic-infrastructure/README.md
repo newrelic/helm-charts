@@ -28,7 +28,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `image.repository` | The container to pull.| `newrelic/infrastructure-k8s`   |
 | `image.pullPolicy` | The pull policy.  | `IfNotPresent`  |
 | `image.pullSecrets`| Image pull secrets.   | `nil`   |
-| `image.tag`| The version of the container to pull. | `1.26.6`   |
+| `image.tag`| The version of the container to pull. | `1.26.8`   |
 | `image.windowsTag` | The version of the Windows container to pull. | `1.21.0-windows-1809-alpha` |
 | `resources`| Any resources you wish to assign to the pod.  | See Resources below |
 | `verboseLog`   | Should the agent log verbosely. (Boolean) | `false` |
