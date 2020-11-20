@@ -47,6 +47,7 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Kubernetes integration][newrelic-kubernetes]
 - [New Relic's Kubernetes plugin for logs][newrelic-logs]
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
+- [New Relic's StatsD integration for Docker/Kubernetes][newrelic-statsd]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
 
