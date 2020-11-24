@@ -1,4 +1,4 @@
-{{- if not .Values.customTLSCertificate }}
+{{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
 apiVersion: batch/v1
 kind: Job
 metadata:
