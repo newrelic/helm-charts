@@ -82,7 +82,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
                 Match *
                 licenseKey ${LICENSE_KEY}
                 endpoint ${ENDPOINT}
-                proxy https://http-proxy-hostname:PORT
+                proxy https://https-proxy-hostname:PORT
                 caBundleFile ${CA_BUNDLE_FILE}
             
             caBundle.pem: |
