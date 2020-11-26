@@ -64,7 +64,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
                - name: ENDPOINT
                  value : "https://log-api.newrelic.com/log/v1"
                - name: HTTP_PROXY
-                 value : "http://http-proxy-hostname:PORT"
+                 value : "http://http-proxy-hostname:PORT" # We must always specify the protocol (either http:// or https://)
         ...
      ```
  3. Continue to the next steps
@@ -74,35 +74,18 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
  If you want to set up a custom proxy (eg. using self-signed certificate):
  
   1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
-  2. Modify the `fluent-conf.yml`:
+  2. Modify the `fluent-conf.yml` and define in the ConfigMap a `caBundle.pem` file with the self-signed certificate:
       ```yaml
-         ...
-          output-newrelic.conf: |
-              [OUTPUT]
-                  Name  newrelic
-                  Match *
-                  licenseKey ${LICENSE_KEY}
-                  endpoint ${ENDPOINT}
-                  proxy https://http-proxy-hostname:PORT
-                  caBundleFile /path/to/proxy-certificate-bundle.pem
-         ...
-      ```
-  3. Continue to the next steps
-  
-  **Tip**: Using Kubernetes it's possible to mount a file in your Pod using a ConfigMap:
-  1. Modify the `fluent-conf.yml` and define in the ConfigMap a `caBundle.pem` file with the self-signed certificate:
-        ```yaml
            ...
-            output-newrelic.conf: |
-                [OUTPUT]
-                    Name  newrelic
-                    Match *
-                    licenseKey ${LICENSE_KEY}
-                    endpoint ${ENDPOINT}
-                    proxy https://http-proxy-hostname:PORT
-                    caBundleFile ${CA_BUNDLE_FILE}
+            [OUTPUT]
+                Name  newrelic
+                Match *
+                licenseKey ${LICENSE_KEY}
+                endpoint ${ENDPOINT}
+                proxy https://http-proxy-hostname:PORT
+                caBundleFile ${CA_BUNDLE_FILE}
             
-              caBundle.pem: |
+            caBundle.pem: |
                 -----BEGIN CERTIFICATE-----
                 MIIB+zCCAWSgAwIBAgIQTiHC/d/NhpHFptZCIoCbNzANBgkrhtiG9w0BAQsFADAS
                 MBAwDgYDVQQKEwdBY23lIENvMCAXDTcwMDEwMTYwMDBwMFoYDzIwODQwMTI5MTYw
@@ -110,8 +93,8 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
                 ekFR5glcUVWoFru+EMj4WKmbRATUe3cYQRCThzO2hQ==
                 -----END CERTIFICATE-----
            ...
-        ```
-  2. Modify `new-relic-fluent-plugin.yml` and define the `CA_BUNDLE_FILE` environment variable pointing to the created ConfigMap file:
+      ```
+  3. Modify `new-relic-fluent-plugin.yml` and define the `CA_BUNDLE_FILE` environment variable pointing to the created ConfigMap file:
        ```yaml
           ...
            containers:
@@ -123,6 +106,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
                    value: /fluent-bit/etc/caBundle.pem
           ...
        ```
+  4. Continue to the next steps
  
 ## Configuration
 
