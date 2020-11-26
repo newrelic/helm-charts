@@ -48,6 +48,66 @@ kubectl apply -f .
  4. [OPTIONAL] You can configure how the plugin parses the data by editing the [parsers.conf section in the fluent-conf.yml file](./k8s/fluent-conf.yml#L55-L70). For more information, see Fluent Bit's documentation on [Parsers configuration](https://docs.fluentbit.io/manual/pipeline/parsers).
 > By default, tailing is set to `/var/log/containers/*.log`. To change this setting, replace the default path with your preferred path in the [new-relic-fluent-plugin.yml file](./k8s/new-relic-fluent-plugin.yml#L40).
 
+#### Proxy support
+
+Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https://github.com/newrelic/newrelic-fluent-bit-output) we can configure the [proxy support](https://github.com/newrelic/newrelic-fluent-bit-output#proxy-support) in order to set up the proxy configuration.
+
+##### As environment variables
+
+ 1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
+ 2. Modify the `new-relic-fluent-plugin.yml` file. Add `HTTP_PROXY` or `HTTPS_PROXY` as environment variables:
+ ```yaml
+...
+ containers:
+   - name: newrelic-logging
+ env:
+   - name: ENDPOINT
+ value : "https://log-api.newrelic.com/log/v1"
+   - name: HTTP_PROXY
+ value : "http://http-proxy-hostname:PORT" # We must always specify the protocol (either http:// or https://)
+...
+ ```
+ 3. Continue to the next steps
+ 
+ ##### Custom proxy
+ 
+ If you want to set up a custom proxy (eg. using self-signed certificate):
+ 
+  1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
+  2. Modify the `fluent-conf.yml` and define in the ConfigMap a `caBundle.pem` file with the self-signed certificate:
+  ```yaml
+   ...
+[OUTPUT]
+Name  newrelic
+Match *
+licenseKey ${LICENSE_KEY}
+endpoint ${ENDPOINT}
+proxy https://https-proxy-hostname:PORT
+caBundleFile ${CA_BUNDLE_FILE}
+
+caBundle.pem: |
+-----BEGIN CERTIFICATE-----
+MIIB+zCCAWSgAwIBAgIQTiHC/d/NhpHFptZCIoCbNzANBgkrhtiG9w0BAQsFADAS
+MBAwDgYDVQQKEwdBY23lIENvMCAXDTcwMDEwMTYwMDBwMFoYDzIwODQwMTI5MTYw
+...
+ekFR5glcUVWoFru+EMj4WKmbRATUe3cYQRCThzO2hQ==
+-----END CERTIFICATE-----
+   ...
+  ```
+  3. Modify `new-relic-fluent-plugin.yml` and define the `CA_BUNDLE_FILE` environment variable pointing to the created ConfigMap file:
+   ```yaml
+  ...
+   containers:
+ - name: newrelic-logging
+   env:
+ - name: ENDPOINT
+   value : "https://log-api.newrelic.com/log/v1"
+ - name: CA_BUNDLE_FILE
+   value: /fluent-bit/etc/caBundle.pem
+  ...
+   ```
+  4. Continue to the next steps
+ 
 ## Configuration
 
 See [values.yaml](values.yaml) for the default values
