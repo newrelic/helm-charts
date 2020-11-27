@@ -68,11 +68,11 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
         ...
      ```
  3. Continue to the next steps
- 
+
  ##### Custom proxy
- 
+
  If you want to set up a custom proxy (eg. using self-signed certificate):
- 
+
   1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
   2. Modify the `fluent-conf.yml` and define in the ConfigMap a `caBundle.pem` file with the self-signed certificate:
       ```yaml
@@ -84,7 +84,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
                 endpoint ${ENDPOINT}
                 proxy https://https-proxy-hostname:PORT
                 caBundleFile ${CA_BUNDLE_FILE}
-            
+
             caBundle.pem: |
                 -----BEGIN CERTIFICATE-----
                 MIIB+zCCAWSgAwIBAgIQTiHC/d/NhpHFptZCIoCbNzANBgkrhtiG9w0BAQsFADAS
@@ -107,7 +107,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
           ...
        ```
   4. Continue to the next steps
- 
+
 ## Configuration
 
 See [values.yaml](values.yaml) for the default values
@@ -124,6 +124,7 @@ See [values.yaml](values.yaml) for the default values
 | `image.pullSecrets`                                        | Image pull secrets.                                                                                                                                                                                                                                                          | `nil`                                |
 | `image.tag`                                                | The version of the container to pull.                                                                                                                                                                                                                                        | See value in [values.yaml]`          |
 | `resources`                                                | Any resources you wish to assign to the pod.                                                                                                                                                                                                                                 | See Resources below                  |
+| `podAnnotations`                               | If you wish to provide additional annotations to apply to the pod(s), specify them here.                                                                                                                                                          |                                      |
 | `priorityClassName`                                        | Scheduling priority of the pod                                                                                                                                                                                                                                               | `nil`                                |
 | `nodeSelector`                                             | Node label to use for scheduling                                                                                                                                                                                                                                             | `nil`                                |
 | `tolerations`                                              | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                                                 | See Tolerations below                |
@@ -133,7 +134,6 @@ See [values.yaml](values.yaml) for the default values
 | `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                                                                                                        | `false`                              |
 | `fluentBit.criEnabled`                                     | We assume that `kubelet`directly communicates with the Docker container engine. Set this to `true` if your K8s installation uses [CRI](https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/) instead, in order to get the logs properly parsed. | `false`                              |
 | `fluentBit.k8sLoggingExclude`                              | Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude.                                                                                                                                                     | `Off`                                |
-
 
 ## Uninstall the Kubernetes plugin
 
