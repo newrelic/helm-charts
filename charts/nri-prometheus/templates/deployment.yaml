@@ -13,6 +13,10 @@ matchLabels:
   app.kubernetes.io/name: {{ include "nri-prometheus.name" . }}
   template:
 metadata:
+{{- if .Values.podAnnotations }}
+  annotations:
+{{ toYaml .Values.podAnnotations | indent 8}}
+{{- end }}
   labels:
 {{ include "nri-prometheus.labels" . | indent 8 }}
 spec:

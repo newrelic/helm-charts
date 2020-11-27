@@ -21,6 +21,7 @@ This chart will deploy the New Relic's Prometheus OpenMetrics Integration.
 | `serviceAccount.create`| If true, a service account would be created and assigned to the deployment| true   |
 | `serviceAccount.name`  | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account ||
 | `serviceAccount.annotations`   | The annotations to add to the service account if `serviceAccount.create` is set to true.  ||
+| `podAnnotations`   | If you wish to provide additional annotations to apply to the pod(s), specify them here.  ||
 | `priorityClassName`| Scheduling priority of the pod| `nil` |
 | `nodeSelector` | Node label to use for scheduling  | `{}`   |
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)  | `[]`   |
