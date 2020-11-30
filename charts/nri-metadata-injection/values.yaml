@@ -66,6 +66,10 @@ podSecurityContext:
 # https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes#configure-injection
 customTLSCertificate: false
 
+# If you wish to provide additional annotations to apply to the pod(s), specify
+# them here
+# podAnnotations:
+
 # Pod scheduling priority
 # Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: high-priority
@@ -76,3 +80,7 @@ customTLSCertificate: false
 #
 # Ref: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts
 timeoutSeconds: 30
+
+# Use cert manager for webhook certs
+certManager:
+  enabled: false
