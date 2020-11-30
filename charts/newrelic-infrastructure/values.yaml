@@ -54,6 +54,8 @@ resources:
 
 privileged: true
 
+windowsSecurityContext: {}
+
 rbac:
   # Specifies whether RBAC resources should be created
   create: true
@@ -68,9 +70,52 @@ serviceAccount:
   # Specify any annotations to add to the ServiceAccount
   annotations:
 
-# If you wish to provide additional labels to apply to the pod(s), specify
-# them here
+# For unprivileged mode - default is 1000.
+# Can also be modified for OpenShift clusters where the runAsUser range
+# may be restricted.  See OpenShift docs for more information.
+# https://www.openshift.com/blog/a-guide-to-openshift-and-uids
+runAsUser:
+
+### Openshift ###
+# Set openshift.enabled true when installing in an OpenShift Cluster
+openshift:
+  enabled: false
+
+# When running in privileged mode if the version is equal to "4.x" it will enable
+# /var/run/crio.sock instead of /var/run/docker.sock.
+# It also automatically enables the OpenShift Control Plane Endpoints.
+# Values supported ["3.x","4.x"]
+  version: ""
+
+### Customize the Control Plane Endpoints ###
+# The New Relic Kubernetest daemonset will attempt to automatically discover the Control Plane endpoints.
+#
+# See docs for more details and default values:
+#  https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#discover-nodes-components
+#
+# If you need to customize the endpoint URLs, enable the following variables and configure based upon your environment.
+#  https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#openshift-4x-configuration
+#
+# schedulerEndpointUrl: "https://localhost:10259"
+# etcdEndpointUrl: "https://localhost:9979"
+# controllerManagerEndpointUrl: "https://localhost:10257"
+# apiServerEndpointUrl: "https://localhost:6443"
+
+### ETCD mTLS
+# In order to set mTLS for querying ETCD, use the follow configuration options.
+#
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#mtls-how-to
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/installation/configure-control-plane-monitoring#mtls-how-to-openshift
+#
+# etcdTlsSecretName: newrelic-infra-etcd-tls-secret
+# etcdTlsSecretNamespace: newrelic
+
+# If you wish to provide additional labels to apply to the pod(s), specify them here
 # podLabels:
+
+# If you wish to provide additional annotations to apply to the pod(s), specify
+# them here
+# podAnnotations:
 
 # If you wish to provide your own newrelic.yml file include it under config:
 # the sample config file is included here as an example. Some options have
@@ -127,9 +172,6 @@ updateStrategy: RollingUpdate
 
 # Custom attributes to be passed to the New Relic agent
 customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
-
-# etcdTlsSecretName: newrelic-infra-etcd-tls-secret
-etcdTlsSecretNamespace: default
 
 # If you wish to monitor services running on Kubernetes you can provide integrations
 # configuration under integrations_config. You just need to create a new entry where

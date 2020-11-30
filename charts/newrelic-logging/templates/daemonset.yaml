@@ -65,6 +65,12 @@ spec:
               value: {{ include "newrelic-logging.cluster" . }}
             - name: LOG_LEVEL
               value: {{ .Values.fluentBit.logLevel | quote }}
+            - name: LOG_PARSER
+              {{- if .Values.fluentBit.criEnabled }}
+              value: "cri"
+              {{- else }}
+              value: "docker"
+              {{- end }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_LOGGING_EXCLUDE

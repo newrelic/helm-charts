@@ -24,10 +24,12 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `serviveAccount.create`       | If true a service account would be created and assigned for the webhook and the job. | `true` |
 | `serviveAccount.name`         | The service account to assign to the webhook and the job. If `serviveAccount.create` is true then this name will be used when creating the service account; if this value is not set or it evaluates to false, then when creating the account the returned value from the template `nr-metadata-injection.fullname` will be used as name. | |
 | `customTLSCertificate`        | Use custom TLS certificate. Setting this options means that you will have to do some post install work as detailed in the *Manage custom certificates* section of the [official docs][1]. | `false` |
+| `certManager.enabled`         | Use cert-manager to provision the MutatingWebhookConfiguration certs. | `false` |
 | `podSecurityContext.enabled`  | Enable custom Pod Security Context                           | `false`                             |
 | `podSecurityContext.fsGroup`  | fsGroup for Pod Security Context                             | `1001`                              |
 | `podSecurityContext.runAsUser`| runAsUser UID for Pod Security Context                       | `1001`                              |
 | `podSecurityContext.runAsGroup`| runAsUser GID for Pod Security Context                      | `1001`                              |
+| `podAnnotations`              | If you wish to provide additional annotations to apply to the pod(s), specify them here.      |                                 |
 | `priorityClassName`           | Scheduling priority of the pod                               | `nil`                               |
 | `nodeSelector`                | Node label to use for scheduling                             | `{}`                                |
 | `timeoutSeconds`              | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds| `10`                             |
@@ -56,3 +58,4 @@ The default set of resources assigned to the pods is shown below:
         memory: 30M
 
 [1]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes#configure-injection
+[2]: https://cert-manager.io/
