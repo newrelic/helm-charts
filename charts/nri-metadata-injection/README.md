@@ -29,6 +29,7 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `podSecurityContext.fsGroup`  | fsGroup for Pod Security Context | `1001`  |
 | `podSecurityContext.runAsUser`| runAsUser UID for Pod Security Context   | `1001`  |
 | `podSecurityContext.runAsGroup`| runAsUser GID for Pod Security Context  | `1001`  |
+| `podAnnotations`  | If you wish to provide additional annotations to apply to the pod(s), specify them here.  | |
 | `priorityClassName`   | Scheduling priority of the pod   | `nil`   |
 | `nodeSelector`| Node label to use for scheduling | `{}`|
 | `timeoutSeconds`  | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds| `10` |
