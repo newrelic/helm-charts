@@ -26,6 +26,21 @@ fluentBit:
   criEnabled: false
   k8sLoggingExclude: "Off"
 
+# If you wish to specify additional filters to for example add additional attributes do 
+# so here
+# filters: |
+#    # Kubernetes saves log files in /var/log/containers/<namespace>_<pod_name>_<pod_id>/<container_name>/
+#    # This chart defines the tag kube.* which encodes the log path 
+#    # (see https://docs.fluentbit.io/manual/pipeline/filters/kubernetes#workflow-of-tail-kubernetes-filter)
+#    #
+#    # Example: This filter adds the attribute logtype=nginx to any log with 'nginx' in the pod name, 
+#    # namespace or container name
+#    [FILTER]
+#        Name           record_modifier
+#        Match          kube.var.log.containers.*nginx*
+#        Record         logtype nginx
+#    
+
 image:
   repository: newrelic/newrelic-fluentbit-output
   tag: ""

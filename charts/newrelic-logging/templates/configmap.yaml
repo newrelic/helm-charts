@@ -42,7 +42,9 @@ data:
         Match          kube.*
         Kube_URL       https://kubernetes.default.svc:443
         K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
-
+{{ if.Values.filters }}
+{{ .Values.filters | indent 4 }}
+{{- end }}
   output-newrelic.conf: |
     [OUTPUT]
         Name  newrelic
