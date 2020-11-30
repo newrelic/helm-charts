@@ -16,7 +16,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `enableLinux`  | Deploys the `DaemonSet` on all Linux nodes| `true`  |
 | `enableWindows`| Deploys the `DaemonSet` on all Windows nodes (see [Running on Windows](#running-on-windows))  | `false` |
 | `integrations_config`  | List of Integrations configuration to monitor services running on Kubernetes. More information on can be found [here](https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-apps-services/monitor-services-running-kubernetes). | |
-| `disableKubeStateMetrics`  | Disables kube-state-metrics data parsing if the value is ` true`. | `false` |
+| `disableKubeStateMetrics`  | Disables kube-state-metrics data parsing if the value is `true`. | `false` |
 | `kubeStateMetricsUrl`  | If provided, the discovery process for kube-state-metrics endpoint won't be triggered. Example: http://172.17.0.3:8080| |
 | `kubeStateMetricsPodLabel` | If provided, the kube-state-metrics pod will be discovered using this label. (should be `true` on target pod) | |
 | `kubeStateMetricsTimeout`  | Timeout for accessing kube-state-metrics in milliseconds. If not set the newrelic default is 5000 | |
@@ -32,15 +32,16 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `image.tag`| The version of the container to pull. | `1.26.8`   |
 | `image.windowsTag` | The version of the Windows container to pull. | `1.21.0-windows-1809-alpha` |
 | `resources`| Any resources you wish to assign to the pod.  | See Resources below |
+| `podAnnotations`   | If you wish to provide additional annotations to apply to the pod(s), specify them here.  | |
 | `verboseLog`   | Should the agent log verbosely. (Boolean) | `false` |
 | `priorityClassName`| Scheduling priority of the pod| `nil`   |
 | `nodeSelector` | Node label to use for scheduling  | `nil`   |
 | `windowsNodeSelector`  | Node label to use for scheduling on Windows nodes | `{ kubernetes.io/os: windows }` |
 | `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)  | See Tolerations below   |
 | `updateStrategy`   | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)   | `RollingUpdate` |
-| `serviveAccount.create`| If true, a service account would be created and assigned to the deployment| true|
-| `serviveAccount.name`  | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account | |
-| `serviveAccount.annotations`   | The annotations to add to the service account if `serviveAccount.create` is set to true.  | |
+| `serviceAccount.create`| If true, a service account would be created and assigned to the deployment| true|
+| `serviceAccount.name`  | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account | |
+| `serviceAccount.annotations`   | The annotations to add to the service account if `serviceAccount.create` is set to true.  | |
 | `etcdTlsSecretName`| Name of the secret containing the cacert, cert and key used for setting the mTLS config for retrieving metrics from ETCD. | |
 | `etcdTlsSecretNamespace`   | Namespace where the secret specified in `etcdTlsSecretName` was created.  | `default`   |
 | `etcdEndpointUrl`  | Explicitly sets the etcd component url.   | |
