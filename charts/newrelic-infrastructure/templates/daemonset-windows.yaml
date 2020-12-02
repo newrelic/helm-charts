@@ -39,7 +39,10 @@ spec:
         - name: {{ template "newrelic.name" . }}
           image: {{ template "newrelic.windowsImage" . }}
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-          securityContext: {}
+          {{- if $.Values.windowsSecurityContext }}
+          securityContext:
+{{ toYaml $.Values.windowsSecurityContext | indent 12 }}
+          {{- end }}
           env:
             - name: "NRIA_LICENSE_KEY"
               valueFrom:

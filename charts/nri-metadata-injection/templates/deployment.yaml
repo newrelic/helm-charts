@@ -13,10 +13,14 @@ spec:
       {{- include "nri-metadata-injection.appLabel" . | nindent 6 }}
   template:
     metadata:
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8}}
+{{- end }}
       labels:
         {{- include "nri-metadata-injection.labels" . | nindent 8 }}
     spec:
-      {{- if not .Values.customTLSCertificate }}
+      {{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
       serviceAccountName: {{ template "nri-metadata-injection.serviceAccountName" . }}
       {{- end }}
       {{- if .Values.podSecurityContext.enabled }}
