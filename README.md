@@ -47,7 +47,6 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Kubernetes integration][newrelic-kubernetes]
 - [New Relic's Kubernetes plugin for logs][newrelic-logs]
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
-- [New Relic's StatsD integration for Docker/Kubernetes][newrelic-statsd]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
 
@@ -55,14 +54,12 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 ```sh
 helm install newrelic-bundle newrelic/nri-bundle \
   --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.insightsKey=YOUR_INSIGHTS_KEY \
   --set global.cluster=YOUR_CLUSTER_NAME \
   --set kubeEvents.enabled=true \
   --set webhook.enabled=true \
   --set prometheus.enabled=true \
   --set logging.enabled=true \
-  --set ksm.enabled=true \
-  --set statsd.enabled=true
+  --set ksm.enabled=true
 ```
 
 #### <a name='Installnri-bundleusingHelm2'></a>Install `nri-bundle` using Helm 2
@@ -70,14 +67,12 @@ helm install newrelic-bundle newrelic/nri-bundle \
 helm install newrelic/nri-bundle \
   --name newrelic-bundle \
   --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.insightsKey=YOUR_INSIGHTS_KEY \
   --set global.cluster=YOUR_CLUSTER_NAME \
   --set kubeEvents.enabled=true \
   --set webhook.enabled=true \
   --set prometheus.enabled=true \
   --set logging.enabled=true \
-  --set ksm.enabled=true \
-  --set statsd.enabled=true
+  --set ksm.enabled=true
 ```
 
 ## <a name='Development'></a>Development
@@ -160,7 +155,6 @@ The project is released under version 2.0 of the [Apache license](http://www.apa
 [newrelic-webhook]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes
 [newrelic-prometheus]: https://docs.newrelic.com/docs/integrations/prometheus-integrations/get-started/new-relic-prometheus-openmetrics-integration-kubernetes
 [newrelic-logs]: https://docs.newrelic.com/docs/logs/enable-logs/enable-logs/kubernetes-plugin-logs
-[newrelic-statsd]: https://docs.newrelic.com/docs/integrations/host-integrations/host-integrations-list/statsd-monitoring-integration-version-2
 [ksm]: https://github.com/kubernetes/kube-state-metrics
 [installing-helm]: https://helm.sh/docs/intro/install/
 [github-personal-access-token]: https://help.github.com/en/github/authenticating-to-github/creating-a-personal-access-token-for-the-command-line
