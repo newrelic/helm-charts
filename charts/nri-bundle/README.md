@@ -85,7 +85,6 @@ Then, to install this chart, run the following command:
 ```sh
 helm install newrelic/nri-bundle \
 --set global.licenseKey=<enter_new_relic_license_key> \
---set global.insightsKey=<enter_new_relic_insights_key> \
 --set global.cluster=my-k8s-cluster \
 --set infrastructure.enabled=true \
 --set prometheus.enabled=true \
