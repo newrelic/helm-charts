@@ -43,6 +43,8 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /app/config
+            - mountPath: /tmp
+              name: tmpfs-tmp
         - name: infra-agent
           image: {{ .Values.image.infraAgent.repository }}:{{ .Values.image.infraAgent.tag }}
           securityContext:
