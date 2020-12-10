@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "nri-statsd.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "nri-statsd.labels" . | indent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+  - name: statsd
+port: {{ .Values.statsdPort }}
+targetPort: {{ .Values.statsdPort }}
+protocol: UDP
+  selector:
+{{ include "nri-statsd.selectorLabels" . | indent 4 }}

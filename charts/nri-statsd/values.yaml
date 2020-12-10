@@ -1,0 +1,80 @@
+# IMPORTANT: Specify your New Relic API key here.
+# insightsKey: ""
+#
+# IMPORTANT: The Kubernetes cluster name
+# https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+# cluster: ""
+#
+# The previous values can also be declared as global in order to be
+# shared by other newrelic charts
+#
+# global:
+#   insightsKey: ""
+#   cluster: ""
+
+accountId: ""
+# flush types supported: metrics,  insights, infra
+flushType: metrics
+statsdPort: 8125
+transport: default
+insightsDomain: collector.newrelic.com
+metricsDomain: metric-api.newrelic.com
+
+# tags to add to all collected statsd metrics
+metricTags: {}
+  # key: val
+
+# Additional configuration for gostatsd, keys and values are added to the generated configmap.
+additionalConfig:
+  flush-interval: 30s
+  statser-type: 'null'
+  log-raw-metric: 'true'
+
+additionalNewRelicConfig: {}
+
+nameOverride: ""
+
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: false
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+image:
+  repository: newrelic/nri-statsd
+  tag: 2.0.0
+  ## It is possible to specify docker registry credentials
+  ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  # pullSecrets:
+# - name: regsecret
+
+resources: {}
+  # We usually recommend not to specify default resources and to leave this as a conscious
+  # choice for the user. This also increases chances charts run on environments with little
+  # resources, such as Minikube. If you do want to specify resources, uncomment the following
+  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+  # limits:
+  #   cpu: 100m
+  #   memory: 128Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 128Mi
+
+# Pod scheduling priority
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Sends data to staging, can be set as a global.
+# global.nrStaging
+nrStaging: false
