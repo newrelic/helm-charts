@@ -200,6 +200,13 @@ spec:
             initialDelaySeconds: 600
             periodSeconds: 300
             timeoutSeconds: 60
+          
+          readinessProbe:
+            httpGet:
+              path: /status/ready
+              port: http
+            initialDelaySeconds: 60
+            timeoutSeconds: 60
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
