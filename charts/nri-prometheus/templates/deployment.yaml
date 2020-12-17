@@ -21,6 +21,10 @@ metadata:
 {{ include "nri-prometheus.labels" . | indent 8 }}
 spec:
   serviceAccountName: {{ template "nri-prometheus.serviceAccountName" . }}
+  {{- if .Values.podSecurityContext}}
+  securityContext:
+{{ toYaml .Values.podSecurityContext | indent 8 }}
+  {{- end }}
   {{- if .Values.image.pullSecrets }}
   imagePullSecrets:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
