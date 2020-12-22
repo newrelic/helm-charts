@@ -26,7 +26,7 @@ fullnameOverride: ""
 
 image:
   repository: newrelic/nri-prometheus
-  tag: 2.2.0
+  tag: 2.3.0
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
@@ -71,11 +71,78 @@ config:
   # The label used to identify scrapable targets. Defaults to "prometheus.io/scrape".
   # scrape_enabled_label: "prometheus.io/scrape"
   # Wether k8s nodes needs to be labelled to be scraped or not. Defaults to false.
-  require_scrape_enabled_label_for_nodes: true
+  # require_scrape_enabled_label_for_nodes: true
   # Wether the integraton sends metrics directly to New Relic (true) or to the Infrastructure agent (false)
   # standalone: false
   # Number of worker threads used for scraping targets. Defaults to 4
   # worker_threads: 4
+
+  # transformations:
+  #   - description: "General processing rules"
+  #     rename_attributes:
+  #       - metric_prefix: ""
+  #         attributes:
+  #           container_name: "containerName"
+  #           pod_name: "podName"
+  #           namespace: "namespaceName"
+  #           node: "nodeName"
+  #           container: "containerName"
+  #           pod: "podName"
+  #           deployment: "deploymentName"
+  #     ignore_metrics:
+  #       # Ignore all the metrics except the ones listed below.
+  #       # This is a list that complements the data retrieved by the New
+  #       # Relic Kubernetes Integration, that's why Pods and containers are
+  #       # not included, because they are already collected by the
+  #       # Kubernetes Integration.
+  #       - except:
+  #         - kube_hpa_
+  #         - kube_daemonset_ #### K8s Daemonset
+  #         - kube_statefulset_ #### K8s Daemonset
+  #         - kube_endpoint_ #### K8s Daemonset
+  #         - kube_service_ #### K8s Daemonset
+  #         - kube_limitrange
+  #         - kube_node_ #K8s Daemonset
+  #         - kube_poddisruptionbudget_
+  #         - kube_resourcequota
+  #         - nr_stats
+  #     copy_attributes:
+  #       # Copy all the labels from the timeseries with metric name
+  #       # `kube_hpa_labels` into every timeseries with a metric name that
+  #       # starts with `kube_hpa_` only if they share the same `namespace`
+  #       # and `hpa` labels.
+  #       - from_metric: "kube_hpa_labels"
+  #         to_metrics: "kube_hpa_"
+  #         match_by:
+  #           - namespace
+  #           - hpa
+  #       - from_metric: "kube_daemonset_labels"
+  #         to_metrics: "kube_daemonset_"
+  #         match_by:
+  #           - namespace
+  #           - daemonset
+  #       - from_metric: "kube_statefulset_labels"
+  #         to_metrics: "kube_statefulset_"
+  #         match_by:
+  #           - namespace
+  #           - statefulset
+  #       - from_metric: "kube_endpoint_labels"
+  #         to_metrics: "kube_endpoint_"
+  #         match_by:
+  #           - namespace
+  #           - endpoint
+  #       - from_metric: "kube_service_labels"
+  #         to_metrics: "kube_service_"
+  #         match_by:
+  #           - namespace
+  #           - service
+  #       - from_metric: "kube_node_labels"
+  #         to_metrics: "kube_node_"
+  #         match_by:
+  #           - namespace
+  #           - node
+  # integration definition files required to map metrics to entities
+  # definition_files_path: /etc/newrelic-infra/definition-files
 
 # If you wish to provide additional annotations to apply to the pod(s), specify
 # them here
