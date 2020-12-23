@@ -30,4 +30,6 @@ webhooks:
       newrelic-metadata-injection: enabled
 {{- end }}
   failurePolicy: Ignore
+{{ if (gt (.Capabilities.KubeVersion.Minor | atoi) 14) }}
   timeoutSeconds: {{ .Values.timeoutSeconds }}
+{{- end }}
