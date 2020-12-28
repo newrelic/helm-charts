@@ -253,10 +253,11 @@ spec:
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
-{{- if .Values.affinity }}
+      {{- if .Values.affinity }}
       affinity:
 {{ toYaml .Values.affinity | indent 8 }}
-{{- if $.Values.nodeSelector }}
+      {{- end }}
+      {{- if $.Values.nodeSelector }}
       nodeSelector:
 {{ toYaml $.Values.nodeSelector | indent 8 }}
       {{- end }}
