@@ -41,13 +41,13 @@ spec:
               value: "docker"
             - name: PATH
               value: "/var/log/containers/*.log"
-          image: newrelic/newrelic-fluentbit-output:1.4.3
+          image: newrelic/newrelic-fluentbit-output:1.4.5
           command:
             - /fluent-bit/bin/fluent-bit
             - -c
             - /fluent-bit/etc/fluent-bit.conf
             - -e
-            - /fluent-bit/bin/out_newrelic.so
+            - /fluent-bit/bin/out_newrelic-linux-amd64-*.so
           resources:
             limits:
               cpu: 500m

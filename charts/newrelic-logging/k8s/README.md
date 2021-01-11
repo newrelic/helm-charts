@@ -2,7 +2,6 @@
 This directory provides plain Kubernetes manifests that can be applied to your cluster to install the Kubernetes Logging plugin. It is provided as an alternative for those users who prefer not using Helm.
 
 ## Installation instructions
-* Create a `newrelic` namespace.  Run `kubectl create namespace newrelic`.
 * Copy all the manifest files in this folder (*.yml files) in your local working directory.
 * Configure the plugin. In new-relic-fluent-plugin.yml:
   * Specify your New Relic license key in the value for LICENSE_KEY
