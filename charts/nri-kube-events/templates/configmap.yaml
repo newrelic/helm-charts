@@ -23,8 +23,8 @@ metadata:
 apiVersion: v1
 kind: ConfigMap
 data:
-    newrelic-infra.yml: |
-{{ toYaml .Values.config | indent 6 }}
+  newrelic-infra.yml: |
+{{ toYaml .Values.config | indent 4 }}
 metadata:
   name: {{ template "nri-kube-events.fullname" . }}-agent-config
   namespace: {{ .Release.Namespace }}
