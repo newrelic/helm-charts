@@ -48,13 +48,17 @@ persistence:
   ##
   # storageClass: "-"
 
-  # Access mode to be defined for the PVC (relevant only if claimName is undefined or empty )
+  # Relevant only if the claimName is undefinied or empty, the access mode defines how the volume is mounted and the how many nodes it mounted by. 
+  # Options: 
+  # 1. ReadWriteOnce (RWO): the volume can be mounted as read-write by a single node
+  # 2. ReadOnlyMany (ROX): the volume can be mounted read-only by many nodes
+  # 3. ReadWriteMany (RWX): the volume can be mounted as read-write by many nodes
   accessMode: ReadWriteOnce
 
-  # Annotations to add to the PVC (relevant only if claimName is undefined or empty )
+  # Relevant only if claimName is undefined or empty, any items of metadata that are not used for querying are considered annotiations. 
   annotations: {}
 
-  # Size to be defined for the PVC (relevant only if claimName is undefined or empty )
+  # Relevant only if claimName is undefined or empty, size to be defined for the PVC (relevant only if claimName is undefined or empty )
   size: 10Gi
 
   ## Path on the volume to the permanent data storage directory
@@ -67,22 +71,20 @@ persistence:
   # userDefinedVariables: "user-defined-variables.json"
 
 serviceAccount:
-  # Specifies whether a service account should be created
+  # A boolean value that specifies whether a service account should be created or not. 
   create: false
 
-  # Annotations to add to the service account
+  # Any items of metadata that are not used for querying are considered annotiations.
   annotations: {}
 
-  # The name of the service account to use.
-  # If not set and create is true, a name is generated using the fullname template
+  # The name of the serviceAccount to use. If value is not set and create is true, a name is generated using the fullname template.
   name:
 
 headlessService:
-  # The name of the headless service to associate to the statefulSet.
-  # If not set a name is generated using the fullname template
+  # The name of the headless service to associate to the statefulSet. If not set a name is generated using the fullname template.
   serviceName:
 
-# Assigning a uid which will be defaulted to 2379, this can be changed as needed
+# Assigning a uid which will be defaulted to 2379, this can be changed as needed. A uid is needed for the synthetics-minion and synthetics-minion-runner to share data. It must be the same across these containers. Also, uid must match the permissions for the custom-modules if this feature is used.
 podSecurityContextRunAsUser: 2379
 
 # appArmorProfileName: ""
