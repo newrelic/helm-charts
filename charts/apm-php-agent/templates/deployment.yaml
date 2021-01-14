@@ -1,0 +1,49 @@
+{{- if (include "apm-php-agent.areValuesValid" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "apm-php-agent.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "apm-php-agent.labels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+{{ include "apm-php-agent.selectorLabels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+{{ include "apm-php-agent.labels" . | indent 8 }}
+    spec:
+      serviceAccountName: {{ template "apm-php-agent.serviceAccountName" . }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+      {{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
+      containers:
+        - name: apm-php-agent
+          image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          ports:
+            - containerPort: {{ .Values.agentPort }}
+          {{- if .Values.resources }}
+          resources:
+          {{ toYaml .Values.resources | indent 10 }}
+          {{- end }}
+      {{- if $.Values.priorityClassName }}
+      priorityClassName: {{ $.Values.priorityClassName }}
+      {{- end }}
+      {{- if $.Values.nodeSelector }}
+      nodeSelector:
+      {{ toYaml $.Values.nodeSelector | indent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+      {{ toYaml .Values.tolerations | indent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+      {{ toYaml .Values.affinity | indent 8 }}
+      {{- end }}
+{{- end }}

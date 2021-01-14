@@ -20,6 +20,7 @@ This chart bundles multiple New Relic products helm-charts.
 | `ksm.enabled`                    | Install the [`kube-state-metrics` chart from the stable helm charts repository][2] | false |
 | `kubeEvents.enabled`             | Install the [`nri-kube-events` chart][6] | false |
 | `logging.enabled`                | Install the [`newrelic-logging` chart][7] | false |
+| `apm.php.enabled`                | Install the [`apm-php-agent` chart][8] | false |
 
 ## Configure Dependencies
 
@@ -101,3 +102,4 @@ helm install newrelic/nri-bundle \
 [5]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-metadata-injection
 [6]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-kube-events
 [7]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+[8]: https://github.com/newrelic/helm-charts/tree/master/charts/apm-php-agent
