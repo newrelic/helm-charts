@@ -3,13 +3,13 @@
 
 # The replicaCount allows the specification of how many pods you want running. 
 replicaCount: 1
-# 
+# The imagePullSecrets stores Docker credentials that are used for accessing a registry. 
 imagePullSecrets: []
 # The nameOverride replaces the name of the chart in the Chart.yaml file.
 nameOverride: ""
 # By default, fullname uses '-. This overrides that and uses the given string instead.
 fullnameOverride: ""
-#
+# The appVersionOverride overrides the current app version. 
 appVersionOverride: ""
 
 synthetics:
@@ -39,6 +39,7 @@ synthetics:
 
 image:
   repository: quay.io/newrelic/synthetics-minion
+  # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. 
   pullPolicy: IfNotPresent
 
 persistence:
