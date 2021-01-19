@@ -21,20 +21,43 @@ synthetics:
   # 1. DEBUG: These messages report detailed diagnostic information and more information than you'd want in normal production situations. 
   # 2. TRACE: These messages capture every detail you possibly can about the minion's behavior.
   minionLogLevel: "INFO"
-  # The number of workers the minion will use to run heavy jobs (BROWSER, SCRIPT_BROWSER, SCRIPT_API). The maximum allowed value for this variable is 50.
+  # The number of workers the minion will use to run heavy jobs (BROWSER, SCRIPT_BROWSER, SCRIPT_API). The maximum allowed value for this parameter is 50.
   heavyWorkers: "2"
-  # The number of workers the minion will use to run lightweight jobs (SIMPLE Ping Jobs). The maximum allowed value for this variable is 1250.
+  # The number of workers the minion will use to run lightweight jobs (SIMPLE Ping Jobs). The maximum allowed value for this parameter is 1250.
   lightweightWorkers: "50"
+  
+  ## For US-based accounts, the endpoint is: https://synthetics-horde.nr-data.net.
+  ## For EU-based accounts, the endpoint is: https://synthetics-horde.eu01.nr-data.net/
   #  minionApiEndpoint: ""
+  
+  ## The Docker Registry and Organization where the Minion Runner image is hosted. The default is quay.io/newrelic, however you can use this parameter to override it. 
   #  minionDockerRunnerRegistryEndpoint: ""
+  
+  ## If set, enables verified script execution and uses this value as a passphrase.
   #  minionVsePassphrase: ""
+  
+  ## If set, the format is: "host:port". 
   #  minionApiProxy: ""
+  
+  ## If set, the accepted values are: true, 1, or yes. 
   #  minionApiProxySelfSignedCert: ""
+  
+  ## If set, the format is: "username:password". Support HTTP Basic Authentication and additional authentication protocols supported by Chrome.
   #  minionApiProxyAuth: ""
+  
+  ## The minionCheckTimeout represents the maximum amount of seconds that your monitor checks are allowed to run. 
+  ## The minimum allowed value for this parameter is 1 second and the maximum allowed value for this parameter is 900 seconds.
+  ## The default is 65 seconds for ping monitors, 180 seconds for browser monitors, script_browser monitors, and script_api monitors. 
   #  minionCheckTimeout: ""
+  
+  ## The minionUserDefinedEnvVariables defines the locally hosted set of user defined key value pairs.
   #  minionUserDefinedEnvVariable: ""
+  
+  ## The minionJVMOpts passes command line options to the internal JVM. 
+  ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
   #  minionJVMOpts: "-XX:-UsePerfData"
-  #  A minion is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
+  
+  ## A minion is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
   #  minionNetworkHealthCheckDisabled: "false"
 
 image:
@@ -100,6 +123,7 @@ headlessService:
 # Assigning a uid which will be defaulted to 2379, this can be changed as needed. A uid is needed for the synthetics-minion and synthetics-minion-runner to share data. It must be the same across these containers. Also, uid must match the permissions for the custom-modules if this feature is used.
 podSecurityContextRunAsUser: 2379
 
+## The AppArmor profile name that will be applied to the Minion and Runner pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
 # appArmorProfileName: ""
 
 resources:
