@@ -25,6 +25,17 @@ synthetics:
   heavyWorkers: "2"
   # The number of workers the minion will use to run lightweight jobs (SIMPLE Ping Jobs). The maximum allowed value for this variable is 1250.
   lightweightWorkers: "50"
+  #  minionApiEndpoint: ""
+  #  minionDockerRunnerRegistryEndpoint: ""
+  #  minionVsePassphrase: ""
+  #  minionApiProxy: ""
+  #  minionApiProxySelfSignedCert: ""
+  #  minionApiProxyAuth: ""
+  #  minionCheckTimeout: ""
+  #  minionUserDefinedEnvVariable: ""
+  #  minionJVMOpts: "-XX:-UsePerfData"
+  #  A minion is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
+  #  minionNetworkHealthCheckDisabled: "false"
 
 image:
   repository: quay.io/newrelic/synthetics-minion
@@ -32,6 +43,23 @@ image:
   pullPolicy: IfNotPresent
 
 persistence:
+  # The name of the PVC to use
+  # If undefined or not set Statefulset will dynamically create a PVC for each replica
+  #
+  # claimName: ""
+
+  ## Override the StorageClass for VolumeClaimTemplates (relevant only if claimName is undefined or empty )
+  ## If defined and claimName is empty, storageClassName: <storageClass>, i.e the PVC can be bound to the PVs
+  ## having <storageClass> Storage class.
+  ## If set to "-", storageClassName: "", i.e the PVC can bound to the PVs that have no class (dynamic provisioning is
+  ## disabled)
+  ## If undefined (the default) or set to null, no storageClassName is set, i.e the PVC can bound to the PVs having
+  ## Default Storage class.
+  ##
+  ## For more details see https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
+  ##
+  # storageClass: "-"
+  
   # Relevant only if the claimName is undefinied or empty, the access mode defines how the volume is mounted and the how many nodes it mounted by. 
   # Options: 
   # 1. ReadWriteOnce (RWO): the volume can be mounted as read-write by a single node
@@ -44,6 +72,15 @@ persistence:
 
   # Relevant only if claimName is undefined or empty, size to be defined for the PVC (relevant only if claimName is undefined or empty )
   size: 10Gi
+  
+  ## Path on the volume to the permanent data storage directory
+  # permanentData: "permanent-data-storage"
+
+  ## Path on the volume to the custom modules directory
+  # customModules: "custom-modules"
+
+  ## Path on the volume to the user-defined-variable.json file
+  # userDefinedVariables: "user-defined-variables.json"
 
 serviceAccount:
   # A boolean value that specifies whether a service account should be created or not. 
@@ -62,6 +99,8 @@ headlessService:
 
 # Assigning a uid which will be defaulted to 2379, this can be changed as needed. A uid is needed for the synthetics-minion and synthetics-minion-runner to share data. It must be the same across these containers. Also, uid must match the permissions for the custom-modules if this feature is used.
 podSecurityContextRunAsUser: 2379
+
+# appArmorProfileName: ""
 
 resources:
   requests:
