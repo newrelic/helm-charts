@@ -14,12 +14,14 @@ This chart bundles multiple New Relic products helm-charts.
 | `global.customSecretName`        | Name of the Secret object where the license key is stored | |
 | `global.customSecretLicenseKey`  | Key in the Secret object where the license key is stored. | |
 | `global.customSecretInsightsKey` | Key in the Secret object where the insights key is stored. | |
-| `infrastructure.enabled`         | Install the [`newrelic-infrastructure` chart][3] | true |
-| `prometheus.enabled`             | Install the [`nri-prometheus` chart][4] | false |
-| `webhook.enabled`                | Install the [`nri-metadata-injection` chart][5] | true |
-| `ksm.enabled`                    | Install the [`kube-state-metrics` chart from the stable helm charts repository][2] | false |
-| `kubeEvents.enabled`             | Install the [`nri-kube-events` chart][6] | false |
-| `logging.enabled`                | Install the [`newrelic-logging` chart][7] | false |
+| `infrastructure.enabled`         | Install the [`newrelic-infrastructure` chart][3] | `true` |
+| `prometheus.enabled`             | Install the [`nri-prometheus` chart][4] | `false` |
+| `webhook.enabled`                | Install the [`nri-metadata-injection` chart][5] | `true` |
+| `ksm.enabled`                    | Install the [`kube-state-metrics` chart from the stable helm charts repository][2]. | `false`* |
+| `kubeEvents.enabled`             | Install the [`nri-kube-events` chart][6] | `false` |
+| `logging.enabled`                | Install the [`newrelic-logging` chart][7] | `false` |
+
+\* *A working deployment of KSM is required for `nri-kubernetes` to function. Please make sure to either enable KSM in this chart, or install it by any other means if its is not already present in your cluster.* 
 
 ## Configure Dependencies
 
