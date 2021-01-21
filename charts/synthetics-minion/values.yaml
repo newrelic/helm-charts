@@ -4,7 +4,7 @@
 # The replicaCount allows the specification of how many pods you want running. 
 replicaCount: 1
 # The imagePullSecrets stores Docker credentials that are used for accessing a registry. 
-imagePullSecrets: []
+imagePullSecrets: [ ]
 # The nameOverride replaces the name of the chart in the Chart.yaml file.
 nameOverride: ""
 # By default, fullname uses '-. This overrides that and uses the given string instead.
@@ -25,38 +25,38 @@ synthetics:
   heavyWorkers: "2"
   # The number of workers the minion will use to run lightweight jobs (SIMPLE Ping Jobs). The maximum allowed value for this parameter is 1250.
   lightweightWorkers: "50"
-  
+
   ## For US-based accounts, the endpoint is: https://synthetics-horde.nr-data.net.
   ## For EU-based accounts, the endpoint is: https://synthetics-horde.eu01.nr-data.net/
   #  minionApiEndpoint: ""
-  
+
   ## The Docker Registry and Organization where the Minion Runner image is hosted. The default is quay.io/newrelic, however you can use this parameter to override it. 
   #  minionDockerRunnerRegistryEndpoint: ""
-  
+
   ## If set, enables verified script execution and uses this value as a passphrase.
   #  minionVsePassphrase: ""
-  
+
   ## If set, the format is: "host:port". 
   #  minionApiProxy: ""
-  
+
   ## If set, the accepted values are: true, 1, or yes. 
   #  minionApiProxySelfSignedCert: ""
-  
+
   ## If set, the format is: "username:password". Support HTTP Basic Authentication and additional authentication protocols supported by Chrome.
   #  minionApiProxyAuth: ""
-  
+
   ## The minionCheckTimeout represents the maximum amount of seconds that your monitor checks are allowed to run. 
   ## The minimum allowed value for this parameter is 1 second and the maximum allowed value for this parameter is 900 seconds.
   ## The default is 65 seconds for ping monitors, 180 seconds for browser monitors, script_browser monitors, and script_api monitors. 
   #  minionCheckTimeout: ""
-  
+
   ## The minionUserDefinedEnvVariables defines the locally hosted set of user defined key value pairs.
   #  minionUserDefinedEnvVariable: ""
-  
+
   ## The minionJVMOpts passes command line options to the internal JVM. 
   ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
   #  minionJVMOpts: "-XX:-UsePerfData"
-  
+
   ## A minion is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
   #  minionNetworkHealthCheckDisabled: "false"
 
@@ -83,7 +83,7 @@ persistence:
   ## For more details see https://kubernetes.io/docs/concepts/storage/persistent-volumes/#class-1
   ##
   # storageClass: "-"
-  
+
   # Relevant only if the claimName is undefinied or empty, the access mode defines how the volume is mounted and the how many nodes it mounted by. 
   # Options: 
   # 1. ReadWriteOnce (RWO): the volume can be mounted as read-write by a single node
@@ -92,11 +92,11 @@ persistence:
   accessMode: ReadWriteOnce
 
   # Relevant only if claimName is undefined or empty, any items of metadata that are not used for querying are considered annotiations. 
-  annotations: {}
+  annotations: { }
 
   # Relevant only if claimName is undefined or empty, size to be defined for the PVC (relevant only if claimName is undefined or empty )
   size: 10Gi
-  
+
   ## Path on the volume to the permanent data storage directory
   # permanentData: "permanent-data-storage"
 
@@ -111,7 +111,7 @@ serviceAccount:
   create: false
 
   # Any items of metadata that are not used for querying are considered annotiations.
-  annotations: {}
+  annotations: { }
 
   # The name of the serviceAccount to use. If value is not set and create is true, a name is generated using the fullname template.
   name:
@@ -135,8 +135,8 @@ resources:
     cpu: 0.75
     memory: 1.6Gi
 
-nodeSelector: {}
+nodeSelector: { }
 
-tolerations: []
+tolerations: [ ]
 
-affinity: {}
+affinity: { }
