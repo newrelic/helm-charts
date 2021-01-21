@@ -26,7 +26,7 @@ fullnameOverride: ""
 
 image:
   repository: newrelic/nri-prometheus
-  tag: 2.3.1
+  tag: 2.4.0
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
@@ -38,11 +38,11 @@ resources: {}
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
   # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
   # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
+  #   cpu: 200m
+  #   memory: 512Mi
   # requests:
   #   cpu: 100m
-  #   memory: 128Mi
+  #   memory: 256Mi
 
 rbac:
   # Specifies whether RBAC resources should be created
@@ -105,9 +105,20 @@ config:
   require_scrape_enabled_label_for_nodes: true
 
   # Number of worker threads used for scraping targets.
-  # For large clusters with many endpoints, increase to 10.
+  # For large clusters with many (>400) endpoints, slowly increase until scrape
+  # time falls between the desired `scrape_duration`.
+  # Increasing this value too much will result in huge memory consumption if too
+  # many metrics are being scraped.
   # Default: 4
   # worker_threads: 4
+
+  # Maximum number of metrics to keep in memory until a report is triggered.
+  # Changing this value is not recommended unless instructed by the New Relic support team.
+  # max_stored_metrics: 10000
+
+  # Minimum amount of time to wait between reports. Cannot be lowered than the default, 200ms.
+  # Changing this value is not recommended unless instructed by the New Relic support team.
+  # min_emitter_harvest_period: 200ms
 
   # targets:
   #   - description: Secure etcd example
