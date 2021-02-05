@@ -1,6 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
+  namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic-logging.labels" . | indent 4 }}
   name: {{ template "newrelic-logging.fluentBitConfig" . }}
 data:
@@ -58,7 +59,6 @@ data:
         Time_Key     time
         Time_Format  %Y-%m-%dT%H:%M:%S.%L
         Time_Keep    On
-        Decode_Field_As   escaped    log
 
     [PARSER]
         Name cri

@@ -79,8 +79,21 @@ spec:
               name: tmpfs-user-data
             - mountPath: /tmp
               name: tmpfs-tmp
+            {{- if .Values.config }}
+            - name: config
+              mountPath: /etc/newrelic-infra.yml
+              subPath: newrelic-infra.yml
+            {{- end }}
       serviceAccountName: {{ template "nri-kube-events.serviceAccountName" . }}
       volumes:
+        {{- if .Values.config }}
+        - name: config
+          configMap:
+            name: {{ template "nri-kube-events.fullname" . }}-agent-config
+            items:
+            - key: newrelic-infra.yml
+              path: newrelic-infra.yml
+        {{- end }}
         - name: config-volume
           configMap:
             name: {{ template "nri-kube-events.fullname" . }}-config
