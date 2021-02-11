@@ -34,6 +34,7 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `runAsUser`| Set when running in unprivileged mode or when hitting UID constraints in OpenShift.| `1000`  |
 | `proxy`| Set proxy if you required as Kube-events-forwarder / infra-agent needs to send metrics to New Relic One.   | |
 | `config`| Set config option in order to pass any configuration to the agent running as a sidecar. This object is map as a configuration map mounted in /etc/newrelic-infra.yml.| |
+| `deployment.annotations`   | The annotations to add to the `Deployment`.
 
 ## Example
 
