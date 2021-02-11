@@ -6,9 +6,9 @@ metadata:
   labels: {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}
   annotations:
-{{- if .Values.daemonSet.annotations }}
+  {{- if .Values.daemonSet.annotations }}
 {{ toYaml .Values.daemonSet.annotations | indent 4 }}
-{{- end }}
+  {{- end }}
 spec:
   updateStrategy:
     type: {{ .Values.updateStrategy }}
