@@ -56,6 +56,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `openshift.enabled` | Enables OpenShift configuration options. | `false` |
 | `openshift.version` | OpenShift version for witch enable specific configuration options. Values supported ["3.x","4.x"]. For 4.x it includes OpenShift specific Control Plane endpoints and CRI-O runtime |  |
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
+| `daemonSet.annotations`   | The annotations to add to the `DaemonSet` on both Linux & Windows nodes.
 
 ## Example
 

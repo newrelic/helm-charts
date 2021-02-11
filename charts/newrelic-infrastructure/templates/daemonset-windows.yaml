@@ -7,6 +7,10 @@ metadata:
     kubernetes.io/os: windows
     {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}-windows
+  annotations:
+{{- if .Values.daemonSet.annotations }}
+{{ toYaml .Values.daemonSet.annotations | indent 4 }}
+{{- end }}
 spec:
   updateStrategy:
     type: {{ .Values.updateStrategy }}
