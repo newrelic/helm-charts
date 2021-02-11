@@ -5,6 +5,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic-logging.labels" . | indent 4 }}
   name: {{ template "newrelic-logging.fullname" . }}
+  annotations:
+  {{- if .Values.daemonSet.annotations }}
+{{ toYaml .Values.daemonSet.annotations | indent 4 }}
+  {{- end }}
 spec:
   updateStrategy:
     type: {{ .Values.updateStrategy }}
