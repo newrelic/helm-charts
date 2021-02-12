@@ -38,6 +38,14 @@ spec:
         - name: {{ template "newrelic-logging.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          securityContext:
+            {{- if .Values.privileged }}
+            privileged: true
+            {{- else }}
+            runAsUser: {{ .Values.runAsUser | default 1000 }}
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            {{- end }}
           env:
             - name: ENDPOINT
               {{- if (include "newrelic.nrStaging" .) }}
