@@ -27,31 +27,3 @@ chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 {{- end }}
-
-{{/*
-Returns nrStaging
-*/}}
-{{- define "newrelic-pixie.nrStaging" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.nrStaging }}
-    {{- .Values.global.nrStaging -}}
-  {{- end -}}
-{{- else if .Values.nrStaging }}
-  {{- .Values.nrStaging -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the cluster
-*/}}
-{{- define "newrelic-pixie.cluster" -}}
-{{- if .Values.global -}}
-  {{- if .Values.global.cluster -}}
-      {{- .Values.global.cluster -}}
-  {{- else -}}
-      {{- .Values.cluster | default "" -}}
-  {{- end -}}
-{{- else -}}
-  {{- .Values.cluster | default "" -}}
-{{- end -}}
-{{- end -}}
