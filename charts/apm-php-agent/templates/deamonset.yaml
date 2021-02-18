@@ -1,13 +1,12 @@
 {{- if (include "apm-php-agent.areValuesValid" .) }}
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
   name: {{ template "apm-php-agent.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "apm-php-agent.labels" . | indent 4 }}
 spec:
-  replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
 {{ include "apm-php-agent.selectorLabels" . | indent 6 }}

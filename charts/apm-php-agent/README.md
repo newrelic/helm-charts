@@ -2,7 +2,7 @@
 
 ## Chart Details
 
-This chart will deploy the New Relic's PHP agent APM through a deployment with a service exposed over the cluster.
+This chart will deploy the New Relic's PHP agent APM through a deamonset with a service exposed over the cluster.
 
 ## Configuration
 
@@ -13,7 +13,6 @@ This chart will deploy the New Relic's PHP agent APM through a deployment with a
 | `image.repository`                                         | The newrelic php agent image name.                                                                                                                                                                 | `newrelic/php-daemon`                  |
 | `image.tag`                                                | The newrelic php agent image tag.                                                                                                                                                                  | `9.15.0`                                |
 | `image.pullSecrets`                                        | Image pull secrets.                                                                                                                                                                                | `nil`                                  |
-| `replicas`                                                 | The desired replica count.                                                                                                                                                                         | `1`                                    |
 | `resources`                                                | A yaml defining the resources for the events-router container.                                                                                                                                     | `{}`                                   |
 | `serviceAccount.create`                                    | If true, a service account would be created and assigned to the deployment                                                                                                                         | `true`                                 |
 | `serviceAccount.name`                                      | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account                                                  |                                        |
