@@ -6,6 +6,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "nri-kube-events.labels" . | indent 4 }}
+  annotations:
+  {{- if .Values.deployment.annotations }}
+{{ toYaml .Values.deployment.annotations | indent 4 }}
+  {{- end }}
 spec:
   replicas: 1
   selector:
@@ -13,12 +17,27 @@ spec:
       app.kubernetes.io/name: {{ template "nri-kube-events.name" . }}
   template:
     metadata:
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8}}
+{{- end }}
       labels:
 {{ include "nri-kube-events.labels" . | indent 8 }}
     spec:
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
+      securityContext:
+        runAsUser: {{ .Values.runAsUser | default 1000 }}
+        runAsNonRoot: true
       containers:
         - name: kube-events
           image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag | default .Chart.AppVersion }}
+          securityContext:
+            privileged: false
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -32,8 +51,6 @@ spec:
           image: {{ .Values.image.infraAgent.repository }}:{{ .Values.image.infraAgent.tag }}
           securityContext:
             privileged: false
-            runAsUser: 1000 # nri-kube-events
-            runAsNonRoot: false
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           ports:
@@ -53,6 +70,10 @@ spec:
             - name: NRIA_STAGING
               value: "true"
             {{- end }}
+            {{- if .Values.proxy }}
+            - name: NRIA_PROXY
+              value: "{{ .Values.proxy }}"
+            {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
               name: tmpfs-data
@@ -60,8 +81,21 @@ spec:
               name: tmpfs-user-data
             - mountPath: /tmp
               name: tmpfs-tmp
+            {{- if .Values.config }}
+            - name: config
+              mountPath: /etc/newrelic-infra.yml
+              subPath: newrelic-infra.yml
+            {{- end }}
       serviceAccountName: {{ template "nri-kube-events.serviceAccountName" . }}
       volumes:
+        {{- if .Values.config }}
+        - name: config
+          configMap:
+            name: {{ template "nri-kube-events.fullname" . }}-agent-config
+            items:
+            - key: newrelic-infra.yml
+              path: newrelic-infra.yml
+        {{- end }}
         - name: config-volume
           configMap:
             name: {{ template "nri-kube-events.fullname" . }}-config

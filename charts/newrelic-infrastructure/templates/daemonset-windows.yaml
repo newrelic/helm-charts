@@ -7,6 +7,10 @@ metadata:
     kubernetes.io/os: windows
     {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}-windows
+  annotations:
+  {{- if .Values.daemonSet.annotations }}
+{{ toYaml .Values.daemonSet.annotations | indent 4 }}
+  {{- end }}
 spec:
   updateStrategy:
     type: {{ .Values.updateStrategy }}
@@ -39,7 +43,10 @@ spec:
         - name: {{ template "newrelic.name" . }}
           image: {{ template "newrelic.windowsImage" . }}
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-          securityContext: {}
+          {{- if $.Values.windowsSecurityContext }}
+          securityContext:
+{{ toYaml $.Values.windowsSecurityContext | indent 12 }}
+          {{- end }}
           env:
             - name: "NRIA_LICENSE_KEY"
               valueFrom:

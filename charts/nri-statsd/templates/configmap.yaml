@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "nri-statsd.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "nri-statsd.labels" . | indent 4 }}
+data:
+  nri-statsd.toml: |
+    backends = 'newrelic'
+    metrics-addr = ':{{ .Values.statsdPort }}'
+  {{- range $k, $v := .Values.additionalConfig }}
+    {{ $k }} = {{ $v | squote }}
+  {{- end }}
+
+    [newrelic]
+    flush-type = '{{ .Values.flushType }}'
+    transport = '{{ .Values.transport }}'
+    address = 'https://{{ .Values.insightsDomain }}/v1/accounts/{{ .Values.accountId }}/events'
+{{- if (include "newrelic.nrStaging" .) }}
+    address-metrics = 'https://staging-metric-api.newrelic.com/metric/v1'
+{{- else }}
+    address-metrics = 'https://{{ .Values.metricsDomain }}/metric/v1'
+{{- end }}
+    api-key = '{{ include "nri-statsd.insightsKey" . }}'
+  {{- range $k, $v := .Values.additionalNewRelicConfig }}
+    {{ $k }} = {{ $v | squote }}
+  {{- end }}

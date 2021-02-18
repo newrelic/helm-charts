@@ -1,8 +1,8 @@
 {{- if (include "newrelic-logging.areValuesValid" .) }}
 apiVersion: apps/v1
-#apiVersion: apps/v1
 kind: DaemonSet
 metadata:
+  namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic-logging.labels" . | indent 4 }}
   name: {{ template "newrelic-logging.fullname" . }}
 spec:
@@ -30,6 +30,10 @@ spec:
       hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
       dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 10
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
         - name: {{ template "newrelic-logging.name" . }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -58,11 +62,19 @@ spec:
                   key: {{ include "newrelic-logging.customSecretKey" . }}
                   {{- end }}
             - name: CLUSTER_NAME
-              value: {{ include "newrelic-logging.clusterName" . }}
+              value: {{ include "newrelic-logging.cluster" . }}
             - name: LOG_LEVEL
               value: {{ .Values.fluentBit.logLevel | quote }}
+            - name: LOG_PARSER
+              {{- if .Values.fluentBit.criEnabled }}
+              value: "cri"
+              {{- else }}
+              value: "docker"
+              {{- end }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
+            - name: K8S_LOGGING_EXCLUDE
+              value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
           command:
             - /fluent-bit/bin/fluent-bit
             - -c

@@ -1,6 +1,10 @@
 # IMPORTANT: Specify your New Relic API key here.
 # licenseKey:
 #
+# Optionally, specify a cluster name and log records can
+# be filtered by cluster.
+# cluster:
+#
 # or Specify secret which contains New Relic API key
 # customSecretName: secret_name
 # customSecretLicenseKey: secret_key
@@ -10,7 +14,7 @@
 #
 # global:
 #   licenseKey:
-#   clusterName:
+#   cluster:
 #   customSecretName:
 #   customSecretLicenseKey:
 #
@@ -23,11 +27,16 @@
 fluentBit:
   logLevel: "info"
   path: "/var/log/containers/*.log"
+  criEnabled: false
+  k8sLoggingExclude: "Off"
 
 image:
   repository: newrelic/newrelic-fluentbit-output
   tag: ""
   pullPolicy: IfNotPresent
+  ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  # pullSecrets:
+    # - name: regsecret
 
 resources:
   limits:
