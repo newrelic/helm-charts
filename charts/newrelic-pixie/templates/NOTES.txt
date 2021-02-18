@@ -1,0 +1,16 @@
+{{- if (include "newrelic-pixie.cluster" .) }}
+Your deployment of the New Relic Pixie integration is complete.
+{{- else -}}
+###############################################################
+####       ERROR: You did not set a cluster name.          ####
+###############################################################
+
+This deployment will be incomplete until you set a cluster name.
+
+Run:
+
+    helm upgrade {{ .Release.Name }} \
+        --set cluster=YOUR-CLUSTER-NAME \
+        newrelic/newrelic-pixie
+
+{{- end -}}

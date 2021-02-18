@@ -1,0 +1,32 @@
+{{- if (include "newrelic-pixie.cluster" .) }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "newrelic-pixie.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic-pixie.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "newrelic-pixie.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "newrelic-pixie.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ template "newrelic-pixie.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        command: [ "/bin/bash", "-c", "--" ]
+        args: [ "while true; do sleep 30; done;" ]
+        env:
+        - name: clusterName
+          value: {{ include "newrelic-pixie.cluster" . }}
+        {{- if .Values.resources }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        {{- end }}
+{{- end }}
