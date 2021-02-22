@@ -54,9 +54,9 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
 | `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will creat a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
-| `version` part of `windowsOsList` | Windows version monitored. | `2004` |
-| `imageTag`  part of `windowsOsList` | Tag for the container image compatible with the specified build version. | `2.2.0-windows-2004-alpha` |
-| `buildNumber`  part of `windowsOsList` | Build number associated to the specified Windows version. This value will be used to create a node selector `node.kubernetes.io/windows-build=buildNumber` | `10.0.19041` |
+| `windowsOsList[].version` | Windows version monitored. | `2004` |
+| `windowsOsList[].imageTag` | Tag for the container image compatible with the specified build version. | `2.2.0-windows-2004-alpha` |
+| `windowsOsList[].buildNumber` | Build number associated to the specified Windows version. This value will be used to create a node selector `node.kubernetes.io/windows-build=buildNumber` | `10.0.19041` |
 | `openshift.enabled` | Enables OpenShift configuration options. | `false` |
 | `openshift.version` | OpenShift version for witch enable specific configuration options. Values supported ["3.x","4.x"]. For 4.x it includes OpenShift specific Control Plane endpoints and CRI-O runtime |  |
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
