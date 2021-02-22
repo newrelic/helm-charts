@@ -6,6 +6,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{- include "nri-metadata-injection.labels" . | nindent 4 }}
+  annotations:
+# Dynamic annotation to force helm to re-deploy the job on upgrades
+# See https://github.com/helm/helm/issues/7082
+"helm-timestamp": "{{ now }}"
 spec:
   template:
 metadata:
