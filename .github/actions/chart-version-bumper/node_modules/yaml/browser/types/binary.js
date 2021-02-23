@@ -1,6 +1,8 @@
-import { binary } from '../dist/tags/yaml-1.1/binary'
-export { binary }
-export default [binary]
+'use strict'
+Object.defineProperty(exports, '__esModule', { value: true })
 
-import { warnFileDeprecation } from './dist/warnings'
-warnFileDeprecation(__filename)
+const legacy = require('../dist/legacy-exports')
+exports.binary = legacy.binary
+exports.default = [exports.binary]
+
+legacy.warnFileDeprecation(__filename)

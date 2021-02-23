@@ -1,2 +1,2 @@
-module.exports = require('./dist/schema/Pair').Pair
-require('./dist/warnings').warnFileDeprecation(__filename)
+module.exports = require('./dist/types').Pair
+require('./dist/legacy-exports').warnFileDeprecation(__filename)
