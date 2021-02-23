@@ -134,6 +134,7 @@ See [values.yaml](values.yaml) for the default values
 | `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key)| `false`  |
 | `fluentBit.criEnabled` | We assume that `kubelet`directly communicates with the Docker container engine. Set this to `true` if your K8s installation uses [CRI](https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/) instead, in order to get the logs properly parsed. | `false`  |
 | `fluentBit.k8sLoggingExclude`  | Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude. | `Off`|
+| `fluentBit.additionalEnvVariables` | Additional environmental variables for fluentbit pods| `[]]`|
 | `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.
 
 
