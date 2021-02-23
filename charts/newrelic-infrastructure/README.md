@@ -30,7 +30,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `image.pullPolicy` | The pull policy.  | `IfNotPresent`  |
 | `image.pullSecrets`| Image pull secrets.   | `nil`   |
 | `image.tag`| The version of the container to pull. | `2.0.0`   |
-| `image.windowsTag` | The version of the Windows container to pull. | `1.21.0-windows-1809-alpha` |
+| `image.windowsTag` | (Deprecated) The version of the Windows container to pull. | `1.21.0-windows-1809-alpha` |
 | `resources`| Any resources you wish to assign to the pod.  | See Resources below |
 | `podAnnotations`   | If you wish to provide additional annotations to apply to the pod(s), specify them here.  | |
 | `verboseLog`   | Should the agent log verbosely. (Boolean) | `false` |
@@ -53,6 +53,10 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `enableProcessMetrics` | Enables the sending of process metrics to New Relic.  | `false` |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`| Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
+| `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will creat a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
+| `windowsOsList[].version` | Windows version monitored. | `2004` |
+| `windowsOsList[].imageTag` | Tag for the container image compatible with the specified build version. | `2.2.0-windows-2004-alpha` |
+| `windowsOsList[].buildNumber` | Build number associated to the specified Windows version. This value will be used to create a node selector `node.kubernetes.io/windows-build=buildNumber` | `10.0.19041` |
 | `openshift.enabled` | Enables OpenShift configuration options. | `false` |
 | `openshift.version` | OpenShift version for witch enable specific configuration options. Values supported ["3.x","4.x"]. For 4.x it includes OpenShift specific Control Plane endpoints and CRI-O runtime |  |
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
@@ -160,6 +164,15 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
 * `memoryUsedBytes`: in the UI, this is displayed in the pod card that appears when you click on a pod, and will show no data. We will soon fix this by updating our charts to use memoryWorkingSetBytes instead.
 * Volume:
 * `fsUsedBytes`: zero, so fsUsedPercent is zero
+
+#### Multiple Windows node builds running in the same cluster
+
+Multiple windows build for the nodes are supported by this chart. A different daemonSet is generated for each of them as specified by the value object `windowsOsList`.
+
+Accordigly the old value for the Windoes image `windowsTag` is deprecated and will be removed in the future. Currently if specified still overwrite the image tag specified by the windowsOsList.
+
+Notice that the [kubernetes standard](https://kubernetes.io/docs/setup/production-environment/windows/user-guide-windows-containers/) for running containers over Windows, requires the presence of the label on the node `node.kubernetes.io/windows-build`. This label is added automatically to each node for versions `>1.17` but should be added manually otherwise.
+This helm charts expects the presence of such labels on the different Windows node and schedules thorugh nodeSelectors the daemonSets accordngly.
 
 # Config file
 
