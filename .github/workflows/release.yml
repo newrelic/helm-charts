@@ -23,7 +23,10 @@ run: |
   git config user.name "$GITHUB_ACTOR"
   git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+  - name: Install Helm
+uses: azure/setup-helm@v1
+
   - name: Run chart-releaser
-uses: helm/chart-releaser-action@v1.0.0-rc.2
+uses: helm/chart-releaser-action@v1.2.0
 env:
   CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
