@@ -1,12 +1,17 @@
-const opt = require('./dist/tags/options')
-exports.binaryOptions = opt.binaryOptions
-exports.boolOptions = opt.boolOptions
-exports.intOptions = opt.intOptions
-exports.nullOptions = opt.nullOptions
-exports.strOptions = opt.strOptions
+const types = require('./dist/types')
 
-exports.Schema = require('./dist/schema').Schema
-exports.YAMLMap = require('./dist/schema/Map').YAMLMap
-exports.YAMLSeq = require('./dist/schema/Seq').YAMLSeq
-exports.Pair = require('./dist/schema/Pair').Pair
-exports.Scalar = require('./dist/schema/Scalar').Scalar
+exports.binaryOptions = types.binaryOptions
+exports.boolOptions = types.boolOptions
+exports.intOptions = types.intOptions
+exports.nullOptions = types.nullOptions
+exports.strOptions = types.strOptions
+
+exports.Schema = types.Schema
+exports.Alias = types.Alias
+exports.Collection = types.Collection
+exports.Merge = types.Merge
+exports.Node = types.Node
+exports.Pair = types.Pair
+exports.Scalar = types.Scalar
+exports.YAMLMap = types.YAMLMap
+exports.YAMLSeq = types.YAMLSeq
