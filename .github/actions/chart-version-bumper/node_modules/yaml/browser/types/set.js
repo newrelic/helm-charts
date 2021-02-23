@@ -1,4 +1,3 @@
-export { set as default } from '../dist/tags/yaml-1.1/set'
-
-import { warnFileDeprecation } from './dist/warnings'
-warnFileDeprecation(__filename)
+const legacy = require('../dist/legacy-exports')
+module.exports = legacy.set
+legacy.warnFileDeprecation(__filename)

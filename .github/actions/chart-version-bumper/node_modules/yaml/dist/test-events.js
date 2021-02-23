@@ -1,19 +1,19 @@
-"use strict";
+'use strict';
 
-exports.testEvents = testEvents;
+require('./PlainValue-ec8e588e.js');
+var parseCst = require('./parse-cst.js');
+require('./resolveSeq-4a68b39b.js');
+var Document$1 = require('./Document-2cf6b08c.js');
+require('./Schema-42e9705c.js');
+require('./warnings-39684f17.js');
 
-var _parse = require("./cst/parse");
-
-var _Document = require("./Document");
-
-// test harness for yaml-test-suite event tests
 function testEvents(src, options) {
   const opt = Object.assign({
     keepCstNodes: true,
     keepNodeTypes: true,
     version: '1.2'
   }, options);
-  const docs = (0, _parse.parse)(src).map(cstDoc => new _Document.Document(opt).parse(cstDoc));
+  const docs = parseCst.parse(src).map(cstDoc => new Document$1.Document(opt).parse(cstDoc));
   const errDoc = docs.find(doc => doc.errors.length > 0);
   const error = errDoc ? errDoc.errors[0].message : null;
   const events = ['+STR'];
@@ -158,3 +158,5 @@ function addEvents(events, doc, e, node) {
     events.push(`=VAL${props} ${scalar}${value}`);
   }
 }
+
+exports.testEvents = testEvents;
