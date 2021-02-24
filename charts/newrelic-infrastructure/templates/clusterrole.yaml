@@ -13,9 +13,6 @@ rules:
       - "nodes/proxy"
       - "pods"
       - "services"
-{{- if eq .Values.rbac.limitSecretAccess false }}
-      - "secrets"
-{{- end}}
     verbs: ["get", "list"]
   - nonResourceURLs: ["/metrics"]
     verbs: ["get"]
@@ -29,7 +26,7 @@ rules:
     verbs:
       - use
 {{- end -}}
-{{- if eq .Values.rbac.limitSecretAccess true }}
+{{- if .Values.etcdTlsSecretNamespace}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole

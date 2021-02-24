@@ -1,21 +1,5 @@
 {{- if .Values.rbac.create }}
-{{- if eq .Values.rbac.limitSecretAccess true }}
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels: {{ include "newrelic.labels" . | indent 4 }}
-  name: {{ template "newrelic.fullname" . }}-secrets
-  namespace: {{ .Release.Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ template "newrelic.fullname" . }}-secrets
-subjects:
-- kind: ServiceAccount
-  name: {{ template "newrelic.serviceAccountName" . }}
-  namespace: {{ .Release.Namespace }}
 {{- if .Values.etcdTlsSecretNamespace}}
----
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
@@ -30,6 +14,5 @@ subjects:
 - kind: ServiceAccount
   name: {{ template "newrelic.serviceAccountName" . }}
   namespace: {{ .Release.Namespace }}
-{{- end -}}
 {{- end -}}
 {{- end -}}
