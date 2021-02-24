@@ -26,7 +26,7 @@ rules:
     verbs:
       - use
 {{- end -}}
-{{- if .Values.etcdTlsSecretNamespace}}
+{{- if or (.Values.etcdTlsSecretName) (.Values.etcdTlsSecretNamespace)}}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
