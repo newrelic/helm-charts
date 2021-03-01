@@ -29,7 +29,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `image.repository`             | The container to pull.                                                                                                                                                                                                                            | `newrelic/infrastructure-k8s`   |
 | `image.pullPolicy`             | The pull policy.                                                                                                                                                                                                                                  | `IfNotPresent`                  |
 | `image.pullSecrets`            | Image pull secrets.                                                                                                                                                                                                                               | `nil`                           |
-| `image.tag`                    | The version of the container to pull.                                                                                                                                                                                                             | `2.0.0`                       |
+| `image.tag`                    | The version of the container to pull.                                                                                                                                                                                                             | `2.3.0`                       |
 | `image.windowsTag`             | (Deprecated) The version of the Windows container to pull.                                                                                                                                                                                                     | `1.21.0-windows-1809-alpha`     |
 | `resources`                    | Any resources you wish to assign to the pod.                                                                                                                                                                                                      | See Resources below             |
 | `podAnnotations`               | If you wish to provide additional annotations to apply to the pod(s), specify them here.                                                                                                                                                          |                                 |
@@ -50,7 +50,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `schedulerEndpointUrl`         | Explicitly sets the scheduler component url.                                                                                                                                                                                                      |                                 |
 | `controllerManagerEndpointUrl` | Explicitly sets the controller manager component url.                                                                                                                                                                                             |                                 |
 | `eventQueueDepth`              | Increases the in-memory cache of the agent to accommodate for more samples at a time. | |
-| `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `false` |
+| `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `(empty)` (Account default<sup>1</sup>) |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
 | `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will creat a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
@@ -62,6 +62,11 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
 | `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.
 
+> 1: Default value will depend on the creation date of the account owning the specified License Key:
+> * Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitely set to `false`. This is done to respect the old default behavior of the Infrastructure Agent.
+> * New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitely set to `true`.
+> 
+> [Additional information](https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes/new-relic-infrastructure-agent-1120)
 ## Example
 
 Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)
