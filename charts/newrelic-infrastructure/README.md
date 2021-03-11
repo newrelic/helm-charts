@@ -51,6 +51,10 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `controllerManagerEndpointUrl` | Explicitly sets the controller manager component url.                                                                                                                                                                                             |                                 |
 | `eventQueueDepth`              | Increases the in-memory cache of the agent to accommodate for more samples at a time. | |
 | `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `(empty)` (Account default<sup>1</sup>) |
+| `metricsNetworkSampleRate`     | Sample rate of network samples, in seconds. | `10` |
+| `metricsProcessSampleRate`     | Sample rate of process samples, in seconds. | `20` |
+| `metricsStorageSampleRate`     | Sample rate of storage samples, in seconds. | `5` |
+| `metricsSystemSampleRate`      | Sample rate of network samples, in seconds. | `5` |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
 | `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will creat a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
