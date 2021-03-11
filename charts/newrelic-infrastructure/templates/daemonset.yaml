@@ -142,19 +142,19 @@ spec:
             {{- end }}
             {{- if  $.Values.metricsNetworkSampleRate }}
             - name: "NRIA_METRICS_NETWORK_SAMPLE_RATE"
-              value: {{  $.Values.metricsNetworkSampleRate | default 10 }}
+              value: {{  $.Values.metricsNetworkSampleRate | quote }}
             {{- end }}
             {{- if  $.Values.metricsProcessSampleRate }}
             - name: "NRIA_METRICS_PROCESS_SAMPLE_RATE"
-              value: {{  $.Values.metricsProcessSampleRate | default 20 }}
+              value: {{  $.Values.metricsProcessSampleRate | quote }}
             {{- end }}
             {{- if  $.Values.metricsStorageSampleRate }}
             - name: "NRIA_METRICS_STORAGE_SAMPLE_RATE"
-              value: {{  $.Values.metricsStorageSampleRate | default 5 }}
+              value: {{  $.Values.metricsStorageSampleRate | quote }}
             {{- end }}
             {{- if  $.Values.metricsSystemSampleRate }}
             - name: "NRIA_METRICS_SYSTEM_SAMPLE_RATE"
-              value: {{  $.Values.metricsSystemSampleRate | default 5 }}
+              value: {{  $.Values.metricsSystemSampleRate | quote }}
             {{- end }}
             {{- if (include "newrelic.nrStaging" .) }}
             - name: "NRIA_STAGING"
