@@ -9,7 +9,7 @@ metadata:
   annotations:
 # Dynamic annotation to force helm to re-deploy the job on upgrades
 # See https://github.com/helm/helm/issues/7082
-"helm-timestamp": "{{ now }}"
+helm-timestamp: {{ now | quote }}
 spec:
   template:
 metadata:
