@@ -1368,6 +1368,45 @@ entries:
   nri-bundle:
   - apiVersion: v1
     appVersion: "1.0"
+    created: "2021-03-15T14:19:58.52210463Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: file://../newrelic-infrastructure
+      version: 2.1.0
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: file://../nri-prometheus
+      version: 1.6.2
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      version: 1.3.5
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://charts.helm.sh/stable
+      version: 2.9.1
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: file://../nri-kube-events
+      version: 1.6.1
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: file://../newrelic-logging
+      version: 1.4.6
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: 4d9b55fa6182f62a164dce9fe8ded3351656a6e177c25fae1b99c66deac2e9de
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    maintainers:
+    - name: douglascamata
+    - name: jorik
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-2.5.0/nri-bundle-2.5.0.tgz
+    version: 2.5.0
+  - apiVersion: v1
+    appVersion: "1.0"
     created: "2021-02-23T10:00:39.330703388Z"
     dependencies:
     - condition: infrastructure.enabled
@@ -3161,6 +3200,26 @@ entries:
   nri-metadata-injection:
   - apiVersion: v1
     appVersion: 1.3.2
+    created: "2021-03-15T14:19:58.66799576Z"
+    description: A Helm chart to deploy the New Relic metadata injection webhook.
+    digest: ce20d0cf4bfda03094ba05233abf5c8565b2843ff128280964ccc856af957d7e
+    home: https://hub.docker.com/r/newrelic/k8s-metadata-injection
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    keywords:
+    - infrastructure
+    - newrelic
+    - monitoring
+    maintainers:
+    - name: douglascamata
+    - name: jorik
+    name: nri-metadata-injection
+    sources:
+    - https://github.com/newrelic/k8s-metadata-injection
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-metadata-injection-1.3.5/nri-metadata-injection-1.3.5.tgz
+    version: 1.3.5
+  - apiVersion: v1
+    appVersion: 1.3.2
     created: "2021-02-22T13:34:59.812559434Z"
     description: A Helm chart to deploy the New Relic metadata injection webhook.
     digest: 2bcb188260f4876ebdc345d035452fd08674c3d5146df9a50a58b581453f0f17
@@ -3955,4 +4014,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2021-03-01T13:45:15.98678634Z"
+generated: "2021-03-15T14:19:58.673595011Z"
