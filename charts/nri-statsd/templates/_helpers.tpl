@@ -90,6 +90,36 @@ Return the insightsKey
 {{- end -}}
 
 {{/*
+Return the customSecretName
+*/}}
+{{- define "nri-statsd.customSecretName" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.customSecretName }}
+      {{- .Values.global.customSecretName -}}
+  {{- else -}}
+      {{- .Values.customSecretName | default "" -}}
+  {{- end -}}
+{{- else -}}
+    {{- .Values.customSecretName | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the customSecretInsightsKey
+*/}}
+{{- define "nri-statsd.customSecretInsightsKey" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.customSecretInsightsKey }}
+      {{- .Values.global.customSecretInsightsKey -}}
+  {{- else -}}
+      {{- .Values.customSecretInsightsKey | default "" -}}
+  {{- end -}}
+{{- else -}}
+    {{- .Values.customSecretInsightsKey | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the cluster
 */}}
 {{- define "nri-statsd.cluster" -}}
@@ -124,5 +154,7 @@ insightsKey and cluster are set.
 {{- define "nri-statsd.areValuesValid" -}}
 {{- $cluster := include "nri-statsd.cluster" . -}}
 {{- $insightsKey := include "nri-statsd.insightsKey" . -}}
-{{- and (or $insightsKey) $cluster}}
+{{- $customSecretName := include "nri-statsd.customSecretName" . -}}
+{{- $customSecretInsightsKey := include "nri-statsd.customSecretInsightsKey" . -}}
+{{- and (or $insightsKey (and $customSecretName $customSecretInsightsKey)) $cluster }}
 {{- end -}}

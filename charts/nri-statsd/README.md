@@ -10,6 +10,8 @@ This chart will deploy the New Relic's StatsD Integration. Keep in mind that due
 |------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------|
 | `global.cluster` - `cluster`                               | The cluster name for the Kubernetes cluster.                                                                                                                                                       |                                        |
 | `global.insightsKey` - `insightsKey`                       | The New Relic Inights API Key.                                                                                                                                                                     |                                        |
+| `global.customSecretName` - `customSecretName` | Uses the customSecretName variable found in the bundle chart |  |
+| `global.customSecretInsightsKey` - `customSecretInsightsKey` | Uses the customSecretInsightsKey variable found in the bundle chart |  |
 | `accountId`                                                | The New Relic account ID.                                                                                                                                                                          |                                        |
 | `flushType`                                                | The type of metric being reported. (`metrics`, `insights`, `infra`)                                                                                                                                |`metrics`                               |
 | `statsdPort`                                               | The port statsd pods and the service will listen on.                                                                                                                                               | `8125`                                 |
@@ -32,6 +34,7 @@ This chart will deploy the New Relic's StatsD Integration. Keep in mind that due
 | `tolerations`                                              | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                       | `[]`                                   |
 | `affinity`                                                 | Node affinity to use for scheduling                                                                                                                                                                | `{}`                                   |
 | `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                              | false                                  |
+| `enableConfigmap` | Enables the use of the packaged configmap for advanced configuration, otherwise, use the container's config generation script | true |
 
 ## Example
 
