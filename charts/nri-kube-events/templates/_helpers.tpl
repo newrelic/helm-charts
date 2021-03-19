@@ -45,6 +45,18 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 
+{{/* Generate additional pod labels labels */}}
+{{- define "nri-kube-events.podLabels" }}
+{{- if .Values.global }}
+{{- if .Values.global.podLabels }}
+{{ toYaml .Values.global.podLabels }}
+{{- end }}
+{{- end }}
+{{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels }}
+{{- end }}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}

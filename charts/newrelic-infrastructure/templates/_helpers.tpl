@@ -37,6 +37,18 @@ release: {{.Release.Name }}
 mode: {{ template "newrelic.mode" . }}
 {{- end }}
 
+{{/* Generate additional pod labels labels */}}
+{{- define "newrelic.podLabels" }}
+{{- if .Values.global }}
+{{- if .Values.global.podLabels }}
+{{ toYaml .Values.global.podLabels }}
+{{- end }}
+{{- end }}
+{{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels }}
+{{- end }}
+{{- end }}
+
 {{/*
 Create chart name and version as used by the chart label.
 */}}

@@ -15,6 +15,7 @@ spec:
     metadata:
       labels:
 {{ include "nri-statsd.labels" . | indent 8 }}
+{{- include "nri-statsd.podLabels" . | indent 8 }}
     spec:
       serviceAccountName: {{ template "nri-statsd.serviceAccountName" . }}
       {{- if .Values.image.pullSecrets }}

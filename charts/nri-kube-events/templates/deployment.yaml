@@ -23,6 +23,7 @@ spec:
 {{- end }}
       labels:
 {{ include "nri-kube-events.labels" . | indent 8 }}
+{{- include "nri-kube-events.podLabels" . | indent 8 }}
     spec:
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:

@@ -25,9 +25,7 @@ spec:
       labels:
         app: {{ template "newrelic.name" . }}
         release: {{.Release.Name }}
-        {{- if .Values.podLabels}}
-{{ toYaml .Values.podLabels | indent 8 }}
-        {{- end }}
+{{- include "newrelic.podLabels" . | indent 8 }}
         mode: {{ template "newrelic.mode" . }}
     spec:
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}

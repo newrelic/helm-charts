@@ -34,7 +34,7 @@ Create chart name and version as used by the chart label.
 {{/*
 Common labels
 */}}
-{{- define "nri-prometheus.labels" -}}
+{{- define "nri-.labels" -}}
 app.kubernetes.io/name: {{ include "nri-prometheus.name" . }}
 helm.sh/chart: {{ include "nri-prometheus.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
@@ -43,6 +43,18 @@ app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
+
+{{/* Generate additional pod labels labels */}}
+{{- define "nri-prometheus.podLabels" }}
+{{- if .Values.global }}
+{{- if .Values.global.podLabels }}
+{{ toYaml .Values.global.podLabels }}
+{{- end }}
+{{- end }}
+{{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels }}
+{{- end }}
+{{- end }}
 
 {{/*
 Create the name of the service account to use

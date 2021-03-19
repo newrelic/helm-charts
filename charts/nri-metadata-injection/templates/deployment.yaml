@@ -19,6 +19,7 @@ spec:
 {{- end }}
       labels:
         {{- include "nri-metadata-injection.labels" . | nindent 8 }}
+{{- include "nri-metadata-injection.podLabels" . | indent 8 }}
     spec:
       {{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
       serviceAccountName: {{ template "nri-metadata-injection.serviceAccountName" . }}

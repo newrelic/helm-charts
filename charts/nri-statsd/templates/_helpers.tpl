@@ -52,6 +52,18 @@ app.kubernetes.io/name: {{ include "nri-statsd.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
+{{/* Generate additional pod labels labels */}}
+{{- define "nri-statsd.podLabels" }}
+{{- if .Values.global }}
+{{- if .Values.global.podLabels }}
+{{ toYaml .Values.global.podLabels }}
+{{- end }}
+{{- end }}
+{{- if .Values.podLabels }}
+{{ toYaml .Values.podLabels }}
+{{- end }}
+{{- end }}
+
 {{/*
 Create the name of the service account to use
 */}}

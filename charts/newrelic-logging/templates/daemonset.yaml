@@ -26,9 +26,7 @@ spec:
         app: {{ template "newrelic-logging.name" . }}
         release: {{.Release.Name }}
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
-        {{- if .Values.podLabels}}
-        {{ toYaml .Values.podLabels }}
-        {{- end }}
+{{- include "newrelic-logging.podLabels" . | indent 8 }}
     spec:
       serviceAccountName: {{ template "newrelic-logging.serviceAccountName" . }}
       hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
