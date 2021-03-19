@@ -34,7 +34,7 @@ Create chart name and version as used by the chart label.
 {{/*
 Common labels
 */}}
-{{- define "nri-.labels" -}}
+{{- define "nri-prometheus.labels" -}}
 app.kubernetes.io/name: {{ include "nri-prometheus.name" . }}
 helm.sh/chart: {{ include "nri-prometheus.chart" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
