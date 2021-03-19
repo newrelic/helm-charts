@@ -14,7 +14,6 @@ This chart bundles multiple New Relic products helm-charts.
 | `global.customSecretName`        | Name of the Secret object where the license key is stored | |
 | `global.customSecretLicenseKey`  | Key in the Secret object where the license key is stored. | |
 | `global.customSecretInsightsKey` | Key in the Secret object where the insights key is stored. | |
-| `global.podLabels`               | Labels to apply to all pods created | |
 | `infrastructure.enabled`         | Install the [`newrelic-infrastructure` chart][3] | true |
 | `prometheus.enabled`             | Install the [`nri-prometheus` chart][4] | false |
 | `webhook.enabled`                | Install the [`nri-metadata-injection` chart][5] | true |
@@ -24,7 +23,7 @@ This chart bundles multiple New Relic products helm-charts.
 
 ## Configure Dependencies
 
-It is possible to configure dependencies values from this chart.
+It is possible to configure dependencies values from this chart.  
 For example you can configure `verboseLog` variable of the newrelic-infrastructure chart installed as a dependency as follows.
 
 ``` yaml
@@ -45,7 +44,7 @@ configuration under `integrations_config` that it will passed down to the `newre
 
 You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
 the integration configuration. The name must end in ".yaml" as this will be the
-filename generated and the Infrastructure agent only looks for YAML files.
+filename generated and the Infrastructure agent only looks for YAML files. 
 
 The data part is the actual integration configuration as described in the spec here:
 https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
@@ -75,7 +74,7 @@ newrelic-infrastructure:
 ```
 ## Upgrade dependency version
 
-Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_dependency/). In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` command to update chart packages under `/charts` and also the `requirements.lock` file
+Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_dependency/). In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` command to update chart packages under `/charts` and also the `requirements.lock` file  
 
 ## Example
 
