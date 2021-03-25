@@ -74,7 +74,12 @@ labels:
 ```
 ## Upgrade dependency version
 
-Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_dependency/). In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` command to update chart packages under `/charts` and also the `requirements.lock` file  
+Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_dependency/). 
+In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` 
+command to update chart packages under `/charts` and also the `requirements.lock` file.
+
+ATTENTION: do not commit the internal dependencies. We only commit *kube-state-metrics* because we don't own its distribution
+but would like to be resilient to failures of its repository.
 
 ## Example
 
@@ -95,7 +100,7 @@ helm install newrelic/nri-bundle \
 ```
 
 [1]: https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key
-[2]: https://github.com/helm/charts/tree/master/stable/kube-state-metrics
+[2]: https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics
 [3]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure
 [4]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-prometheus
 [5]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-metadata-injection
