@@ -19,7 +19,7 @@ jobs:
           chart_version: ${{  github.event.client_payload.chart_version }}
           app_version: ${{  github.event.client_payload.app_version }}
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v2
+        uses: peter-evans/create-pull-request@v3
         with:
           token: "${{ secrets.GITHUB_TOKEN }}"
           commit-message: ${{ steps.version-bump.outputs.changeString }}
