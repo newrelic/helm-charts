@@ -6,8 +6,23 @@ branches:
   - master
 
 jobs:
+  # Sometimes chart-releaser might fetch an outdated index.yaml from gh-pages, causing a WAW hazard on the repo
+  # This job checks the remote file is up to date with the local one on release
+  validate-gh-pages-index:
+runs-on: ubuntu-latest
+steps:
+  - name: Checkout
+uses: actions/checkout@v2
+with:
+  ref: gh-pages
+  - name: Download remote index file and check equality
+run: |
+  curl -vsSL https://newrelic.github.io/helm-charts/index.yaml > index.yaml.remote
+  test "$(md5sum < index.yaml)" = "$(md5sum < index.yaml.remote)"
+
   release:
 runs-on: ubuntu-latest
+needs: [ validate-gh-pages-index ]
 steps:
   - name: Checkout
 uses: actions/checkout@v2
