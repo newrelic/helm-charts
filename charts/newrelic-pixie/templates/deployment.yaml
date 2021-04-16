@@ -1,0 +1,49 @@
+{{- if .Values.global.cluster }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "newrelic-pixie.fullname" . }}
+  namespace: pl
+  labels:
+    {{- include "newrelic-pixie.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ template "newrelic-pixie.name" . }}
+  template:
+    metadata:
+      labels:
+        {{- include "newrelic-pixie.labels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: {{ template "newrelic-pixie.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        env:
+        - name: CLUSTER_NAME
+          value: {{ .Values.global.cluster }}
+        - name: NR_LICENSE_KEY
+          value: {{ .Values.global.licenseKey }}
+        - name: PIXIE_API_KEY
+          value: {{ .Values.apiKey }}
+        - name: PIXIE_CLUSTER_ID
+          valueFrom:
+            secretKeyRef:
+              key: cluster-id
+              name: pl-cluster-secrets
+        {{- if .Values.verbose }}
+        - name: VERBOSE
+          value: "true"
+        {{- end }}
+        {{- if .Values.global.nrStaging }}
+        - name: NR_TRACE_API
+          value: "https://staging-trace-api.newrelic.com/trace/v1"
+        - name: NR_METRIC_API
+          value: "https://staging-metric-api.newrelic.com/metric/v1"
+        {{- end }}
+        {{- if .Values.resources }}
+        resources:
+{{ toYaml .Values.resources | indent 10 }}
+        {{- end }}
+{{- end }}
