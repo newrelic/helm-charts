@@ -53,7 +53,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `(empty)` (Account default<sup>1</sup>) |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
-| `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will creat a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
+| `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will create a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
 | `windowsOsList[].version` | Windows version monitored. | `2004` |
 | `windowsOsList[].imageTag` | Tag for the container image compatible with the specified build version. | `2.2.0-windows-2004-alpha` |
 | `windowsOsList[].buildNumber` | Build number associated to the specified Windows version. This value will be used to create a node selector `node.kubernetes.io/windows-build=buildNumber` | `10.0.19041` |
@@ -63,9 +63,9 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.
 
 > 1: Default value will depend on the creation date of the account owning the specified License Key:
-> * Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitely set to `false`. This is done to respect the old default behavior of the Infrastructure Agent.
-> * New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitely set to `true`.
-> 
+> * Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitly set to `false`. This is done to respect the old default behavior of the Infrastructure Agent.
+> * New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitly set to `true`.
+>
 > [Additional information](https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes/new-relic-infrastructure-agent-1120)
 ## Example
 
@@ -174,10 +174,10 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
 
 Multiple windows build for the nodes are supported by this chart. A different daemonSet is generated for each of them as specified by the value object `windowsOsList`.
 
-Accordigly the old value for the Windoes image `windowsTag` is deprecated and will be removed in the future. Currently if specified still overwrite the image tag specified by the windowsOsList.
+Accordigly the old value for the Windows image `windowsTag` is deprecated and will be removed in the future. Currently if specified still overwrite the image tag specified by the windowsOsList.
 
 Notice that the [kubernetes standard](https://kubernetes.io/docs/setup/production-environment/windows/user-guide-windows-containers/) for running containers over Windows, requires the presence of the label on the node `node.kubernetes.io/windows-build`. This label is added automatically to each node for versions `>1.17` but should be added manually otherwise.
-This helm charts expects the presence of such labels on the different Windows node and schedules thorugh nodeSelectors the daemonSets accordngly.
+This helm charts expects the presence of such labels on the different Windows node and schedules through nodeSelectors the daemonSets accordingly.
 
 # Config file
 
