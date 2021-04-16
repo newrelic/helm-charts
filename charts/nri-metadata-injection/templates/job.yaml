@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "nri-metadata-injection.fullname" . }}-job
+  name: {{ template "nri-metadata-injection.fullname" . }}-job-{{ randAlphaNum 6 }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "nri-metadata-injection.labels" . | nindent 4 }}
