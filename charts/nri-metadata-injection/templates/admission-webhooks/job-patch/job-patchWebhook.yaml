@@ -1,0 +1,47 @@
+{{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name:  {{ template "nri-metadata-injection.fullname" . }}-admission-patch
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: {{ template "nri-metadata-injection.name" $ }}-admission-patch
+{{ include "nri-metadata-injection.labels" $ | indent 4 }}
+spec:
+  template:
+    metadata:
+      name:  {{ template "nri-metadata-injection.fullname" . }}-admission-patch
+      labels:
+        app: {{ template "nri-metadata-injection.name" $ }}-admission-patch
+{{ include "nri-metadata-injection.labels" $ | indent 8 }}
+    spec:
+      containers:
+        - name: patch
+          image: {{ .Values.jobImage.repository }}:{{ .Values.jobImage.tag }}
+          imagePullPolicy: {{ .Values.jobImage.pullPolicy }}
+          args:
+            - patch
+            - --webhook-name={{ template "nri-metadata-injection.fullname" . }}
+            - --namespace={{ .Release.Namespace }}
+            - --secret-name={{ template "nri-metadata-injection.fullname" . }}-admission
+            - --patch-failure-policy=Ignore
+            - --patch-validating=false
+          {{- if .Values.jobImage.volumeMounts }}
+          volumeMounts:
+          {{- include "tplvalues.render" ( dict "value" .Values.jobImage.volumeMounts "context" $ ) | nindent 10 }}
+          {{- end }}
+      restartPolicy: Never
+      {{- if .Values.jobImage.volumes }}
+      volumes:
+      {{- include "tplvalues.render" ( dict "value" .Values.jobImage.volumes "context" $ ) | nindent 8 }}
+      {{- end }}
+      restartPolicy: OnFailure
+      serviceAccountName: {{ template "nri-metadata-injection.fullname" . }}-admission
+      securityContext:
+        runAsGroup: 2000
+        runAsNonRoot: true
+        runAsUser: 2000
+{{- end }}
