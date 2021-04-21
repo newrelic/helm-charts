@@ -24,6 +24,9 @@ Then, to install this chart, run the following command:
 
 ```sh
 helm install newrelic/newrelic-pixie \
+  --set cluster=<Kubernetes cluster name> \
+  --set licenseKey=<Your New Relic license key> \
+  --set apiKey=<Your Pixie API key>
 ```
 
 ## Resources
