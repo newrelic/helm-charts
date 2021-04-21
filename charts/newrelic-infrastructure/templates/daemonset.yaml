@@ -136,6 +136,7 @@ spec:
             - name: "DISCOVERY_CACHE_TTL"
               value: {{ .Values.discoveryCacheTTL | quote }}
             {{- end }}
+            {{- /* Ugly hack to check if .Values.enableProcessMetrics is defined: */}}
             {{- if ne (print .Values.enableProcessMetrics) "<nil>" }}
             - name: "NRIA_ENABLE_PROCESS_METRICS"
               value: {{ .Values.enableProcessMetrics | quote }}
