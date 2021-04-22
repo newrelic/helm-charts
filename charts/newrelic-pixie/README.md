@@ -11,10 +11,13 @@ it needs to access the cluster id inside the Pixie secrets. By default, Pixie is
 
 | Parameter                     | Description                                                  | Default                    |
 | ----------------------------- | ------------------------------------------------------------ | -------------------------- |
-| `cluster`                     | The cluster name for the Kubernetes cluster.                 |                            |
-| `licenseKey`                  | The New Relic license key (stored in a secret)               |                            |
-| `apiKey`                      | The Pixie API key  (stored in a secret)                      |                            |
-| `verbose`                     | Whether the integration should run in verbose mode or not    | false                      |
+| `global.cluster` - `cluster`  | The cluster name for the Kubernetes cluster. Required.       |                            |
+| `global.licenseKey` - `licenseKey` | The New Relic license key (stored in a secret). Required.    |                            |
+| `apiKey`                      | The Pixie API key (stored in a secret). Required.            |                            |
+| `verbose`                     | Whether the integration should run in verbose mode or not.   | false                      |
+| `global.customSecretName` - `customSecretName` | Name of the Secret object where the New Relic license and Pixie API key are stored                                                                                                                                                                         |                                 |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the New Relic license key is stored.                                                                                                                                                             |                                 |
+| `global.customSecretApiKeyKey` - `customSecretApiKeyKey` | Key in the Secret object where the Pixie API key is stored.                                                                                                                                                             |                                 |
 
 ## Example
 
@@ -27,6 +30,7 @@ helm install newrelic/newrelic-pixie \
   --set cluster=<Kubernetes cluster name> \
   --set licenseKey=<Your New Relic license key> \
   --set apiKey=<Your Pixie API key> \ 
+  --namespace pl \
   --generate-name
 ```
 
