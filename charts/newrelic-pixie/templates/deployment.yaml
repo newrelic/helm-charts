@@ -45,7 +45,7 @@ spec:
               key: {{ include "newrelic-pixie.customSecretApiKeyKey" . }}
           {{- end }}
         - name: PIXIE_CLUSTER_ID
-          {{- if (include "Values.pixieClusterId" .) }}
+          {{- if (include ".Values.pixieClusterId" .) }}
           value: {{ .Values.pixieClusterId }}
           {{- else }}
           valueFrom:
