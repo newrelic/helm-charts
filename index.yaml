@@ -3,6 +3,28 @@ entries:
   newrelic-infrastructure:
   - apiVersion: v1
     appVersion: 2.4.0
+    created: "2021-04-22T08:52:51.611232898Z"
+    description: A Helm chart to deploy the New Relic Infrastructure Agent as a DaemonSet
+    digest: 082be4811367451e983a42f865df5f411df2442adb8e7382a21afc5d63e908ca
+    home: https://hub.docker.com/r/newrelic/infrastructure-k8s/
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    keywords:
+    - infrastructure
+    - newrelic
+    - monitoring
+    maintainers:
+    - name: paologallinaharbur
+    - name: davidbrota
+    - name: gsanchezgavier
+    - name: roobre
+    name: newrelic-infrastructure
+    sources:
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/newrelic-infrastructure-2.4.1/newrelic-infrastructure-2.4.1.tgz
+    version: 2.4.1
+  - apiVersion: v1
+    appVersion: 2.4.0
     created: "2021-04-16T13:44:45.945735843Z"
     description: A Helm chart to deploy the New Relic Infrastructure Agent as a DaemonSet
     digest: bfc6fed3807d56ad64ed3a3386075e2222a5c9eb8ad320e2af5f887b91fcde45
@@ -1454,6 +1476,47 @@ entries:
     - https://github.com/newrelic-experimental/helm-charts/releases/download/newrelic-logging-1.0.3/newrelic-logging-1.0.3.tgz
     version: 1.0.3
   nri-bundle:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-04-22T08:52:51.763297195Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: file://../newrelic-infrastructure
+      version: 2.4.1
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: file://../nri-prometheus
+      version: 1.7.0
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      version: 1.4.1
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes.github.io/kube-state-metrics
+      version: 2.13.2
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: file://../nri-kube-events
+      version: 1.8.0
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: file://../newrelic-logging
+      version: 1.4.7
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: 9ab66410ada9b242bff0a67f7ae349d64fbd335010a4b486d0f8552836339133
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    maintainers:
+    - name: paologallinaharbur
+    - name: davidbrota
+    - name: gsanchezgavier
+    - name: roobre
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-2.8.2/nri-bundle-2.8.2.tgz
+    version: 2.8.2
   - apiVersion: v1
     appVersion: "1.0"
     created: "2021-04-16T15:14:18.338187918Z"
@@ -4475,4 +4538,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2021-04-16T15:14:18.467753008Z"
+generated: "2021-04-22T08:52:51.765369376Z"
