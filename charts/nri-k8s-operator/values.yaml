@@ -1,0 +1,87 @@
+# IMPORTANT: The Kubernetes cluster name
+# https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+cluster: ""
+
+image:
+  repository: newrelic/k8s-metadata-injection
+  tag: 1.4.0
+  pullPolicy: IfNotPresent
+  ## It is possible to specify docker registry credentials
+  ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  # pullSecrets:
+    # - name: regsecret
+
+admissionWebhooksPatchJob:
+  image:
+    repository: jettech/kube-webhook-certgen
+    tag: v1.5.0
+    pullPolicy: IfNotPresent
+  # Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies
+  # Enforce a read-only root.
+  volumeMounts: []
+  #  - name: tmp
+  #    mountPath: /tmp
+
+  # Volumes to add to the job container
+  volumes: []
+  #  - name: tmp
+  #    emptyDir: {}
+
+replicas: 1
+
+resources:
+  limits:
+    memory: 80M
+  requests:
+    cpu: 100m
+    memory: 30M
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created for the job and
+  # the deployment.
+  #
+  # When `customTLSCertificate` is set to true, the service account is not
+  # necessary and it's not created in the case of `create=true`.
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name:
+
+# Configure podSecurityContext
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsGroup: 1001
+
+# Use custom tls certificates for the webhook, or let the chart handle it
+# automatically.
+#
+# Make sure to read the 'Manage custom certificates' section of the official
+# docs when using custom certificates.
+#
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes#configure-injection
+customTLSCertificate: false
+
+# If you wish to provide additional annotations to apply to the pod(s), specify
+# them here
+# podAnnotations:
+
+# Pod scheduling priority
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+
+# Webhook timeout
+#
+# Configure how long the API server should wait for a webhook to respond before treating the call as a failure
+#
+# Ref: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts
+timeoutSeconds: 30
+
+# Use cert manager for webhook certs
+certManager:
+  enabled: false
+
+fullnameOverride: ""
+affinity: {}
+tolerations: {}

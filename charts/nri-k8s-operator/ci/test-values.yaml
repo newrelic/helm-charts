@@ -1,0 +1,33 @@
+cluster: test-cluster
+serviceAccount:
+  name: nri-k8s-operator-test
+image:
+  pullSecrets:
+  - name: test-pull-secret
+admissionWebhooksPatchJob:
+  volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir:
+podAnnotations:
+  test-annotation: test-value
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      podAffinityTerm:
+        topologyKey: topology.kubernetes.io/zone
+        labelSelector:
+          matchExpressions:
+          - key: test-key
+            operator: In
+            values:
+            - test-value
+tolerations:
+- key: "key1"
+  operator: "Exists"
+  effect: "NoSchedule"
+nodeSelector:
+  beta.kubernetes.io/os: linux
