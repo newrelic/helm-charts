@@ -1,0 +1,30 @@
+{{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "nri-k8s-operator.fullname" . }}-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: {{ template "nri-k8s-operator.name" $ }}-admission
+{{ include "nri-k8s-operator.labels" $ | indent 4 }}
+rules:
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    verbs:
+      - get
+      - update
+{{- $kubeTargetVersion := default .Capabilities.KubeVersion.GitVersion .Values.kubeTargetVersionOverride }}
+{{- if semverCompare "> 1.15.0-0" $kubeTargetVersion }}
+  - apiGroups: ['policy']
+{{- else }}
+  - apiGroups: ['extensions']
+{{- end }}
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames:
+    - {{ template "nri-k8s-operator.fullname" . }}-admission
+{{- end }}

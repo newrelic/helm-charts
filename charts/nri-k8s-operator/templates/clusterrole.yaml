@@ -1,0 +1,32 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "nri-k8s-operator.fullname" . }}
+  labels:
+    {{- include "nri-k8s-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterrolebindings"]
+    verbs: ["list", "watch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterrolebindings"]
+    verbs: ["update"]
+    resourceNames: [{{ template "nri-k8s-operator.fullname" . }}-agent-mock]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "nri-k8s-operator.fullname" . }}-agent-mock
+  labels: {{- include "nri-k8s-operator.labels" . | nindent 4 }}
+rules:
+  - apiGroups: [""]
+    resources:
+      - "nodes"
+      - "nodes/metrics"
+      - "nodes/stats"
+      - "nodes/proxy"
+      - "pods"
+      - "services"
+    verbs: ["get", "list"]
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
