@@ -83,7 +83,7 @@ release: {{.Release.Name }}
 {{- end -}}
 
 {{/*
-Return the customSecretName where the New Relic license and Pixie API key will be stored
+Return the customSecretName where the New Relic license and Pixie API key are being stored.
 */}}
 {{- define "newrelic-pixie.customSecretName" -}}
 {{- if .Values.global }}
