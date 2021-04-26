@@ -1,6 +1,6 @@
-# newrelic-pixie (PRE-RELEASE)
+# newrelic-pixie (pre-release/early access program)
 
-**This chart is a pre-release and installs pre-release software.**
+**This chart is a pre-release and installs software under an early access program.**
 
 ## Chart Details
 
