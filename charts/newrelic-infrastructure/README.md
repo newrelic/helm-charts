@@ -60,7 +60,8 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `openshift.enabled` | Enables OpenShift configuration options. | `false` |
 | `openshift.version` | OpenShift version for witch enable specific configuration options. Values supported ["3.x","4.x"]. For 4.x it includes OpenShift specific Control Plane endpoints and CRI-O runtime |  |
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
-| `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.
+| `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.| |
+| `nriKubernetesMetricsInterval` | The metrics interval to send the data to New Relic. | `20` |
 
 > 1: Default value will depend on the creation date of the account owning the specified License Key:
 > * Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitly set to `false`. This is done to respect the old default behavior of the Infrastructure Agent.

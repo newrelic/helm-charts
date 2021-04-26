@@ -208,6 +208,9 @@ spec:
             - mountPath: /var/cache/nr-kubernetes
               name: tmpfs-cache
             {{- end }}
+            - mountPath: /var/db/newrelic-infra/newrelic-integrations/nri-kubernetes-definition.yml
+              name: nri-kubernetes-definition
+              subPath: nri-kubernetes-definition.yml
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -250,6 +253,9 @@ spec:
             - key: newrelic-infra.yml
               path: newrelic-infra.yml
         {{- end }}
+        - name: nri-kubernetes-definition
+          configMap:
+            name: nri-kubernetes-definition
         {{- if .Values.integrations_config }}
         - name: nri-integrations-cfg-volume
           configMap:

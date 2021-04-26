@@ -24,3 +24,23 @@ data:
 {{ toYaml .data | indent  4 }}
 {{ end }}
 {{ end }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic.labels" . | indent 4 }}
+  name: nri-kubernetes-definition
+data:
+    nri-kubernetes-definition.yml: |
+      name: com.newrelic.kubernetes
+      description: "This New Relic Infrastructure integration collects metrics for your Kubernetes clusters and allows you to alert on them. To learn more, visit: https://docs.newrelic.com/docs/kubernetes-monitoring-integration-beta."
+      protocol_version: 2
+      os: linux
+
+      commands:
+        metrics:
+          command:
+            - ./bin/nri-kubernetes
+            - --metrics
+          interval: {{ .Values.nriKubernetesMetricsInterval }}
