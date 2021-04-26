@@ -18,9 +18,9 @@ it needs to access the cluster id inside the Pixie secrets. By default, Pixie is
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | false |
 | `apiKey`                      | The Pixie API key (stored in a secret). Required.            |                            |
 | `verbose`                     | Whether the integration should run in verbose mode or not.   | false                      |
-| `global.customSecretName` - `customSecretName` | Name of the Secret object where the New Relic license and Pixie API key are stored                                                                                                                                                                         |                                 |
-| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the New Relic license key is stored.                                                                                                                                                             |                                 |
-| `global.customSecretApiKeyKey` - `customSecretApiKeyKey` | Key in the Secret object where the Pixie API key is stored.                                                                                                                                                             |                                 |
+| `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license and Pixie API key are stored                                                                                                                                                                         |                                 |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored.                                                                                                                                                             |                                 |
+| `global.customSecretApiKeyKey` - `customSecretApiKeyKey` | Key in the existing Secret object, indicated by `customSecretName`, where the Pixie API key is stored.                                                                                                                                                             |                                 |
 
 ## Example
 
