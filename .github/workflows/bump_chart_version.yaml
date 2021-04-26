@@ -1,18 +1,18 @@
 name: Bump Chart Version
 
-on: 
+on:
   repository_dispatch:
     types: bump-chart-version
 
 jobs:
   hello_world_job:
     runs-on: ubuntu-latest
-    name: A job thats bumps the versions of a chart
+    name: A job that bumps the versions of a chart
     steps:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Bump Chart & App version
-        uses: ./.github/actions/chart-version-bumper 
+        uses: ./.github/actions/chart-version-bumper
         id: version-bump
         with:
           chart_name: ${{ github.event.client_payload.chart_name }}
@@ -25,7 +25,7 @@ jobs:
           commit-message: ${{ steps.version-bump.outputs.changeString }}
           title: ${{ steps.version-bump.outputs.changeString }}
           body: ${{ steps.version-bump.outputs.verboseChangeString }}
-          branch-suffix: random 
+          branch-suffix: random
           labels: automatic-version-bump
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           committer: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>

@@ -20,6 +20,13 @@ jobs:
       - name: Lint charts
         run: ct lint --config ct.yaml
 
+      - uses: codespell-project/actions-codespell@master
+        with:
+          check_filenames: true
+          check_hidden: true
+          skip: ./.git,./.github/actions/chart-version-bumper/node_modules
+          ignore_words_list: enver
+
       - name: Check for changed charts
         id: list-changed
         run: |
