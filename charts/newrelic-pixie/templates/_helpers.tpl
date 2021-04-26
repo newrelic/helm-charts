@@ -12,6 +12,7 @@ Expand the name of the chart.
 {{- else -}}
     {{- .Release.Namespace | default "pl" -}}
 {{- end -}}
+{{- end -}}
 
 {{/*
 Create a default fully qualified app name.
