@@ -7,7 +7,10 @@ Expand the name of the chart.
 {{- end -}}
 
 {{- define "newrelic-pixie.namespace" -}}
-{{- .Release.Namespace | default "pl" -}}
+{{- if Values.namespace -}}
+    {{- Values.namespace -}}
+{{- else -}}
+    {{- .Release.Namespace | default "pl" -}}
 {{- end -}}
 
 {{/*
