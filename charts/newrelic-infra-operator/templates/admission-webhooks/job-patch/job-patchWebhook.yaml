@@ -2,20 +2,20 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "nri-k8s-operator.fullname" . }}-admission-patch
+  name: {{ template "newrelic-infra-operator.fullname" . }}-admission-patch
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
-    app: {{ template "nri-k8s-operator.name" $ }}-admission-patch
-{{ include "nri-k8s-operator.labels" $ | indent 4 }}
+    app: {{ template "newrelic-infra-operator.name" $ }}-admission-patch
+{{ include "newrelic-infra-operator.labels" $ | indent 4 }}
 spec:
   template:
     metadata:
-      name: {{ template "nri-k8s-operator.fullname" . }}-admission-patch
+      name: {{ template "newrelic-infra-operator.fullname" . }}-admission-patch
       labels:
-        app: {{ template "nri-k8s-operator.name" $ }}-admission-patch
-{{ include "nri-k8s-operator.labels" $ | indent 8 }}
+        app: {{ template "newrelic-infra-operator.name" $ }}-admission-patch
+{{ include "newrelic-infra-operator.labels" $ | indent 8 }}
     spec:
       containers:
         - name: patch
@@ -23,9 +23,9 @@ spec:
           imagePullPolicy: {{ .Values.admissionWebhooksPatchJob.image.pullPolicy }}
           args:
             - patch
-            - --webhook-name={{ template "nri-k8s-operator.fullname" . }}
+            - --webhook-name={{ template "newrelic-infra-operator.fullname" . }}
             - --namespace={{ .Release.Namespace }}
-            - --secret-name={{ template "nri-k8s-operator.fullname" . }}-admission
+            - --secret-name={{ template "newrelic-infra-operator.fullname" . }}-admission
             - --patch-failure-policy=Ignore
             - --patch-validating=false
           {{- if .Values.admissionWebhooksPatchJob.image.volumeMounts }}
@@ -37,7 +37,7 @@ spec:
       {{- include "tplvalues.render" ( dict "value" .Values.admissionWebhooksPatchJob.image.volumes "context" $ ) | nindent 8 }}
       {{- end }}
       restartPolicy: OnFailure
-      serviceAccountName: {{ template "nri-k8s-operator.fullname" . }}-admission
+      serviceAccountName: {{ template "newrelic-infra-operator.fullname" . }}-admission
       securityContext:
         runAsGroup: 2000
         runAsNonRoot: true

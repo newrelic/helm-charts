@@ -2,13 +2,13 @@
 apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
-  name: {{ template "nri-k8s-operator.fullname" . }}-admission
+  name: {{ template "newrelic-infra-operator.fullname" . }}-admission
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
-    app: {{ template "nri-k8s-operator.name" . }}-admission
-{{ include "nri-k8s-operator.labels" . | indent 4 }}
+    app: {{ template "newrelic-infra-operator.name" . }}-admission
+{{ include "newrelic-infra-operator.labels" . | indent 4 }}
 spec:
   privileged: false
   # Required to prevent escalations to root.

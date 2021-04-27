@@ -1,9 +1,0 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: {{ template "nri-k8s-operator.fullname" . }}-config
-  labels:
-    {{- include "nri-k8s-operator.labels" . | nindent 4 }}
-data:
-  operator.yaml: |-
-    {{- .Values.config | toYaml | nindent 4 }}

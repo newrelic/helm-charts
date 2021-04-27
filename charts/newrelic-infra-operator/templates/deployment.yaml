@@ -1,14 +1,14 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ template "nri-k8s-operator.fullname" . }}
+  name: {{ template "newrelic-infra-operator.fullname" . }}
   labels:
-    {{- include "nri-k8s-operator.labels" . | nindent 4 }}
+    {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.replicas }}
   selector:
     matchLabels:
-      {{- include "nri-k8s-operator.appLabel" . | nindent 6 }}
+      {{- include "newrelic-infra-operator.appLabel" . | nindent 6 }}
   template:
     metadata:
       {{- if .Values.podAnnotations }}
@@ -16,9 +16,9 @@ spec:
         {{- toYaml .Values.podAnnotations | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "nri-k8s-operator.labels" . | nindent 8 }}
+        {{- include "newrelic-infra-operator.labels" . | nindent 8 }}
     spec:
-      serviceAccountName: {{ template "nri-k8s-operator.serviceAccountName" . }}
+      serviceAccountName: {{ template "newrelic-infra-operator.serviceAccountName" . }}
       {{- if .Values.podSecurityContext.enabled }}
       securityContext:
         runAsUser: {{ .Values.podSecurityContext.runAsUser }}
@@ -30,12 +30,12 @@ spec:
         {{- toYaml .Values.image.pullSecrets | nindent 8 }}
       {{- end }}
       containers:
-      - name: {{ template "nri-k8s-operator.name" . }}
+      - name: {{ template "newrelic-infra-operator.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         env:
         - name: clusterName
-          value: {{ include "nri-k8s-operator.cluster" . }}
+          value: {{ include "newrelic-infra-operator.cluster" . }}
         volumeMounts:
         - name: config
           mountPath: /etc/newrelic/newrelic-infra-operator/
@@ -54,10 +54,10 @@ spec:
       volumes:
       - name: config
         configMap:
-          name: {{ template "nri-k8s-operator.fullname" . }}-config
+          name: {{ template "newrelic-infra-operator.fullname" . }}-config
       - name: tls-key-cert-pair
         secret:
-          secretName: {{ template "nri-k8s-operator.fullname" . }}-admission
+          secretName: {{ template "newrelic-infra-operator.fullname" . }}-admission
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
