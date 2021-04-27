@@ -8,17 +8,17 @@ rules:
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["list", "watch"]
-  {{/* Our controller needs permission to add the ServiceAccounts from the user to the -agent-mock CRB */}}
+  {{/* Our controller needs permission to add the ServiceAccounts from the user to the -infra-agent CRB */}}
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["update"]
-    resourceNames: [{{ template "newrelic-infra-operator.fullname" . }}-agent-mock]
+    resourceNames: [{{ template "newrelic-infra-operator.fullname" . }}-infra-agent]
 ---
-{{/* agent-mock is the ClusterRole to be used by the injected agents to get metrics */}}
+{{/* infra-agent is the ClusterRole to be used by the injected agents to get metrics */}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ template "newrelic-infra-operator.fullname" . }}-agent-mock
+  name: {{ template "newrelic-infra-operator.fullname" . }}-infra-agent
   labels: {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
 rules:
   - apiGroups: [""]
