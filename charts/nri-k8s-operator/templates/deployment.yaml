@@ -31,7 +31,7 @@ spec:
       {{- end }}
       containers:
       - name: {{ template "nri-k8s-operator.name" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         env:
         - name: clusterName
