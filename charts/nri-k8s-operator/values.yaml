@@ -54,14 +54,13 @@ podSecurityContext:
   runAsUser: 1001
   runAsGroup: 1001
 
+# Use cert manager for webhook certs, rather than the built-in patch job
+certManager:
+  enabled: false
+
 # Use custom tls certificates for the webhook, or let the chart handle it
-# automatically.
-#
-# Make sure to read the 'Manage custom certificates' section of the official
-# docs when using custom certificates.
-#
-# https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes#configure-injection
-customTLSCertificate: false
+# TODO: Add support for defining custom certs for the webhook here
+# customTLSCertificate: {}
 
 # If you wish to provide additional annotations to apply to the pod(s), specify
 # them here
@@ -77,10 +76,6 @@ customTLSCertificate: false
 #
 # Ref: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts
 timeoutSeconds: 30
-
-# Use cert manager for webhook certs
-certManager:
-  enabled: false
 
 fullnameOverride: ""
 affinity: {}
