@@ -6,8 +6,9 @@
 
 This chart will deploy the New Relic Pixie Integration.
 
-IMPORTANT: this chart has to be deployed in the same namespace as Pixie. This is required because
-it needs to access the cluster id inside the Pixie secrets. By default, Pixie is installed in the `pl` namespace.
+IMPORTANT: make sure you deploy this chart in the same namespace as Pixie. 
+It needs to access the cluster id inside the Pixie secrets. 
+By default, Pixie is installed in the `pl` namespace.
 
 ## Configuration
 
