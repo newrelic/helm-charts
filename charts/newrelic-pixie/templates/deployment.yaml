@@ -42,7 +42,7 @@ spec:
               name: {{ template "newrelic-pixie.fullname" . }}-secrets
               key: pixieApiKey
               {{- else }}
-              name: {{ include "newrelic-pixie.customSecretName" . }}
+              name: {{ include "newrelic-pixie.customSecretApiKeyName" . }}
               key: {{ include "newrelic-pixie.customSecretApiKeyKey" . }}
           {{- end }}
         - name: PIXIE_CLUSTER_ID

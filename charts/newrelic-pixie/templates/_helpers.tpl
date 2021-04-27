@@ -83,7 +83,7 @@ release: {{.Release.Name }}
 {{- end -}}
 
 {{/*
-Return the customSecretName where the New Relic license and Pixie API key are being stored.
+Return the customSecretName where the New Relic license is being stored.
 */}}
 {{- define "newrelic-pixie.customSecretName" -}}
 {{- if .Values.global }}
@@ -95,6 +95,13 @@ Return the customSecretName where the New Relic license and Pixie API key are be
 {{- else -}}
     {{- .Values.customSecretName | default "" -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Return the customSecretApiKeyName where the Pixie API key is being stored.
+*/}}
+{{- define "newrelic-pixie.customSecretApiKeyName" -}}
+    {{- .Values.customSecretApiKeyName | default "" -}}
 {{- end -}}
 
 {{/*
@@ -116,15 +123,7 @@ Return the customSecretLicenseKey
 Return the customSecretApiKeyKey
 */}}
 {{- define "newrelic-pixie.customSecretApiKeyKey" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.customSecretApiKeyKey }}
-      {{- .Values.global.customSecretApiKeyKey -}}
-  {{- else -}}
-      {{- .Values.customSecretApiKeyKey | default "" -}}
-  {{- end -}}
-{{- else -}}
     {{- .Values.customSecretApiKeyKey | default "" -}}
-{{- end -}}
 {{- end -}}
 
 {{/*

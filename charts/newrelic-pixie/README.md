@@ -19,9 +19,10 @@ By default, Pixie is installed in the `pl` namespace.
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | false |
 | `apiKey`                      | The Pixie API key (stored in a secret). Required.            |                            |
 | `verbose`                     | Whether the integration should run in verbose mode or not.   | false                      |
-| `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license and Pixie API key are stored                                                                                                                                                                         |                                 |
+| `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license is stored                                                                                                                                                                         |                                 |
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored.                                                                                                                                                             |                                 |
-| `global.customSecretApiKeyKey` - `customSecretApiKeyKey` | Key in the existing Secret object, indicated by `customSecretName`, where the Pixie API key is stored.                                                                                                                                                             |                                 |
+| `customSecretApiKeyName` | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.    |                                 |
+| `customSecretApiKeyKey` | Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   |                                 |
 
 ## Example
 
@@ -52,7 +53,6 @@ More information on globals and subcharts can be found at [Helm's official docum
 | `global.licenseKey`             |
 | `global.customSecretName`       |
 | `global.customSecretLicenseKey` |
-| `global.customSecretApiKeyKey`  |
 | `global.nrStaging`              |
 
 
