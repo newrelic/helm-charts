@@ -39,9 +39,6 @@ resources:
 serviceAccount:
   # Specifies whether a ServiceAccount should be created for the job and
   # the deployment.
-  #
-  # When `customTLSCertificate` is set to true, the service account is not
-  # necessary and it's not created in the case of `create=true`.
   create: true
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
@@ -76,6 +73,25 @@ certManager:
 #
 # Ref: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts
 timeoutSeconds: 30
+
+# Operator configuration
+# The following are the default values for the operator
+config:
+  # sidecarInjection: {} # Sidecar injection can be disabled by setting it to an empty object
+
+  sidecarInjection: # List of sidecar injection policies, indexed by namespace
+    "*": # This policy applies to all namespaces that do not have a specific entry in this map
+      unlabeled: false # Do not inject unless there is a label match
+      fargate: true # Inject sidecar in fargate nodes
+      # List of additional labels that will be checked.
+      # Sidecar will be injected if label value is truthy, will not if it's falsy.
+      # Upon conflict (one label is truthy but other is falsy), the falsy takes preference.
+      # If none of the labels in this list exists, `unlabeled` will be honored.
+      labels:
+        - newrelic.com/inject
+  #  other-example-namespace:
+  #    # Let's monitor everything in this namespace
+  #    unlabeled: true
 
 fullnameOverride: ""
 affinity: {}

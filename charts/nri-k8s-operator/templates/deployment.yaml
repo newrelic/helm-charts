@@ -37,6 +37,8 @@ spec:
         - name: clusterName
           value: {{ include "nri-k8s-operator.cluster" . }}
         volumeMounts:
+        - name: config
+          mountPath: /etc/newrelic/newrelic-infra-operator/
         - name: tls-key-cert-pair
           mountPath: /tmp/k8s-webhook-server/serving-certs/
         readinessProbe:
@@ -50,6 +52,9 @@ spec:
           {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
       volumes:
+      - name: config
+        configMap:
+          name: {{ template "nri-k8s-operator.fullname" . }}-config
       - name: tls-key-cert-pair
         secret:
           secretName: {{ template "nri-k8s-operator.fullname" . }}-admission
