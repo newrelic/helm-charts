@@ -4,7 +4,7 @@ cluster: ""
 
 image:
   repository: newrelic/k8s-metadata-injection
-  tag: "" # Defaults to AppVersion
+  tag: ""  # Defaults to AppVersion
   pullPolicy: IfNotPresent
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
@@ -77,12 +77,12 @@ timeoutSeconds: 30
 # Operator configuration
 # The following are the default values for the operator
 config:
-  # sidecarInjection: {} # Sidecar injection can be disabled by setting it to an empty object
+  # sidecarInjection: {}  # Sidecar injection can be disabled by setting it to an empty object
 
-  sidecarInjection: # List of sidecar injection policies, indexed by namespace
-    "*": # This policy applies to all namespaces that do not have a specific entry in this map
-      unlabeled: false # Do not inject unless there is a label match
-      fargate: true # Inject sidecar in fargate nodes
+  sidecarInjection:  # List of sidecar injection policies, indexed by namespace
+    "*":  # This policy applies to all namespaces that do not have a specific entry in this map
+      unlabeled: false  # Do not inject unless there is a label match
+      fargate: true  # Inject sidecar in fargate nodes
       # List of additional labels that will be checked.
       # Sidecar will be injected if label value is truthy, will not if it's falsy.
       # Upon conflict (one label is truthy but other is falsy), the falsy takes preference.
