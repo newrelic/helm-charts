@@ -8,11 +8,13 @@ rules:
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["list", "watch"]
+  {{/* Our controller needs permission to add the ServiceAccounts from the user to the -agent-mock CRB */}}
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["update"]
     resourceNames: [{{ template "nri-k8s-operator.fullname" . }}-agent-mock]
 ---
+{{/* agent-mock is the ClusterRole to be used by the injected agents to get metrics */}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
