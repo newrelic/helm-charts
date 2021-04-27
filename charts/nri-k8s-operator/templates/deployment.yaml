@@ -13,12 +13,12 @@ spec:
     metadata:
       {{- if .Values.podAnnotations }}
       annotations:
-        {{- toYaml .Values.podAnnotations | nindent 8}}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
       {{- end }}
       labels:
         {{- include "nri-k8s-operator.labels" . | nindent 8 }}
     spec:
-      serviceAccount: {{ template "nri-k8s-operator.serviceAccountName" . }}
+      serviceAccountName: {{ template "nri-k8s-operator.serviceAccountName" . }}
       {{- if .Values.podSecurityContext.enabled }}
       securityContext:
         runAsUser: {{ .Values.podSecurityContext.runAsUser }}
@@ -27,7 +27,7 @@ spec:
       {{- end }}
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
-      {{- toYaml .Values.image.pullSecrets | nindent 6 }}
+        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
       {{- end }}
       containers:
       - name: {{ template "nri-k8s-operator.name" . }}
@@ -47,7 +47,7 @@ spec:
           periodSeconds: 1
         {{- if .Values.resources }}
         resources:
-          {{- toYaml .Values.resources | nindent 8 }}
+          {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
       volumes:
       - name: tls-key-cert-pair
@@ -58,11 +58,11 @@ spec:
       {{- end }}
       {{- if $.Values.nodeSelector }}
       nodeSelector:
-      {{- toYaml $.Values.nodeSelector | nindent 8 }}
+        {{- toYaml $.Values.nodeSelector | nindent 8 }}
       {{- end }}
       {{- if .Values.tolerations }}
       tolerations:
-      {{- toYaml .Values.tolerations | nindent 6 }}
+        {{- toYaml .Values.tolerations | nindent 8 }}
       {{- end }}
       {{- if .Values.affinity }}
       affinity:
