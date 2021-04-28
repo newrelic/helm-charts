@@ -80,7 +80,7 @@ Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_
 In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` 
 command to update chart packages under `/charts` and also the `requirements.lock` file.
 
-ATTENTION: do not commit the internal dependencies. We only commit *kube-state-metrics* and `pixie-chart`because we 
+ATTENTION: do not commit the internal dependencies. We only commit *kube-state-metrics* and `pixie-chart` because we 
 don't own their distribution but would like to be resilient to failures of their repository.
 
 ## Example
