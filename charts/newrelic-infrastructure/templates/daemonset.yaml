@@ -5,8 +5,8 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}
-  annotations:
   {{- if .Values.daemonSet.annotations }}
+  annotations:
 {{ toYaml .Values.daemonSet.annotations | indent 4 }}
   {{- end }}
 spec:
@@ -257,6 +257,17 @@ spec:
         {{- end }}
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
+      {{- end }}
+      {{- if .Values.global.fargate }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: eks.amazonaws.com/compute-type
+                    operator: NotIn
+                    values:
+                      - fargate
       {{- end }}
       {{- if $.Values.nodeSelector }}
       nodeSelector:
