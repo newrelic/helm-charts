@@ -20,6 +20,8 @@ This chart bundles multiple New Relic products helm-charts.
 | `ksm.enabled`                    | Install the [`kube-state-metrics` chart from the stable helm charts repository][2] | false |
 | `kubeEvents.enabled`             | Install the [`nri-kube-events` chart][6] | false |
 | `logging.enabled`                | Install the [`newrelic-logging` chart][7] | false |
+| `newrelic-pixie.enabled`         | Install the [`newrelic-pixie`][8] chart | false |
+| `pixie-chart.enabled`            | Install the [`pixie-chart` chart][9] | false |
 
 ## Configure Dependencies
 
@@ -78,8 +80,8 @@ Dependencies are managed using [Helm Dependency](https://helm.sh/docs/helm/helm_
 In order to update any of the dependency versions you should bump the version in `requirements.yaml` and run `helm dependency update` 
 command to update chart packages under `/charts` and also the `requirements.lock` file.
 
-ATTENTION: do not commit the internal dependencies. We only commit *kube-state-metrics* because we don't own its distribution
-but would like to be resilient to failures of its repository.
+ATTENTION: do not commit the internal dependencies. We only commit *kube-state-metrics* and `pixie-chart` because we 
+don't own their distribution but would like to be resilient to failures of their repository.
 
 ## Example
 
@@ -106,3 +108,5 @@ helm install newrelic/nri-bundle \
 [5]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-metadata-injection
 [6]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-kube-events
 [7]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+[8]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
+[9]: https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy
