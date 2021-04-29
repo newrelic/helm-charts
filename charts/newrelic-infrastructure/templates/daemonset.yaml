@@ -258,7 +258,10 @@ spec:
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
-      {{- if .Values.global.fargate }}
+      {{- if .Values.nodeAffinity }}
+      affinity:
+        nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
+      {{- else if .Values.global.fargate }}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
