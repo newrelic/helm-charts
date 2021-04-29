@@ -20,9 +20,10 @@ metadata:
   labels:
 {{- include "nri-metadata-injection.labels" . | nindent 8 }}
 spec:
-  {{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
-  serviceAccountName: {{ template "nri-metadata-injection.serviceAccountName" . }}
-  {{- end }}
+  # Switching from dedicated service account to default one must be
+  # done explicitly, otherwise upgrade fails, trying to use old
+  # service account.
+  serviceAccount: default
   {{- if .Values.podSecurityContext.enabled }}
   securityContext:
 runAsUser: {{ .Values.podSecurityContext.runAsUser }}
@@ -56,7 +57,7 @@ resources:
   volumes:
   - name: tls-key-cert-pair
 secret:
-  secretName: {{ template "nri-metadata-injection.fullname" . }}
+  secretName: {{ template "nri-metadata-injection.fullname" . }}-admission
   {{- if $.Values.priorityClassName }}
   priorityClassName: {{ $.Values.priorityClassName }}
   {{- end }}
