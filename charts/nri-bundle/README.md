@@ -91,14 +91,37 @@ Then, to install this chart, run the following command:
 
 ```sh
 helm install newrelic/nri-bundle \
---set global.licenseKey=<enter_new_relic_license_key> \
---set global.cluster=my-k8s-cluster
---set infrastructure.enabled=true
---set prometheus.enabled=true
---set webhook.enabled=true
---set ksm.enabled=true
---set kubeEvents.enabled=true
---set logging.enabled=true
+--set global.licenseKey=<New Relic License key> \
+--set global.cluster=<Cluster name> \
+--set infrastructure.enabled=true \
+--set prometheus.enabled=true \
+--set webhook.enabled=true \
+--set ksm.enabled=true \
+--set kubeEvents.enabled=true \
+--set logging.enabled=true \
+--generate-name
+```
+
+### Example with Pixie
+
+> Note: Pixie integration is still in a pre-release state and requires an early access program enrollment
+
+```sh
+helm install newrelic/nri-bundle \
+--set global.licenseKey=<New Relic License key> \
+--set global.cluster=<Cluster name> \
+--set infrastructure.enabled=true \
+--set prometheus.enabled=true \
+--set webhook.enabled=true \
+--set ksm.enabled=true \
+--set kubeEvents.enabled=true \
+--set logging.enabled=true \
+--set newrelic-pixie.enabled=true \
+--set newrelic-pixie.apiKey=<Pixie API key> \
+--set pixie-chart.enabled=true \
+--set pixie-chart.deployKey=<Pixie Deploy key> \
+--set pixie-chart.clusterName=<Cluster name> \ 
+--generate-name
 ```
 
 [1]: https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key
