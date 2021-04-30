@@ -5,9 +5,18 @@ metadata:
   labels:
     {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
 rules:
+  - apiGroups: [""]
+    resources:
+      - "secrets"
+    verbs: ["get", "update", "patch"]
+    resourceNames: [{{ template "newrelic-infra-operator.fullname" . }}-config]
+  - apiGroups: [""]
+    resources:
+      - "secrets"
+    verbs: ["create"]
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
-    verbs: ["list", "watch"]
+    verbs: ["list", "watch", "get"]
   {{/* Our controller needs permission to add the ServiceAccounts from the user to the -infra-agent CRB */}}
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]

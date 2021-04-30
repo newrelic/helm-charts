@@ -63,6 +63,21 @@ Create the name of the service account to use
 {{- end -}}
 
 {{/*
+Return the licenseKey
+*/}}
+{{- define "newrelic-infra-operator.licenseKey" -}}
+{{- if .Values.global}}
+  {{- if .Values.global.licenseKey }}
+      {{- .Values.global.licenseKey -}}
+  {{- else -}}
+      {{- .Values.licenseKey | default "" -}}
+  {{- end -}}
+{{- else -}}
+    {{- .Values.licenseKey | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the cluster
 */}}
 {{- define "newrelic-infra-operator.cluster" -}}

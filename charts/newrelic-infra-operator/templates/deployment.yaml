@@ -36,6 +36,18 @@ spec:
         env:
         - name: CLUSTER_NAME
           value: {{ include "newrelic-infra-operator.cluster" . }}
+        - name: RELEASE_NAME
+          value: {{ template "newrelic-infra-operator.fullname" . }}
+        - name: NRIA_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              {{- if (include "newrelic-infra-operator.licenseKey" .) }}
+              name: {{ template "newrelic-infra-operator.fullname" . }}-config
+              key: license
+              {{- else }}
+              name: {{ include "newrelic-infra-operator.customSecretName" . }}
+              key: {{ include "newrelic-infra-operator.customSecretLicenseKey" . }}
+              {{- end }}
         volumeMounts:
         - name: config
           mountPath: /etc/newrelic/newrelic-infra-operator/
