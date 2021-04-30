@@ -102,7 +102,9 @@ helm install newrelic/nri-bundle \
 --generate-name
 ```
 
-### Example with Pixie (pre-release, requires an early access program enrollment)
+### Example with Pixie
+
+> Note: Pixie integration is still in a pre-release state and requires an early access program enrollment
 
 ```sh
 helm install newrelic/nri-bundle \
