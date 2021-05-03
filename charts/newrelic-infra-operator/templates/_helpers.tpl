@@ -104,3 +104,32 @@ Usage:
         {{- tpl (.value | toYaml) .context }}
     {{- end }}
 {{- end -}}
+
+{{/*
+Return the customSecretName
+*/}}
+{{- define "newrelic-infra-operator.customSecretName" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.customSecretName }}
+      {{- .Values.global.customSecretName -}}
+  {{- else -}}
+      {{- .Values.customSecretName | default "" -}}
+  {{- end -}}
+{{- else -}}
+    {{- .Values.customSecretName | default "" -}}
+{{- end -}}
+{{- end -}}
+{{/*
+Return the customSecretLicenseKey
+*/}}
+{{- define "newrelic-infra-operator.customSecretLicenseKey" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.customSecretLicenseKey }}
+      {{- .Values.global.customSecretLicenseKey -}}
+  {{- else -}}
+      {{- .Values.customSecretLicenseKey | default "" -}}
+  {{- end -}}
+{{- else -}}
+    {{- .Values.customSecretLicenseKey | default "" -}}
+{{- end -}}
+{{- end -}}

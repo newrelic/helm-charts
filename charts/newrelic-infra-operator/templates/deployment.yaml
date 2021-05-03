@@ -42,7 +42,7 @@ spec:
           valueFrom:
             secretKeyRef:
               {{- if (include "newrelic-infra-operator.licenseKey" .) }}
-              name: {{ template "newrelic-infra-operator.fullname" . }}-config
+              name: {{ template "newrelic-infra-operator.fullname" . }}-license
               key: license
               {{- else }}
               name: {{ include "newrelic-infra-operator.customSecretName" . }}
