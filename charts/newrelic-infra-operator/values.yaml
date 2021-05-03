@@ -77,25 +77,19 @@ timeoutSeconds: 30
 # Operator configuration
 # The following are the default values for the operator
 config:
-  # infraSidecarInjection: {}  # Sidecar injection can be disabled by setting it to an empty object
-
+  # infraSidecarInjection: {}  # Sidecar injection can be disabled by setting this to an empty object
   infraSidecarInjection:
-    policies:  # Map of policies to determine where to inject, indexed by namespace
-      "*":  # `*` defines a special default policy that will apply to all namespaces that do not have a specific entry
-        unlabeled: false  # Do not inject unless there is a label match
-        fargate: true  # Inject sidecar in fargate nodes
-        # List of additional labels that will be checked.
-        # Sidecar will be injected if label value is truthy, will not if it's falsy.
-        # Upon conflict (one label is truthy but other is falsy), the falsy takes preference.
-        # If none of the labels in this list exists, `unlabeled` will be honored.
-        labels:
-          - newrelic.com/inject-sidecar
-#      # Monitor everything in example-namespace unless it has `newrelic.com/inject: false`
-#      example-namespace:
-#        unlabeled: true
-#        labels:
-#          - newrelic.com/inject-sidecar
-
+    policies:
+      # Inject to all pods in namespace "foo"
+      - namespaceName: "foo"
+      # Inject to all pods in namespace with label "foo=bar".
+      - namespaceSelector:
+          matchLabels:
+            foo: bar
+      # Inject to pods in all namespaces with label "foo=baz".
+      - podSelector:
+          matchLabels:
+            foo: baz
 
 fullnameOverride: ""
 affinity: {}
