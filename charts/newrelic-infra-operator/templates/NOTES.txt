@@ -1,23 +1,3 @@
-Your deployment of the New Relic metadata injection webhook is complete. You can check on the progress of this by running the following command:
+Your deployment of the New Relic Infrastructure Operator is complete. You can check on the progress of this by running the following command:
 
     kubectl get deployments -o wide -w --namespace {{ .Release.Namespace }} {{ template "newrelic-infra-operator.fullname" . }}
-
-{{- if .Values.customTLSCertificate }}
-You have configure the chart to use a custom tls certificate, make sure to read the 'Manage custom certificates' section of the official docs to find the instructions on how to finish setting up the webhook.
-
-https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes#configure-injection
-{{- end }}
-
-To validate the injection of infrastructure agent, create a dummy pod running nginx by executing:
-
-    kubectl run --image nginx -l test-infrastructure-agent-injection
-
-Check if extra container has been injected:
-
-    kubectl get pods test-infrastructure-agent-injection -o yaml | grep NRIA
-
-    - name: NRIA_LICENSE_KEY
-    - name: NRIA_VERBOSE
-    - name: NRIA_DISPLAY_NAME
-    - name: NRIA_CUSTOM_ATTRIBUTES
-    - name: NRIA_PASSTHROUGH_ENVIRONMENT
