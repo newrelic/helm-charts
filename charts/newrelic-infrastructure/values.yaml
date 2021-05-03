@@ -174,6 +174,21 @@ openshift:
 # Ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
 
+# Node affinity rules
+# Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+#
+# IMPORTANT #
+# ######### #
+# When .Values.global.fargate == true, the chart will automatically add the required affinity rules to exclude
+# the DaemonSet from Fargate nodes. There is no need to manually touch this property achieve this.
+# This automatic exclusion will, however, not take place if this value is overridden: Setting this to a
+# non-empty value WHEN deploying in EKS Fargate (global.fargate == true) requires the user to manually
+# include in their custom ruleset an exclusion for nodes with "eks.amazonaws.com/compute-type: fargate", as
+# the New Relic DaemonSet MUST NOT be deployed on fargate nodes, as the operator takes care of injecting it
+# as a sidecar instead.
+# Please refer to the daemonset.yaml template for more details on how to achieve this.
+nodeAffinity: {}
+
 # Please note that an additional nodeSelector is added automatically in order to
 # select the correct Windows version of the node: "node.kubernetes.io/windows-build"
 # https://kubernetes.io/docs/setup/production-environment/windows/user-guide-windows-containers/
