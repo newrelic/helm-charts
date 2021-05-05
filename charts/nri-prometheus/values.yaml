@@ -26,7 +26,7 @@ fullnameOverride: ""
 
 image:
   repository: newrelic/nri-prometheus
-  tag: 2.5.0
+  tag: 2.6.0
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
@@ -71,9 +71,17 @@ config:
   # Default: "30s"
   # scrape_duration: "30s"
 
-  # The HTTP client timeout when fetching data from endpoints.
+  # The HTTP client timeout when fetching data from targets.
   # Default: "5s"
   # scrape_timeout: "5s"
+
+  # scrape_services Allows to enable scraping the service and not the endpoints behind.
+  # When endpoints are scraped this is no longer needed
+  scrape_services: true
+
+  # scrape_endpoints Allows to enable scraping directly endpoints instead of services as prometheus service natively does.
+  # Please notice that depending on the number of endpoints behind a service the load can increase considerably
+  scrape_endpoints: false
 
   # How old must the entries used for calculating the counters delta be
   # before the telemetry emitter expires them.
@@ -108,7 +116,7 @@ config:
   require_scrape_enabled_label_for_nodes: true
 
   # Number of worker threads used for scraping targets.
-  # For large clusters with many (>400) endpoints, slowly increase until scrape
+  # For large clusters with many (>400) targets, slowly increase until scrape
   # time falls between the desired `scrape_duration`.
   # Increasing this value too much will result in huge memory consumption if too
   # many metrics are being scraped.

@@ -14,7 +14,7 @@ This chart will deploy the New Relic's Prometheus OpenMetrics Integration.
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the license key is stored.                                                                                                                                                                             |                                        |
 | `nameOverride`                                             | The name that should be used for the deployment.                                                                                                                                                                                      |                                        |
 | `image.repository`                                         | The prometheus openmetrics integration image name.                                                                                                                                                                                    | `newrelic/nri-prometheus`              |
-| `image.tag`                                                | The prometheus openmetrics integration image tag.                                                                                                                                                                                     | `2.5.0`                                |
+| `image.tag`                                                | The prometheus openmetrics integration image tag.                                                                                                                                                                                     | `2.6.0`                                |
 | `image.pullSecrets`                                        | Image pull secrets.                                                                                                                                                                                                                   | `nil`                                  |
 | `resources`                                                | A yaml defining the resources for the events-router container.                                                                                                                                                                        | {}                                     |
 | `rbac.create`                                              | Enable Role-based authentication                                                                                                                                                                                                      | `true`                                 |
@@ -42,3 +42,17 @@ helm install newrelic/nri-prometheus \
 --set licenseKey=<enter_new_relic_license_key> \
 --set cluster=my-k8s-cluster
 ```
+
+## Services and Endpoints scrape behaviour 
+
+By default, services are scraped directly instead of the underlying endpoints 
+since `scrape_services` is set to `true` and `scrape_endpoints` to `false`. 
+
+In order to change this behaviour set `scrape_endpoints` to `true` configuring `nri-promtheus` to 
+scrape the underlying endpoints, as Prometheus server natively does, instead of directly the services.
+
+Please notice that depending on the number of endpoints behind the services in the cluster the load and the data injested can increase considerably, 
+monitor and, if needed, increase resource requirements.
+
+Moreover, even if it is possible to set both `scrape_services` and `scrape_endpoints` to true to assure retrocompatibility, 
+it would lead to duplicate data.
