@@ -44,9 +44,11 @@ spec:
               {{- if (include "newrelic-infra-operator.licenseKey" .) }}
               name: {{ template "newrelic-infra-operator.fullname" . }}-license
               key: license
-              {{- else }}
+              {{- else if include "newrelic-infra-operator.customSecretName" . }}
               name: {{ include "newrelic-infra-operator.customSecretName" . }}
               key: {{ include "newrelic-infra-operator.customSecretLicenseKey" . }}
+              {{- else }}
+              {{- "" | required "Cannot find License Key, either licenseKey or customSecretName must be defined" }}
               {{- end }}
         volumeMounts:
         - name: config
