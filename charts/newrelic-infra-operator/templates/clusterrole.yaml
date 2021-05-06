@@ -1,3 +1,17 @@
+{{- define "newrelic-infra-operator.infra-agent-monitoring-rules" -}}
+- apiGroups: [""]
+  resources:
+    - "nodes"
+    - "nodes/metrics"
+    - "nodes/stats"
+    - "nodes/proxy"
+    - "pods"
+    - "services"
+  verbs: ["get", "list"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+{{- end -}}
+
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -17,11 +31,12 @@ rules:
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["list", "watch", "get"]
-  {{/* Our controller needs permission to add the ServiceAccounts from the user to the -infra-agent CRB */}}
+  {{/* Our controller needs permission to add the ServiceAccounts from the user to the -infra-agent CRB */ -}}
   - apiGroups: ["rbac.authorization.k8s.io"]
     resources: ["clusterrolebindings"]
     verbs: ["update"]
     resourceNames: [{{ template "newrelic-infra-operator.fullname" . }}-infra-agent]
+  {{- include "newrelic-infra-operator.infra-agent-monitoring-rules" . | nindent 2 }}
 ---
 {{/* infra-agent is the ClusterRole to be used by the injected agents to get metrics */}}
 apiVersion: rbac.authorization.k8s.io/v1
@@ -30,14 +45,4 @@ metadata:
   name: {{ template "newrelic-infra-operator.fullname" . }}-infra-agent
   labels: {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
 rules:
-  - apiGroups: [""]
-    resources:
-      - "nodes"
-      - "nodes/metrics"
-      - "nodes/stats"
-      - "nodes/proxy"
-      - "pods"
-      - "services"
-    verbs: ["get", "list"]
-  - nonResourceURLs: ["/metrics"]
-    verbs: ["get"]
+  {{- include "newrelic-infra-operator.infra-agent-monitoring-rules" . | nindent 2 }}

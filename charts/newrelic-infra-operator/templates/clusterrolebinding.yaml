@@ -24,8 +24,3 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: {{ template "newrelic-infra-operator.fullname" . }}-infra-agent
-subjects:
-  - kind: ServiceAccount
-    # Webhook must have permissions it will grant to other service accounts.
-    name: {{ template "newrelic-infra-operator.serviceAccountName" . }}
-    namespace: {{ .Release.Namespace }}
