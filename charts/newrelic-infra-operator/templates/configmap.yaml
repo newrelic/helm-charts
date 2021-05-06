@@ -6,4 +6,6 @@ metadata:
     {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
 data:
   operator.yaml: |-
-    {{- .Values.config | toYaml | nindent 4 }}
+    {{- with .Values.config }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
