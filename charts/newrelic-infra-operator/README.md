@@ -26,12 +26,14 @@ helm upgrade --install newrelic/newrelic-infra-operator --set cluster=my_cluster
 
 The default set of resources assigned to the pods is shown below:
 
-    resources:
-      limits:
-        memory: 80M
-      requests:
-        cpu: 100m
-        memory: 30M
+```yaml
+resources:
+  limits:
+    memory: 80M
+  requests:
+    cpu: 100m
+    memory: 30M
+```
 
 [1]: https://github.com/newrelic/newrelic-infra-operator
 [2]: https://cert-manager.io/
