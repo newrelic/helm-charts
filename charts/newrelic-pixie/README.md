@@ -63,9 +63,9 @@ The default set of resources assigned to the pods is shown below:
 ```yaml
 resources:
   limits:
-memory: 150M
+memory: 250M
   requests:
 cpu: 100m
-memory: 30M
+memory: 250M
 ```
 
