@@ -26,6 +26,34 @@ kubeEvents:
 logging:
   enabled: false
 
+# enables newrelic-pixie
+newrelic-pixie:
+  enabled: false
+
+# enables pixie-chart
+pixie-chart:
+  enabled: false
+
+# IMPORTANT: the following values are set as global so that they
+# can be shared by other newrelic product's charts
+#
+#   - Specify either the New Relic keys or the secret which
+#   contains them.
+#
+#   - Specify the Kubernetes cluster name.
+#     https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+#
+# global:
+#   licenseKey:
+#   insightsKey:
+#   customSecretName:
+#   customSecretLicenseKey:
+#   customSecretInsightsKey:
+#   cluster:
+#   # IMPORTANT: Set this to true when deploying in EKS Fargate. This will pull the sidecar injector operator chart to
+#   # automatically monitor fargate workloads, and also prevent the DaemonSet from being scheduled in Fargate nodes
+#   fargate: true
+
 # It is possible to configure dependencies values from this chart.
 # For example you can configure `verboseLog` variable of the newrelic-infrastructure chart installed as a dependency and enable openshift configs as follows.
 
@@ -68,21 +96,3 @@ logging:
 #               PORT: 6379
 #             labels:
 #               env: test
-
-
-# IMPORTANT: the following values are set as global so that they
-# can be shared by other newrelic product's charts
-#
-#   - Specify either the New Relic keys or the secret which
-#   contains them.
-#
-#   - Specify the Kubernetes cluster name.
-#     https://docs.newrelic.com/docs/kubernetes-monitoring-integration
-#
-# global:
-#   licenseKey:
-#   insightsKey:
-#   customSecretName:
-#   customSecretLicenseKey:
-#   customSecretInsightsKey:
-#   cluster:
