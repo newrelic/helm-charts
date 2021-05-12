@@ -49,7 +49,7 @@ When a service is labeled or anotated with `scrape_enabled_label` (defaults to `
 `nri-prometheus` will attempt to hit the service directly, rather than the endpoints behind it.
 
 This is the default behavior for compatibility reasons, but is known to cause issues if more than one endpoint
-is behind the service, as metric queries wil be load-balanced as well leading to unaccurate histograms.
+is behind the service, as metric queries will be load-balanced as well leading to unaccurate histograms.
 
 In order to change this behaviour set `scrape_endpoints` to `true` and `scrape_services` to `false`.
 This will instruct `nri-promtheus` to scrape the underlying endpoints, as Prometheus server does.
