@@ -43,16 +43,20 @@ helm install newrelic/nri-prometheus \
 --set cluster=my-k8s-cluster
 ```
 
-## Services and Endpoints scrape behaviour 
+## Scraping services and endpoints
 
-By default, services are scraped directly instead of the underlying endpoints 
-since `scrape_services` is set to `true` and `scrape_endpoints` to `false`. 
+When a service is labeled or anotated with `scrape_enabled_label` (defaults to `prometheus.io/scrape`),
+`nri-prometheus` will attempt to hit the service directly, rather than the endpoints behind it.
 
-In order to change this behaviour set `scrape_endpoints` to `true` configuring `nri-promtheus` to 
-scrape the underlying endpoints, as Prometheus server natively does, instead of directly the services.
+This is the default behavior for compatibility reasons, but is known to cause issues if more than one endpoint
+is behind the service, as metric queries wil be load-balanced as well leading to unaccurate histograms.
 
-Please notice that depending on the number of endpoints behind the services in the cluster the load and the data injested can increase considerably, 
-monitor and, if needed, increase resource requirements.
+In order to change this behaviour set `scrape_endpoints` to `true` and `scrape_services` to `false`.
+This will instruct `nri-promtheus` to scrape the underlying endpoints, as Prometheus server does.
 
-Moreover, even if it is possible to set both `scrape_services` and `scrape_endpoints` to true to assure retrocompatibility, 
-it would lead to duplicate data.
+Existing users that are switching to this behavior should note that, depending on the number of endpoints
+behind the services in the cluster the load and the metrics reported by those, data ingestion might see
+an increase when flipping this option. Resource requirements might also be impacted, again depending on the number of new targets.
+
+While it is technically possible to set both `scrape_services` and `scrape_endpoints` to true, we do no recommend
+doing so as it will lead to redundant metrics being processed,
