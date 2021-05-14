@@ -140,6 +140,19 @@ Returns nrStaging
 {{- end -}}
 
 {{/*
+Returns fargate
+*/}}
+{{- define "newrelic.fargate" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.fargate }}
+{{- .Values.global.fargate -}}
+  {{- end -}}
+{{- else if .Values.fargate }}
+  {{- .Values.fargate -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
 */}}

@@ -25,7 +25,7 @@ newrelic/newrelic-infrastructure
 ####  it will be removed in the future, please consider to update the configuration  ####
 
 {{- end -}}
-{{- if and .Values.global.fargate .Values.nodeAffinity }}
+{{- if and (include "newrelic.fargate" .) .Values.nodeAffinity }}
 ###########
 # WARNING #
 ###########
