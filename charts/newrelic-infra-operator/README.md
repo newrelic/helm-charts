@@ -6,11 +6,53 @@ This chart will deploy the [New Relic Infrastructure Operator][1], which injects
 
 ## Configuration
 
+
 | Parameter                     | Description                                                  | Default                    |
 | ----------------------------- | ------------------------------------------------------------ | -------------------------- |
 | `cluster`                     | The cluster name for the Kubernetes cluster.                 |                            |
+| `image.repository`            | The container to pull.                                       | `newrelic/newrelic-infra-operator`   |
+| `image.pullPolicy`            | The pull policy.                                             | `IfNotPresent`                      |
+| `image.tag`                   | The version of the container to pull.                        | `appVersion`                             |
+| `image.pullSecrets`           | Image pull secrets.                                          | `nil`                               |
+| `admissionWebhooksPatchJob.image.repository`         | The job container to pull.                                   | `admissionWebhooksPatchJob` |
+| `admissionWebhooksPatchJob.image.pullPolicy`         | The job pull policy.                                         | `IfNotPresent`                      |
+| `admissionWebhooksPatchJob.image.tag`                | The job version of the container to pull.                    | `1.5.0`                             |
+| `admissionWebhooksPatchJob.volumeMounts`       | Additional Volume mounts for Cert Job                        | `[]`                                |
+| `admissionWebhooksPatchJob.volumes`            | Additional Volumes for Cert Job                              | `[]`                                |
+| `replicas`                    | Number of replicas in the deployment                         | `1`                                 |
+| `resources`                   | Any resources you wish to assign to the pod.                 | See Resources below                 |
+| `serviveAccount.create`       | If true a service account would be created and assigned for the webhook and the job. | `true` |
+| `serviveAccount.name`         | The service account to assign to the webhook and the job. If `serviveAccount.create` is true then this name will be used when creating the service account; if this value is not set or it evaluates to false, then when creating the account the returned value from the template `newrelic-infra-operator.fullname` will be used as name. | |
+| `certManager.enabled`         | Use cert-manager to provision the MutatingWebhookConfiguration certs. | `false` |
+| `podSecurityContext.enabled`  | Enable custom Pod Security Context                           | `false`                             |
+| `podSecurityContext.fsGroup`  | fsGroup for Pod Security Context                             | `1001`                              |
+| `podSecurityContext.runAsUser`| runAsUser UID for Pod Security Context                       | `1001`                              |
+| `podSecurityContext.runAsGroup`| runAsGroup GID for Pod Security Context                      | `1001`                              |
+| `podAnnotations`              | If you wish to provide additional annotations to apply to the pod(s), specify them here.      |                                 |
+| `priorityClassName`           | Scheduling priority of the pod                               | `nil`                               |
+| `nodeSelector`                | Node label to use for scheduling                             | `{}`                                |
+| `timeoutSeconds`              | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds| `30`                             |
+| `tolerations`                 | List of node taints to tolerate (requires Kubernetes >= 1.6) | `[]`                                |
+| `affinity`                    | Node affinity to use for scheduling                          | `{}`                                |
+| `config.ignoreMutationErrors`                     | if true it instruments the operator to ignore injection error instead of failing     | `true`          |
+| `config.infraAgentInjection.policies[]`                     | All policies are ORed, if one policy matches the sidecar is injected. Within a policy PodSelectors, NamespaceSelector and NamespaceName are ANDed, any of these, if not specified, is ignored.                          | `[podSelector{matchExpressions[{key:"label.eks.amazonaws.com/fargate-profile",operator:"Exists"}]}]`                               |
+| `config.infraAgentInjection.policies[].podSelector`                     | Selector on Pod Labels.                          |                                |
+| `config.infraAgentInjection.policies[].namespaceSelector`               | Selector on Namespace labels.                          |                               |
+| `config.infraAgentInjection.policies[].namespace`                       | Namespace name. if set only pods belonging to such namespace matches the policy         |                                |
+| `config.infraAgentInjection.customAttributes[].name`                     | name of custom attribute to include                          |                                |
+| `config.infraAgentInjection.customAttributes[].defaultValue`                     | default value for custom attribute to include                        |                                |
+| `config.infraAgentInjection.customAttributes[].fromValue`                     | label from which take the value of the custom attribute                          |                          |
+| `config.infraAgentInjection.agentConfig.image.repository`         | The infrastructure agent repository for the sidecar container.                                   | `newrelic/infrastructure-k8s` |
+| `config.infraAgentInjection.agentConfig.image.pullPolicy`         | The sidecar image pull policy.                                         | `IfNotPresent`                      |
+| `config.infraAgentInjection.agentConfig.image.tag`                | The infrastructure agent repository for the sidecar container.                   | `2.4.0-unprivileged`                             |
+| `config.infraAgentInjection.agentConfig.image.repository`         | The infrastructure agent repository for the sidecar container.                                   | `newrelic/infrastructure-k8s` |
+| `config.infraAgentInjection.agentConfig.podSecurityContext.RunAsUser`         | runAsUser UID for Pod Security Context                                         |                   |
+| `config.infraAgentInjection.agentConfig.podSecurityContext.RunAsGroup`                | runAsGroup UID for Pod Security Context                   |                           |
+| `config.infraAgentInjection.agentConfig.configSelectors[]`         | configSelectors is the way to configure resource requirements and extra envVars of the injected sidecar container. When mutating it will be applied the first configuration having the labelSelector matching with the mutating pod.                                       |                   |
+| `config.infraAgentInjection.agentConfig.configSelectors[].resourceRequirements`                | resourceRequirements to apply to the sidecar                |                           |
+| `config.infraAgentInjection.agentConfig.configSelectors[].extraEnvVars`                | extraEnvVars to pass to the injected sidecar                   |                           |
+| `config.infraAgentInjection.agentConfig.configSelectors[].labelSelector`                | labelSelector matching the labels of the mutating pods                   |                           |
 
-> TBD
 
 ## Example
 
@@ -21,6 +63,30 @@ Then, to install this chart, run the following command:
 ```sh
 helm upgrade --install newrelic/newrelic-infra-operator --set cluster=my_cluster_name
 ```
+
+## Configure in which pods the sidecar should be injected
+
+Policies are available in order to configure in which pods the sidecar should be injected.
+Each policy is evaluated indipendently and if at least one policy matches the operator will inject the sidecar.
+
+Policies are composed by `namespaceSelector` checking the labels of the Pod namespace, `podSelector` checking
+the labels of the Pod and `namespace` checking the namespace name. Each of those, if specified, are ANDed
+
+By default the the policies are configured in order to inject the sidecar in each pod belonging to a fargate profile.
+
+Moreover to exclude single pods that would be selected by the policies is possible to add the label
+`infra-operator.newrelic.com/disable-injection`  to the pod and the sidecar will not be injected.
+
+Please make sure to configure policies correctly in order to avoid injecting sidear for pods running on EC2 nodes already monitored
+by the infrastructure DaemonSet
+
+## Configure the sidecar with labelsSelectors
+
+It is also possible to configure `resourceRequirements` and `extraEnvVars` based on the labels of the mutating Pod.
+
+The current configuration increases the resource requirements for sidecar injected on `KSM` instances and disable the `KSM` discovery
+for pods not running on `KSM` instances in order to decrease the load on the K8s ApiServer
+
 
 ## Resources
 
