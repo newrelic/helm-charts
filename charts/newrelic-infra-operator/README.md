@@ -57,7 +57,7 @@ This chart will deploy the [New Relic Infrastructure Operator][1], which injects
 
 ## Example
 
-Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)
+Make sure you have [added the New Relic chart repository.](../../README.md#install)
 
 Then, to install this chart, run the following command:
 
@@ -68,17 +68,17 @@ helm upgrade --install newrelic/newrelic-infra-operator --set cluster=my_cluster
 ## Configure in which pods the sidecar should be injected
 
 Policies are available in order to configure in which pods the sidecar should be injected.
-Each policy is evaluated indipendently and if at least one policy matches the operator will inject the sidecar.
+Each policy is evaluated independently and if at least one policy matches the operator will inject the sidecar.
 
 Policies are composed by `namespaceSelector` checking the labels of the Pod namespace, `podSelector` checking
 the labels of the Pod and `namespace` checking the namespace name. Each of those, if specified, are ANDed
 
-By default the the policies are configured in order to inject the sidecar in each pod belonging to a fargate profile.
+By default, the policies are configured in order to inject the sidecar in each pod belonging to a fargate profile.
 
-Moreover to exclude single pods that would be selected by the policies is possible to add the label
-`infra-operator.newrelic.com/disable-injection`  to the pod and the sidecar will not be injected.
+Moreover, to exclude injection for single Pods that otherwise would be selected by the policies is possible to add the 
+label `infra-operator.newrelic.com/disable-injection` to Pods.
 
-Please make sure to configure policies correctly in order to avoid injecting sidear for pods running on EC2 nodes already monitored
+Please make sure to configure policies correctly in order to avoid injecting sidecar for pods running on EC2 nodes already monitored
 by the infrastructure DaemonSet
 
 ## Configure the sidecar with labelsSelectors
