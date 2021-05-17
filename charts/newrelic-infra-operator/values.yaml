@@ -110,13 +110,6 @@ config:
         tag: 2.4.0-unprivileged
         pullPolicy: IfNotPresent
 
-## pod Security Context of the sidecar injected.
-## Notice that ReadOnlyRootFilesystem and AllowPrivilegeEscalation enforced respectively to true and to false 
-      # podSecurityContext:
-      #   RunAsUser:
-      #   RunAsGroup:
-
-
 ## configSelectors is the way to configure resource requirements and extra envVars of the injected sidecar container.
 ## When mutating it will be applied the first configuration having the labelSelector matching with the mutating pod.
       configSelectors:
@@ -152,7 +145,7 @@ config:
               cpu: 150m
           labelSelector:
             matchLabels:
-              k8s-app : kube-state-metrics
+              k8s-app: kube-state-metrics
           # extraEnvVars:
             # NRIA_VERBOSE: "1"
         - resourceRequirements:
@@ -164,7 +157,7 @@ config:
               cpu: 150m
           labelSelector:
             matchLabels:
-              app : kube-state-metrics
+              app: kube-state-metrics
           # extraEnvVars:
             # NRIA_VERBOSE: "1"
         - resourceRequirements:
@@ -180,7 +173,12 @@ config:
           # extraEnvVars:
             # NRIA_VERBOSE: "1"
 
+## pod Security Context of the sidecar injected.
+## Notice that ReadOnlyRootFilesystem and AllowPrivilegeEscalation enforced respectively to true and to false
+      # podSecurityContext:
+      #   RunAsUser:
+      #   RunAsGroup:
 
 fullnameOverride: ""
 affinity: {}
-tolerations: {}
+tolerations: []
