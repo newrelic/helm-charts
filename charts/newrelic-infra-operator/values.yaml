@@ -90,19 +90,19 @@ config:
       # NamespaceName: "my-namespace"
       # NamespaceSelector: LabelSelector{}
 
-## customAttributes allows to pass any custom attribute to the injected infra agents. 
+## agentConfig contains the configuration for the container agent injected
+    agentConfig:
+
+## customAttributes allows to pass any custom attribute to the injected infra agents.
 ## The value is computed either from the defaultValue or taken at injected time from Label specified in "fromLabel"
 ## Either the label should exist or the default should be specified in order to have the injection working.
-    customAttributes:
-    - name: computeType
-      defaultValue: serverless
-    - name: fargateProfile
-      # To allow inclusion on non-fargate clusters for testing.
-      defaultValue: unknown
-      fromLabel: eks.amazonaws.com/fargate-profile
-
-## agentConfig contains all the 
-    agentConfig:
+      customAttributes:
+      - name: computeType
+        defaultValue: serverless
+      - name: fargateProfile
+        # To allow inclusion on non-fargate clusters for testing.
+        defaultValue: unknown
+        fromLabel: eks.amazonaws.com/fargate-profile
 
 ## Image of the infrastructure agent to be injected
       image:
