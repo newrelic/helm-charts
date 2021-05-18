@@ -77,18 +77,21 @@ config:
 ## If set to false errors of the injection could block the creation of pods.
   ignoreMutationErrors: true
 
-## configuration of the sidecar injection webook
+  ## configuration of the sidecar injection webhook
   infraAgentInjection:
 ## All policies are ORed, if one policy matches the sidecar is injected.
 ## Within a policy PodSelectors, NamespaceSelector and NamespaceName are ANDed, any of these, if not specified, is ignored.
-    policies:
     ## The following policy matches all pods belonging to any fargate profile
-    - podSelector:
-        matchExpressions:
-          - key: "label.eks.amazonaws.com/fargate-profile"
-            operator: Exists
-      # NamespaceName: "my-namespace"
-      # NamespaceSelector: LabelSelector{}
+    ## and are injected in the template if global.fargate=true
+#    policies:
+#    - podSelector:
+#        matchExpressions:
+#        - key: "label.eks.amazonaws.com/fargate-profile"
+#          operator: Exists
+#    # Also NamespaceName and NamespaceSelector can be leveraged
+#      NamespaceName: "my-namespace"
+#      NamespaceSelector: {}
+
 
 ## agentConfig contains the configuration for the container agent injected
     agentConfig:
@@ -96,13 +99,11 @@ config:
 ## customAttributes allows to pass any custom attribute to the injected infra agents.
 ## The value is computed either from the defaultValue or taken at injected time from Label specified in "fromLabel"
 ## Either the label should exist or the default should be specified in order to have the injection working.
-      customAttributes:
-      - name: computeType
-        defaultValue: serverless
-      - name: fargateProfile
-        # To allow inclusion on non-fargate clusters for testing.
-        defaultValue: unknown
-        fromLabel: eks.amazonaws.com/fargate-profile
+#      customAttributes:
+#        - name: computeType
+#          defaultValue: serverless
+#        - name: fargateProfile
+#          fromLabel: eks.amazonaws.com/fargate-profile
 
 ## Image of the infrastructure agent to be injected
       image:
