@@ -2,6 +2,13 @@
 infraAgentInjection:
   resourcePrefix: {{ template "newrelic-infra-operator.fullname" . }}
 {{- if include "newrelic.fargate" . }}
+{{- if not .Values.config.infraAgentInjection.policies }}
+  policies:
+    - podSelector:
+        matchExpressions:
+          - key: "label.eks.amazonaws.com/fargate-profile"
+            operator: Exists
+{{- end }}
   agentConfig:
 {{- if not .Values.config.infraAgentInjection.agentConfig.customAttributes }}
     customAttributes:
@@ -9,13 +16,6 @@ infraAgentInjection:
         defaultValue: serverless
       - name: fargateProfile
         fromLabel: eks.amazonaws.com/fargate-profile
-{{- end -}}
-{{- if not .Values.config.infraAgentInjection.agentConfig.policies }}
-    policies:
-    - podSelector:
-        matchExpressions:
-        - key: "label.eks.amazonaws.com/fargate-profile"
-          operator: Exists
 {{- end -}}
 {{- end -}}
 {{- end -}}
