@@ -1,8 +1,24 @@
 {{- define "fargate-config" -}}
 infraAgentInjection:
   resourcePrefix: {{ template "newrelic-infra-operator.fullname" . }}
+{{- if include "newrelic.fargate" . }}
+  agentConfig:
+{{- if not .Values.config.infraAgentInjection.agentConfig.customAttributes }}
+    customAttributes:
+      - name: computeType
+        defaultValue: serverless
+      - name: fargateProfile
+        fromLabel: eks.amazonaws.com/fargate-profile
 {{- end -}}
-
+{{- if not .Values.config.infraAgentInjection.agentConfig.policies }}
+    policies:
+    - podSelector:
+        matchExpressions:
+        - key: "label.eks.amazonaws.com/fargate-profile"
+          operator: Exists
+{{- end -}}
+{{- end -}}
+{{- end -}}
 
 {{- define "config" -}}
 {{ toYaml (merge (include "fargate-config" . | fromYaml) .Values.config) }}

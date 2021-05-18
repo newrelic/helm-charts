@@ -133,3 +133,16 @@ Return the customSecretLicenseKey
     {{- .Values.customSecretLicenseKey | default "" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Returns fargate
+*/}}
+{{- define "newrelic.fargate" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.fargate }}
+    {{- .Values.global.fargate -}}
+  {{- end -}}
+{{- else if .Values.fargate }}
+  {{- .Values.fargate -}}
+{{- end -}}
+{{- end -}}
