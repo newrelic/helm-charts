@@ -5,7 +5,7 @@
 # cluster:
 # fargate:
 # IMPORTANT: the previous values can also be set as global so that they
-# can be shared by other newrelic product's charts
+# can be shared by other newrelic product's charts.
 #
 # global:
 #   licenseKey:
@@ -16,7 +16,7 @@ image:
   repository: newrelic/newrelic-infra-operator
   tag: ""  # Defaults to AppVersion
   pullPolicy: IfNotPresent
-#   It is possible to specify docker registry credentials
+#   It is possible to specify docker registry credentials.
 #   See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
 #  pullSecrets:
 #  - name: regsecret
@@ -26,13 +26,13 @@ admissionWebhooksPatchJob:
     repository: jettech/kube-webhook-certgen
     tag: v1.5.0
     pullPolicy: IfNotPresent
-#   Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies
+#   Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies.
 #   Enforce a read-only root.
   volumeMounts: []
 #  - name: tmp
 #    mountPath: /tmp
 #
-#   Volumes to add to the job container
+#   Volumes to add to the job container.
   volumes: []
 #  - name: tmp
 #    emptyDir: {}
@@ -47,11 +47,10 @@ resources:
     memory: 30M
 
 serviceAccount:
-#   Specifies whether a ServiceAccount should be created for the job and
-#   the deployment.
+#   Specifies whether a ServiceAccount should be created for the job and the deployment.
   create: true
 #   The name of the ServiceAccount to use.
-#   If not set and create is true, a name is generated using the fullname template
+#   If not set and create is true, a name is generated using the fullname template.
   name:
 
 # Configure podSecurityContext
@@ -61,21 +60,19 @@ podSecurityContext:
   runAsUser: 1001
   runAsGroup: 1001
 
-# Use cert manager for webhook certs, rather than the built-in patch job
+# Use cert manager for webhook certs, rather than the built-in patch job.
 certManager:
   enabled: false
 
-# If you wish to provide additional annotations to apply to the pod(s), specify them here
+# If you wish to provide additional annotations to apply to the pod(s), specify them here.
 # podAnnotations:
 
 # Pod scheduling priority
 # Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: high-priority
 
-# Webhook timeout
-#
-# Configure how long the API server should wait for a webhook to respond before treating the call as a failure
-#
+# Webhook timeout.
+# Configure how long the API server should wait for a webhook to respond before treating the call as a failure.
 # Ref: https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#timeouts
 timeoutSeconds: 30
 
@@ -98,8 +95,8 @@ config:
 #        - key: "eks.amazonaws.com/fargate-profile"
 #          operator: Exists
 ## Also NamespaceName and NamespaceSelector can be leveraged.
-#      NamespaceName: "my-namespace"
-#      NamespaceSelector: {}
+#      namespaceName: "my-namespace"
+#      namespaceSelector: {}
 
 
 ## agentConfig contains the configuration for the container agent injected
@@ -114,7 +111,7 @@ config:
 #        - name: fargateProfile
 #          fromLabel: eks.amazonaws.com/fargate-profile
 
-## Image of the infrastructure agent to be injected
+## Image of the infrastructure agent to be injected.
       image:
         repository: newrelic/infrastructure-k8s
         tag: 2.4.0-unprivileged
@@ -123,7 +120,7 @@ config:
 ## configSelectors is the way to configure resource requirements and extra envVars of the injected sidecar container.
 ## When mutating it will be applied the first configuration having the labelSelector matching with the mutating pod.
       configSelectors:
-## resourceRequirements to apply to the injected sidecar
+## resourceRequirements to apply to the injected sidecar.
       - resourceRequirements:
           limits:
             memory: 100M
@@ -131,7 +128,7 @@ config:
           requests:
             memory: 50M
             cpu: 100m
-## extraEnvVars to pass to the injected sidecar
+## extraEnvVars to pass to the injected sidecar.
         extraEnvVars:
           DISABLE_KUBE_STATE_METRICS: "true"
 #            NRIA_VERBOSE: "1"
@@ -184,7 +181,7 @@ config:
 #            NRIA_VERBOSE: "1"
 
 ## pod Security Context of the sidecar injected.
-## Notice that ReadOnlyRootFilesystem and AllowPrivilegeEscalation enforced respectively to true and to false
+## Notice that ReadOnlyRootFilesystem and AllowPrivilegeEscalation enforced respectively to true and to false.
 #      podSecurityContext:
 #        RunAsUser:
 #        RunAsGroup:
