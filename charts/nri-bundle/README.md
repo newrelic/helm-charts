@@ -23,7 +23,7 @@ This chart bundles multiple New Relic products helm-charts.
 | `logging.enabled`                 | Install the [`newrelic-logging` chart][7]                                                                                                            | false   |
 | `newrelic-pixie.enabled`          | Install the [`newrelic-pixie`][8] chart                                                                                                              | false   |
 | `pixie-chart.enabled`             | Install the [`pixie-chart` chart][9]                                                                                                                 | false   |
-| `newrelic-infra-operator.enabled` | Install the [`newrelic-infra-operator` chart][10]                                                                                                    | false   |
+| `newrelic-infra-operator.enabled` | Install the [`newrelic-infra-operator` chart][10] (Beta)                                                                                             | false   |
 
 ## Configure Dependencies
 
