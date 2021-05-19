@@ -89,7 +89,7 @@ It is also possible to configure `resourceRequirements` and `extraEnvVars` based
 
 The current configuration increases the resource requirements for sidecar injected on `KSM` instances. Moreover, 
 injectes disable the `DISABLE_KUBE_STATE_METRICS` environmentVariable for pods not running on `KSM` instances
-to decrease the load on the ApiServer.
+to decrease the load on the API server.
 
 ## Resources
 
