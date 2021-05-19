@@ -80,7 +80,7 @@ By default, the policies are configured in order to inject the sidecar in each p
 >Moreover, it is possible to add the label `infra-operator.newrelic.com/disable-injection` to Pods to exclude injection
 for a single Pod that otherwise would be selected by the policies.
 
-Please make sure to configure policies correctly avoiding injecting sidecar for pods running on EC2 nodes
+Please make sure to configure policies correctly to avoid injecting sidecar for pods running on EC2 nodes
 already monitored by the infrastructure DaemonSet.
 
 ## Configure the sidecar with labelsSelectors
