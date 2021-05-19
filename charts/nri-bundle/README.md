@@ -14,7 +14,7 @@ This chart bundles multiple New Relic products helm-charts.
 | `global.customSecretName`         | Name of the Secret object where the license key is stored                                                                                            |         |
 | `global.customSecretLicenseKey`   | Key in the Secret object where the license key is stored.                                                                                            |         |
 | `global.customSecretInsightsKey`  | Key in the Secret object where the insights key is stored.                                                                                           |         |
-| `global.fargate`                  | Must be set to `true` when deploying in an EKS Fargate environment.                                                                                  |         |
+| `global.fargate`                  | Must be set to `true` when deploying in an EKS Fargate environment.                                                                                  | false   |
 | `infrastructure.enabled`          | Install the [`newrelic-infrastructure` chart][3]                                                                                                     | true    |
 | `prometheus.enabled`              | Install the [`nri-prometheus` chart][4]                                                                                                              | false   |
 | `webhook.enabled`                 | Install the [`nri-metadata-injection` chart][5]                                                                                                      | true    |
