@@ -135,4 +135,4 @@ helm install newrelic/nri-bundle \
 [7]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
 [8]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
 [9]: https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy
-[9]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infra-operator
+[10]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infra-operator
