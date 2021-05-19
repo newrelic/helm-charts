@@ -103,7 +103,7 @@ config:
     agentConfig:
 
 ## CustomAttributes allows to pass any custom attribute to the injected infra agents.
-## The value is computed either from the defaultValue or taken at injected time from Label specified in "fromLabel"
+## The value is computed either from the defaultValue or taken at injected time from Label specified in "fromLabel".
 ## Either the label should exist or the default should be specified in order to have the injection working.
 #      customAttributes:
 #        - name: computeType
@@ -131,7 +131,7 @@ config:
 ## extraEnvVars to pass to the injected sidecar.
         extraEnvVars:
           DISABLE_KUBE_STATE_METRICS: "true"
-#            NRIA_VERBOSE: "1"
+#          NRIA_VERBOSE: "1"
         labelSelector:
           matchExpressions:
           - key: "app.kubernetes.io/name"
@@ -153,8 +153,8 @@ config:
         labelSelector:
           matchLabels:
             k8s-app: kube-state-metrics
-#          extraEnvVars:
-#            NRIA_VERBOSE: "1"
+#        extraEnvVars:
+#          NRIA_VERBOSE: "1"
       - resourceRequirements:
           limits:
             memory: 300M
@@ -165,8 +165,8 @@ config:
         labelSelector:
           matchLabels:
             app: kube-state-metrics
-#          extraEnvVars:
-#            NRIA_VERBOSE: "1"
+#        extraEnvVars:
+#          NRIA_VERBOSE: "1"
       - resourceRequirements:
           limits:
             memory: 300M
@@ -177,8 +177,8 @@ config:
         labelSelector:
           matchLabels:
             app.kubernetes.io/name: kube-state-metrics
-#          extraEnvVars:
-#            NRIA_VERBOSE: "1"
+#        extraEnvVars:
+#          NRIA_VERBOSE: "1"
 
 ## pod Security Context of the sidecar injected.
 ## Notice that ReadOnlyRootFilesystem and AllowPrivilegeEscalation enforced respectively to true and to false.
