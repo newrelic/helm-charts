@@ -88,7 +88,7 @@ already monitored by the infrastructure DaemonSet.
 It is also possible to configure `resourceRequirements` and `extraEnvVars` based on the labels of the mutating Pod.
 
 The current configuration increases the resource requirements for sidecar injected on `KSM` instances. Moreover, 
-injectes disable the `DISABLE_KUBE_STATE_METRICS` environmentVariable for pods not running on `KSM` instances
+injectes disable the `DISABLE_KUBE_STATE_METRICS` environment variable for Pods not running on `KSM` instances
 to decrease the load on the API server.
 
 ## Resources
