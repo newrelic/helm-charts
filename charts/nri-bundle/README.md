@@ -6,23 +6,24 @@ This chart bundles multiple New Relic products helm-charts.
 
 ## Configuration
 
-| Parameter                        | Description | Default |
-| -------------------------------- | ----------- | ------- |
-| `global.cluster`                 | The cluster name for the Kubernetes cluster. | |
-| `global.licenseKey`              | The [license key][1] for your New Relic Account. This will be preferred configuration option if both `licenseKey` and `customSecret` are specified. | |
-| `global.insightsKey`             | The [license key][1] for your New Relic Account. This will be preferred configuration option if both `insightsKey` and `customSecret` are specified. | |
-| `global.customSecretName`        | Name of the Secret object where the license key is stored | |
-| `global.customSecretLicenseKey`  | Key in the Secret object where the license key is stored. | |
-| `global.customSecretInsightsKey` | Key in the Secret object where the insights key is stored. | |
-| `global.fargate`                 | Must be set to `true` when deploying in an EKS Fargate environment. | |
-| `infrastructure.enabled`         | Install the [`newrelic-infrastructure` chart][3] | true |
-| `prometheus.enabled`             | Install the [`nri-prometheus` chart][4] | false |
-| `webhook.enabled`                | Install the [`nri-metadata-injection` chart][5] | true |
-| `ksm.enabled`                    | Install the [`kube-state-metrics` chart from the stable helm charts repository][2] | false |
-| `kubeEvents.enabled`             | Install the [`nri-kube-events` chart][6] | false |
-| `logging.enabled`                | Install the [`newrelic-logging` chart][7] | false |
-| `newrelic-pixie.enabled`         | Install the [`newrelic-pixie`][8] chart | false |
-| `pixie-chart.enabled`            | Install the [`pixie-chart` chart][9] | false |
+| Parameter                         | Description                                                                                                                                          | Default |
+|-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
+| `global.cluster`                  | The cluster name for the Kubernetes cluster.                                                                                                         |         |
+| `global.licenseKey`               | The [license key][1] for your New Relic Account. This will be preferred configuration option if both `licenseKey` and `customSecret` are specified.  |         |
+| `global.insightsKey`              | The [license key][1] for your New Relic Account. This will be preferred configuration option if both `insightsKey` and `customSecret` are specified. |         |
+| `global.customSecretName`         | Name of the Secret object where the license key is stored                                                                                            |         |
+| `global.customSecretLicenseKey`   | Key in the Secret object where the license key is stored.                                                                                            |         |
+| `global.customSecretInsightsKey`  | Key in the Secret object where the insights key is stored.                                                                                           |         |
+| `global.fargate`                  | Must be set to `true` when deploying in an EKS Fargate environment.                                                                                  |         |
+| `infrastructure.enabled`          | Install the [`newrelic-infrastructure` chart][3]                                                                                                     | true    |
+| `prometheus.enabled`              | Install the [`nri-prometheus` chart][4]                                                                                                              | false   |
+| `webhook.enabled`                 | Install the [`nri-metadata-injection` chart][5]                                                                                                      | true    |
+| `ksm.enabled`                     | Install the [`kube-state-metrics` chart from the stable helm charts repository][2]                                                                   | false   |
+| `kubeEvents.enabled`              | Install the [`nri-kube-events` chart][6]                                                                                                             | false   |
+| `logging.enabled`                 | Install the [`newrelic-logging` chart][7]                                                                                                            | false   |
+| `newrelic-pixie.enabled`          | Install the [`newrelic-pixie`][8] chart                                                                                                              | false   |
+| `pixie-chart.enabled`             | Install the [`pixie-chart` chart][9]                                                                                                                 | false   |
+| `newrelic-infra-operator.enabled` | Install the [`newrelic-infra-operator` chart][10]                                                                                                    | false   |
 
 ## Configure Dependencies
 
@@ -134,3 +135,4 @@ helm install newrelic/nri-bundle \
 [7]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
 [8]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
 [9]: https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy
+[9]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infra-operator
