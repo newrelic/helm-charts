@@ -34,6 +34,7 @@ spec:
       containers:
         - name: kube-events
           image: {{ .Values.image.kubeEvents.repository }}:{{ .Values.image.kubeEvents.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.image.kubeEvents.pullPolicy }}
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false
@@ -49,6 +50,7 @@ spec:
               mountPath: /app/config
         - name: infra-agent
           image: {{ .Values.image.infraAgent.repository }}:{{ .Values.image.infraAgent.tag }}
+          imagePullPolicy: {{ .Values.image.infraAgent.pullPolicy }}
           securityContext:
             privileged: false
             allowPrivilegeEscalation: false

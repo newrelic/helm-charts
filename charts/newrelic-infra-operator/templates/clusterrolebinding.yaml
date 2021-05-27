@@ -1,0 +1,26 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "newrelic-infra-operator.fullname" . }}
+  labels:
+    {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "newrelic-infra-operator.fullname" . }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "newrelic-infra-operator.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+---
+{{/* infra-agent is the ClusterRoleBinding to be used by the ServiceAccounts of the injected agents */}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ template "newrelic-infra-operator.fullname" . }}-infra-agent
+  labels:
+    {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ template "newrelic-infra-operator.fullname" . }}-infra-agent
