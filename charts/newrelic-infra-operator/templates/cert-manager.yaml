@@ -5,6 +5,7 @@
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
+  namespace: {{ .Release.Namespace }}
   name: {{ template "newrelic-infra-operator.fullname" . }}-self-signed-issuer
 spec:
   selfSigned: {}
@@ -13,6 +14,7 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: {{ .Release.Namespace }}
   name: {{ template "newrelic-infra-operator.fullname" . }}-root-cert
 spec:
   secretName: {{ template "newrelic-infra-operator.fullname" . }}-root-cert
@@ -26,19 +28,20 @@ spec:
 apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
+  namespace: {{ .Release.Namespace }}
   name: {{ template "newrelic-infra-operator.fullname" . }}-root-issuer
 spec:
   ca:
     secretName: {{ template "newrelic-infra-operator.fullname" . }}-root-cert
 ---
-
 # Finally, generate a serving certificate for the webhook to use
 apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
+  namespace: {{ .Release.Namespace }}
   name: {{ template "newrelic-infra-operator.fullname" . }}-webhook-cert
 spec:
-  secretName: {{ template "newrelic-infra-operator.fullname" . }}
+  secretName: {{ template "newrelic-infra-operator.fullname" . }}-admission
   duration: 8760h # 1y
   issuerRef:
     name: {{ template "newrelic-infra-operator.fullname" . }}-root-issuer
