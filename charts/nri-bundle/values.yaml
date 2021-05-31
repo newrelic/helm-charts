@@ -35,6 +35,8 @@ pixie-chart:
   enabled: false
 
 # enables newrelic-infra-operator
+# If enabled, and global.fargate is set to true, the chart will deploy the New Relic Infrastructure Operator, which
+# takes care of monitoring fargate workloads by automatically injecting a sidecar to fargate-scheduled pods.
 newrelic-infra-operator:
   enabled: false
 
@@ -48,14 +50,21 @@ newrelic-infra-operator:
 #     https://docs.newrelic.com/docs/kubernetes-monitoring-integration
 #
 # global:
+#   # New Relic License key (mandatory)
 #   licenseKey:
+#   # Insights key
 #   insightsKey:
+#   # Alternatively, specify a custom secret name and key to retrieve license and insights key from a secret
 #   customSecretName:
 #   customSecretLicenseKey:
 #   customSecretInsightsKey:
+#   # Name of the cluster, should be descriptive and unique within the New Relic account
 #   cluster:
-#   # IMPORTANT: Set this to true when deploying in EKS Fargate. This will pull the sidecar injector operator chart to
-#   # automatically monitor fargate workloads, and also prevent the DaemonSet from being scheduled in Fargate nodes
+#
+#   # IMPORTANT: Set this to true when deploying in EKS Fargate. This will:
+#   # - Automatically add nodeAffinity rules to exclude the DaemonSet pods from Fargate nodes
+#   # - If newrelic-infra-operator.enabled is also set, pull the sidecar injector operator chart to automatically
+#   #   monitor fargate workloads
 #   fargate: true
 
 # It is possible to configure dependencies values from this chart.
