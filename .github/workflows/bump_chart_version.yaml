@@ -21,7 +21,7 @@ jobs:
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
-          token: "${{ secrets.GITHUB_TOKEN }}"
+          token: ${{ secrets.NR_BOT_TOKEN }}
           commit-message: ${{ steps.version-bump.outputs.changeString }}
           title: ${{ steps.version-bump.outputs.changeString }}
           body: ${{ steps.version-bump.outputs.verboseChangeString }}
