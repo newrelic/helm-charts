@@ -260,7 +260,7 @@ spec:
       {{- if .Values.nodeAffinity }}
       affinity:
         nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
-      {{- else if .Values.global.fargate }}
+      {{- else if include "newrelic.fargate" . }}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:

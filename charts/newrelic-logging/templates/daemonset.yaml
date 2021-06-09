@@ -108,6 +108,20 @@ spec:
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
+      {{- if .Values.nodeAffinity }}
+      affinity:
+        nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
+      {{- else if include "newrelic.fargate" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: eks.amazonaws.com/compute-type
+                    operator: NotIn
+                    values:
+                      - fargate
+      {{- end }}
       {{- if $.Values.nodeSelector }}
       nodeSelector:
 {{ toYaml $.Values.nodeSelector | indent 8 }}

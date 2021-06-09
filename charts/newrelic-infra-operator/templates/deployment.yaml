@@ -1,0 +1,90 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "newrelic-infra-operator.fullname" . }}
+  labels:
+    {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+      {{- include "newrelic-infra-operator.appLabel" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
+        {{- if .Values.podAnnotations }}
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "newrelic-infra-operator.labels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ template "newrelic-infra-operator.serviceAccountName" . }}
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
+      {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ template "newrelic-infra-operator.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        env:
+        - name: CLUSTER_NAME
+          value: {{ include "newrelic-infra-operator.cluster" . }}
+        - name: NRIA_LICENSE_KEY
+          valueFrom:
+            secretKeyRef:
+              {{- if (include "newrelic-infra-operator.licenseKey" .) }}
+              name: {{ template "newrelic-infra-operator.fullname" . }}-license
+              key: license
+              {{- else if include "newrelic-infra-operator.customSecretName" . }}
+              name: {{ include "newrelic-infra-operator.customSecretName" . }}
+              key: {{ include "newrelic-infra-operator.customSecretLicenseKey" . }}
+              {{- else }}
+              {{- "" | required "Cannot find License Key, either licenseKey or customSecretName must be defined" }}
+              {{- end }}
+        volumeMounts:
+        - name: config
+          mountPath: /etc/newrelic/newrelic-infra-operator/
+        - name: tls-key-cert-pair
+          mountPath: /tmp/k8s-webhook-server/serving-certs/
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 9440
+          initialDelaySeconds: 1
+          periodSeconds: 1
+        {{- if .Values.resources }}
+        resources:
+          {{- toYaml .Values.resources | nindent 10 }}
+        {{- end }}
+      volumes:
+      - name: config
+        configMap:
+          name: {{ template "newrelic-infra-operator.fullname" . }}-config
+      - name: tls-key-cert-pair
+        secret:
+          secretName: {{ template "newrelic-infra-operator.fullname" . }}-admission
+      {{- if $.Values.priorityClassName }}
+      priorityClassName: {{ $.Values.priorityClassName }}
+      {{- end }}
+      {{- if $.Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml $.Values.nodeSelector | nindent 8 }}
+      {{- end }}
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}

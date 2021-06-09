@@ -1,0 +1,25 @@
+{{- if (and (not .Values.customTLSCertificate) (not .Values.certManager.enabled)) }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "newrelic-infra-operator.fullname" . }}-admission
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade,post-install,post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+  labels:
+    app: {{ template "newrelic-infra-operator.name" $ }}-admission
+{{ include "newrelic-infra-operator.labels" $ | indent 4 }}
+rules:
+  - apiGroups:
+      - admissionregistration.k8s.io
+    resources:
+      - mutatingwebhookconfigurations
+    verbs:
+      - get
+      - update
+  - apiGroups: ['policy']
+    resources: ['podsecuritypolicies']
+    verbs: ['use']
+    resourceNames:
+    - {{ template "newrelic-infra-operator.fullname" . }}-admission
+{{- end }}
