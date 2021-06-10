@@ -26,6 +26,56 @@ Other guidelines:
 * Roughly order changes within those groupings by impact.
 -->
 
+## 16.6.0
+
+* Added `parentNode.replaceChildren()`. (ninevra)
+* Fixed jsdom's handling of when code running inside the jsdom throws `null` or `undefined` as an exception. (mbest)
+* Removed the dependency on the deprecated [`request`](https://www.npmjs.com/package/request) package, in the process fixing several issues with the `XMLHttpRequest` implementation around header processing. Special thanks to vegardbb for completing this months-long effort!
+
+## 16.5.3
+
+* Fixed infinite recursion when using `MutationObserver`s to observe elements inside a `MutationObserver` callback.
+
+## 16.5.2
+
+* Fixed `Access-Control-Allow-Headers: *` to work with `XMLHttpRequest`. (silviot)
+* Fixed `xhr.response` to strip any leading BOM when `xhr.responseType` is `"json"`.
+* Fixed `new Text()` and `new Comment()` constructors to properly set the resulting node's `ownerDocument`.
+* Fixed `customElements.whenDefined()` to resolve its returned promise with the custom element constructor, per recent spec updates. (ExE-Boss)
+* Fixed parsing to ensure that `<svg><template></template></svg>` does not throw an exception, but instead correctly produces a SVG-namespace `<template>` element.
+* Fixed `domParser.parseFromString()` to treat `<noscript>` elements appropriately.
+* Fixed form control validity checking when the control was outside the `<form>` element and instead associated using the `form=""` attribute.
+* Fixed `legendEl.form` to return the correct result based on its parent `<fieldset>`.
+* Fixed `optionEl.text` to exclude `<script>` descendants.
+* Fixed radio buttons and checkboxes to not fire `input` and `change` events when disconnected.
+* Fixed `inputEl.indeterminate` to reset to its previous value when canceling a `click` event on a checkbox or radio button.
+* Fixed the behavior of event handler attributes (e.g. `onclick="...code..."`) when there were global variables named `element` or `formOwner`. (ExE-Boss)
+* On Node.js v14.6.0+ where `WeakRef`s are available, fixed `NodeIterator` to no longer stop working when more than ten `NodeIterator` instances are created, and to use less memory due to inactive `NodeIterator`s sticking around. (ExE-Boss)
+
+## 16.5.1
+
+* Fixed a regression that broke `customElements.get()` in v16.5.0. (fdesforges)
+* Fixed `window.event` to have a setter which overwrites the `window.event` property with the given value, per the specification. This fixes an issue where after upgrading to jsdom v16.5.0 you would no longer be able to set a global variable named `event` in the jsdom context.
+
+## 16.5.0
+
+* Added `window.queueMicrotask()`.
+* Added `window.event`.
+* Added `inputEvent.inputType`. (diegohaz)
+* Removed `ondragexit` from `Window` and friends, per a spec update.
+* Fixed the URL of `about:blank` iframes. Previously it was getting set to the parent's URL. (SimonMueller)
+* Fixed the loading of subresources from the filesystem when they had non-ASCII filenames.
+* Fixed the `hidden=""` attribute to cause `display: none` per the user-agent stylesheet. (ph-fritsche)
+* Fixed the `new File()` constructor to no longer convert `/` to `:`, per [a pending spec update](https://github.com/w3c/FileAPI/issues/41).
+* Fixed mutation observer callbacks to be called with the `MutationObserver` instance as their `this` value.
+* Fixed `<input type=checkbox>` and `<input type=radio>` to be mutable even when disabled, per [a spec update](https://github.com/whatwg/html/pull/5805).
+* Fixed `XMLHttpRequest` to not fire a redundant final `progress` event if a `progress` event was previously fired with the same `loaded` value. This would usually occur with small files.
+* Fixed `XMLHttpRequest` to expose the `Content-Length` header on cross-origin responses.
+* Fixed `xhr.response` to return `null` for failures that occur during the middle of the download.
+* Fixed edge cases around passing callback functions or event handlers. (ExE-Boss)
+* Fixed edge cases around the properties of proxy-like objects such as `localStorage` or `dataset`. (ExE-Boss)
+* Fixed a potential memory leak with custom elements (although we could not figure out how to trigger it). (soncodi)
+
 ## 16.4.0
 
 * Added a not-implemented warning if you try to use the second pseudo-element argument to `getComputedStyle()`, unless you pass a `::part` or `::slotted` pseudo-element, in which case we throw an error per the spec. (ExE-Boss)
