@@ -4,17 +4,25 @@ inputs:
   chart_name: 
     description: 'Name of the chart'
     required: true
-  chart_version:
-    description: 'The (new) version of the Helm chart'
-    required: true
   app_version:
     description: 'The (new) appVersion'
     required: true
+  chart_version:
+    description: 'The (new) version of the Helm chart'
+    required: false
 outputs:
   changeString:
     description: 'The changes summed up in a short message, meant for commits and PR titles'
+    value: 'Bump versions'
   verboseChangeString:
     description: 'The changes summed up in a verbose way, meant for PR or Slack messages'
+    value: 'Bump versions'
 runs:
-  using: 'node12'
-  main: 'index.js'
+  using: 'composite'
+  steps:
+    - run: |
+        export CHART=${{ inputs.chart_name }}
+        export VERSION=${{ inputs.chart_version }}
+        export APP_VERSION=${{ inputs.app_version }}
+        go run ./${{ github.action_path }}/src/cmd
+      shell: bash
