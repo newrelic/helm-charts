@@ -12,6 +12,7 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `global.licenseKey` - `licenseKey` | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be preferred configuration option if both `licenseKey` and `customSecret` are specified.         |                                 |
 | `global.customSecretName` - `customSecretName` | Name of the Secret object where the license key is stored                                                                                                                                                                         |                                 |
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the license key is stored.                                                                                                                                                             |                                 |
+| `global.fargate`               | Must be set to `true` when deploying in an EKS Fargate environment. Prevents DaemonSet pods from being scheduled in Fargate nodes.  |                                 |
 | `config`                       | A `newrelic.yml` file if you wish to provide.                                                                                                                                                                                                     |                                 |
 | `enableLinux`                  | Deploys the `DaemonSet` on all Linux nodes                                                                                                                                                                                                        | `true`                          |
 | `enableWindows`                | Deploys the `DaemonSet` on all Windows nodes (see [Running on Windows](#running-on-windows))                                                                                                                                                      | `false`                         |
@@ -25,12 +26,12 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `rbac.create`                  | Enable Role-based authentication                                                                                                                                                                                                                  | `true`                          |
 | `rbac.pspEnabled`              | Enable pod security policy support                                                                                                                                                                                                                | `false`                         |
 | `privileged`                   | Enable privileged mode.                                                                                                                                                                                                                           | `true`                          |
-| `windowsSecurityContext`      | Set security context values for the Windows daemonset.                                                                                                                                                                                                                           | `{}`                          |
+| `windowsSecurityContext`       | Set security context values for the Windows daemonset.                                                                                                                                                                                                                           | `{}`                          |
 | `image.repository`             | The container to pull.                                                                                                                                                                                                                            | `newrelic/infrastructure-k8s`   |
 | `image.pullPolicy`             | The pull policy.                                                                                                                                                                                                                                  | `IfNotPresent`                  |
 | `image.pullSecrets`            | Image pull secrets.                                                                                                                                                                                                                               | `nil`                           |
-| `image.tag`                    | The version of the container to pull.                                                                                                                                                                                                             | `2.0.0`                       |
-| `image.windowsTag`             | The version of the Windows container to pull.                                                                                                                                                                                                     | `1.21.0-windows-1809-alpha`     |
+| `image.tag`                    | The version of the container to pull.                                                                                                                                                                                                             | `2.4.0`                       |
+| `image.windowsTag`             | (Deprecated) The version of the Windows container to pull.                                                                                                                                                                                                     | `1.21.0-windows-1809-alpha`     |
 | `resources`                    | Any resources you wish to assign to the pod.                                                                                                                                                                                                      | See Resources below             |
 | `podAnnotations`               | If you wish to provide additional annotations to apply to the pod(s), specify them here.                                                                                                                                                          |                                 |
 | `verboseLog`                   | Should the agent log verbosely. (Boolean)                                                                                                                                                                                                         | `false`                         |
@@ -50,13 +51,23 @@ This chart will deploy the New Relic Infrastructure agent as a Daemonset.
 | `schedulerEndpointUrl`         | Explicitly sets the scheduler component url.                                                                                                                                                                                                      |                                 |
 | `controllerManagerEndpointUrl` | Explicitly sets the controller manager component url.                                                                                                                                                                                             |                                 |
 | `eventQueueDepth`              | Increases the in-memory cache of the agent to accommodate for more samples at a time. | |
-| `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `false` |
+| `enableProcessMetrics`         | Enables the sending of process metrics to New Relic.  | `(empty)` (Account default<sup>1</sup>) |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | `false` |
 | `discoveryCacheTTL`            | Duration since the discovered endpoints are stored in the cache until they expire. Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' | `1h` |
+| `windowsOsList` | List of `windowsOs` to be monitored, for each object specified it will create a different daemonset for the specified Windows version. | [{"version":2004,"imageTag":"2.2.0-windows-2004-alpha","buildNumber":"10.0.19041"}] |
+| `windowsOsList[].version` | Windows version monitored. | `2004` |
+| `windowsOsList[].imageTag` | Tag for the container image compatible with the specified build version. | `2.2.0-windows-2004-alpha` |
+| `windowsOsList[].buildNumber` | Build number associated to the specified Windows version. This value will be used to create a node selector `node.kubernetes.io/windows-build=buildNumber` | `10.0.19041` |
 | `openshift.enabled` | Enables OpenShift configuration options. | `false` |
 | `openshift.version` | OpenShift version for witch enable specific configuration options. Values supported ["3.x","4.x"]. For 4.x it includes OpenShift specific Control Plane endpoints and CRI-O runtime |  |
 | `runAsUser` | Set when running in unprivileged mode or when hitting UID constraints in OpenShift. | `1000` |
+| `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.
 
+> 1: Default value will depend on the creation date of the account owning the specified License Key:
+> * Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitly set to `false`. This is done to respect the old default behavior of the Infrastructure Agent.
+> * New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitly set to `true`.
+>
+> [Additional information](https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes/new-relic-infrastructure-agent-1120)
 ## Example
 
 Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)
@@ -159,6 +170,15 @@ HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows NT\CurrentVersion
         * `memoryUsedBytes`: in the UI, this is displayed in the pod card that appears when you click on a pod, and will show no data. We will soon fix this by updating our charts to use memoryWorkingSetBytes instead.
     * Volume:
         * `fsUsedBytes`: zero, so fsUsedPercent is zero
+
+#### Multiple Windows node builds running in the same cluster
+
+Multiple windows build for the nodes are supported by this chart. A different daemonSet is generated for each of them as specified by the value object `windowsOsList`.
+
+Accordigly the old value for the Windows image `windowsTag` is deprecated and will be removed in the future. Currently if specified still overwrite the image tag specified by the windowsOsList.
+
+Notice that the [kubernetes standard](https://kubernetes.io/docs/setup/production-environment/windows/user-guide-windows-containers/) for running containers over Windows, requires the presence of the label on the node `node.kubernetes.io/windows-build`. This label is added automatically to each node for versions `>1.17` but should be added manually otherwise.
+This helm charts expects the presence of such labels on the different Windows node and schedules through nodeSelectors the daemonSets accordingly.
 
 # Config file
 

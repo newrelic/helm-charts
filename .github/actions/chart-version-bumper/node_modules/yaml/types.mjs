@@ -1,21 +1,17 @@
-import opt from './dist/tags/options.js'
-export const binaryOptions = opt.binaryOptions
-export const boolOptions = opt.boolOptions
-export const intOptions = opt.intOptions
-export const nullOptions = opt.nullOptions
-export const strOptions = opt.strOptions
+import types from './dist/types.js'
 
-import schema from './dist/schema/index.js'
-export const Schema = schema.Schema
+export const binaryOptions = types.binaryOptions
+export const boolOptions = types.boolOptions
+export const intOptions = types.intOptions
+export const nullOptions = types.nullOptions
+export const strOptions = types.strOptions
 
-import map from './dist/schema/Map.js'
-export const YAMLMap = map.YAMLMap
-
-import seq from './dist/schema/Seq.js'
-export const YAMLSeq = seq.YAMLSeq
-
-import pair from './dist/schema/Pair.js'
-export const Pair = pair.Pair
-
-import scalar from './dist/schema/Scalar.js'
-export const Scalar = scalar.Scalar
+export const Schema = types.Schema
+export const Alias = types.Alias
+export const Collection = types.Collection
+export const Merge = types.Merge
+export const Node = types.Node
+export const Pair = types.Pair
+export const Scalar = types.Scalar
+export const YAMLMap = types.YAMLMap
+export const YAMLSeq = types.YAMLSeq

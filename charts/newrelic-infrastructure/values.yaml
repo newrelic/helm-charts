@@ -26,10 +26,25 @@
 # Valid time units: 'ns', 'us', 'ms', 's', 'm', 'h' default is 1h
 
 enableLinux: true
-
 enableWindows: false
+windowsOsList:
+  # - version: 1809
+  #   imageTag: 2.2.0-windows-1809-alpha
+  #   buildNumber: 10.0.17763
+  # - version: 1909
+  #   imageTag: 2.2.0-windows-1909-alpha
+  #   buildNumber: 10.0.18363
+  - version: 2004
+    imageTag: 2.2.0-windows-2004-alpha
+    buildNumber: 10.0.19041
+
 
 verboseLog: false
+
+# Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitly set to "false"
+# On the other hand New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitly set to "true",
+# https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes/new-relic-infrastructure-agent-1120
+# enableProcessMetrics: "false"
 
 # This can be set, the default is shown below
 # logFile: /var/log/nr-infra.log
@@ -38,12 +53,14 @@ image:
   repository: newrelic/infrastructure-k8s
 # tag is set from the appVersion (in helpers.tpl)
   tag: ""
-  windowsTag: 1.21.0-windows-1809-alpha
   pullPolicy: IfNotPresent
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
     # - name: regsecret
+
+  # windowsTag has been deprecated in favour of windowsOsList
+  # windowsTag: 1.21.0-windows-1809-alpha
 
 resources:
   limits:
@@ -149,7 +166,7 @@ openshift:
   #  team: alpha-team
   #
 
-# Pod scheduling proirity
+# Pod scheduling priority
 # Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: high-priority
 
@@ -157,6 +174,24 @@ openshift:
 # Ref: https://kubernetes.io/docs/user-guide/node-selection/
 nodeSelector: {}
 
+# Node affinity rules
+# Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+#
+# IMPORTANT #
+# ######### #
+# When .Values.global.fargate == true, the chart will automatically add the required affinity rules to exclude
+# the DaemonSet from Fargate nodes. There is no need to manually touch this property achieve this.
+# This automatic exclusion will, however, not take place if this value is overridden: Setting this to a
+# non-empty value WHEN deploying in EKS Fargate (global.fargate == true) requires the user to manually
+# include in their custom ruleset an exclusion for nodes with "eks.amazonaws.com/compute-type: fargate", as
+# the New Relic DaemonSet MUST NOT be deployed on fargate nodes, as the operator takes care of injecting it
+# as a sidecar instead.
+# Please refer to the daemonset.yaml template for more details on how to achieve this.
+nodeAffinity: {}
+
+# Please note that an additional nodeSelector is added automatically in order to
+# select the correct Windows version of the node: "node.kubernetes.io/windows-build"
+# https://kubernetes.io/docs/setup/production-environment/windows/user-guide-windows-containers/
 windowsNodeSelector:
   kubernetes.io/os: windows
 
@@ -203,7 +238,7 @@ customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
   #             env: test
 # For more details on monitoring services on Kubernetes see
 # https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-apps-services/monitor-services-running-kubernetes
-integrations_config: {}
+integrations_config: []
 
 # Sends data to staging, can be set as a global.
 # global.nrStaging
@@ -216,3 +251,7 @@ nrStaging: false
 # 'false' will use the host name as the name for the "host".
 # 'true' may cause issues if the node name is the same in different clusters
 useNodeNameAsDisplayName: true
+
+daemonSet:
+  # Annotations to add to the DaemonSet.
+  annotations: {}

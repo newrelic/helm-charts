@@ -67,13 +67,6 @@ Create the image name depending on the "privileged" flag
 {{- end -}}
 
 {{/*
-Create the Windows image name
-*/}}
-{{- define "newrelic.windowsImage" -}}
-"{{ .Values.image.repository }}:{{ .Values.image.windowsTag }}"
-{{- end -}}
-
-{{/*
 Return the licenseKey
 */}}
 {{- define "newrelic.licenseKey" -}}
@@ -143,6 +136,19 @@ Returns nrStaging
   {{- end -}}
 {{- else if .Values.nrStaging }}
   {{- .Values.nrStaging -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns fargate
+*/}}
+{{- define "newrelic.fargate" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.fargate }}
+    {{- .Values.global.fargate -}}
+  {{- end -}}
+{{- else if .Values.fargate }}
+  {{- .Values.fargate -}}
 {{- end -}}
 {{- end -}}
 

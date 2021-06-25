@@ -6,6 +6,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ template "nri-metadata-injection.fullname" . }}-self-signed-issuer
+  namespace: {{ .Release.Namespace }}
 spec:
   selfSigned: {}
 ---
@@ -14,6 +15,7 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ template "nri-metadata-injection.fullname" . }}-root-cert
+  namespace: {{ .Release.Namespace }}
 spec:
   secretName: {{ template "nri-metadata-injection.fullname" . }}-root-cert
   duration: 43800h # 5y
@@ -27,6 +29,7 @@ apiVersion: cert-manager.io/v1
 kind: Issuer
 metadata:
   name: {{ template "nri-metadata-injection.fullname" . }}-root-issuer
+  namespace: {{ .Release.Namespace }}
 spec:
   ca:
     secretName: {{ template "nri-metadata-injection.fullname" . }}-root-cert
@@ -37,8 +40,9 @@ apiVersion: cert-manager.io/v1
 kind: Certificate
 metadata:
   name: {{ template "nri-metadata-injection.fullname" . }}-webhook-cert
+  namespace: {{ .Release.Namespace }}
 spec:
-  secretName: {{ template "nri-metadata-injection.fullname" . }}
+  secretName: {{ template "nri-metadata-injection.fullname" . }}-admission
   duration: 8760h # 1y
   issuerRef:
     name: {{ template "nri-metadata-injection.fullname" . }}-root-issuer

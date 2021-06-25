@@ -1,0 +1,52 @@
+{{- define "newrelic-infra-operator.infra-agent-monitoring-rules" -}}
+- apiGroups: [""]
+  resources:
+    - "nodes"
+    - "nodes/metrics"
+    - "nodes/stats"
+    - "nodes/proxy"
+    - "pods"
+    - "services"
+  verbs: ["get", "list"]
+- nonResourceURLs: ["/metrics"]
+  verbs: ["get"]
+{{- end -}}
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "newrelic-infra-operator.fullname" . }}
+  labels:
+    {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
+rules:
+  {{/* Allow creating and updating secrets with license key for infra agent. */ -}}
+  - apiGroups: [""]
+    resources:
+      - "secrets"
+    verbs: ["get", "update", "patch"]
+    resourceNames: [{{ template "newrelic-infra-operator.fullname" . }}-config]
+  {{/* resourceNames used above do not support "create" verb. */ -}}
+  - apiGroups: [""]
+    resources:
+      - "secrets"
+    verbs: ["create"]
+  {{/* "list" and "watch" are required for controller-runtime caching. */ -}}
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterrolebindings"]
+    verbs: ["list", "watch", "get"]
+  {{/* Our controller needs permission to add the ServiceAccounts from the user to the -infra-agent CRB. */ -}}
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["clusterrolebindings"]
+    verbs: ["update"]
+    resourceNames: [{{ template "newrelic-infra-operator.fullname" . }}-infra-agent]
+  {{- /* Controller must have permissions it will grant to other ServiceAccounts. */ -}}
+  {{- include "newrelic-infra-operator.infra-agent-monitoring-rules" . | nindent 2 }}
+---
+{{/* infra-agent is the ClusterRole to be used by the injected agents to get metrics */}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ template "newrelic-infra-operator.fullname" . }}-infra-agent
+  labels: {{- include "newrelic-infra-operator.labels" . | nindent 4 }}
+rules:
+  {{- include "newrelic-infra-operator.infra-agent-monitoring-rules" . | nindent 2 }}

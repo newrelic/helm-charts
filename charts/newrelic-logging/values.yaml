@@ -1,6 +1,10 @@
 # IMPORTANT: Specify your New Relic API key here.
 # licenseKey:
 #
+# Optionally, specify a cluster name and log records can
+# be filtered by cluster.
+# cluster:
+#
 # or Specify secret which contains New Relic API key
 # customSecretName: secret_name
 # customSecretLicenseKey: secret_key
@@ -10,7 +14,7 @@
 #
 # global:
 #   licenseKey:
-#   clusterName:
+#   cluster:
 #   customSecretName:
 #   customSecretLicenseKey:
 #
@@ -25,6 +29,10 @@ fluentBit:
   path: "/var/log/containers/*.log"
   criEnabled: false
   k8sLoggingExclude: "Off"
+  additionalEnvVariables: []
+  # additionalEnvVariables:
+  # - name: HTTPS_PROXY
+  #   value: http://example.com:3128
 
 image:
   repository: newrelic/newrelic-fluentbit-output
@@ -53,14 +61,31 @@ serviceAccount:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
+  # Specify any annotations to add to the ServiceAccount
+  annotations: {}
 
 # If you wish to provide additional labels to apply to the pod(s), specify
 # them here
 # podLabels:
 
-# Pod scheduling proirity
+# Pod scheduling priority
 # Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
 # priorityClassName: high-priority
+
+# Node affinity rules
+# Ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#affinity-and-anti-affinity
+#
+# IMPORTANT #
+# ######### #
+# When .Values.global.fargate == true, the chart will automatically add the required affinity rules to exclude
+# the DaemonSet from Fargate nodes. There is no need to manually touch this property achieve this.
+# This automatic exclusion will, however, not take place if this value is overridden: Setting this to a
+# non-empty value WHEN deploying in EKS Fargate (global.fargate == true) requires the user to manually
+# include in their custom ruleset an exclusion for nodes with "eks.amazonaws.com/compute-type: fargate", as
+# the New Relic DaemonSet MUST NOT be deployed on fargate nodes, as the operator takes care of injecting it
+# as a sidecar instead.
+# Please refer to the daemonset.yaml template for more details on how to achieve this.
+nodeAffinity: {}
 
 # Node labels for pod assignment
 # Ref: https://kubernetes.io/docs/user-guide/node-selection/
@@ -79,3 +104,7 @@ updateStrategy: RollingUpdate
 # Sends data to staging, can be set as a global.
 # global.nrStaging
 nrStaging: false
+
+daemonSet:
+  # Annotations to add to the DaemonSet.
+  annotations: {}
