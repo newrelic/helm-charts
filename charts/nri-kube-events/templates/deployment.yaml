@@ -43,7 +43,6 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
-          imagePullPolicy: IfNotPresent
           args: ["-config", "/app/config/config.yaml", "-loglevel", "debug"]
           volumeMounts:
             - name: config-volume
