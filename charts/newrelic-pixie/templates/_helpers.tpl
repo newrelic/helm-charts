@@ -58,16 +58,6 @@ release: {{.Release.Name }}
 {{- end -}}
 {{- end -}}
 
-{{- define "newrelic-pixie.pixieStaging" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.pixieStaging }}
-    {{- .Values.global.pixieStaging -}}
-  {{- end -}}
-{{- else if .Values.pixieStaging }}
-  {{- .Values.pixieStaging -}}
-{{- end -}}
-{{- end -}}
-
 {{- define "newrelic-pixie.licenseKey" -}}
 {{- if .Values.global}}
   {{- if .Values.global.licenseKey }}
