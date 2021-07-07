@@ -17,6 +17,7 @@ By default, Pixie is installed in the `pl` namespace.
 | `global.cluster` - `cluster`  | The cluster name for the Kubernetes cluster. Required.       |                            |
 | `global.licenseKey` - `licenseKey` | The New Relic license key (stored in a secret). Required.    |                            |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | false |
+| `global.pixieStaging` - `pixieStaging` | Use Pixie's staging environment | false |
 | `apiKey`                      | The Pixie API key (stored in a secret). Required.            |                            |
 | `verbose`                     | Whether the integration should run in verbose mode or not.   | false                      |
 | `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license is stored                                                                                                                                                                         |                                 |
