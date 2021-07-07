@@ -62,6 +62,10 @@ secretKeyRef:
 - name: NR_OTLP_HOST
   value: "staging.otlp.nr-data.net:4317"
 {{- end }}
+{{- if (include "newrelic-pixie.nrStaging" .) }}
+- name: PIXIE_ENDPOINT
+  value: "staging.withpixie.dev:443"
+{{- end }}
 {{- if .Values.resources }}
 resources:
 {{ toYaml .Values.resources | indent 10 }}
