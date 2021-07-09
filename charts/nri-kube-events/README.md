@@ -19,7 +19,7 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `image.kubeEvents.tag` | The events-router image tag.   | `1.5.0` |
 | `image.kubeEvents.pullPolicy`  | The events-router image pull policy.   | (Empty, cluster default)|
 | `image.infraAgent.repository`  | The infra-agent image name.| `newrelic/k8s-events-forwarder` |
-| `image.infraAgent.tag` | The infra-agent image tag. | `1.16.3`|
+| `image.infraAgent.tag` | The infra-agent image tag. | `1.19.2`|
 | `image.infraAgent.pullPolicy`  | The infra-agent image pull policy. | (Empty, cluster default)|
 | `image.pullSecrets`| Image pull secrets.| `nil`   |
 | `resources`| A yaml defining the resources for the events-router container. | {}  |
