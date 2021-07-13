@@ -106,8 +106,6 @@ helm install newrelic/nri-bundle \
 
 ### Example with Pixie
 
-> Note: Pixie integration is still in a pre-release state and requires an early access program enrollment
-
 ```sh
 helm install newrelic/nri-bundle \
 --set global.licenseKey=<New Relic License key> \
