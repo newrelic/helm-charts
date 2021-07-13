@@ -11,3 +11,8 @@ data:
 {{- if .Values.config }}
 {{ toYaml .Values.config | indent 4 -}}
 {{ end }}
+{{- if .Values.guided_install }}
+{{ toYaml .Values.guided_install_transformations | indent 4 -}}
+{{ else }}
+{{ toYaml .Values.custom_transformations | indent 4 -}}
+{{ end }}

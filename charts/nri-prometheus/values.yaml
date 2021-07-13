@@ -20,6 +20,11 @@
 
 prometheusScrape: "true"
 
+# This parameter enables the default metric set 
+# ingested by nri-prometheus when using the Guided Install.
+# Default: true
+guided_install: true
+
 nameOverride: ""
 
 fullnameOverride: ""
@@ -56,6 +61,8 @@ serviceAccount:
   name: ""
   # Specify any annotations to add to the ServiceAccount
   annotations:
+
+
 
 # If you wish to provide your own config.yaml file include it under config:
 # the sample config file is included here as an example.
@@ -139,101 +146,123 @@ config:
   #       cert_file_path: "/etc/etcd/etcd-client.crt"
   #       key_file_path: "/etc/etcd/etcd-client.key"
 
-  # Proxy to be used by the emitters when submitting metrics. It should be
-  # in the format [scheme]://[domain]:[port].
-  # The emitter is the component in charge of sending the scraped metrics.
-  # This proxy won't be used when scraping metrics from the targets.
-  # By default it's empty, meaning that no proxy will be used.
-  # emitter_proxy: "http://localhost:8888"
+# Proxy to be used by the emitters when submitting metrics. It should be
+# in the format [scheme]://[domain]:[port].
+# The emitter is the component in charge of sending the scraped metrics.
+# This proxy won't be used when scraping metrics from the targets.
+# By default it's empty, meaning that no proxy will be used.
+# emitter_proxy: "http://localhost:8888"
 
-  # Certificate to add to the root CA that the emitter will use when
-  # verifying server certificates.
-  # If left empty, TLS uses the host's root CA set.
-  # emitter_ca_file: "/path/to/cert/server.pem"
+# Certificate to add to the root CA that the emitter will use when
+# verifying server certificates.
+# If left empty, TLS uses the host's root CA set.
+# emitter_ca_file: "/path/to/cert/server.pem"
 
-  # Set to true in order to stop autodiscovery in the k8s cluster. It can be useful when running the Pod with a service account
-  # having limited privileges.
-  # Default: false
-  # disable_autodiscovery: false
+# Set to true in order to stop autodiscovery in the k8s cluster. It can be useful when running the Pod with a service account
+# having limited privileges.
+# Default: false
+# disable_autodiscovery: false
 
-  # Whether the emitter should skip TLS verification when submitting data.
-  # Default: false
-  # emitter_insecure_skip_verify: false
+# Whether the emitter should skip TLS verification when submitting data.
+# Default: false
+# emitter_insecure_skip_verify: false
 
-  # Histogram support is based on New Relic's guidelines for higher
-  # level metrics abstractions https://github.com/newrelic/newrelic-exporter-specs/blob/master/Guidelines.md.
-  # To better support visualization of this data, percentiles are calculated
-  # based on the histogram metrics and sent to New Relic.
-  # By default, the following percentiles are calculated: 50, 95 and 99.
-  #
-  # percentiles:
-  #   - 50
-  #   - 95
-  #   - 99
+# Histogram support is based on New Relic's guidelines for higher
+# level metrics abstractions https://github.com/newrelic/newrelic-exporter-specs/blob/master/Guidelines.md.
+# To better support visualization of this data, percentiles are calculated
+# based on the histogram metrics and sent to New Relic.
+# By default, the following percentiles are calculated: 50, 95 and 99.
+#
+# percentiles:
+#   - 50
+#   - 95
+#   - 99
+#
+# integration definition files required to map metrics to entities
+# definition_files_path: /etc/newrelic-infra/definition-files
 
-  # transformations:
-  #   - description: "Uncomment if running New Relic Kubernetes Integration"
-  #     rename_attributes:
-  #       - metric_prefix: ""
-  #         attributes:
-  #           container_name: "containerName"
-  #           pod_name: "podName"
-  #           namespace: "namespaceName"
-  #           node: "nodeName"
-  #           container: "containerName"
-  #           pod: "podName"
-  #           deployment: "deploymentName"
-  #     ignore_metrics:
-  #       # Ignore the following metrics.
-  #       # These metrics are already collected by the New Relic Kubernetes Integration.
-  #       - prefixes:
-  #         - kube_daemonset_
-  #         - kube_deployment_
-  #         - kube_endpoint_
-  #         - kube_namespace_
-  #         - kube_node_
-  #         - kube_persistentvolume_
-  #         - kube_pod_
-  #         - kube_replicaset_
-  #         - kube_service_
-  #         - kube_statefulset_
-  #     copy_attributes:
-  #       # Copy all the labels from the timeseries with metric name
-  #       # `kube_hpa_labels` into every timeseries with a metric name that
-  #       # starts with `kube_hpa_` only if they share the same `namespace`
-  #       # and `hpa` labels.
-  #       - from_metric: "kube_hpa_labels"
-  #         to_metrics: "kube_hpa_"
-  #         match_by:
-  #           - namespace
-  #           - hpa
-  #       - from_metric: "kube_daemonset_labels"
-  #         to_metrics: "kube_daemonset_"
-  #         match_by:
-  #           - namespace
-  #           - daemonset
-  #       - from_metric: "kube_statefulset_labels"
-  #         to_metrics: "kube_statefulset_"
-  #         match_by:
-  #           - namespace
-  #           - statefulset
-  #       - from_metric: "kube_endpoint_labels"
-  #         to_metrics: "kube_endpoint_"
-  #         match_by:
-  #           - namespace
-  #           - endpoint
-  #       - from_metric: "kube_service_labels"
-  #         to_metrics: "kube_service_"
-  #         match_by:
-  #           - namespace
-  #           - service
-  #       - from_metric: "kube_node_labels"
-  #         to_metrics: "kube_node_"
-  #         match_by:
-  #           - namespace
-  #           - node
-  # integration definition files required to map metrics to entities
-  # definition_files_path: /etc/newrelic-infra/definition-files
+custom_transformations:
+  transformations:
+    - description: "Custom transformation Example"
+      rename_attributes:
+        - metric_prefix: ""
+          attributes:
+            container_name: "containerName"
+            pod_name: "podName"
+            namespace: "namespaceName"
+            node: "nodeName"
+            container: "containerName"
+            pod: "podName"
+            deployment: "deploymentName"
+      ignore_metrics:
+        # Ignore the following metrics.
+        # These metrics are already collected by the New Relic Kubernetes Integration.
+        - prefixes:
+          - kube_daemonset_
+          - kube_deployment_
+          - kube_endpoint_
+          - kube_namespace_
+          - kube_node_
+          - kube_persistentvolume_
+          - kube_pod_
+          - kube_replicaset_
+          - kube_service_
+          - kube_statefulset_
+      copy_attributes:
+        # Copy all the labels from the timeseries with metric name
+        # `kube_hpa_labels` into every timeseries with a metric name that
+        # starts with `kube_hpa_` only if they share the same `namespace`
+        # and `hpa` labels.
+        - from_metric: "kube_hpa_labels"
+          to_metrics: "kube_hpa_"
+          match_by:
+            - namespace
+            - hpa
+        - from_metric: "kube_daemonset_labels"
+          to_metrics: "kube_daemonset_"
+          match_by:
+            - namespace
+            - daemonset
+        - from_metric: "kube_statefulset_labels"
+          to_metrics: "kube_statefulset_"
+          match_by:
+            - namespace
+            - statefulset
+        - from_metric: "kube_endpoint_labels"
+          to_metrics: "kube_endpoint_"
+          match_by:
+            - namespace
+            - endpoint
+        - from_metric: "kube_service_labels"
+          to_metrics: "kube_service_"
+          match_by:
+            - namespace
+            - service
+        - from_metric: "kube_node_labels"
+          to_metrics: "kube_node_"
+          match_by:
+            - namespace
+            - node
+
+guided_install_transformations:
+  transformations:
+    - description: "New Relic Guided Install Defaults"
+      rename_attributes:
+        - metric_prefix: ""
+          attributes:
+            container_name: "containerName"
+            pod_name: "podName"
+            namespace: "namespaceName"
+            node: "nodeName"
+            container: "containerName"
+            pod: "podName"
+            deployment: "deploymentName"
+      ignore_metrics:
+        # Ignore the following metrics.
+        # These metrics are already collected by the New Relic Kubernetes Integration.
+        - prefixes:
+          - kube_
+          - container_
 
 # If you wish to provide additional annotations to apply to the pod(s), specify
 # them here
