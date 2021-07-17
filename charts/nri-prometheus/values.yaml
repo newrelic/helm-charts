@@ -22,8 +22,8 @@ prometheusScrape: "true"
 
 # This parameter enables the default metric set 
 # ingested by nri-prometheus when using the Guided Install.
-# Default: true
-guidedInstall: true
+# Default: false
+guidedInstall: false
 
 nameOverride: ""
 
@@ -263,6 +263,8 @@ guided_install_transformations:
         - prefixes:
           - kube_
           - container_
+          - machine_
+          - cadvisor_
 
 # If you wish to provide additional annotations to apply to the pod(s), specify
 # them here
