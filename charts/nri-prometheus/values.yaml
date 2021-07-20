@@ -179,90 +179,67 @@ config:
   # integration definition files required to map metrics to entities
   # definition_files_path: /etc/newrelic-infra/definition-files
 
-custom_transformations:
-  transformations: {}
-    # - description: "Custom transformation Example"
-    #   rename_attributes:
-    #     - metric_prefix: ""
-    #       attributes:
-    #         container_name: "containerName"
-    #         pod_name: "podName"
-    #         namespace: "namespaceName"
-    #         node: "nodeName"
-    #         container: "containerName"
-    #         pod: "podName"
-    #         deployment: "deploymentName"
-    #   ignore_metrics:
-    #     # Ignore the following metrics.
-    #     # These metrics are already collected by the New Relic Kubernetes Integration.
-    #     - prefixes:
-    #       - kube_daemonset_
-    #       - kube_deployment_
-    #       - kube_endpoint_
-    #       - kube_namespace_
-    #       - kube_node_
-    #       - kube_persistentvolume_
-    #       - kube_pod_
-    #       - kube_replicaset_
-    #       - kube_service_
-    #       - kube_statefulset_
-    #   copy_attributes:
-    #     # Copy all the labels from the timeseries with metric name
-    #     # `kube_hpa_labels` into every timeseries with a metric name that
-    #     # starts with `kube_hpa_` only if they share the same `namespace`
-    #     # and `hpa` labels.
-    #     - from_metric: "kube_hpa_labels"
-    #       to_metrics: "kube_hpa_"
-    #       match_by:
-    #         - namespace
-    #         - hpa
-    #     - from_metric: "kube_daemonset_labels"
-    #       to_metrics: "kube_daemonset_"
-    #       match_by:
-    #         - namespace
-    #         - daemonset
-    #     - from_metric: "kube_statefulset_labels"
-    #       to_metrics: "kube_statefulset_"
-    #       match_by:
-    #         - namespace
-    #         - statefulset
-    #     - from_metric: "kube_endpoint_labels"
-    #       to_metrics: "kube_endpoint_"
-    #       match_by:
-    #         - namespace
-    #         - endpoint
-    #     - from_metric: "kube_service_labels"
-    #       to_metrics: "kube_service_"
-    #       match_by:
-    #         - namespace
-    #         - service
-    #     - from_metric: "kube_node_labels"
-    #       to_metrics: "kube_node_"
-    #       match_by:
-    #         - namespace
-    #         - node
-
-guided_install_transformations:
-  transformations:
-    - description: "New Relic Guided Install Defaults"
-      rename_attributes:
-        - metric_prefix: ""
-          attributes:
-            container_name: "containerName"
-            pod_name: "podName"
-            namespace: "namespaceName"
-            node: "nodeName"
-            container: "containerName"
-            pod: "podName"
-            deployment: "deploymentName"
-      ignore_metrics:
-        # Ignore the following metrics.
-        # These metrics are already collected by the New Relic Kubernetes Integration.
-        - prefixes:
-          - kube_
-          - container_
-          - machine_
-          - cadvisor_
+  transformations: []
+  # - description: "Custom transformation Example"
+  #   rename_attributes:
+  #     - metric_prefix: ""
+  #       attributes:
+  #         container_name: "containerName"
+  #         pod_name: "podName"
+  #         namespace: "namespaceName"
+  #         node: "nodeName"
+  #         container: "containerName"
+  #         pod: "podName"
+  #         deployment: "deploymentName"
+  #   ignore_metrics:
+  #     # Ignore the following metrics.
+  #     # These metrics are already collected by the New Relic Kubernetes Integration.
+  #     - prefixes:
+  #       - kube_daemonset_
+  #       - kube_deployment_
+  #       - kube_endpoint_
+  #       - kube_namespace_
+  #       - kube_node_
+  #       - kube_persistentvolume_
+  #       - kube_pod_
+  #       - kube_replicaset_
+  #       - kube_service_
+  #       - kube_statefulset_
+  #   copy_attributes:
+  #     # Copy all the labels from the timeseries with metric name
+  #     # `kube_hpa_labels` into every timeseries with a metric name that
+  #     # starts with `kube_hpa_` only if they share the same `namespace`
+  #     # and `hpa` labels.
+  #     - from_metric: "kube_hpa_labels"
+  #       to_metrics: "kube_hpa_"
+  #       match_by:
+  #         - namespace
+  #         - hpa
+  #     - from_metric: "kube_daemonset_labels"
+  #       to_metrics: "kube_daemonset_"
+  #       match_by:
+  #         - namespace
+  #         - daemonset
+  #     - from_metric: "kube_statefulset_labels"
+  #       to_metrics: "kube_statefulset_"
+  #       match_by:
+  #         - namespace
+  #         - statefulset
+  #     - from_metric: "kube_endpoint_labels"
+  #       to_metrics: "kube_endpoint_"
+  #       match_by:
+  #         - namespace
+  #         - endpoint
+  #     - from_metric: "kube_service_labels"
+  #       to_metrics: "kube_service_"
+  #       match_by:
+  #         - namespace
+  #         - service
+  #     - from_metric: "kube_node_labels"
+  #       to_metrics: "kube_node_"
+  #       match_by:
+  #         - namespace
+  #         - node
 
 # If you wish to provide additional annotations to apply to the pod(s), specify
 # them here

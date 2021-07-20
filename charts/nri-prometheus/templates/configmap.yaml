@@ -8,11 +8,10 @@ apiVersion: v1
 data:
   config.yaml: |
     cluster_name: {{ include "nri-prometheus.cluster" . }}
-{{- if .Values.config }}
-{{ toYaml .Values.config | indent 4 -}}
-{{ end }}
 {{- if .Values.guidedInstall }}
-{{ toYaml .Values.guided_install_transformations | indent 4 -}}
+    {{- .Files.Get "static/guidedinstalldefaults.yaml" | indent 4 -}}
 {{ else }}
-{{ toYaml .Values.custom_transformations | indent 4 -}}
+    {{- if .Values.config }}
+    {{ toYaml .Values.config | indent 4 | trim  -}}
+    {{ end }}
 {{ end }}
