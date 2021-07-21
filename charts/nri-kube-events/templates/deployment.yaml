@@ -75,6 +75,11 @@ secretKeyRef:
 - name: NRIA_PROXY
   value: "{{ .Values.proxy }}"
 {{- end }}
+# Using FORWARD_ONLY mode to avoid the entity creation for the events.
+- name: NRIA_IS_SECURE_FORWARD_ONLY
+  value: "false"
+- name: NRIA_IS_FORWARD_ONLY
+  value: "true"
   volumeMounts:
 - mountPath: /var/db/newrelic-infra/data
   name: tmpfs-data
