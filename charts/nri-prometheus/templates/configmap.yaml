@@ -10,8 +10,6 @@ data:
     cluster_name: {{ include "nri-prometheus.cluster" . }}
 {{- if .Values.guidedInstall }}
     {{- .Files.Get "static/guidedinstalldefaults.yaml" | indent 4 -}}
-{{ else }}
-    {{- if .Values.config }}
-    {{ toYaml .Values.config | indent 4 | trim  -}}
-    {{ end }}
-{{ end }}
+{{- else if .Values.config }}
+    {{ toYaml .Values.config | indent 4 | trim }}
+{{- end }}
