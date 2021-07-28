@@ -10,17 +10,18 @@ By default, Pixie is installed in the `pl` namespace.
 
 ## Configuration
 
-| Parameter                     | Description                                                  | Default                    |
-| ----------------------------- | ------------------------------------------------------------ | -------------------------- |
-| `global.cluster` - `cluster`  | The cluster name for the Kubernetes cluster. Required.       |                            |
-| `global.licenseKey` - `licenseKey` | The New Relic license key (stored in a secret). Required.    |                            |
-| `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | false |
-| `apiKey`                      | The Pixie API key (stored in a secret). Required.            |                            |
-| `verbose`                     | Whether the integration should run in verbose mode or not.   | false                      |
-| `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license is stored                                                                                                                                                                         |                                 |
-| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored.                                                                                                                                                             |                                 |
-| `customSecretApiKeyName` | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.    |                                 |
-| `customSecretApiKeyKey` | Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   |                                 |
+| Parameter                                                  | Description                                                                                                    | Default               |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `global.cluster` - `cluster`                               | The cluster name for the Kubernetes cluster. Required.                                                         |                       |
+| `global.licenseKey` - `licenseKey`                         | The New Relic license key (stored in a secret). Required.                                                      |                       |
+| `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key).                                                         | false                 |
+| `apiKey`                                                   | The Pixie API key (stored in a secret). Required.                                                              |                       |
+| `verbose`                                                  | Whether the integration should run in verbose mode or not.                                                     | false                 |
+| `global.customSecretName` - `customSecretName`             | Name of an existing Secret object, not created by this chart, where the New Relic license is stored            |                       |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored. |                       |
+| `customSecretApiKeyName`                                   | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.               |                       |
+| `customSecretApiKeyKey`                                    | Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   |                       |
+| `tolerations`                                              | List of node taints to tolerate                                                                                | See Tolerations below |
 
 ## Example
 
@@ -67,3 +68,13 @@ resources:
     memory: 250M
 ```
 
+## Tolerations
+
+The default set of relations assigned to Pixie is shown below:
+
+```yaml
+- operator: "Exists"
+  effect: "NoSchedule"
+- operator: "Exists"
+  effect: "NoExecute"
+```

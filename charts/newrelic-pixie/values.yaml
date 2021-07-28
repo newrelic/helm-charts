@@ -29,4 +29,10 @@ resources:
     cpu: 100m
     memory: 250M
 
-tolerations: []
+# These are default tolerations to be able to run Pixie Kubernetes
+# integration.
+tolerations:
+  - operator: "Exists"
+    effect: "NoSchedule"
+  - operator: "Exists"
+    effect: "NoExecute"
