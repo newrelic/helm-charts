@@ -203,7 +203,11 @@ tolerations:
   - operator: "Exists"
     effect: "NoExecute"
 
-updateStrategy: RollingUpdate
+# K8s DaemonSet update strategy.
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
 
 # Custom attributes to be passed to the New Relic agent
 customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
