@@ -14,7 +14,7 @@
 
 image:
   repository: newrelic/newrelic-infra-operator
-  tag: ""  # Defaults to AppVersion
+  tag: "" # Defaults to AppVersion
   pullPolicy: IfNotPresent
 #   It is possible to specify docker registry credentials.
 #   See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
@@ -26,13 +26,13 @@ admissionWebhooksPatchJob:
     repository: jettech/kube-webhook-certgen
     tag: v1.5.0
     pullPolicy: IfNotPresent
-#   Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies.
-#   Enforce a read-only root.
+  #   Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies.
+  #   Enforce a read-only root.
   volumeMounts: []
-#  - name: tmp
-#    mountPath: /tmp
-#
-#   Volumes to add to the job container.
+  #  - name: tmp
+  #    mountPath: /tmp
+  #
+  #   Volumes to add to the job container.
   volumes: []
 #  - name: tmp
 #    emptyDir: {}
@@ -47,10 +47,10 @@ resources:
     memory: 30M
 
 serviceAccount:
-#   Specifies whether a ServiceAccount should be created for the job and the deployment.
+  #   Specifies whether a ServiceAccount should be created for the job and the deployment.
   create: true
-#   The name of the ServiceAccount to use.
-#   If not set and create is true, a name is generated using the fullname template.
+  #   The name of the ServiceAccount to use.
+  #   If not set and create is true, a name is generated using the fullname template.
   name:
 
 # Configure podSecurityContext
@@ -79,104 +79,101 @@ timeoutSeconds: 30
 # Operator configuration
 # The following are the default values for the operator
 config:
-
-## IgnoreMutationErrors instruments the operator to ignore injection error instead of failing.
-## If set to false errors of the injection could block the creation of pods.
+  ## IgnoreMutationErrors instruments the operator to ignore injection error instead of failing.
+  ## If set to false errors of the injection could block the creation of pods.
   ignoreMutationErrors: true
 
-## configuration of the sidecar injection webhook
+  ## configuration of the sidecar injection webhook
   infraAgentInjection:
-## All policies are ORed, if one policy matches the sidecar is injected.
-## Within a policy PodSelectors, NamespaceSelector and NamespaceName are ANDed, any of these, if not specified, is ignored.
-## The following policy is injected if global.fargate=true and matches all pods belonging to any fargate profile.
-#    policies:
-#    - podSelector:
-#        matchExpressions:
-#        - key: "eks.amazonaws.com/fargate-profile"
-#          operator: Exists
-## Also NamespaceName and NamespaceSelector can be leveraged.
-#      namespaceName: "my-namespace"
-#      namespaceSelector: {}
+    ## All policies are ORed, if one policy matches the sidecar is injected.
+    ## Within a policy PodSelectors, NamespaceSelector and NamespaceName are ANDed, any of these, if not specified, is ignored.
+    ## The following policy is injected if global.fargate=true and matches all pods belonging to any fargate profile.
+    #    policies:
+    #    - podSelector:
+    #        matchExpressions:
+    #        - key: "eks.amazonaws.com/fargate-profile"
+    #          operator: Exists
+    ## Also NamespaceName and NamespaceSelector can be leveraged.
+    #      namespaceName: "my-namespace"
+    #      namespaceSelector: {}
 
-
-## agentConfig contains the configuration for the container agent injected
+    ## agentConfig contains the configuration for the container agent injected
     agentConfig:
+      ## CustomAttributes allows to pass any custom attribute to the injected infra agents.
+      ## The value is computed either from the defaultValue or taken at injected time from Label specified in "fromLabel".
+      ## Either the label should exist or the default should be specified in order to have the injection working.
+      #      customAttributes:
+      #        - name: computeType
+      #          defaultValue: serverless
+      #        - name: fargateProfile
+      #          fromLabel: eks.amazonaws.com/fargate-profile
 
-## CustomAttributes allows to pass any custom attribute to the injected infra agents.
-## The value is computed either from the defaultValue or taken at injected time from Label specified in "fromLabel".
-## Either the label should exist or the default should be specified in order to have the injection working.
-#      customAttributes:
-#        - name: computeType
-#          defaultValue: serverless
-#        - name: fargateProfile
-#          fromLabel: eks.amazonaws.com/fargate-profile
-
-## Image of the infrastructure agent to be injected.
+      ## Image of the infrastructure agent to be injected.
       image:
         repository: newrelic/infrastructure-k8s
         tag: 2.4.0-unprivileged
         pullPolicy: IfNotPresent
 
-## configSelectors is the way to configure resource requirements and extra envVars of the injected sidecar container.
-## When mutating it will be applied the first configuration having the labelSelector matching with the mutating pod.
+      ## configSelectors is the way to configure resource requirements and extra envVars of the injected sidecar container.
+      ## When mutating it will be applied the first configuration having the labelSelector matching with the mutating pod.
       configSelectors:
-## resourceRequirements to apply to the injected sidecar.
-      - resourceRequirements:
-          limits:
-            memory: 100M
-            cpu: 200m
-          requests:
-            memory: 50M
-            cpu: 100m
-## extraEnvVars to pass to the injected sidecar.
-        extraEnvVars:
-          DISABLE_KUBE_STATE_METRICS: "true"
-#          NRIA_VERBOSE: "1"
-        labelSelector:
-          matchExpressions:
-          - key: "app.kubernetes.io/name"
-            operator: NotIn
-            values: ["kube-state-metrics"]
-          - key: "app"
-            operator: NotIn
-            values: ["kube-state-metrics"]
-          - key: "k8s-app"
-            operator: NotIn
-            values: ["kube-state-metrics"]
-      - resourceRequirements:
-          limits:
-            memory: 300M
-            cpu: 300m
-          requests:
-            memory: 150M
-            cpu: 150m
-        labelSelector:
-          matchLabels:
-            k8s-app: kube-state-metrics
-#        extraEnvVars:
-#          NRIA_VERBOSE: "1"
-      - resourceRequirements:
-          limits:
-            memory: 300M
-            cpu: 300m
-          requests:
-            memory: 150M
-            cpu: 150m
-        labelSelector:
-          matchLabels:
-            app: kube-state-metrics
-#        extraEnvVars:
-#          NRIA_VERBOSE: "1"
-      - resourceRequirements:
-          limits:
-            memory: 300M
-            cpu: 300m
-          requests:
-            memory: 150M
-            cpu: 150m
-        labelSelector:
-          matchLabels:
-            app.kubernetes.io/name: kube-state-metrics
+        ## resourceRequirements to apply to the injected sidecar.
+        - resourceRequirements:
+            limits:
+              memory: 100M
+              cpu: 200m
+            requests:
+              memory: 50M
+              cpu: 100m
+          ## extraEnvVars to pass to the injected sidecar.
+          extraEnvVars:
+            DISABLE_KUBE_STATE_METRICS: "true"
+          #          NRIA_VERBOSE: "1"
+          labelSelector:
+            matchExpressions:
+              - key: "app.kubernetes.io/name"
+                operator: NotIn
+                values: ["kube-state-metrics"]
+              - key: "app"
+                operator: NotIn
+                values: ["kube-state-metrics"]
+              - key: "k8s-app"
+                operator: NotIn
+                values: ["kube-state-metrics"]
+        - resourceRequirements:
+            limits:
+              memory: 300M
+              cpu: 300m
+            requests:
+              memory: 150M
+              cpu: 150m
+          labelSelector:
+            matchLabels:
+              k8s-app: kube-state-metrics
+        #        extraEnvVars:
+        #          NRIA_VERBOSE: "1"
+        - resourceRequirements:
+            limits:
+              memory: 300M
+              cpu: 300m
+            requests:
+              memory: 150M
+              cpu: 150m
+          labelSelector:
+            matchLabels:
+              app: kube-state-metrics
+        #        extraEnvVars:
+        #          NRIA_VERBOSE: "1"
+        - resourceRequirements:
+            limits:
+              memory: 300M
+              cpu: 300m
+            requests:
+              memory: 150M
+              cpu: 150m
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: kube-state-metrics
 #        extraEnvVars:
 #          NRIA_VERBOSE: "1"
 
@@ -188,4 +185,11 @@ config:
 
 fullnameOverride: ""
 affinity: {}
-tolerations: []
+
+# These are default tolerations to be able to run the New Relic Kubernetes
+# integration.
+tolerations:
+  - operator: "Exists"
+    effect: "NoSchedule"
+  - operator: "Exists"
+    effect: "NoExecute"
