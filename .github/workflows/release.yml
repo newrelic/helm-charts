@@ -34,7 +34,7 @@ jobs:
         run: helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
 
       - name: Add Pixie repository
-        run: helm repo add pixie https://pixie-helm-charts.storage.googleapis.com
+        run: helm repo add pixie https://pixie-chart-helm2.storage.googleapis.com
 
       - name: Configure Git
         run: |
@@ -45,6 +45,6 @@ jobs:
         uses: azure/setup-helm@v1
 
       - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.2.0
+        uses: helm/chart-releaser-action@v1.2.1
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

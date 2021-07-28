@@ -2,7 +2,7 @@ dependencies:
   - name: newrelic-infrastructure
     repository: file://../newrelic-infrastructure
     condition: infrastructure.enabled
-    version: 2.4.4
+    version: 2.4.8
 
   - name: nri-prometheus
     repository: file://../nri-prometheus
@@ -12,7 +12,7 @@ dependencies:
   - name: nri-metadata-injection
     repository: file://../nri-metadata-injection
     condition: webhook.enabled
-    version: 1.5.0
+    version: 1.5.1
 
   - name: kube-state-metrics
     repository: https://kubernetes.github.io/kube-state-metrics
@@ -22,22 +22,23 @@ dependencies:
   - name: nri-kube-events
     repository: file://../nri-kube-events
     condition: kubeEvents.enabled
-    version: 1.9.2
+    version: 1.9.4
 
   - name: newrelic-logging
     repository: file://../newrelic-logging
     condition: logging.enabled
-    version: 1.4.8
+    version: 1.5.0
 
   - name: newrelic-pixie
     repository: file://../newrelic-pixie
     condition: newrelic-pixie.enabled
-    version: 0.1.0-alpha.8
+    version: 1.0.0
 
-  - name: pixie-chart
-    repository: https://pixie-helm-charts.storage.googleapis.com
+  - name: pixie-chart-helm2
+    alias: pixie-chart
+    repository: https://pixie-chart-helm2.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.7.13
+    version: 0.8.2
 
   - name: newrelic-infra-operator
     repository: file://../newrelic-infra-operator
