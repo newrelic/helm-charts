@@ -1934,6 +1934,60 @@ entries:
   nri-bundle:
   - apiVersion: v1
     appVersion: "1.0"
+    created: "2021-07-29T06:28:12.294899892Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: file://../newrelic-infrastructure
+      version: 2.5.0
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: file://../nri-prometheus
+      version: 1.8.2
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      version: 1.5.1
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes.github.io/kube-state-metrics
+      version: 2.13.2
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: file://../nri-kube-events
+      version: 1.9.5
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: file://../newrelic-logging
+      version: 1.5.0
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: file://../newrelic-pixie
+      version: 1.0.0
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-chart-helm2
+      repository: https://pixie-chart-helm2.storage.googleapis.com
+      version: 0.8.2
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: file://../newrelic-infra-operator
+      version: 0.1.1
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: 36d3dc663fd4bfe6b5ccf9cec79e7f6bceab02ffe337adec1708da75c32a8870
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    maintainers:
+    - name: paologallinaharbur
+    - name: davidbrota
+    - name: gsanchezgavier
+    - name: roobre
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-2.15.0/nri-bundle-2.15.0.tgz
+    version: 2.15.0
+  - apiVersion: v1
+    appVersion: "1.0"
     created: "2021-07-19T15:16:33.089268716Z"
     dependencies:
     - condition: infrastructure.enabled
@@ -6363,4 +6417,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2021-07-28T10:55:15.827653012Z"
+generated: "2021-07-29T06:28:12.296281818Z"
