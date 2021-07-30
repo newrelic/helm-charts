@@ -176,6 +176,10 @@ spec:
             - name: NRIA_LOG_FILE
               value: {{ .Values.logFile }}
             {{- end }}
+            {{- if .Values.proxy }}
+            - name: NRIA_PROXY
+              value: "{{ .Values.proxy }}"
+            {{- end }}
           volumeMounts:
             {{- if .Values.config }}
             - name: config
