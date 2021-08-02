@@ -13,9 +13,11 @@ verbs: ["get", "list"]
   - apiGroups: ["batch"]
 resources: ["jobs"]
 verbs: ["get", "watch", "list", "create", "delete", "patch", "update"]
+{{- if not .Values.removeJobsLog }}
   - apiGroups: ["batch"]
 resources: ["jobs/log"]
 verbs: ["get", "list"]
+{{- end }}
   - apiGroups: [""]
 resources: ["events"]
 verbs: ["create", "update", "patch"]

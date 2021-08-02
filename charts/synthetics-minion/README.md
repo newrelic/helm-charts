@@ -39,6 +39,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Minion as 
 | `serviveAccount.create`   | If true, a service account would be created and assigned to the deployment | false|
 | `serviveAccount.name` | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account  |  |
 | `serviveAccount.annotations`  | The annotations to add to the service account if `serviveAccount.create` is set to true.   |  |
+| `removeJobsLog`   | Default Kubernetes does not include a jobs/log resource. Set this to `true` to remove it from the role if needed   | `false`  |
 | `headlessService.serviceName` | The name of the headless service to associate to the StatefulSet. If not set a name is generated using the fullname template.  |  |
 | `podSecurityContextRunAsUser` | Assigning a default uid to the Minion Pod, this can be changed as needed   | `2379`   |
 | `appArmorProfileName` | Name of an AppArmor profile to load.   |  |
