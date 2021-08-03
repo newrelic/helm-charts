@@ -78,6 +78,13 @@ rbac:
   create: true
   pspEnabled: false
 
+# Our DaemonSet will query the API Server to discover in which node kube-state-metrics (KSM) is deployed, so scrapping
+# can be performed by DS instance that shares a node with it.
+# Clusters with large amounts of both nodes and ports might want to restrict this discovery operations to a particular
+# namespace, to avoid sending non-namespaced requests that could stress the control plane.
+# By default this value is empty, which will allow the integration to discover kube-state-metrics on any namespace.
+# kubeStateMetricsNamespace: "newrelic"
+
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
   create: true
