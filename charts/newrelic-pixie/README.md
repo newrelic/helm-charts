@@ -1,11 +1,11 @@
-# newrelic-pixie 
+# newrelic-pixie
 
 ## Chart Details
 
 This chart will deploy the New Relic Pixie Integration.
 
-IMPORTANT: make sure you deploy this chart in the same namespace as Pixie. 
-It needs to access the cluster id inside the Pixie secrets. 
+IMPORTANT: make sure you deploy this chart in the same namespace as Pixie.
+It needs to access the cluster id inside the Pixie secrets.
 By default, Pixie is installed in the `pl` namespace.
 
 ## Configuration
@@ -37,6 +37,7 @@ helm install newrelic/newrelic-pixie \
   --namespace pl \
   --generate-name
 ```
+
 ## Globals
 
 **Important:** global parameters have higher precedence than locals with the same name.
@@ -53,7 +54,6 @@ More information on globals and subcharts can be found at [Helm's official docum
 | `global.customSecretName`       |
 | `global.customSecretLicenseKey` |
 | `global.nrStaging`              |
-
 
 ## Resources
 
