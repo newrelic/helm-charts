@@ -71,3 +71,7 @@ spec:
 {{ toYaml .Values.resources | indent 10 }}
         {{- end }}
 {{- end }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+      {{- if .Values.affinity }}
