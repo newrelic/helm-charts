@@ -13,10 +13,7 @@ kubernetes.io/os: windows
 {{ toYaml  $.Values.daemonSet.annotations | indent 4 }}
   {{- end }}
 spec:
-  updateStrategy:
-{{- with .Values.updateStrategy }}
-  {{- toYaml . | nindent 4 }}
-{{- end }}
+  {{ include "newrelic.updateStrategy" . | indent 2 }}
   selector:
 matchLabels:
   app: {{ template "newrelic.name" $ }}
