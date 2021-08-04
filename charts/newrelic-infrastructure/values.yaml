@@ -216,8 +216,9 @@ updateStrategy:
   rollingUpdate:
     maxUnavailable: 1
 
-# Custom attributes to be passed to the New Relic agent
-customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
+# Custom attributes to be passed to the New Relic agent, as a JSON string
+customAttributes: |
+  {"clusterName": "$(CLUSTER_NAME)"}
 
 # If you wish to monitor services running on Kubernetes you can provide integrations
 # configuration under integrations_config. You just need to create a new entry where
