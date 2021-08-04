@@ -153,6 +153,27 @@ Returns fargate
 {{- end -}}
 
 {{/*
+Returns the updateStrategy, either .Values.updateStrategy directly if it is an object, or wrapped if it is a string
+This is done to keep compatibility with old values and --reuse-values.
+Defining updateStrategy as a string is deprecated and will be removed in a future version of the chart.
+*/}}
+{{- define "newrelic.updateStrategy" -}}
+{{- if .Values.updateStrategy }}
+{{- if eq "string" (printf "%T" .Values.updateStrategy) }}
+updateStrategy:
+  type: {{ .Values.updateStrategy }}
+  {{- if eq .Values.updateStrategy "RollingUpdate" }}
+  rollingUpdate:
+    maxUnavailable: 1
+  {{- end }}
+{{- else }}
+updateStrategy:
+{{ .Values.updateStrategy | toYaml | indent 2 }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
 */}}
