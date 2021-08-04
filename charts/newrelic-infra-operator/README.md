@@ -36,7 +36,7 @@ This is typically used in environments where DaemonSets are not available, such 
 | `priorityClassName`                                                             | Scheduling priority of the pod.                                                                                                                                                                                                                                                                                                             | `nil`                                                                                                |
 | `nodeSelector`                                                                  | Node label to use for scheduling.                                                                                                                                                                                                                                                                                                           | `{}`                                                                                                 |
 | `timeoutSeconds`                                                                | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds.                                                                                                                                                                                                                                               | `30`                                                                                                 |
-| `tolerations`                                                                   | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                                                                                                                | `See Tolerations below`                                                                              |
+| `tolerations`                                                                   | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                                                                                                                | `Tolerations for the operator deployment and jobs. See Tolerations below.`                           |
 | `affinity`                                                                      | Node affinity to use for scheduling.                                                                                                                                                                                                                                                                                                        | `{}`                                                                                                 |
 | `config.ignoreMutationErrors`                                                   | If true it instruments the operator to ignore injection error instead of failing.                                                                                                                                                                                                                                                           | `true`                                                                                               |
 | `config.infraAgentInjection.policies[]`                                         | All policies are ORed, if one policy matches the sidecar is injected. Within a policy PodSelectors, NamespaceSelector and NamespaceName are ANDed, any of these, if not specified, is ignored.                                                                                                                                              | `[podSelector{matchExpressions[{key:"label.eks.amazonaws.com/fargate-profile",operator:"Exists"}]}]` |
@@ -134,7 +134,7 @@ resources:
 
 ## Tolerations
 
-The default set of relations assigned to our job is shown below:
+The default set of relations assigned to the operator itself and the related jobs are shown below:
 
 ```yaml
 - operator: "Exists"
@@ -142,6 +142,8 @@ The default set of relations assigned to our job is shown below:
 - operator: "Exists"
   effect: "NoExecute"
 ```
+
+Please note that these tolerations are applied only to the operator and the certificate-related jobs themselves, and not to any pod or container injected by it.
 
 [1]: https://github.com/newrelic/newrelic-infra-operator
 [2]: https://cert-manager.io/
