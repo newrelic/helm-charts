@@ -41,6 +41,9 @@ spec:
         env:
         - name: clusterName
           value: {{ include "nri-metadata-injection.cluster" . }}
+        ports:
+          - containerPort: 8443
+            protocol: TCP
         volumeMounts:
         - name: tls-key-cert-pair
           mountPath: /etc/tls-key-cert-pair
