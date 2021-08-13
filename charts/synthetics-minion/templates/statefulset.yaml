@@ -93,6 +93,8 @@ spec:
               value: {{ include "synthetics-minion.user-defined-variables-path" . | quote }}
           volumeMounts:
           {{- include "synthetics-minion.volumeMounts" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ include "synthetics-minion.appVersion" . }}"
