@@ -94,7 +94,12 @@ spec:
           volumeMounts:
           {{- include "synthetics-minion.volumeMounts" . | nindent 12 }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            requests:
+              cpu: "100m"
+              memory: "100Mi"
+            limits:
+              cpu: "200m"
+              memory: "200Mi"
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ include "synthetics-minion.appVersion" . }}"
