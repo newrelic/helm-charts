@@ -66,6 +66,12 @@ spec:
         - name: PIXIE_ENDPOINT
           value: "staging.withpixie.dev:443"
         {{- end }}
+        {{- if .Values.proxy }}
+        - name: HTTP_PROXY
+          value: {{ .Values.proxy | quote }}
+        - name: HTTPS_PROXY
+          value: {{ .Values.proxy | quote }}
+        {{- end }}
         {{- if .Values.resources }}
         resources:
 {{ toYaml .Values.resources | indent 10 }}
