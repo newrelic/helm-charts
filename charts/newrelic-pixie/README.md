@@ -21,6 +21,7 @@ By default, Pixie is installed in the `pl` namespace.
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored. | |
 | `customSecretApiKeyName` | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.| |
 | `customSecretApiKeyKey` | Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   | |
+| `proxy` | Set proxy to connect to Pixie Cloud and New Relic. | |
 
 ## Example
 
