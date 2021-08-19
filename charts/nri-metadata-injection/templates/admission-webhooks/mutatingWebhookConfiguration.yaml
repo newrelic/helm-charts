@@ -1,4 +1,4 @@
-apiVersion: admissionregistration.k8s.io/v1beta1
+apiVersion: admissionregistration.k8s.io/v1
 kind: MutatingWebhookConfiguration
 metadata:
   name: {{ template "nri-metadata-injection.fullname" . }}
@@ -31,3 +31,7 @@ webhooks:
 {{- end }}
   failurePolicy: Ignore
   timeoutSeconds: {{ .Values.timeoutSeconds }}
+  sideEffects: None
+  admissionReviewVersions:
+  - v1beta1
+  - v1
