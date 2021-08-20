@@ -49,10 +49,10 @@ spec:
     metadata:
       labels:
         {{- include "synthetics-minion.selectorLabels" . | nindent 8 }}
-      {{ if .Values.appArmorProfileName }}
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/{{ .Chart.Name }}: localhost/{{ .Values.appArmorProfileName }}
-      {{ end }}
+        {{- with .Values.labels -}}
+          {{ toYaml . | nindent 8 }}
+        {{- end }}
+      {{- include "synthetics-minion.podAnnotations" . | nindent 6 }}
     spec:
       serviceAccountName: {{ include "synthetics-minion.serviceAccountName" . }}
       ######################################## NOTE #################################################################

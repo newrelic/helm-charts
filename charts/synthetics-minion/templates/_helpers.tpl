@@ -39,6 +39,21 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Pod annotations
+*/}}
+{{- define "synthetics-minion.podAnnotations" -}}
+{{- if or .Values.appArmorProfileName .Values.annotations -}}
+annotations:
+{{- if .Values.appArmorProfileName }}
+  container.apparmor.security.beta.kubernetes.io/{{ .Chart.Name }}: localhost/{{ .Values.appArmorProfileName }}
+{{- end }}
+{{- range $key, $val := .Values.annotations }}
+  {{ $key }}: {{ $val | quote }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Selector labels
 */}}
 {{- define "synthetics-minion.selectorLabels" -}}
