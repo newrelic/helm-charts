@@ -69,6 +69,22 @@ cpu: 0.75
 memory: 1.6Gi
 ```
 
+## Labels
+
+The object used to add custom labels to the Minion Pods is shown below:
+
+```yaml
+labels: {}
+```
+
+## Annotations
+
+The object used to add custom annotations to the Minion Pods is shown below:
+
+```yaml
+annotations: {}
+```
+
 ## Tolerations
 
 The default set of relations assigned to our StatefulSet is shown below:
