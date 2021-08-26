@@ -3,6 +3,11 @@
     "config:base"
   ],
   "bumpVersion": "patch",
+  "postUpgradeTasks": {
+    "commands": ["helm dependency update"],
+    "fileFilters": ["Chart.*", "requirements.*"],
+    "executionMode": "update"
+  },
   "packageRules": [
     {
       // Group all GHA bumps together in a single PR.
