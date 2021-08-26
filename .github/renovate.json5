@@ -1,0 +1,29 @@
+{
+  "extends": [
+"config:base"
+  ],
+  "bumpVersion": "patch",
+  "packageRules": [
+{
+  // Group all GHA bumps together in a single PR.
+  "matchManagers": [
+"github-actions"
+  ],
+  "groupName": "Github Actions"
+},
+{
+  // Disable major updates of Kube State Metrics.
+  "matchPackageNames": [
+"kube-state-metrics"
+  ],
+  "matchUpdateTypes": [
+"major"
+  ],
+  "enabled": false
+}
+  ],
+  "ignorePaths": [
+// Do not bother bumping versions on the homemade chart-version-bumper action since it will be deprecated soon.
+".github/actions/chart-version-bumper"
+  ]
+}
