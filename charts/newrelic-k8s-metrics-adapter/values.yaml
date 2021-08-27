@@ -1,0 +1,49 @@
+cluster: testing
+licenseKey: test
+
+image:
+  repository: newrelic/newrelic-k8s-metrics-adapter
+  tag: "latest"  # Defaults to AppVersion
+  pullPolicy: IfNotPresent
+#   It is possible to specify docker registry credentials.
+#   See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+#  pullSecrets:
+#  - name: regsecret
+
+replicas: 1
+
+resources:
+  limits:
+    memory: 80M
+  requests:
+    cpu: 100m
+    memory: 30M
+
+serviceAccount:
+#   Specifies whether a ServiceAccount should be created for the job and the deployment.
+  create: true
+#   The name of the ServiceAccount to use.
+#   If not set and create is true, a name is generated using the fullname template.
+  name:
+
+# Configure podSecurityContext
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsGroup: 1001
+
+# Use cert manager for webhook certs, rather than the built-in patch job.
+certManager:
+  enabled: false
+
+# If you wish to provide additional annotations to apply to the pod(s), specify them here.
+# podAnnotations:
+
+# Pod scheduling priority
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+
+fullnameOverride: ""
+affinity: {}
+tolerations: []
