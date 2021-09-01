@@ -3,6 +3,13 @@
 "config:base"
   ],
   "bumpVersion": "patch",
+  "enabledManagers": [
+"helm-values",
+"helmv3",
+// Disable helm-requirements as it bumps requirements.yaml but _not_ requirements.lock, breaking CI workflow.
+// helmv3 manager should be able to bump Chart.lock, so hopefully we should be fine once we upgrade to Helm 3.
+// "helm-requirements"
+  ],
   "packageRules": [
 {
   // Group all GHA bumps together in a single PR.
