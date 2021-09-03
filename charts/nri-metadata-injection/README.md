@@ -43,7 +43,7 @@ Make sure you have [added the New Relic chart repository.](../../README.md#insta
 Then, to install this chart, run the following command:
 
 ```sh
-helm install newrelic/newrelic-mutation-webhook --set cluster=my_cluster_name
+helm install newrelic/nri-metadata-injection --set cluster=my_cluster_name --generate-name
 ```
 
 ## Resources
