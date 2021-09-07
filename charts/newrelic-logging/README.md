@@ -26,7 +26,7 @@ This document explains how to install it in your cluster, either using a [Helm](
 
 > For EU users, add `--set endpoint=https://log-api.eu.newrelic.com/log/v1 to any of the helm install commands above.
 
-> By default, tailing is set to `/var/log/containers/*.log`. To change this setting, provide your preferred path by adding `--set fluentBit.path=DESIRED_PATH` to any of the helm install commands above.
+> By default, tailing is set to `/var/log/containers/*.log`. To change this setting, provide your preferred path by adding `--set newrelic-logging.fluentBit.path=DESIRED_PATH` to any of the helm install commands above. If you're using a comma-separated list of paths, but sure to escape the commas with a backslash, ie `...path="/var/log/containers/*newrelic*.log\,/var/log/containers/*hello*.log"`
 
 ### Install the Kubernetes manifests manually
 
