@@ -33,7 +33,7 @@ This chart will deploy the [New Relic Infrastructure metadata injection webhook]
 | `priorityClassName`             | Scheduling priority of the pod                                                                                                                                                                                                                                                                                                            | `nil`                               |
 | `nodeSelector`                  | Node label to use for scheduling                                                                                                                                                                                                                                                                                                          | `{}`                                |
 | `timeoutSeconds`                | Seconds to wait for a webhook to respond. The timeout value must be between 1 and 30 seconds                                                                                                                                                                                                                                              | `10`                                |
-| `tolerations`                   | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                                                                                                              | See Tolerations below               |
+| `tolerations`                   | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                                                                                                              | `[]`                                |
 | `affinity`                      | Node affinity to use for scheduling                                                                                                                                                                                                                                                                                                       | `{}`                                |
 
 ## Example
@@ -56,17 +56,6 @@ The default set of resources assigned to the pods is shown below:
       requests:
         cpu: 100m
         memory: 30M
-
-## Tolerations
-
-The default set of relations assigned to nri metadata injection is shown below:
-
-```yaml
-- operator: "Exists"
-  effect: "NoSchedule"
-- operator: "Exists"
-  effect: "NoExecute"
-```
 
 [1]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-your-applications/link-your-applications-kubernetes#configure-injection
 [2]: https://cert-manager.io/
