@@ -1,15 +1,14 @@
 {{- if and (include "newrelic.areValuesValid" .) .Values.enableLinux }}
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic.labels" . | indent 4 }}
-  name: {{ template "newrelic.fullname" . }}
+  name: {{ template "newrelic.fullname" . }}-k8s
   {{- if .Values.daemonSet.annotations }}
   annotations: {{ toYaml .Values.daemonSet.annotations | nindent 4 }}
   {{- end }}
 spec:
-  {{ include "newrelic.updateStrategy" . | indent 2 }}
   selector:
     matchLabels:
       app: {{ template "newrelic.name" . }}
@@ -29,10 +28,6 @@ spec:
         mode: {{ template "newrelic.mode" . }}
     spec:
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
-      {{- if .Values.privileged }}
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
-      {{- end }}
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
@@ -42,13 +37,9 @@ spec:
           image: {{ template "newrelic.image" . }}
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           securityContext:
-            {{- if .Values.privileged }}
-            privileged: true
-            {{- else }}
             runAsUser: {{ .Values.runAsUser | default 1000 }}
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
-            {{- end }}
           env:
             - name: NRIA_LICENSE_KEY
               valueFrom:
@@ -62,13 +53,67 @@ spec:
                   {{- end }}
             - name: "CLUSTER_NAME"
               value: {{ include "newrelic.cluster" . }}
-            - name: "DISABLE_KUBE_STATE_METRICS"
+            - name: "DISABLE_KUBELET"
               value: "true"
-            - name: "DISABLE_CONTROLPLANE"
-              value: "true"
+            {{- if .Values.kubeStateMetricsUrl }}
+            - name: "KUBE_STATE_METRICS_URL"
+              value: {{ .Values.kubeStateMetricsUrl | quote }}
+            {{- end }}
+            {{- if .Values.kubeStateMetricsPodLabel }}
+            - name: "KUBE_STATE_METRICS_POD_LABEL"
+              value: {{ .Values.kubeStateMetricsPodLabel | quote }}
+            {{- end }}
             {{- if .Values.kubeStateMetricsTimeout }}
             - name: TIMEOUT
               value: {{ .Values.kubeStateMetricsTimeout | quote }}
+            {{- end }}
+            {{- if .Values.kubeStateMetricsScheme }}
+            - name: "KUBE_STATE_METRICS_SCHEME"
+              value: {{ .Values.kubeStateMetricsScheme | quote }}
+            {{- end }}
+            {{- if .Values.kubeStateMetricsPort }}
+            - name: "KUBE_STATE_METRICS_PORT"
+              value: {{ .Values.kubeStateMetricsPort | quote }}
+            {{- end }}
+            {{- if .Values.kubeStateMetricsNamespace }}
+            - name: "KUBE_STATE_METRICS_NAMESPACE"
+              value: {{ .Values.kubeStateMetricsNamespace | quote }}
+            {{- end }}
+            {{- if .Values.etcdTlsSecretName }}
+            - name: ETCD_TLS_SECRET_NAME
+              value: {{ .Values.etcdTlsSecretName | quote }}
+            {{- end }}
+            {{- if .Values.etcdTlsSecretNamespace }}
+            - name: ETCD_TLS_SECRET_NAMESPACE
+              value: {{ .Values.etcdTlsSecretNamespace | quote }}
+            {{- end }}
+            {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
+            # OpenShift defaults
+            - name: "ETCD_ENDPOINT_URL"
+              value: {{ .Values.etcdEndpointUrl | quote | default "https://localhost:9979" }}
+            - name: "API_SERVER_ENDPOINT_URL"
+              value: {{ .Values.apiServerEndpointUrl | quote | default "https://localhost:6443" }}
+            - name: "SCHEDULER_ENDPOINT_URL"
+              value: {{ .Values.schedulerEndpointUrl | quote | default "https://localhost:10259" }}
+            - name: "CONTROLLER_MANAGER_ENDPOINT_URL"
+              value: {{ .Values.controllerManagerEndpointUrl | quote | default "https://localhost:10257" }}
+            {{- else }}
+            {{- if .Values.etcdEndpointUrl }}
+            - name: "ETCD_ENDPOINT_URL"
+              value: {{ .Values.etcdEndpointUrl | quote }}
+            {{- end }}
+            {{- if .Values.apiServerEndpointUrl }}
+            - name: "API_SERVER_ENDPOINT_URL"
+              value: {{ .Values.apiServerEndpointUrl | quote }}
+            {{- end }}
+            {{- if .Values.schedulerEndpointUrl }}
+            - name: "SCHEDULER_ENDPOINT_URL"
+              value: {{ .Values.schedulerEndpointUrl | quote }}
+            {{- end }}
+            {{- if .Values.controllerManagerEndpointUrl }}
+            - name: "CONTROLLER_MANAGER_ENDPOINT_URL"
+              value: {{ .Values.controllerManagerEndpointUrl | quote }}
+            {{- end }}
             {{- end }}
             {{- if .Values.apiServerSecurePort }}
             - name: "API_SERVER_SECURE_PORT"
@@ -112,7 +157,7 @@ spec:
               value: {{ .Values.customAttributes }}
             {{- end }}
             - name: "NRIA_PASSTHROUGH_ENVIRONMENT"
-              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,DISABLE_KUBE_STATE_METRICS,DISCOVERY_CACHE_TTL,DISABLE_CONTROLPLANE"
+              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,KUBE_STATE_METRICS_POD_LABEL,TIMEOUT,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,KUBE_STATE_METRICS_SCHEME,KUBE_STATE_METRICS_PORT,KUBE_STATE_METRICS_NAMESPACE,SCHEDULER_ENDPOINT_URL,ETCD_ENDPOINT_URL,CONTROLLER_MANAGER_ENDPOINT_URL,API_SERVER_ENDPOINT_URL,DISCOVERY_CACHE_TTL,DISABLE_KUBELET"
             {{- if .Values.verboseLog }}
             - name: NRIA_VERBOSE
               value: "1"
@@ -121,6 +166,11 @@ spec:
             - name: NRIA_LOG_FILE
               value: {{ .Values.logFile }}
             {{- end }}
+            # Using FORWARD_ONLY mode to avoid the entity creation for the events.
+            - name: NRIA_IS_SECURE_FORWARD_ONLY
+              value: "false"
+            - name: NRIA_IS_FORWARD_ONLY
+              value: "true"
           volumeMounts:
             {{- if .Values.config }}
             - name: config
@@ -131,22 +181,6 @@ spec:
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
             {{- end }}
-            {{- if .Values.privileged }}
-            - name: dev
-              mountPath: /dev
-            {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
-            - name: host-crio-socket
-              mountPath: /var/run/crio.sock
-            {{- else }}
-            - name: host-docker-socket
-              mountPath: /var/run/docker.sock
-            {{- end }}
-            - name: log
-              mountPath: /var/log
-            - name: host-volume
-              mountPath: /host
-              readOnly: true
-            {{- else }}
             - mountPath: /var/db/newrelic-infra/data
               name: tmpfs-data
             - mountPath: /var/db/newrelic-infra/user_data
@@ -155,32 +189,11 @@ spec:
               name: tmpfs-tmp
             - mountPath: /var/cache/nr-kubernetes
               name: tmpfs-cache
-            {{- end }}
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
       volumes:
-        {{- if .Values.privileged }}
-        - name: dev
-          hostPath:
-            path: /dev
-        {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
-        - name: host-crio-socket
-          hostPath:
-            path: /var/run/crio.sock
-        {{- else }}
-        - name: host-docker-socket
-          hostPath:
-            path: /var/run/docker.sock
-        {{- end }}
-        - name: log
-          hostPath:
-            path: /var/log
-        - name: host-volume
-          hostPath:
-            path: /
-        {{- else }}
         - name: tmpfs-data
           emptyDir: {}
         - name: tmpfs-user-data
@@ -189,7 +202,6 @@ spec:
           emptyDir: {}
         - name: tmpfs-cache
           emptyDir: {}
-        {{- end }}
         {{- if .Values.config }}
         - name: config
           configMap:
@@ -206,19 +218,17 @@ spec:
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
+      affinity:
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: kube-state-metrics
+            weight: 100
       {{- if .Values.nodeAffinity }}
-      affinity:
         nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
-      {{- else if include "newrelic.fargate" . }}
-      affinity:
-        nodeAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-            nodeSelectorTerms:
-              - matchExpressions:
-                  - key: eks.amazonaws.com/compute-type
-                    operator: NotIn
-                    values:
-                      - fargate
       {{- end }}
       {{- if $.Values.nodeSelector }}
       nodeSelector:
