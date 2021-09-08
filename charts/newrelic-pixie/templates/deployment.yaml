@@ -60,7 +60,7 @@ secretKeyRef:
 {{- end }}
 {{- if (include "newrelic-pixie.nrStaging" .) }}
 - name: NR_OTLP_HOST
-  value: "staging.otlp.nr-data.net:4317"
+  value: "staging-otlp.nr-data.net:4317"
 {{- end }}
 {{- if (include "newrelic-pixie.nrStaging" .) }}
 - name: PIXIE_ENDPOINT
@@ -71,6 +71,14 @@ secretKeyRef:
   value: {{ .Values.proxy | quote }}
 - name: HTTPS_PROXY
   value: {{ .Values.proxy | quote }}
+{{- end }}
+{{- if .Values.excludePodsRegex }}
+- name: EXCLUDE_PODS_REGEX
+  value: {{ .Values.excludePodsRegex | quote }}
+{{- end }}
+{{- if .Values.excludeNamespacesRegex }}
+- name: EXCLUDE_NAMESPACES_REGEX
+  value: {{ .Values.excludeNamespacesRegex | quote }}
 {{- end }}
 {{- if .Values.resources }}
 resources:
