@@ -109,7 +109,7 @@ fieldRef:
 fieldRef:
   fieldPath: metadata.namespace
 - name: MINION_PRIVATE_LOCATION_KEY
-  value: {{ required "A valid .Values.synthetics.privateLocationKey entry required" .Values.synthetics.privateLocationKey  | quote }}
+  {{- include "synthetics-minion.privateLocationKey" . | nindent 14 }}
 - name: MINION_LOG_LEVEL
   value: {{ .Values.synthetics.minionLogLevel | quote }}
 
