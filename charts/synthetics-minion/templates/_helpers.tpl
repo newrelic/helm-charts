@@ -230,3 +230,19 @@ Define the volume mounts for the Minion
   subPath: {{ .Values.persistence.userDefinedVariables | quote }}
   {{ end }}
 {{- end }}
+
+{{/*
+Add privateLocationKey directly or retrieve from a Kubernetes Secret
+*/}}
+{{- define "synthetics-minion.privateLocationKey" }}
+{{- if .Values.synthetics.privateLocationKey -}}
+value: {{ .Values.synthetics.privateLocationKey | quote }}
+{{- else if .Values.synthetics.privateLocationKeySecretName -}}
+valueFrom:
+  secretKeyRef:
+    name: {{ .Values.synthetics.privateLocationKeySecretName  }}
+    key: privateLocationKey
+{{- else -}}
+{{- required ".Values.synthetics.privateLocationKey or .Values.synthetics.privateLocationKeySecretName must be set!" nil }}
+{{- end -}}
+{{- end }}
