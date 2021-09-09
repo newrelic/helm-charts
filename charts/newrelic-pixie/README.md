@@ -21,7 +21,9 @@ By default, Pixie is installed in the `pl` namespace.
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored. |   |
 | `customSecretApiKeyName`   | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.   |   |
 | `customSecretApiKeyKey`| Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   |   |
-| `tolerations`  | List of node taints to tolerate| `[]`  |
+| `nodeSelector` | Node label to use for scheduling  | `{}`   |
+| `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)  | `[]`   |
+| `affinity` | Node affinity to use for scheduling| `{}`  |
 | `proxy`| Set proxy to connect to Pixie Cloud and New Relic. |   |
 | `excludeNamespacesRegex`   | Observability data for namespaces matching this RE2 regex is not sent to New Relic. If empty, observability data for all namespaces is sent to New Relic.  |   |
 | `excludePodsRegex` | Observability data for pods (across all namespaces) matching this RE2 regex is not sent to New Relic. If empty, observability data for all pods (in non-excluded namespaces) is sent to New Relic. |   |
