@@ -10,7 +10,7 @@ This is typically used in environments where DaemonSets are not available, such 
 
 
 | Parameter   | Description | Default  |
-|---------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------|
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `global.cluster` - `cluster`| The cluster name for the Kubernetes cluster.|  |
 | `global.licenseKey` - `licenseKey`  | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be preferred configuration option if both `licenseKey` and `customSecret` are specified.   |  |
 | `global.fargate` - `fargate`| Must be set to `true` when deploying in an EKS Fargate environment. Adds the default policies and customAttributes to inject on fargate |  |
@@ -132,6 +132,10 @@ memory: 150M
 cpu: 150m
 ```
 
+## Tolerations
+
+No default set of tolerations are defined.
+Please note that these tolerations are applied only to the operator and the certificate-related jobs themselves, and not to any pod or container injected by it.
 
 [1]: https://github.com/newrelic/newrelic-infra-operator
 [2]: https://cert-manager.io/
