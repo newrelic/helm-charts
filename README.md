@@ -81,7 +81,7 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 
 1. Clone this repository on your local machine.
 2. Add or modify the files for the desired chart.
-3. To install the chart locally, run `helm install dev-chart charts/<YOUR_CHART>` 
+3. To install the chart locally, run `helm install dev-chart charts/<YOUR_CHART>`
 4. Verify that the chart works as expected.
 5. Remove the installed chart with `helm uninstall dev-chart`.
 6. Create your pull request and follow the instructions below.
@@ -118,7 +118,30 @@ See [chart testing](docs/chart_testing.md)
 
 See [our Contributing docs](CONTRIBUTING.md) and our [review guidelines](docs/review_guidelines.md)
 
+**A note about vulnerabilities**
+
+As noted in our [security policy](../../security/policy), New Relic is committed to the privacy and security of our customers and their data. We believe that providing coordinated disclosure by security researchers and engaging with the security community are important means to achieve our security goals.
+
+If you believe you have found a security vulnerability in this project or any of New Relic's products or websites, we welcome and greatly appreciate you reporting it to New Relic through [HackerOne](https://hackerone.com/newrelic).
+
+If you would like to contribute to this project, review [these guidelines](./CONTRIBUTING.md).
+
+To all contributors, we thank you!  Without your contribution, this project would not be what it is today.
+
+
 ## <a name='Support'></a>Support
+
+Should you need assistance with New Relic products, you are in good hands with several support diagnostic tools and support channels.
+
+If the issue has been confirmed as a bug or is a feature request, file a GitHub issue.
+
+**Support Channels**
+
+* [New Relic Documentation](https://docs.newrelic.com): Comprehensive guidance for using our platform
+* [New Relic Community](https://discuss.newrelic.com/c/support-products-agents/new-relic-infrastructure): The best place to engage in troubleshooting questions
+* [New Relic Developer](https://developer.newrelic.com/): Resources for building a custom observability applications
+* [New Relic University](https://learn.newrelic.com/): A range of online training for New Relic users of every level
+* [New Relic Technical Support](https://support.newrelic.com/) 24/7/365 ticketed support. Read more about our [Technical Support Offerings](https://docs.newrelic.com/docs/licenses/license-information/general-usage-licenses/support-plan).
 
 ### <a name='IssuesEnhancementRequests'></a>Issues / Enhancement Requests
 
