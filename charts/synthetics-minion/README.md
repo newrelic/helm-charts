@@ -20,6 +20,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Minion as 
 | `synthetics.minionApiEndpoint`| Ensure your CPM can connect to the appropriate endpoint in order to serve your monitor.  | For US-based accounts, the endpoint is: `https://synthetics-horde.nr-data.net`. For EU-based accounts, the endpoint is: `https://synthetics-horde.eu01.nr-data.net/` |
 | `synthetics.minionDockerRunnerRegistryEndpoint`   | The Docker Registry where the Minion Runner image is hosted. Example: `docker.io`| `quay.io`|
 | `synthetics.minionVsePassphrase`  | If set, enables verified script execution and uses this value as a passphrase.   |  |
+| `synthetics.minionVsePassphraseSecretName`| If set, enables verified script execution and uses this value to retrieve the passphrase from a Kubernetes secret with a key called `minionVsePassphrase`.   |  |
 | `synthetics.minionApiProxy`   | Proxy used to allow the Minion to communicate with New Relic to fetch and reports Synthetics checks. Example format: "host:port" |  |
 | `synthetics.minionApiProxySelfSignedCert` | If `synthetics.minionApiProxy` is present and uses a self signed cert, enable this value. Acceptable values: true, 1, or yes (any case). |  |
 | `synthetics.minionProxyAuth`  | If any authentication is needed to communicate with the proxy provide credentials in the format: `"username:password"` - Support HTTP Basic Auth + additional authentication protocols supported by Chrome.  |  |
