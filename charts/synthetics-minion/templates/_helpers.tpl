@@ -246,3 +246,21 @@ valueFrom:
 {{- required ".Values.synthetics.privateLocationKey or .Values.synthetics.privateLocationKeySecretName must be set!" nil }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Add minionVsePassphrase directly or retrieve from a Kubernetes Secret
+*/}}
+{{- define "synthetics-minion.minionVsePassphrase" }}
+{{- if or .Values.synthetics.minionVsePassphrase .Values.synthetics.minionVsePassphraseSecretName -}}
+{{- if .Values.synthetics.minionVsePassphrase -}}
+- name: MINION_VSE_PASSPHRASE
+  value: {{ .Values.synthetics.minionVsePassphrase | quote }}
+{{- else if .Values.synthetics.minionVsePassphraseSecretName -}}
+- name: MINION_VSE_PASSPHRASE
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.synthetics.minionVsePassphraseSecretName  }}
+      key: minionVsePassphrase
+{{- end -}}
+{{- end -}}
+{{- end }}
