@@ -34,9 +34,9 @@ This document explains how to install it in your cluster, either using a [Helm](
      ```sh
     curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/fluent-conf.yml > fluent-conf.yml
     curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/new-relic-fluent-plugin.yml > new-relic-fluent-plugin.yml
-    curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/rbac.yml > rbac.yml 
+    curl https://raw.githubusercontent.com/newrelic/helm-charts/master/charts/newrelic-logging/k8s/rbac.yml > rbac.yml
      ```
-    
+
  2. In the downloaded `new-relic-fluent-plugin.yml` file, replace the placeholder value `LICENSE_KEY` with your [New Relic license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key).
     > For EU users, replace the ENDPOINT environment variable to https://log-api.eu.newrelic.com/log/v1.
 
@@ -48,27 +48,95 @@ This document explains how to install it in your cluster, either using a [Helm](
  4. [OPTIONAL] You can configure how the plugin parses the data by editing the [parsers.conf section in the fluent-conf.yml file](./k8s/fluent-conf.yml#L55-L70). For more information, see Fluent Bit's documentation on [Parsers configuration](https://docs.fluentbit.io/manual/pipeline/parsers).
     > By default, tailing is set to `/var/log/containers/*.log`. To change this setting, replace the default path with your preferred path in the [new-relic-fluent-plugin.yml file](./k8s/new-relic-fluent-plugin.yml#L40).
 
+#### Proxy support
+
+Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https://github.com/newrelic/newrelic-fluent-bit-output) we can configure the [proxy support](https://github.com/newrelic/newrelic-fluent-bit-output#proxy-support) in order to set up the proxy configuration.
+
+##### As environment variables
+
+ 1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
+ 2. Modify the `new-relic-fluent-plugin.yml` file. Add `HTTP_PROXY` or `HTTPS_PROXY` as environment variables:
+     ```yaml
+        ...
+         containers:
+           - name: newrelic-logging
+             env:
+               - name: ENDPOINT
+                 value : "https://log-api.newrelic.com/log/v1"
+               - name: HTTP_PROXY
+                 value : "http://http-proxy-hostname:PORT" # We must always specify the protocol (either http:// or https://)
+        ...
+     ```
+ 3. Continue to the next steps
+ 
+ ##### Custom proxy
+ 
+ If you want to set up a custom proxy (eg. using self-signed certificate):
+ 
+  1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
+  2. Modify the `fluent-conf.yml` and define in the ConfigMap a `caBundle.pem` file with the self-signed certificate:
+      ```yaml
+           ...
+            [OUTPUT]
+                Name  newrelic
+                Match *
+                licenseKey ${LICENSE_KEY}
+                endpoint ${ENDPOINT}
+                proxy https://https-proxy-hostname:PORT
+                caBundleFile ${CA_BUNDLE_FILE}
+            
+            caBundle.pem: |
+                -----BEGIN CERTIFICATE-----
+                MIIB+zCCAWSgAwIBAgIQTiHC/d/NhpHFptZCIoCbNzANBgkrhtiG9w0BAQsFADAS
+                MBAwDgYDVQQKEwdBY23lIENvMCAXDTcwMDEwMTYwMDBwMFoYDzIwODQwMTI5MTYw
+                ...
+                ekFR5glcUVWoFru+EMj4WKmbRATUe3cYQRCThzO2hQ==
+                -----END CERTIFICATE-----
+           ...
+      ```
+  3. Modify `new-relic-fluent-plugin.yml` and define the `CA_BUNDLE_FILE` environment variable pointing to the created ConfigMap file:
+       ```yaml
+          ...
+           containers:
+             - name: newrelic-logging
+               env:
+                 - name: ENDPOINT
+                   value : "https://log-api.newrelic.com/log/v1"
+                 - name: CA_BUNDLE_FILE
+                   value: /fluent-bit/etc/caBundle.pem
+          ...
+       ```
+  4. Continue to the next steps
+ 
 ## Configuration
 
 See [values.yaml](values.yaml) for the default values
 
-| Parameter                                      | Description                                                                                                                                                                                                                                       | Default                              |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
-| `global.licenseKey` - `licenseKey`             | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified. |                                      |
-| `global.customSecretName` - `customSecretName` | Name of the Secret object where the license key is stored                                                                                                                                                                                         |                                      |
-| `global.customSecretLicenseKey` - `customSecretLicenseKey`   | Key in the Secret object where the license key is stored.                                                                                                                                                                                         |                                      |
-| `rbac.create`                                  | Enable Role-based authentication                                                                                                                                                                                                                  | `true`                               |
-| `image.repository`                             | The container to pull.                                                                                                                                                                                                                            | `newrelic/newrelic-fluentbit-output` |
-| `image.pullPolicy`                             | The pull policy.                                                                                                                                                                                                                                  | `IfNotPresent`                       |
-| `image.tag`                                    | The version of the container to pull.                                                                                                                                                                                                             | See value in [values.yaml]`          |
-| `resources`                                    | Any resources you wish to assign to the pod.                                                                                                                                                                                                      | See Resources below                  |
-| `priorityClassName`                            | Scheduling priority of the pod                                                                                                                                                                                                                    | `nil`                                |
-| `nodeSelector`                                 | Node label to use for scheduling                                                                                                                                                                                                                  | `nil`                                |
-| `tolerations`                                  | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                      | See Tolerations below                |
-| `updateStrategy`                               | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)                                                                                                                                                                                       | `RollingUpdate`                      |
-| `serviveAccount.create`                        | If true, a service account would be created and assigned to the deployment                                                                                                                                                                        | true                                 |
-| `serviveAccount.name`                          | The service account to assign to the deployment. If `serviveAccount.create` is true then this name will be used when creating the service account                                                                                                 |                                      |
-| `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                                                                 | false                                  |
+| Parameter                                                  | Description                                                                                                                                                                                                                                                                  | Default                              |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `global.licenseKey` - `licenseKey`                         | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified.                            |                                      |
+| `global.customSecretName` - `customSecretName`             | Name of the Secret object where the license key is stored                                                                                                                                                                                                                    |                                      |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the license key is stored.                                                                                                                                                                                                                    |                                      |
+| `global.fargate`                                           | Must be set to `true` when deploying in an EKS Fargate environment. Prevents DaemonSet pods from being scheduled in Fargate nodes.  |                                 |
+| `rbac.create`                                              | Enable Role-based authentication                                                                                                                                                                                                                                             | `true`                               |
+| `rbac.pspEnabled`                                          | Enable pod security policy support                                                                                                                                                                                                                                           | `false`                              |
+| `image.repository`                                         | The container to pull.                                                                                                                                                                                                                                                       | `newrelic/newrelic-fluentbit-output` |
+| `image.pullPolicy`                                         | The pull policy.                                                                                                                                                                                                                                                             | `IfNotPresent`                       |
+| `image.pullSecrets`                                        | Image pull secrets.                                                                                                                                                                                                                                                          | `nil`                                |
+| `image.tag`                                                | The version of the container to pull.                                                                                                                                                                                                                                        | See value in [values.yaml]`          |
+| `resources`                                                | Any resources you wish to assign to the pod.                                                                                                                                                                                                                                 | See Resources below                  |
+| `priorityClassName`                                        | Scheduling priority of the pod                                                                                                                                                                                                                                               | `nil`                                |
+| `nodeSelector`                                             | Node label to use for scheduling                                                                                                                                                                                                                                             | `nil`                                |
+| `tolerations`                                              | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                                                                 | See Tolerations below                |
+| `updateStrategy`                                           | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)                                                                                                                                                                                                                  | `RollingUpdate`                      |
+| `serviceAccount.create`                                    | If true, a service account would be created and assigned to the deployment                                                                                                                                                                                                   | `true`                               |
+| `serviceAccount.name`                                      | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account                                                                                                                            |                                      |
+| `serviceAccount.annotations`   | The annotations to add to the service account if `serviceAccount.create` is set to true.                                                                                                                                                          |                                 |
+| `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                                                                                                        | `false`                              |
+| `fluentBit.criEnabled`                                     | We assume that `kubelet`directly communicates with the Docker container engine. Set this to `true` if your K8s installation uses [CRI](https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/) instead, in order to get the logs properly parsed. | `false`                              |
+| `fluentBit.k8sLoggingExclude`                              | Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude.                                                                                                                                                     | `Off`                                |
+| `fluentBit.additionalEnvVariables`                         | Additional environmental variables for fluentbit pods                                                                                                                                                                                                                        | `[]]`                                |
+| `daemonSet.annotations`   | The annotations to add to the `DaemonSet`.
 
 
 ## Uninstall the Kubernetes plugin

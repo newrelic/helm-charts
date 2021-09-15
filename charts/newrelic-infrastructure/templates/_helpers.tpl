@@ -67,13 +67,6 @@ Create the image name depending on the "privileged" flag
 {{- end -}}
 
 {{/*
-Create the Windows image name
-*/}}
-{{- define "newrelic.windowsImage" -}}
-"{{ .Values.image.repository }}:{{ .Values.image.windowsTag }}"
-{{- end -}}
-
-{{/*
 Return the licenseKey
 */}}
 {{- define "newrelic.licenseKey" -}}
@@ -143,6 +136,40 @@ Returns nrStaging
   {{- end -}}
 {{- else if .Values.nrStaging }}
   {{- .Values.nrStaging -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns fargate
+*/}}
+{{- define "newrelic.fargate" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.fargate }}
+    {{- .Values.global.fargate -}}
+  {{- end -}}
+{{- else if .Values.fargate }}
+  {{- .Values.fargate -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the updateStrategy, either .Values.updateStrategy directly if it is an object, or wrapped if it is a string
+This is done to keep compatibility with old values and --reuse-values.
+Defining updateStrategy as a string is deprecated and will be removed in a future version of the chart.
+*/}}
+{{- define "newrelic.updateStrategy" -}}
+{{- if .Values.updateStrategy }}
+{{- if eq "string" (printf "%T" .Values.updateStrategy) }}
+updateStrategy:
+  type: {{ .Values.updateStrategy }}
+  {{- if eq .Values.updateStrategy "RollingUpdate" }}
+  rollingUpdate:
+    maxUnavailable: 1
+  {{- end }}
+{{- else }}
+updateStrategy:
+{{ .Values.updateStrategy | toYaml | indent 2 }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 

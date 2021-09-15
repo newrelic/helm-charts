@@ -5,9 +5,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}
+  {{- if .Values.daemonSet.annotations }}
+  annotations: {{ toYaml .Values.daemonSet.annotations | nindent 4 }}
+  {{- end }}
 spec:
-  updateStrategy:
-    type: {{ .Values.updateStrategy }}
+  {{ include "newrelic.updateStrategy" . | indent 2 }}
   selector:
     matchLabels:
       app: {{ template "newrelic.name" . }}
@@ -31,6 +33,10 @@ spec:
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
         - name: {{ template "newrelic.name" . }}
           image: {{ template "newrelic.image" . }}
@@ -39,7 +45,7 @@ spec:
             {{- if .Values.privileged }}
             privileged: true
             {{- else }}
-            runAsUser: 1000 # nri-agent
+            runAsUser: {{ .Values.runAsUser | default 1000 }}
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             {{- end }}
@@ -80,6 +86,10 @@ spec:
             - name: "KUBE_STATE_METRICS_PORT"
               value: {{ .Values.kubeStateMetricsPort | quote }}
             {{- end }}
+            {{- if .Values.kubeStateMetricsNamespace }}
+            - name: "KUBE_STATE_METRICS_NAMESPACE"
+              value: {{ .Values.kubeStateMetricsNamespace | quote }}
+            {{- end }}
             {{- if .Values.etcdTlsSecretName }}
             - name: ETCD_TLS_SECRET_NAME
               value: {{ .Values.etcdTlsSecretName | quote }}
@@ -88,13 +98,20 @@ spec:
             - name: ETCD_TLS_SECRET_NAMESPACE
               value: {{ .Values.etcdTlsSecretNamespace | quote }}
             {{- end }}
+            {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
+            # OpenShift defaults
+            - name: "ETCD_ENDPOINT_URL"
+              value: {{ .Values.etcdEndpointUrl | quote | default "https://localhost:9979" }}
+            - name: "API_SERVER_ENDPOINT_URL"
+              value: {{ .Values.apiServerEndpointUrl | quote | default "https://localhost:6443" }}
+            - name: "SCHEDULER_ENDPOINT_URL"
+              value: {{ .Values.schedulerEndpointUrl | quote | default "https://localhost:10259" }}
+            - name: "CONTROLLER_MANAGER_ENDPOINT_URL"
+              value: {{ .Values.controllerManagerEndpointUrl | quote | default "https://localhost:10257" }}
+            {{- else }}
             {{- if .Values.etcdEndpointUrl }}
             - name: "ETCD_ENDPOINT_URL"
               value: {{ .Values.etcdEndpointUrl | quote }}
-            {{- end }}
-            {{- if .Values.apiServerSecurePort }}
-            - name: "API_SERVER_SECURE_PORT"
-              value: {{ .Values.apiServerSecurePort | quote }}
             {{- end }}
             {{- if .Values.apiServerEndpointUrl }}
             - name: "API_SERVER_ENDPOINT_URL"
@@ -108,28 +125,50 @@ spec:
             - name: "CONTROLLER_MANAGER_ENDPOINT_URL"
               value: {{ .Values.controllerManagerEndpointUrl | quote }}
             {{- end }}
+            {{- end }}
+            {{- if .Values.apiServerSecurePort }}
+            - name: "API_SERVER_SECURE_PORT"
+              value: {{ .Values.apiServerSecurePort | quote }}
+            {{- end }}
             {{- if .Values.eventQueueDepth }}
             - name: "NRIA_EVENT_QUEUE_DEPTH"
               value: {{ .Values.eventQueueDepth | quote }}
+            {{- end }}
+            {{- if .Values.discoveryCacheTTL }}
+            - name: "DISCOVERY_CACHE_TTL"
+              value: {{ .Values.discoveryCacheTTL | quote }}
+            {{- end }}
+            {{- /* Ugly hack to check if .Values.enableProcessMetrics is defined: */}}
+            {{- if ne (print .Values.enableProcessMetrics) "<nil>" }}
+            - name: "NRIA_ENABLE_PROCESS_METRICS"
+              value: {{ .Values.enableProcessMetrics | quote }}
             {{- end }}
             {{- if (include "newrelic.nrStaging" .) }}
             - name: "NRIA_STAGING"
               value: "true"
             {{- end }}
-            - name: "NRIA_DISPLAY_NAME"
-              valueFrom:
-                fieldRef:
-                  apiVersion: "v1"
-                  fieldPath: "spec.nodeName"
             - name: "NRK8S_NODE_NAME"
               valueFrom:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            {{- if .Values.useNodeNameAsDisplayName }}
+            - name: "NRIA_DISPLAY_NAME"
+            {{- if .Values.prefixDisplayNameWithCluster }}
+              value: "{{ include "newrelic.cluster" . }}:$(NRK8S_NODE_NAME)"
+            {{- else }}
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            {{- end }}
+            {{- end }}
+            {{- if .Values.customAttributes }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
               value: {{ .Values.customAttributes }}
+            {{- end }}
             - name: "NRIA_PASSTHROUGH_ENVIRONMENT"
-              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,KUBE_STATE_METRICS_POD_LABEL,TIMEOUT,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,KUBE_STATE_METRICS_SCHEME,KUBE_STATE_METRICS_PORT,SCHEDULER_ENDPOINT_URL,ETCD_ENDPOINT_URL,CONTROLLER_MANAGER_ENDPOINT_URL,API_SERVER_ENDPOINT_URL,DISABLE_KUBE_STATE_METRICS"
+              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,KUBE_STATE_METRICS_POD_LABEL,TIMEOUT,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,KUBE_STATE_METRICS_SCHEME,KUBE_STATE_METRICS_PORT,KUBE_STATE_METRICS_NAMESPACE,SCHEDULER_ENDPOINT_URL,ETCD_ENDPOINT_URL,CONTROLLER_MANAGER_ENDPOINT_URL,API_SERVER_ENDPOINT_URL,DISABLE_KUBE_STATE_METRICS,DISCOVERY_CACHE_TTL"
             {{- if .Values.verboseLog }}
             - name: NRIA_VERBOSE
               value: "1"
@@ -151,8 +190,13 @@ spec:
             {{- if .Values.privileged }}
             - name: dev
               mountPath: /dev
+            {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
+            - name: host-crio-socket
+              mountPath: /var/run/crio.sock
+            {{- else }}
             - name: host-docker-socket
               mountPath: /var/run/docker.sock
+            {{- end }}
             - name: log
               mountPath: /var/log
             - name: host-volume
@@ -177,9 +221,15 @@ spec:
         - name: dev
           hostPath:
             path: /dev
+        {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
+        - name: host-crio-socket
+          hostPath:
+            path: /var/run/crio.sock
+        {{- else }}
         - name: host-docker-socket
           hostPath:
             path: /var/run/docker.sock
+        {{- end }}
         - name: log
           hostPath:
             path: /var/log
@@ -211,6 +261,20 @@ spec:
         {{- end }}
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
+      {{- end }}
+      {{- if .Values.nodeAffinity }}
+      affinity:
+        nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
+      {{- else if include "newrelic.fargate" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: eks.amazonaws.com/compute-type
+                    operator: NotIn
+                    values:
+                      - fargate
       {{- end }}
       {{- if $.Values.nodeSelector }}
       nodeSelector:

@@ -1,0 +1,23 @@
+apiVersion: rbac.authorization.k8s.io/v1beta1
+kind: Role
+metadata:
+  name: synthetics-minion-role
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log", "persistentvolumeclaims"]
+    verbs: ["get", "list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "watch", "list", "create", "delete", "patch", "update"]
+{{- if not .Values.removeJobsLog }}
+  - apiGroups: ["batch"]
+    resources: ["jobs/log"]
+    verbs: ["get", "list"]
+{{- end }}
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["create", "update", "patch"]

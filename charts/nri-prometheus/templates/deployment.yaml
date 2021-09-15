@@ -13,13 +13,25 @@ spec:
       app.kubernetes.io/name: {{ include "nri-prometheus.name" . }}
   template:
     metadata:
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8}}
+{{- end }}
       labels:
 {{ include "nri-prometheus.labels" . | indent 8 }}
     spec:
       serviceAccountName: {{ template "nri-prometheus.serviceAccountName" . }}
+      {{- if .Values.podSecurityContext}}
+      securityContext:
+{{ toYaml .Values.podSecurityContext | indent 8 }}
+      {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
       - name: nri-prometheus
-        image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+        image: {{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}
         args:
           - "--configfile=/etc/nri-prometheus/config.yaml"
         ports:

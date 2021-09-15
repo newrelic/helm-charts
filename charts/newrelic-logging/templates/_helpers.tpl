@@ -73,15 +73,15 @@ Return the licenseKey
 {{/*
 Return the clusterName
 */}}
-{{- define "newrelic-logging.clusterName" -}}
+{{- define "newrelic-logging.cluster" -}}
 {{- if .Values.global}}
-  {{- if .Values.global.clusterName }}
-      {{- .Values.global.clusterName -}}
+  {{- if .Values.global.cluster }}
+    {{- .Values.global.cluster -}}
   {{- else -}}
-      {{- .Values.clusterName | default "" -}}
+    {{- .Values.cluster | default "" -}}
   {{- end -}}
 {{- else -}}
-    {{- .Values.clusterName | default "" -}}
+    {{- .Values.cluster | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -133,6 +133,19 @@ Returns nrStaging
   {{- end -}}
 {{- else if .Values.nrStaging }}
   {{- .Values.nrStaging -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns fargate
+*/}}
+{{- define "newrelic.fargate" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.fargate }}
+    {{- .Values.global.fargate -}}
+  {{- end -}}
+{{- else if .Values.fargate }}
+  {{- .Values.fargate -}}
 {{- end -}}
 {{- end -}}
 

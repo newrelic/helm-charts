@@ -1,0 +1,52 @@
+{{ if .Values.certManager.enabled }}
+---
+# Create a selfsigned Issuer, in order to create a root CA certificate for
+# signing webhook serving certificates
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "newrelic-infra-operator.fullname" . }}-self-signed-issuer
+spec:
+  selfSigned: {}
+---
+# Generate a CA Certificate used to sign certificates for the webhook
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "newrelic-infra-operator.fullname" . }}-root-cert
+spec:
+  secretName: {{ template "newrelic-infra-operator.fullname" . }}-root-cert
+  duration: 43800h # 5y
+  issuerRef:
+    name: {{ template "newrelic-infra-operator.fullname" . }}-self-signed-issuer
+  commonName: "ca.webhook.nri"
+  isCA: true
+---
+# Create an Issuer that uses the above generated CA certificate to issue certs
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "newrelic-infra-operator.fullname" . }}-root-issuer
+spec:
+  ca:
+    secretName: {{ template "newrelic-infra-operator.fullname" . }}-root-cert
+---
+# Finally, generate a serving certificate for the webhook to use
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  namespace: {{ .Release.Namespace }}
+  name: {{ template "newrelic-infra-operator.fullname" . }}-webhook-cert
+spec:
+  secretName: {{ template "newrelic-infra-operator.fullname" . }}-admission
+  duration: 8760h # 1y
+  issuerRef:
+    name: {{ template "newrelic-infra-operator.fullname" . }}-root-issuer
+  dnsNames:
+  - {{ template "newrelic-infra-operator.fullname" . }}
+  - {{ template "newrelic-infra-operator.fullname" . }}.{{ .Release.Namespace }}
+  - {{ template "newrelic-infra-operator.fullname" . }}.{{ .Release.Namespace }}.svc
+{{ end }}

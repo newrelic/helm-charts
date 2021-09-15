@@ -1,0 +1,27 @@
+{{- if (include "newrelic-pixie.areValuesValid" .) }}
+
+Your deployment of the New Relic Pixie integration is complete.
+
+Please ensure this integration is deployed in the same namespace
+as Pixie.
+{{- else -}}
+###############################################################
+####    ERROR: You did not set all the required values.    ####
+###############################################################
+
+This deployment will be incomplete until you set all the required values:
+
+* Cluster name
+* New Relic license key
+* Pixie API key
+
+For a simple installation to be fixed, run:
+
+    helm upgrade {{ .Release.Name }} \
+        --set cluster=YOUR-CLUSTER-NAME \
+        --set licenseKey=YOUR-LICENSE-KEY \
+        --set apiKey=YOUR-API-KEY \
+        -n {{ .Release.Namespace }} \
+        newrelic/newrelic-pixie
+
+{{- end -}}

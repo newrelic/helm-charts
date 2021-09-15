@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: fluent-bit-config
-  namespace: default
+  namespace: newrelic
   labels:
     k8s-app: newrelic-logging
 data:
@@ -27,7 +27,7 @@ data:
         Name              tail
         Tag               kube.*
         Path              ${PATH}
-        Parser            docker
+        Parser            ${LOG_PARSER}
         DB                /var/log/flb_kube.db
         Mem_Buf_Limit     7MB
         Skip_Long_Lines   On
@@ -43,7 +43,7 @@ data:
         Name           kubernetes
         Match          kube.*
         Kube_URL       https://kubernetes.default.svc.cluster.local:443
-        Merge_JSON_Log Off
+        Merge_Log      Off
 
   output-newrelic.conf: |
     [OUTPUT]
@@ -53,18 +53,17 @@ data:
         endpoint ${ENDPOINT}
 
   parsers.conf: |
+    # Relevant parsers retrieved from: https://github.com/fluent/fluent-bit/blob/master/conf/parsers.conf
     [PARSER]
-        Name   json
-        Format json
-        Time_Key time
-        Time_Format %d/%b/%Y:%H:%M:%S %z
+        Name         docker
+        Format       json
+        Time_Key     time
+        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep    On
 
     [PARSER]
-        Name        docker
-        Format      json
+        Name cri
+        Format regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
         Time_Key    time
-        Time_Format %Y-%m-%dT%H:%M:%S.%L
-        Time_Keep   On
-        # Command      |  Decoder | Field | Optional Action
-        # =============|==================|=================
-        Decode_Field_As   escaped    log
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z

@@ -13,19 +13,37 @@ spec:
       {{- include "nri-metadata-injection.appLabel" . | nindent 6 }}
   template:
     metadata:
+{{- if .Values.podAnnotations }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8}}
+{{- end }}
       labels:
         {{- include "nri-metadata-injection.labels" . | nindent 8 }}
     spec:
-      {{- if not .Values.customTLSCertificate }}
-      serviceAccountName: {{ template "nri-metadata-injection.serviceAccountName" . }}
+      # Switching from dedicated service account to default one must be
+      # done explicitly, otherwise upgrade fails, trying to use old
+      # service account.
+      serviceAccount: default
+      {{- if .Values.podSecurityContext.enabled }}
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContext.runAsUser }}
+        runAsGroup: {{ .Values.podSecurityContext.runAsGroup }}
+        fsGroup: {{ .Values.podSecurityContext.fsGroup }}
+      {{- end }}
+      {{- if .Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.image.pullSecrets | indent 8 }}
       {{- end }}
       containers:
       - name: {{ template "nri-metadata-injection.name" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         env:
         - name: clusterName
           value: {{ include "nri-metadata-injection.cluster" . }}
+        ports:
+          - containerPort: 8443
+            protocol: TCP
         volumeMounts:
         - name: tls-key-cert-pair
           mountPath: /etc/tls-key-cert-pair
@@ -42,7 +60,7 @@ spec:
       volumes:
       - name: tls-key-cert-pair
         secret:
-          secretName: {{ template "nri-metadata-injection.fullname" . }}
+          secretName: {{ template "nri-metadata-injection.fullname" . }}-admission
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}

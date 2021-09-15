@@ -7,7 +7,7 @@ Your deployment of the New Relic Infrastructure agent is complete. You can check
 ####       ERROR: You did not set a licenseKey and/or cluster name.       ####
 ##############################################################################
 
-This deployment will be incomplete until you get your API key from New Relic.
+This deployment will be incomplete until you set your New Relic license key and a cluster name.
 
 Then run:
 
@@ -17,3 +17,34 @@ Then run:
         newrelic/newrelic-infrastructure
 
 {{- end -}}
+
+{{- if .Values.image }}
+{{- if and (eq .Values.enableWindows true) (.Values.image.windowsTag) }}
+
+####       .Values.image.windowsTag for [newrelic-infrastructure] is deprecated      ####
+####  it will be removed in the future, please consider to update the configuration  ####
+
+{{- end -}}
+{{- if and (include "newrelic.fargate" .) .Values.nodeAffinity }}
+###########
+# WARNING #
+###########
+
+You have specified both an EKS Fargate environment (global.fargate) and custom
+nodeAffinity rules, so we couldn't automatically exclude the daemonSet from
+Fargate nodes. In order for the integration to work, you MUST manually exclude
+the daemonSet from Fargate nodes.
+
+Please make sure your custom .Values.nodeAffinity achieve the same effect as:
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: eks.amazonaws.com/compute-type
+              operator: NotIn
+              values:
+                - fargate
+{{- end }}
+{{- end }}

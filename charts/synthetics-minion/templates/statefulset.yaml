@@ -1,0 +1,227 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ include "synthetics-minion.fullname" . }}
+  labels:
+    {{- include "synthetics-minion.labels" . | nindent 4 }}
+  namespace:
+    {{ .Release.Namespace }}
+spec:
+  {{ if and .Values.persistence.claimName (eq .Values.persistence.accessMode "ReadWriteOnce") -}}
+    ######################################## NOTE #################################################################
+    # If accessMode is ReadWriteOnce and the persistence.claimName is provided, replica count is limited to 1
+    # This is to avoid over scheduling minions on the Node having access to PVC.
+    ###############################################################################################################
+  {{ end }}
+  replicas: {{ include "synthetics-minion.replica-count" . }}
+  serviceName: {{ include "synthetics-minion.headlessServiceName" . }}
+
+  {{ if not .Values.persistence.claimName }}
+  volumeClaimTemplates:
+    - metadata:
+        name: {{ include "synthetics-minion.persistentVolumeClaimTemplateName" . | quote }}
+        namespace: {{ .Release.Namespace }}
+        {{- with .Values.persistence.annotations  }}
+        annotations:
+          {{ toYaml . }}
+        {{- end }}
+        labels:
+          {{- include "synthetics-minion.selectorLabels" . | nindent 10 }}
+      spec:
+        {{ if .Values.persistence.storageClass }}
+        {{ if eq .Values.persistence.storageClass "-" }}
+        storageClassName: ""
+        {{ else }}
+        storageClassName: {{ .Values.persistence.storageClass | quote }}
+        {{ end }}
+        {{ end }}
+        accessModes:
+          - {{ .Values.persistence.accessMode | quote }}
+        resources:
+          requests:
+            storage: {{ .Values.persistence.size | quote }}
+  {{ end }}
+
+  selector:
+    matchLabels:
+      {{- include "synthetics-minion.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "synthetics-minion.selectorLabels" . | nindent 8 }}
+        {{- with .Values.labels -}}
+          {{ toYaml . | nindent 8 }}
+        {{- end }}
+      {{- include "synthetics-minion.podAnnotations" . | nindent 6 }}
+    spec:
+      serviceAccountName: {{ include "synthetics-minion.serviceAccountName" . }}
+      ######################################## NOTE #################################################################
+      # runAsUser is defaulted to 2379 but can be any arbitrary uid
+      # runAsGroup MUST ALWAYS be set to 3729 for the permissions between Minion and Runner to work correctly
+      ###############################################################################################################
+      securityContext:
+        runAsUser: {{ .Values.podSecurityContextRunAsUser }}
+        runAsGroup: {{ include "synthetics-minion.runAsGroup" . }}
+        fsGroup: {{ include "synthetics-minion.runAsGroup" . }}
+
+      {{ if .Values.persistence.claimName }}
+      volumes:
+        - name: {{ include "synthetics-minion.volumeName" . | quote}}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.claimName | quote }}
+      {{ end }}
+
+      initContainers:
+        - name: "update-mounted-subpath-permissions"
+          image: "{{ .Values.image.repository }}:{{ include "synthetics-minion.appVersion" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ['update-k8s-mounted-subpath-permissions']
+          securityContext:
+            runAsUser: 0
+          env:
+            - name: MINION_UID
+              value: {{ .Values.podSecurityContextRunAsUser | quote }}
+            - name: MINION_GID
+              value: {{ include "synthetics-minion.runAsGroup" . | quote }}
+            - name: TMP_PATH
+              value: {{ include "synthetics-minion.tmp-path" . | quote }}
+            - name: PERMANENT_DATA_STORAGE_PATH
+              value: {{ include "synthetics-minion.permanent-data-path" . | quote }}
+            - name: CUSTOM_MODULES_PATH
+              value: {{ include "synthetics-minion.custom-modules-path" . | quote }}
+            - name: USER_DEFINED_VARIABLES_PATH
+              value: {{ include "synthetics-minion.user-defined-variables-path" . | quote }}
+          volumeMounts:
+          {{- include "synthetics-minion.volumeMounts" . | nindent 12 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ include "synthetics-minion.appVersion" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          volumeMounts:
+          {{- include "synthetics-minion.volumeMounts" . | nindent 12 }}
+          env:
+            - name: MINION_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MINION_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MINION_PRIVATE_LOCATION_KEY
+              {{- include "synthetics-minion.privateLocationKey" . | nindent 14 }}
+            - name: MINION_LOG_LEVEL
+              value: {{ .Values.synthetics.minionLogLevel | quote }}
+
+            {{- if .Values.synthetics.minionApiEndpoint }}
+            - name: MINION_API_ENDPOINT
+              value: {{ .Values.synthetics.minionApiEndpoint | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.minionDockerRunnerRegistryEndpoint }}
+            - name: MINION_DOCKER_RUNNER_REGISTRY_ENDPOINT
+              value: {{ .Values.synthetics.minionDockerRunnerRegistryEndpoint | quote }}
+            {{- end }}
+
+            {{- include "synthetics-minion.minionVsePassphrase" . | nindent 12 -}}
+
+            {{- if .Values.synthetics.minionApiProxy }}
+            - name: MINION_API_PROXY
+              value: {{ .Values.synthetics.minionApiProxy | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.minionApiProxySelfSignedCert }}
+            - name: MINION_API_PROXY_SELF_SIGNED_CERT
+              value: {{ .Values.synthetics.minionApiProxySelfSignedCert | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.minionApiProxyAuth }}
+            - name: MINION_API_PROXY_AUTH
+              value: {{ .Values.synthetics.minionApiProxyAuth | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.minionCheckTimeout }}
+            - name: MINION_CHECK_TIMEOUT
+              value: {{ .Values.synthetics.minionCheckTimeout | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.minionUserDefinedEnvVariable }}
+            - name: MINION_USER_DEFINED_ENV_VARIABLES
+              value: {{ .Values.synthetics.minionUserDefinedEnvVariable | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.minionNetworkHealthCheckDisabled }}
+            - name: MINION_NETWORK_HEALTHCHECK_DISABLED
+              value: {{ .Values.synthetics.minionNetworkHealthCheckDisabled | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.heavyWorkers }}
+            - name: MINION_HEAVY_WORKERS
+              value: "{{ .Values.synthetics.heavyWorkers }}"
+            {{- end }}
+
+            {{- if .Values.synthetics.lightweightWorkers }}
+            - name: MINION_LIGHTWEIGHT_WORKERS
+              value: "{{ .Values.synthetics.lightweightWorkers }}"
+            {{- end }}
+
+            {{- if .Values.appArmorProfileName }}
+            - name: MINION_RUNNER_APPARMOR
+              value: "{{ .Values.appArmorProfileName }}"
+            {{- end }}
+
+            {{- if .Values.synthetics.minionJVMOpts }}
+            - name: MINION_JVM_OPTS
+              value: "{{ .Values.synthetics.minionJVMOpts }}"
+            {{- end }}
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - containerPort: 8180
+              protocol: TCP
+            - name: "jvm-debug"
+              containerPort: 5005
+            {{/* HarProxy ports - range 65100...65150 */}}
+            {{- range untilStep 65100 (int (include "synthetics-minion.maxProxyPortRange" .)) 1 }}
+            - containerPort: {{ . }}
+              protocol: TCP
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /status/check
+              port: http
+
+            {{/* The initial delay takes into account the (average) time required to pull the runner image */}}
+            initialDelaySeconds: 600
+            periodSeconds: 300
+            timeoutSeconds: 60
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          terminationMessagePolicy: FallbackToLogsOnError
+
+      terminationGracePeriodSeconds: {{ include "synthetics-minion.terminationGracePeriodSeconds" . }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      restartPolicy: Always

@@ -1,4 +1,4 @@
-[![Community Project header](https://github.com/newrelic/open-source-office/raw/master/examples/categories/images/Community_Project.png)](https://github.com/newrelic/open-source-office/blob/master/examples/categories/index.md#category-community-project)
+[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
 
 # New Relic's Helm charts repository
 
@@ -81,7 +81,7 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 
 1. Clone this repository on your local machine.
 2. Add or modify the files for the desired chart.
-3. To install the chart locally, run `helm install dev-chart charts/<YOUR_CHART>` 
+3. To install the chart locally, run `helm install dev-chart charts/<YOUR_CHART>`
 4. Verify that the chart works as expected.
 5. Remove the installed chart with `helm uninstall dev-chart`.
 6. Create your pull request and follow the instructions below.
@@ -96,12 +96,16 @@ This repository is configured to accept webhook requests to bump chart versions.
 
 A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
 
+`chart_name`: (required) Name of the helm chart to be bumped.
+`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
+`app_version`: (required) Version of the application.
+
 ```sh
 curl -H "Accept: application/vnd.github.everest-preview+json" \
      -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
      --request POST \
      --data '{"event_type": "bump-chart-version", "client_payload": { "chart_name": "simple-nginx", "chart_version": "1.2.3", "app_version": "1.45.7"}}' \
-     https://api.github.com/repos/newrelic-experimental/helm-charts/dispatches
+     https://api.github.com/repos/newrelic/helm-charts/dispatches
 ```
 
 Notice the sample `client_payload` object in the request body: the request generates a pull request for the `simple-nginx` chart to update `app_version` to `1.45.7` and `chart_version` to `1.2.3`.
@@ -114,7 +118,30 @@ See [chart testing](docs/chart_testing.md)
 
 See [our Contributing docs](CONTRIBUTING.md) and our [review guidelines](docs/review_guidelines.md)
 
+**A note about vulnerabilities**
+
+As noted in our [security policy](../../security/policy), New Relic is committed to the privacy and security of our customers and their data. We believe that providing coordinated disclosure by security researchers and engaging with the security community are important means to achieve our security goals.
+
+If you believe you have found a security vulnerability in this project or any of New Relic's products or websites, we welcome and greatly appreciate you reporting it to New Relic through [HackerOne](https://hackerone.com/newrelic).
+
+If you would like to contribute to this project, review [these guidelines](./CONTRIBUTING.md).
+
+To all contributors, we thank you!  Without your contribution, this project would not be what it is today.
+
+
 ## <a name='Support'></a>Support
+
+Should you need assistance with New Relic products, you are in good hands with several support diagnostic tools and support channels.
+
+If the issue has been confirmed as a bug or is a feature request, file a GitHub issue.
+
+**Support Channels**
+
+* [New Relic Documentation](https://docs.newrelic.com): Comprehensive guidance for using our platform
+* [New Relic Community](https://discuss.newrelic.com/c/support-products-agents/new-relic-infrastructure): The best place to engage in troubleshooting questions
+* [New Relic Developer](https://developer.newrelic.com/): Resources for building a custom observability applications
+* [New Relic University](https://learn.newrelic.com/): A range of online training for New Relic users of every level
+* [New Relic Technical Support](https://support.newrelic.com/) 24/7/365 ticketed support. Read more about our [Technical Support Offerings](https://docs.newrelic.com/docs/licenses/license-information/general-usage-licenses/support-plan).
 
 ### <a name='IssuesEnhancementRequests'></a>Issues / Enhancement Requests
 

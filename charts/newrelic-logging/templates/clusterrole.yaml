@@ -10,4 +10,14 @@ rules:
       - namespaces
       - pods
     verbs: ["get", "list", "watch"]
+{{- if .Values.rbac.pspEnabled }}
+  - apiGroups:
+      - extensions
+    resources:
+      - podsecuritypolicies
+    resourceNames:
+      - privileged-{{ template "newrelic.fullname" . }}
+    verbs:
+      - use
+{{- end -}}
 {{- end -}}

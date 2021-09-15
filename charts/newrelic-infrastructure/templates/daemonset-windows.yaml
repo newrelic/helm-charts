@@ -1,139 +1,164 @@
-{{- if and (include "newrelic.areValuesValid" .) .Values.enableWindows }}
+{{- if and (include "newrelic.areValuesValid" $)  $.Values.enableWindows }}
+{{- range .Values.windowsOsList }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  namespace: {{ .Release.Namespace }}
+  namespace: {{ $.Release.Namespace }}
   labels:
     kubernetes.io/os: windows
-    {{ include "newrelic.labels" . | indent 4 }}
-  name: {{ template "newrelic.fullname" . }}-windows
+    {{ include "newrelic.labels" $ | indent 4 }}
+  name: {{ template "newrelic.fullname" $ }}-windows-{{ .version }}
+  annotations:
+  {{- if  $.Values.daemonSet.annotations }}
+{{ toYaml  $.Values.daemonSet.annotations | indent 4 }}
+  {{- end }}
 spec:
-  updateStrategy:
-    type: {{ .Values.updateStrategy }}
+  {{ include "newrelic.updateStrategy" . | indent 2 }}
   selector:
     matchLabels:
-      app: {{ template "newrelic.name" . }}
-      release: {{.Release.Name }}
+      app: {{ template "newrelic.name" $ }}
+      release: {{ $.Release.Name }}
       kubernetes.io/os: windows
   template:
     metadata:
-    {{- if .Values.podAnnotations }}
+    {{- if  $.Values.podAnnotations }}
       annotations:
-{{ toYaml .Values.podAnnotations | indent 8}}
+{{ toYaml  $.Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
-        app: {{ template "newrelic.name" . }}
-        release: {{.Release.Name }}
+        app: {{ template "newrelic.name" $ }}
+        release: {{ $.Release.Name }}
         kubernetes.io/os: windows
-        {{- if .Values.podLabels}}
-{{ toYaml .Values.podLabels | indent 8 }}
+        {{- if  $.Values.podLabels}}
+{{ toYaml  $.Values.podLabels | indent 8 }}
         {{- end }}
-        mode: {{ template "newrelic.mode" . }}
+        mode: {{ template "newrelic.mode" $ }}
     spec:
-      serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
+      serviceAccountName: {{ template "newrelic.serviceAccountName" $ }}
+      {{- if  $.Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml  $.Values.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
-        - name: {{ template "newrelic.name" . }}
-          image: {{ template "newrelic.windowsImage" . }}
-          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
-          securityContext: {}
+        - name: {{ template "newrelic.name" $ }}
+          image: {{ $.Values.image.repository }}:{{ $.Values.image.windowsTag | default .imageTag }}
+          imagePullPolicy: "{{  $.Values.image.pullPolicy }}"
+          {{- if $.Values.windowsSecurityContext }}
+          securityContext:
+{{ toYaml $.Values.windowsSecurityContext | indent 12 }}
+          {{- end }}
           env:
             - name: "NRIA_LICENSE_KEY"
               valueFrom:
                 secretKeyRef:
-                  {{- if (include "newrelic.licenseKey" .) }}
-                  name: {{ template "newrelic.fullname" . }}-config
+                  {{- if (include "newrelic.licenseKey" $) }}
+                  name: {{ template "newrelic.fullname" $ }}-config
                   key: license
                   {{- else }}
-                  name: {{ include "newrelic.customSecretName" . }}
-                  key: {{ include "newrelic.customSecretLicenseKey" . }}
+                  name: {{ include "newrelic.customSecretName" $ }}
+                  key: {{ include "newrelic.customSecretLicenseKey" $ }}
                   {{- end }}
             - name: "CLUSTER_NAME"
-              value: {{ include "newrelic.cluster" . }}
-            {{- if .Values.disableKubeStateMetrics }}
+              value: {{ include "newrelic.cluster" $ }}
+            {{- if  $.Values.disableKubeStateMetrics }}
             - name: "DISABLE_KUBE_STATE_METRICS"
-              value: {{ .Values.disableKubeStateMetrics | quote }}
+              value: {{  $.Values.disableKubeStateMetrics | quote }}
             {{- end }}
-            {{- if .Values.kubeStateMetricsUrl }}
+            {{- if  $.Values.kubeStateMetricsUrl }}
             - name: "KUBE_STATE_METRICS_URL"
-              value: {{ .Values.kubeStateMetricsUrl | quote }}
+              value: {{  $.Values.kubeStateMetricsUrl | quote }}
             {{- end }}
-            {{- if .Values.kubeStateMetricsPodLabel }}
+            {{- if  $.Values.kubeStateMetricsPodLabel }}
             - name: "KUBE_STATE_METRICS_POD_LABEL"
-              value: {{ .Values.kubeStateMetricsPodLabel | quote }}
+              value: {{  $.Values.kubeStateMetricsPodLabel | quote }}
             {{- end }}
-            {{- if .Values.kubeStateMetricsTimeout }}
+            {{- if  $.Values.kubeStateMetricsTimeout }}
             - name: "TIMEOUT"
-              value: {{ .Values.kubeStateMetricsTimeout | quote }}
+              value: {{  $.Values.kubeStateMetricsTimeout | quote }}
             {{- end }}
-            {{- if .Values.kubeStateMetricsScheme }}
+            {{- if  $.Values.kubeStateMetricsScheme }}
             - name: "KUBE_STATE_METRICS_SCHEME"
-              value: {{ .Values.kubeStateMetricsScheme | quote }}
+              value: {{  $.Values.kubeStateMetricsScheme | quote }}
             {{- end }}
-            {{- if .Values.kubeStateMetricsPort }}
+            {{- if  $.Values.kubeStateMetricsPort }}
             - name: "KUBE_STATE_METRICS_PORT"
-              value: {{ .Values.kubeStateMetricsPort | quote }}
+              value: {{  $.Values.kubeStateMetricsPort | quote }}
             {{- end }}
-            {{- if .Values.etcdTlsSecretName }}
+            {{- if  $.Values.etcdTlsSecretName }}
             - name: "ETCD_TLS_SECRET_NAME"
-              value: {{ .Values.etcdTlsSecretName | quote }}
+              value: {{  $.Values.etcdTlsSecretName | quote }}
             {{- end }}
-            {{- if .Values.etcdTlsSecretNamespace }}
+            {{- if  $.Values.etcdTlsSecretNamespace }}
             - name: "ETCD_TLS_SECRET_NAMESPACE"
-              value: {{ .Values.etcdTlsSecretNamespace | quote }}
+              value: {{  $.Values.etcdTlsSecretNamespace | quote }}
             {{- end }}
-            {{- if .Values.etcdEndpointUrl }}
+            {{- if  $.Values.etcdEndpointUrl }}
             - name: "ETCD_ENDPOINT_URL"
-              value: {{ .Values.etcdEndpointUrl | quote }}
+              value: {{  $.Values.etcdEndpointUrl | quote }}
             {{- end }}
-            {{- if .Values.apiServerSecurePort }}
+            {{- if  $.Values.apiServerSecurePort }}
             - name: "API_SERVER_SECURE_PORT"
-              value: {{ .Values.apiServerSecurePort | quote }}
+              value: {{  $.Values.apiServerSecurePort | quote }}
             {{- end }}
-            {{- if .Values.apiServerEndpointUrl }}
+            {{- if  $.Values.apiServerEndpointUrl }}
             - name: "API_SERVER_ENDPOINT_URL"
-              value: {{ .Values.apiServerEndpointUrl | quote }}
+              value: {{  $.Values.apiServerEndpointUrl | quote }}
             {{- end }}
-            {{- if .Values.schedulerEndpointUrl }}
+            {{- if  $.Values.schedulerEndpointUrl }}
             - name: "SCHEDULER_ENDPOINT_URL"
-              value: {{ .Values.schedulerEndpointUrl | quote }}
+              value: {{  $.Values.schedulerEndpointUrl | quote }}
             {{- end }}
-            {{- if .Values.controllerManagerEndpointUrl }}
+            {{- if  $.Values.controllerManagerEndpointUrl }}
             - name: "CONTROLLER_MANAGER_ENDPOINT_URL"
-              value: {{ .Values.controllerManagerEndpointUrl | quote }}
+              value: {{  $.Values.controllerManagerEndpointUrl | quote }}
             {{- end }}
-            {{- if .Values.eventQueueDepth }}
+            {{- if  $.Values.eventQueueDepth }}
             - name: "NRIA_EVENT_QUEUE_DEPTH"
-              value: {{ .Values.eventQueueDepth | quote }}
+              value: {{  $.Values.eventQueueDepth | quote }}
             {{- end }}
-            {{- if (include "newrelic.nrStaging" .) }}
+            {{- if  $.Values.discoveryCacheTTL }}
+            - name: "DISCOVERY_CACHE_TTL"
+              value: {{  $.Values.discoveryCacheTTL | quote }}
+            {{- end }}
+            {{- if  $.Values.enableProcessMetrics }}
+            - name: "NRIA_ENABLE_PROCESS_METRICS"
+              value: {{  $.Values.enableProcessMetrics | quote }}
+            {{- end }}
+            {{- if (include "newrelic.nrStaging" $) }}
             - name: "NRIA_STAGING"
               value: "true"
             {{- end }}
-            - name: "NRIA_DISPLAY_NAME"
-              valueFrom:
-                fieldRef:
-                  apiVersion: "v1"
-                  fieldPath: "spec.nodeName"
             - name: "NRK8S_NODE_NAME"
               valueFrom:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            {{- if  $.Values.useNodeNameAsDisplayName }}
+            - name: "NRIA_DISPLAY_NAME"
+            {{- if  $.Values.prefixDisplayNameWithCluster }}
+              value: "{{ include "newrelic.cluster" $ }}:$(NRK8S_NODE_NAME)"
+            {{- else }}
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            {{- end }}
+            {{- end }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
               value: '{"clusterName":"$(CLUSTER_NAME)"}'
             - name: "NRIA_PASSTHROUGH_ENVIRONMENT"
-              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,NRIA_CACHE_PATH,TIMEOUT"
-            {{- if .Values.verboseLog }}
+              value: "KUBERNETES_SERVICE_HOST,KUBERNETES_SERVICE_PORT,CLUSTER_NAME,CADVISOR_PORT,NRK8S_NODE_NAME,KUBE_STATE_METRICS_URL,ETCD_TLS_SECRET_NAME,ETCD_TLS_SECRET_NAMESPACE,API_SERVER_SECURE_PORT,NRIA_CACHE_PATH,TIMEOUT,DISCOVERY_CACHE_TTL"
+            {{- if  $.Values.verboseLog }}
             - name: NRIA_VERBOSE
               value: "1"
             {{- end }}
-            {{- if .Values.logFile }}
+            {{- if  $.Values.logFile }}
             - name: NRIA_LOG_FILE
-              value: {{ .Values.logFile }}
+              value: {{  $.Values.logFile }}
             {{- end }}
-          {{- if .Values.resources }}
+          {{- if  $.Values.resources }}
           resources:
-{{ toYaml .Values.resources | indent 12 }}
+{{ toYaml  $.Values.resources | indent 12 }}
           {{- end }}
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
@@ -141,13 +166,16 @@ spec:
       {{- if $.Values.windowsNodeSelector }}
       nodeSelector:
 {{ toYaml $.Values.windowsNodeSelector | indent 8 }}
+        node.kubernetes.io/windows-build: {{ .buildNumber }}
       {{- end }}
       tolerations:
         - key: "node.kubernetes.io/os"
           operator: "Equal"
           value: "windows"
           effect: "NoSchedule"
-      {{- if .Values.tolerations }}
-{{ toYaml .Values.tolerations | indent 8 }}
+      {{- if  $.Values.tolerations }}
+{{ toYaml  $.Values.tolerations | indent 8 }}
       {{- end }}
+---
+{{- end }}
 {{- end }}

@@ -1,16 +1,16 @@
-exports.findPair = require('./dist/schema/Map').findPair
-exports.parseMap = require('./dist/schema/parseMap').parseMap
-exports.parseSeq = require('./dist/schema/parseSeq').parseSeq
+const util = require('./dist/util')
 
-const str = require('./dist/stringify')
-exports.stringifyNumber = str.stringifyNumber
-exports.stringifyString = str.stringifyString
-exports.toJSON = require('./dist/toJSON').toJSON
-exports.Type = require('./dist/constants').Type
+exports.findPair = util.findPair
+exports.toJSON = util.toJSON
+exports.parseMap = util.parseMap
+exports.parseSeq = util.parseSeq
 
-const err = require('./dist/errors')
-exports.YAMLError = err.YAMLError
-exports.YAMLReferenceError = err.YAMLReferenceError
-exports.YAMLSemanticError = err.YAMLSemanticError
-exports.YAMLSyntaxError = err.YAMLSyntaxError
-exports.YAMLWarning = err.YAMLWarning
+exports.stringifyNumber = util.stringifyNumber
+exports.stringifyString = util.stringifyString
+exports.Type = util.Type
+
+exports.YAMLError = util.YAMLError
+exports.YAMLReferenceError = util.YAMLReferenceError
+exports.YAMLSemanticError = util.YAMLSemanticError
+exports.YAMLSyntaxError = util.YAMLSyntaxError
+exports.YAMLWarning = util.YAMLWarning
