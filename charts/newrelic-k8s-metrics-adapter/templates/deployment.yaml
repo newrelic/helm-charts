@@ -33,6 +33,9 @@ spec:
       - name: {{ template "newrelic-k8s-metrics-adapter.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        args:
+        - --tls-cert-file=/tmp/k8s-metrics-adapter/serving-certs/tls.crt
+        - --tls-private-key-file=/tmp/k8s-metrics-adapter/serving-certs/tls.key
         readinessProbe:
           httpGet:
             scheme: HTTPS
@@ -43,6 +46,13 @@ spec:
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
+        volumeMounts:
+        - name: tls-key-cert-pair
+          mountPath: /tmp/k8s-metrics-adapter/serving-certs/
+      volumes:
+      - name: tls-key-cert-pair
+        secret:
+          secretName: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}-apiservice
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
