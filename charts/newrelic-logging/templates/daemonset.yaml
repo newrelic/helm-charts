@@ -1,4 +1,4 @@
-{{- if (include "newrelic-logging.areValuesValid" .) }}
+{{- if and (include "newrelic-logging.areValuesValid" .) .Values.enableLinux }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -25,6 +25,7 @@ spec:
       labels:
         app: {{ template "newrelic-logging.name" . }}
         release: {{.Release.Name }}
+        kubernetes.io/os: linux
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
         {{- if .Values.podLabels}}
         {{ toYaml .Values.podLabels }}
@@ -75,6 +76,8 @@ spec:
               {{- else }}
               value: "docker"
               {{- end }}
+            - name: FB_DB
+              value: {{ .Values.fluentBit.db | quote }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_LOGGING_EXCLUDE
@@ -124,6 +127,7 @@ spec:
       {{- end }}
       {{- if $.Values.nodeSelector }}
       nodeSelector:
+        kubernetes.io/os: linux
 {{ toYaml $.Values.nodeSelector | indent 8 }}
       {{- end }}
       {{- if .Values.tolerations }}

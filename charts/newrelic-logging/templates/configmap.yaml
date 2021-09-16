@@ -17,22 +17,16 @@ data:
         HTTP_Listen   0.0.0.0
         HTTP_Port     2020
 
-    @INCLUDE input-kubernetes.conf
-    @INCLUDE output-newrelic.conf
-    @INCLUDE filter-kubernetes.conf
-
-  input-kubernetes.conf: |
     [INPUT]
         Name              tail
         Tag               kube.*
         Path              ${PATH}
         Parser            ${LOG_PARSER}
-        DB                /var/log/flb_kube.db
+        DB                ${FB_DB}
         Mem_Buf_Limit     7MB
         Skip_Long_Lines   On
         Refresh_Interval  10
 
-  filter-kubernetes.conf: |
     [FILTER]
         Name           record_modifier
         Match          *
@@ -41,10 +35,9 @@ data:
     [FILTER]
         Name           kubernetes
         Match          kube.*
-        Kube_URL       https://kubernetes.default.svc:443
+        Kube_URL       https://kubernetes.default.svc.cluster.local:443
         K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
 
-  output-newrelic.conf: |
     [OUTPUT]
         Name  newrelic
         Match *

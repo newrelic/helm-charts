@@ -71,7 +71,7 @@ Return the licenseKey
 {{- end -}}
 
 {{/*
-Return the clusterName
+Return the cluster name
 */}}
 {{- define "newrelic-logging.cluster" -}}
 {{- if .Values.global}}
