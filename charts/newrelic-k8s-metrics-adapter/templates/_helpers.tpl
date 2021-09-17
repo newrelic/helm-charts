@@ -61,3 +61,44 @@ Create the name of the service account to use
     {{ default "default" .Values.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Return the licenseKey
+*/}}
+{{- define "newrelic-k8s-metrics-adapter.licenseKey" -}}
+{{- if .Values.global}}
+  {{- if .Values.global.licenseKey }}
+      {{- .Values.global.licenseKey -}}
+  {{- else -}}
+      {{- .Values.licenseKey | default "" -}}
+  {{- end -}}
+{{- else -}}
+    {{- .Values.licenseKey | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the cluster
+*/}}
+{{- define "newrelic-k8s-metrics-adapter.cluster" -}}
+{{- if .Values.global -}}
+  {{- if .Values.global.cluster -}}
+      {{- .Values.global.cluster -}}
+  {{- else -}}
+      {{- .Values.cluster | default "" -}}
+  {{- end -}}
+{{- else -}}
+  {{- .Values.cluster | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Select a value for the region
+*/}}
+{{- define "newrelic-k8s-metrics-adapter.region" -}}
+{{- if .Values.region -}}
+{{ .Values.region | upper }}
+{{- else -}}
+{{ include "newrelic-k8s-metrics-adapter.licenseKey" . | substr 0 2 | upper }}
+{{- end -}}
+{{- end -}}
