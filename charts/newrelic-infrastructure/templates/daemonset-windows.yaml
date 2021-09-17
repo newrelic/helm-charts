@@ -1,4 +1,4 @@
-{{- if and (include "newrelic.areValuesValid" $)  $.Values.enableWindows }}
+{{- if and (include "newrelic.areValuesValid" .)  .Values.enableWindows }}
 {{- range .Values.windowsOsList }}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -13,7 +13,7 @@ kubernetes.io/os: windows
 {{ toYaml  $.Values.daemonSet.annotations | indent 4 }}
   {{- end }}
 spec:
-  {{ include "newrelic.updateStrategy" . | indent 2 }}
+  {{ include "newrelic.updateStrategy" $ | indent 2 }}
   selector:
 matchLabels:
   app: {{ template "newrelic.name" $ }}
