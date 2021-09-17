@@ -12,6 +12,8 @@ spec:
   template:
     metadata:
       annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- if .Values.podAnnotations }}
         {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
@@ -36,6 +38,7 @@ spec:
         args:
         - --tls-cert-file=/tmp/k8s-metrics-adapter/serving-certs/tls.crt
         - --tls-private-key-file=/tmp/k8s-metrics-adapter/serving-certs/tls.key
+        - --secure-port=6443
         readinessProbe:
           httpGet:
             scheme: HTTPS
@@ -46,13 +49,26 @@ spec:
         resources:
           {{- toYaml .Values.resources | nindent 10 }}
         {{- end }}
+        env:
+        - name: CLUSTER_NAME
+          value: {{ include "newrelic-k8s-metrics-adapter.cluster" . }}
+        - name: NEWRELIC_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}
+              key: personalAPIKey
         volumeMounts:
         - name: tls-key-cert-pair
           mountPath: /tmp/k8s-metrics-adapter/serving-certs/
+        - name: config
+          mountPath: /etc/newrelic/adapter/
       volumes:
       - name: tls-key-cert-pair
         secret:
           secretName: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}-apiservice
+      - name: config
+        configMap:
+          name: {{ template "newrelic-k8s-metrics-adapter.fullname" .  }}
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
