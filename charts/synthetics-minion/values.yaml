@@ -16,6 +16,8 @@ synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
   # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
   privateLocationKey: ""
+  # privateLocationKeySecretName expects a Kubernetes Secret to exist that includes the key privateLocationKey
+  privateLocationKeySecretName: ""
   # The minionLogLevel is defaulted to INFO, which report about normal operations, but they provide the skeleton of what happened.
   # Other Options:
   # 1. DEBUG: These messages report detailed diagnostic information and more information than you'd want in normal production situations.
@@ -35,6 +37,9 @@ synthetics:
 
   ## If set, enables verified script execution and uses this value as a passphrase.
   #  minionVsePassphrase: ""
+
+  ## If set, enables verified script execution and uses this value from this Kubernetes Secret as a passphrase. Expects a key named `minionVsePassphrase`.
+  #  minionVsePassphraseSecretName: ""
 
   ## If set, the format is: "host:port".
   #  minionApiProxy: ""
@@ -137,6 +142,10 @@ resources:
   limits:
     cpu: "750m"
     memory: "1600Mi"
+
+labels: {}
+
+annotations: {}
 
 nodeSelector: {}
 
