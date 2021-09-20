@@ -36,8 +36,8 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ template "newrelic-logging.serviceAccountName" $ }}
-      hostNetwork: true
-      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: false
+      dnsPolicy: ClusterFirst
       terminationGracePeriodSeconds: 10
       {{- if $.Values.image.pullSecrets }}
       imagePullSecrets:
