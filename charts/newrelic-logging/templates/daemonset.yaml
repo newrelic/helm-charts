@@ -126,9 +126,10 @@ spec:
                       - fargate
       {{- end }}
       nodeSelector:
-        kubernetes.io/os: linux
         {{- if $.Values.nodeSelector }}
 {{ toYaml $.Values.nodeSelector | indent 8 }}
+        {{- else }}
+        kubernetes.io/os: linux
         {{- end }}
       {{- if .Values.tolerations }}
       tolerations:

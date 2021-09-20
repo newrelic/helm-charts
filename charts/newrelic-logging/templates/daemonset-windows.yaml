@@ -124,11 +124,12 @@ spec:
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
       nodeSelector:
+        {{- if $.Values.windowsNodeSelector }}
+{{ toYaml $.Values.windowsNodeSelector | indent 8 }}
+        {{- else }}
         kubernetes.io/os: windows
         # Windows containers can only be executed on hosts running the exact same Windows version and build number
         node.kubernetes.io/windows-build: {{ .buildNumber }}
-        {{- if $.Values.nodeSelector }}
-{{ toYaml $.Values.nodeSelector | indent 8 }}
         {{- end }}
       {{- if $.Values.tolerations }}
       tolerations:
