@@ -7,6 +7,10 @@ metadata:
 data:
   config.yaml: |
     accountID: {{ .Values.config.accountID | required "config.accountID is required" }}
-    region: {{ include "newrelic-k8s-metrics-adapter.region" . }}
+    {{- with (include "newrelic-k8s-metrics-adapter.region" .) }}
+    region: {{ . }}
+    {{- end }}
+    {{- with .Values.config.externalMetrics }}
     externalMetrics:
-      {{- toYaml .Values.config.externalMetrics | nindent 6 }}
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
