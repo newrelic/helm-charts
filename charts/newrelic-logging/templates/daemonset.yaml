@@ -79,6 +79,8 @@ spec:
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_LOGGING_EXCLUDE
               value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
+            - name: LOW_DATA_MODE
+              value: {{ include "newrelic.lowDataMode" . | quote }}
             {{- range .Values.fluentBit.additionalEnvVariables }}
             - name: {{ .name }}
               value: {{ .value }}
