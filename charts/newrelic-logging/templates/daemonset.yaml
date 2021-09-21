@@ -128,7 +128,7 @@ spec:
       nodeSelector:
         {{- if $.Values.nodeSelector }}
 {{ toYaml $.Values.nodeSelector | indent 8 }}
-        {{- else }}
+        {{- else if $.Values.enableWindows }}
         kubernetes.io/os: linux
         {{- end }}
       {{- if .Values.tolerations }}
