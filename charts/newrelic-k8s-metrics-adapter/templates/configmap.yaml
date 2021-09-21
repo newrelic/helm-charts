@@ -6,7 +6,7 @@ metadata:
     {{- include "newrelic-k8s-metrics-adapter.labels" . | nindent 4 }}
 data:
   config.yaml: |
-    accountID: {{ .Values.accountID | required "accountID is required" }}
+    accountID: {{ .Values.config.accountID | required "config.accountID is required" }}
     region: {{ include "newrelic-k8s-metrics-adapter.region" . }}
     externalMetrics:
-      {{- toYaml .Values.externalMetrics | nindent 6 }}
+      {{- toYaml .Values.config.externalMetrics | nindent 6 }}

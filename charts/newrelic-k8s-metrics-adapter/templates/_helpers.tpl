@@ -96,9 +96,15 @@ Return the cluster
 Select a value for the region
 */}}
 {{- define "newrelic-k8s-metrics-adapter.region" -}}
-{{- if .Values.region -}}
-{{ .Values.region | upper }}
-{{- else -}}
-{{ include "newrelic-k8s-metrics-adapter.licenseKey" . | substr 0 2 | upper }}
+{{- if .Values.config.region -}}
+  {{- .Values.config.region | upper -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.nrStaging -}}
+    Staging
+  {{- else if eq (include "newrelic-k8s-metrics-adapter.licenseKey" . | substr 0 2) "eu" -}}
+    EU
+    {{- end }}
+{{- else if eq (include "newrelic-k8s-metrics-adapter.licenseKey" . | substr 0 2) "eu" -}}
+EU
 {{- end -}}
 {{- end -}}
