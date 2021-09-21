@@ -129,6 +129,10 @@ spec:
         {{- if $.Values.nodeSelector }}
 {{ toYaml $.Values.nodeSelector | indent 8 }}
         {{- else if $.Values.enableWindows }}
+        # We add this only if Windows is enabled to keep backwards-compatibility. Prior to version 1.14, this label was
+        # named beta.kubernetes.io/os. In version 1.14, it was deprecated and replaced by this one. Version 1.14 also
+        # introduces Windows support. Therefore, anyone wishing to use Windows containers must bet at version >=1.14 and
+        # are going to need this label, in order to avoid placing a linux container on a windows node, and viceversa.
         kubernetes.io/os: linux
         {{- end }}
       {{- if .Values.tolerations }}
