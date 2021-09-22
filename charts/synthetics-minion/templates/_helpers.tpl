@@ -39,6 +39,21 @@ Create chart name and version as used by the chart label.
 {{- end -}}
 
 {{/*
+Pod annotations
+*/}}
+{{- define "synthetics-minion.podAnnotations" -}}
+{{- if or .Values.appArmorProfileName .Values.annotations -}}
+annotations:
+{{- if .Values.appArmorProfileName }}
+  container.apparmor.security.beta.kubernetes.io/{{ .Chart.Name }}: localhost/{{ .Values.appArmorProfileName }}
+{{- end }}
+{{- range $key, $val := .Values.annotations }}
+  {{ $key }}: {{ $val | quote }}
+{{- end }}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Selector labels
 */}}
 {{- define "synthetics-minion.selectorLabels" -}}
@@ -214,4 +229,38 @@ Define the volume mounts for the Minion
   name: {{ include "synthetics-minion.volumeName" . | quote }}
   subPath: {{ .Values.persistence.userDefinedVariables | quote }}
   {{ end }}
+{{- end }}
+
+{{/*
+Add privateLocationKey directly or retrieve from a Kubernetes Secret
+*/}}
+{{- define "synthetics-minion.privateLocationKey" }}
+{{- if .Values.synthetics.privateLocationKey -}}
+value: {{ .Values.synthetics.privateLocationKey | quote }}
+{{- else if .Values.synthetics.privateLocationKeySecretName -}}
+valueFrom:
+  secretKeyRef:
+    name: {{ .Values.synthetics.privateLocationKeySecretName  }}
+    key: privateLocationKey
+{{- else -}}
+{{- required ".Values.synthetics.privateLocationKey or .Values.synthetics.privateLocationKeySecretName must be set!" nil }}
+{{- end -}}
+{{- end }}
+
+{{/*
+Add minionVsePassphrase directly or retrieve from a Kubernetes Secret
+*/}}
+{{- define "synthetics-minion.minionVsePassphrase" }}
+{{- if or .Values.synthetics.minionVsePassphrase .Values.synthetics.minionVsePassphraseSecretName -}}
+{{- if .Values.synthetics.minionVsePassphrase -}}
+- name: MINION_VSE_PASSPHRASE
+  value: {{ .Values.synthetics.minionVsePassphrase | quote }}
+{{- else if .Values.synthetics.minionVsePassphraseSecretName -}}
+- name: MINION_VSE_PASSPHRASE
+  valueFrom:
+    secretKeyRef:
+      name: {{ .Values.synthetics.minionVsePassphraseSecretName  }}
+      key: minionVsePassphrase
+{{- end -}}
+{{- end -}}
 {{- end }}

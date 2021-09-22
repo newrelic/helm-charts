@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+# Prevent two release workflows from running concurrently, which might cause WAR race conditions in the repository
+# Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
+concurrency: helm-release
+
 jobs:
   # Sometimes chart-releaser might fetch an outdated index.yaml from gh-pages, causing a WAW hazard on the repo
   # This job checks the remote file is up to date with the local one on release
@@ -34,7 +38,7 @@ jobs:
         run: helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
 
       - name: Add Pixie repository
-        run: helm repo add pixie https://pixie-chart-helm2.storage.googleapis.com
+        run: helm repo add pixie-operator https://pixie-operator-charts.storage.googleapis.com
 
       - name: Configure Git
         run: |
