@@ -83,6 +83,19 @@ release: {{.Release.Name }}
 {{- end -}}
 
 {{/*
+Returns lowDataMode
+*/}}
+{{- define "newrelic-pixie.lowDataMode" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.lowDataMode }}
+    {{- .Values.global.lowDataMode -}}
+  {{- end -}}
+{{- else if .Values.lowDataMode }}
+  {{- .Values.lowDataMode -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the customSecretName where the New Relic license is being stored.
 */}}
 {{- define "newrelic-pixie.customSecretName" -}}
