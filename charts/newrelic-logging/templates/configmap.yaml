@@ -17,26 +17,22 @@ data:
         HTTP_Listen   0.0.0.0
         HTTP_Port     2020
 
-    @INCLUDE input-kubernetes.conf
-    @INCLUDE output-newrelic.conf
-    @INCLUDE filter-kubernetes.conf
-
-  input-kubernetes.conf: |
     [INPUT]
         Name              tail
         Tag               kube.*
         Path              ${PATH}
         Parser            ${LOG_PARSER}
-        DB                /var/log/flb_kube.db
+        DB                ${FB_DB}
         Mem_Buf_Limit     7MB
         Skip_Long_Lines   On
         Refresh_Interval  10
 
-  filter-kubernetes.conf: |
     [FILTER]
         Name           kubernetes
         Match          kube.*
-        Kube_URL       https://kubernetes.default.svc:443
+        # We need the full DNS suffix as Windows only supports resolving names with this suffix
+        # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+        Kube_URL       https://kubernetes.default.svc.cluster.local:443
         K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
 {{- if (include "newrelic.lowDataMode" .) }}
         Labels         Off
@@ -61,7 +57,6 @@ data:
         Allowlist_key  log
 {{- end }}
 
-  output-newrelic.conf: |
     [OUTPUT]
         Name           newrelic
         Match          *

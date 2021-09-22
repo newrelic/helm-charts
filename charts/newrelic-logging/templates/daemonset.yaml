@@ -1,4 +1,4 @@
-{{- if (include "newrelic-logging.areValuesValid" .) }}
+{{- if and (include "newrelic-logging.areValuesValid" .) .Values.enableLinux }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -25,6 +25,7 @@ spec:
       labels:
         app: {{ template "newrelic-logging.name" . }}
         release: {{.Release.Name }}
+        kubernetes.io/os: linux
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
         {{- if .Values.podLabels}}
         {{ toYaml .Values.podLabels }}
@@ -75,6 +76,8 @@ spec:
               {{- else }}
               value: "docker"
               {{- end }}
+            - name: FB_DB
+              value: {{ .Values.fluentBit.db | quote }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_LOGGING_EXCLUDE
@@ -124,10 +127,16 @@ spec:
                     values:
                       - fargate
       {{- end }}
-      {{- if $.Values.nodeSelector }}
       nodeSelector:
-{{ toYaml $.Values.nodeSelector | indent 8 }}
-      {{- end }}
+        {{- if .Values.nodeSelector }}
+{{ toYaml .Values.nodeSelector | indent 8 }}
+        {{- else if $.Values.enableWindows }}
+        # We add this only if Windows is enabled to keep backwards-compatibility. Prior to version 1.14, this label was
+        # named beta.kubernetes.io/os. In version 1.14, it was deprecated and replaced by this one. Version 1.14 also
+        # introduces Windows support. Therefore, anyone wishing to use Windows containers must bet at version >=1.14 and
+        # are going to need this label, in order to avoid placing a linux container on a windows node, and viceversa.
+        kubernetes.io/os: linux
+        {{- end }}
       {{- if .Values.tolerations }}
       tolerations:
 {{ toYaml .Values.tolerations | indent 8 }}
