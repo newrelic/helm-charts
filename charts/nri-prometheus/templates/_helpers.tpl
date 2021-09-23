@@ -116,6 +116,19 @@ Return the customSecretLicenseKey
 {{- end -}}
 
 {{/*
+Returns lowDataMode
+*/}}
+{{- define "nri-prometheus.lowDataMode" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.lowDataMode }}
+{{- .Values.global.lowDataMode -}}
+  {{- end -}}
+{{- else if .Values.lowDataMode }}
+  {{- .Values.lowDataMode -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns nrStaging
 */}}
 {{- define "newrelic.nrStaging" -}}
