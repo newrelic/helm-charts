@@ -14,6 +14,7 @@ By default, Pixie is installed in the `pl` namespace.
 | ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
 | `global.cluster` - `cluster`   | The cluster name for the Kubernetes cluster. Required. |   |
 | `global.licenseKey` - `licenseKey` | The New Relic license key (stored in a secret). Required.  |   |
+| `global.lowDataMode` - `lowDataMode`   | If `true`, the integration performs heavier sampling on the Pixie span data and sets the collect interval to 15 seconds instead of 10 seconds. | false |
 | `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key). | false |
 | `apiKey`   | The Pixie API key (stored in a secret). Required.  |   |
 | `verbose`  | Whether the integration should run in verbose mode or not. | false |
@@ -57,6 +58,7 @@ More information on globals and subcharts can be found at [Helm's official docum
 | `global.licenseKey` |
 | `global.customSecretName`   |
 | `global.customSecretLicenseKey` |
+| `global.lowDataMode`|
 | `global.nrStaging`  |
 
 ## Resources

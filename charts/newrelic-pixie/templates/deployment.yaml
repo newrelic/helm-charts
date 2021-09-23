@@ -58,6 +58,14 @@ secretKeyRef:
 - name: VERBOSE
   value: "true"
 {{- end }}
+{{- if (include "newrelic-pixie.lowDataMode" .) }}
+- name: COLLECT_INTERVAL_SEC
+  value: "15"
+- name: HTTP_SPAN_LIMIT
+  value: "750"
+- name: DB_SPAN_LIMIT
+  value: "250"
+{{- end }}
 {{- if (include "newrelic-pixie.nrStaging" .) }}
 - name: NR_OTLP_HOST
   value: "staging-otlp.nr-data.net:4317"
