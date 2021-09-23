@@ -9,5 +9,10 @@ data:
   config.yaml: |
     cluster_name: {{ include "nri-prometheus.cluster" . }}
 {{- if .Values.config }}
-{{ toYaml .Values.config | indent 4 -}}
-{{ end }}
+{{- if (include "nri-prometheus.lowDataMode" .) }}
+{{ $lowDataDefault := .Files.Get "static/lowdatamodedefaults.yaml" | fromYaml -}}
+    {{- mergeOverwrite .Values.config $lowDataDefault | toYaml | indent 4 -}}
+{{- else }}
+    {{ toYaml .Values.config | indent 4 | trim }}
+{{- end }}
+{{- end }}
