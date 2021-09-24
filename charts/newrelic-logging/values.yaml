@@ -27,6 +27,9 @@
 fluentBit:
   logLevel: "info"
   path: "/var/log/containers/*.log"
+  windowsPath: "C:\\var\\log\\containers\\*.log"
+  db: "/var/log/flb_kube.db"
+  windowsDb: "C:\\var\\log\\flb_kube.db"
   criEnabled: false
   k8sLoggingExclude: "Off"
   additionalEnvVariables: []
@@ -41,6 +44,22 @@ image:
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
     # - name: regsecret
+
+# By default, the Linux DaemonSet will always be deployed, while the Windows DaemonSet(s) won't.
+enableLinux: true
+enableWindows: false
+# For every entry in this Windows OS list, we will create an independent DaemonSet which will get deployed
+# on Windows nodes running each specific Windows version and build number. Note that
+# Windows containers can only be executed on hosts running the exact same Windows version and build number,
+# because Kubernetes only supports process isolation and not Hyper-V isolation (as of September 2021)
+windowsOsList:
+  # Right now, the windows-2019 worker offerred by GitHub is based on ltsc2019/10.0.17763.2183,
+  # so it can only compile containers running this specific version and compilation number of the OS.
+  # We aim to support (but right now, we can only support LTSC2019 using GitHub actions):
+  # https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#windows-os-version-support
+  - version: ltsc2019
+    imageTagSuffix: windows-ltsc-2019
+    buildNumber: 10.0.17763
 
 resources:
   limits:
@@ -89,7 +108,14 @@ nodeAffinity: {}
 
 # Node labels for pod assignment
 # Ref: https://kubernetes.io/docs/user-guide/node-selection/
+# Note that the Linux DaemonSet already contains a node selector label based on their OS (kubernetes.io/os: linux).
 nodeSelector: {}
+
+# Note that the Windows DaemonSet already contains a node selector label based on their OS (kubernetes.io/os: windows).
+# and build number (node.kubernetes.io/windows-build: {{ .buildNumber }}, to ensure that each version of the DaemonSet
+# gets deployed only on those Windows nodes running the exact same Windows version and build number. Note that
+# Windows containers can only be executed on hosts running the exact same Windows version and build number.
+windowsNodeSelector: {}
 
 # These are default tolerations to be able to run the New Relic Kubernetes
 # integration.
