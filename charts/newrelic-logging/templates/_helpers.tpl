@@ -150,6 +150,19 @@ Returns fargate
 {{- end -}}
 
 {{/*
+Returns lowDataMode
+*/}}
+{{- define "newrelic.lowDataMode" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.lowDataMode }}
+{{- .Values.global.lowDataMode -}}
+  {{- end -}}
+{{- else if .Values.lowDataMode }}
+  {{- .Values.lowDataMode -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns if the template should render, it checks if the required values are set.
 */}}
 {{- define "newrelic-logging.areValuesValid" -}}
