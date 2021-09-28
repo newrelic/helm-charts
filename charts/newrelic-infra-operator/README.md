@@ -2,8 +2,8 @@
 
 ## Chart Details
 
-This chart will deploy the [New Relic Infrastructure Operator][1], which injects the New Relic Infrastructure solution 
-as a sidecar to specific pods. 
+This chart will deploy the [New Relic Infrastructure Operator][1], which injects the New Relic Infrastructure solution
+as a sidecar to specific pods.
 This is typically used in environments where DaemonSets are not available, such as EKS Fargate.
 
 ## Configuration
@@ -20,13 +20,14 @@ This is typically used in environments where DaemonSets are not available, such 
 | `image.pullSecrets` | The image pull secrets. | `nil`|
 | `admissionWebhooksPatchJob.image.repository`| The job container to pull.  | `admissionWebhooksPatchJob`  |
 | `admissionWebhooksPatchJob.image.pullPolicy`| The job pull policy.| `IfNotPresent`   |
+| `admissionWebhooksPatchJob.image.pullSecrets`   | Image pull secrets. | `nil`   |
 | `admissionWebhooksPatchJob.image.tag`   | The job version of the container to pull.   | `1.5.0`  |
 | `admissionWebhooksPatchJob.volumeMounts`| Additional Volume mounts for Cert Job.  | `[]` |
 | `admissionWebhooksPatchJob.volumes` | Additional Volumes for Cert Job.| `[]` |
 | `replicas`  | Number of replicas in the deployment.   | `1`  |
 | `resources` | Resources you wish to assign to the pod.| See Resources below  |
-| `serviveAccount.create` | If true a service account would be created and assigned for the webhook and the job.| `true`   |
-| `serviveAccount.name`   | The service account to assign to the webhook and the job. If `serviveAccount.create` is true then this name will be used when creating the service account; if this value is not set or it evaluates to false, then when creating the account the returned value from the template `newrelic-infra-operator.fullname` will be used as name. |  |
+| `serviceAccount.create` | If true a service account would be created and assigned for the webhook and the job.| `true`   |
+| `serviceAccount.name`   | The service account to assign to the webhook and the job. If `serviceAccount.create` is true then this name will be used when creating the service account; if this value is not set or it evaluates to false, then when creating the account the returned value from the template `newrelic-infra-operator.fullname` will be used as name. |  |
 | `certManager.enabled`   | Use cert-manager to provision the MutatingWebhookConfiguration certs.   | `false`  |
 | `podSecurityContext.enabled`| Enable custom Pod Security Context. | `false`  |
 | `podSecurityContext.fsGroup`| fsGroup for Pod Security Context.   | `1001`   |
@@ -91,7 +92,7 @@ already monitored by the infrastructure DaemonSet.
 
 It is also possible to configure `resourceRequirements` and `extraEnvVars` based on the labels of the mutating Pod.
 
-The current configuration increases the resource requirements for sidecar injected on `KSM` instances. Moreover, 
+The current configuration increases the resource requirements for sidecar injected on `KSM` instances. Moreover,
 injectes disable the `DISABLE_KUBE_STATE_METRICS` environment variable for Pods not running on `KSM` instances
 to decrease the load on the API server.
 
