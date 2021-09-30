@@ -19,9 +19,23 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- end -}}
 {{- end -}}
 
+{{/*
+Returns .Values.global.privileged if it is set, or .Values.privileged otherwise
+*/}}
+{{- define "newrelic.privileged" -}}
+{{/* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */}}
+{{- if and (.Values.global) (get .Values.global "privileged" | kindIs "bool") }}
+  {{- if .Values.global.privileged -}}
+    {{- .Values.global.privileged -}}
+  {{- end -}}
+{{- else if .Values.privileged -}}
+  {{- .Values.privileged -}}
+{{- end -}}
+{{- end -}}
+
 {{/* Generate mode label */}}
 {{- define "newrelic.mode" }}
-{{- if .Values.privileged -}}
+{{- if include "newrelic.privileged" . -}}
 privileged
 {{- else -}}
 unprivileged
@@ -59,7 +73,7 @@ Create the name of the service account to use
 Create the image name depending on the "privileged" flag
 */}}
 {{- define "newrelic.image" -}}
-{{- if .Values.privileged -}}
+{{- if include "newrelic.privileged" . -}}
 "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion}}"
 {{- else -}}
 "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}-unprivileged"

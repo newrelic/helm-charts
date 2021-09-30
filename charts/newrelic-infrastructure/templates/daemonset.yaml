@@ -29,7 +29,7 @@ spec:
         mode: {{ template "newrelic.mode" . }}
     spec:
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
-      {{- if .Values.privileged }}
+      {{- if include "newrelic.privileged" . }}
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
@@ -42,7 +42,7 @@ spec:
           image: {{ template "newrelic.image" . }}
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           securityContext:
-            {{- if .Values.privileged }}
+            {{- if include "newrelic.privileged" . }}
             privileged: true
             {{- else }}
             runAsUser: {{ .Values.runAsUser | default 1000 }}
@@ -187,7 +187,7 @@ spec:
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
             {{- end }}
-            {{- if .Values.privileged }}
+            {{- if include "newrelic.privileged" . }}
             - name: dev
               mountPath: /dev
             {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
@@ -217,7 +217,7 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
       volumes:
-        {{- if .Values.privileged }}
+        {{- if include "newrelic.privileged" . }}
         - name: dev
           hostPath:
             path: /dev
