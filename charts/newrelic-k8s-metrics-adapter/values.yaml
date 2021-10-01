@@ -21,9 +21,12 @@ verboseLog: false
 config:
   accountID:
   externalMetrics:
+  # By default a cluster filter is added to the query to ensure no cross cluster metrics are taking into account.
+  # When metrics coming outside the cluster or without the 'clusterName' attribute are needed, removeClusterFilter
+  # should be set to true. Default value for this parameter is false.
   # test1:
   #   query: "SELECT latest(cpuUsedCores) from K8sContainerSample "
-  #   addClusterFilter: true
+  #   removeClusterFilter: false
   #
   # If not set, it will be automatically derived from global.licenseKey.
   # For US-based accounts, the region is: `US`.
