@@ -49,10 +49,10 @@ spec:
     metadata:
       labels:
         {{- include "synthetics-minion.selectorLabels" . | nindent 8 }}
-      {{ if .Values.appArmorProfileName }}
-      annotations:
-        container.apparmor.security.beta.kubernetes.io/{{ .Chart.Name }}: localhost/{{ .Values.appArmorProfileName }}
-      {{ end }}
+        {{- with .Values.labels -}}
+          {{ toYaml . | nindent 8 }}
+        {{- end }}
+      {{- include "synthetics-minion.podAnnotations" . | nindent 6 }}
     spec:
       serviceAccountName: {{ include "synthetics-minion.serviceAccountName" . }}
       ######################################## NOTE #################################################################
@@ -109,7 +109,7 @@ spec:
                 fieldRef:
                   fieldPath: metadata.namespace
             - name: MINION_PRIVATE_LOCATION_KEY
-              value: {{ required "A valid .Values.synthetics.privateLocationKey entry required" .Values.synthetics.privateLocationKey  | quote }}
+              {{- include "synthetics-minion.privateLocationKey" . | nindent 14 }}
             - name: MINION_LOG_LEVEL
               value: {{ .Values.synthetics.minionLogLevel | quote }}
 
@@ -123,10 +123,7 @@ spec:
               value: {{ .Values.synthetics.minionDockerRunnerRegistryEndpoint | quote }}
             {{- end }}
 
-            {{- if .Values.synthetics.minionVsePassphrase }}
-            - name: MINION_VSE_PASSPHRASE
-              value: {{ .Values.synthetics.minionVsePassphrase  | quote }}
-            {{- end }}
+            {{- include "synthetics-minion.minionVsePassphrase" . | nindent 12 -}}
 
             {{- if .Values.synthetics.minionApiProxy }}
             - name: MINION_API_PROXY

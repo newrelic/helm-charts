@@ -1,7 +1,4 @@
 {{- if (include "newrelic-pixie.areValuesValid" .) }}
-###############################################################
-####   WARNING: this is pre-release/early access software  ####
-###############################################################
 
 Your deployment of the New Relic Pixie integration is complete.
 
@@ -24,7 +21,7 @@ For a simple installation to be fixed, run:
         --set cluster=YOUR-CLUSTER-NAME \
         --set licenseKey=YOUR-LICENSE-KEY \
         --set apiKey=YOUR-API-KEY \
-        -n {{ .Release.Namespace }}
+        -n {{ .Release.Namespace }} \
         newrelic/newrelic-pixie
 
 {{- end -}}

@@ -1,3 +1,4 @@
+{{- if (not .Values.daemonset.create) }}
 {{- if (include "nri-statsd.areValuesValid" .) }}
 apiVersion: apps/v1
 kind: Deployment
@@ -7,7 +8,7 @@ metadata:
   labels:
 {{ include "nri-statsd.labels" . | indent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       app.kubernetes.io/name: {{ include "nri-statsd.name" . }}
@@ -80,4 +81,5 @@ spec:
       affinity:
 {{ toYaml .Values.affinity | indent 8 }}
       {{- end }}
+{{- end }}
 {{- end }}

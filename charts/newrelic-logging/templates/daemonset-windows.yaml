@@ -1,0 +1,142 @@
+{{- if and (include "newrelic-logging.areValuesValid" $)  $.Values.enableWindows }}
+{{- range .Values.windowsOsList }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    kubernetes.io/os: windows
+{{ include "newrelic-logging.labels" $ | indent 4 }}
+  name: {{ template "newrelic-logging.fullname" $ }}-windows-{{ .version }}
+  annotations:
+  {{- if $.Values.daemonSet.annotations }}
+{{ toYaml $.Values.daemonSet.annotations | indent 4 }}
+  {{- end }}
+spec:
+  updateStrategy:
+    type: {{ $.Values.updateStrategy }}
+  selector:
+    matchLabels:
+      app: {{ template "newrelic-logging.name" $ }}
+      release: {{ $.Release.Name }}
+      kubernetes.io/os: windows
+  template:
+    metadata:
+    {{- if $.Values.podAnnotations }}
+      annotations:
+{{ toYaml $.Values.podAnnotations | indent 8}}
+    {{- end }}
+      labels:
+        app: {{ template "newrelic-logging.name" $ }}
+        release: {{ $.Release.Name }}
+        kubernetes.io/os: windows
+        app.kubernetes.io/name: {{ template "newrelic-logging.name" $ }}
+        {{- if $.Values.podLabels}}
+{{ toYaml $.Values.podLabels | indent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ template "newrelic-logging.serviceAccountName" $ }}
+      hostNetwork: false
+      dnsPolicy: ClusterFirst
+      terminationGracePeriodSeconds: 10
+      {{- if $.Values.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml $.Values.image.pullSecrets | indent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ template "newrelic-logging.name" $ }}
+          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion  }}-{{ .imageTagSuffix }}"
+          imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
+          securityContext: {}
+          env:
+            - name: ENDPOINT
+              {{- if (include "newrelic.nrStaging" $) }}
+              value: "https://staging-log-api.newrelic.com/log/v1"
+              {{- else if $.Values.endpoint }}
+              value: {{ $.Values.endpoint }}
+              {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" $)) "eu" }}
+              value: "https://log-api.eu.newrelic.com/log/v1"
+              {{- else }}
+              value: "https://log-api.newrelic.com/log/v1"
+              {{- end }}
+            - name: SOURCE
+              value: {{ if (include "newrelic.lowDataMode" .) }} "k8s" {{- else }} "kubernetes" {{- end }}
+            - name: LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- if (include "newrelic-logging.licenseKey" $) }}
+                  name: {{ template "newrelic-logging.fullname" $ }}-config
+                  key: license
+                  {{- else }}
+                  name: {{ include "newrelic-logging.customSecretName" $ }}
+                  key: {{ include "newrelic-logging.customSecretKey" $ }}
+              {{- end }}
+            - name: CLUSTER_NAME
+              value: {{ include "newrelic-logging.cluster" $ }}
+            - name: LOG_LEVEL
+              value: {{ $.Values.fluentBit.logLevel | quote }}
+            - name: LOG_PARSER
+              {{- if $.Values.fluentBit.criEnabled }}
+              value: "cri"
+              {{- else }}
+              value: "docker"
+              {{- end }}
+            - name: FB_DB
+              value: {{ $.Values.fluentBit.windowsDb | quote }}
+            - name: PATH
+              value: {{ $.Values.fluentBit.windowsPath | quote }}
+            - name: K8S_LOGGING_EXCLUDE
+              value: {{ $.Values.fluentBit.k8sLoggingExclude | quote }}
+            - name: LOW_DATA_MODE
+              value: {{ include "newrelic.lowDataMode" . | default "false" | quote }}
+            {{- range $.Values.fluentBit.additionalEnvVariables }}
+            - name: {{ .name }}
+              value: {{ .value }}
+            {{- end }}
+          command:
+            - C:\fluent-bit\bin\fluent-bit.exe
+            - -c
+            - c:\fluent-bit\etc\fluent-bit.conf
+            - -e
+            - C:\fluent-bit\bin\out_newrelic.dll
+          volumeMounts:
+            - mountPath: C:\fluent-bit\etc
+              name: fluent-bit-config
+            - mountPath: C:\var\log
+              name: varlog
+              # We need to also mount this because the logs in C:\var\logs are actually symlinks to C:\ProgramData.
+              # So, in order to be able to read these logs, the reading process needs to also have access to C:\ProgramData.
+            - mountPath: C:\ProgramData
+              name: progdata
+          {{- if $.Values.resources }}
+          resources:
+{{ toYaml $.Values.resources | indent 12 }}
+          {{- end }}
+      volumes:
+        - name: fluent-bit-config
+          configMap:
+            name: {{ template "newrelic-logging.fluentBitConfig" $ }}
+        - name: varlog
+          hostPath:
+            path: C:\var\log
+        - name: progdata
+          hostPath:
+            path: C:\ProgramData
+      {{- if $.Values.priorityClassName }}
+      priorityClassName: {{ $.Values.priorityClassName }}
+      {{- end }}
+      nodeSelector:
+        {{- if $.Values.windowsNodeSelector }}
+{{ toYaml $.Values.windowsNodeSelector | indent 8 }}
+        {{- else }}
+        kubernetes.io/os: windows
+        # Windows containers can only be executed on hosts running the exact same Windows version and build number
+        node.kubernetes.io/windows-build: {{ .buildNumber }}
+        {{- end }}
+      {{- if $.Values.tolerations }}
+      tolerations:
+{{ toYaml $.Values.tolerations | indent 8 }}
+      {{- end }}
+{{- end }}
+---
+{{- end }}

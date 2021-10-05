@@ -43,7 +43,6 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
-          imagePullPolicy: IfNotPresent
           args: ["-config", "/app/config/config.yaml", "-loglevel", "debug"]
           volumeMounts:
             - name: config-volume
@@ -76,6 +75,11 @@ spec:
             - name: NRIA_PROXY
               value: "{{ .Values.proxy }}"
             {{- end }}
+            # Using FORWARD_ONLY mode to avoid the entity creation for the events.
+            - name: NRIA_IS_SECURE_FORWARD_ONLY
+              value: "false"
+            - name: NRIA_IS_FORWARD_ONLY
+              value: "true"
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
               name: tmpfs-data

@@ -16,6 +16,8 @@ synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
   # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
   privateLocationKey: ""
+  # privateLocationKeySecretName expects a Kubernetes Secret to exist that includes the key privateLocationKey
+  privateLocationKeySecretName: ""
   # The minionLogLevel is defaulted to INFO, which report about normal operations, but they provide the skeleton of what happened.
   # Other Options:
   # 1. DEBUG: These messages report detailed diagnostic information and more information than you'd want in normal production situations.
@@ -35,6 +37,9 @@ synthetics:
 
   ## If set, enables verified script execution and uses this value as a passphrase.
   #  minionVsePassphrase: ""
+
+  ## If set, enables verified script execution and uses this value from this Kubernetes Secret as a passphrase. Expects a key named `minionVsePassphrase`.
+  #  minionVsePassphraseSecretName: ""
 
   ## If set, the format is: "host:port".
   #  minionApiProxy: ""
@@ -116,6 +121,9 @@ serviceAccount:
   # The name of the serviceAccount to use. If value is not set and create is true, a name is generated using the fullname template.
   name:
 
+# Default Kubernetes does not include a jobs/log resource.
+# removeJobsLog: true
+
 headlessService:
   # The name of the headless service to associate to the statefulSet. A headless service is a service with a service IP but instead of load-balancing it will return the IPs of our associated Pods. This allows us to interact directly with the Pods instead of a proxy. If not set a name is generated using the fullname template.
   # For more information about services: https://kubernetes.io/docs/concepts/services-networking/service/
@@ -129,11 +137,15 @@ podSecurityContextRunAsUser: 2379
 
 resources:
   requests:
-    cpu: 0.5
-    memory: 800Mi
+    cpu: "500m"
+    memory: "800Mi"
   limits:
-    cpu: 0.75
-    memory: 1.6Gi
+    cpu: "750m"
+    memory: "1600Mi"
+
+labels: {}
+
+annotations: {}
 
 nodeSelector: {}
 

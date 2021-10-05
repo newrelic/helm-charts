@@ -2,9 +2,11 @@
 
 ## Chart Details
 
-This chart bundles multiple New Relic products helm-charts.
+This chart groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
 
 ## Configuration
+
+The following properties can be configured in the `values.yml` file:
 
 | Parameter                         | Description                                                                                                                                          | Default |
 |-----------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------|---------|
@@ -14,6 +16,7 @@ This chart bundles multiple New Relic products helm-charts.
 | `global.customSecretName`         | Name of the Secret object where the license key is stored                                                                                            |         |
 | `global.customSecretLicenseKey`   | Key in the Secret object where the license key is stored.                                                                                            |         |
 | `global.customSecretInsightsKey`  | Key in the Secret object where the insights key is stored.                                                                                           |         |
+| `global.lowDataMode`              | Enable Low Data mode: apply more sampling on Pixie data, send minimal attributes on Logs and filter KSM metrics from Prometheus.                     | false   |
 | `global.fargate`                  | Must be set to `true` when deploying in an EKS Fargate environment.                                                                                  | false   |
 | `infrastructure.enabled`          | Install the [`newrelic-infrastructure` chart][3]                                                                                                     | true    |
 | `prometheus.enabled`              | Install the [`nri-prometheus` chart][4]                                                                                                              | false   |
@@ -25,21 +28,58 @@ This chart bundles multiple New Relic products helm-charts.
 | `pixie-chart.enabled`             | Install the [`pixie-chart` chart][9]                                                                                                                 | false   |
 | `newrelic-infra-operator.enabled` | Install the [`newrelic-infra-operator` chart][10] (Beta)                                                                                             | false   |
 
-## Configure Dependencies
+## Configure components
 
-It is possible to configure dependencies values from this chart.  
-For example you can configure `verboseLog` variable of the newrelic-infrastructure chart installed as a dependency as follows.
+It is possible to configure settings for the individual charts this chart groups by specifying values for them under a key using the name of the chart, as specified in [helm documentation](https://helm.sh/docs/chart_template_guide/subcharts_and_globals).
 
-``` yaml
+For example, by adding the following to the `values.yml` file:
+
+```yaml
+# Configuration settings for the newrelic-infrastructure chart
 newrelic-infrastructure:
+  # Any key defined in the values.yml file for the newrelic-infrastructure chart can be configured here:
+  # https://github.com/newrelic/helm-charts/blob/master/charts/newrelic-infrastructure/values.yaml
+
   verboseLog: false
+
+  resources:
+    limits:
+      memory: 512M
+
+  daemonSet:
+    annotations:
+      example.org/annotation: value
 ```
 
-```
-$ helm upgrade --reuse-values -f values.yaml [RELEASE] [CHART]
+It is possible to override the `verboseLog`, `resources`, or `daemonSet` entries of the [`newrelic-infrastructure`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure) chart, as defined in their [`values.yml` file](https://github.com/newrelic/helm-charts/blob/master/charts/newrelic-infrastructure/values.yaml).
+
+As another example, the following snippet allows specifying config options for the infrastructure-agent, which again is part of the `newrelic-infrastructure` chart:
+
+```yaml
+newrelic-infrastructure:
+  # Enable verbose logging
+  verboseLog: true
+
+  # Configure advanced options for the infrastructure-agent itself
+  config:
+    # Set up a proxy
+    proxy: https://user:password@hostname:port
+    # Log sent data to stderr
+    trace:
+      - connect
 ```
 
-The same approach can be followed to update any of the dependencies. [Official documentation](https://helm.sh/docs/chart_template_guide/subcharts_and_globals)
+Everything under the `config` key will be mapped to the agent config file. For more details about which configuration options can be set for the New Relic Infrastructure Agent, please check [our documentation](https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/).
+
+The same approach can be followed to update any of the subcharts.
+
+After making this changes to the `values.yml` file, or a custom values file, make sure to apply them using:
+
+```
+$ helm upgrade --reuse-values -f values.yaml [RELEASE] newrelic/nri-bundle
+```
+
+Where `[RELEASE]` is the name of the helm release, e.g. `newrelic-bundle`.
 
 ### Monitor on host integrations
 
@@ -105,8 +145,6 @@ helm install newrelic/nri-bundle \
 ```
 
 ### Example with Pixie
-
-> Note: Pixie integration is still in a pre-release state and requires an early access program enrollment
 
 ```sh
 helm install newrelic/nri-bundle \

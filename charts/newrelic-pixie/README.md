@@ -1,29 +1,33 @@
-# newrelic-pixie (pre-release/early access program)
-
-**This chart is a pre-release and installs software under an early access program.**
+# newrelic-pixie
 
 ## Chart Details
 
 This chart will deploy the New Relic Pixie Integration.
 
-IMPORTANT: make sure you deploy this chart in the same namespace as Pixie. 
-It needs to access the cluster id inside the Pixie secrets. 
+IMPORTANT: make sure you deploy this chart in the same namespace as Pixie.
+It needs to access the cluster id inside the Pixie secrets.
 By default, Pixie is installed in the `pl` namespace.
 
 ## Configuration
 
-| Parameter                     | Description                                                  | Default                    |
-| ----------------------------- | ------------------------------------------------------------ | -------------------------- |
-| `global.cluster` - `cluster`  | The cluster name for the Kubernetes cluster. Required.       |                            |
-| `global.licenseKey` - `licenseKey` | The New Relic license key (stored in a secret). Required.    |                            |
-| `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key). | false |
-| `apiKey`                      | The Pixie API key (stored in a secret). Required.            |                            |
-| `verbose`                     | Whether the integration should run in verbose mode or not.   | false                      |
-| `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license is stored                                                                                                                                                                         |                                 |
-| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored.                                                                                                                                                             |                                 |
-| `customSecretApiKeyName` | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.    |                                 |
-| `customSecretApiKeyKey` | Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   |                                 |
-
+| Parameter                                                  | Description                                                                                                                                                                                        | Default               |
+| ---------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
+| `global.cluster` - `cluster`                               | The cluster name for the Kubernetes cluster. Required.                                                                                                                                             |                       |
+| `global.licenseKey` - `licenseKey`                         | The New Relic license key (stored in a secret). Required.                                                                                                                                          |                       |
+| `global.lowDataMode` - `lowDataMode`                       | If `true`, the integration performs heavier sampling on the Pixie span data and sets the collect interval to 15 seconds instead of 10 seconds.                                                     | false                 |
+| `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key).                                                                                                                                             | false                 |
+| `apiKey`                                                   | The Pixie API key (stored in a secret). Required.                                                                                                                                                  |                       |
+| `verbose`                                                  | Whether the integration should run in verbose mode or not.                                                                                                                                         | false                 |
+| `global.customSecretName` - `customSecretName`             | Name of an existing Secret object, not created by this chart, where the New Relic license is stored                                                                                                |                       |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored.                                                                                     |                       |
+| `customSecretApiKeyName`                                   | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.                                                                                                   |                       |
+| `customSecretApiKeyKey`                                    | Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.                                                                                       |                       |
+| `nodeSelector`                                             | Node label to use for scheduling                                                                                                                                                                                                      | `{}`                                   |
+| `tolerations`                                              | List of node taints to tolerate (requires Kubernetes >= 1.6)                                                                                                                                                                          | `[]`                                   |
+| `affinity`                                                 | Node affinity to use for scheduling                                                                                                                                                                                            | `{}`                  |
+| `proxy`                                                    | Set proxy to connect to Pixie Cloud and New Relic.                                                                                                                                                 |                       |
+| `excludeNamespacesRegex`                                   | Observability data for namespaces matching this RE2 regex is not sent to New Relic. If empty, observability data for all namespaces is sent to New Relic.                                          |                       |
+| `excludePodsRegex`                                         | Observability data for pods (across all namespaces) matching this RE2 regex is not sent to New Relic. If empty, observability data for all pods (in non-excluded namespaces) is sent to New Relic. |                       |
 ## Example
 
 Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)
@@ -38,6 +42,7 @@ helm install newrelic/newrelic-pixie \
   --namespace pl \
   --generate-name
 ```
+
 ## Globals
 
 **Important:** global parameters have higher precedence than locals with the same name.
@@ -53,8 +58,8 @@ More information on globals and subcharts can be found at [Helm's official docum
 | `global.licenseKey`             |
 | `global.customSecretName`       |
 | `global.customSecretLicenseKey` |
+| `global.lowDataMode`            |
 | `global.nrStaging`              |
-
 
 ## Resources
 

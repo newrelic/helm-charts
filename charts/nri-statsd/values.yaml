@@ -36,6 +36,10 @@ nameOverride: ""
 
 fullnameOverride: ""
 
+daemonset:
+  create: false
+  annotations: {}
+
 serviceAccount:
   # Specifies whether a service account should be created
   create: false
@@ -47,12 +51,13 @@ serviceAccount:
 
 image:
   repository: newrelic/nri-statsd
-  tag: v2.0.1
+  tag: 2.0.3
   ## It is possible to specify docker registry credentials
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
     # - name: regsecret
 
+replicaCount: 1
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little

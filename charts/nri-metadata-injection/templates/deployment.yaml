@@ -36,11 +36,14 @@ spec:
       {{- end }}
       containers:
       - name: {{ template "nri-metadata-injection.name" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         env:
         - name: clusterName
           value: {{ include "nri-metadata-injection.cluster" . }}
+        ports:
+          - containerPort: 8443
+            protocol: TCP
         volumeMounts:
         - name: tls-key-cert-pair
           mountPath: /etc/tls-key-cert-pair

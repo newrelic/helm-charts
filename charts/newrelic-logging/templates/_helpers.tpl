@@ -71,7 +71,7 @@ Return the licenseKey
 {{- end -}}
 
 {{/*
-Return the clusterName
+Return the cluster name
 */}}
 {{- define "newrelic-logging.cluster" -}}
 {{- if .Values.global}}
@@ -146,6 +146,19 @@ Returns fargate
   {{- end -}}
 {{- else if .Values.fargate }}
   {{- .Values.fargate -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns lowDataMode
+*/}}
+{{- define "newrelic.lowDataMode" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.lowDataMode }}
+    {{- .Values.global.lowDataMode -}}
+  {{- end -}}
+{{- else if .Values.lowDataMode }}
+  {{- .Values.lowDataMode -}}
 {{- end -}}
 {{- end -}}
 

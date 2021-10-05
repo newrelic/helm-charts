@@ -17,39 +17,52 @@ data:
         HTTP_Listen   0.0.0.0
         HTTP_Port     2020
 
-    @INCLUDE input-kubernetes.conf
-    @INCLUDE output-newrelic.conf
-    @INCLUDE filter-kubernetes.conf
-
-  input-kubernetes.conf: |
     [INPUT]
         Name              tail
         Tag               kube.*
         Path              ${PATH}
         Parser            ${LOG_PARSER}
-        DB                /var/log/flb_kube.db
+        DB                ${FB_DB}
         Mem_Buf_Limit     7MB
         Skip_Long_Lines   On
         Refresh_Interval  10
 
-  filter-kubernetes.conf: |
+    [FILTER]
+        Name           kubernetes
+        Match          kube.*
+        # We need the full DNS suffix as Windows only supports resolving names with this suffix
+        # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+        Kube_URL       https://kubernetes.default.svc.cluster.local:443
+        K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+{{- if (include "newrelic.lowDataMode" .) }}
+        Labels         Off
+        Annotations    Off
+
+    [FILTER]
+        Name           nest
+        Match          *
+        Operation      lift
+        Nested_under   kubernetes
+{{- end }}
+
     [FILTER]
         Name           record_modifier
         Match          *
         Record         cluster_name ${CLUSTER_NAME}
+{{- if (include "newrelic.lowDataMode" .) }}
+        Allowlist_key  container_name
+        Allowlist_key  namespace_name
+        Allowlist_key  pod_name
+        Allowlist_key  stream
+        Allowlist_key  log
+{{- end }}
 
-    [FILTER]
-        Name           kubernetes
-        Match          kube.*
-        Kube_URL       https://kubernetes.default.svc:443
-        K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
-
-  output-newrelic.conf: |
     [OUTPUT]
-        Name  newrelic
-        Match *
-        licenseKey ${LICENSE_KEY}
-        endpoint ${ENDPOINT}
+        Name           newrelic
+        Match          *
+        licenseKey     ${LICENSE_KEY}
+        endpoint       ${ENDPOINT}
+        lowDataMode    ${LOW_DATA_MODE}
 
   parsers.conf: |
     # Relevant parsers retrieved from: https://github.com/fluent/fluent-bit/blob/master/conf/parsers.conf
