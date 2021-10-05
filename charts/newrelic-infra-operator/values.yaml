@@ -26,6 +26,8 @@ admissionWebhooksPatchJob:
     repository: jettech/kube-webhook-certgen
     tag: v1.5.0
     pullPolicy: IfNotPresent
+#   pullSecrets:
+#   - name: regsecret
 #   Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies.
 #   Enforce a read-only root.
   volumeMounts: []
@@ -111,7 +113,7 @@ config:
 ## Image of the infrastructure agent to be injected.
       image:
         repository: newrelic/infrastructure-k8s
-        tag: 2.4.0-unprivileged
+        tag: 2.8.1-unprivileged
         pullPolicy: IfNotPresent
 
 ## configSelectors is the way to configure resource requirements and extra envVars of the injected sidecar container.

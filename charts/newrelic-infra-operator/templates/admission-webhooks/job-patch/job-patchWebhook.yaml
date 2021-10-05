@@ -18,6 +18,10 @@ spec:
         app: {{ template "newrelic-infra-operator.name" $ }}-admission-patch
 {{ include "newrelic-infra-operator.labels" $ | indent 8 }}
     spec:
+      {{- if .Values.admissionWebhooksPatchJob.image.pullSecrets }}
+      imagePullSecrets:
+{{ toYaml .Values.admissionWebhooksPatchJob.image.pullSecrets | indent 8 }}
+      {{- end }}
       containers:
         - name: patch
           image: {{ .Values.admissionWebhooksPatchJob.image.repository }}:{{ .Values.admissionWebhooksPatchJob.image.tag }}

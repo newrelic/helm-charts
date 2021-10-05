@@ -16,6 +16,7 @@ The following properties can be configured in the `values.yml` file:
 | `global.customSecretName`         | Name of the Secret object where the license key is stored                                                                                            |         |
 | `global.customSecretLicenseKey`   | Key in the Secret object where the license key is stored.                                                                                            |         |
 | `global.customSecretInsightsKey`  | Key in the Secret object where the insights key is stored.                                                                                           |         |
+| `global.lowDataMode`              | Enable Low Data mode: apply more sampling on Pixie data, send minimal attributes on Logs and filter KSM metrics from Prometheus.                     | false   |
 | `global.fargate`                  | Must be set to `true` when deploying in an EKS Fargate environment.                                                                                  | false   |
 | `infrastructure.enabled`          | Install the [`newrelic-infrastructure` chart][3]                                                                                                     | true    |
 | `prometheus.enabled`              | Install the [`nri-prometheus` chart][4]                                                                                                              | false   |

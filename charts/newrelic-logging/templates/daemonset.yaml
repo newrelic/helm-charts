@@ -55,7 +55,7 @@ spec:
               value: "https://log-api.newrelic.com/log/v1"
               {{- end }}
             - name: SOURCE
-              value: "kubernetes"
+              value: {{ if (include "newrelic.lowDataMode" .) }} "k8s" {{- else }} "kubernetes" {{- end }}
             - name: LICENSE_KEY
               valueFrom:
                 secretKeyRef:
@@ -82,6 +82,8 @@ spec:
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_LOGGING_EXCLUDE
               value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
+            - name: LOW_DATA_MODE
+              value: {{ include "newrelic.lowDataMode" . | default "false" | quote }}
             {{- range .Values.fluentBit.additionalEnvVariables }}
             - name: {{ .name }}
               value: {{ .value }}
