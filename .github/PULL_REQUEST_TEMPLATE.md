@@ -38,3 +38,4 @@ even continue reviewing your changes.
 - [ ] Chart Version bumped
 - [ ] Variables are documented in the README.md
 - [ ] Title of the PR starts with chart name (e.g. `[mychartname]`)
+- [ ] CHANGELOG.md in the chart repo has been updated
