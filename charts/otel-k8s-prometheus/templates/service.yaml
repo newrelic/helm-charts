@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "otel-k8s-prometheus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otel-k8s-prometheus.labels" . | nindent 4 }}
+  {{- with .Values.service.prometheusDebug.annotations }}
+  annotations:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.service.prometheusDebug.type }}
+  ports:
+    - port: {{ .Values.service.prometheusDebug.port }}
+      targetPort: prometheus
+      protocol: TCP
+      name: prometheus
+  selector:
+    {{- include "otel-k8s-prometheus.selectorLabels" . | nindent 4 }}

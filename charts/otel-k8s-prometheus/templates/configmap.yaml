@@ -1,0 +1,148 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "otel-k8s-prometheus.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otel-k8s-prometheus.labels" . | nindent 4 }}
+data:
+  otel-prometheus-config.yaml: |
+  {{- with .Values.config }}
+    receivers:
+      prometheus:
+        config:
+          scrape_configs:
+          {{- with .jobs.podsEndpoints }}
+          {{- if .enabled }}
+            - job_name: {{ include "otel-k8s-prometheus.name" $ | include "toPrometheus" }}_pods_endpoints
+              scrape_interval: {{ $.Values.config.interval }}
+              kubernetes_sd_configs:
+                # Attempt to scrape endpoints (pods behind annotated services)
+                - role: endpoints
+                # And also pods that are annotated directly and are not behind a service
+                - role: pod
+              relabel_configs:
+                # K8s scrape labels and transformations
+                {{- include "newrelic.prometheusOtelRelabel" $.Values.config | nindent 16 }}
+          {{- end }}
+          {{- end }}
+
+          {{- with .jobs.external }}
+          {{- if .enabled }}
+            - job_name: {{ include "otel-k8s-prometheus.name" $ | include "toPrometheus" }}_external
+              scrape_interval: {{ $.Values.config.interval }}
+              kubernetes_sd_configs:
+                - role: service
+              relabel_configs:
+                # Drop targets that are not services with an externalName
+                - source_labels:
+                  - __meta_kubernetes_service_external_name
+                  regex: ".+"
+                  action: keep
+                # K8s scrape labels and transformations
+                {{- include "newrelic.prometheusOtelRelabel" $.Values.config | nindent 16 }}
+          {{- end }}
+          {{- end }}
+
+          {{- with .extraScrapeConfigs }}
+          {{- . | toYaml | nindent 12 }}
+          {{- end }}
+
+    processors:
+    {{- if .batchProcessor.enabled }}
+      batch: {}
+    {{- end }}
+    {{- if .nrConventionsProcessor.enabled }}
+      metricstransform/nrConventions:
+        transforms:
+          - include: ".*"
+            match_type: regexp
+            action: update
+            operations:
+              - action: add_label
+                new_label: k8s.cluster.name
+                new_value: ${NR_CLUSTER_NAME}
+
+              # TODO: This one is not working, unsure why
+              - action: update_label
+                label: service.name
+                new_label: otelmeta.service.name
+
+              # K8s labels
+              - action: update_label
+                label: kubernetes_pod_name
+                new_label: k8s.pod.name
+              - action: update_label
+                label: kubernetes_namespace
+                new_label: k8s.namespace
+              - action: update_label
+                label: kubernetes_pod_container_name
+                new_label: k8s.pod.container.name
+              - action: update_label
+                label: kubernetes_pod_node_name
+                new_label: k8s.pod.node.name
+              - action: update_label
+                label: kubernetes_service_name
+                new_label: k8s.service.name
+    {{- end }}
+    {{- with .extraProcessors }}
+      {{- . | toYaml | nindent 6 }}
+    {{- end }}
+
+    exporters:
+      {{- with .otlpExporter }}
+      {{- if .enabled }}
+      otlp:
+        {{- omit . "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      {{- with .loggingExporter }}
+      {{- if .enabled }}
+      logging:
+        {{- omit . "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      {{- end }}
+      {{- with $.Values.service.prometheusDebug }}
+      {{- if .enabled }}
+      prometheus:
+        endpoint: ":9000"
+        resource_to_telemetry_conversion:
+          enabled: true
+      {{- end }}
+      {{- end }}
+      {{- with .extraExporters }}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
+
+    extensions:
+      health_check:
+
+    service:
+      extensions: [ health_check ]
+      pipelines:
+        metrics:
+          receivers: [ prometheus ]
+          processors:
+            {{- if .batchProcessor.enabled }}
+            - batch
+            {{- end }}
+            {{- if .nrConventionsProcessor.enabled }}
+            - metricstransform/nrConventions
+            {{- end }}
+            {{- range $processor, $_ := .extraProcessors }}
+            - {{ $processor }}
+            {{- end }}
+          exporters:
+            {{- if .otlpExporter.enabled }}
+            - otlp
+            {{- end }}
+            {{- if .loggingExporter.enabled }}
+            - logging
+            {{- end }}
+            {{- if $.Values.service.prometheusDebug.enabled }}
+            - prometheus
+            {{- end }}
+            {{- range $exporter, $_ := .extraExporters }}
+            - {{ $exporter }}
+            {{- end }}
+  {{- end }}

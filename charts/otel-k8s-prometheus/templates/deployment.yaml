@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "otel-k8s-prometheus.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "otel-k8s-prometheus.labels" . | nindent 4 }}
+spec:
+  replicas: 1  # Multiple replicas are not supported, as they would lead to duplicate data
+  selector:
+    matchLabels:
+      {{- include "otel-k8s-prometheus.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "otel-k8s-prometheus.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "otel-k8s-prometheus.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - "/otelcontribcol"
+            - "--config=/conf/otel-prometheus-config.yaml"
+          env:
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  optional: true
+                  name: {{ include "newrelic.licenseSecretName" . }}
+                  key: {{ include "newrelic.licenseSecretKey" . }}
+            - name: NR_CLUSTER_NAME
+              value: {{ include "newrelic.cluster" . }}
+          {{- if .Values.service.prometheusDebug.enabled }}
+          ports:
+            - name: prometheus
+              containerPort: 9000
+              protocol: TCP
+          {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 13133  # Health Check extension default port.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 13133  # Health Check extension default port.
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: otel-prometheus-config
+              mountPath: /conf
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: otel-prometheus-config
+          configMap:
+            name: {{ include "otel-k8s-prometheus.fullname" . }}-config
+            items:
+              - key: otel-prometheus-config.yaml
+                path: otel-prometheus-config.yaml

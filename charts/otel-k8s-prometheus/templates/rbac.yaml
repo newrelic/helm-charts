@@ -1,0 +1,33 @@
+{{- if .Values.rbac.create }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "otel-k8s-prometheus.fullname" . }}-cr
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - nodes
+      - pods
+      - services
+      - endpoints
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "otel-k8s-prometheus.fullname" . }}-crb
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "otel-k8s-prometheus.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "otel-k8s-prometheus.fullname" . }}-cr
+  apiGroup: rbac.authorization.k8s.io
+{{- end }}
