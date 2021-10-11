@@ -20,12 +20,21 @@ data:
     [INPUT]
         Name              tail
         Tag               kube.*
-        Path              ${PATH}
-        Parser            ${LOG_PARSER}
-        DB                ${FB_DB}
+        Path              {{ .Values.fluentBit.path }}
+        {{- if .Values.fluentBit.criEnabled }}
+        Parser            cri
+        {{- else }}
+        Parser            docker
+        {{- end }}
+        DB                {{ .Values.fluentBit.db }}
         Mem_Buf_Limit     7MB
         Skip_Long_Lines   On
         Refresh_Interval  10
+
+{{ range .Values.fluentBit.inputs }}
+    [INPUT]
+{{ .fluentBitconfig | indent 8 }}
+{{ end }}
 
     [FILTER]
         Name           kubernetes

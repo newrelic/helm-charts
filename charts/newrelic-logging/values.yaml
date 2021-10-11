@@ -36,6 +36,15 @@ fluentBit:
   # additionalEnvVariables:
   # - name: HTTPS_PROXY
   #   value: http://example.com:3128
+  inputs:
+    - fluentBitconfig: |-
+        Name              tail
+        Tag               kube_audit
+        Path              /var/log/kubernetes/*.log
+        DB                /var/log/kubernetes/kube-audit.db
+        Mem_Buf_Limit     7MB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
 
 image:
   repository: newrelic/newrelic-fluentbit-output
