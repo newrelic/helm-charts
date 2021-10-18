@@ -10,6 +10,7 @@ data:
     {{- with (include "newrelic-k8s-metrics-adapter.region" .) }}
     region: {{ . }}
     {{- end }}
+    cacheTTLSeconds: {{ .Values.config.cacheTTLSeconds | default "0" }}
     {{- with .Values.config.externalMetrics }}
     externalMetrics:
       {{- toYaml . | nindent 6 }}
