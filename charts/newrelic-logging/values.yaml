@@ -143,50 +143,37 @@ lowDataMode: false
 
 config:
   service: |
+    # This is the first line
     [SERVICE]
-        Flush         1
-        Log_Level     ${LOG_LEVEL}
-        Daemon        off
-        Parsers_File  parsers.conf
-        HTTP_Server   On
-        HTTP_Listen   0.0.0.0
-        HTTP_Port     2020
-        lowDataDefault true
+      Flush         1
+      Log_Level     ${LOG_LEVEL}
+      Daemon        off
+      Parsers_File  parsers.conf
+      HTTP_Server   On
+      HTTP_Listen   0.0.0.0
+      HTTP_Port     2020
+      lowDataDefault true
 
   inputs: |
+    # This is the first line
     [INPUT]
-        Name              tail
-        Tag               kube.*
-        Path              ${PATH}
-        Parser            ${LOG_PARSER}
-        DB                ${FB_DB}
-        Mem_Buf_Limit     7MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+      Name              tail
+      Tag               kube.*
+      Path              ${PATH}
+      Parser            ${LOG_PARSER}
+      DB                ${FB_DB}
+      Mem_Buf_Limit     7MB
+      Skip_Long_Lines   On
+      Refresh_Interval  10
 
   filters: |
+    # This is the first line
     [FILTER]
-        Name           kubernetes
-        Match          kube.*
-        # We need the full DNS suffix as Windows only supports resolving names with this suffix
-        # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-        Kube_URL       https://kubernetes.default.svc.cluster.local:443
-        K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
-        Labels         Off
-        Annotations    Off
-
-    [FILTER]
-        Name           nest
-        Match          *
-        Operation      lift
-        Nested_under   kubernetes
-
-    [FILTER]
-        Name           record_modifier
-        Match          *
-        Record         cluster_name ${CLUSTER_NAME}
-        Allowlist_key  container_name
-        Allowlist_key  namespace_name
-        Allowlist_key  pod_name
-        Allowlist_key  stream
-        Allowlist_key  log
+      Name           kubernetes
+      Match          kube.*
+      # We need the full DNS suffix as Windows only supports resolving names with this suffix
+      # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+      Kube_URL       https://kubernetes.default.svc.cluster.local:443
+      K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+      Labels         Off
+      Annotations    Off
