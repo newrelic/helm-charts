@@ -141,6 +141,9 @@ daemonSet:
 # Can be set as a global: global.lowDataMode
 lowDataMode: false
 
+# New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs) 
+# and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
+# send all attributes.  If custom configuration is required, update these variables.
 config:
   service: |
     [SERVICE]
@@ -185,17 +188,17 @@ config:
         endpoint       ${ENDPOINT}
         lowDataMode    ${LOW_DATA_MODE}
   
-  # parsers: |
-  #   [PARSER]
-  #       Name         docker
-  #       Format       json
-  #       Time_Key     time
-  #       Time_Format  %Y-%m-%dT%H:%M:%S.%L
-  #       Time_Keep    On
+  parsers: |
+    [PARSER]
+        Name         docker
+        Format       json
+        Time_Key     time
+        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep    On
 
-  #   [PARSER]
-  #       Name cri
-  #       Format regex
-  #       Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
-  #       Time_Key    time
-  #       Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+    [PARSER]
+        Name cri
+        Format regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
