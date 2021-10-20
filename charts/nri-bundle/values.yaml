@@ -101,65 +101,66 @@ newrelic-infra-operator:
 #             labels:
 #               env: test
 
+# New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
+# and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
+# send all attributes.  If custom configuration is required, update these variables.
 # newrelic-logging:
-#   # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs) 
-#   # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
-#   # send all attributes.  If custom configuration is required, update these variables.
-#   config:
-#     service: |
-#       [SERVICE]
-#           Flush         1
-#           Log_Level     ${LOG_LEVEL}
-#           Daemon        off
-#           Parsers_File  parsers.conf
-#           HTTP_Server   On
-#           HTTP_Listen   0.0.0.0
-#           HTTP_Port     2020
+#   fluentBit:
+#     config:
+#       service: |
+#         [SERVICE]
+#             Flush         1
+#             Log_Level     ${LOG_LEVEL}
+#             Daemon        off
+#             Parsers_File  parsers.conf
+#             HTTP_Server   On
+#             HTTP_Listen   0.0.0.0
+#             HTTP_Port     2020
 
-#     inputs: |
-#       [INPUT]
-#           Name              tail
-#           Tag               kube.*
-#           Path              ${PATH}
-#           Parser            ${LOG_PARSER}
-#           DB                ${FB_DB}
-#           Mem_Buf_Limit     7MB
-#           Skip_Long_Lines   On
-#           Refresh_Interval  10
+#       inputs: |
+#         [INPUT]
+#             Name              tail
+#             Tag               kube.*
+#             Path              ${PATH}
+#             Parser            ${LOG_PARSER}
+#             DB                ${FB_DB}
+#             Mem_Buf_Limit     7MB
+#             Skip_Long_Lines   On
+#             Refresh_Interval  10
 
-#     filters: |
-#       [FILTER]
-#           Name           kubernetes
-#           Match          kube.*
-#           # We need the full DNS suffix as Windows only supports resolving names with this suffix
-#           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-#           Kube_URL       https://kubernetes.default.svc.cluster.local:443
-#           K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+#       filters: |
+#         [FILTER]
+#             Name           kubernetes
+#             Match          kube.*
+#             # We need the full DNS suffix as Windows only supports resolving names with this suffix
+#             # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+#             Kube_URL       https://kubernetes.default.svc.cluster.local:443
+#             K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
 
-#       [FILTER]
-#           Name           record_modifier
-#           Match          *
-#           Record         cluster_name ${CLUSTER_NAME}
+#         [FILTER]
+#             Name           record_modifier
+#             Match          *
+#             Record         cluster_name ${CLUSTER_NAME}
 
-#     outputs: |
-#       [OUTPUT]
-#           Name           newrelic
-#           Match          *
-#           licenseKey     ${LICENSE_KEY}
-#           endpoint       ${ENDPOINT}
-#           lowDataMode    ${LOW_DATA_MODE}
-    
-#     parsers: |
-#       [PARSER]
-#           Name         docker
-#           Format       json
-#           Time_Key     time
-#           Time_Format  %Y-%m-%dT%H:%M:%S.%L
-#           Time_Keep    On
+#       outputs: |
+#         [OUTPUT]
+#             Name           newrelic
+#             Match          *
+#             licenseKey     ${LICENSE_KEY}
+#             endpoint       ${ENDPOINT}
+#             lowDataMode    ${LOW_DATA_MODE}
 
-#       [PARSER]
-#           Name cri
-#           Format regex
-#           Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
-#           Time_Key    time
-#           Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+#       parsers: |
+#         [PARSER]
+#             Name         docker
+#             Format       json
+#             Time_Key     time
+#             Time_Format  %Y-%m-%dT%H:%M:%S.%L
+#             Time_Keep    On
+
+#         [PARSER]
+#             Name cri
+#             Format regex
+#             Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
+#             Time_Key    time
+#             Time_Format %Y-%m-%dT%H:%M:%S.%L%z
