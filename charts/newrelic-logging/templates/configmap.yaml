@@ -10,8 +10,36 @@ data:
     {{- $lowDataDefault }}
   {{- else }}
   fluent-bit.conf: |
-    {{ .Values.config.service }}
-    {{ .Values.config.inputs }}
-    {{ .Values.config.filters }}
-    {{ .Values.config.outputs }}
-  {{- end }}
+    {{- if .Values.config.service }}
+      {{- .Values.config.service | nindent 4 }}
+    {{ end }}
+    {{- if .Values.config.inputs }}
+      {{- .Values.config.inputs | nindent 4 }}
+    {{ end }}
+    {{- if .Values.config.filters }}
+      {{- .Values.config.filters | nindent 4 }}
+    {{ end }}
+    {{- if .Values.config.outputs }}
+      {{- .Values.config.outputs | nindent 4 }}
+    {{- end }}
+  {{ end }}
+  parsers.conf: |
+  {{- if .Values.config.parsers }}
+    {{- .Values.config.parsers | nindent 4}}
+  {{- else }}
+    # Relevant parsers retrieved from: https://github.com/fluent/fluent-bit/blob/master/conf/parsers.conf
+    [PARSER]
+        Name         docker
+        Format       json
+        Time_Key     time
+        Time_Format  %Y-%m-%dT%H:%M:%S.%L
+        Time_Keep    On
+
+    [PARSER]
+        Name cri
+        Format regex
+        Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
+        Time_Key    time
+        Time_Format %Y-%m-%dT%H:%M:%S.%L%z
+    {{- end }}
+    
