@@ -146,8 +146,7 @@ See [values.yaml](values.yaml) for the default values
 | `fluentBit.config.inputs` | Contains fluent-bit.conf Inputs config                                                                                             |    |
 | `fluentBit.config.filters` | Contains fluent-bit.conf Filters config                                                                                             |    |
 | `fluentBit.config.outputs` | Contains fluent-bit.conf Outputs config                                                                                             |    |
-| `fluentBit.config.parsers` | Contains parsers.conf Parsers config         
-
+| `fluentBit.config.parsers` | Contains parsers.conf Parsers config                                                                                             |    |
 
 ## Uninstall the Kubernetes plugin
 
