@@ -68,11 +68,11 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
         ...
      ```
  3. Continue to the next steps
- 
+
  ##### Custom proxy
- 
+
  If you want to set up a custom proxy (eg. using self-signed certificate):
- 
+
   1. Complete the step 1 in [Install the Kubernetes manifests manually](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging#install-the-kubernetes-manifests-manually)
   2. Modify the `fluent-conf.yml` and define in the ConfigMap a `caBundle.pem` file with the self-signed certificate:
       ```yaml
@@ -84,7 +84,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
                 endpoint ${ENDPOINT}
                 proxy https://https-proxy-hostname:PORT
                 caBundleFile ${CA_BUNDLE_FILE}
-            
+
             caBundle.pem: |
                 -----BEGIN CERTIFICATE-----
                 MIIB+zCCAWSgAwIBAgIQTiHC/d/NhpHFptZCIoCbNzANBgkrhtiG9w0BAQsFADAS
@@ -107,7 +107,7 @@ Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https:/
           ...
        ```
   4. Continue to the next steps
- 
+
 ## Configuration
 
 See [values.yaml](values.yaml) for the default values
