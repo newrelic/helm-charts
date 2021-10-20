@@ -10,22 +10,22 @@ data:
     {{- $lowDataDefault }}
   {{- else }}
   fluent-bit.conf: |
-    {{- if .Values.config.service }}
-      {{- .Values.config.service | nindent 4 }}
+    {{- if .Values.fluentBit.config.service }}
+      {{- .Values.fluentBit.config.service | nindent 4 }}
     {{ end }}
-    {{- if .Values.config.inputs }}
-      {{- .Values.config.inputs | nindent 4 }}
+    {{- if .Values.fluentBit.config.inputs }}
+      {{- .Values.fluentBit.config.inputs | nindent 4 }}
     {{ end }}
-    {{- if .Values.config.filters }}
-      {{- .Values.config.filters | nindent 4 }}
+    {{- if .Values.fluentBit.config.filters }}
+      {{- .Values.fluentBit.config.filters | nindent 4 }}
     {{ end }}
-    {{- if .Values.config.outputs }}
-      {{- .Values.config.outputs | nindent 4 }}
+    {{- if .Values.fluentBit.config.outputs }}
+      {{- .Values.fluentBit.config.outputs | nindent 4 }}
     {{- end }}
   {{ end }}
   parsers.conf: |
-  {{- if .Values.config.parsers }}
-    {{- .Values.config.parsers | nindent 4}}
+  {{- if .Values.fluentBit.config.parsers }}
+    {{- .Values.fluentBit.config.parsers | nindent 4}}
   {{- else }}
     # Relevant parsers retrieved from: https://github.com/fluent/fluent-bit/blob/master/conf/parsers.conf
     [PARSER]

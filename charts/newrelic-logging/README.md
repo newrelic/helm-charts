@@ -142,6 +142,11 @@ See [values.yaml](values.yaml) for the default values
 | `daemonSet.annotations`                                    | The annotations to add to the `DaemonSet`.                                                                                                                                                                                                                                   |                                      |
 | `enableLinux`                                              | Enable log collection from Linux containers. This is the default behavior. In case you are only interested of collecting logs from Windows containers, set this to `false`.                                                                                                  | `true`                               |
 | `enableWindows`                                            | Enable log collection from Windows containers. Please refer to the [Windows support](#windows-support) section for more details.                                                                                                                                             | `false`                              |
+| `fluentBit.config.service` | Contains fluent-bit.conf Service config                                                                                             |    |
+| `fluentBit.config.inputs` | Contains fluent-bit.conf Inputs config                                                                                             |    |
+| `fluentBit.config.filters` | Contains fluent-bit.conf Filters config                                                                                             |    |
+| `fluentBit.config.outputs` | Contains fluent-bit.conf Outputs config                                                                                             |    |
+| `fluentBit.config.parsers` | Contains parsers.conf Parsers config         
 
 
 ## Uninstall the Kubernetes plugin
