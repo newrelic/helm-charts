@@ -95,7 +95,7 @@ spec:
           value: 10000
 ```
 
-The NRQL query that will be run to get the `nginx_average_requests` vale will be:
+The NRQL query that will be run to get the `nginx_average_requests` value will be:
 
 ```sql
 FROM Metric SELECT average(nginx.server.net.requestsPerSecond) WHERE clusterName='ClusterName' AND `k8s.namespaceName`='nginx' SINCE 2 MINUTES AGO
