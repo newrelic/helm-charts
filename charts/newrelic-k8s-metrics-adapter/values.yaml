@@ -26,17 +26,17 @@ config:
   # Not setting or setting it to '0' disables the cache.
   cacheTTLSeconds: 30
   externalMetrics:
-  # Each externalMetrics key represents an external metric name. Names cannot contain uppercase characters and 
-  # "/" or "%" characters. 
+  # Each externalMetrics key represents an external metric name. Names cannot contain uppercase characters and
+  # "/" or "%" characters.
   # my_external_metric_name_example:
-  # 
-  # NRQL query that will executed to obtain the metric value. 
+  #
+  # NRQL query that will executed to obtain the metric value.
   # The query must return just one value so is recommended to use aggregator functions like average or latest.
   # Default time span for aggregator func is 1h so is recommended to use the SINCE clause to reduce the time span.
   #   query: "FROM Metric SELECT average(`k8s.container.cpuCoresUtilization`) SINCE 2 MINUTES AGO"
   #
   # By default a cluster filter is added to the query to ensure no cross cluster metrics are taking into account.
-  # The added filter is equivalent to WHERE `clusterName`=<cluster> .
+  # The added filter is equivalent to WHERE `clusterName`=<cluster>.
   # If metrics are not from the cluster use removeClusterFilter. Default value for this parameter is false.
   #   removeClusterFilter: false
 
