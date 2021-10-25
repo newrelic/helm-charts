@@ -1,0 +1,38 @@
+personalAPIKey: foo
+cluster: bar
+
+config:
+  accountID: 1
+
+serviceAccount:
+  name: test
+
+apiServicePatchJob:
+  volumeMounts:
+  - name: tmp
+    mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir:
+podAnnotations:
+  test-annotation: test-value
+affinity:
+  podAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 1
+      podAffinityTerm:
+        topologyKey: topology.kubernetes.io/zone
+        labelSelector:
+          matchExpressions:
+          - key: test-key
+            operator: In
+            values:
+            - test-value
+tolerations:
+- key: "key1"
+  operator: "Exists"
+  effect: "NoSchedule"
+
+image:
+  repository: newrelic/newrelic-k8s-metrics-adapter
+  tag: 0.1.0
