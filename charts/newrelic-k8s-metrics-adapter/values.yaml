@@ -1,0 +1,105 @@
+# IMPORTANT: The Kubernetes cluster name
+# https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+#
+# licenseKey:
+# cluster:
+# IMPORTANT: the previous values can also be set as global so that they
+# can be shared by other newrelic product's charts.
+#
+# global:
+#   licenseKey:
+#   cluster:
+#   nrStaging:
+
+personalAPIKey:
+
+verboseLog: false
+
+config:
+  accountID:
+  # If not set, it will be automatically derived from global.licenseKey.
+  # For US-based accounts, the region is: `US`.
+  # For EU-based accounts, the region is: `EU`.
+  # For Staging accounts, the region is: 'Staging' this is also automatically derived form `global.nrStaging`
+  region:
+  # Sets the period of time in seconds in which a cached value of a metric is consider valid.
+  # Not setting or setting it to '0' disables the cache.
+  cacheTTLSeconds: 30
+  externalMetrics:
+  # Each externalMetrics key represents an external metric name. Names cannot contain uppercase characters and
+  # "/" or "%" characters.
+  # my_external_metric_name_example:
+  #
+  # NRQL query that will executed to obtain the metric value.
+  # The query must return just one value so is recommended to use aggregator functions like average or latest.
+  # Default time span for aggregator func is 1h so is recommended to use the SINCE clause to reduce the time span.
+  #   query: "FROM Metric SELECT average(`k8s.container.cpuCoresUtilization`) SINCE 2 MINUTES AGO"
+  #
+  # By default a cluster filter is added to the query to ensure no cross cluster metrics are taking into account.
+  # The added filter is equivalent to WHERE `clusterName`=<cluster>.
+  # If metrics are not from the cluster use removeClusterFilter. Default value for this parameter is false.
+  #   removeClusterFilter: false
+
+image:
+  repository: newrelic/newrelic-k8s-metrics-adapter
+  tag: ""  # Defaults to AppVersion
+  pullPolicy: IfNotPresent
+  # It is possible to specify docker registry credentials.
+  # See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
+  # pullSecrets:
+  # - name: regsecret
+
+replicas: 1
+
+resources:
+  limits:
+memory: 80M
+  requests:
+cpu: 100m
+memory: 30M
+
+serviceAccount:
+  # Specifies whether a ServiceAccount should be created for the job and the deployment.
+  create: true
+  # The name of the ServiceAccount to use.
+  # If not set and create is true, a name is generated using the fullname template.
+  name:
+
+# Configure podSecurityContext
+podSecurityContext:
+  enabled: false
+  fsGroup: 1001
+  runAsUser: 1001
+  runAsGroup: 1001
+
+# If you wish to provide additional annotations to apply to the pod(s), specify them here.
+# podAnnotations:
+
+# Pod scheduling priority
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+
+fullnameOverride: ""
+affinity: {}
+nodeSelector: {}
+tolerations: []
+
+apiServicePatchJob:
+  image:
+repository: k8s.gcr.io/ingress-nginx/kube-webhook-certgen
+tag: v1.1.1
+pullPolicy: IfNotPresent
+#   Volume mounts to add to the job, you might want to mount tmp if Pod Security Policies.
+#   Enforce a read-only root.
+  volumeMounts: []
+#  - name: tmp
+#mountPath: /tmp
+#
+#   Volumes to add to the job container.
+  volumes: []
+#  - name: tmp
+#emptyDir: {}
+
+# Use cert manager for APIService certs, rather than the built-in patch job.
+certManager:
+  enabled: false
