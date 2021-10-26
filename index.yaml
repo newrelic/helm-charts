@@ -2479,6 +2479,66 @@ entries:
   nri-bundle:
   - apiVersion: v1
     appVersion: "1.0"
+    created: "2021-10-26T16:26:15.159332972Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: file://../newrelic-infrastructure
+      version: 2.7.0
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: file://../nri-prometheus
+      version: 1.10.0
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      version: 2.1.0
+    - condition: metrics-adapter.enabled
+      name: newrelic-k8s-metrics-adapter
+      repository: file://../newrelic-k8s-metrics-adapter
+      version: 0.1.0
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes.github.io/kube-state-metrics
+      version: 2.13.2
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: file://../nri-kube-events
+      version: 1.11.0
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: file://../newrelic-logging
+      version: 1.10.0
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: file://../newrelic-pixie
+      version: 1.4.1
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-operator-helm2-chart
+      repository: https://pixie-operator-charts.storage.googleapis.com
+      version: 0.0.13
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: file://../newrelic-infra-operator
+      version: 0.3.0
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: 7976a36bafa0f1023a6e718a7186cca7afca0f6075e258ebfa482dcad2f60e19
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    maintainers:
+    - name: alvarocabanas
+    - name: carlossscastro
+    - name: gsanchezgavier
+    - name: kang-makes
+    - name: paologallinaharbur
+    - name: roobre
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-3.2.1/nri-bundle-3.2.1.tgz
+    version: 3.2.1
+  - apiVersion: v1
+    appVersion: "1.0"
     created: "2021-10-25T14:24:40.65025724Z"
     dependencies:
     - condition: infrastructure.enabled
@@ -8365,4 +8425,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2021-10-25T14:24:40.653069159Z"
+generated: "2021-10-26T16:26:15.161734888Z"
