@@ -45,6 +45,13 @@ image:
   # pullSecrets:
     # - name: regsecret
 
+command:
+  - /fluent-bit/bin/fluent-bit
+  - -c
+  - /fluent-bit/etc/fluent-bit.conf
+  - -e
+  - /fluent-bit/bin/out_newrelic.so
+
 # By default, the Linux DaemonSet will always be deployed, while the Windows DaemonSet(s) won't.
 enableLinux: true
 enableWindows: false

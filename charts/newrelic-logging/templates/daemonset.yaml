@@ -88,12 +88,12 @@ spec:
             - name: {{ .name }}
               value: {{ .value }}
             {{- end }}
+          {{- if .Values.command }}
           command:
-            - /fluent-bit/bin/fluent-bit
-            - -c
-            - /fluent-bit/etc/fluent-bit.conf
-            - -e
-            - /fluent-bit/bin/out_newrelic.so
+          {{- range .Values.command }}
+            - {{ . }}
+          {{- end }}
+          {{- end}}
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
