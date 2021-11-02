@@ -52,7 +52,7 @@ spec:
           valueFrom:
             secretKeyRef:
               key: cluster-id
-              name: pl-cluster-secrets
+              name: {{ template "newrelic-pixie.fullname" . }}-secrets
           {{- end }}
         {{- if .Values.verbose }}
         - name: VERBOSE
