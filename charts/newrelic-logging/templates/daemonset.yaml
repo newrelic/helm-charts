@@ -84,6 +84,8 @@ spec:
               value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic.lowDataMode" . | default "false" | quote }}
+            - name: KUBERNETES_FILTER_BUFFER_SIZE
+              value: {{ .Values.fluentBit.kubernetesFilterBufferSize | quote }}
             {{- range .Values.fluentBit.additionalEnvVariables }}
             - name: {{ .name }}
               value: {{ .value }}
