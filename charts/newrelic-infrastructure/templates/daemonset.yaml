@@ -163,6 +163,13 @@ spec:
                   fieldPath: "spec.nodeName"
             {{- end }}
             {{- end }}
+            {{- if not .Values.privileged }}
+            - name: "NRIA_OVERRIDE_HOSTNAME_SHORT"
+                valueFrom:
+                  fieldRef:
+                    apiVersion: "v1"
+                    fieldPath: "spec.nodeName"
+            {{- end }}
             {{- if .Values.customAttributes }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
               value: {{ .Values.customAttributes }}
