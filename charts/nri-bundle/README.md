@@ -27,6 +27,7 @@ The following properties can be configured in the `values.yml` file:
 | `newrelic-pixie.enabled`          | Install the [`newrelic-pixie`][8] chart                                                                                                              | false   |
 | `pixie-chart.enabled`             | Install the [`pixie-chart` chart][9]                                                                                                                 | false   |
 | `newrelic-infra-operator.enabled` | Install the [`newrelic-infra-operator` chart][10] (Beta)                                                                                             | false   |
+| `metrics-adapter.enabled`         | Install the [`newrelic-k8s-metrics-adapter.` chart][11] (Beta)                                                                                             | false   |
 
 ## Configure components
 
@@ -174,3 +175,4 @@ helm install newrelic/nri-bundle \
 [8]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
 [9]: https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy
 [10]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infra-operator
+[11]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-k8s-metrics-adapter

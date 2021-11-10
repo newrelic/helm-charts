@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}
+  labels:
+    {{- include "newrelic-k8s-metrics-adapter.labels" . | nindent 4 }}
+spec:
+  ports:
+  - port: 443
+    targetPort: 6443
+  selector:
+    {{- include "newrelic-k8s-metrics-adapter.appLabel" . | nindent 4 }}

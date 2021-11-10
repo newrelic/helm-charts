@@ -1,0 +1,19 @@
+apiVersion: apiregistration.k8s.io/v1
+kind: APIService
+metadata:
+  name: v1beta1.external.metrics.k8s.io
+  labels:
+    {{- include "newrelic-k8s-metrics-adapter.labels" . | nindent 4 }}
+{{- if .Values.certManager.enabled }}
+  annotations:
+    certmanager.k8s.io/inject-ca-from: {{ printf "%s/%s-root-cert" .Release.Namespace (include "newrelic-k8s-metrics-adapter.fullname" .) | quote }}
+    cert-manager.io/inject-ca-from: {{ printf "%s/%s-root-cert" .Release.Namespace (include "newrelic-k8s-metrics-adapter.fullname" .) | quote }}
+{{- end }}
+spec:
+  service:
+    name: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}
+    namespace: {{ .Release.Namespace }}
+  group: external.metrics.k8s.io
+  version: v1beta1
+  groupPriorityMinimum: 100
+  versionPriority: 100
