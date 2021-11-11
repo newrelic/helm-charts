@@ -61,8 +61,13 @@ data:
             from_attribute: service.name
           - action: delete
             key: service.name
+          # Cluster name
           - action: insert
             key: k8s.cluster.name
+            value: ${NR_CLUSTER_NAME}
+          # Legacy cluster name attribute
+          - action: insert
+            key: clusterName
             value: ${NR_CLUSTER_NAME}
       metricstransform/nrConventions:
         transforms:
