@@ -6,7 +6,9 @@ metadata:
   labels:
     {{- include "otel-k8s-prometheus.labels" . | nindent 4 }}
 spec:
+  {{- if eq .Values.kind "Deployment" }}
   replicas: 1  # Multiple replicas are not supported, as they would lead to duplicate data
+  {{- end }}
   selector:
     matchLabels:
       {{- include "otel-k8s-prometheus.selectorLabels" . | nindent 6 }}
@@ -45,6 +47,10 @@ spec:
                   key: {{ include "newrelic.licenseSecretKey" . }}
             - name: NR_CLUSTER_NAME
               value: {{ include "newrelic.cluster" . }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
           {{- if .Values.service.prometheusDebug.enabled }}
           ports:
             - name: prometheus

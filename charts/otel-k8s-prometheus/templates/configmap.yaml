@@ -23,7 +23,7 @@ data:
                 - role: pod
               relabel_configs:
                 # K8s scrape labels and transformations
-                {{- include "newrelic.prometheusOtelRelabel" $.Values.config | nindent 16 }}
+                {{- include "newrelic.prometheusOtelRelabel" $.Values | nindent 16 }}
                 # Use replace labels to support prometheus.io/port and prometheus.io/path annotations.
                 - source_labels: [ __address__, __meta_kubernetes_pod_annotation_prometheus_io_port ]
                   action: replace
@@ -61,7 +61,7 @@ data:
                   regex: ".+"
                   action: keep
                 # K8s scrape labels and transformations
-                {{- include "newrelic.prometheusOtelRelabel" $.Values.config | nindent 16 }}
+                {{- include "newrelic.prometheusOtelRelabel" $.Values | nindent 16 }}
           {{- end }}
           {{- end }}
 

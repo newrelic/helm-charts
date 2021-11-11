@@ -85,6 +85,11 @@ service:
     port: 9000
     annotations: {}
 
+# Either Deployment or DaemonSet.
+# If DaemonSet is in use, sharding will be applied so each pod will scrape only targets it shares a node with.
+# TODO: Sharding logic is currently untested.
+kind: Deployment
+
 # ---
 
 image:
