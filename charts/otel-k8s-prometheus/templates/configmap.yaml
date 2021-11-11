@@ -61,6 +61,13 @@ data:
             from_attribute: service.name
           - action: delete
             key: service.name
+          # Instrumentation meta
+          - action: insert
+            key: instrumentation.name
+            value: {{$.Chart.Name}}
+          - action: insert
+            key: instrumentation.version
+            value: {{$.Chart.Version}}
           # Cluster name
           - action: insert
             key: k8s.cluster.name
