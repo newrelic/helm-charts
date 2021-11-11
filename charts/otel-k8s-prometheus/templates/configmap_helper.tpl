@@ -54,4 +54,8 @@ Return the name key for the License Key inside the secret
 - source_labels: [__meta_kubernetes_service_name]
   action: replace
   target_label: kubernetes_service_name
+
+{{- with .extraPrometheusRelabelConfigs }}
+{{ . | toYaml }}
+{{- end }}
 {{- end -}}

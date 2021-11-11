@@ -21,6 +21,14 @@ config:
     external:
       enabled: false
 
+  # Extra relabel_configs entries for prometheus scrape jobs.
+  # This can be used to add, drop or rename labels, metrics, and targets. Will be used for podsEndpoints and external jobs.
+  extraPrometheusRelabelConfigs: []
+    #- source_labels: [ __meta_kubernetes_pod_container_name ]
+    #  action: replace
+    #  target_label: kubernetes_pod_container_name
+
+
   # Prometheus scrape configs to add to the prometheus receiver.
   # See https://prometheus.io/docs/prometheus/latest/configuration/configuration/#scrape_config
   extraScrapeConfigs: []
