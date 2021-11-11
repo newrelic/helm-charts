@@ -24,6 +24,27 @@ data:
               relabel_configs:
                 # K8s scrape labels and transformations
                 {{- include "newrelic.prometheusOtelRelabel" $.Values.config | nindent 16 }}
+                # Use replace labels to support prometheus.io/port and prometheus.io/path annotations.
+                - source_labels: [ __address__, __meta_kubernetes_pod_annotation_prometheus_io_port ]
+                  action: replace
+                  target_label: __address__
+                  # Matched against labels concatenated with `;`:
+                  # First group (captured in $1) gets everything before `:`.
+                  # Second group (non-captured) matches the original group.
+                  # Third group (captured in $2) matches the port from the port label.
+                  # TODO: This will not work with v6.
+                  regex: ([^:]+)(?::\d+)?;(\d+)
+                  # Just concatenate both captured groups separated by a colon.
+                  replacement: $$1:$$2
+                - source_labels: [ __address__, __meta_kubernetes_pod_annotation_prometheus_io_path ]
+                  action: replace
+                  target_label: __address__
+                  # Matched against labels concatenated with `;`:
+                  # First group (captured in $1) gets the current target.
+                  # Second group (captured in $2) matches the path from the path label.
+                  regex: (.+);(/.+)
+                  # Just concatenate both captured groups.
+                  replacement: $$1$$2
           {{- end }}
           {{- end }}
 
