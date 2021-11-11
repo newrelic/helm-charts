@@ -53,7 +53,7 @@ This is the default behavior for compatibility reasons, but is known to cause is
 is behind the service, as metric queries will be load-balanced as well leading to unaccurate histograms.
 
 In order to change this behaviour set `scrape_endpoints` to `true` and `scrape_services` to `false`.
-This will instruct `nri-promtheus` to scrape the underlying endpoints, as Prometheus server does.
+This will instruct `nri-prometheus` to scrape the underlying endpoints, as Prometheus server does.
 
 Existing users that are switching to this behavior should note that, depending on the number of endpoints
 behind the services in the cluster the load and the metrics reported by those, data ingestion might see
