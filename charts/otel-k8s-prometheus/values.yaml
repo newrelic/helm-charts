@@ -29,16 +29,18 @@ config:
   batchProcessor:
     enabled: true
 
-  # This pre-configured processor will apply some transformations to labels and values to match the conventions used by
-  # New Relic. It should be enabled if you are sending data to New Relic.
-  nrConventionsProcessor:
+  # If enabled, this flag will add two pre-configured processors which apply some transformations to labels and
+  # attributes to match the conventions used by New Relic.
+  # It MUST be enabled if you are sending data to New Relic.
+  nrConventionsProcessors:
     enabled: false
 
   # Extra configs to use as processors for the otel collector.
-  # By adding more processors here, metrics can be filtered or transformed with a high degree of flexibility:
+  # By adding more processors here, metrics can be filtered or transformed with a high degree of flexibility, e.g.:
   # - Filter: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/filterprocessor
   # - Transform: https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/metricstransformprocessor
   # More: https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor
+  # Processors defined here will be automatically added at the end of the metrics pipeline.
   extraProcessors: {}
     #filter/kube:
     #  metrics:
@@ -54,7 +56,7 @@ config:
     loglevel: info
 
   # Configure the OTLP exporter, which would typically hit an in-cluster gateway collector.
-  # Env var NR_LICENSE_KEY is available containing the license key.
+  # Env var NR_LICENSE_KEY is available containing the New Relic license key, if it has been provided.
   # See: https://github.com/open-telemetry/opentelemetry-collector/tree/main/exporter/otlpexporter
   otlpExporter:
     enabled: false

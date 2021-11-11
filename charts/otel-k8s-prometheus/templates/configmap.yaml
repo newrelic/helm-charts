@@ -52,22 +52,24 @@ data:
     {{- if .batchProcessor.enabled }}
       batch: {}
     {{- end }}
-    {{- if .nrConventionsProcessor.enabled }}
+    {{- if .nrConventionsProcessors.enabled }}
+      resource/nrConventions:
+        attributes:
+          # Rename service.name, which is actually the prometheus job name, and will confuse NR pipeline
+          - action: insert
+            key: otelmeta.service.name
+            from_attribute: service.name
+          - action: delete
+            key: service.name
+          - action: insert
+            key: k8s.cluster.name
+            value: ${NR_CLUSTER_NAME}
       metricstransform/nrConventions:
         transforms:
           - include: ".*"
             match_type: regexp
             action: update
             operations:
-              - action: add_label
-                new_label: k8s.cluster.name
-                new_value: ${NR_CLUSTER_NAME}
-
-              # TODO: This one is not working, unsure why
-              - action: update_label
-                label: service.name
-                new_label: otelmeta.service.name
-
               # K8s labels
               - action: update_label
                 label: kubernetes_pod_name
@@ -126,7 +128,8 @@ data:
             {{- if .batchProcessor.enabled }}
             - batch
             {{- end }}
-            {{- if .nrConventionsProcessor.enabled }}
+            {{- if .nrConventionsProcessors.enabled }}
+            - resource/nrConventions
             - metricstransform/nrConventions
             {{- end }}
             {{- range $processor, $_ := .extraProcessors }}
