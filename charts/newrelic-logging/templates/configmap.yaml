@@ -23,9 +23,9 @@ data:
         Path              ${PATH}
         Parser            ${LOG_PARSER}
         DB                ${FB_DB}
-        Mem_Buf_Limit     7MB
-        Skip_Long_Lines   On
-        Refresh_Interval  10
+        Mem_Buf_Limit     {{ .Values.fluentBit.memBufLimit }}
+        Skip_Long_Lines   {{ .Values.fluentBit.skipLongLines }}
+        Refresh_Interval  {{ .Values.fluentBit.refreshInterval }}
 
     [FILTER]
         Name           kubernetes
