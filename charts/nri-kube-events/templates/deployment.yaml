@@ -47,6 +47,13 @@ spec:
           volumeMounts:
             - name: config-volume
               mountPath: /app/config
+          {{- if .Values.custom_attributes }}
+          env:
+            {{- range $key, $val := .Values.custom_attributes }}
+            - name: NRI_KUBE_EVENTS_{{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+          {{- end }}
         - name: infra-agent
           image: {{ .Values.image.infraAgent.repository }}:{{ .Values.image.infraAgent.tag }}
           imagePullPolicy: {{ .Values.image.infraAgent.pullPolicy }}
