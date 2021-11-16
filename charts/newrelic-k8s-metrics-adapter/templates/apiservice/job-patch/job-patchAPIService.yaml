@@ -8,14 +8,14 @@ metadata:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
-    app: {{ template "newrelic-k8s-metrics-adapter.name" $ }}-apiservice-patch
+    app: {{ template "newrelic-k8s-metrics-adapter.name" $ }}
 {{ include "newrelic-k8s-metrics-adapter.labels" $ | indent 4 }}
 spec:
   template:
     metadata:
       name: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}-apiservice-patch
       labels:
-        app: {{ template "newrelic-k8s-metrics-adapter.name" $ }}-apiservice-patch
+        app: {{ template "newrelic-k8s-metrics-adapter.name" $ }}
 {{ include "newrelic-k8s-metrics-adapter.labels" $ | indent 8 }}
     spec:
       containers:
