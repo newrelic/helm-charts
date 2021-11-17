@@ -152,11 +152,9 @@ Returns fargate
 {{/*
 Returns lowDataMode
 */}}
-{{- define "newrelic.lowDataMode" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.lowDataMode }}
-    {{- .Values.global.lowDataMode -}}
-  {{- end -}}
+{{- define "newrelic-logging.lowDataMode" -}}
+{{- if and (.Values.global) (.Values.global.lowDataMode) }}
+  {{- .Values.global.lowDataMode -}}
 {{- else if .Values.lowDataMode }}
   {{- .Values.lowDataMode -}}
 {{- end -}}
