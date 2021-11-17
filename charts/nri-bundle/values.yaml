@@ -12,11 +12,11 @@ prometheus:
 
 # enables nri-metadata-injection
 webhook:
-  enabled: true
+  enabled: false
 
 # enables kube-state-metrics
 ksm:
-  enabled: false
+  enabled: true
 
 # enables nri-kube-events
 kubeEvents:
@@ -24,7 +24,7 @@ kubeEvents:
 
 # enables newrelic-logging
 logging:
-  enabled: false
+  enabled: true
 
 # enables newrelic-pixie
 newrelic-pixie:
@@ -100,3 +100,21 @@ newrelic-infra-operator:
 #               PORT: 6379
 #             labels:
 #               env: test
+
+newrelic-logging:
+  fluentBit:
+    config:
+      filters: |
+        [FILTER]
+            Name                kubernetes
+            Match               kube.*
+            # We need the full DNS suffix as Windows only supports resolving names with this suffix
+            # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+            Kube_URL            https://kubernetes.default.svc.cluster.local:443
+            K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+
+        [FILTER]
+            Name           record_modifier
+            Match          *
+            Record         cluster_name ${CLUSTER_NAME}
+            Record         test_attribute true

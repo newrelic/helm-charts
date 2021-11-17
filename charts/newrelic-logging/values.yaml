@@ -64,17 +64,44 @@ fluentBit:
 
     filters: |
       [FILTER]
-          Name           kubernetes
-          Match          kube.*
+          Name                kubernetes
+          Match               kube.*
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-          Kube_URL       https://kubernetes.default.svc.cluster.local:443
+          Kube_URL            https://kubernetes.default.svc.cluster.local:443
           K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
 
       [FILTER]
           Name           record_modifier
           Match          *
           Record         cluster_name ${CLUSTER_NAME}
+
+    lowDataModeFilters: |
+      [FILTER]
+          Name           kubernetes
+          Match          kube.*
+          # We need the full DNS suffix as Windows only supports resolving names with this suffix
+          # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+          Kube_URL       https://kubernetes.default.svc.cluster.local:443
+          K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+          Labels         Off
+          Annotations    Off
+
+      [FILTER]
+          Name           nest
+          Match          *
+          Operation      lift
+          Nested_under   kubernetes
+
+      [FILTER]
+          Name           record_modifier
+          Match          *
+          Record         cluster_name ${CLUSTER_NAME}
+          Allowlist_key  container_name
+          Allowlist_key  namespace_name
+          Allowlist_key  pod_name
+          Allowlist_key  stream
+          Allowlist_key  log
 
     outputs: |
       [OUTPUT]
