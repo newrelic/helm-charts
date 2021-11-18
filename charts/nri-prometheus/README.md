@@ -15,7 +15,7 @@ This chart will deploy the New Relic's Prometheus OpenMetrics Integration.
 | `global.lowDataMode` - `lowDataMode` | Excludes KSM and cAdvisor metrics when enabled. The low data mode overwrites config.transformations, if you want to set this field in the config you need to turn low data mode off.  |   `false`  |
 | `nameOverride` | The name that should be used for the deployment.  ||
 | `image.repository` | The prometheus openmetrics integration image name.| `newrelic/nri-prometheus`  |
-| `image.tag`| The prometheus openmetrics integration image tag. | `2.6.0`|
+| `image.tag`| The prometheus openmetrics integration image tag. | appVersion |
 | `image.pullSecrets`| Image pull secrets.   | `nil`  |
 | `resources`| A yaml defining the resources for the events-router container.| {} |
 | `rbac.create`  | Enable Role-based authentication  | `true` |
