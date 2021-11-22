@@ -164,6 +164,28 @@ entries:
     version: 0.1.0
   newrelic-infrastructure:
   - apiVersion: v1
+    appVersion: 2.8.3
+    created: "2021-11-22T14:35:20.704135116Z"
+    description: A Helm chart to deploy the New Relic Infrastructure Agent as a DaemonSet
+    digest: 37c0166f99ccd3155cde0daa7e3092409f88edf3cbc48c076f9a93a0bb997707
+    home: https://hub.docker.com/r/newrelic/infrastructure-k8s/
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    keywords:
+    - infrastructure
+    - newrelic
+    - monitoring
+    maintainers:
+    - name: paologallinaharbur
+    - name: davidbrota
+    - name: gsanchezgavier
+    - name: roobre
+    name: newrelic-infrastructure
+    sources:
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/newrelic-infrastructure-2.7.3/newrelic-infrastructure-2.7.3.tgz
+    version: 2.7.3
+  - apiVersion: v1
     appVersion: 2.8.2
     created: "2021-11-09T10:41:46.949000056Z"
     description: A Helm chart to deploy the New Relic Infrastructure Agent as a DaemonSet
@@ -2684,6 +2706,66 @@ entries:
     - https://github.com/newrelic/helm-charts/releases/download/newrelic-pixie-0.1.0-alpha.1/newrelic-pixie-0.1.0-alpha.1.tgz
     version: 0.1.0-alpha.1
   nri-bundle:
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2021-11-22T14:35:20.861973247Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: file://../newrelic-infrastructure
+      version: 2.7.3
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: file://../nri-prometheus
+      version: 1.11.0
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: file://../nri-metadata-injection
+      version: 2.1.1
+    - condition: metrics-adapter.enabled
+      name: newrelic-k8s-metrics-adapter
+      repository: file://../newrelic-k8s-metrics-adapter
+      version: 0.1.1
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes.github.io/kube-state-metrics
+      version: 2.13.2
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: file://../nri-kube-events
+      version: 1.11.0
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: file://../newrelic-logging
+      version: 1.10.4
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: file://../newrelic-pixie
+      version: 1.4.2
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-operator-helm2-chart
+      repository: https://pixie-operator-charts.storage.googleapis.com
+      version: 0.0.15
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: file://../newrelic-infra-operator
+      version: 0.4.0
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: 9b96d788c0f82e080d652d7ff9b24820c70ef641be8d8a29f9fcf095df23be2e
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    maintainers:
+    - name: alvarocabanas
+    - name: carlossscastro
+    - name: gsanchezgavier
+    - name: kang-makes
+    - name: paologallinaharbur
+    - name: roobre
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-3.2.10/nri-bundle-3.2.10.tgz
+    version: 3.2.10
   - apiVersion: v1
     appVersion: "1.0"
     created: "2021-11-19T08:10:33.770819953Z"
@@ -9139,4 +9221,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2021-11-19T08:10:33.773378734Z"
+generated: "2021-11-22T14:35:20.864082017Z"
