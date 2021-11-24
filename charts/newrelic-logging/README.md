@@ -145,6 +145,7 @@ See [values.yaml](values.yaml) for the default values
 | `fluentBit.config.service` | Contains fluent-bit.conf Service config                                                                                             |    |
 | `fluentBit.config.inputs` | Contains fluent-bit.conf Inputs config                                                                                             |    |
 | `fluentBit.config.filters` | Contains fluent-bit.conf Filters config
+| `fluentBit.config.extraFilters` | Contains extra fluent-bit.conf Filters config
 | `fluentBit.config.lowDataModeFilters` | Contains fluent-bit.conf Filters config for lowDataMode                                                                                              |    |
 | `fluentBit.config.outputs` | Contains fluent-bit.conf Outputs config                                                                                             |    |
 | `fluentBit.config.parsers` | Contains parsers.conf Parsers config                                                                                             |    |
