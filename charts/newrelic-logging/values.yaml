@@ -31,6 +31,7 @@ fluentBit:
   db: "/var/log/flb_kube.db"
   windowsDb: "C:\\var\\log\\flb_kube.db"
   criEnabled: false
+  k8sBufferSize: "32k"
   k8sLoggingExclude: "Off"
   additionalEnvVariables: []
   # additionalEnvVariables:
@@ -69,6 +70,7 @@ fluentBit:
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
           Kube_URL            https://kubernetes.default.svc.cluster.local:443
+          Buffer_Size         ${K8S_BUFFER_SIZE}
           K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
 
       [FILTER]
@@ -83,6 +85,7 @@ fluentBit:
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
           Kube_URL       https://kubernetes.default.svc.cluster.local:443
+          Buffer_Size    ${K8S_BUFFER_SIZE}
           K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
           Labels         Off
           Annotations    Off
