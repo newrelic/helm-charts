@@ -3,7 +3,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic.labels" . | indent 4 }}
+  labels: {{ include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}
 data:
     newrelic-infra.yml: |
@@ -15,7 +15,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic.labels" . | indent 4 }}
+  labels: {{ include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-integrations-cfg
 data:
 {{ range .Values.integrations_config -}}
@@ -23,4 +23,16 @@ data:
     ---
 {{ toYaml .data | indent  4 }}
 {{ end }}
+{{ end }}
+---
+{{ if .Values.scrapersConfig }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic.labels" . | nindent 4 }}
+  name: {{ template "newrelic.fullname" . }}-scrapers
+data:
+  nri-kubernetes-config.yml: |
+{{ toYaml .Values.scrapersConfig | indent 6 }}
 {{ end }}

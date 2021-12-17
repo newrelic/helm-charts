@@ -1,0 +1,199 @@
+{{- if and (.Values.scrapersConfig.controlPlane.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) (.Values.privileged) (not (include "newrelic.fargate" .)) }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic.labels" . | nindent 4 }}
+  name: {{ template "newrelic.fullname" . }}-control-plane
+  {{- with .Values.controlPlane.annotations }}
+  annotations: {{ toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{ include "newrelic.updateStrategy" . | indent 2 }}
+  selector:
+    matchLabels:
+      {{- include "newrelic.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "newrelic.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+        mode: {{ include "newrelic.mode" . }}
+    spec:
+      {{- if or (.Values.images.scraper.pullSecrets) (.Values.images.agent.pullSecrets) }}
+      imagePullSecrets:
+        {{- with .Values.images.scraper.pullSecrets }}
+          {{- toYaml . | nindent 8 }}
+      {{- end }}
+        {{- with .Values.images.agent.pullSecrets }}
+          {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
+      {{- if .Values.privileged }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+      containers:
+        - name: control-plane
+          image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
+          securityContext:
+            runAsUser: {{ .Values.runAsUser }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          env:
+            - name: "NRI_KUBERNETES_HTTPSERVERPORT"
+              value: "8001"
+            - name: "NRI_KUBERNETES_CONTROLPLANE_ENABLED"
+              value: "true"
+            - name: "NRI_KUBERNETES_KSM_ENABLED"
+              value: "false"
+            - name: "NRI_KUBERNETES_KUBELET_ENABLED"
+              value: "false"
+            - name: "NRI_KUBERNETES_CLUSTERNAME"
+              value: {{ include "newrelic.cluster" . }}
+            - name: "NRI_KUBERNETES_NODENAME"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            - name: "NRI_KUBERNETES_NODEIP"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "status.hostIP"
+            {{- with .Values.controlPlane.extraEnv }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          {{- with .Values.controlPlane.extraEnvFrom }}
+          envFrom:
+            {{- tpl . $ | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: nri-kubernetes-config
+              mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
+              subPath: nri-kubernetes-config.yml
+            - mountPath: /var/cache/nr-kubernetes
+              name: tmpfs-cache
+            - mountPath: /tmp
+              name: tmpfs-tmp
+            {{- with .Values.kubelet.extraVolumeMounts }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          {{- with .Values.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
+        - name: forwarder
+          image: {{ .Values.images.forwarder.repository }}:{{ .Values.images.forwarder.tag }}
+          imagePullPolicy: {{ .Values.images.forwarder.pullPolicy }}
+          securityContext:
+            runAsUser: {{ .Values.runAsUser }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          ports:
+            - containerPort: 8001
+          env:
+            - name: "NRIA_HTTP_SERVER_PORT"
+              value: "8001"
+            - name: "NRI_KUBERNETES_NODE_NAME"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            {{- if .Values.useNodeNameAsDisplayName }}
+            - name: "NRIA_DISPLAY_NAME"
+            {{- if .Values.prefixDisplayNameWithCluster }}
+              value: "{{ include "newrelic.cluster" . }}:$(NRI_KUBERNETES_NODE_NAME)"
+            {{- else }}
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            {{- end }}
+            {{- end }}
+            - name: NRIA_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ template "newrelic.fullname" . }}-config
+                  key: license
+            {{- if (include "newrelic.nrStaging" .) }}
+            - name: NRIA_STAGING
+              value: "true"
+            {{- end }}
+            # Using FORWARD_ONLY mode to avoid the entity creation for the events.
+            - name: NRIA_IS_SECURE_FORWARD_ONLY
+              value: "false"
+            - name: NRIA_IS_FORWARD_ONLY
+              value: "true"
+            {{- with .Values.controlPlane.extraEnv }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+          {{- with .Values.controlPlane.extraEnvFrom }}
+          envFrom:
+            {{- tpl . $ | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - mountPath: /var/db/newrelic-infra/data
+              name: tmpfs-data
+            - mountPath: /var/db/newrelic-infra/user_data
+              name: tmpfs-user-data
+            - mountPath: /tmp
+              name: tmpfs-tmp
+            {{- if .Values.config }}
+            - name: config
+              mountPath: /etc/newrelic-infra.yml
+              subPath: newrelic-infra.yml
+            {{- end }}
+            {{- with .Values.ksm.extraVolumeMounts }}
+            {{- tpl . $ | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if .Values.scrapersConfig }}
+        - name: nri-kubernetes-config
+          configMap:
+            name: {{ template "newrelic.fullname" . }}-scrapers
+            items:
+              - key: nri-kubernetes-config.yml
+                path: nri-kubernetes-config.yml
+        {{- end }}
+        - name: tmpfs-data
+          emptyDir: {}
+        - name: tmpfs-user-data
+          emptyDir: {}
+        - name: tmpfs-tmp
+          emptyDir: {}
+        - name: tmpfs-cache
+          emptyDir: {}
+        {{- if .Values.config }}
+        - name: config
+          configMap:
+            name: {{ template "newrelic.fullname" . }}
+            items:
+              - key: newrelic-infra.yml
+                path: newrelic-infra.yml
+        {{- end }}
+      {{- with $.Values.priorityClassName }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with .Values.controlPlane.affinity.nodeAffinity }}
+      affinity:
+        nodeAffinity: {{ . | toYaml | nindent 10 }}
+      {{- end }}
+      {{- with .Values.controlPlane.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.controlPlane.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

@@ -1,23 +1,29 @@
-{{/* vim: set filetype=mustache: */}}
 {{/*
 Expand the name of the chart.
 */}}
 {{- define "newrelic.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
+{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
 
 {{/*
 Create a default fully qualified app name.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If release name contains chart name it will be used as a full name.
 */}}
 {{- define "newrelic.fullname" -}}
-{{- $name := default .Chart.Name .Values.nameOverride -}}
-{{- if ne $name .Release.Name -}}
-{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
-{{- else -}}
-{{- printf "%s" $name | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-{{- end -}}
+{{- if .Values.fullnameOverride }}
+{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- if contains $name .Release.Name }}
+{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- else }}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
+{{- end }}
+{{- end }}
+{{- end }}
+
 
 {{/* Generate mode label */}}
 {{- define "newrelic.mode" }}
@@ -28,47 +34,37 @@ unprivileged
 {{- end }}
 {{- end -}}
 
-{{/* Generate basic labels */}}
-{{- define "newrelic.labels" }}
-app: {{ template "newrelic.name" . }}
-chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-heritage: {{.Release.Service }}
-release: {{.Release.Name }}
-mode: {{ template "newrelic.mode" . }}
+
+{{/* Selector labels */}}
+{{- define "newrelic.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "newrelic.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
-{{/*
-Create chart name and version as used by the chart label.
-*/}}
-{{- define "newrelic.chart" -}}
-{{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
 
-{{/*
-Create the name of the service account to use
-*/}}
+{{/* Common labels */}}
+{{- define "newrelic.labels" -}}
+helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
+{{ include "newrelic.selectorLabels" . }}
+mode: {{ template "newrelic.mode" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+
+{{/* Create the name of the service account to use */}}
 {{- define "newrelic.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "newrelic.fullname" .) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
+{{- if .Values.serviceAccount.create }}
+{{- default (include "newrelic.fullname" .) .Values.serviceAccount.name }}
+{{- else }}
+{{- default "default" .Values.serviceAccount.name }}
+{{- end }}
+{{- end }}
 
-{{/*
-Create the image name depending on the "privileged" flag
-*/}}
-{{- define "newrelic.image" -}}
-{{- if .Values.privileged -}}
-"{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion}}"
-{{- else -}}
-"{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}-unprivileged"
-{{- end -}}
-{{- end -}}
 
-{{/*
-Return the licenseKey
-*/}}
+{{/* Return the licenseKey */}}
 {{- define "newrelic.licenseKey" -}}
 {{- if .Values.global}}
   {{- if .Values.global.licenseKey }}
@@ -81,9 +77,8 @@ Return the licenseKey
 {{- end -}}
 {{- end -}}
 
-{{/*
-Return the cluster
-*/}}
+
+{{/* Return the cluster */}}
 {{- define "newrelic.cluster" -}}
 {{- if .Values.global -}}
   {{- if .Values.global.cluster -}}
@@ -126,6 +121,7 @@ Return the customSecretLicenseKey
 {{- end -}}
 {{- end -}}
 
+
 {{/*
 Returns nrStaging
 */}}
@@ -152,6 +148,7 @@ Returns fargate
 {{- end -}}
 {{- end -}}
 
+
 {{/*
 Returns the updateStrategy, either .Values.updateStrategy directly if it is an object, or wrapped if it is a string
 This is done to keep compatibility with old values and --reuse-values.
@@ -173,6 +170,7 @@ updateStrategy:
 {{- end -}}
 {{- end -}}
 
+
 {{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
@@ -184,3 +182,19 @@ licenseKey and cluster are set.
 {{- $customSecretLicenseKey := include "newrelic.customSecretLicenseKey" . -}}
 {{- and (or $licenseKey (and $customSecretName $customSecretLicenseKey)) $cluster}}
 {{- end -}}
+
+{{- define "newrelic.deprecatedKubeStateMetrics" -}}
+ksm:
+  discovery:
+      scheme: {{  $.Values.kubeStateMetricsScheme | quote }}
+      port: {{  $.Values.kubeStateMetricsPort | quote }}
+      static:
+        url: {{  $.Values.kubeStateMetricsUrl | quote }}
+      endpoints:
+          label_selector: {{  $.Values.kubeStateMetricsPodLabel | quote }}
+          namespace: {{  $.Values.kubeStateMetricsNamespace | quote }}
+{{- end -}}
+
+{{- define "config" -}}
+{{ toYaml (merge (include "newrelic.deprecatedKubeStateMetrics" . | fromYaml) .Values.config) }}
+{{- end }}
