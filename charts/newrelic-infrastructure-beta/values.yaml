@@ -1,0 +1,290 @@
+# Default values for newrelic-infrastructure.
+nameOverride: ""
+fullnameOverride: ""
+
+enableLinux: true
+enableWindows: false
+windowsOsList:
+  # - version: 1809
+  #   imageTag: 2.2.0-windows-1809-alpha
+  #   buildNumber: 10.0.17763
+  # - version: 1909
+  #   imageTag: 2.2.0-windows-1909-alpha
+  #   buildNumber: 10.0.18363
+  - version: 2004
+    imageTag: 2.2.0-windows-2004-alpha
+    buildNumber: 10.0.19041
+
+images:
+  pullSecrets: []
+  forwarder:
+    pullPolicy: IfNotPresent
+    tag: 1.20.5
+    repository: newrelic/k8s-events-forwarder
+  agent:
+    pullPolicy: IfNotPresent
+    tag: latest
+    repository: newrelic/infrastructure-bundle
+  scraper:
+    pullPolicy: IfNotPresent
+    tag: latest
+    repository: newrelic/nri-kubernetes
+
+controlPlane:
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+          - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+  kind: Daemonset/Deployment
+  extraEnv: []
+  extraEnvFrom:
+  extraVolumes: []
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  scrapperConfig:
+    controlPlane:
+      enabled: true
+      etcd:
+        enabled: true
+        autodiscover:
+          - namespace: kube-system
+            selector: "tier=control-plane,component=etcd"
+            matchNode: true
+            endpoints:
+              - url: http://localhost:2381
+      scheduler:
+        enabled: true
+        autodiscover:
+          - namespace: kube-system
+            selector: "tier=control-plane,component=kube-scheduler"
+            matchNode: true
+            endpoints:
+              - url: https://localhost:10259
+                insecureSkipVerify: true
+                auth:
+                  type: bearer
+      controllerManager:
+        enabled: true
+        autodiscover:
+          - namespace: kube-system
+            selector: "tier=control-plane,component=kube-controller-manager"
+            matchNode: true
+            endpoints:
+              - url: https://localhost:10257
+                insecureSkipVerify: true
+                auth:
+                  type: bearer
+      apiServer:
+        enabled: true
+        autodiscover:
+          - namespace: kube-system
+            selector: "tier=control-plane,component=kube-apiserver"
+            matchNode: true
+            endpoints:
+              - url: https://localhost:8443
+                insecureSkipVerify: true
+                auth:
+                  type: bearer
+
+kubelet:
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    nodeAffinity: []
+  extraEnv: []
+  extraEnvFrom:
+  extraVolumes: []
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+
+
+ksm:
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: kube-state-metrics
+          weight: 100
+    nodeAffinity: []
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  extraEnv:
+    - name: ENV_VAR1
+      value: "var1"
+    - name: ENV_VAR2
+      value: "var2"
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
+  extraEnvFrom: []
+  # Mount additional volumes into the pod.
+  extraVolumes: []
+  # Mount additional volumes into the pod.
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+
+common:
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  scrapperConfig:
+    interval: 15s
+    verbose: true
+    timeout: 30s
+    networkRouteFile: "/proc/net/route"
+
+# K8s DaemonSets update strategy.
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+
+# Kubelet's agent envs
+# Custom attributes to be passed to the New Relic agent
+customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
+
+# Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitly set to "false"
+# On the other hand New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitly set to "true",
+# https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes/new-relic-infrastructure-agent-1120
+# enableProcessMetrics: "false"
+
+# This can be set, the default is shown below
+# logFile: /var/log/nr-infra.log
+
+verboseLog: false
+
+
+serviceAccount:
+  create: true
+  annotations: {}
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# For unprivileged mode - default is 1000.
+# Can also be modified for OpenShift clusters where the runAsUser range
+# may be restricted.  See OpenShift docs for more information.
+# https://www.openshift.com/blog/a-guide-to-openshift-and-uids
+runAsUser: 1000
+# For unprivileged mode - default is 2000.
+runAsGroup: 2000
+
+### Openshift ###
+# Set openshift.enabled true when installing in an OpenShift Cluster
+openshift:
+  enabled: false
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext: {}
+  # capabilities:
+  #   drop:
+  #   - ALL
+  # readOnlyRootFilesystem: true
+  # runAsNonRoot: true
+# runAsUser: 1000
+
+# Pod scheduling priority
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+priorityClassName: ""
+
+privileged: true
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  pspEnabled: false
+
+# Sends data to staging, can be set as a global.
+# global.nrStaging
+nrStaging: false
+
+# prefix nodes display name with cluster to reduce chances of collisions
+prefixDisplayNameWithCluster: false
+
+# 'true' will use the node name as the name for the "host",
+#  note that it may cause data collision if the node name is the same in different clusters
+#  and prefixDisplayNameWithCluster is not set to true.
+# 'false' will use the host name as the name for the "host".
+useNodeNameAsDisplayName: true
+
+# If you wish to monitor services running on Kubernetes you can provide integrations
+# configuration under integrations_config. You just need to create a new entry where
+# the "name" is the filename of the configuration file and the data is the content of
+# the integration configuration. The name must end in ".yaml" as this will be the
+# filename generated and the Infrastructure agent only looks for YAML files. The data
+# part is the actual integration configuration as described in the spec here:
+# https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
+# For example, if you wanted do to monitor a Redis instance that has a label "app=redis"
+# you could do so by adding following entry:
+# integrations_config:
+#   - name: nri-redis.yaml
+#     data:
+#       discovery:
+#         command:
+#           # Run NRI Discovery for Kubernetes
+#           # https://github.com/newrelic/nri-discovery-kubernetes
+#           exec: /var/db/newrelic-infra/nri-discovery-kubernetes
+#           match:
+#             label.app: redis
+#       integrations:
+#         - name: nri-redis
+#           env:
+#             # using the discovered IP as the hostname address
+#             HOSTNAME: ${discovery.ip}
+#             PORT: 6379
+#           labels:
+#             env: test
+# For more details on monitoring services on Kubernetes see
+# https://docs.newrelic.com/docs/integrations/kubernetes-integration/link-apps-services/monitor-services-running-kubernetes
+integrations_config: []
