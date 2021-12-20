@@ -1,18 +1,18 @@
-{{- if .Values.rbac.create }}
-{{- if or (.Values.etcdTlsSecretName) (.Values.etcdTlsSecretNamespace)}}
+{{- $namespaces := include "newrelic.roleBindingNamespaces" . | fromYaml -}}
+{{- range $namespaces.roleBindingNamespaces }}
+---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  labels: {{ include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-secrets
-  namespace: {{ .Values.etcdTlsSecretNamespace | default "default" }}
+  labels: {{ include "newrelic.labels" $ | nindent 4 }}
+  name: {{ template "newrelic.fullname" $ }}-{{ . }}
+  namespace: {{ . }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ template "newrelic.fullname" . }}-secrets
+  name: {{ template "newrelic.fullname" $ }}-secrets
 subjects:
 - kind: ServiceAccount
-  name: {{ template "newrelic.serviceAccountName" . }}
-  namespace: {{ .Release.Namespace }}
-{{- end -}}
+  name: {{ template "newrelic.serviceAccountName" $ }}-control-plane
+  namespace: {{ $.Release.Namespace }}
 {{- end -}}

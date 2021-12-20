@@ -192,6 +192,29 @@ ksm:
 
 
 {{/*
+Returns the list of namespaces where secrets need to be accessed by the controlPlane Scraper to do mTLS Auth
+*/}}
+{{- define "newrelic.roleBindingNamespaces" -}}
+{{ $namespaceList := list }}
+{{- range $components := .Values.controlPlane.scraper.config }}
+    {{- range $autodiscover := $components.autodiscover }}
+        {{- range $endpoint := $autodiscover.endpoints }}
+            {{- if and ($endpoint.auth) }}
+            {{- if $endpoint.auth.mtls }}
+            {{- if $endpoint.auth.mtls.secretName }}
+            {{- $namespace := $endpoint.auth.mtls.secretNamespace | default "default" -}}
+            {{- $namespaceList = append $namespaceList $namespace -}}
+            {{- end }}
+            {{- end }}
+            {{- end }}
+        {{- end }}
+    {{- end }}
+{{- end }}
+roleBindingNamespaces: {{- uniq $namespaceList | toYaml | nindent 0 }}
+{{- end -}}
+
+
+{{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
 */}}
