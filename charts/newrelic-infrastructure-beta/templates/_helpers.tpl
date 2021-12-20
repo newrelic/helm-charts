@@ -148,6 +148,48 @@ Returns fargate
 {{- end -}}
 {{- end -}}
 
+{{/* controlPlane scraper config */}}
+{{- define "newrelic.controlPlane.scraper" -}}
+controlPlane:
+  enabled: true
+{{- if .Values.controlPlane.scraper.config }}
+    {{- .Values.controlPlane.scraper.config | toYaml | nindent 2 }}
+    {{- range $key, $val := .Values.controlPlane.scraper }}
+      {{- if ne $key "config" -}}
+      {{- nindent 0 $key }}: {{ $val | quote }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+
+{{/* kubelet scraper config */}}
+{{- define "newrelic.kubelet.scraper" -}}
+kubelet:
+  enabled: true
+{{- if .Values.kubelet.scraper.config }}
+    {{- .Values.kubelet.scraper.config | toYaml | nindent 2 }}
+    {{- range $key, $val := .Values.kubelet.scraper }}
+      {{- if ne $key "config" -}}
+      {{- nindent 0 $key }}: {{ $val | quote }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+
+{{/* ksm scraper config */}}
+{{- define "newrelic.ksm.scraper" -}}
+ksm:
+  enabled: true
+{{- if .Values.ksm.scraper.config }}
+    {{- .Values.ksm.scraper.config | toYaml | nindent 2 }}
+    {{- range $key, $val := .Values.ksm.scraper }}
+      {{- if ne $key "config" -}}
+      {{- nindent 0 $key }}: {{ $val | quote }}
+      {{- end }}
+    {{- end }}
+{{- end }}
+{{- end }}
+
 
 {{/*
 Returns if the template should render, it checks if the required values

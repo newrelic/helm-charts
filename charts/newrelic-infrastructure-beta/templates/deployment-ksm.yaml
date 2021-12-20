@@ -1,4 +1,4 @@
-{{- if and (.Values.scrapersConfig.ksm.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) }}
+{{- if and (.Values.ksm.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -74,17 +74,21 @@ spec:
             - name: NRIA_STAGING
               value: "true"
             {{- end }}
-            # Using FORWARD_ONLY mode to avoid the entity creation for the events.
+            {{- with .Values.eventQueueDepth }}
+            - name: "NRIA_EVENT_QUEUE_DEPTH"
+              value: {{ .| quote }}
+            {{- end }}
+            # Using FORWARD_ONLY mode to avoid the creating a host entity for the pod.
             - name: NRIA_IS_SECURE_FORWARD_ONLY
               value: "false"
             - name: NRIA_IS_FORWARD_ONLY
               value: "true"
             {{- with .Values.ksm.extraEnv }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.ksm.extraEnvFrom }}
           envFrom:
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
@@ -99,7 +103,7 @@ spec:
               subPath: newrelic-infra.yml
             {{- end }}
             {{- with .Values.ksm.extraVolumeMounts }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
         - name: ksm
           image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
@@ -126,11 +130,11 @@ spec:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
             {{- with .Values.ksm.extraEnv }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.ksm.extraEnvFrom }}
           envFrom:
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: nri-kubernetes-config
@@ -141,20 +145,18 @@ spec:
             - mountPath: /tmp
               name: tmpfs-tmp
             {{- with .Values.ksm.extraVolumeMounts }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
       volumes:
-        {{- if .Values.scrapersConfig }}
         - name: nri-kubernetes-config
           configMap:
-            name: {{ template "newrelic.fullname" . }}-scrapers
+            name: {{ template "newrelic.fullname" . }}-ksm
             items:
               - key: nri-kubernetes-config.yml
                 path: nri-kubernetes-config.yml
-        {{- end }}
         - name: tmpfs-data
           emptyDir: {}
         - name: tmpfs-user-data
@@ -172,7 +174,7 @@ spec:
                 path: newrelic-infra.yml
         {{- end }}
         {{- with .Values.ksm.extraVolumes }}
-        {{- tpl . $ | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with $.Values.priorityClassName }}
       priorityClassName: {{ . }}

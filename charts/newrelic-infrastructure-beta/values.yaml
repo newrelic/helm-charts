@@ -23,14 +23,15 @@ images:
     repository: newrelic/k8s-events-forwarder
   agent:
     pullPolicy: IfNotPresent
-    tag: latest
+    tag: 2.7.6
     repository: newrelic/infrastructure-bundle
   scraper:
     pullPolicy: IfNotPresent
-    tag: latest
+    tag: 0.1.1
     repository: newrelic/nri-kubernetes
 
 controlPlane:
+  enabled: true
   annotations: {}
   tolerations:
     - operator: "Exists"
@@ -48,9 +49,9 @@ controlPlane:
           - matchExpressions:
               - key: node-role.kubernetes.io/master
                 operator: Exists
-  kind: Daemonset/Deployment
+  kind: DaemonSet
   extraEnv: []
-  extraEnvFrom:
+  extraEnvFrom: []
   extraVolumes: []
   extraVolumeMounts: []
   resources:
@@ -59,9 +60,8 @@ controlPlane:
     requests:
       cpu: 100m
       memory: 150M
-  scrapperConfig:
-    controlPlane:
-      enabled: true
+  scraper:
+    config:
       etcd:
         enabled: true
         autodiscover:
@@ -105,6 +105,7 @@ controlPlane:
                   type: bearer
 
 kubelet:
+  enabled: true
   annotations: {}
   tolerations:
     - operator: "Exists"
@@ -115,7 +116,7 @@ kubelet:
   affinity:
     nodeAffinity: []
   extraEnv: []
-  extraEnvFrom:
+  extraEnvFrom: []
   extraVolumes: []
   extraVolumeMounts: []
   resources:
@@ -124,9 +125,14 @@ kubelet:
     requests:
       cpu: 100m
       memory: 150M
+  scraper:
+    interval: 35s
+    timeout: 60s
+    config: {}
 
 
 ksm:
+  enabled: true
   annotations: {}
   tolerations:
     - operator: "Exists"
@@ -165,6 +171,10 @@ ksm:
     requests:
       cpu: 100m
       memory: 150M
+  scraper:
+    interval: 10s
+    timeout: 40s
+    config: {}
 
 common:
   resources:
@@ -173,11 +183,10 @@ common:
     requests:
       cpu: 100m
       memory: 150M
-  scrapperConfig:
+  verbose: true
+  scraper:
     interval: 15s
-    verbose: true
     timeout: 30s
-    networkRouteFile: "/proc/net/route"
 
 # K8s DaemonSets update strategy.
 updateStrategy:
@@ -198,7 +207,6 @@ customAttributes: "'{\"clusterName\":\"$(CLUSTER_NAME)\"}'"
 # logFile: /var/log/nr-infra.log
 
 verboseLog: false
-
 
 serviceAccount:
   create: true

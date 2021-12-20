@@ -1,4 +1,4 @@
-{{- if and (.Values.scrapersConfig.kubelet.enabled) (include "newrelic.areValuesValid" .) .Values.enableLinux }}
+{{- if and (.Values.kubelet.enabled) (include "newrelic.areValuesValid" .) .Values.enableLinux }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -67,11 +67,11 @@ spec:
                   apiVersion: "v1"
                   fieldPath: "status.hostIP"
             {{- with .Values.kubelet.extraEnv }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.kubelet.extraEnvFrom }}
           envFrom:
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: nri-kubernetes-config
@@ -82,7 +82,7 @@ spec:
             - mountPath: /tmp
               name: tmpfs-tmp
             {{- with .Values.kubelet.extraVolumeMounts }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.resources }}
           resources: {{ toYaml . | nindent 12 }}
@@ -173,11 +173,11 @@ spec:
               value: "true"
             {{- end }}
             {{- with .Values.kubelet.extraEnv }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.kubelet.extraEnvFrom }}
           envFrom:
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             {{- if .Values.config }}
@@ -213,7 +213,7 @@ spec:
               name: tmpfs-tmp
             {{- end }}
             {{- with .Values.kubelet.extraVolumeMounts }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.resources }}
           resources: {{ toYaml . | nindent 12 }}
@@ -248,14 +248,12 @@ spec:
           emptyDir: {}
         - name: tmpfs-cache
           emptyDir: {}
-        {{- if .Values.scrapersConfig }}
         - name: nri-kubernetes-config
           configMap:
-            name: {{ template "newrelic.fullname" . }}-scrapers
+            name: {{ template "newrelic.fullname" . }}-kubelet
             items:
               - key: nri-kubernetes-config.yml
                 path: nri-kubernetes-config.yml
-        {{- end }}
         {{- if .Values.config }}
         - name: config
           configMap:
@@ -268,6 +266,9 @@ spec:
         - name: nri-integrations-cfg-volume
           configMap:
             name: {{ template "newrelic.fullname" . }}-integrations-cfg
+        {{- end }}
+        {{- with .Values.kubelet.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
         {{- end }}
       {{- with $.Values.priorityClassName }}
       priorityClassName: {{ . }}

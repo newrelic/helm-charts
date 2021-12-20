@@ -1,6 +1,6 @@
-{{- if and (.Values.scrapersConfig.controlPlane.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) (.Values.privileged) (not (include "newrelic.fargate" .)) }}
+{{- if and (.Values.controlPlane.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) (.Values.privileged) (not (include "newrelic.fargate" .)) }}
 apiVersion: apps/v1
-kind: DaemonSet
+kind: {{ .Values.controlPlane.kind }}
 metadata:
   namespace: {{ .Release.Namespace }}
   labels: {{ include "newrelic.labels" . | nindent 4 }}
@@ -126,7 +126,11 @@ spec:
             - name: NRIA_STAGING
               value: "true"
             {{- end }}
-            # Using FORWARD_ONLY mode to avoid the entity creation for the events.
+            {{- with .Values.eventQueueDepth }}
+            - name: "NRIA_EVENT_QUEUE_DEPTH"
+              value: {{ .| quote }}
+            {{- end }}
+            # Using FORWARD_ONLY mode to avoid the creating a host entity for the pod.
             - name: NRIA_IS_SECURE_FORWARD_ONLY
               value: "false"
             - name: NRIA_IS_FORWARD_ONLY
@@ -150,18 +154,16 @@ spec:
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
             {{- end }}
-            {{- with .Values.ksm.extraVolumeMounts }}
+            {{- with .Values.controlPlane.extraVolumeMounts }}
             {{- tpl . $ | nindent 12 }}
             {{- end }}
       volumes:
-        {{- if .Values.scrapersConfig }}
         - name: nri-kubernetes-config
           configMap:
-            name: {{ template "newrelic.fullname" . }}-scrapers
+            name: {{ template "newrelic.fullname" . }}-control-plane
             items:
               - key: nri-kubernetes-config.yml
                 path: nri-kubernetes-config.yml
-        {{- end }}
         - name: tmpfs-data
           emptyDir: {}
         - name: tmpfs-user-data
@@ -178,7 +180,10 @@ spec:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
         {{- end }}
-      {{- with $.Values.priorityClassName }}
+        {{- with .Values.controlPlane.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
       {{- with .Values.controlPlane.affinity.nodeAffinity }}
