@@ -117,6 +117,10 @@ spec:
                   fieldPath: "spec.nodeName"
             {{- end }}
             {{- end }}
+            {{- if (include "newrelic.customAttributes" .) }}
+            - name: "NRIA_CUSTOM_ATTRIBUTES"
+              value: {{ include "newrelic.customAttributes" . }}
+            {{- end }}
             - name: NRIA_LICENSE_KEY
               valueFrom:
                 secretKeyRef:

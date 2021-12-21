@@ -213,6 +213,17 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 roleBindingNamespaces: {{- uniq $namespaceList | toYaml | nindent 0 }}
 {{- end -}}
 
+{{/*
+Returns Custom Attributes as a yaml even if formatted as a json string
+*/}}
+{{- define "newrelic.customAttributes" -}}
+{{- if kindOf .Values.customAttributes | eq "string" -}}
+{{  .Values.customAttributes }}
+{{- else -}}
+{{ .Values.customAttributes | toJson | quote  }}
+{{- end -}}
+{{- end -}}
+
 
 {{/*
 Returns if the template should render, it checks if the required values

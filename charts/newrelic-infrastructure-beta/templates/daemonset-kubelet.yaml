@@ -154,9 +154,9 @@ spec:
                   fieldPath: "spec.nodeName"
             {{- end }}
             {{- end }}
-            {{- with .Values.customAttributes }}
+            {{- if (include "newrelic.customAttributes" .) }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
-              value: {{ . }}
+              value: {{ include "newrelic.customAttributes" . }}
             {{- end }}
             {{- if .Values.verboseLog }}
             - name: NRIA_VERBOSE
