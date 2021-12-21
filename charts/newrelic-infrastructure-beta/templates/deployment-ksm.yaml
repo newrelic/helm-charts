@@ -11,7 +11,8 @@ metadata:
 spec:
   selector:
     matchLabels:
-      {{- include "newrelic.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: {{ include "newrelic.name" . }}-ksm
+      app.kubernetes.io/instance: {{ .Release.Name }}-ksm
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -19,7 +20,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "newrelic.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "newrelic.name" . }}-ksm
+        app.kubernetes.io/instance: {{ .Release.Name }}-ksm
         {{- with .Values.podLabels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}

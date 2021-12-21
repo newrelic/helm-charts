@@ -14,7 +14,8 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      {{- include "newrelic.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/name: {{ include "newrelic.name" . }}-control-plane
+      app.kubernetes.io/instance: {{ .Release.Name }}-control-plane
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -22,7 +23,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "newrelic.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/name: {{ include "newrelic.name" . }}-control-plane
+        app.kubernetes.io/instance: {{ .Release.Name }}-control-plane
         {{- with .Values.podLabels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
