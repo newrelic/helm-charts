@@ -35,9 +35,6 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
-      {{- if .Values.privileged }}
-      dnsPolicy: ClusterFirstWithHostNet
-      {{- end }}
       containers:
         - name: kubelet
           image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
