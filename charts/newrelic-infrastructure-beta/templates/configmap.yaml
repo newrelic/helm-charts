@@ -24,39 +24,3 @@ data:
 {{ toYaml .data | indent  4 }}
 {{ end }}
 {{ end }}
----
-{{ if .Values.controlPlane.enabled }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-control-plane
-data:
-  nri-kubernetes-config.yml: |
-{{ toYaml (merge (include "newrelic.controlPlane.scraper" . | fromYaml) .Values.common.scraper) | indent 6 }}
-{{ end }}
----
-{{ if .Values.kubelet.enabled }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-kubelet
-data:
-  nri-kubernetes-config.yml: |
-{{ toYaml (merge (include "newrelic.kubelet.scraper" . | fromYaml) .Values.common.scraper) | indent 6 }}
-{{ end }}
----
-{{ if .Values.ksm.enabled }}
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-ksm
-data:
-  nri-kubernetes-config.yml: |
-{{ toYaml (merge (include "newrelic.ksm.scraper" . | fromYaml) .Values.common.scraper) | indent 6 }}
-{{ end }}

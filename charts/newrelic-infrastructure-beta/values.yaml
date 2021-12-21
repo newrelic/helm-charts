@@ -60,8 +60,10 @@ controlPlane:
     requests:
       cpu: 100m
       memory: 150M
-  scraper:
-    config:
+  scraperConfig:
+    #    interval: 35s
+    #    timeout: 60s
+    controlPlane:
       etcd:
         enabled: true
         autodiscover:
@@ -219,10 +221,8 @@ kubelet:
     requests:
       cpu: 100m
       memory: 150M
-  scraper:
-    interval: 35s
-    timeout: 60s
-    config: {}
+  scraperConfig:
+    kubelet: {}
 
 
 ksm:
@@ -265,22 +265,16 @@ ksm:
     requests:
       cpu: 100m
       memory: 150M
-  scraper:
-    interval: 10s
-    timeout: 40s
-    config: {}
+  scraperConfig:
+#    interval: 10s
+#    timeout: 40s
+    ksm: {}
 
 common:
-  resources:
-    limits:
-      memory: 300M
-    requests:
-      cpu: 100m
-      memory: 150M
-  verbose: true
-  scraper:
+  scraperConfig:
     interval: 15s
     timeout: 30s
+
 
 # K8s DaemonSets update strategy.
 updateStrategy:

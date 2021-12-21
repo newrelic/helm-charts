@@ -85,14 +85,12 @@ spec:
             - name: nri-kubernetes-config
               mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
               subPath: nri-kubernetes-config.yml
-            - mountPath: /var/cache/nr-kubernetes
-              name: tmpfs-cache
             - mountPath: /tmp
               name: tmpfs-tmp
             {{- with .Values.kubelet.extraVolumeMounts }}
             {{- tpl . $ | nindent 12 }}
             {{- end }}
-          {{- with .Values.resources }}
+          {{- with .Values.controlPlane.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
         - name: forwarder
@@ -108,7 +106,7 @@ spec:
           env:
             - name: "NRIA_HTTP_SERVER_PORT"
               value: "8001"
-            - name: "NRI_KUBERNETES_NODE_NAME"
+            - name: "K8S_NODE_NAME"
               valueFrom:
                 fieldRef:
                   apiVersion: "v1"
@@ -116,7 +114,7 @@ spec:
             {{- if .Values.useNodeNameAsDisplayName }}
             - name: "NRIA_DISPLAY_NAME"
             {{- if .Values.prefixDisplayNameWithCluster }}
-              value: "{{ include "newrelic.cluster" . }}:$(NRI_KUBERNETES_NODE_NAME)"
+              value: "{{ include "newrelic.cluster" . }}:$(K8S_NODE_NAME)"
             {{- else }}
               valueFrom:
                 fieldRef:
@@ -168,6 +166,9 @@ spec:
             {{- with .Values.controlPlane.extraVolumeMounts }}
             {{- tpl . $ | nindent 12 }}
             {{- end }}
+          {{- with .Values.controlPlane.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
       volumes:
         - name: nri-kubernetes-config
           configMap:
@@ -180,8 +181,6 @@ spec:
         - name: tmpfs-user-data
           emptyDir: {}
         - name: tmpfs-tmp
-          emptyDir: {}
-        - name: tmpfs-cache
           emptyDir: {}
         {{- if .Values.config }}
         - name: config

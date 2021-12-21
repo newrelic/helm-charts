@@ -60,6 +60,7 @@ spec:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            # Required to connect to the kubelet
             - name: "NRI_KUBERNETES_NODEIP"
               valueFrom:
                 fieldRef:
@@ -76,14 +77,12 @@ spec:
             - name: nri-kubernetes-config
               mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
               subPath: nri-kubernetes-config.yml
-            - mountPath: /var/cache/nr-kubernetes
-              name: tmpfs-cache
             - mountPath: /tmp
               name: tmpfs-tmp
             {{- with .Values.kubelet.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- with .Values.resources }}
+          {{- with .Values.kubelet.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
         - name: agent
@@ -209,7 +208,7 @@ spec:
             {{- with .Values.kubelet.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
-          {{- with .Values.resources }}
+          {{- with .Values.kubelet.resources }}
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
       volumes:
@@ -239,8 +238,6 @@ spec:
           emptyDir: {}
         {{- end }}
         - name: tmpfs-tmp
-          emptyDir: {}
-        - name: tmpfs-cache
           emptyDir: {}
         - name: nri-kubernetes-config
           configMap:

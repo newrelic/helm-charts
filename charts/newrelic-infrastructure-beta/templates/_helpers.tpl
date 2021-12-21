@@ -34,7 +34,6 @@ unprivileged
 {{- end }}
 {{- end -}}
 
-
 {{/* Common labels */}}
 {{- define "newrelic.labels" -}}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
@@ -151,45 +150,45 @@ Returns fargate
 {{- end -}}
 
 {{/* controlPlane scraper config */}}
-{{- define "newrelic.controlPlane.scraper" -}}
+{{- define "newrelic.controlPlane.scraperConfig" -}}
 controlPlane:
   enabled: true
-{{- if .Values.controlPlane.scraper.config }}
-    {{- .Values.controlPlane.scraper.config | toYaml | nindent 2 }}
-    {{- range $key, $val := .Values.controlPlane.scraper }}
-      {{- if ne $key "config" -}}
-      {{- nindent 0 $key }}: {{ $val | quote }}
-      {{- end }}
+  {{- if .Values.controlPlane.scraperConfig.controlPlane }}
+    {{- .Values.controlPlane.scraperConfig.controlPlane | toYaml | nindent 2 }}
+  {{- end }}
+  {{- range $key, $val := .Values.controlPlane.scraperConfig }}
+    {{- if ne $key "controlPlane" -}}
+    {{- nindent 0 $key }}: {{ $val | quote }}
     {{- end }}
-{{- end }}
+  {{- end }}
 {{- end }}
 
 {{/* kubelet scraper config */}}
-{{- define "newrelic.kubelet.scraper" -}}
+{{- define "newrelic.kubelet.scraperConfig" -}}
 kubelet:
   enabled: true
-{{- if .Values.kubelet.scraper.config }}
-    {{- .Values.kubelet.scraper.config | toYaml | nindent 2 }}
-    {{- range $key, $val := .Values.kubelet.scraper }}
-      {{- if ne $key "config" -}}
-      {{- nindent 0 $key }}: {{ $val | quote }}
-      {{- end }}
+  {{- if .Values.kubelet.scraperConfig.kubelet }}
+    {{- .Values.kubelet.scraperConfig.kubelet | toYaml | nindent 2 }}
+  {{- end }}
+  {{- range $key, $val := .Values.kubelet.scraperConfig }}
+    {{- if ne $key "kubelet" -}}
+    {{- nindent 0 $key }}: {{ $val | quote }}
     {{- end }}
-{{- end }}
+  {{- end }}
 {{- end }}
 
 {{/* ksm scraper config */}}
-{{- define "newrelic.ksm.scraper" -}}
+{{- define "newrelic.ksm.scraperConfig" -}}
 ksm:
   enabled: true
-{{- if .Values.ksm.scraper.config }}
-    {{- .Values.ksm.scraper.config | toYaml | nindent 2 }}
-    {{- range $key, $val := .Values.ksm.scraper }}
-      {{- if ne $key "config" -}}
-      {{- nindent 0 $key }}: {{ $val | quote }}
-      {{- end }}
+  {{- if .Values.ksm.scraperConfig.ksm }}
+    {{- .Values.ksm.scraperConfig.ksm | toYaml | nindent 2 }}
+  {{- end }}
+  {{- range $key, $val := .Values.ksm.scraperConfig }}
+    {{- if ne $key "ksm" -}}
+    {{- nindent 0 $key }}: {{ $val | quote }}
     {{- end }}
-{{- end }}
+  {{- end }}
 {{- end }}
 
 
@@ -198,7 +197,7 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 */}}
 {{- define "newrelic.roleBindingNamespaces" -}}
 {{ $namespaceList := list }}
-{{- range $components := .Values.controlPlane.scraper.config }}
+{{- range $components := .Values.controlPlane.scraperConfig.controlPlane }}
     {{- range $autodiscover := $components.autodiscover }}
         {{- range $endpoint := $autodiscover.endpoints }}
             {{- if and ($endpoint.auth) }}
