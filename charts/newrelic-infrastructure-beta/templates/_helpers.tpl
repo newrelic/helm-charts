@@ -177,6 +177,15 @@ kubelet:
   {{- end }}
 {{- end }}
 
+{{- define "newrelic.deprecatedKubeStateMetrics" -}}
+ksm:
+  scheme: {{  $.Values.kubeStateMetricsScheme | quote }}
+  port: {{  $.Values.kubeStateMetricsPort | quote }}
+  staticURL: {{  $.Values.kubeStateMetricsUrl | quote }}
+  selector: {{  $.Values.kubeStateMetricsPodLabel | quote }}
+  namespace: {{  $.Values.kubeStateMetricsNamespace | quote }}
+{{- end -}}
+
 {{/* ksm scraper config */}}
 {{- define "newrelic.ksm.scraperConfig" -}}
 ksm:
@@ -190,7 +199,6 @@ ksm:
     {{- end }}
   {{- end }}
 {{- end }}
-
 
 {{/*
 Returns the list of namespaces where secrets need to be accessed by the controlPlane Scraper to do mTLS Auth
@@ -224,19 +232,3 @@ Returns Custom Attributes as a yaml even if formatted as a json string
 {{ .Values.customAttributes | toJson | quote  }}
 {{- end -}}
 {{- end -}}
-
-{{- define "newrelic.deprecatedKubeStateMetrics" -}}
-ksm:
-  discovery:
-      scheme: {{  $.Values.kubeStateMetricsScheme | quote }}
-      port: {{  $.Values.kubeStateMetricsPort | quote }}
-      static:
-        url: {{  $.Values.kubeStateMetricsUrl | quote }}
-      endpoints:
-          label_selector: {{  $.Values.kubeStateMetricsPodLabel | quote }}
-          namespace: {{  $.Values.kubeStateMetricsNamespace | quote }}
-{{- end -}}
-
-{{- define "config" -}}
-{{ toYaml (merge (include "newrelic.deprecatedKubeStateMetrics" . | fromYaml) .Values.config) }}
-{{- end }}
