@@ -1,4 +1,4 @@
-{{- if and (.Values.controlPlane.enabled) (.Values.enableLinux) (.Values.privileged) (not (include "newrelic.fargate" .)) }}
+{{- if and (.Values.controlPlane.enabled) (.Values.enableLinux) (not (include "newrelic.fargate" .)) }}
 apiVersion: apps/v1
 kind: {{ .Values.controlPlane.kind }}
 metadata:
@@ -47,6 +47,11 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           env:
+            - name: "NRIA_OVERRIDE_HOSTNAME_SHORT"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
             - name: "NRI_KUBERNETES_HTTPSERVERPORT"
               value: "8001"
             - name: "NRI_KUBERNETES_CONTROLPLANE_ENABLED"
@@ -124,13 +129,8 @@ spec:
             - name: NRIA_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  {{- if (include "newrelic.licenseKey" .) }}
-                  name: {{ template "newrelic.fullname" . }}-config
-                  key: license
-                  {{- else }}
-                  name: {{ include "newrelic.customSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
-                  key: {{ include "newrelic.customSecretLicenseKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
-                  {{- end }}
+                  name: {{ include "newrelic.licenseSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  key: {{ include "newrelic.licenseSecretKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
             {{- if (include "newrelic.nrStaging" .) }}
             - name: NRIA_STAGING
               value: "true"

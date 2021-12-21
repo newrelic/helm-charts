@@ -118,13 +118,8 @@ spec:
             - name: NRIA_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  {{- if (include "newrelic.licenseKey" .) }}
-                  name: {{ template "newrelic.fullname" . }}-config
-                  key: license
-                  {{- else }}
-                  name: {{ include "newrelic.customSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
-                  key: {{ include "newrelic.customSecretLicenseKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
-                  {{- end }}
+                  name: {{ include "newrelic.licenseSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  key: {{ include "newrelic.licenseSecretKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
             {{- with .Values.eventQueueDepth }}
             - name: "NRIA_EVENT_QUEUE_DEPTH"
               value: {{ .| quote }}

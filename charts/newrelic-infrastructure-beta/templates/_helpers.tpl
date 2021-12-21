@@ -63,21 +63,6 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
-
-{{/* Return the licenseKey */}}
-{{- define "newrelic.licenseKey" -}}
-{{- if .Values.global}}
-  {{- if .Values.global.licenseKey }}
-      {{- .Values.global.licenseKey -}}
-  {{- else -}}
-      {{- .Values.licenseKey | default "" -}}
-  {{- end -}}
-{{- else -}}
-    {{- .Values.licenseKey | default "" -}}
-{{- end -}}
-{{- end -}}
-
-
 {{/* Return the cluster */}}
 {{- define "newrelic.cluster" -}}
 {{- if .Values.global -}}
@@ -91,36 +76,59 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end -}}
 {{- end -}}
 
+
 {{/*
-Return the customSecretName
+Return local licenseKey if set, global otherwise
 */}}
-{{- define "newrelic.customSecretName" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.customSecretName }}
-      {{- .Values.global.customSecretName -}}
-  {{- else -}}
-      {{- .Values.customSecretName | default "" -}}
+{{- define "newrelic.licenseKey" -}}
+{{- if .Values.licenseKey -}}
+  {{- .Values.licenseKey -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.licenseKey -}}
+    {{- .Values.global.licenseKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretName | default "" -}}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Return the customSecretLicenseKey
+Return the name of the secret holding the License Key
 */}}
-{{- define "newrelic.customSecretLicenseKey" -}}
-{{- if .Values.global }}
+{{- define "newrelic.licenseCustomSecretName" -}}
+{{- if .Values.customSecretName -}}
+  {{- .Values.customSecretName -}}
+{{- else if and .Values.global -}}
+  {{- if .Values.global.customSecretName -}}
+    {{- .Values.global.customSecretName -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the name of the secret holding the License Key
+*/}}
+{{- define "newrelic.licenseSecretName" -}}
+{{ include "newrelic.licenseCustomSecretName" . | default (printf "%s-license" (include "newrelic.fullname" . )) }}
+{{- end -}}
+
+{{/*
+Return the name key for the License Key inside the secret
+*/}}
+{{- define "newrelic.licenseCustomSecretKey" -}}
+{{- if .Values.customSecretLicenseKey -}}
+  {{- .Values.customSecretLicenseKey -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.customSecretLicenseKey }}
-      {{- .Values.global.customSecretLicenseKey -}}
-  {{- else -}}
-      {{- .Values.customSecretLicenseKey | default "" -}}
+    {{- .Values.global.customSecretLicenseKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretLicenseKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
+{{/*
+Return the name key for the License Key inside the secret
+*/}}
+{{- define "newrelic.licenseSecretKey" -}}
+{{ include "newrelic.licenseCustomSecretKey" . | default "licenseKey" }}
+{{- end -}}
 
 {{/*
 Returns nrStaging
