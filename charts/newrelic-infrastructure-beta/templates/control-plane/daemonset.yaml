@@ -68,6 +68,10 @@ spec:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "status.hostIP"
+            {{- if .Values.verboseLog }}
+            - name: NRI_VERBOSE
+              value: "1"
+            {{- end }}
             {{- with .Values.controlPlane.extraEnv }}
             {{- tpl . $ | nindent 12 }}
             {{- end }}
@@ -105,6 +109,10 @@ spec:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            {{- if .Values.verboseLog }}
+            - name: NRIA_VERBOSE
+              value: "1"
+            {{- end }}
             {{- if .Values.useNodeNameAsDisplayName }}
             - name: "NRIA_DISPLAY_NAME"
             {{- if .Values.prefixDisplayNameWithCluster }}

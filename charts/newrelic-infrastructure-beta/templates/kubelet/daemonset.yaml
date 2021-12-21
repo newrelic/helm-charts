@@ -49,6 +49,10 @@ spec:
               value: "8003"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
               value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
+            {{- if .Values.verboseLog }}
+            - name: NRI_VERBOSE
+              value: "1"
+            {{- end }}
             - name: "NRI_KUBERNETES_NODENAME"
               valueFrom:
                 fieldRef:

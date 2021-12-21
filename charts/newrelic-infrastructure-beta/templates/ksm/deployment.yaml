@@ -51,15 +51,19 @@ spec:
                   fieldPath: "spec.nodeName"
             - name: "NRIA_HTTP_SERVER_PORT"
               value: "8002"
-            - name: "NRI_KUBERNETES_NODE_NAME"
+            - name: "K8S_NODE_NAME"
               valueFrom:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            {{- if .Values.verboseLog }}
+            - name: NRIA_VERBOSE
+              value: "1"
+            {{- end }}
             {{- if .Values.useNodeNameAsDisplayName }}
             - name: "NRIA_DISPLAY_NAME"
             {{- if .Values.prefixDisplayNameWithCluster }}
-              value: "{{ include "newrelic.cluster" . }}:$(NRI_KUBERNETES_NODE_NAME)"
+              value: "{{ include "newrelic.cluster" . }}:$(K8S_NODE_NAME)"
             {{- else }}
               valueFrom:
                 fieldRef:
@@ -132,6 +136,10 @@ spec:
                 fieldRef:
                   apiVersion: "v1"
                   fieldPath: "spec.nodeName"
+            {{- if .Values.verboseLog }}
+            - name: NRI_VERBOSE
+              value: "1"
+            {{- end }}
             {{- with .Values.ksm.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
