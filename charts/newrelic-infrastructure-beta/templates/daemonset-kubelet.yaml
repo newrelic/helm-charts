@@ -1,4 +1,4 @@
-{{- if and (.Values.kubelet.enabled) (include "newrelic.areValuesValid" .) .Values.enableLinux }}
+{{- if and (.Values.kubelet.enabled) (.Values.enableLinux) }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -55,7 +55,7 @@ spec:
             - name: "NRI_KUBERNETES_KUBELET_ENABLED"
               value: "true"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
-              value: {{ include "newrelic.cluster" . }}
+              value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
             - name: "NRI_KUBERNETES_NODENAME"
               valueFrom:
                 fieldRef:
@@ -122,8 +122,8 @@ spec:
                   name: {{ template "newrelic.fullname" . }}-config
                   key: license
                   {{- else }}
-                  name: {{ include "newrelic.customSecretName" . }}
-                  key: {{ include "newrelic.customSecretLicenseKey" . }}
+                  name: {{ include "newrelic.customSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  key: {{ include "newrelic.customSecretLicenseKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
                   {{- end }}
             {{- with .Values.eventQueueDepth }}
             - name: "NRIA_EVENT_QUEUE_DEPTH"

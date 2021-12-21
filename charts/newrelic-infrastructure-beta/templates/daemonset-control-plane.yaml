@@ -1,4 +1,4 @@
-{{- if and (.Values.controlPlane.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) (.Values.privileged) (not (include "newrelic.fargate" .)) }}
+{{- if and (.Values.controlPlane.enabled) (.Values.enableLinux) (.Values.privileged) (not (include "newrelic.fargate" .)) }}
 apiVersion: apps/v1
 kind: {{ .Values.controlPlane.kind }}
 metadata:
@@ -56,7 +56,7 @@ spec:
             - name: "NRI_KUBERNETES_KUBELET_ENABLED"
               value: "false"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
-              value: {{ include "newrelic.cluster" . }}
+              value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
             - name: "NRI_KUBERNETES_NODENAME"
               valueFrom:
                 fieldRef:
@@ -124,8 +124,13 @@ spec:
             - name: NRIA_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
+                  {{- if (include "newrelic.licenseKey" .) }}
                   name: {{ template "newrelic.fullname" . }}-config
                   key: license
+                  {{- else }}
+                  name: {{ include "newrelic.customSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  key: {{ include "newrelic.customSecretLicenseKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  {{- end }}
             {{- if (include "newrelic.nrStaging" .) }}
             - name: NRIA_STAGING
               value: "true"

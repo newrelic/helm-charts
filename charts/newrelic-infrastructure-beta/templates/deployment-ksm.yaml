@@ -1,4 +1,4 @@
-{{- if and (.Values.ksm.enabled) (include "newrelic.areValuesValid" .) (.Values.enableLinux) }}
+{{- if and (.Values.ksm.enabled) (.Values.enableLinux) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -72,8 +72,13 @@ spec:
             - name: NRIA_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
+                  {{- if (include "newrelic.licenseKey" .) }}
                   name: {{ template "newrelic.fullname" . }}-config
                   key: license
+                  {{- else }}
+                  name: {{ include "newrelic.customSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  key: {{ include "newrelic.customSecretLicenseKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
+                  {{- end }}
             {{- if (include "newrelic.nrStaging" .) }}
             - name: NRIA_STAGING
               value: "true"
@@ -127,7 +132,7 @@ spec:
             - name: "NRI_KUBERNETES_HTTPSERVERPORT"
               value: "8002"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
-              value: {{ include "newrelic.cluster" . }}
+              value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
             - name: "NRI_KUBERNETES_NODENAME"
               valueFrom:
                 fieldRef:

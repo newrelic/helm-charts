@@ -224,19 +224,6 @@ Returns Custom Attributes as a yaml even if formatted as a json string
 {{- end -}}
 {{- end -}}
 
-
-{{/*
-Returns if the template should render, it checks if the required values
-licenseKey and cluster are set.
-*/}}
-{{- define "newrelic.areValuesValid" -}}
-{{- $cluster := include "newrelic.cluster" . -}}
-{{- $licenseKey := include "newrelic.licenseKey" . -}}
-{{- $customSecretName := include "newrelic.customSecretName" . -}}
-{{- $customSecretLicenseKey := include "newrelic.customSecretLicenseKey" . -}}
-{{- and (or $licenseKey (and $customSecretName $customSecretLicenseKey)) $cluster}}
-{{- end -}}
-
 {{- define "newrelic.deprecatedKubeStateMetrics" -}}
 ksm:
   discovery:
