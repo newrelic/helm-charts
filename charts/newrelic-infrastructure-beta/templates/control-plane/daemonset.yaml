@@ -56,12 +56,6 @@ spec:
                   fieldPath: "spec.nodeName"
             - name: "NRI_KUBERNETES_HTTPSERVERPORT"
               value: "8001"
-            - name: "NRI_KUBERNETES_CONTROLPLANE_ENABLED"
-              value: "true"
-            - name: "NRI_KUBERNETES_KSM_ENABLED"
-              value: "false"
-            - name: "NRI_KUBERNETES_KUBELET_ENABLED"
-              value: "false"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
               value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
             - name: "NRI_KUBERNETES_NODENAME"
@@ -87,7 +81,7 @@ spec:
               subPath: nri-kubernetes-config.yml
             - mountPath: /tmp
               name: tmpfs-tmp
-            {{- with .Values.kubelet.extraVolumeMounts }}
+            {{- with .Values.controlPlane.extraVolumeMounts }}
             {{- tpl . $ | nindent 12 }}
             {{- end }}
           {{- with .Values.controlPlane.resources }}
