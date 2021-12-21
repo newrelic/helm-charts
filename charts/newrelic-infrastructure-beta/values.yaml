@@ -27,7 +27,7 @@ images:
     repository: newrelic/infrastructure-bundle
   scraper:
     pullPolicy: IfNotPresent
-    tag: 0.1.1
+    tag: 0.1.2
     repository: newrelic/nri-kubernetes
 
 controlPlane:
@@ -274,7 +274,12 @@ ksm:
   scraperConfig:
 #    interval: 10s
 #    timeout: 40s
-    ksm: {}
+    ksm:
+      namespace: ""
+      port: 0
+      scheme: ""
+      selector: ""
+      staticURL: ""
 
 common:
   scraperConfig:
