@@ -1,4 +1,6 @@
 {{ if .Values.ksm.enabled }}
+{{- $deprecatedKubeStateMetrics := include "newrelic.deprecatedKubeStateMetrics" . | fromYaml -}}
+{{- $scraperConfig := include "newrelic.ksm.scraperConfig" . | fromYaml -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,5 +9,5 @@ metadata:
   name: {{ template "newrelic.fullname" . }}-ksm
 data:
   nri-kubernetes-config.yml: |
-{{ toYaml (merge (include "newrelic.deprecatedKubeStateMetrics" . | fromYaml) (include "newrelic.ksm.scraperConfig" . | fromYaml) .Values.common.scraperConfig) | indent 6 }}
+{{ toYaml (merge ($deprecatedKubeStateMetrics) ($scraperConfig) .Values.common.scraperConfig) | indent 6 }}
 {{ end }}
