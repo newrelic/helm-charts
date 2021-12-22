@@ -9,6 +9,7 @@ Your deployment of the New Relic Infrastructure agent is complete. You can check
 ####  it will be removed in the future, please consider to update the configuration  ####
 
 {{- end -}}
+{{- end }}
 {{- if and (include "newrelic.fargate" .) .Values.nodeAffinity }}
 ###########
 # WARNING #
@@ -30,5 +31,4 @@ affinity:
               operator: NotIn
               values:
                 - fargate
-{{- end }}
 {{- end }}
