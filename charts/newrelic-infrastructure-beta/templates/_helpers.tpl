@@ -149,31 +149,25 @@ Returns fargate
 {{- end -}}
 
 {{/* controlPlane scraper config */}}
-{{- define "newrelic.controlPlane.scraperConfig" -}}
+{{- define "newrelic.controlPlane.scraperConfigEnabled" -}}
 controlPlane:
   enabled: true
-  {{- if .Values.controlPlane.scraperConfig.controlPlane }}
-    {{- .Values.controlPlane.scraperConfig.controlPlane | toYaml | nindent 2 }}
-  {{- end }}
-  {{- range $key, $val := .Values.controlPlane.scraperConfig }}
-    {{- if ne $key "controlPlane" -}}
-    {{- nindent 0 $key }}: {{ $val | quote }}
-    {{- end }}
-  {{- end }}
+{{- end }}
+
+{{/* controlPlane scraper config */}}
+{{- define "newrelic.controlPlane.scraperConfig" -}}
+{{- (merge (include "newrelic.controlPlane.scraperConfigEnabled" . | fromYaml) .Values.controlPlane.scraperConfig) | toYaml }}
+{{- end }}
+
+{{/* kubelet scraper config */}}
+{{- define "newrelic.kubelet.scraperConfigEnabled" -}}
+kubelet:
+  enabled: true
 {{- end }}
 
 {{/* kubelet scraper config */}}
 {{- define "newrelic.kubelet.scraperConfig" -}}
-kubelet:
-  enabled: true
-  {{- if .Values.kubelet.scraperConfig.kubelet }}
-    {{- .Values.kubelet.scraperConfig.kubelet | toYaml | nindent 2 }}
-  {{- end }}
-  {{- range $key, $val := .Values.kubelet.scraperConfig }}
-    {{- if ne $key "kubelet" -}}
-    {{- nindent 0 $key }}: {{ $val | quote }}
-    {{- end }}
-  {{- end }}
+{{- (merge (include "newrelic.kubelet.scraperConfigEnabled" . | fromYaml) .Values.kubelet.scraperConfig) | toYaml }}
 {{- end }}
 
 {{- define "newrelic.deprecatedKubeStateMetrics" -}}
@@ -186,17 +180,14 @@ ksm:
 {{- end -}}
 
 {{/* ksm scraper config */}}
-{{- define "newrelic.ksm.scraperConfig" -}}
+{{- define "newrelic.ksm.scraperConfigEnabled" -}}
 ksm:
   enabled: true
-  {{- if .Values.ksm.scraperConfig.ksm }}
-    {{- .Values.ksm.scraperConfig.ksm | toYaml | nindent 2 }}
-  {{- end }}
-  {{- range $key, $val := .Values.ksm.scraperConfig }}
-    {{- if ne $key "ksm" -}}
-    {{- nindent 0 $key }}: {{ $val | quote }}
-    {{- end }}
-  {{- end }}
+{{- end }}
+
+{{/* ksm scraper config */}}
+{{- define "newrelic.ksm.scraperConfig" -}}
+{{- (merge (include "newrelic.ksm.scraperConfigEnabled" . | fromYaml) .Values.ksm.scraperConfig) | toYaml }}
 {{- end }}
 
 {{/*
