@@ -59,7 +59,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Return the cluster name
 */}}
-{{- define "newrelic.clusterGlobal" -}}
+{{- define "newrelic.cluster" -}}
 {{- if .Values.cluster -}}
   {{- .Values.cluster -}}
 {{- else if .Values.global -}}
@@ -68,14 +68,6 @@ Return the cluster name
   {{- end -}}
 {{- end -}}
 {{- end -}}
-
-{{/*
-Return the cluster name
-*/}}
-{{- define "newrelic.cluster" -}}
-{{ include "newrelic.clusterGlobal" . | default (include "newrelic.fullname" . ) }}
-{{- end -}}
-
 
 {{/*
 Return local licenseKey if set, global otherwise
