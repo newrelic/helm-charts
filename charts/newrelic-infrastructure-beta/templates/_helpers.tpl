@@ -198,7 +198,7 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 {{- range $components := .Values.controlPlane.scraperConfig.controlPlane }}
     {{- range $autodiscover := $components.autodiscover }}
         {{- range $endpoint := $autodiscover.endpoints }}
-            {{- if and ($endpoint.auth) }}
+            {{- if $endpoint.auth }}
             {{- if $endpoint.auth.mtls }}
             {{- if $endpoint.auth.mtls.secretName }}
             {{- $namespace := $endpoint.auth.mtls.secretNamespace | default "default" -}}
