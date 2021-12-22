@@ -56,17 +56,24 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{- end }}
 {{- end }}
 
-{{/* Return the cluster */}}
-{{- define "newrelic.cluster" -}}
-{{- if .Values.global -}}
+{{/*
+Return the cluster name
+*/}}
+{{- define "newrelic.clusterGlobal" -}}
+{{- if .Values.cluster -}}
+  {{- .Values.cluster -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.cluster -}}
-      {{- .Values.global.cluster -}}
-  {{- else -}}
-      {{- .Values.cluster | default "" -}}
+    {{- .Values.global.cluster -}}
   {{- end -}}
-{{- else -}}
-  {{- .Values.cluster | default "" -}}
 {{- end -}}
+{{- end -}}
+
+{{/*
+Return the cluster name
+*/}}
+{{- define "newrelic.cluster" -}}
+{{ include "newrelic.clusterGlobal" . | default (include "newrelic.fullname" . ) }}
 {{- end -}}
 
 
@@ -127,12 +134,12 @@ Return the name key for the License Key inside the secret
 Returns nrStaging
 */}}
 {{- define "newrelic.nrStaging" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.nrStaging }}
+{{- if .Values.nrStaging -}}
+  {{- .Values.nrStaging -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.nrStaging -}}
     {{- .Values.global.nrStaging -}}
   {{- end -}}
-{{- else if .Values.nrStaging }}
-  {{- .Values.nrStaging -}}
 {{- end -}}
 {{- end -}}
 
@@ -140,12 +147,12 @@ Returns nrStaging
 Returns fargate
 */}}
 {{- define "newrelic.fargate" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.fargate }}
+{{- if .Values.fargate -}}
+  {{- .Values.fargate -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.fargate -}}
     {{- .Values.global.fargate -}}
   {{- end -}}
-{{- else if .Values.fargate }}
-  {{- .Values.fargate -}}
 {{- end -}}
 {{- end -}}
 
