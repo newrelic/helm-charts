@@ -97,8 +97,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.ksm.extraEnvFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
+          envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
@@ -144,8 +143,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.ksm.extraEnvFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
+          envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: nri-kubernetes-config

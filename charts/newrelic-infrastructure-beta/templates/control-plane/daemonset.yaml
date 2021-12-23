@@ -68,11 +68,10 @@ spec:
               value: "1"
             {{- end }}
             {{- with .Values.controlPlane.extraEnv }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.controlPlane.extraEnvFrom }}
-          envFrom:
-            {{- tpl . $ | nindent 12 }}
+          envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: nri-kubernetes-config
@@ -81,7 +80,7 @@ spec:
             - mountPath: /tmp
               name: tmpfs-tmp
             {{- with .Values.controlPlane.extraVolumeMounts }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.controlPlane.resources }}
           resources: {{ toYaml . | nindent 12 }}
@@ -147,11 +146,10 @@ spec:
             - name: NRIA_IS_FORWARD_ONLY
               value: "true"
             {{- with .Values.controlPlane.extraEnv }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.controlPlane.extraEnvFrom }}
-          envFrom:
-            {{- tpl . $ | nindent 12 }}
+          envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
@@ -166,7 +164,7 @@ spec:
               subPath: newrelic-infra.yml
             {{- end }}
             {{- with .Values.controlPlane.extraVolumeMounts }}
-            {{- tpl . $ | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.controlPlane.resources }}
           resources: {{ toYaml . | nindent 12 }}

@@ -68,8 +68,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.kubelet.extraEnvFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
+          envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             - name: nri-kubernetes-config
@@ -166,8 +165,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
           {{- with .Values.kubelet.extraEnvFrom }}
-          envFrom:
-            {{- toYaml . | nindent 12 }}
+          envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
             {{- if .Values.config }}

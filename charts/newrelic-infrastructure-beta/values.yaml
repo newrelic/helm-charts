@@ -56,10 +56,21 @@ controlPlane:
               - key: node-role.kubernetes.io/master
                 operator: Exists
   kind: DaemonSet
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
   extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
   extraEnvFrom: []
+  # Mount additional volumes into the pod.
   extraVolumes: []
-  extraVolumeMounts: []
+  # Mount additional volume Mounts into the pod.
   resources:
     limits:
       memory: 300M
@@ -217,10 +228,21 @@ kubelet:
   nodeSelector: {}
   affinity:
     nodeAffinity: []
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
   extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
   extraEnvFrom: []
+  # Mount additional volumes into the pod.
   extraVolumes: []
-  extraVolumeMounts: []
+  # Mount additional volume Mounts into the pod.
   resources:
     limits:
       memory: 300M
@@ -251,11 +273,12 @@ ksm:
           weight: 100
     nodeAffinity: []
   # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
-  extraEnv:
-    - name: ENV_VAR1
-      value: "var1"
-    - name: ENV_VAR2
-      value: "var2"
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
+  extraEnv: []
   # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
   # extraEnvFrom:
   #  - configMapRef:
@@ -263,7 +286,7 @@ ksm:
   extraEnvFrom: []
   # Mount additional volumes into the pod.
   extraVolumes: []
-  # Mount additional volumes into the pod.
+  # Mount additional volume Mounts into the pod.
   extraVolumeMounts: []
   resources:
     limits:
