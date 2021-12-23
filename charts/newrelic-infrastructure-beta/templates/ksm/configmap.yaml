@@ -9,5 +9,7 @@ metadata:
   name: {{ template "newrelic.fullname" . }}-ksm
 data:
   nri-kubernetes-config.yml: |
+# The component's scraperConfig with the old deprecated values and the common scrapper values are merged
+# if a specific common value is not set on the component, the one in the common will be the one used (Example: interval)
 {{ toYaml (merge ($deprecatedKubeStateMetrics) ($scraperConfig) .Values.common.scraperConfig) | indent 6 }}
 {{ end }}

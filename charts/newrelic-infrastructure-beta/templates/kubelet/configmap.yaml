@@ -7,5 +7,7 @@ metadata:
   name: {{ template "newrelic.fullname" . }}-kubelet
 data:
   nri-kubernetes-config.yml: |
+# The component's scraperConfig and the common scrapper values are merged
+# if a specific common value is not set on the component, the one in the common will be the one used (Example: interval)
 {{ toYaml (merge (include "newrelic.kubelet.scraperConfig" . | fromYaml) .Values.common.scraperConfig) | indent 6 }}
 {{ end }}
