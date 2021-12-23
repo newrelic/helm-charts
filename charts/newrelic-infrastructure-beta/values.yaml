@@ -65,8 +65,8 @@ controlPlane:
       cpu: 100m
       memory: 150M
   scraperConfig:
-    #    interval: 35s
-    #    timeout: 60s
+  # interval: 35s
+  # timeout: 60s
     controlPlane:
       etcd:
         enabled: true
@@ -96,18 +96,18 @@ controlPlane:
                 insecureSkipVerify: true
                 auth:
                   type: bearer
-          ## OpenShift
-          # - selector: "k8s-app=etcd"
-          #   namespace: kube-system
-          #   matchNode: true
-          #   endpoints:
-          #     - url: https://localhost:9979
-          #       insecureSkipVerify: true
-          #       auth:
-          #         type: mTLS
-          #         mtls:
-          #           secretName: secret-name
-          #           secretNamespace: secret-namespace
+        ## OpenShift
+        # - selector: "k8s-app=etcd"
+        #   namespace: kube-system
+        #   matchNode: true
+        #   endpoints:
+        #     - url: https://localhost:9979
+        #       insecureSkipVerify: true
+        #       auth:
+        #         type: mTLS
+        #         mtls:
+        #           secretName: secret-name
+        #           secretNamespace: secret-namespace
 
       scheduler:
         enabled: true
@@ -163,9 +163,9 @@ controlPlane:
                 insecureSkipVerify: true
                 auth:
                   type: bearer
-                  #           mtls:
-                  #           secretName: secret-name
-                  #           secretNamespace: secret-namespace
+               #  mtls:
+               #    secretName: secret-name
+               #    secretNamespace: secret-namespace
           - selector: "app=controller-manager,controller-manager=true"
             namespace: kube-system
             matchNode: true
@@ -282,8 +282,8 @@ ksm:
       cpu: 100m
       memory: 150M
   scraperConfig:
-#    interval: 10s
-#    timeout: 40s
+#   interval: 10s
+#   timeout: 40s
     ksm:
       namespace: ""
       port: 0
