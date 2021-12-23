@@ -33,6 +33,46 @@ spec:
       {{- end }}
       serviceAccountName: {{ include "newrelic.serviceAccountName" . }}
       containers:
+        - name: ksm
+          image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
+          imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
+          securityContext:
+            runAsUser: {{ .Values.runAsUser }}
+            runAsGroup: {{ .Values.runAsGroup }}
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+          env:
+            - name: "NRI_KUBERNETES_HTTPSERVERPORT"
+              value: "8002"
+            - name: "NRI_KUBERNETES_CLUSTERNAME"
+              value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
+            - name: "NRI_KUBERNETES_NODENAME"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+            {{- if .Values.verboseLog }}
+            - name: NRI_KUBERNETES_VERBOSE
+              value: "1"
+            {{- end }}
+            {{- with .Values.ksm.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.ksm.extraEnvFrom }}
+          envFrom: {{ toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            - name: nri-kubernetes-config
+              mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
+              subPath: nri-kubernetes-config.yml
+            - mountPath: /tmp
+              name: tmpfs-tmp
+            {{- with .Values.ksm.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          {{- with .Values.ksm.resources }}
+          resources: {{ toYaml . | nindent 12 }}
+          {{- end }}
         - name: forwarder
           image: {{ .Values.images.forwarder.repository }}:{{ .Values.images.forwarder.tag }}
           imagePullPolicy: {{ .Values.images.forwarder.pullPolicy }}
@@ -111,46 +151,6 @@ spec:
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
             {{- end }}
-            {{- with .Values.ksm.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          {{- with .Values.ksm.resources }}
-          resources: {{ toYaml . | nindent 12 }}
-          {{- end }}
-        - name: ksm
-          image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
-          imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
-          securityContext:
-            runAsUser: {{ .Values.runAsUser }}
-            runAsGroup: {{ .Values.runAsGroup }}
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-          env:
-            - name: "NRI_KUBERNETES_HTTPSERVERPORT"
-              value: "8002"
-            - name: "NRI_KUBERNETES_CLUSTERNAME"
-              value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
-            - name: "NRI_KUBERNETES_NODENAME"
-              valueFrom:
-                fieldRef:
-                  apiVersion: "v1"
-                  fieldPath: "spec.nodeName"
-            {{- if .Values.verboseLog }}
-            - name: NRI_KUBERNETES_VERBOSE
-              value: "1"
-            {{- end }}
-            {{- with .Values.ksm.extraEnv }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
-          {{- with .Values.ksm.extraEnvFrom }}
-          envFrom: {{ toYaml . | nindent 12 }}
-          {{- end }}
-          volumeMounts:
-            - name: nri-kubernetes-config
-              mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
-              subPath: nri-kubernetes-config.yml
-            - mountPath: /tmp
-              name: tmpfs-tmp
             {{- with .Values.ksm.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
