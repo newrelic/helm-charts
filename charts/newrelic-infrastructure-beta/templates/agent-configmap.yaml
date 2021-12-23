@@ -1,0 +1,11 @@
+{{ if .Values.config }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic.labels" . | nindent 4 }}
+  name: {{ template "newrelic.fullname" . }}-agent
+data:
+    newrelic-infra.yml: |
+{{ toYaml .Values.config | indent 6 }}
+{{ end }}

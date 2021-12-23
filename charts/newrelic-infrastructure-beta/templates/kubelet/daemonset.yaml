@@ -50,7 +50,7 @@ spec:
             - name: "NRI_KUBERNETES_CLUSTERNAME"
               value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
             {{- if .Values.verboseLog }}
-            - name: NRI_VERBOSE
+            - name: NRI_KUBERNETES_VERBOSE
               value: "1"
             {{- end }}
             - name: "NRI_KUBERNETES_NODENAME"
@@ -85,8 +85,7 @@ spec:
           {{- end }}
         - name: agent
           image: {{ .Values.images.agent.repository }}:{{ .Values.images.agent.tag }}
-          command: [ "/sbin/tini" ]
-          args: [ "--", "/usr/bin/newrelic-infra" ]
+          command: [ "/sbin/tini", "--", "/usr/bin/newrelic-infra" ]
           imagePullPolicy: {{ .Values.images.agent.pullPolicy }}
           securityContext:
             {{- if .Values.privileged }}
@@ -246,7 +245,7 @@ spec:
         {{- if .Values.config }}
         - name: config
           configMap:
-            name: {{ template "newrelic.fullname" . }}
+            name: {{ template "newrelic.fullname" . }}-agent
             items:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml

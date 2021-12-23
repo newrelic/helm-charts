@@ -69,7 +69,7 @@ spec:
                   apiVersion: "v1"
                   fieldPath: "status.hostIP"
             {{- if .Values.verboseLog }}
-            - name: NRI_VERBOSE
+            - name: NRI_KUBERNETES_VERBOSE
               value: "1"
             {{- end }}
             {{- with .Values.controlPlane.extraEnv }}
@@ -187,7 +187,7 @@ spec:
         {{- if .Values.config }}
         - name: config
           configMap:
-            name: {{ template "newrelic.fullname" . }}
+            name: {{ template "newrelic.fullname" . }}-agent
             items:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
