@@ -49,11 +49,6 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
           env:
-            - name: "NRIA_OVERRIDE_HOSTNAME_SHORT"
-              valueFrom:
-                fieldRef:
-                  apiVersion: "v1"
-                  fieldPath: "spec.nodeName"
             - name: "NRI_KUBERNETES_HTTPSERVERPORT"
               value: "8001"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
@@ -102,6 +97,11 @@ spec:
           ports:
             - containerPort: 8001
           env:
+            - name: "NRIA_OVERRIDE_HOSTNAME_SHORT"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
             - name: "NRIA_HTTP_SERVER_PORT"
               value: "8001"
             - name: "K8S_NODE_NAME"
