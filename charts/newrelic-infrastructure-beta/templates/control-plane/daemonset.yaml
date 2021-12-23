@@ -1,4 +1,4 @@
-{{- if and (.Values.controlPlane.enabled) (.Values.enableLinux) (not (include "newrelic.fargate" .)) }}
+{{- if and (.Values.controlPlane.enabled) (not (include "newrelic.fargate" .)) }}
 apiVersion: apps/v1
 kind: {{ .Values.controlPlane.kind }}
 metadata:

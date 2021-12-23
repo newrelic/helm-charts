@@ -2,14 +2,6 @@ Your deployment of the New Relic Infrastructure agent is complete. You can check
 
     kubectl get daemonset -o wide -w --namespace {{ .Release.Namespace }} {{ template "newrelic.fullname" . }}
 
-{{- if .Values.image }}
-{{- if and (eq .Values.enableWindows true) (.Values.image.windowsTag) }}
-
-####       .Values.image.windowsTag for [newrelic-infrastructure] is deprecated      ####
-####  it will be removed in the future, please consider to update the configuration  ####
-
-{{- end -}}
-{{- end }}
 {{- if and (include "newrelic.fargate" .) .Values.nodeAffinity }}
 ###########
 # WARNING #
