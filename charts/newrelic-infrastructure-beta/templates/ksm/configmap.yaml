@@ -1,6 +1,4 @@
-{{ if .Values.ksm.enabled }}
-{{- $deprecatedKubeStateMetrics := include "newrelic.deprecatedKubeStateMetrics" . | fromYaml -}}
-{{- $scraperConfig := include "newrelic.ksm.scraperConfig" . | fromYaml -}}
+{{- if .Values.ksm.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,8 +6,11 @@ metadata:
   labels: {{ include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-ksm
 data:
-  # The component's scraperConfig with the old deprecated values and the common scrapper values are merged
-  # if a specific common value is not set on the component, the one in the common will be the one used (Example: interval)
   nri-kubernetes-config.yml: |
-{{ toYaml (merge ($deprecatedKubeStateMetrics) ($scraperConfig) .Values.common.scraperConfig) | indent 6 }}
-{{ end }}
+    {{- .Values.common.config | toYaml | nindent 4 }}
+    ksm:
+      enabled: true
+    {{- if .Values.ksm.config -}}
+    {{- .Values.ksm.config | toYaml | nindent 6 }}
+    {{- end }}
+{{- end }}

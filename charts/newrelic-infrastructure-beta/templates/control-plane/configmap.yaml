@@ -1,4 +1,4 @@
-{{ if .Values.controlPlane.enabled }}
+{{- if .Values.controlPlane.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,8 +6,11 @@ metadata:
   labels: {{ include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-control-plane
 data:
-  # The component's scraperConfig and the common scrapper values are merged
-  # if a specific common value is not set on the component, the one in the common will be the one used (Example: interval)
   nri-kubernetes-config.yml: |
-{{ toYaml (merge (include "newrelic.controlPlane.scraperConfig" . | fromYaml) .Values.common.scraperConfig) | indent 6 }}
-{{ end }}
+    {{- .Values.common.config | toYaml | nindent 4 }}
+    controlPlane:
+      enabled: true
+    {{- if .Values.controlPlane.config -}}
+    {{- .Values.controlPlane.config | toYaml | nindent 6 }}
+    {{- end }}
+{{- end }}

@@ -1,4 +1,4 @@
-{{ if .Values.kubelet.enabled }}
+{{- if .Values.kubelet.enabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -6,8 +6,11 @@ metadata:
   labels: {{ include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-kubelet
 data:
-  # The component's scraperConfig and the common scrapper values are merged
-  # if a specific common value is not set on the component, the one in the common will be the one used (Example: interval)
   nri-kubernetes-config.yml: |
-{{ toYaml (merge (include "newrelic.kubelet.scraperConfig" . | fromYaml) .Values.common.scraperConfig) | indent 6 }}
-{{ end }}
+    {{- .Values.common.config | toYaml | nindent 4 }}
+    kubelet:
+      enabled: true
+    {{- if .Values.kubelet.config -}}
+    {{- .Values.kubelet.config | toYaml | nindent 6 }}
+    {{- end }}
+{{- end }}

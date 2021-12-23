@@ -148,48 +148,6 @@ Returns fargate
 {{- end -}}
 {{- end -}}
 
-{{/* controlPlane scraper config */}}
-{{- define "newrelic.controlPlane.scraperConfigEnabled" -}}
-controlPlane:
-  enabled: true
-{{- end }}
-
-{{/* controlPlane scraper config */}}
-{{- define "newrelic.controlPlane.scraperConfig" -}}
-{{- (merge (include "newrelic.controlPlane.scraperConfigEnabled" . | fromYaml) .Values.controlPlane.scraperConfig) | toYaml }}
-{{- end }}
-
-{{/* kubelet scraper config */}}
-{{- define "newrelic.kubelet.scraperConfigEnabled" -}}
-kubelet:
-  enabled: true
-{{- end }}
-
-{{/* kubelet scraper config */}}
-{{- define "newrelic.kubelet.scraperConfig" -}}
-{{- (merge (include "newrelic.kubelet.scraperConfigEnabled" . | fromYaml) .Values.kubelet.scraperConfig) | toYaml }}
-{{- end }}
-
-{{- define "newrelic.deprecatedKubeStateMetrics" -}}
-ksm:
-  scheme: {{  $.Values.kubeStateMetricsScheme | quote }}
-  port: {{  $.Values.kubeStateMetricsPort | quote }}
-  staticURL: {{  $.Values.kubeStateMetricsUrl | quote }}
-  selector: {{  $.Values.kubeStateMetricsPodLabel | quote }}
-  namespace: {{  $.Values.kubeStateMetricsNamespace | quote }}
-{{- end -}}
-
-{{/* ksm scraper config */}}
-{{- define "newrelic.ksm.scraperConfigEnabled" -}}
-ksm:
-  enabled: true
-{{- end }}
-
-{{/* ksm scraper config */}}
-{{- define "newrelic.ksm.scraperConfig" -}}
-{{- (merge (include "newrelic.ksm.scraperConfigEnabled" . | fromYaml) .Values.ksm.scraperConfig) | toYaml }}
-{{- end }}
-
 {{/*
 Returns the list of namespaces where secrets need to be accessed by the controlPlane Scraper to do mTLS Auth
 */}}

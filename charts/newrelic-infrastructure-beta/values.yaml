@@ -8,14 +8,26 @@ images:
     pullPolicy: IfNotPresent
     tag: 1.20.5
     repository: newrelic/k8s-events-forwarder
+    registry: docker.io
   agent:
     pullPolicy: IfNotPresent
     tag: 2.7.6
     repository: newrelic/infrastructure-bundle
+    registry: docker.io
   scraper:
     pullPolicy: IfNotPresent
     tag: 0.1.2
     repository: newrelic/nri-kubernetes
+    registry: docker.io
+
+
+common:
+  config:
+    interval: 15s
+    timeout: 30s
+#   nodeIP: "1.2.3.4"
+  agentConfig:
+    eventQueueDepth: 2000
 
 controlPlane:
   enabled: true
@@ -64,145 +76,141 @@ controlPlane:
     requests:
       cpu: 100m
       memory: 150M
-  scraperConfig:
-  # interval: 35s
-  # timeout: 60s
-    controlPlane:
-      etcd:
-        enabled: true
-        autodiscover:
-          - selector: "tier=control-plane,component=etcd"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:4001
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-              - url: http://localhost:2381
-          - selector: "k8s-app=etcd-manager-main"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:4001
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-          - selector: "k8s-app=etcd"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:4001
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-        ## OpenShift
-        # - selector: "k8s-app=etcd"
-        #   namespace: kube-system
-        #   matchNode: true
-        #   endpoints:
-        #     - url: https://localhost:9979
-        #       insecureSkipVerify: true
-        #       auth:
-        #         type: mTLS
-        #         mtls:
-        #           secretName: secret-name
-        #           secretNamespace: secret-namespace
-
-      scheduler:
-        enabled: true
-        autodiscover:
-          - selector: "tier=control-plane,component=kube-scheduler"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10259
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-          - selector: "k8s-app=kube-scheduler"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10259
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-          - selector: "app=openshift-kube-scheduler,scheduler=true"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10259
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-      controllerManager:
-        enabled: true
-        autodiscover:
-          - selector: "tier=control-plane,component=kube-controller-manager"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10257
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-          - selector: "k8s-app=kube-controller-manager"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10257
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-          - selector: "app=kube-controller-manager,kube-controller-manager=true"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10257
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-               #  mtls:
-               #    secretName: secret-name
-               #    secretNamespace: secret-namespace
-          - selector: "app=controller-manager,controller-manager=true"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:10257
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-      apiServer:
-        enabled: true
-        autodiscover:
-          - selector: "tier=control-plane,component=kube-apiserver"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:8443
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-              - url: http://localhost:8080
-          - selector: "k8s-app=kube-apiserver"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:8443
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
-              - url: http://localhost:8080
-          - selector: "app=openshift-kube-apiserver,apiserver=true"
-            namespace: kube-system
-            matchNode: true
-            endpoints:
-              - url: https://localhost:8443
-                insecureSkipVerify: true
-                auth:
-                  type: bearer
+  config:
+    etcd:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=etcd"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:4001
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+            - url: http://localhost:2381
+        - selector: "k8s-app=etcd-manager-main"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:4001
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "k8s-app=etcd"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:4001
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+      ## OpenShift
+      # - selector: "k8s-app=etcd"
+      #   namespace: kube-system
+      #   matchNode: true
+      #   endpoints:
+      #     - url: https://localhost:9979
+      #       insecureSkipVerify: true
+      #       auth:
+      #         type: mTLS
+      #         mtls:
+      #           secretName: secret-name
+      #           secretNamespace: secret-namespace
+    scheduler:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=kube-scheduler"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10259
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "k8s-app=kube-scheduler"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10259
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "app=openshift-kube-scheduler,scheduler=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10259
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+    controllerManager:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=kube-controller-manager"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "k8s-app=kube-controller-manager"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "app=kube-controller-manager,kube-controller-manager=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+             #  mtls:
+             #    secretName: secret-name
+             #    secretNamespace: secret-namespace
+        - selector: "app=controller-manager,controller-manager=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+    apiServer:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=kube-apiserver"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:8443
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+            - url: http://localhost:8080
+        - selector: "k8s-app=kube-apiserver"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:8443
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+            - url: http://localhost:8080
+        - selector: "app=openshift-kube-apiserver,apiserver=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:8443
+              insecureSkipVerify: true
+              auth:
+                type: bearer
 
 kubelet:
   enabled: true
@@ -236,8 +244,7 @@ kubelet:
     requests:
       cpu: 100m
       memory: 150M
-  scraperConfig:
-    kubelet: {}
+  config: {}
 
 
 ksm:
@@ -281,21 +288,7 @@ ksm:
     requests:
       cpu: 100m
       memory: 150M
-  scraperConfig:
-#   interval: 10s
-#   timeout: 40s
-    ksm:
-      namespace: ""
-      port: 0
-      scheme: ""
-      selector: ""
-      staticURL: ""
-
-common:
-  scraperConfig:
-    interval: 15s
-    timeout: 30s
-
+  config: {}
 
 # K8s DaemonSets update strategy.
 updateStrategy:
