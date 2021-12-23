@@ -180,13 +180,8 @@ spec:
             {{- if .Values.privileged }}
             - name: dev
               mountPath: /dev
-            {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
-            - name: host-crio-socket
-              mountPath: /var/run/crio.sock
-            {{- else }}
             - name: host-docker-socket
               mountPath: /var/run/docker.sock
-            {{- end }}
             - name: log
               mountPath: /var/log
             - name: host-volume
@@ -211,15 +206,9 @@ spec:
         - name: dev
           hostPath:
             path: /dev
-        {{- if and (.Values.openshift.enabled) (eq .Values.openshift.version "4.x") }}
-        - name: host-crio-socket
-          hostPath:
-            path: /var/run/crio.sock
-        {{- else }}
         - name: host-docker-socket
           hostPath:
             path: /var/run/docker.sock
-        {{- end }}
         - name: log
           hostPath:
             path: /var/log
