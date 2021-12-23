@@ -3,6 +3,7 @@ apiVersion: policy/v1beta1
 kind: PodSecurityPolicy
 metadata:
   name: privileged-{{ template "newrelic.fullname" . }}
+  labels: {{ include "newrelic.labels" . | indent 4 }}
 spec:
   allowedCapabilities:
   - '*'

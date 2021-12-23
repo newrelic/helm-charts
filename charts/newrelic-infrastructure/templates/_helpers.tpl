@@ -35,6 +35,15 @@ chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 mode: {{ template "newrelic.mode" . }}
+{{- if .Values.global }}
+  {{- if .Values.global.customLabels }}
+{{ toYaml .Values.global.customLabels }}
+  {{- end }}
+{{- else }}
+  {{- if .Values.customLabels }}
+{{ toYaml .Values.customLabels }}
+  {{- end }}
+{{- end }}
 {{- end }}
 
 {{/*
