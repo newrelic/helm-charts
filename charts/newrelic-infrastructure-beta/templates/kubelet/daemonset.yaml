@@ -109,10 +109,6 @@ spec:
                 secretKeyRef:
                   name: {{ include "newrelic.licenseSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
                   key: {{ include "newrelic.licenseSecretKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
-            {{- with .Values.eventQueueDepth }}
-            - name: "NRIA_EVENT_QUEUE_DEPTH"
-              value: {{ .| quote }}
-            {{- end }}
             {{- /* Ugly hack to check if .Values.enableProcessMetrics is defined: */}}
             {{- if ne (print .Values.enableProcessMetrics) "<nil>" }}
             - name: "NRIA_ENABLE_PROCESS_METRICS"
@@ -163,7 +159,7 @@ spec:
           envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.config }}
+            {{- if .Values.common.agentConfig }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
@@ -224,7 +220,7 @@ spec:
             items:
               - key: nri-kubernetes-config.yml
                 path: nri-kubernetes-config.yml
-        {{- if .Values.config }}
+        {{- if .Values.common.agentConfig }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent

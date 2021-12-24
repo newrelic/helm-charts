@@ -131,10 +131,6 @@ spec:
             - name: NRIA_STAGING
               value: "true"
             {{- end }}
-            {{- with .Values.eventQueueDepth }}
-            - name: "NRIA_EVENT_QUEUE_DEPTH"
-              value: {{ .| quote }}
-            {{- end }}
             # Using FORWARD_ONLY mode to avoid the creating a host entity for the pod.
             - name: NRIA_IS_SECURE_FORWARD_ONLY
               value: "false"
@@ -153,7 +149,7 @@ spec:
               name: tmpfs-user-data
             - mountPath: /tmp
               name: tmpfs-tmp
-            {{- if .Values.config }}
+            {{- if .Values.common.agentConfig }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
@@ -177,7 +173,7 @@ spec:
           emptyDir: {}
         - name: tmpfs-tmp
           emptyDir: {}
-        {{- if .Values.config }}
+        {{- if .Values.common.agentConfig }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
