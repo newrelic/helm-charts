@@ -3,7 +3,8 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic.labels" . | nindent 4 }}
+  labels:
+    {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-kubelet
   {{- with .Values.kubelet.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
