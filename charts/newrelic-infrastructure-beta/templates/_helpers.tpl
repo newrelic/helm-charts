@@ -93,7 +93,7 @@ Return the name of the secret holding the License Key
 {{- define "newrelic.licenseCustomSecretName" -}}
 {{- if .Values.customSecretName -}}
   {{- .Values.customSecretName -}}
-{{- else if and .Values.global -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.customSecretName -}}
     {{- .Values.global.customSecretName -}}
   {{- end -}}
