@@ -181,7 +181,8 @@ spec:
         podAffinity: {{ . | toYaml | nindent 10 }}
         {{- end }}
         {{- with .Values.ksm.affinity.nodeAffinity }}
-        nodeAffinity: {{ . | toYaml | nindent 10 }}
+        nodeAffinity:
+          {{- . | toYaml | nindent 10 }}
         {{- end }}
       {{- end }}
       {{- with .Values.ksm.tolerations }}

@@ -189,7 +189,8 @@ spec:
       {{- end }}
       {{- with .Values.controlPlane.affinity.nodeAffinity }}
       affinity:
-        nodeAffinity: {{ . | toYaml | nindent 10 }}
+        nodeAffinity:
+          {{- . | toYaml | nindent 10 }}
       {{- end }}
       {{- with .Values.controlPlane.tolerations }}
       tolerations:

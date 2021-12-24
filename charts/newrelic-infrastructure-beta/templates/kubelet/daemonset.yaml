@@ -241,7 +241,8 @@ spec:
       {{- end }}
       {{- if .Values.kubelet.affinity.nodeAffinity }}
       affinity:
-        nodeAffinity: {{ .Values.kubelet.affinity.nodeAffinity | toYaml | nindent 10 }}
+        nodeAffinity:
+          {{- .Values.kubelet.affinity.nodeAffinity | toYaml | nindent 10 }}
       {{- else if include "newrelic.fargate" . }}
       affinity:
         nodeAffinity:
