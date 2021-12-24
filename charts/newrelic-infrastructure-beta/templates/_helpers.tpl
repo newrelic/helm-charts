@@ -34,11 +34,16 @@ unprivileged
 {{- end }}
 {{- end -}}
 
+{{/* Selector labels */}}
+{{- define "newrelic.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "newrelic.name" . }}
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
 {{/* Common labels */}}
 {{- define "newrelic.labels" -}}
 helm.sh/chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
-app.kubernetes.io/name: {{ include "newrelic.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
+{{ include "newrelic.selectorLabels" . }}
 mode: {{ template "newrelic.mode" . }}
 {{- if .Chart.AppVersion }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}

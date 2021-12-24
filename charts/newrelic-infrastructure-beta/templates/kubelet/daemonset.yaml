@@ -15,8 +15,8 @@ spec:
   {{- end }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ include "newrelic.name" . }}-kubelet
-      app.kubernetes.io/instance: {{ .Release.Name }}-kubelet
+      {{- include "newrelic.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/component: kubelet
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -24,8 +24,8 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        app.kubernetes.io/name: {{ include "newrelic.name" . }}-kubelet
-        app.kubernetes.io/instance: {{ .Release.Name }}-kubelet
+        {{- include "newrelic.selectorLabels" . | nindent 8 }}
+        app.kubernetes.io/component: kubelet
         {{- with .Values.podLabels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
