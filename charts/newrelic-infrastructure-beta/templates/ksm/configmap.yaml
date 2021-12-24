@@ -11,7 +11,7 @@ data:
     {{- .Values.common.config | toYaml | nindent 4 }}
     ksm:
       enabled: true
-    {{- if .Values.ksm.config -}}
-    {{- .Values.ksm.config | toYaml | nindent 6 }}
-    {{- end }}
+      {{- with .Values.ksm.config -}}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
 {{- end }}

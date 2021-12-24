@@ -11,7 +11,7 @@ data:
     {{- .Values.common.config | toYaml | nindent 4 }}
     kubelet:
       enabled: true
-    {{- if .Values.kubelet.config -}}
-    {{- .Values.kubelet.config | toYaml | nindent 6 }}
-    {{- end }}
+      {{- with .Values.kubelet.config -}}
+      {{- . | toYaml | nindent 6 }}
+      {{- end }}
 {{- end }}
