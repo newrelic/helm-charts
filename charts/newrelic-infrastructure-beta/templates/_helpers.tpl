@@ -158,9 +158,8 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
         {{- range $endpoint := $autodiscover.endpoints }}
             {{- if $endpoint.auth }}
             {{- if $endpoint.auth.mtls }}
-            {{- if $endpoint.auth.mtls.secretName }}
-            {{- $namespace := $endpoint.auth.mtls.secretNamespace | default "default" -}}
-            {{- $namespaceList = append $namespaceList $namespace -}}
+            {{- if $endpoint.auth.mtls.secretNamespace }}
+            {{- $namespaceList = append $namespaceList $endpoint.auth.mtls.secretNamespace -}}
             {{- end }}
             {{- end }}
             {{- end }}
