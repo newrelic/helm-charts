@@ -85,7 +85,7 @@ spec:
           command: [ "/sbin/tini", "--", "/usr/bin/newrelic-infra" ]
           imagePullPolicy: {{ .Values.images.agent.pullPolicy }}
           securityContext:
-          {{- if .Values.privileged -}}
+          {{- if .Values.privileged }}
             privileged: true
           {{- else }}
             {{- toYaml .Values.securityContext | nindent 12 }}
