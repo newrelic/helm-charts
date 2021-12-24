@@ -41,10 +41,7 @@ spec:
           image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
           imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
           securityContext:
-            runAsUser: {{ .Values.runAsUser }}
-            runAsGroup: {{ .Values.runAsGroup }}
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
+            {{- toYaml .Values.securityContext | nindent 12 }}
           env:
             - name: "NRI_KUBERNETES_HTTPSERVERPORT"
               value: "8003"
@@ -88,14 +85,11 @@ spec:
           command: [ "/sbin/tini", "--", "/usr/bin/newrelic-infra" ]
           imagePullPolicy: {{ .Values.images.agent.pullPolicy }}
           securityContext:
-            {{- if .Values.privileged }}
+          {{- if .Values.privileged -}}
             privileged: true
-            {{- else }}
-            runAsUser: {{ .Values.runAsUser }}
-            runAsGroup: {{ .Values.runAsGroup }}
-            allowPrivilegeEscalation: false
-            readOnlyRootFilesystem: true
-            {{- end }}
+          {{- else }}
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          {{- end }}
           ports:
             - containerPort: 8003
           env:
