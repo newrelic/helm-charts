@@ -158,7 +158,7 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 */}}
 {{- define "newrelic.roleBindingNamespaces" -}}
 {{ $namespaceList := list }}
-{{- range $components := .Values.controlPlane.scraperConfig.controlPlane }}
+{{- range $components := .Values.controlPlane.config }}
     {{- range $autodiscover := $components.autodiscover }}
         {{- range $endpoint := $autodiscover.endpoints }}
             {{- if $endpoint.auth }}
