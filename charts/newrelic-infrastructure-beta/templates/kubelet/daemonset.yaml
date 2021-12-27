@@ -38,7 +38,7 @@ spec:
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
       containers:
         - name: kubelet
-          image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
+          image: "{{ .Values.images.scraper.registry }}/{{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -81,7 +81,7 @@ spec:
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
         - name: agent
-          image: {{ .Values.images.agent.repository }}:{{ .Values.images.agent.tag }}
+          image: "{{ .Values.images.agent.registry }}/{{ .Values.images.agent.repository }}:{{ .Values.images.agent.tag }}"
           command: [ "/sbin/tini", "--", "/usr/bin/newrelic-infra" ]
           imagePullPolicy: {{ .Values.images.agent.pullPolicy }}
           securityContext:

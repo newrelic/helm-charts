@@ -42,7 +42,7 @@ spec:
       {{- end }}
       containers:
         - name: control-plane
-          image: {{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}
+          image: "{{ .Values.images.scraper.registry }}/{{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
@@ -84,7 +84,7 @@ spec:
           resources: {{ toYaml . | nindent 12 }}
           {{- end }}
         - name: forwarder
-          image: {{ .Values.images.forwarder.repository }}:{{ .Values.images.forwarder.tag }}
+          image: "{{ .Values.images.forwarder.registry }}/{{ .Values.images.forwarder.repository }}:{{ .Values.images.forwarder.tag }}"
           imagePullPolicy: {{ .Values.images.forwarder.pullPolicy }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
