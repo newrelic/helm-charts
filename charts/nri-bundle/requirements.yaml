@@ -1,8 +1,16 @@
 dependencies:
+  # Old newrelic-infrastructure chart, now deprecated.
   - name: newrelic-infrastructure
     repository: file://../newrelic-infrastructure
     condition: infrastructure.enabled
     version: 2.7.3
+
+  # New newrelic-infrastructure chart.
+  - name: newrelic-infrastructure-beta
+    alias: newrelic-infrastructure
+    repository: file://../newrelic-infrastructure-beta
+    condition: newrelic-infrastructure-beta.enabled
+    version: 3.0.0
 
   - name: nri-prometheus
     repository: file://../nri-prometheus
