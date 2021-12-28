@@ -119,8 +119,8 @@ spec:
                 secretKeyRef:
                   name: {{ include "newrelic.licenseSecretName" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
                   key: {{ include "newrelic.licenseSecretKey" . | required "licenseKey or customSecretName and customSecretLicenseKey must be set" }}
-            {{- /* Ugly hack to check if .Values.enableProcessMetrics is defined: */}}
-            {{- if ne (print .Values.enableProcessMetrics) "<nil>" }}
+            {{- /* Check if enableProcessMetrics is present in the map */}}
+            {{- if .Values.enableProcessMetrics | kindIs "bool" }}
             - name: "NRIA_ENABLE_PROCESS_METRICS"
               value: {{ .Values.enableProcessMetrics | quote }}
             {{- end }}
