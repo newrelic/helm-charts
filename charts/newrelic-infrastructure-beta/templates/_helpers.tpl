@@ -175,12 +175,16 @@ roleBindingNamespaces: {{- uniq $namespaceList | toYaml | nindent 0 }}
 {{- end -}}
 
 {{/*
-Returns Custom Attributes as a yaml even if formatted as a json string
+Returns Custom Attributes even if formatted as a json string
 */}}
-{{- define "newrelic.customAttributes" -}}
+{{- define "newrelic.customAttributesWithoutClusterName" -}}
 {{- if kindOf .Values.customAttributes | eq "string" -}}
 {{  .Values.customAttributes }}
 {{- else -}}
-{{ .Values.customAttributes | toJson | quote  }}
+{{ .Values.customAttributes | toJson }}
 {{- end -}}
+{{- end -}}
+
+{{- define "newrelic.customAttributes" -}}
+{{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" "$(CLUSTER_NAME)") | toJson | quote }}
 {{- end -}}
