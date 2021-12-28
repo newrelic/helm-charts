@@ -11,7 +11,7 @@ data:
     {{- .Values.common.config | toYaml | nindent 4 }}
     controlPlane:
       enabled: true
-      {{- with .Values.controlPlane.config -}}
+      {{- with .Values.controlPlane.config }}
       {{- . | toYaml | nindent 6 }}
       {{- end }}
 {{- end }}
