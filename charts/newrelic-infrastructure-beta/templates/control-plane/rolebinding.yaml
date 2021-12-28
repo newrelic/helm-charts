@@ -1,3 +1,4 @@
+{{- if .Values.rbac.create }}
 {{- $namespaces := (include "newrelic.roleBindingNamespaces" . | fromYaml) -}}
 {{- range $namespaces.roleBindingNamespaces }}
 ---
@@ -16,4 +17,5 @@ subjects:
 - kind: ServiceAccount
   name: {{ template "newrelic.serviceAccountName" $ }}-control-plane
   namespace: {{ $.Release.Namespace }}
+{{- end -}}
 {{- end -}}
