@@ -154,7 +154,7 @@ Returns fargate
 {{- end -}}
 
 {{/*
-Returns the list of namespaces where secrets need to be accessed by the controlPlane Scraper to do mTLS Auth
+Returns the list of namespaces where secrets need to be accessed by the controlPlane integration to do mTLS Auth
 */}}
 {{- define "newrelic.roleBindingNamespaces" -}}
 {{ $namespaceList := list }}

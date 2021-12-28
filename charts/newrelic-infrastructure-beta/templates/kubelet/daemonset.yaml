@@ -48,8 +48,8 @@ spec:
       serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
       containers:
         - name: kubelet
-          image: "{{ .Values.images.scraper.registry }}/{{ .Values.images.scraper.repository }}:{{ .Values.images.scraper.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: {{ .Values.images.scraper.pullPolicy }}
+          image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
           env:
