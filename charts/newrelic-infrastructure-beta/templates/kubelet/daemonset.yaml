@@ -216,12 +216,11 @@ spec:
         - name: host-volume
           hostPath:
             path: /
-        {{- else }}
+        {{- end }}
         - name: tmpfs-data
           emptyDir: {}
         - name: tmpfs-user-data
           emptyDir: {}
-        {{- end }}
         - name: tmpfs-tmp
           emptyDir: {}
         - name: nri-kubernetes-config
@@ -246,7 +245,7 @@ spec:
         {{- with .Values.kubelet.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- with $.Values.priorityClassName }}
+      {{- with .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
       {{- if .Values.kubelet.affinity.nodeAffinity }}
