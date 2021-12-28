@@ -2,7 +2,19 @@ Your deployment of the New Relic Infrastructure agent is complete if you have no
 
     kubectl get daemonset -o wide -w --namespace {{ .Release.Namespace }} {{ template "newrelic.fullname" . }}
 
+{{- if or (not .Values.ksm.enabled) (not .Values.kubelet.enabled) }}
+
+###########
+# WARNING #
+###########
+
+You have specified ksm or kubelet integration components as not enabled.
+Those components are needed to have the full experience on NROne kubernetes explorer.
+
+{{- end }}
+
 {{- if and (include "newrelic.fargate" .) .Values.kubelet.affinity.nodeAffinity }}
+
 ###########
 # WARNING #
 ###########
