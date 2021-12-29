@@ -186,5 +186,5 @@ Returns Custom Attributes even if formatted as a json string
 {{- end -}}
 
 {{- define "newrelic.customAttributes" -}}
-{{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" "$(CLUSTER_NAME)") | toJson | quote }}
+{{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" (include "newrelic.cluster" .)) | toJson | quote }}
 {{- end -}}
