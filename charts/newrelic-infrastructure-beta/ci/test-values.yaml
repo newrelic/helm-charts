@@ -36,7 +36,7 @@ ksm:
       cpu: 100m
       memory: 150M
   config:
-    namespace: "newrelic"
+    namespace: "kube-system"
 
 # K8s DaemonSets update strategy.
 updateStrategy:
@@ -132,7 +132,7 @@ controlPlane:
                 type: bearer
                 mtls:
                   secretName: secret-name
-                  secretNamespace: newrelic
+                  secretNamespace: default
     apiServer:
       enabled: true
       autodiscover:
