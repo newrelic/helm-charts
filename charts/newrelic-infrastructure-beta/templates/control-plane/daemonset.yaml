@@ -83,7 +83,7 @@ spec:
               mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
               subPath: nri-kubernetes-config.yml
             - mountPath: /tmp
-              name: tmpfs-tmp
+              name: control-plane-tmpfs-tmp
             {{- with .Values.controlPlane.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -152,11 +152,11 @@ spec:
           {{- end }}
           volumeMounts:
             - mountPath: /var/db/newrelic-infra/data
-              name: tmpfs-data
+              name: forwarder-tmpfs-data
             - mountPath: /var/db/newrelic-infra/user_data
-              name: tmpfs-user-data
+              name: forwarder-tmpfs-user-data
             - mountPath: /tmp
-              name: tmpfs-tmp
+              name: forwarder-tmpfs-tmp
             {{- if .Values.common.agentConfig }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
@@ -175,11 +175,13 @@ spec:
             items:
               - key: nri-kubernetes-config.yml
                 path: nri-kubernetes-config.yml
-        - name: tmpfs-data
+        - name: forwarder-tmpfs-data
           emptyDir: {}
-        - name: tmpfs-user-data
+        - name: forwarder-tmpfs-user-data
           emptyDir: {}
-        - name: tmpfs-tmp
+        - name: forwarder-tmpfs-tmp
+          emptyDir: {}
+        - name: control-plane-tmpfs-tmp
           emptyDir: {}
         {{- if .Values.common.agentConfig }}
         - name: config

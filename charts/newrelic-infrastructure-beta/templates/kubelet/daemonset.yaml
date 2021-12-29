@@ -83,7 +83,7 @@ spec:
               mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
               subPath: nri-kubernetes-config.yml
             - mountPath: /tmp
-              name: tmpfs-tmp
+              name: kubelet-tmpfs-tmp
             {{- with .Values.kubelet.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -97,6 +97,7 @@ spec:
           securityContext:
           {{- if .Values.privileged }}
             privileged: true
+            readOnlyRootFilesystem: true
           {{- else }}
             {{- toYaml .Values.securityContext | nindent 12 }}
           {{- end }}
@@ -188,14 +189,13 @@ spec:
             - name: host-volume
               mountPath: /host
               readOnly: true
-            {{- else }}
-            - mountPath: /var/db/newrelic-infra/data
-              name: tmpfs-data
-            - mountPath: /var/db/newrelic-infra/user_data
-              name: tmpfs-user-data
-            - mountPath: /tmp
-              name: tmpfs-tmp
             {{- end }}
+            - mountPath: /var/db/newrelic-infra/data
+              name: agent-tmpfs-data
+            - mountPath: /var/db/newrelic-infra/user_data
+              name: agent-tmpfs-user-data
+            - mountPath: /tmp
+              name: agent-tmpfs-tmp
             {{- with .Values.kubelet.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -217,11 +217,13 @@ spec:
           hostPath:
             path: /
         {{- end }}
-        - name: tmpfs-data
+        - name: agent-tmpfs-data
           emptyDir: {}
-        - name: tmpfs-user-data
+        - name: agent-tmpfs-user-data
           emptyDir: {}
-        - name: tmpfs-tmp
+        - name: agent-tmpfs-tmp
+          emptyDir: {}
+        - name: kubelet-tmpfs-tmp
           emptyDir: {}
         - name: nri-kubernetes-config
           configMap:
