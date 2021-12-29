@@ -153,12 +153,15 @@ Returns fargate
 Returns lowDataMode
 */}}
 {{- define "newrelic-logging.lowDataMode" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.lowDataMode }}
-    {{- .Values.global.lowDataMode -}}
-  {{- end -}}
-{{- else if .Values.lowDataMode }}
+{{/* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */}}
+{{- if (get .Values "lowDataMode" | kindIs "bool") -}}
   {{- .Values.lowDataMode -}}
+{{- else -}}
+{{/* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */}}
+{{- $global := index .Values "global" | default dict -}}
+{{- if get $global "lowDataMode" | kindIs "bool" -}}
+  {{- $global.lowDataMode -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
