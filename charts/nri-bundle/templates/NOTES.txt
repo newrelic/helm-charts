@@ -1,0 +1,38 @@
+{{/* We want to fail if you try to install the old newrelic-infrastructure and the new nri-kubernetes */}}
+{{- if and .Values.infrastructure.enabled (index .Values "nri-kubernetes").enabled -}}
+{{- fail "You cannot enable the legacy and the v3 infrastructure charts at the same time. Please set infrastructure.enabled to false in your values or enable the compatibility layer. Refer to the migration docs for more information." }}
+{{- end -}}
+
+{{/* We want to fail if you try to install the old newrelic-infrastructure and the new nri-kubernetes in compatibility mode */}}
+{{- if and (index .Values "nri-kubernetes").enabled (index .Values "newrelic-infrastructure").compatibilityLayer -}}
+{{ fail "You cannot enable the v3 and the v3 in compatibility mode at the same time. nri-kubernetes.enabled should only be used with migrated configurations. Check the migrations docs for more information." }}
+{{- end -}}
+
+
+{{- if and (index .Values "newrelic-infrastructure-beta").enabled .Release.IsUpgrade }}
+Congratulations!
+You just upgraded to:
+
+             _        _          _                          _
+            (_)      | |        | |                        | |
+  _ __  _ __ _ ______| | ___   _| |__   ___ _ __ _ __   ___| |_ ___  ___
+ | '_ \| '__| |______| |/ / | | | '_ \ / _ \ '__| '_ \ / _ \ __/ _ \/ __|
+ | | | | |  | |      |   <| |_| | |_) |  __/ |  | | | |  __/ ||  __/\__ \
+ |_| |_|_|_ |_|      |_|\_\\__,_|_.__/ \___|_|  |_| |_|\___|\__\___||___/
+      |___ \
+ __   ____) |
+ \ \ / /__ <
+  \ V /___) |
+   \_/|____/
+
+In this major release we have changed quite a few things:
+* Our monolithic DaemonSet has been split into several, more lightweight
+  components allowing for better resource tuning.
+* Enabling monitoring of the control plane, including out-of-cluster control
+  planes is now easier to do.
+* Logs and error messages have been strongly revamped, providing more
+  actionable and less noisy messages.
+
+And much more! Please check the full release notes below:
+https://placeholder.link # TODO
+{{- end }}

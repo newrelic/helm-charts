@@ -1,8 +1,25 @@
 dependencies:
+  # Old newrelic-infrastructure chart, now deprecated.
   - name: newrelic-infrastructure
     repository: file://../newrelic-infrastructure
     condition: infrastructure.enabled
     version: 2.7.3
+
+  # New nri-kubernetes chart with compatibility layer.
+  - name: nri-kubernetes
+    alias: newrelic-infrastructure
+    repository: file://../nri-kubernetes
+    # Notes of why this is overengineered:
+    #  * This chart is still using Helm 2 so we cannot set various conditions like `infrastructure.enabled,newrelic-infrastructure.compatibilityLayer`
+    #  * Helm 2 also does not support `import-values` so we have to alias the new chart to the old one to get the values from it.
+    condition: newrelic-infrastructure.compatibilityLayer
+    version: 3.0.0
+
+  # New nri-kubernetes chart.
+  - name: nri-kubernetes
+    repository: file://../nri-kubernetes
+    condition: nri-kubernetes.enabled
+    version: 3.0.0
 
   - name: nri-prometheus
     repository: file://../nri-prometheus
