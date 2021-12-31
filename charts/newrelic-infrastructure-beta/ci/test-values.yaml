@@ -4,9 +4,9 @@ global:
 
 common:
   agentConfig:
-    eventQueueDepth: 100000
-    collector_url: http://mock-server:8000
-    identity_url: http://mock-server:8000
+    # We set it in order for the kubelet to not crash when posting tho the agent. Since the License_Key is
+    # not valid, the Identity Api doesn't return an AgentID and the server from the Agent takes to long to respond
+    is_forward_only: true
   config:
     interval: 30s
     timeout: 180s
