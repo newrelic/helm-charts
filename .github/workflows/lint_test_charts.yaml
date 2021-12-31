@@ -40,10 +40,6 @@ jobs:
       - name: Create test ns
         if: steps.list-changed.outputs.changed == 'true'
         run: kubectl create ns ct
-      - name: Create mock Server
-        run: |
-          kubectl run mock-server --image=bash -- bash -c "while true; do printf \"HTTP/1.1 200 Okay-ish\nServer: Fake\nContent-Length: 0\n\n\" | nc -lvvp 8000 > /dev/null;done
-          kubectl expose pod mock-server --port 8000
       - name: Test install charts
         run: ct install --namespace ct --config ct.yaml
 
