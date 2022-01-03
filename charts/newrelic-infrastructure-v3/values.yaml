@@ -20,12 +20,89 @@ images:
     repository: newrelic/nri-kubernetes
     registry: docker.io
 
-
 common:
   config:
     interval: 15s
     timeout: 30s
   agentConfig: {}
+
+kubelet:
+  enabled: true
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    nodeAffinity: {}
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
+  extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
+  extraEnvFrom: []
+  # Mount additional volumes into the pod.
+  extraVolumes: []
+  # Mount additional volume Mounts into the pod.
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  config: {}
+
+ksm:
+  enabled: true
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: kube-state-metrics
+          weight: 100
+    nodeAffinity: {}
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
+  extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
+  extraEnvFrom: []
+  # Mount additional volumes into the pod.
+  extraVolumes: []
+  # Mount additional volume Mounts into the pod.
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  config: {}
 
 controlPlane:
   enabled: true
@@ -210,85 +287,6 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
-
-kubelet:
-  enabled: true
-  annotations: {}
-  tolerations:
-    - operator: "Exists"
-      effect: "NoSchedule"
-    - operator: "Exists"
-      effect: "NoExecute"
-  nodeSelector: {}
-  affinity:
-    nodeAffinity: {}
-  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
-  # extraEnv:
-  #  - name: ENV_VAR1
-  #    value: "var1"
-  #  - name: ENV_VAR2
-  #    value: "var2"
-  extraEnv: []
-  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
-  # extraEnvFrom:
-  #  - configMapRef:
-  #      name: 'another-config-map'
-  extraEnvFrom: []
-  # Mount additional volumes into the pod.
-  extraVolumes: []
-  # Mount additional volume Mounts into the pod.
-  extraVolumeMounts: []
-  resources:
-    limits:
-      memory: 300M
-    requests:
-      cpu: 100m
-      memory: 150M
-  config: {}
-
-
-ksm:
-  enabled: true
-  annotations: {}
-  tolerations:
-    - operator: "Exists"
-      effect: "NoSchedule"
-    - operator: "Exists"
-      effect: "NoExecute"
-  nodeSelector: {}
-  affinity:
-    podAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - podAffinityTerm:
-            topologyKey: kubernetes.io/hostname
-            labelSelector:
-              matchLabels:
-                app.kubernetes.io/name: kube-state-metrics
-          weight: 100
-    nodeAffinity: {}
-  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
-  # extraEnv:
-  #  - name: ENV_VAR1
-  #    value: "var1"
-  #  - name: ENV_VAR2
-  #    value: "var2"
-  extraEnv: []
-  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
-  # extraEnvFrom:
-  #  - configMapRef:
-  #      name: 'another-config-map'
-  extraEnvFrom: []
-  # Mount additional volumes into the pod.
-  extraVolumes: []
-  # Mount additional volume Mounts into the pod.
-  extraVolumeMounts: []
-  resources:
-    limits:
-      memory: 300M
-    requests:
-      cpu: 100m
-      memory: 150M
-  config: {}
 
 # K8s DaemonSets update strategy.
 updateStrategy:
