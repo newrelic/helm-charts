@@ -157,8 +157,8 @@ Returns lowDataMode
 {{- if (get .Values "lowDataMode" | kindIs "bool") -}}
   {{- if .Values.lowDataMode -}}
     {{/*
-        We want only to return when this is true, returning `false` here will tamplate "false" (string) when doing
-        an `(include "newrelic-logging.lowDataMode" .)`, whis is not an "empty string" so it is `true` if it is used
+        We want only to return when this is true, returning `false` here will template "false" (string) when doing
+        an `(include "newrelic-logging.lowDataMode" .)`, which is not an "empty string" so it is `true` if it is used
         as an evaluation somewhere else.
     */}}
     {{- .Values.lowDataMode -}}
