@@ -115,7 +115,8 @@ spec:
             {{- end }}
             {{- if (include "newrelic.customAttributes" .) }}
             - name: "NRIA_CUSTOM_ATTRIBUTES"
-              value: {{ include "newrelic.customAttributes" . }}
+              value: >-
+                {{- include "newrelic.customAttributes" . | nindent 16 }}
             {{- end }}
             - name: NRIA_LICENSE_KEY
               valueFrom:
