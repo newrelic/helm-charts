@@ -13,30 +13,9 @@ common:
 
 customAttributes: '{"new":"relic","loren":"ipsum"}'
 
+# Disable KSM scraper as it is not enabled when testing this chart individually.
 ksm:
   enabled: false
-  annotations: {}
-  tolerations:
-    - operator: "Exists"
-      effect: "NoSchedule"
-    - operator: "Exists"
-      effect: "NoExecute"
-  extraEnv:
-    - name: ENV_VAR1
-      value: "var1"
-    - name: ENV_VAR2
-      value: "var2"
-  extraEnvFrom: []
-  # Mount additional volumes into the pod.
-  extraVolumes: []
-  # Mount additional volume Mounts into the pod.
-  extraVolumeMounts: []
-  resources:
-    limits:
-      memory: 300M
-    requests:
-      cpu: 100m
-      memory: 150M
 
 # K8s DaemonSets update strategy.
 updateStrategy:
