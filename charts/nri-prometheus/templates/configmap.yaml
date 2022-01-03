@@ -13,7 +13,7 @@ data:
   {{- $lowDataDefault := .Files.Get "static/lowdatamodedefaults.yaml" | fromYaml -}}
 
   {{- if (include "nri-prometheus.lowDataMode" .) }}
-    {{- mergeOverwrite .Values.config $lowDataDefault | toYaml | nindent 4 }}
+    {{- mergeOverwrite $lowDataDefault .Values.config | toYaml | nindent 4 }}
   {{- else }}
     {{- toYaml .Values.config | trim | nindent 4 }}
   {{- end }}
