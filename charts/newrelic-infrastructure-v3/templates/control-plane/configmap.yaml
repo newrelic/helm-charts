@@ -1,0 +1,17 @@
+{{- if .Values.controlPlane.enabled -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{- include "newrelic.labels" . | nindent 4 }}
+  name: {{ template "newrelic.fullname" . }}-control-plane
+data:
+  nri-kubernetes-config.yml: |
+{{- .Values.common.config | toYaml | nindent 4 }}
+controlPlane:
+  enabled: true
+  {{- with .Values.controlPlane.config }}
+  {{- . | toYaml | nindent 6 }}
+  {{- end }}
+{{- end }}
