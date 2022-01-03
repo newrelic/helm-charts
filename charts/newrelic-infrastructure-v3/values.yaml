@@ -1,0 +1,380 @@
+# Default values for newrelic-infrastructure.
+nameOverride: ""
+fullnameOverride: ""
+
+images:
+  pullSecrets: []
+  forwarder:
+    pullPolicy: IfNotPresent
+    tag: 1.20.5
+    repository: newrelic/k8s-events-forwarder
+    registry: docker.io
+  agent:
+    pullPolicy: IfNotPresent
+    tag: 2.7.6
+    repository: newrelic/infrastructure-bundle
+    registry: docker.io
+  integration:
+    pullPolicy: IfNotPresent
+    tag: 0.1.2
+    repository: newrelic/nri-kubernetes
+    registry: docker.io
+
+common:
+  config:
+    interval: 15s
+    timeout: 30s
+  agentConfig: {}
+
+kubelet:
+  enabled: true
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    nodeAffinity: {}
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
+  extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
+  extraEnvFrom: []
+  # Mount additional volumes into the pod.
+  extraVolumes: []
+  # Mount additional volume Mounts into the pod.
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  config: {}
+
+ksm:
+  enabled: true
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    podAffinity:
+      preferredDuringSchedulingIgnoredDuringExecution:
+        - podAffinityTerm:
+            topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchLabels:
+                app.kubernetes.io/name: kube-state-metrics
+          weight: 100
+    nodeAffinity: {}
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
+  extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
+  extraEnvFrom: []
+  # Mount additional volumes into the pod.
+  extraVolumes: []
+  # Mount additional volume Mounts into the pod.
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  config: {}
+
+controlPlane:
+  enabled: true
+  annotations: {}
+  tolerations:
+    - operator: "Exists"
+      effect: "NoSchedule"
+    - operator: "Exists"
+      effect: "NoExecute"
+  nodeSelector: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: node-role.kubernetes.io/control-plane
+                operator: Exists
+          - matchExpressions:
+              - key: node-role.kubernetes.io/controlplane
+                operator: Exists
+          - matchExpressions:
+              - key: node-role.kubernetes.io/etcd
+                operator: Exists
+          - matchExpressions:
+              - key: node-role.kubernetes.io/master
+                operator: Exists
+  kind: DaemonSet
+  # Extra env ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnv:
+  #  - name: ENV_VAR1
+  #    value: "var1"
+  #  - name: ENV_VAR2
+  #    value: "var2"
+  extraEnv: []
+  # Extra envFrom ‘items’ that will be added to the definition of the containers; a string is expected (can be templated).
+  # extraEnvFrom:
+  #  - configMapRef:
+  #      name: 'another-config-map'
+  extraEnvFrom: []
+  # Mount additional volumes into the pod.
+  extraVolumes: []
+  # Mount additional volume Mounts into the pod.
+  extraVolumeMounts: []
+  resources:
+    limits:
+      memory: 300M
+    requests:
+      cpu: 100m
+      memory: 150M
+  config:
+    etcd:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=etcd"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:4001
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+            - url: http://localhost:2381
+        - selector: "k8s-app=etcd-manager-main"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:4001
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "k8s-app=etcd"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:4001
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+      ## OpenShift
+      # - selector: "k8s-app=etcd"
+      #   namespace: kube-system
+      #   matchNode: true
+      #   endpoints:
+      #     - url: https://localhost:9979
+      #       insecureSkipVerify: true
+      #       auth:
+      #         type: mTLS
+      #         mtls:
+      #           secretName: secret-name
+      #           secretNamespace: secret-namespace
+    scheduler:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=kube-scheduler"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10259
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "k8s-app=kube-scheduler"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10259
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "app=openshift-kube-scheduler,scheduler=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10259
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+    controllerManager:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=kube-controller-manager"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "k8s-app=kube-controller-manager"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+        - selector: "app=kube-controller-manager,kube-controller-manager=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+             #  mtls:
+             #    secretName: secret-name
+             #    secretNamespace: secret-namespace
+        - selector: "app=controller-manager,controller-manager=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:10257
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+    apiServer:
+      enabled: true
+      autodiscover:
+        - selector: "tier=control-plane,component=kube-apiserver"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:8443
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+            - url: http://localhost:8080
+        - selector: "k8s-app=kube-apiserver"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:8443
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+            - url: http://localhost:8080
+        - selector: "app=openshift-kube-apiserver,apiserver=true"
+          namespace: kube-system
+          matchNode: true
+          endpoints:
+            - url: https://localhost:8443
+              insecureSkipVerify: true
+              auth:
+                type: bearer
+
+# K8s DaemonSets update strategy.
+updateStrategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+
+# Kubelet's agent envs
+# Custom attributes to be passed to the New Relic agent
+customAttributes: {}
+
+# Accounts and subaccounts created before July 20, 2020 will report, by default, process metrics unless this config option is explicitly set to "false"
+# On the other hand New Relic accounts created after July 20, 2020 will **not** send, by default, any process metrics unless this config option is explicitly set to "true",
+# https://docs.newrelic.com/docs/release-notes/infrastructure-release-notes/infrastructure-agent-release-notes/new-relic-infrastructure-agent-1120
+# enableProcessMetrics: "false"
+
+# This can be set, the default is shown below
+# logFile: /var/log/nr-infra.log
+
+verboseLog: false
+
+serviceAccount:
+  create: true
+  annotations: {}
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+# Pod scheduling priority
+# Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+priorityClassName: ""
+
+# Used in all the containers of the pods except the kubelet agent on privileged mode
+# The default user may be restricted on OpenShift clusters where the runAsUser range
+# is restricted.  See OpenShift docs for more information.
+# https://www.openshift.com/blog/a-guide-to-openshift-and-uids
+securityContext:
+  runAsUser: 1000
+  runAsGroup: 2000
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+
+privileged: true
+
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+  pspEnabled: false
+
+# Sends data to staging, can be set as a global.
+# global.nrStaging
+# nrStaging: false
+
+# prefix nodes display name with cluster to reduce chances of collisions
+prefixDisplayNameWithCluster: false
+
+# 'true' will use the node name as the name for the "host",
+#  note that it may cause data collision if the node name is the same in different clusters
+#  and prefixDisplayNameWithCluster is not set to true.
+# 'false' will use the host name as the name for the "host".
+useNodeNameAsDisplayName: true
+
+# If you wish to monitor services running on Kubernetes you can provide integrations
+# configuration under `integrations`. You just need to create a new entry where
+# the key is the filename of the configuration file and the value is the content of
+# the integration configuration. The key must end in ".yaml" as this will be the
+# filename generated and the Infrastructure agent only looks for YAML files.
+# The data is the actual integration configuration as described in the spec here:
+# https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
+# For example, if you wanted to monitor a Redis instance that has a label "app=sampleapp"
+# you could do so by adding following entry:
+integrations:
+#  nri-redis-sampleapp:
+#    discovery:
+#      command:
+#        # Run NRI Discovery for Kubernetes
+#        # https://github.com/newrelic/nri-discovery-kubernetes
+#        exec: /var/db/newrelic-infra/nri-discovery-kubernetes
+#        match:
+#          label.app: sampleapp
+#    integrations:
+#      - name: nri-redis
+#        env:
+#          # using the discovered IP as the hostname address
+#          HOSTNAME: ${discovery.ip}
+#          PORT: 6379
+#        labels:
+#          env: test
