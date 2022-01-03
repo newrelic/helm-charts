@@ -15,5 +15,5 @@ data:
   {{- if (include "nri-prometheus.lowDataMode" .) }}
     {{- mergeOverwrite .Values.config $lowDataDefault | toYaml | nindent 4 }}
   {{- else }}
-    {{- toYaml .Values.config | nindent 4 | trim }}
+    {{- toYaml .Values.config | trim | nindent 4 }}
   {{- end }}
