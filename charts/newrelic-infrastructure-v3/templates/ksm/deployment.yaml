@@ -70,8 +70,6 @@ spec:
             - name: nri-kubernetes-config
               mountPath: /etc/newrelic-infra/nri-kubernetes.yml
               subPath: nri-kubernetes.yml
-            - mountPath: /tmp
-              name: ksm-tmpfs-tmp
             {{- with .Values.ksm.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -165,8 +163,6 @@ spec:
         - name: forwarder-tmpfs-user-data
           emptyDir: {}
         - name: forwarder-tmpfs-tmp
-          emptyDir: {}
-        - name: ksm-tmpfs-tmp
           emptyDir: {}
         {{- if .Values.common.agentConfig }}
         - name: config
