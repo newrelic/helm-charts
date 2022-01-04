@@ -7,7 +7,7 @@ metadata:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-ksm
 data:
-  nri-kubernetes-config.yml: |
+  nri-kubernetes.yml: |
     {{- .Values.common.config | toYaml | nindent 4 }}
     ksm:
       enabled: true
