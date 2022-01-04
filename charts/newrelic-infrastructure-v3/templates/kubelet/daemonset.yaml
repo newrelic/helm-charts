@@ -80,8 +80,8 @@ fieldRef:
   {{- end }}
   volumeMounts:
 - name: nri-kubernetes-config
-  mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
-  subPath: nri-kubernetes-config.yml
+  mountPath: /etc/newrelic-infra/nri-kubernetes.yml
+  subPath: nri-kubernetes.yml
 - mountPath: /tmp
   name: kubelet-tmpfs-tmp
 {{- with .Values.kubelet.extraVolumeMounts }}
@@ -230,8 +230,8 @@ path: /
   configMap:
 name: {{ template "newrelic.fullname" . }}-kubelet
 items:
-  - key: nri-kubernetes-config.yml
-path: nri-kubernetes-config.yml
+  - key: nri-kubernetes.yml
+path: nri-kubernetes.yml
 {{- if .Values.common.agentConfig }}
 - name: config
   configMap:

@@ -82,8 +82,8 @@ fieldRef:
   {{- end }}
   volumeMounts:
 - name: nri-kubernetes-config
-  mountPath: /etc/newrelic-infra/integrations.d/nri-kubernetes-config.yml
-  subPath: nri-kubernetes-config.yml
+  mountPath: /etc/newrelic-infra/nri-kubernetes.yml
+  subPath: nri-kubernetes.yml
 - mountPath: /tmp
   name: control-plane-tmpfs-tmp
 {{- with .Values.controlPlane.extraVolumeMounts }}
@@ -172,8 +172,8 @@ secretKeyRef:
   configMap:
 name: {{ template "newrelic.fullname" . }}-control-plane
 items:
-  - key: nri-kubernetes-config.yml
-path: nri-kubernetes-config.yml
+  - key: nri-kubernetes.yml
+path: nri-kubernetes.yml
 - name: forwarder-tmpfs-data
   emptyDir: {}
 - name: forwarder-tmpfs-user-data
