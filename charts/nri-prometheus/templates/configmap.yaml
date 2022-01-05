@@ -9,10 +9,13 @@ data:
   config.yaml: |
     cluster_name: {{ include "nri-prometheus.cluster" . }}
 {{- if .Values.config }}
-{{- if (include "nri-prometheus.lowDataMode" .) }}
-{{ $lowDataDefault := .Files.Get "static/lowdatamodedefaults.yaml" | fromYaml -}}
-    {{- mergeOverwrite .Values.config $lowDataDefault | toYaml | indent 4 -}}
-{{- else }}
-    {{ toYaml .Values.config | indent 4 | trim }}
+    {{ omit .Values.config "transformations" | toYaml | indent 4 | trim -}}
+{{ if .Values.config.transformations }}
+    transformations: 
+    {{ .Values.config.transformations | toYaml | indent 4 | trim -}}
+{{- end }}
+{{- if (include "nri-prometheus.lowDataMode" .) -}}
+    {{ $lowDataDefault := .Files.Get "static/lowdatamodedefaults.yaml" | fromYaml }}
+    {{ $lowDataDefault.transformations | toYaml | indent 4 | trim }}
 {{- end }}
 {{- end }}
