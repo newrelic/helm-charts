@@ -1,4 +1,6 @@
-{{ if .Values.common.agentConfig }}
+{{- $agentConfig := include "newrelic.commonAgentConfig" . -}}
+{{- if $agentConfig -}}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,5 +10,5 @@ metadata:
   name: {{ template "newrelic.fullname" . }}-agent
 data:
   newrelic-infra.yml: |
-    {{- toYaml .Values.common.agentConfig | nindent 4 }}
-{{ end }}
+    {{- $agentConfig | nindent 4 }}
+{{- end }}
