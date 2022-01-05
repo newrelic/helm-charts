@@ -223,8 +223,3 @@ Returns Custom Attributes even if formatted as a json string
   {{- merge (.Values.common.config | default dict) ($defaults) | toYaml -}}
 {{- end -}}
 {{- end -}}
-
-{{- define "newrelic.commonAgentConfig" -}}
-{{- $defaults := dict -}} {{/* There are no know defaults yet */}}
-{{- merge (.Values.common.agentConfig | default dict) ($defaults) | toYaml -}}
-{{- end -}}
