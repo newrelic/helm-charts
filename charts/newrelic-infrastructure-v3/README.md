@@ -21,9 +21,10 @@ Kubernetes: `>=1.16.0-0`
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
+| lowDataMode | bool | `nil` | Enables low data mode sending less data by incrementing the interval from "15s" (the default when `lowDataMode` is `false` or `nil`) to "30s". Can be superseded by `.common.config.interval` |
 | common | object | See `values.yaml` | Config that applies to all instances of the solution: kubelet, ksm, control plane and sidecars. |
 | common.agentConfig | object | `{}` | Config for the Infrastructure agent. Will be used by the forwarder sidecars and the agent running integrations. See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/ |
-| common.config.interval | string | `"15s"` | How often the integration should collect and report data. Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. |
+| common.config.interval | string | `nil` | How often the integration should collect and report data. Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. This value takes precedence over `lowDataMode` but if this value is undefined its default from 15s (without low data mode) to 30s (with low data mode enabled) |
 | common.config.timeout | string | `"30s"` | Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc. |
 | controlPlane | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the control plane. |
 | controlPlane.affinity | object | Deployed only in master nodes. | Affinity for the control plane DaemonSet. |

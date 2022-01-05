@@ -36,7 +36,8 @@ common:
   # Configuration entries that apply to all instances of the integration: kubelet, ksm and control plane.
   config:
     # -- How often the integration should collect and report data.
-    # Intervals larger than 40s are not supported and will cause the NR UI to not behave properly.
+    # Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. This value takes precedence over `lowDataMode`
+    # but if this value is undefined its default from 15s (without low data mode) to 30s (with low data mode enabled)
     # interval: 15s
     # -- Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
     timeout: 30s
@@ -44,6 +45,10 @@ common:
   # Will be used by the forwarder sidecars and the agent running integrations.
   # See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
   agentConfig: {}
+
+# -- Enables low data mode sending less data by incrementing the interval from "15s" (the default when `lowDataMode` is `false` or `nil`) to "30s".
+# Can be superseded by `.common.config.interval`
+# lowDataMode: false
 
 # -- Configuration for the DaemonSet that collects metrics from the Kubelet
 # @default -- See `values.yaml`
