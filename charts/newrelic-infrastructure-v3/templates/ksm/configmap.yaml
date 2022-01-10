@@ -9,8 +9,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   nri-kubernetes.yml: |
-    {{- include "newrelic.commonIntegrationConfig" . | nindent 4 }}
+    {{- (merge .Values.common.config (include "newrelic.integrationConfigDefaults" . | fromYaml)) | toYaml | nindent 4 }}
     ksm:
       enabled: true
+      {{- if .Values.ksm.config }}
       {{- toYaml .Values.ksm.config | nindent 6 }}
+      {{- end }}
 {{- end }}

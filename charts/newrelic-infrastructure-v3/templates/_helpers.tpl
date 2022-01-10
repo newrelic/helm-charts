@@ -214,12 +214,10 @@ Returns Custom Attributes even if formatted as a json string
 {{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" (include "newrelic.cluster" .)) | toJson }}
 {{- end -}}
 
-{{- define "newrelic.commonIntegrationConfig" -}}
+{{- define "newrelic.integrationConfigDefaults" -}}
 {{- if include "newrelic.lowDataMode" . -}}
-  {{- $defaults := dict "interval" "30s" "timeout" "60s" -}}
-  {{- merge (.Values.common.config | default dict) ($defaults) | toYaml -}}
+interval: 30s
 {{- else  -}}
-  {{- $defaults := dict "interval" "15s" "timeout" "60s" -}}
-  {{- merge (.Values.common.config | default dict) ($defaults) | toYaml -}}
+interval: 15s
 {{- end -}}
 {{- end -}}
