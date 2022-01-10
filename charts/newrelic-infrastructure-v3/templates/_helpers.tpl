@@ -159,7 +159,11 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 {{- define "newrelic.roleBindingNamespaces" -}}
 {{ $namespaceList := list }}
 {{- range $components := .Values.controlPlane.config }}
+  {{- if $components }}
+  {{- if $components.autodiscover }}
     {{- range $autodiscover := $components.autodiscover }}
+      {{- if $autodiscover }}
+      {{- if $autodiscover.endpoints }}
         {{- range $endpoint := $autodiscover.endpoints }}
             {{- if $endpoint.auth }}
             {{- if $endpoint.auth.mtls }}
@@ -169,7 +173,11 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
             {{- end }}
             {{- end }}
         {{- end }}
+      {{- end }}
+      {{- end }}
     {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
 roleBindingNamespaces: {{- uniq $namespaceList | toYaml | nindent 0 }}
 {{- end -}}
@@ -188,3 +196,29 @@ Returns Custom Attributes even if formatted as a json string
 {{- define "newrelic.customAttributes" -}}
 {{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" (include "newrelic.cluster" .)) | toJson }}
 {{- end -}}
+
+
+{{/*
+Returns static cp component taking into account deprecated values
+*/}}
+{{- define "newrelic.compatibility.control-plane" -}}
+enabled: true
+{{- with .autodiscover }}
+autodiscover:
+{{ . | toYaml}}
+{{- end -}}
+
+{{- if ( or .staticEndpoint .etcdEndpointUrl) }}
+staticEndpoint:
+    {{- if .staticEndpoint  }}
+{{ .staticEndpoint | toYaml | indent 2}}
+    {{- else if .etcdEndpointUrl }}
+  url: {{ .etcdEndpointUrl }}
+  insecureSkipVerify: true
+  auth:
+    type: bearer
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+

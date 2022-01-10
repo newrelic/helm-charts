@@ -26,7 +26,7 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if .Values.common.agentConfig }}
+        {{- if ( include "newrelic.compatibility.agentConfig" .) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- with .Values.podAnnotations }}
@@ -154,7 +154,7 @@ spec:
               name: forwarder-tmpfs-user-data
             - mountPath: /tmp
               name: forwarder-tmpfs-tmp
-            {{- if .Values.common.agentConfig }}
+            {{- if ( include "newrelic.compatibility.agentConfig" .) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
@@ -178,7 +178,7 @@ spec:
           emptyDir: {}
         - name: forwarder-tmpfs-tmp
           emptyDir: {}
-        {{- if .Values.common.agentConfig }}
+        {{- if ( include "newrelic.compatibility.agentConfig" .) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
@@ -192,10 +192,20 @@ spec:
       {{- with .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- with .Values.controlPlane.affinity.nodeAffinity }}
+      {{- if .Values.controlPlane.affinity.nodeAffinity }}
       affinity:
         nodeAffinity:
-          {{- . | toYaml | nindent 10 }}
+          {{- .Values.controlPlane.affinity.nodeAffinity | toYaml | nindent 10 }}
+      {{- else if include "newrelic.fargate" . }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: eks.amazonaws.com/compute-type
+                    operator: NotIn
+                    values:
+                      - fargate
       {{- end }}
       {{- with .Values.controlPlane.tolerations }}
       tolerations:
