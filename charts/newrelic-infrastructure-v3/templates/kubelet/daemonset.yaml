@@ -24,7 +24,7 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if .Values.common.agentConfig }}
+        {{- if ( include "newrelic.compatibility.agentConfig" .) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- if .Values.integrations_config }}
@@ -169,7 +169,7 @@ spec:
           envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.common.agentConfig }}
+            {{- if ( include "newrelic.compatibility.agentConfig" .) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
@@ -228,7 +228,7 @@ spec:
             items:
               - key: nri-kubernetes.yml
                 path: nri-kubernetes.yml
-        {{- if .Values.common.agentConfig }}
+        {{- if ( include "newrelic.compatibility.agentConfig" .) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent

@@ -257,3 +257,32 @@ distributed: {{  .Values.ksm.config.distributed }}
 {{- end -}}
 
 
+{{/*
+Returns agent config
+*/}}
+{{- define "newrelic.compatibility.agentConfig" -}}
+{{- if .Values.common.agentConfig -}}
+{{- toYaml .Values.common.agentConfig -}}
+{{- else if .Values.config -}}
+{{- toYaml .Values.config -}}
+{{- end -}}
+{{- end -}}
+
+
+{{/*
+Returns integration config Map
+*/}}
+{{- define "newrelic.compatibility.integrations" -}}
+{{- if .Values.integrations_config -}}
+{{- range .Values.integrations_config }}
+{{ .name | indent 2 }}: |
+{{ toYaml .data | indent  4 }}
+{{- end -}}
+
+{{- else if .Values.integrations -}}
+{{- range $k, $v := .Values.integrations }}
+  {{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |
+    {{- tpl ($v | toYaml) $ | nindent 4 }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
