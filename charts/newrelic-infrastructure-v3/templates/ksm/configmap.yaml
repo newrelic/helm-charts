@@ -1,4 +1,5 @@
-{{- if .Values.ksm.enabled -}}
+{{- $ksmEnabled := ((.Values.ksm.enabled | default (not .Values.ksm.disableKubeStateMetrics))) -}}
+{{- if $ksmEnabled -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,11 +8,10 @@ metadata:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-ksm
 data:
-  nri-kubernetes.yml: |
+  nri-kubernetes.yml: |-
     {{- .Values.common.config | toYaml | nindent 4 }}
     ksm:
-      enabled: true
-      {{- with .Values.ksm.config }}
-      {{- . | toYaml | nindent 6 }}
-      {{- end }}
-{{- end }}
+{{- with (include "newrelic.compatibility.ksm" .) }}
+{{ . | indent 6 }}
+{{- end -}}
+{{- end -}}

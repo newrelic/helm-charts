@@ -222,3 +222,38 @@ staticEndpoint:
 {{- end -}}
 
 
+{{/*
+Returns static ksm data taking into account deprecated values
+*/}}
+{{- define "newrelic.compatibility.ksm" -}}
+
+enabled: true
+
+{{- if ( or .Values.ksm.config.scheme .Values.kubeStateMetricsScheme) }}
+scheme: {{  .Values.ksm.config.scheme | default .Values.kubeStateMetricsScheme | quote }}
+{{- end -}}
+
+{{- if (or .Values.ksm.config.port .Values.kubeStateMetricsPort) }}
+port: {{ .Values.ksm.config.port | default .Values.kubeStateMetricsPort }}
+{{- end -}}
+
+{{- if (or .Values.ksm.config.staticUrl .Values.kubeStateMetricsUrl) }}
+staticUrl: {{ .Values.ksm.config.staticUrl | default .Values.kubeStateMetricsUrl | quote }}
+{{- end -}}
+
+{{- if .Values.ksm.config.selector }}
+selector: {{ .Values.ksm.config.selector | quote }}
+{{- else if .Values.kubeStateMetricsPodLabel }}
+selector: {{ printf "%s=kube-state-metrics" .Values.kubeStateMetricsPodLabel | quote}}
+{{- end -}}
+
+{{- if (or .Values.ksm.config.namespace .Values.kubeStateMetricsNamespace) }}
+namespace: {{ .Values.ksm.config.namespace | default .Values.kubeStateMetricsNamespace | quote }}
+{{- end -}}
+
+{{- if .Values.ksm.config.distributed }}
+distributed: {{  .Values.ksm.config.distributed }}
+{{- end -}}
+{{- end -}}
+
+

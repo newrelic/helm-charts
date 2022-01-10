@@ -1,4 +1,5 @@
-{{- if (.Values.ksm.enabled) }}
+{{- $ksmEnabled := ((.Values.ksm.enabled | default (not .Values.ksm.disableKubeStateMetrics))) -}}
+{{- if $ksmEnabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,7 +22,7 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if .Values.common.agentConfig }}
+        {{- if ( include "newrelic.compatibility.agentConfig" .) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- with .Values.podAnnotations }}
@@ -140,7 +141,7 @@ spec:
               name: forwarder-tmpfs-user-data
             - mountPath: /tmp
               name: forwarder-tmpfs-tmp
-            {{- if .Values.common.agentConfig }}
+            {{- if ( include "newrelic.compatibility.agentConfig" .) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
@@ -164,7 +165,7 @@ spec:
           emptyDir: {}
         - name: forwarder-tmpfs-tmp
           emptyDir: {}
-        {{- if .Values.common.agentConfig }}
+        {{- if ( include "newrelic.compatibility.agentConfig" .) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
