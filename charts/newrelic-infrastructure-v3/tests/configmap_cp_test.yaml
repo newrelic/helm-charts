@@ -19,6 +19,7 @@ tests:
             controlPlane:
               enabled: true
               etcd:
+                autodiscover: []
                 enabled: true
   - it: etcdEndpointUrl value is taken into account since no staticEndpoint is defined for etcd
     set:
@@ -38,12 +39,13 @@ tests:
             controlPlane:
               enabled: true
               etcd:
+                autodiscover: []
                 enabled: true
                 staticEndpoint:
-                  url: http://test.io:9090/test
-                  insecureSkipVerify: true
                   auth:
                     type: bearer
+                  insecureSkipVerify: true
+                  url: http://test.io:9090/test
   - it: etcdEndpointUrl value is ignored since staticEndpoint is defined for etcd
     set:
       licenseKey: test
@@ -65,6 +67,7 @@ tests:
             controlPlane:
               enabled: true
               etcd:
+                autodiscover: []
                 enabled: true
                 staticEndpoint:
                   insecureSkipVerify: false
@@ -96,31 +99,35 @@ tests:
             controlPlane:
               enabled: true
               etcd:
+                autodiscover: []
                 enabled: true
                 staticEndpoint:
                   insecureSkipVerify: false
                   url: http://test2.io:9090/test2
               scheduler:
+                autodiscover: []
                 enabled: true
                 staticEndpoint:
+                  auth:
+                    type: bearer
+                  insecureSkipVerify: true
                   url: http://scheduler/test
-                  insecureSkipVerify: true
-                  auth:
-                    type: bearer
               controllerManager:
+                autodiscover: []
                 enabled: true
                 staticEndpoint:
+                  auth:
+                    type: bearer
+                  insecureSkipVerify: true
                   url: http://controller/test
-                  insecureSkipVerify: true
-                  auth:
-                    type: bearer
               apiServer:
+                autodiscover: []
                 enabled: true
                 staticEndpoint:
-                  url: http://apiServer/test
-                  insecureSkipVerify: true
                   auth:
                     type: bearer
+                  insecureSkipVerify: true
+                  url: http://apiServer/test
   - it: autodiscovery section is rendered as expected together with the static Endpoint
     set:
       licenseKey: test
@@ -147,13 +154,13 @@ tests:
             controlPlane:
               enabled: true
               etcd:
-                enabled: true
                 autodiscover:
                 - endpoints:
                   - url: http://localhost:2381
                   matchNode: true
                   namespace: kube-system
                   selector: tier=control-plane,component=etcd
+                enabled: true
                 staticEndpoint:
                   insecureSkipVerify: false
                   url: http://test2.io:9090/test2

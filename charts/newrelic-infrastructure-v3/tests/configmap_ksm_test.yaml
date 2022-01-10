@@ -2,6 +2,26 @@ suite: test configmap
 templates:
   - templates/ksm/configmap.yaml
 tests:
+  - it: kubeStateMetric config is not created due to disableKubeStateMetrics and test fails
+    set:
+      licenseKey: test
+      cluster: test
+      kubeStateMetricsPort: 22
+      ksm.enabled: true
+      disableKubeStateMetrics: true
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: kubeStateMetric config is not created due to ksm.config.enabled and test fails
+    set:
+      licenseKey: test
+      cluster: test
+      kubeStateMetricsPort: 22
+      ksm.enabled: false
+      disableKubeStateMetrics: false
+    asserts:
+      - hasDocuments:
+          count: 0
   - it: kubeStateMetricsPort is taken into account since ksm.config.port is not defined
     set:
       licenseKey: test
@@ -29,7 +49,7 @@ tests:
             timeout: 30s
             ksm:
               enabled: true
-              selector: "label-name=kube-state-metrics"
+              selector: label-name=kube-state-metrics
   - it: kubeStateMetricsPort is ignored since ksm.config.port is defined
     set:
       licenseKey: test
@@ -49,12 +69,13 @@ tests:
     set:
       licenseKey: test
       cluster: test
+      ksm.config.staticURL: newURL
       ksm.config.scheme: http
-      ksm.config.selector: "a=b"
+      ksm.config.selector: a=b
       ksm.config.namespace: test
       ksm.config.distributed: true
       kubeStateMetricsPort: 22
-      kubeStateMetricsUrl: "test.io"
+      kubeStateMetricsUrl: test2.io
     asserts:
       - equal:
           path: data.nri-kubernetes\.yml
@@ -62,10 +83,10 @@ tests:
             interval: 15s
             timeout: 30s
             ksm:
-              enabled: true
-              scheme: "http"
-              port: 22
-              staticUrl: "test.io"
-              selector: "a=b"
-              namespace: "test"
               distributed: true
+              enabled: true
+              namespace: test
+              port: 22
+              scheme: http
+              selector: a=b
+              staticURL: newURL

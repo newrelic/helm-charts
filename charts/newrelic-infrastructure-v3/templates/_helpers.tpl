@@ -199,7 +199,7 @@ Returns Custom Attributes even if formatted as a json string
 
 
 {{/*
-Returns static cp component taking into account deprecated values
+Returns controlPlane component taking into account legacy values
 */}}
 {{- define "newrelic.compatibility.control-plane" -}}
 enabled: true
@@ -221,68 +221,96 @@ staticEndpoint:
 {{- end -}}
 {{- end -}}
 
-
 {{/*
-Returns static ksm data taking into account deprecated values
+Returns true if .Values.ksm.enabled is true and the legacy disableKubeStateMetrics is not set
 */}}
-{{- define "newrelic.compatibility.ksm" -}}
+{{- define "newrelic.compatibility.ksm.enabled" -}}
+{{- and .Values.ksm.enabled (not .Values.disableKubeStateMetrics) -}}
+{{- end -}}
 
+{{/*
+Returns legacy ksm values
+*/}}
+{{- define "newrelic.compatibility.ksm.legacyData" -}}
 enabled: true
-
-{{- if ( or .Values.ksm.config.scheme .Values.kubeStateMetricsScheme) }}
-scheme: {{  .Values.ksm.config.scheme | default .Values.kubeStateMetricsScheme | quote }}
+{{- if .Values.kubeStateMetricsScheme }}
+scheme: {{ .Values.kubeStateMetricsScheme }}
+{{- end -}}
+{{- if .Values.kubeStateMetricsPort }}
+port: {{ .Values.kubeStateMetricsPort }}
+{{- end -}}
+{{- if .Values.kubeStateMetricsUrl }}
+staticURL: {{ .Values.kubeStateMetricsUrl }}
+{{- end -}}
+{{- if .Values.kubeStateMetricsPodLabel }}
+selector: {{ printf "%s=kube-state-metrics" .Values.kubeStateMetricsPodLabel }}
+{{- end -}}
+{{- if  .Values.kubeStateMetricsNamespace }}
+namespace: {{ .Values.kubeStateMetricsNamespace}}
+{{- end -}}
 {{- end -}}
 
-{{- if (or .Values.ksm.config.port .Values.kubeStateMetricsPort) }}
-port: {{ .Values.ksm.config.port | default .Values.kubeStateMetricsPort }}
+{{/*
+Returns the new value if available, falling back on the legacy one
+*/}}
+{{- define "newrelic.compatibility.valueWithFallback" -}}
+{{- if .supported }}
+{{- toYaml .supported}}
+{{- else if .legacy -}}
+{{- toYaml .legacy}}
+{{- end }}
 {{- end -}}
 
-{{- if (or .Values.ksm.config.staticUrl .Values.kubeStateMetricsUrl) }}
-staticUrl: {{ .Values.ksm.config.staticUrl | default .Values.kubeStateMetricsUrl | quote }}
-{{- end -}}
 
-{{- if .Values.ksm.config.selector }}
-selector: {{ .Values.ksm.config.selector | quote }}
-{{- else if .Values.kubeStateMetricsPodLabel }}
-selector: {{ printf "%s=kube-state-metrics" .Values.kubeStateMetricsPodLabel | quote}}
-{{- end -}}
-
-{{- if (or .Values.ksm.config.namespace .Values.kubeStateMetricsNamespace) }}
-namespace: {{ .Values.ksm.config.namespace | default .Values.kubeStateMetricsNamespace | quote }}
-{{- end -}}
-
-{{- if .Values.ksm.config.distributed }}
-distributed: {{  .Values.ksm.config.distributed }}
+{{/*
+Returns securityContext merged with old runAsUser config
+*/}}
+{{- define "newrelic.compatibility.securityContext" -}}
+{{- if  .Values.runAsUser -}}
+{{- mustMergeOverwrite .Values.securityContext (dict "runAsUser" .Values.runAsUser ) | toYaml }}
+{{- else -}}
+{{- .Values.securityContext | toYaml }}
 {{- end -}}
 {{- end -}}
 
 
 {{/*
-Returns agent config
+Returns agent configmap merged with old eventQueueDepth config
 */}}
 {{- define "newrelic.compatibility.agentConfig" -}}
-{{- if .Values.common.agentConfig -}}
-{{- toYaml .Values.common.agentConfig -}}
-{{- else if .Values.config -}}
-{{- toYaml .Values.config -}}
+{{ $config:= (include "newrelic.compatibility.valueWithFallback" (dict "legacy" .Values.config "supported" .Values.common.agentConfig ) | fromYaml )}}
+{{- if .Values.eventQueueDepth -}}
+{{- mustMergeOverwrite $config (dict "event_queue_depth" .Values.eventQueueDepth ) | toYaml }}
+{{- else -}}
+{{- $config | toYaml}}
 {{- end -}}
 {{- end -}}
 
 
 {{/*
-Returns integration config Map
+Returns integration configmap data,
+if the new one is defined we ignore the old one
 */}}
-{{- define "newrelic.compatibility.integrations" -}}
+{{- define "newrelic.integrations" -}}
 {{- if .Values.integrations_config -}}
 {{- range .Values.integrations_config }}
-{{ .name | indent 2 }}: |
-{{ toYaml .data | indent  4 }}
+{{ .name -}}: |-
+  {{- toYaml .data | nindent 2 -}}
 {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns integration configmap data with legacy fallback
+*/}}
+{{- define "newrelic.compatibility.integrations" -}}
+{{- if (include "newrelic.integrations" .) -}}
+{{- include "newrelic.integrations" . -}}
 
 {{- else if .Values.integrations -}}
 {{- range $k, $v := .Values.integrations }}
-  {{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |
-    {{- tpl ($v | toYaml) $ | nindent 4 }}
+{{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |-
+    {{- tpl ($v | toYaml) $ | nindent 2 -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}

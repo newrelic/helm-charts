@@ -1,4 +1,4 @@
-{{- if ( include "newrelic.compatibility.agentConfig" .) -}}
+{{- if (include "newrelic.compatibility.agentConfig" . ) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,5 +8,5 @@ metadata:
   name: {{ template "newrelic.fullname" . }}-agent
 data:
   newrelic-infra.yml: |-
-    {{- include "newrelic.compatibility.agentConfig" . | nindent 4 -}}
+    {{- .Values.common.agentConfig | mustMergeOverwrite (include "newrelic.compatibility.agentConfig" . | fromYaml) | toYaml | nindent 4 -}}
 {{- end -}}

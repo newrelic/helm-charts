@@ -13,29 +13,19 @@ Those components are needed to have the full experience on NROne kubernetes expl
 
 {{- end }}
 
-{{- if .Values.nodeSelector }}
+{{- if and .Values.nodeAffinity (.Values.controlPlane.enabled) (not (include "newrelic.fargate" .)) }}
 
 ###########
 # WARNING #
 ###########
 
-You have specified "nodeSelector" into values, however the new version of the chart
-support different nodeSelectors per each component, therefore the value specified has been ignored.
+You have specified the legacy "nodeAffinity" option into values, however the new version of the chart
+support a different nodeAffinity options per component.
 
-Please use ksm.nodeSelector, controlPlane.nodeSelector and kubelet.nodeSelector.
+The value specified has been applied automatically to ksm and kubelet components, however **NOT** to the control plane daemonSet.
 
-{{- end }}
-
-{{- if .Values.nodeAffinity }}
-
-###########
-# WARNING #
-###########
-
-You have specified "nodeAffinity" into values, however the new version of the chart
-support different nodeAffinity options per component, therefore the value specified has been ignored.
-
-Please use ksm.affinity.nodeAffinity, controlPlane.affinity.nodeAffinity and kubelet.affinity.nodeAffinity.
+Keep in mind you should leverage the new ksm.affinity.nodeAffinity, controlPlane.affinity.nodeAffinity
+and kubelet.affinity.nodeAffinity to customize nodeAffinity.
 
 {{- end }}
 
@@ -45,7 +35,7 @@ Please use ksm.affinity.nodeAffinity, controlPlane.affinity.nodeAffinity and kub
 # WARNING #
 ###########
 
-You have specified the "resources" into values, however the new version of the chart
+You have specified the legacy "resources" option into values, however the new version of the chart
 support different resources per component, therefore the value specified has been ignored.
 
 Please use ksm.resources, controlPlane.resources and kubelet.resources.
@@ -58,20 +48,20 @@ Please use ksm.resources, controlPlane.resources and kubelet.resources.
 # WARNING #
 ###########
 
-You have specified "tolerations" into values, however the new version of the chart
+You have specified the legacy "tolerations" options into values, however the new version of the chart
 support different tolerations per component, therefore the value specified has been ignored.
 
 Please use ksm.tolerations, controlPlane.tolerations and kubelet.tolerations.
 
 {{- end }}
 
-{{- if ( or image.repository image.tag image.pullPolicy image.pullSecrets) }}
+{{- if .image }}
 
 ###########
 # WARNING #
 ###########
 
-You have specified into values options "image.*".
+You have specified into values one of the legacy options "image.*".
 The following values are no longer supported and are currently ignored.
  - image.repository
  - image.tag
@@ -92,7 +82,7 @@ Please set:
 # WARNING #
 ###########
 
-Windows is currently supported by 2.x charts only and "windowsOsList" "windowsSecurityContext" "windowsNodeSelector"
+Windows is currently supported by 2.x charts only and therefore "windowsOsList" "windowsSecurityContext" "windowsNodeSelector"
 are no longer supported.
 
 {{- end }}
@@ -124,25 +114,8 @@ file. Example:
 
 The "logFile" value is no longer supported, please specify the option "log_file" directly in "common.agentConfig".
 
-{{- end }}
-
-{{- if .Values.runAsUser }}
-
-###########
-# WARNING #
-###########
-
-The "runAsUser" value is no longer supported, please specify it with the value "securityContext.runAsUser".
-
-{{- end }}
-
-{{- if .Values.eventQueueDepth }}
-
-###########
-# WARNING #
-###########
-
-The "eventQueueDepth" value is no longer supported, please specify the option "event_queue_depth" directly in "common.agentConfig".
+Notice that you will need as well to set securityContext.readOnlyRootFilesystem to false or add extraVolumes to allow
+the container to write to such location
 
 {{- end }}
 

@@ -2,7 +2,7 @@ suite: test configmap
 templates:
   - templates/agent-configmap.yaml
 tests:
-  - it: agent configMap is created and configured from config
+  - it: agent configMap is created and configured from legacy config
     set:
       licenseKey: test
       cluster: test
@@ -34,10 +34,30 @@ tests:
       cluster: test
       common.agentConfig:
         test1: one
-      config:
         test2: two
+      config:
+        test3: three
     asserts:
       - equal:
           path: data.newrelic-infra\.yml
           value: |-
             test1: one
+            test2: two
+  - it: eventQueueDepth is taken into account
+    set:
+      licenseKey: test
+      cluster: test
+      common.agentConfig:
+        test1: one
+        test2: two
+      config:
+        test3: three
+      eventQueueDepth: 1000
+    asserts:
+      - equal:
+          path: data.newrelic-infra\.yml
+          value: |-
+            event_queue_depth: 1000
+            test1: one
+            test2: two
+

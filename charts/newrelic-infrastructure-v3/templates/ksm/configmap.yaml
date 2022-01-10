@@ -1,5 +1,4 @@
-{{- $ksmEnabled := ((.Values.ksm.enabled | default (not .Values.ksm.disableKubeStateMetrics))) -}}
-{{- if $ksmEnabled -}}
+{{- if eq (include "newrelic.compatibility.ksm.enabled" . ) "true" -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -11,7 +10,6 @@ data:
   nri-kubernetes.yml: |-
     {{- .Values.common.config | toYaml | nindent 4 }}
     ksm:
-{{- with (include "newrelic.compatibility.ksm" .) }}
-{{ . | indent 6 }}
-{{- end -}}
+      {{- /* Notice that new values takes precedence since they have no default and the user need to set them up specifically*/ -}}
+      {{- mustMergeOverwrite (include "newrelic.compatibility.ksm.legacyData" . | fromYaml) .Values.ksm.config | toYaml | nindent 6 -}}
 {{- end -}}

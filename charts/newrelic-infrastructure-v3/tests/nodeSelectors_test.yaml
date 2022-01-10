@@ -1,0 +1,92 @@
+suite: test configmap
+templates:
+  - templates/control-plane/daemonset.yaml
+  - templates/control-plane/configmap.yaml
+  - templates/kubelet/daemonset.yaml
+  - templates/kubelet/configmap.yaml
+  - templates/ksm/deployment.yaml
+  - templates/ksm/configmap.yaml
+  - templates/agent-configmap.yaml
+  - templates/secret.yaml
+tests:
+  - it: nodeSelector is populated from legacy value
+    set:
+      licenseKey: test
+      cluster: test
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: ssd
+        template: templates/ksm/deployment.yaml
+  - it: nodeSelector is populated from supported value
+    set:
+      licenseKey: test
+      cluster: test
+      ksm:
+        nodeSelector:
+          disktype: real
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: real
+        template: templates/ksm/deployment.yaml
+  - it: nodeSelector is populated from legacy value
+    set:
+      licenseKey: test
+      cluster: test
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: ssd
+        template: templates/kubelet/daemonset.yaml
+  - it: nodeSelector is populated from supported value
+    set:
+      licenseKey: test
+      cluster: test
+      kubelet:
+        nodeSelector:
+          disktype: real
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: real
+        template: templates/kubelet/daemonset.yaml
+  - it: nodeSelector is populated from legacy value
+    set:
+      licenseKey: test
+      cluster: test
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: ssd
+        template: templates/control-plane/daemonset.yaml
+  - it: nodeSelector is populated from supported value
+    set:
+      licenseKey: test
+      cluster: test
+      controlPlane:
+        nodeSelector:
+          disktype: real
+      nodeSelector:
+        disktype: ssd
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            disktype: real
+        template: templates/control-plane/daemonset.yaml

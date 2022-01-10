@@ -14,21 +14,25 @@ data:
 
     {{- if  .Values.controlPlane.config.etcd.enabled }}
       etcd:
-{{ include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.etcd.autodiscover "staticEndpoint" .Values.controlPlane.config.etcd.staticEndpoint "etcdEndpointUrl" .Values.etcdEndpointUrl ) | indent 8 }}
+        {{- $dataETCD :=  include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.etcd.autodiscover "staticEndpoint" .Values.controlPlane.config.etcd.staticEndpoint "etcdEndpointUrl" .Values.etcdEndpointUrl ) -}}
+        {{- mustMergeOverwrite .Values.controlPlane.config.etcd  ($dataETCD | fromYaml) | toYaml | nindent 8 -}}
     {{- end -}}
 
-    {{- if  .Values.controlPlane.config.scheduler.enabled }}
+    {{- if .Values.controlPlane.config.scheduler.enabled }}
       scheduler:
-{{ include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.scheduler.autodiscover "staticEndpoint" .Values.controlPlane.config.scheduler.staticEndpoint "etcdEndpointUrl" .Values.schedulerEndpointUrl ) | indent 8 }}
+        {{- $dataScheduler :=  include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.scheduler.autodiscover "staticEndpoint" .Values.controlPlane.config.scheduler.staticEndpoint "etcdEndpointUrl" .Values.schedulerEndpointUrl ) -}}
+        {{- mustMergeOverwrite .Values.controlPlane.config.scheduler  ($dataScheduler | fromYaml) | toYaml | nindent 8 -}}
     {{- end -}}
 
     {{- if  .Values.controlPlane.config.controllerManager.enabled }}
       controllerManager:
-{{ include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.controllerManager.autodiscover "staticEndpoint" .Values.controlPlane.config.controllerManager.staticEndpoint "etcdEndpointUrl" .Values.controllerManagerEndpointUrl ) | indent 8 }}
+        {{- $dataController :=  include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.controllerManager.autodiscover "staticEndpoint" .Values.controlPlane.config.controllerManager.staticEndpoint "etcdEndpointUrl" .Values.controllerManagerEndpointUrl ) -}}
+        {{- mustMergeOverwrite .Values.controlPlane.config.controllerManager  ($dataController | fromYaml) | toYaml | nindent 8 -}}
     {{- end -}}
 
-    {{- if  .Values.controlPlane.config.apiServer.enabled }}
+    {{- if .Values.controlPlane.config.apiServer.enabled }}
       apiServer:
-{{ include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.apiServer.autodiscover "staticEndpoint" .Values.controlPlane.config.apiServer.staticEndpoint "etcdEndpointUrl" .Values.apiServerEndpointUrl ) | indent 8 }}
+        {{- $dataApiServer :=  include "newrelic.compatibility.control-plane" (dict "autodiscover" .Values.controlPlane.config.apiServer.autodiscover "staticEndpoint" .Values.controlPlane.config.apiServer.staticEndpoint "etcdEndpointUrl" .Values.apiServerEndpointUrl ) -}}
+        {{- mustMergeOverwrite .Values.controlPlane.config.apiServer  ($dataApiServer | fromYaml) | toYaml | nindent 8 -}}
     {{- end -}}
 {{- end -}}
