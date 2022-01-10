@@ -1,0 +1,71 @@
+suite: test configmap
+templates:
+  - templates/ksm/configmap.yaml
+tests:
+  - it: kubeStateMetricsPort is taken into account since ksm.config.port is not defined
+    set:
+      licenseKey: test
+      cluster: test
+      kubeStateMetricsPort: 22
+    asserts:
+      - equal:
+          path: data.nri-kubernetes\.yml
+          value: |-
+            interval: 15s
+            timeout: 30s
+            ksm:
+              enabled: true
+              port: 22
+  - it: kubeStateMetricsPodLabel is taken into account since ksm.config.label is not defined
+    set:
+      licenseKey: test
+      cluster: test
+      kubeStateMetricsPodLabel: label-name
+    asserts:
+      - equal:
+          path: data.nri-kubernetes\.yml
+          value: |-
+            interval: 15s
+            timeout: 30s
+            ksm:
+              enabled: true
+              selector: "label-name=kube-state-metrics"
+  - it: kubeStateMetricsPort is ignored since ksm.config.port is defined
+    set:
+      licenseKey: test
+      cluster: test
+      kubeStateMetricsPort: 22
+      ksm.config.port: 25
+    asserts:
+      - equal:
+          path: data.nri-kubernetes\.yml
+          value: |-
+            interval: 15s
+            timeout: 30s
+            ksm:
+              enabled: true
+              port: 25
+  - it: a mix of values is passed and the config is rendered correctly
+    set:
+      licenseKey: test
+      cluster: test
+      ksm.config.scheme: http
+      ksm.config.selector: "a=b"
+      ksm.config.namespace: test
+      ksm.config.distributed: true
+      kubeStateMetricsPort: 22
+      kubeStateMetricsUrl: "test.io"
+    asserts:
+      - equal:
+          path: data.nri-kubernetes\.yml
+          value: |-
+            interval: 15s
+            timeout: 30s
+            ksm:
+              enabled: true
+              scheme: "http"
+              port: 22
+              staticUrl: "test.io"
+              selector: "a=b"
+              namespace: "test"
+              distributed: true

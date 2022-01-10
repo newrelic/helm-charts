@@ -45,3 +45,10 @@ jobs:
 
       - name: Test upgrade charts
         run: ct install --namespace ct --config ct.yaml --upgrade
+
+      - name: unitTests
+        run: |
+          helm plugin install https://github.com/quintush/helm-unittest
+          if [[ $(ct list-changed) =~ .*"charts/newrelic-infrastructure-v3".* ]]; then
+            helm unittest ./charts/newrelic-infrastructure-v3 -3
+          fi
