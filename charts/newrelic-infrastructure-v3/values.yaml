@@ -25,7 +25,7 @@ images:
   integration:
     pullPolicy: IfNotPresent
     # -- Tag for the kubernetes integration.
-    tag: 0.1.2
+    tag: 0.2.0-pre
     # -- Image for the kubernetes integration.
     repository: newrelic/nri-kubernetes
     registry: docker.io
@@ -71,6 +71,8 @@ kubelet:
       cpu: 100m
       memory: 150M
   config: {}
+  # port:
+  # scheme:
 
 # -- Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics).
 # @default -- See `values.yaml`
@@ -110,6 +112,11 @@ ksm:
       cpu: 100m
       memory: 150M
   config: {}
+  # staticURL:
+  # scheme:
+  # port:
+  # selector:
+  # namespace:
 
 # -- Configuration for the DaemonSet that collects metrics from the control plane.
 # @default -- See `values.yaml`
@@ -204,6 +211,16 @@ controlPlane:
       #         mtls:
       #           secretName: secret-name
       #           secretNamespace: secret-namespace
+
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
+
     # -- Scheduler monitoring configuration
     # @default -- Common settings for most K8s distributions.
     scheduler:
@@ -234,6 +251,15 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
+
     # -- Controller manager monitoring configuration
     # @default -- Common settings for most K8s distributions.
     controllerManager:
@@ -275,6 +301,15 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
+
     # -- API Server monitoring configuration
     # @default -- Common settings for most K8s distributions.
     apiServer:
@@ -307,6 +342,14 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
 
 # -- Update strategy for the DaemonSets deployed.
 # @default -- See `values.yaml`

@@ -65,7 +65,7 @@ Please use ksm.tolerations, controlPlane.tolerations and kubelet.tolerations.
 
 {{- end }}
 
-{{- if ( or .Values.image ) }}
+{{- if ( or image.repository image.tag image.pullPolicy image.pullSecrets) }}
 
 ###########
 # WARNING #
@@ -76,10 +76,9 @@ The following values are no longer supported and are currently ignored.
  - image.repository
  - image.tag
  - image.pullPolicy
- - image.pullSecrets:
+ - image.pullSecrets
 
-Notice that the 3.x version of the integration uses 3 different images. One , one bundling
-the agent and the different onHost integrations and one used merely to forward data to Newrelic.
+Notice that the 3.x version of the integration uses 3 different images.
 Please set:
  - images.forwarder.* to configure the image in charge of sending data to newrelic backend
  - images.agent.* to configure the image bundling the agent and onHost integration
@@ -93,7 +92,8 @@ Please set:
 # WARNING #
 ###########
 
-Windows is currently supported by 2.x charts only.
+Windows is currently supported by 2.x charts only and "windowsOsList" "windowsSecurityContext" "windowsNodeSelector"
+are no longer supported.
 
 {{- end }}
 
@@ -152,7 +152,7 @@ The "eventQueueDepth" value is no longer supported, please specify the option "e
 # WARNING #
 ###########
 
-The "apiServerSecurePort" value is no longer supported, please if needed specify them in the new "apiServer.autodiscover[].endpoints".
+The "apiServerSecurePort" value is no longer supported, please specify it in the section "apiServer.autodiscover[].endpoints".
 
 {{- end }}
 

@@ -27,6 +27,13 @@ jobs:
           skip: ./.git,./.github/actions/chart-version-bumper/node_modules
           ignore_words_list: enver
 
+      - name: unitTests for supported charts
+        run: |
+          helm plugin install https://github.com/quintush/helm-unittest
+          if [[ $(ct list-changed) =~ .*"charts/newrelic-infrastructure-v3".* ]]; then
+            helm unittest ./charts/newrelic-infrastructure-v3 -3
+          fi
+
       - name: Check for changed charts
         id: list-changed
         run: |
@@ -45,10 +52,3 @@ jobs:
 
       - name: Test upgrade charts
         run: ct install --namespace ct --config ct.yaml --upgrade
-
-      - name: unitTests
-        run: |
-          helm plugin install https://github.com/quintush/helm-unittest
-          if [[ $(ct list-changed) =~ .*"charts/newrelic-infrastructure-v3".* ]]; then
-            helm unittest ./charts/newrelic-infrastructure-v3 -3
-          fi

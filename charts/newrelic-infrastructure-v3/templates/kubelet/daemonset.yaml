@@ -152,10 +152,6 @@ spec:
             - name: NRIA_VERBOSE
               value: "1"
             {{- end }}
-            {{- with .Values.logFile }}
-            - name: NRIA_LOG_FILE
-              value: {{ . }}
-            {{- end }}
             {{- if not .Values.privileged }}
             - name: "NRIA_OVERRIDE_HOST_ROOT"
               value: ""
