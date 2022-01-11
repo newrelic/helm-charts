@@ -2,7 +2,9 @@
 Returns true if .Values.ksm.enabled is true and the legacy disableKubeStateMetrics is not set
 */}}
 {{- define "newrelic.compatibility.ksm.enabled" -}}
-{{- and .Values.ksm.enabled (not .Values.disableKubeStateMetrics) -}}
+{{- if and .Values.ksm.enabled (not .Values.disableKubeStateMetrics) -}}
+true
+{{- end -}}
 {{- end -}}
 
 {{/*
