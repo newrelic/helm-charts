@@ -1,17 +1,18 @@
 {{- if .Values.kubelet.enabled -}}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: {{ .Release.Namespace }}
   labels:
 {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-kubelet
+  namespace: {{ .Release.Namespace }}
 data:
   nri-kubernetes.yml: |
-{{- .Values.common.config | toYaml | nindent 4 }}
+{{- (merge .Values.common.config (include "newrelic.integrationConfigDefaults" . | fromYaml)) | toYaml | nindent 4 }}
 kubelet:
   enabled: true
-  {{- with .Values.kubelet.config }}
-  {{- . | toYaml | nindent 6 }}
+  {{- if .Values.kubelet.config }}
+  {{- toYaml .Values.kubelet.config | nindent 6 }}
   {{- end }}
 {{- end }}

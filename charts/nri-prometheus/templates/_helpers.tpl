@@ -119,12 +119,24 @@ Return the customSecretLicenseKey
 Returns lowDataMode
 */}}
 {{- define "nri-prometheus.lowDataMode" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.lowDataMode }}
-{{- .Values.global.lowDataMode -}}
+{{/* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */}}
+{{- if (get .Values "lowDataMode" | kindIs "bool") -}}
+  {{- if .Values.lowDataMode -}}
+{{/*
+We want only to return when this is true, returning `false` here will template "false" (string) when doing
+an `(include "nri-prometheus.lowDataMode" .)`, which is not an "empty string" so it is `true` if it is used
+as an evaluation somewhere else.
+*/}}
+{{- .Values.lowDataMode -}}
   {{- end -}}
-{{- else if .Values.lowDataMode }}
-  {{- .Values.lowDataMode -}}
+{{- else -}}
+{{/* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */}}
+{{- $global := index .Values "global" | default dict -}}
+{{- if get $global "lowDataMode" | kindIs "bool" -}}
+  {{- if $global.lowDataMode -}}
+{{- $global.lowDataMode -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
