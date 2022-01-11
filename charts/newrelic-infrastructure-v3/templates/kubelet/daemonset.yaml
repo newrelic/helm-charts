@@ -53,7 +53,7 @@ spec:
           securityContext:
             {{- .Values.securityContext | mustMergeOverwrite (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           env:
-            - name: "NRI_KUBERNETES_HTTPSERVERPORT"
+            - name: "NRI_KUBERNETES_SINK_HTTP_PORT"
               value: "8003"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
               value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}

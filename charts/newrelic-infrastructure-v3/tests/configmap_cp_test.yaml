@@ -21,32 +21,7 @@ tests:
               etcd:
                 autodiscover: []
                 enabled: true
-  - it: etcdEndpointUrl value is taken into account since no staticEndpoint is defined for etcd
-    set:
-      licenseKey: test
-      cluster: test
-      controlPlane.config.etcd.autodiscover: []
-      controlPlane.config.apiServer.enabled: false
-      controlPlane.config.controllerManager.enabled: false
-      controlPlane.config.scheduler.enabled: false
-      etcdEndpointUrl: http://test.io:9090/test
-    asserts:
-      - equal:
-          path: data.nri-kubernetes\.yml
-          value: |-
-            interval: 15s
-            timeout: 30s
-            controlPlane:
-              enabled: true
-              etcd:
-                autodiscover: []
-                enabled: true
-                staticEndpoint:
-                  auth:
-                    type: bearer
-                  insecureSkipVerify: true
-                  url: http://test.io:9090/test
-  - it: etcdEndpointUrl value is ignored since staticEndpoint is defined for etcd
+  - it: staticEndpoint is defined for etcd
     set:
       licenseKey: test
       cluster: test
@@ -57,7 +32,6 @@ tests:
       controlPlane.config.etcd.staticEndpoint:
         url: http://test2.io:9090/test2
         insecureSkipVerify: false
-      etcdEndpointUrl: http://test.io:9090/test
     asserts:
       - equal:
           path: data.nri-kubernetes\.yml
@@ -79,16 +53,16 @@ tests:
       controlPlane.config.etcd.autodiscover: []
       controlPlane.config.apiServer.autodiscover: []
       controlPlane.config.controllerManager.autodiscover: []
-      controlPlane.config.scheduler.autodiscover: []
-      controlPlane.config.apiServer.enabled: true
-      controlPlane.config.controllerManager.enabled: true
-      controlPlane.config.scheduler.enabled: true
-      etcdEndpointUrl: http://etcd/test
       controlPlane.config.etcd.staticEndpoint:
         url: http://test2.io:9090/test2
         insecureSkipVerify: false
-      schedulerEndpointUrl: http://scheduler/test
-      controllerManagerEndpointUrl: http://controller/test
+      controlPlane.config.scheduler.staticEndpoint:
+        url: http://scheduler/test
+      controlPlane.config.controllerManager.staticEndpoint:
+        url: http://controller/test
+      controlPlane.config.apiServer.staticEndpoint:
+        url: http://apiServer/test
+
       apiServerEndpointUrl: http://apiServer/test
     asserts:
       - equal:
@@ -105,28 +79,43 @@ tests:
                   insecureSkipVerify: false
                   url: http://test2.io:9090/test2
               scheduler:
-                autodiscover: []
+                autodiscover:
+                - endpoints:
+                  - auth:
+                      type: bearer
+                    insecureSkipVerify: true
+                    url: https://localhost:10259
+                  matchNode: true
+                  namespace: kube-system
+                  selector: tier=control-plane,component=kube-scheduler
+                - endpoints:
+                  - auth:
+                      type: bearer
+                    insecureSkipVerify: true
+                    url: https://localhost:10259
+                  matchNode: true
+                  namespace: kube-system
+                  selector: k8s-app=kube-scheduler
+                - endpoints:
+                  - auth:
+                      type: bearer
+                    insecureSkipVerify: true
+                    url: https://localhost:10259
+                  matchNode: true
+                  namespace: kube-system
+                  selector: app=openshift-kube-scheduler,scheduler=true
                 enabled: true
                 staticEndpoint:
-                  auth:
-                    type: bearer
-                  insecureSkipVerify: true
                   url: http://scheduler/test
               controllerManager:
                 autodiscover: []
                 enabled: true
                 staticEndpoint:
-                  auth:
-                    type: bearer
-                  insecureSkipVerify: true
                   url: http://controller/test
               apiServer:
                 autodiscover: []
                 enabled: true
                 staticEndpoint:
-                  auth:
-                    type: bearer
-                  insecureSkipVerify: true
                   url: http://apiServer/test
   - it: autodiscovery section is rendered as expected together with the static Endpoint
     set:

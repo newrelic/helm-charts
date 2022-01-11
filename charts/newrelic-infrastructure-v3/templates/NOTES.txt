@@ -55,7 +55,7 @@ Please use ksm.tolerations, controlPlane.tolerations and kubelet.tolerations.
 
 {{- end }}
 
-{{- if .image }}
+{{- if .Values.image }}
 
 ###########
 # WARNING #
@@ -76,7 +76,7 @@ Please set:
 
 {{- end }}
 
-{{- if (or .Values.enableWindows .windowsOsList .windowsSecurityContext .windowsNodeSelector)}}
+{{- if (or .Values.enableWindows .Values.windowsOsList .Values.windowsSecurityContext .Values.windowsNodeSelector)}}
 
 ###########
 # WARNING #
@@ -87,7 +87,28 @@ are no longer supported.
 
 {{- end }}
 
-{{- if ( or .Values.etcdTlsSecretName .etcdTlsSecretNamespace )}}
+{{- if ( or .Values.controllerManagerEndpointUrl  .Values.schedulerEndpointUrl .Values.etcdEndpointUrl .Values.apiServerEndpointUrl )}}
+
+###########
+# WARNING #
+###########
+
+Values "controllerManagerEndpointUrl", "etcdEndpointUrl", "apiServerEndpointUrl", "schedulerEndpointUrl" are no longer
+supported, please specify them in the config file. You can add them in the autodiscovery section. Example for etcdEndpointUrl:
+
+#  autodiscover:
+#    - selector: "tier=control-plane,component=etcd"
+#      namespace: kube-system
+#      matchNode: true
+#      endpoints:
+#        - url: https://localhost:4001
+#          insecureSkipVerify: true
+#          auth:
+#            type: bearer
+
+{{- end }}
+
+{{- if ( or .Values.etcdTlsSecretName .Values.etcdTlsSecretNamespace )}}
 
 ###########
 # WARNING #
