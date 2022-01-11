@@ -112,11 +112,16 @@ ksm:
       cpu: 100m
       memory: 150M
   config: {}
-  # staticUrl:
-  # scheme:
-  # port:
-  # selector:
-  # namespace:
+  # If staticUrl is specified autodiscovery is not performed and the specified URL is used
+  # staticUrl: "http://test.io:8080/metrics"
+  # If scheme is specified the scheme is not discovered and the specified one is used
+  # scheme: "http"
+  # If port is specified the scheme is not discovered and the specified one is used
+  # port: 8080
+  # If selector is specified only the pods matching with selector are taken into account during autodiscovery
+  # selector: "app.kubernetes.io/name=kube-state-metrics"
+  # If selector is specified only the pods matching with selector are taken into account during autodiscovery
+  # namespace: "ksm-namespace"
 
 # -- Configuration for the DaemonSet that collects metrics from the control plane.
 # @default -- See `values.yaml`

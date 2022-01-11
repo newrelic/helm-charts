@@ -210,14 +210,14 @@ autodiscover:
 
 {{- if ( or .staticEndpoint .etcdEndpointUrl) }}
 staticEndpoint:
-    {{- if .staticEndpoint  }}
-{{ .staticEndpoint | toYaml | indent 2}}
-    {{- else if .etcdEndpointUrl }}
+{{- if .staticEndpoint  -}}
+  {{- .staticEndpoint | toYaml | nindent 2 -}}
+{{- else if .etcdEndpointUrl }}
   url: {{ .etcdEndpointUrl }}
   insecureSkipVerify: true
   auth:
     type: bearer
-    {{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
