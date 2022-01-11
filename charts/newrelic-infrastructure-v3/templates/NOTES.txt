@@ -13,7 +13,7 @@ Those components are needed to have the full experience on NROne kubernetes expl
 
 {{- end }}
 
-{{- if and .Values.nodeAffinity (.Values.controlPlane.enabled) (not (include "newrelic.fargate" .)) }}
+{{- if and .Values.nodeAffinity .Values.controlPlane.enabled (not (include "newrelic.fargate" .)) }}
 
 ###########
 # WARNING #
