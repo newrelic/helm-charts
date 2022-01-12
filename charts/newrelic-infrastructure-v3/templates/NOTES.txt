@@ -1,19 +1,23 @@
 {{- if or (not .Values.ksm.enabled) (not .Values.kubelet.enabled) }}
-
-###########
-# WARNING #
-###########
+Warning:
+========
 
 You have specified ksm or kubelet integration components as not enabled.
 Those components are needed to have the full experience on NROne kubernetes explorer.
+{{- end }}
 
+{{- if and .Values.controlPlane.enabled (not (include "newrelic.controlPlane.hostNetwork" .)) }}
+Warning:
+========
+
+Most Control Plane components listen in the loopback address only, which is not reachable with `hostNetwork: true`.
+Control plane autodiscovery might not work as expected.
+You can enable hostNetwork for control plane scraper pods only by setting `controlPlane.unprivilegedHostNetwork: true`.
 {{- end }}
 
 {{- if and (include "newrelic.fargate" .) .Values.kubelet.affinity.nodeAffinity }}
-
-###########
-# WARNING #
-###########
+Warning:
+========
 
 You have specified both an EKS Fargate environment (global.fargate) and custom
 nodeAffinity rules, so we couldn't automatically exclude the kubelet daemonSet from

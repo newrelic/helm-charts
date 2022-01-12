@@ -119,8 +119,11 @@ ksm:
 # -- Configuration for the DaemonSet that collects metrics from the control plane.
 # @default -- See `values.yaml`
 controlPlane:
-  # -- Deploy control plane monitoring DaemonSet. Requires `privileged` mode to be enabled.
+  # -- Deploy control plane monitoring DaemonSet.
   enabled: true
+  # -- Run Control Plane scraper with hostNetwork even if privileged is set to false.
+  # hostNetwork is required for most control plane configuration, as they only accept connections from localhost.
+  unprivilegedHostNetwork: false
   annotations: {}
   tolerations:
     - operator: "Exists"
