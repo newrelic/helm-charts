@@ -32,7 +32,7 @@ jobs:
           helm plugin install https://github.com/quintush/helm-unittest
           
           for chart in $(ct list-changed); do
-            if [ -d "$chart/tests/ ]; then
+            if [ -d "$chart/tests/" ]; then
               helm unittest $chart -3
             fi
           done
