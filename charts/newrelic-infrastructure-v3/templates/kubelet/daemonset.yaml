@@ -170,7 +170,7 @@ spec:
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
             {{- end }}
-            {{- if or .Values.integrations_config .Values.integrations }}
+            {{- if or .Values.integrations (include "newrelic.compatibility.integrations" .)}}
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
             {{- end }}
@@ -232,7 +232,7 @@ spec:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
         {{- end }}
-        {{- if or .Values.integrations_config .Values.integrations }}
+        {{- if or .Values.integrations (include "newrelic.compatibility.integrations" .) }}
         - name: nri-integrations-cfg-volume
           configMap:
             name: {{ template "newrelic.fullname" . }}-integrations-cfg

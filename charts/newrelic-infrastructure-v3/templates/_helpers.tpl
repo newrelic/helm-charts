@@ -222,20 +222,6 @@ Returns Custom Attributes even if formatted as a json string
 {{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" (include "newrelic.cluster" .)) | toJson }}
 {{- end -}}
 
-{{/*
-Returns integration configmap data,
-if the new one is defined we ignore the old one
-*/}}
-{{- define "newrelic.integrations" -}}
-{{- if .Values.integrations -}}
-{{- range $k, $v := .Values.integrations }}
-{{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |-
-    {{- tpl ($v | toYaml) $ | nindent 2 }}
-{{- end -}}
-{{- end -}}
-{{- end -}}
-
-
 {{- define "newrelic.integrationConfigDefaults" -}}
 {{- if include "newrelic.lowDataMode" . -}}
 interval: 30s
