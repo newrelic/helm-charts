@@ -30,9 +30,12 @@ jobs:
       - name: unitTests for supported charts
         run: |
           helm plugin install https://github.com/quintush/helm-unittest
-          if [[ $(ct list-changed) =~ .*"charts/newrelic-infrastructure-v3".* ]]; then
-            helm unittest ./charts/newrelic-infrastructure-v3 -3
-          fi
+          
+          for chart in $(ct list-changed); do
+            if [ -d "$chart/tests/ ]; then
+              helm unittest $chart -3
+            fi
+          done
 
       - name: Check for changed charts
         id: list-changed
