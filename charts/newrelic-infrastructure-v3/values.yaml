@@ -35,10 +35,10 @@ images:
 common:
   # Configuration entries that apply to all instances of the integration: kubelet, ksm and control plane.
   config:
-    # Intervals larger than 40s are not supported and will cause the NR UI to not behave properly.
+    # common.config.interval -- (duration) Intervals larger than 40s are not supported and will cause the NR UI to not behave properly.
     # @default -- `15s` if `lowDataMode == false`, `30s` otherwise.
-    # interval: 15s
-    # -- Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
+    interval:
+    # Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
     timeout: 30s
   # -- Config for the Infrastructure agent.
   # Will be used by the forwarder sidecars and the agent running integrations.
@@ -48,7 +48,7 @@ common:
 # lowDataMode -- (bool) Enables low data mode sending less data by incrementing the interval from "15s" (the default when `lowDataMode` is `false` or `nil`) to "30s".
 # Will be ignored if `.common.config.interval` is set.
 # @default -- false
-# lowDataMode: false
+lowDataMode:
 
 # kubelet -- Configuration for the DaemonSet that collects metrics from the Kubelet.
 # @default -- See `values.yaml`

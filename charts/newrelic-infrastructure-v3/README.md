@@ -23,6 +23,7 @@ Kubernetes: `>=1.16.0-0`
 |-----|------|---------|-------------|
 | common | object | See `values.yaml` | Config that applies to all instances of the solution: kubelet, ksm, control plane and sidecars. |
 | common.agentConfig | object | `{}` | Config for the Infrastructure agent. Will be used by the forwarder sidecars and the agent running integrations. See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/ |
+| common.config.interval | duration | `15s` if `lowDataMode == false`, `30s` otherwise. | Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. |
 | controlPlane | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the control plane. |
 | controlPlane.affinity | object | Deployed only in master nodes. | Affinity for the control plane DaemonSet. |
 | controlPlane.config.apiServer | object | Common settings for most K8s distributions. | API Server monitoring configuration |
@@ -50,6 +51,7 @@ Kubernetes: `>=1.16.0-0`
 | ksm.resources | object | 100m/150M -/850M | Resources for the KSM scraper pod. Keep in mind that sharding is not supported at the moment, so memory usage for this component ramps up quickly on large clusters. |
 | kubelet | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the Kubelet. |
 | kubelet.enabled | bool | `true` | Enable kubelet monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
+| lowDataMode | bool | false | Enables low data mode sending less data by incrementing the interval from "15s" (the default when `lowDataMode` is `false` or `nil`) to "30s". Will be ignored if `.common.config.interval` is set. |
 | podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
 | podLabels | object | `{}` | Labels to be added to all pods created by the integration. |
 | priorityClassName | string | `""` | Pod scheduling priority Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/ |
