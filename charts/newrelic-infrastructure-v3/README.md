@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.4](https://img.shields.io/badge/Version-3.0.4-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
+![Version: 3.0.5](https://img.shields.io/badge/Version-3.0.5-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -48,22 +48,8 @@ Kubernetes: `>=1.16.0-0`
 | ksm | object | See `values.yaml` | Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics). |
 | ksm.enabled | bool | `true` | Enable cluster state monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
 | ksm.resources | object | 100m/150M -/850M | Resources for the KSM scraper pod. Keep in mind that sharding is not supported at the moment, so memory usage for this component ramps up quickly on large clusters. |
-| kubelet.affinity.nodeAffinity | object | `{}` |  |
-| kubelet.annotations | object | `{}` |  |
-| kubelet.config | object | `{}` |  |
+| kubelet | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the Kubelet. |
 | kubelet.enabled | bool | `true` | Enable kubelet monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
-| kubelet.extraEnv | list | `[]` |  |
-| kubelet.extraEnvFrom | list | `[]` |  |
-| kubelet.extraVolumeMounts | list | `[]` |  |
-| kubelet.extraVolumes | list | `[]` |  |
-| kubelet.nodeSelector | object | `{}` |  |
-| kubelet.resources.limits.memory | string | `"300M"` |  |
-| kubelet.resources.requests.cpu | string | `"100m"` |  |
-| kubelet.resources.requests.memory | string | `"150M"` |  |
-| kubelet.tolerations[0].effect | string | `"NoSchedule"` |  |
-| kubelet.tolerations[0].operator | string | `"Exists"` |  |
-| kubelet.tolerations[1].effect | string | `"NoExecute"` |  |
-| kubelet.tolerations[1].operator | string | `"Exists"` |  |
 | podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
 | podLabels | object | `{}` | Labels to be added to all pods created by the integration. |
 | priorityClassName | string | `""` | Pod scheduling priority Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/ |
