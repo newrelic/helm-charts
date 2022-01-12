@@ -12,7 +12,8 @@ Warning:
 
 Most Control Plane components listen in the loopback address only, which is not reachable without `hostNetwork: true`.
 Control plane autodiscovery might not work as expected.
-You can enable hostNetwork for control plane scraper pods only by setting `controlPlane.unprivilegedHostNetwork: true`.
+You can enable hostNetwork for control plane scraper pods only by setting `controlPlane.unprivilegedHostNetwork: true`,
+or alternative disable control plane monitoring altogether with `controlPlane.enabled: false`.
 {{- end }}
 
 {{- if and (include "newrelic.fargate" .) .Values.kubelet.affinity.nodeAffinity }}
