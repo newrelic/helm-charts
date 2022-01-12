@@ -51,7 +51,7 @@ spec:
           image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
           securityContext:
-            {{- .Values.securityContext | mustMergeOverwrite (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           env:
             - name: "NRI_KUBERNETES_SINK_HTTP_PORT"
               value: "8003"
@@ -97,7 +97,7 @@ spec:
             privileged: true
             readOnlyRootFilesystem: true
           {{- else }}
-            {{- .Values.securityContext | mustMergeOverwrite (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           {{- end }}
           ports:
             - containerPort: 8003
@@ -170,7 +170,7 @@ spec:
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
             {{- end }}
-            {{- if .Values.integrations_config }}
+            {{- if or .Values.integrations_config .Values.integrations }}
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
             {{- end }}
@@ -232,7 +232,7 @@ spec:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
         {{- end }}
-        {{- if .Values.integrations_config }}
+        {{- if or .Values.integrations_config .Values.integrations }}
         - name: nri-integrations-cfg-volume
           configMap:
             name: {{ template "newrelic.fullname" . }}-integrations-cfg

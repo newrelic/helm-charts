@@ -45,7 +45,7 @@ spec:
           image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
           securityContext:
-            {{- .Values.securityContext | mustMergeOverwrite (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           env:
             - name: "NRI_KUBERNETES_SINK_HTTP_PORT"
               value: "8002"
@@ -80,7 +80,7 @@ spec:
           image: "{{ .Values.images.forwarder.registry }}/{{ .Values.images.forwarder.repository }}:{{ .Values.images.forwarder.tag }}"
           imagePullPolicy: {{ .Values.images.forwarder.pullPolicy }}
           securityContext:
-            {{- .Values.securityContext | mustMergeOverwrite (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           ports:
             - containerPort: 8002
           env:

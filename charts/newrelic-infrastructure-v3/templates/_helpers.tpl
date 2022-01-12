@@ -227,10 +227,10 @@ Returns integration configmap data,
 if the new one is defined we ignore the old one
 */}}
 {{- define "newrelic.integrations" -}}
-{{- if .Values.integrations_config -}}
-{{- range .Values.integrations_config }}
-{{ .name -}}: |-
-  {{- toYaml .data | nindent 2 }}
+{{- if .Values.integrations -}}
+{{- range $k, $v := .Values.integrations }}
+{{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |-
+    {{- tpl ($v | toYaml) $ | nindent 2 }}
 {{- end -}}
 {{- end -}}
 {{- end -}}

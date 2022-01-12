@@ -4,21 +4,14 @@ Your deployment of the New Relic Infrastructure agent is complete if you have no
 
 {{- if or (not .Values.ksm.enabled) (not .Values.kubelet.enabled) }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG<-
 You have specified ksm or kubelet integration components as not enabled.
 Those components are needed to have the full experience on NROne kubernetes explorer.
-
 {{- end }}
 
 {{- if and .Values.nodeAffinity .Values.controlPlane.enabled (not (include "newrelic.fargate" .)) }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 You have specified the legacy "nodeAffinity" option into values, however the new version of the chart
 supports a different nodeAffinity options per component.
 
@@ -26,41 +19,29 @@ The value specified has been applied automatically to ksm and kubelet workloads,
 
 Keep in mind you should leverage the new ksm.affinity.nodeAffinity, controlPlane.affinity.nodeAffinity
 and kubelet.affinity.nodeAffinity to customize nodeAffinity.
-
 {{- end }}
 
 {{- if .Values.resources }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 You have specified the legacy "resources" option into values, however the new version of the chart
 supports different resources per component, therefore the value specified has been ignored.
 
 Please use ksm.resources, controlPlane.resources and kubelet.resources.
-
 {{- end }}
 
 {{- if .Values.tolerations }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 You have specified the legacy "tolerations" options into values, however the new version of the chart
 supports different tolerations per component, therefore the value specified has been ignored.
 
 Please use ksm.tolerations, controlPlane.tolerations and kubelet.tolerations.
-
 {{- end }}
 
 {{- if .Values.image }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 You have specified into values one of the legacy options "image.*".
 The following values are no longer supported and are currently ignored.
  - image.repository
@@ -73,15 +54,11 @@ Please set:
  - images.forwarder.* to configure the image in charge of sending data to newrelic backend
  - images.agent.* to configure the image bundling the agent and onHost integration
  - images.integration.* to configure the image in charge of scraping k8s data
-
 {{- end }}
 
 {{- if (or .Values.enableWindows .Values.windowsOsList .Values.windowsSecurityContext .Values.windowsNodeSelector)}}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 Windows is currently supported by 2.x charts only and therefore "windowsOsList" "windowsSecurityContext" "windowsNodeSelector"
 are no longer supported.
 
@@ -89,10 +66,7 @@ are no longer supported.
 
 {{- if ( or .Values.controllerManagerEndpointUrl  .Values.schedulerEndpointUrl .Values.etcdEndpointUrl .Values.apiServerEndpointUrl )}}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 Values "controllerManagerEndpointUrl", "etcdEndpointUrl", "apiServerEndpointUrl", "schedulerEndpointUrl" are no longer
 supported, please specify them in the config file. You can add them in the autodiscovery section. Example for etcdEndpointUrl:
 
@@ -110,10 +84,7 @@ supported, please specify them in the config file. You can add them in the autod
 
 {{- if ( or .Values.etcdTlsSecretName .Values.etcdTlsSecretNamespace )}}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 Values "etcdTlsSecretName" and "etcdTlsSecretNamespace" are no longer supported, please specify them in the config
 file. Example:
 # - endpoints:
@@ -124,30 +95,21 @@ file. Example:
 #         mtls:
 #           secretName: secret-name
 #           secretNamespace: secret-namespace
-
 {{- end }}
 
 {{- if .Values.logFile }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 The "logFile" value is no longer supported, please specify the option "log_file" directly in "common.agentConfig".
 
 Notice that you will need as well to set securityContext.readOnlyRootFilesystem to false or add extraVolumes to allow
 the container to write to such location
-
 {{- end }}
 
 {{- if .Values.apiServerSecurePort }}
 
-###########
-# WARNING #
-###########
-
+-> WARNING LEGACY CONFIG <-
 The "apiServerSecurePort" value is no longer supported, please specify it in the section "apiServer.autodiscover[].endpoints".
-
 {{- end }}
 
 {{- if and (include "newrelic.fargate" .) .Values.kubelet.affinity.nodeAffinity }}

@@ -1,4 +1,4 @@
-{{ if include "newrelic.compatibility.integrations" .}}
+{{ if or .Values.integrations_config .Values.integrations }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,5 +7,6 @@ metadata:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-integrations-cfg
 data:
-  {{- mustMergeOverwrite (include "newrelic.integrations" . | fromYaml) (include "newrelic.compatibility.integrations" . | fromYaml) | toYaml | nindent 2 -}}
+  {{- include "newrelic.integrations" . | nindent 2 -}}
+  {{- include "newrelic.compatibility.integrations" . | nindent 2 -}}
 {{- end -}}

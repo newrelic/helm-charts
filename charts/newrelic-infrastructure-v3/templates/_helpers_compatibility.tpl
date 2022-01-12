@@ -30,7 +30,7 @@ namespace: {{ .Values.kubeStateMetricsNamespace}}
 {{- end -}}
 
 {{/*
-Returns the new value if available, falling back on the legacy one
+Returns the new value if available, otherwise falling back on the legacy one
 */}}
 {{- define "newrelic.compatibility.valueWithFallback" -}}
 {{- if .supported }}
@@ -41,18 +41,16 @@ Returns the new value if available, falling back on the legacy one
 {{- end -}}
 
 {{/*
-Returns securityContext merged with old runAsUser config
+Returns a dictionary with legacy runAsUser config
 */}}
 {{- define "newrelic.compatibility.securityContext" -}}
 {{- if  .Values.runAsUser -}}
-{{- mustMergeOverwrite .Values.securityContext (dict "runAsUser" .Values.runAsUser ) | toYaml }}
-{{- else -}}
-{{- .Values.securityContext | toYaml }}
+{{ dict "runAsUser" .Values.runAsUser | toYaml }}
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns agent configmap merged with old eventQueueDepth config
+Returns agent configmap merged with legacy config and legacy eventQueueDepth config
 */}}
 {{- define "newrelic.compatibility.agentConfig" -}}
 {{ $config:= (include "newrelic.compatibility.valueWithFallback" (dict "legacy" .Values.config "supported" .Values.common.agentConfig ) | fromYaml )}}
@@ -64,16 +62,13 @@ Returns agent configmap merged with old eventQueueDepth config
 {{- end -}}
 
 {{/*
-Returns integration configmap data with legacy fallback
+Returns legacy integrations_config configmap data
 */}}
 {{- define "newrelic.compatibility.integrations" -}}
-{{- if (include "newrelic.integrations" .) -}}
-{{- include "newrelic.integrations" . -}}
-
-{{- else if .Values.integrations -}}
-{{- range $k, $v := .Values.integrations }}
-{{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |-
-    {{- tpl ($v | toYaml) $ | nindent 2 }}
+{{- if .Values.integrations_config -}}
+{{- range .Values.integrations_config }}
+{{ .name -}}: |-
+  {{- toYaml .data | nindent 2 }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
