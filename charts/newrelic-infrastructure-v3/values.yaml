@@ -35,22 +35,23 @@ registry: docker.io
 common:
   # Configuration entries that apply to all instances of the integration: kubelet, ksm and control plane.
   config:
-# Intervals larger than 40s are not supported and will cause the NR UI to not behave properly.
+# common.config.interval -- (duration) Intervals larger than 40s are not supported and will cause the NR UI to not
+# behave properly. Any non-nil value will override the `lowDataMode` default.
 # @default -- `15s` if `lowDataMode == false`, `30s` otherwise.
-# interval: 15s
-# -- Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
+interval:
+# Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
 timeout: 30s
   # -- Config for the Infrastructure agent.
   # Will be used by the forwarder sidecars and the agent running integrations.
   # See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
   agentConfig: {}
 
-# lowDataMode -- (bool) Enables low data mode sending less data by incrementing the interval from "15s" (the default when `lowDataMode` is `false` or `nil`) to "30s".
-# Will be ignored if `.common.config.interval` is set.
-# @default -- false
-# lowDataMode: false
+# lowDataMode -- (bool) Send less data by incrementing the interval from `15s` (the default when `lowDataMode` is `false` or `nil`) to `30s`.
+# Non-nil values of `common.config.interval` will override this value.
+# @default -- `false`
+lowDataMode:
 
-# -- Configuration for the DaemonSet that collects metrics from the Kubelet
+# kubelet -- Configuration for the DaemonSet that collects metrics from the Kubelet.
 # @default -- See `values.yaml`
 kubelet:
   # -- Enable kubelet monitoring.
@@ -77,7 +78,7 @@ requests:
   memory: 150M
   config: {}
 
-# -- Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics).
+# ksm -- Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics).
 # @default -- See `values.yaml`
 ksm:
   # -- Enable cluster state monitoring.
@@ -116,11 +117,14 @@ requests:
   memory: 150M
   config: {}
 
-# -- Configuration for the DaemonSet that collects metrics from the control plane.
+# controlPlane -- Configuration for the control plane scraper.
 # @default -- See `values.yaml`
 controlPlane:
-  # -- Deploy control plane monitoring DaemonSet. Requires `privileged` mode to be enabled.
+  # -- Deploy control plane monitoring component.
   enabled: true
+  # -- Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false.
+  # `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost.
+  unprivilegedHostNetwork: false
   annotations: {}
   tolerations:
 - operator: "Exists"
