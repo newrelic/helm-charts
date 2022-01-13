@@ -73,51 +73,63 @@ Returns legacy integrations_config configmap data
 {{- end -}}
 {{- end -}}
 
+{{- define "newrelic.compatibility.message.logFile" -}}
+The `logFile` option is no longer supported and has been replaced by common.agentConfig.log_file.
+{{- end -}}
+
+{{- define "newrelic.compatibility.message.resources" -}}
+You have specified the legacy `resources` option in your values, which is not fully compatible with the v3 version.
+This version deploys three different components and therefore you'll need to specify resources for each of them.
+Please use `ksm.resources`, `controlPlane.resources` and `kubelet.resources`.
+{{- end -}}
+
+{{- define "newrelic.compatibility.message.tolerations" -}}
+You have specified the legacy `tolerations` option in your values, which is not fully compatible with the v3 version.
+This version deploys three different components and therefore you'll need to specify tolerations for each of them.
+Please use `ksm.tolerations`, `controlPlane.tolerations` and `kubelet.tolerations`.
+{{- end -}}
+
 {{- define "newrelic.compatibility.message.apiServerSecurePort" -}}
--> WARNING LEGACY CONFIG <-
-    The "apiServerSecurePort" value is no longer supported, please specify it in the section "apiServer.autodiscover[].endpoints".
+You have specified the legacy `apiServerSecurePort` option in your values, which is not fully compatible with the v3
+version.
+Please configure the API Server port as a part of `apiServer.autodiscover[].endpoints`.
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.windows" -}}
--> WARNING LEGACY CONFIG <-
-Windows is currently supported by 2.x charts only and therefore "windowsOsList" "windowsSecurityContext" "windowsNodeSelector"
-are no longer supported.
+nri-kubernetes v3 does not support deploying into windows Nodes.
+Please use the latest 2.x version of the chart.
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.etcdSecrets" -}}
--> WARNING LEGACY CONFIG <-
-Values "etcdTlsSecretName" and "etcdTlsSecretNamespace" are no longer supported, please specify them in the config
-file. Example:
-# - endpoints:
-#     - url: https://localhost:9979
-#       insecureSkipVerify: true
-#       auth:
-#         type: mTLS
-#         mtls:
-#           secretName: secret-name
-#           secretNamespace: secret-namespace
+Values "etcdTlsSecretName" and "etcdTlsSecretNamespace" are no longer supported, please specify them as a part of the
+`etcd` config in the values, for example:
+ - endpoints:
+     - url: https://localhost:9979
+       insecureSkipVerify: true
+       auth:
+         type: mTLS
+         mtls:
+           secretName: {{ .Values.etcdTlsSecretName | default "etcdTlsSecretName"}}
+           secretNamespace: {{ .Values.etcdTlsSecretNamespace | default "etcdTlsSecretNamespace"}}
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.apiURL" -}}
--> WARNING LEGACY CONFIG <-
 Values "controllerManagerEndpointUrl", "etcdEndpointUrl", "apiServerEndpointUrl", "schedulerEndpointUrl" are no longer
-supported, please specify them in the config file. You can add them in the autodiscovery section. Example for etcdEndpointUrl:
-
-#  autodiscover:
-#    - selector: "tier=control-plane,component=etcd"
-#      namespace: kube-system
-#      matchNode: true
-#      endpoints:
-#        - url: https://localhost:4001
-#          insecureSkipVerify: true
-#          auth:
-#            type: bearer
+supported, please specify them as a part of the `controlplane` config in the values, for example
+  autodiscover:
+    - selector: "tier=control-plane,component=etcd"
+      namespace: kube-system
+      matchNode: true
+      endpoints:
+        - url: https://localhost:4001
+          insecureSkipVerify: true
+          auth:
+            type: bearer
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.image" -}}
--> WARNING LEGACY CONFIG <-
-You have specified into values one of the legacy options "image.*".
-The following values are no longer supported and are currently ignored.
+Configuring image repository an tag under `image` is no longer supported.
+The following values are no longer supported and are currently ignored:
  - image.repository
  - image.tag
  - image.pullPolicy
@@ -125,7 +137,7 @@ The following values are no longer supported and are currently ignored.
 
 Notice that the 3.x version of the integration uses 3 different images.
 Please set:
- - images.forwarder.* to configure the image in charge of sending data to newrelic backend
- - images.agent.* to configure the image bundling the agent and onHost integration
- - images.integration.* to configure the image in charge of scraping k8s data
+ - images.forwarder.* to configure the infrastructure-agent forwarder.
+ - images.agent.* to configure the image bundling the infrastructure-agent and on-host integrations.
+ - images.integration.* to configure the image in charge of scraping k8s data.
 {{- end -}}
