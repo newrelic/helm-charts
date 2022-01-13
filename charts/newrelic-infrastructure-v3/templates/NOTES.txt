@@ -1,4 +1,3 @@
-
 {{- if or (not .Values.ksm.enabled) (not .Values.kubelet.enabled) }}
 Warning:
 ========
@@ -124,6 +123,6 @@ future. Please migrate your agent config to the new format in the `common.agentC
 {{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.apiServerSecurePort" . ) }}
 {{- end }}
 
-{{- if $errors }}
+{{- if $errors | trim}}
 {{- fail $errors }}
 {{- end }}
