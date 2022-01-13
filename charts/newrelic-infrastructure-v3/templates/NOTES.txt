@@ -38,14 +38,6 @@ affinity:
                 - fargate
 {{- end }}
 
-{{- if or (not .Values.ksm.enabled) (not .Values.kubelet.enabled) }}
-WARNING
-=======
-
-You have specified ksm or kubelet integration components as not enabled.
-Those components are needed to have the full experience on NROne kubernetes explorer.
-{{- end }}
-
 {{- if and .Values.nodeAffinity .Values.controlPlane.enabled }}
 WARNING: `nodeAffinity` is deprecated
 =====================================
