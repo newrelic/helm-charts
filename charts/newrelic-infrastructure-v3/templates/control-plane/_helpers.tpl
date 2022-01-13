@@ -1,4 +1,4 @@
-{{/* Returns whether the controlPlane component needs needsHostNetwork to work, that is, if they do not have a staticEndpoint configured */}}
+{{/* Returns whether the controlPlane scraper should run with hostNetwork: true based on the user configuration. */}}
 {{- define "newrelic.controlPlane.hostNetwork" -}}
 {{- if .Values.privileged -}}
 true
