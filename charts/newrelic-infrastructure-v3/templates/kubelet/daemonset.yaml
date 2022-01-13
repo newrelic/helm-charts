@@ -24,7 +24,7 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if .Values.common.agentConfig }}
+        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- if .Values.integrations_config }}
@@ -51,9 +51,9 @@ spec:
           image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           env:
-            - name: "NRI_KUBERNETES_HTTPSERVERPORT"
+            - name: "NRI_KUBERNETES_SINK_HTTP_PORT"
               value: "8003"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
               value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
@@ -97,7 +97,7 @@ spec:
             privileged: true
             readOnlyRootFilesystem: true
           {{- else }}
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           {{- end }}
           ports:
             - containerPort: 8003
@@ -152,10 +152,6 @@ spec:
             - name: NRIA_VERBOSE
               value: "1"
             {{- end }}
-            {{- with .Values.logFile }}
-            - name: NRIA_LOG_FILE
-              value: {{ . }}
-            {{- end }}
             {{- if not .Values.privileged }}
             - name: "NRIA_OVERRIDE_HOST_ROOT"
               value: ""
@@ -169,12 +165,12 @@ spec:
           envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if .Values.common.agentConfig }}
+            {{- if (include "newrelic.compatibility.agentConfig" . ) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
             {{- end }}
-            {{- if .Values.integrations_config }}
+            {{- if or .Values.integrations (include "newrelic.compatibility.integrations" .)}}
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
             {{- end }}
@@ -228,7 +224,7 @@ spec:
             items:
               - key: nri-kubernetes.yml
                 path: nri-kubernetes.yml
-        {{- if .Values.common.agentConfig }}
+        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
@@ -236,7 +232,7 @@ spec:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
         {{- end }}
-        {{- if .Values.integrations_config }}
+        {{- if or .Values.integrations (include "newrelic.compatibility.integrations" .) }}
         - name: nri-integrations-cfg-volume
           configMap:
             name: {{ template "newrelic.fullname" . }}-integrations-cfg
@@ -247,10 +243,11 @@ spec:
       {{- with .Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- if .Values.kubelet.affinity.nodeAffinity }}
+      {{- $nodeAffinity:=(include "newrelic.compatibility.valueWithFallback" (dict "legacy" .Values.nodeAffinity "supported" .Values.kubelet.affinity.nodeAffinity )) -}}
+      {{- if $nodeAffinity }}
       affinity:
         nodeAffinity:
-          {{- .Values.kubelet.affinity.nodeAffinity | toYaml | nindent 10 }}
+          {{- $nodeAffinity | nindent 10 }}
       {{- else if include "newrelic.fargate" . }}
       affinity:
         nodeAffinity:
@@ -265,9 +262,10 @@ spec:
       {{- with .Values.kubelet.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.kubelet.nodeSelector }}
+      {{- end -}}
+
+      {{- with (include "newrelic.compatibility.valueWithFallback" (dict "legacy" .Values.nodeSelector "supported" .Values.kubelet.nodeSelector )) }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- . | nindent 8}}
+      {{- end -}}
 {{- end }}
