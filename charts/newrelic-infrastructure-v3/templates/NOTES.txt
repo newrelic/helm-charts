@@ -37,3 +37,84 @@ requiredDuringSchedulingIgnoredDuringExecution:
   values:
 - fargate
 {{- end }}
+
+{{- if and .Values.nodeAffinity .Values.controlPlane.enabled }}
+WARNING: `nodeAffinity` is deprecated
+=====================================
+
+We have applied the old `nodeAffinity` to KSM and Kubelet components, but *NOT* to the control plane component as it
+might conflict with the default nodeSelector.
+This shimming will be removed in the future, please convert your `nodeAffinity` item into:
+`ksm.affinity.nodeAffinity`, `controlPlane.affinity.nodeAffinity`, and `kubelet.affinity.nodeAffinity`.
+{{- end }}
+
+{{- if and .Values.integrations_config }}
+WARNING: `integrations_config` is deprecated
+============================================
+
+We have automatically translated `integrations_config` to the new format, but this shimming will be removed in the
+future. Please migrate your configs to the new format in the `integrations` key.
+{{- end }}
+
+{{- if or .Values.kubeStateMetricsScheme .Values.kubeStateMetricsPort .Values.kubeStateMetricsUrl .Values.kubeStateMetricsPodLabel .Values.kubeStateMetricsNamespace }}
+WARNING: `kubeStateMetrics*` are deprecated
+===========================================
+
+We have automatically translated your `kubeStateMetrics*` values to the new format, but this shimming will be removed in
+the future. Please migrate your configs to the new format in the `ksm.config` key.
+{{- end }}
+
+{{- if .Values.runAsUser }}
+WARNING: `runAsUser` is deprecated
+==================================
+
+We have automatically translated your `runAsUser` setting to the new format, but this shimming will be removed in the
+future. Please migrate your configs to the new format in the `securityContext` key.
+{{- end }}
+
+{{- if .Values.config }}
+WARNING: `config` is deprecated
+===============================
+
+We have automatically translated your `config` setting to the new format, but this shimming will be removed in the
+future. Please migrate your agent config to the new format in the `common.agentConfig` key.
+{{- end }}
+
+
+{{ $errors:= "\n" }}
+
+{{- if .Values.logFile }}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.logFile" . ) }}
+{{- end }}
+
+{{- if .Values.tolerations }}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.tolerations" . ) }}
+{{- end }}
+
+{{- if .Values.resources }}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.resources" . ) }}
+{{- end }}
+
+{{- if .Values.image }}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.image" . ) }}
+{{- end }}
+
+{{- if (or .Values.enableWindows .Values.windowsOsList .Values.windowsSecurityContext .Values.windowsNodeSelector)}}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.windows" . ) }}
+{{- end }}
+
+{{- if ( or .Values.controllerManagerEndpointUrl  .Values.schedulerEndpointUrl .Values.etcdEndpointUrl .Values.apiServerEndpointUrl )}}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.apiURL" . ) }}
+{{- end }}
+
+{{- if ( or .Values.etcdTlsSecretName .Values.etcdTlsSecretNamespace )}}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.etcdSecrets" . ) }}
+{{- end }}
+
+{{- if .Values.apiServerSecurePort }}
+{{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.apiServerSecurePort" . ) }}
+{{- end }}
+
+{{- if $errors | trim}}
+{{- fail $errors }}
+{{- end }}

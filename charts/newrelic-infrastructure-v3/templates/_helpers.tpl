@@ -184,7 +184,11 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 {{- define "newrelic.roleBindingNamespaces" -}}
 {{ $namespaceList := list }}
 {{- range $components := .Values.controlPlane.config }}
+  {{- if $components }}
+  {{- if $components.autodiscover }}
 {{- range $autodiscover := $components.autodiscover }}
+  {{- if $autodiscover }}
+  {{- if $autodiscover.endpoints }}
 {{- range $endpoint := $autodiscover.endpoints }}
 {{- if $endpoint.auth }}
 {{- if $endpoint.auth.mtls }}
@@ -194,7 +198,11 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 {{- end }}
 {{- end }}
 {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
 roleBindingNamespaces: {{- uniq $namespaceList | toYaml | nindent 0 }}
 {{- end -}}
@@ -221,3 +229,4 @@ interval: 30s
 interval: 15s
 {{- end -}}
 {{- end -}}
+

@@ -1,4 +1,4 @@
-{{ if or .Values.integrations_config .Values.integrations }}
+{{ if or .Values.integrations (include "newrelic.compatibility.integrations" .)}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -7,16 +7,11 @@ metadata:
 {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-integrations-cfg
 data:
-{{/* TODO: Remove legacy integrations_config range */}}
-{{- range .Values.integrations_config }}
-  # Legacy integrations_config entry
-{{ .name | indent 2 }}: |
----
-{{ toYaml .data | indent  4 }}
-{{- end }}
-
-{{- range $k, $v := .Values.integrations }}
-  {{ $k | trimSuffix ".yaml" | trimSuffix ".yml" }}.yaml: |
-{{- tpl ($v | toYaml) $ | nindent 4 }}
-{{- end }}
-{{- end }}
+  {{- if .Values.integrations -}}
+  {{- range $k, $v := .Values.integrations -}}
+  {{- $k | trimSuffix ".yaml" | trimSuffix ".yml" | nindent 2 -}}.yaml: |-
+  {{- tpl ($v | toYaml) $ | nindent 4 -}}
+  {{- end -}}
+  {{- end -}}
+  {{- include "newrelic.compatibility.integrations" . | nindent 2 -}}
+{{- end -}}
