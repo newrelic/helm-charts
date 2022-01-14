@@ -20,7 +20,7 @@ spec:
     spec:
       {{- if .Values.apiServicePatchJob.image.pullSecrets }}
       imagePullSecrets:
-{{ toYaml .Values.apiServicePatchJob.image.pullSecrets | indent 8 }}
+        {{- toYaml .Values.apiServicePatchJob.image.pullSecrets | nindent 8 }}
       {{- end }}
       containers:
         - name: patch

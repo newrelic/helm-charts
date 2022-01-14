@@ -20,7 +20,7 @@ spec:
     spec:
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
-{{ toYaml .Values.image.pullSecrets | indent 8 }}
+        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
       {{- end }}
       containers:
       - name: {{ template "newrelic-pixie.name" . }}
