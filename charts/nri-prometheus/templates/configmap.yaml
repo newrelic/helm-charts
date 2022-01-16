@@ -8,18 +8,14 @@ apiVersion: v1
 data:
   config.yaml: |
     cluster_name: {{ include "nri-prometheus.cluster" . }}
-{{- if .Values.config }}
-    {{ omit .Values.config "transformations" | toYaml | indent 4 | trim -}}
-{{ if .Values.config.transformations }}
-    transformations: 
-    {{ .Values.config.transformations | toYaml | indent 4 | trim -}}
-{{- end }}
-{{- if (include "nri-prometheus.lowDataMode" .) -}}
+{{- if .Values.config -}}
+  {{- if and (.Values.config.transformations) (include "nri-prometheus.lowDataMode" .) -}}
+    {{- include "nri-prometheus.mergeTransformations" . -}}
+  {{- else if (include "nri-prometheus.lowDataMode" .) -}}
     {{ $lowDataDefault := .Files.Get "static/lowdatamodedefaults.yaml" | fromYaml }}
-    {{ if .Values.config.transformations }}
-    {{- $lowDataDefault.transformations | toYaml | indent 4 | trim }}
-    {{ else }}
-    {{- $lowDataDefault | toYaml | indent 4 | trim }}
-    {{ end }}
-{{- end }}
-{{- end }}
+    {{ mergeOverwrite .Values.config $lowDataDefault | toYaml | indent 4 | trim -}}
+  {{- else }}
+    {{ .Values.config | toYaml | indent 4 | trim  -}}
+  {{- end -}}
+{{- end -}}
+
