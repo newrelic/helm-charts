@@ -13,9 +13,9 @@ data:
     {{- include "nri-prometheus.mergeTransformations" . -}}
   {{- else if (include "nri-prometheus.lowDataMode" .) -}}
     {{ $lowDataDefault := .Files.Get "static/lowdatamodedefaults.yaml" | fromYaml }}
-    {{ mergeOverwrite .Values.config $lowDataDefault | toYaml | indent 4 | trim -}}
+    {{- mergeOverwrite .Values.config $lowDataDefault | toYaml | nindent 4 -}}
   {{- else }}
-    {{ .Values.config | toYaml | indent 4 | trim  -}}
+    {{- .Values.config | toYaml | nindent 4  -}}
   {{- end -}}
 {{- end -}}
 
