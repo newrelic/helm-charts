@@ -1,17 +1,35 @@
 {{- if .Values.controlPlane.enabled -}}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-control-plane
+  namespace: {{ .Release.Namespace }}
 data:
-  nri-kubernetes.yml: |
-    {{- .Values.common.config | toYaml | nindent 4 }}
+  nri-kubernetes.yml: |-
+    {{- (merge .Values.common.config (include "newrelic.integrationConfigDefaults" . | fromYaml)) | toYaml | nindent 4 }}
     controlPlane:
       enabled: true
-      {{- with .Values.controlPlane.config }}
-      {{- . | toYaml | nindent 6 }}
-      {{- end }}
-{{- end }}
+
+    {{- if  .Values.controlPlane.config.etcd.enabled }}
+      etcd:
+        {{- toYaml .Values.controlPlane.config.etcd | nindent 8 -}}
+    {{- end -}}
+
+    {{- if .Values.controlPlane.config.scheduler.enabled }}
+      scheduler:
+        {{- toYaml .Values.controlPlane.config.scheduler | nindent 8 -}}
+    {{- end -}}
+
+    {{- if  .Values.controlPlane.config.controllerManager.enabled }}
+      controllerManager:
+        {{- toYaml .Values.controlPlane.config.controllerManager | nindent 8 -}}
+    {{- end -}}
+
+    {{- if .Values.controlPlane.config.apiServer.enabled }}
+      apiServer:
+        {{- toYaml .Values.controlPlane.config.apiServer | nindent 8 -}}
+    {{- end -}}
+{{- end -}}

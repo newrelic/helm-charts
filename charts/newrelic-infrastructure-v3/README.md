@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.1](https://img.shields.io/badge/Version-3.0.1-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
+![Version: 3.0.6](https://img.shields.io/badge/Version-3.0.6-informational?style=flat-square) ![AppVersion: 0.3.0-pre](https://img.shields.io/badge/AppVersion-0.3.0--pre-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -23,9 +23,8 @@ Kubernetes: `>=1.16.0-0`
 |-----|------|---------|-------------|
 | common | object | See `values.yaml` | Config that applies to all instances of the solution: kubelet, ksm, control plane and sidecars. |
 | common.agentConfig | object | `{}` | Config for the Infrastructure agent. Will be used by the forwarder sidecars and the agent running integrations. See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/ |
-| common.config.interval | string | `"15s"` | How often the integration should collect and report data. Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. |
-| common.config.timeout | string | `"30s"` | Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc. |
-| controlPlane | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the control plane. |
+| common.config.interval | duration | `15s` if `lowDataMode == false`, `30s` otherwise. | Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. Any non-nil value will override the `lowDataMode` default. |
+| controlPlane | object | See `values.yaml` | Configuration for the control plane scraper. |
 | controlPlane.affinity | object | Deployed only in master nodes. | Affinity for the control plane DaemonSet. |
 | controlPlane.config.apiServer | object | Common settings for most K8s distributions. | API Server monitoring configuration |
 | controlPlane.config.apiServer.enabled | bool | `true` | Enable API Server monitoring |
@@ -35,22 +34,24 @@ Kubernetes: `>=1.16.0-0`
 | controlPlane.config.etcd.enabled | bool | `true` | Enable etcd monitoring. Might require manual configuration in some environments. |
 | controlPlane.config.scheduler | object | Common settings for most K8s distributions. | Scheduler monitoring configuration |
 | controlPlane.config.scheduler.enabled | bool | `true` | Enable scheduler monitoring. |
-| controlPlane.enabled | bool | `true` | Deploy control plane monitoring DaemonSet. Requires `privileged` mode to be enabled. |
+| controlPlane.enabled | bool | `true` | Deploy control plane monitoring component. |
 | controlPlane.kind | string | `"DaemonSet"` | How to deploy the control plane scraper. If autodiscovery is in use, it should be `DaemonSet`. Advanced users using static endpoints set this to `Deployment` to avoid reporting metrics twice. |
+| controlPlane.unprivilegedHostNetwork | bool | `false` | Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false. `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost. |
 | customAttributes | object | `{}` | Custom attributes to be added to the data reported by all integrations reporting in the cluster. |
 | images | object | See `values.yaml` | Images used by the chart for the integration and agents. |
 | images.agent.repository | string | `"newrelic/infrastructure-bundle"` | Image for the agent and integrations bundle. |
-| images.agent.tag | string | `"2.7.6"` | Tag for the agent and integrations bundle. |
+| images.agent.tag | string | `"2.8.0"` | Tag for the agent and integrations bundle. |
 | images.forwarder.repository | string | `"newrelic/k8s-events-forwarder"` | Image for the agent sidecar. |
-| images.forwarder.tag | string | `"1.20.5"` | Tag for the agent sidecar. |
+| images.forwarder.tag | string | `"1.21.0"` | Tag for the agent sidecar. |
 | images.integration.repository | string | `"newrelic/nri-kubernetes"` | Image for the kubernetes integration. |
-| images.integration.tag | string | `"0.1.2"` | Tag for the kubernetes integration. |
+| images.integration.tag | string | `"0.3.0-pre"` | Tag for the kubernetes integration. |
 | integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. |
 | ksm | object | See `values.yaml` | Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics). |
 | ksm.enabled | bool | `true` | Enable cluster state monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
 | ksm.resources | object | 100m/150M -/850M | Resources for the KSM scraper pod. Keep in mind that sharding is not supported at the moment, so memory usage for this component ramps up quickly on large clusters. |
-| kubelet | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the Kubelet |
+| kubelet | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the Kubelet. |
 | kubelet.enabled | bool | `true` | Enable kubelet monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
+| lowDataMode | bool | `false` | Send less data by incrementing the interval from `15s` (the default when `lowDataMode` is `false` or `nil`) to `30s`. Non-nil values of `common.config.interval` will override this value. |
 | podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
 | podLabels | object | `{}` | Labels to be added to all pods created by the integration. |
 | priorityClassName | string | `""` | Pod scheduling priority Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/ |

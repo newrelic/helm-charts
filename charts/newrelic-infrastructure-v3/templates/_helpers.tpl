@@ -154,12 +154,41 @@ Returns fargate
 {{- end -}}
 
 {{/*
+Returns lowDataMode
+*/}}
+{{- define "newrelic.lowDataMode" -}}
+{{/* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */}}
+{{- if (get .Values "lowDataMode" | kindIs "bool") -}}
+  {{- if .Values.lowDataMode -}}
+    {{/*
+        We want only to return when this is true, returning `false` here will template "false" (string) when doing
+        an `(include "newrelic-logging.lowDataMode" .)`, which is not an "empty string" so it is `true` if it is used
+        as an evaluation somewhere else.
+    */}}
+    {{- .Values.lowDataMode -}}
+  {{- end -}}
+{{- else -}}
+{{/* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */}}
+{{- $global := index .Values "global" | default dict -}}
+{{- if get $global "lowDataMode" | kindIs "bool" -}}
+  {{- if $global.lowDataMode -}}
+    {{- $global.lowDataMode -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns the list of namespaces where secrets need to be accessed by the controlPlane integration to do mTLS Auth
 */}}
 {{- define "newrelic.roleBindingNamespaces" -}}
 {{ $namespaceList := list }}
 {{- range $components := .Values.controlPlane.config }}
+  {{- if $components }}
+  {{- if $components.autodiscover }}
     {{- range $autodiscover := $components.autodiscover }}
+      {{- if $autodiscover }}
+      {{- if $autodiscover.endpoints }}
         {{- range $endpoint := $autodiscover.endpoints }}
             {{- if $endpoint.auth }}
             {{- if $endpoint.auth.mtls }}
@@ -169,7 +198,11 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
             {{- end }}
             {{- end }}
         {{- end }}
+      {{- end }}
+      {{- end }}
     {{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
 roleBindingNamespaces: {{- uniq $namespaceList | toYaml | nindent 0 }}
 {{- end -}}
@@ -188,3 +221,12 @@ Returns Custom Attributes even if formatted as a json string
 {{- define "newrelic.customAttributes" -}}
 {{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" (include "newrelic.cluster" .)) | toJson }}
 {{- end -}}
+
+{{- define "newrelic.integrationConfigDefaults" -}}
+{{- if include "newrelic.lowDataMode" . -}}
+interval: 30s
+{{- else  -}}
+interval: 15s
+{{- end -}}
+{{- end -}}
+

@@ -1,17 +1,16 @@
-{{- if .Values.ksm.enabled -}}
+{{- if include "newrelic.compatibility.ksm.enabled" .  -}}
+---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-ksm
+  namespace: {{ .Release.Namespace }}
 data:
-  nri-kubernetes.yml: |
-    {{- .Values.common.config | toYaml | nindent 4 }}
+  nri-kubernetes.yml: |-
+    {{- (merge .Values.common.config (include "newrelic.integrationConfigDefaults" . | fromYaml)) | toYaml | nindent 4 }}
     ksm:
-      enabled: true
-      {{- with .Values.ksm.config }}
-      {{- . | toYaml | nindent 6 }}
-      {{- end }}
-{{- end }}
+      {{- /* Notice that new values takes precedence since they have no default and the user need to set them up specifically*/ -}}
+      {{- mustMergeOverwrite (include "newrelic.compatibility.ksm.legacyData" . | fromYaml) .Values.ksm.config | toYaml | nindent 6 -}}
+{{- end -}}
