@@ -27,6 +27,16 @@ jobs:
           skip: ./.git,./.github/actions/chart-version-bumper/node_modules
           ignore_words_list: enver
 
+      - name: unitTests for supported charts
+        run: |
+          helm plugin install https://github.com/quintush/helm-unittest
+          
+          for chart in $(ct list-changed); do
+            if [ -d "$chart/tests/" ]; then
+              helm unittest $chart -3
+            fi
+          done
+
       - name: Check for changed charts
         id: list-changed
         run: |

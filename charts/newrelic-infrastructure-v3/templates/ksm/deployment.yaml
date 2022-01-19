@@ -1,4 +1,4 @@
-{{- if (.Values.ksm.enabled) }}
+{{- if include "newrelic.compatibility.ksm.enabled" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -21,7 +21,7 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if .Values.common.agentConfig }}
+        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
         {{- end }}
         {{- with .Values.podAnnotations }}
@@ -45,9 +45,9 @@ spec:
           image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           env:
-            - name: "NRI_KUBERNETES_HTTPSERVERPORT"
+            - name: "NRI_KUBERNETES_SINK_HTTP_PORT"
               value: "8002"
             - name: "NRI_KUBERNETES_CLUSTERNAME"
               value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
@@ -80,7 +80,7 @@ spec:
           image: "{{ .Values.images.forwarder.registry }}/{{ .Values.images.forwarder.repository }}:{{ .Values.images.forwarder.tag }}"
           imagePullPolicy: {{ .Values.images.forwarder.pullPolicy }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- mustMergeOverwrite .Values.securityContext  (include "newrelic.compatibility.securityContext" . | fromYaml) | toYaml | nindent 12 }}
           ports:
             - containerPort: 8002
           env:
@@ -140,7 +140,7 @@ spec:
               name: forwarder-tmpfs-user-data
             - mountPath: /tmp
               name: forwarder-tmpfs-tmp
-            {{- if .Values.common.agentConfig }}
+            {{- if (include "newrelic.compatibility.agentConfig" . ) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
@@ -164,7 +164,7 @@ spec:
           emptyDir: {}
         - name: forwarder-tmpfs-tmp
           emptyDir: {}
-        {{- if .Values.common.agentConfig }}
+        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
@@ -178,22 +178,24 @@ spec:
       {{- with $.Values.priorityClassName }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- if or (.Values.ksm.affinity.podAffinity) (.Values.ksm.affinity.podAffinity) }}
+      {{- $nodeAffinity:=(include "newrelic.compatibility.valueWithFallback" (dict "legacy" .Values.nodeAffinity "supported" .Values.ksm.affinity.nodeAffinity )) -}}
+      {{- if (or .Values.ksm.affinity.podAffinity $nodeAffinity) }}
       affinity:
         {{- with .Values.ksm.affinity.podAffinity }}
         podAffinity: {{ . | toYaml | nindent 10 }}
         {{- end }}
-        {{- with .Values.ksm.affinity.nodeAffinity }}
+        {{- with $nodeAffinity }}
         nodeAffinity:
-          {{- . | toYaml | nindent 10 }}
+          {{- . | nindent 10 }}
         {{- end }}
       {{- end }}
       {{- with .Values.ksm.tolerations }}
       tolerations:
         {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.ksm.nodeSelector }}
+      {{- end -}}
+
+      {{- with (include "newrelic.compatibility.valueWithFallback" (dict "legacy" .Values.nodeSelector "supported" .Values.ksm.nodeSelector )) }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+        {{- . | nindent 8}}
+      {{- end -}}
 {{- end }}

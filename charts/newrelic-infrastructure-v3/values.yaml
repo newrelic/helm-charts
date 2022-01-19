@@ -9,7 +9,7 @@ images:
   forwarder:
     pullPolicy: IfNotPresent
     # -- Tag for the agent sidecar.
-    tag: 1.20.5
+    tag: 1.21.0
     # -- Image for the agent sidecar.
     repository: newrelic/k8s-events-forwarder
     registry: docker.io
@@ -17,7 +17,7 @@ images:
   agent:
     pullPolicy: IfNotPresent
     # -- Tag for the agent and integrations bundle.
-    tag: 2.7.6
+    tag: 2.8.0
     # -- Image for the agent and integrations bundle.
     repository: newrelic/infrastructure-bundle
     registry: docker.io
@@ -25,7 +25,7 @@ images:
   integration:
     pullPolicy: IfNotPresent
     # -- Tag for the kubernetes integration.
-    tag: 0.1.2
+    tag: 0.3.0-pre
     # -- Image for the kubernetes integration.
     repository: newrelic/nri-kubernetes
     registry: docker.io
@@ -35,17 +35,23 @@ images:
 common:
   # Configuration entries that apply to all instances of the integration: kubelet, ksm and control plane.
   config:
-    # -- How often the integration should collect and report data.
-    # Intervals larger than 40s are not supported and will cause the NR UI to not behave properly.
-    interval: 15s
-    # -- Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
+    # common.config.interval -- (duration) Intervals larger than 40s are not supported and will cause the NR UI to not
+    # behave properly. Any non-nil value will override the `lowDataMode` default.
+    # @default -- `15s` if `lowDataMode == false`, `30s` otherwise.
+    interval:
+    # Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
     timeout: 30s
   # -- Config for the Infrastructure agent.
   # Will be used by the forwarder sidecars and the agent running integrations.
   # See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
   agentConfig: {}
 
-# -- Configuration for the DaemonSet that collects metrics from the Kubelet
+# lowDataMode -- (bool) Send less data by incrementing the interval from `15s` (the default when `lowDataMode` is `false` or `nil`) to `30s`.
+# Non-nil values of `common.config.interval` will override this value.
+# @default -- `false`
+lowDataMode:
+
+# kubelet -- Configuration for the DaemonSet that collects metrics from the Kubelet.
 # @default -- See `values.yaml`
 kubelet:
   # -- Enable kubelet monitoring.
@@ -71,8 +77,10 @@ kubelet:
       cpu: 100m
       memory: 150M
   config: {}
+  # port:
+  # scheme:
 
-# -- Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics).
+# ksm -- Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics).
 # @default -- See `values.yaml`
 ksm:
   # -- Enable cluster state monitoring.
@@ -110,12 +118,25 @@ ksm:
       cpu: 100m
       memory: 150M
   config: {}
+  # -- if specified autodiscovery is not performed and the specified URL is used
+  # staticUrl: "http://test.io:8080/metrics"
+  # -- the URL scheme is not discovered and the specified one is used
+  # scheme: "http"
+  # -- the port is not discovered and the specified one is used
+  # port: 8080
+  # -- only the pods matching this selector are taken into account during autodiscovery
+  # selector: "app.kubernetes.io/name=kube-state-metrics"
+  # -- only the pods matching this namespace taken into account during autodiscovery
+  # namespace: "ksm-namespace"
 
-# -- Configuration for the DaemonSet that collects metrics from the control plane.
+# controlPlane -- Configuration for the control plane scraper.
 # @default -- See `values.yaml`
 controlPlane:
-  # -- Deploy control plane monitoring DaemonSet. Requires `privileged` mode to be enabled.
+  # -- Deploy control plane monitoring component.
   enabled: true
+  # -- Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false.
+  # `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost.
+  unprivilegedHostNetwork: false
   annotations: {}
   tolerations:
     - operator: "Exists"
@@ -204,6 +225,16 @@ controlPlane:
       #         mtls:
       #           secretName: secret-name
       #           secretNamespace: secret-namespace
+
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
+
     # -- Scheduler monitoring configuration
     # @default -- Common settings for most K8s distributions.
     scheduler:
@@ -234,6 +265,15 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
+
     # -- Controller manager monitoring configuration
     # @default -- Common settings for most K8s distributions.
     controllerManager:
@@ -275,6 +315,15 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
+
     # -- API Server monitoring configuration
     # @default -- Common settings for most K8s distributions.
     apiServer:
@@ -307,6 +356,14 @@ controlPlane:
               insecureSkipVerify: true
               auth:
                 type: bearer
+      # -- staticEndpoint configuration.
+      # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
+      # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
+      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # staticEndpoint:
+      #   url: https://url:port
+      #   insecureSkipVerify: true
+      #   auth: {}
 
 # -- Update strategy for the DaemonSets deployed.
 # @default -- See `values.yaml`
