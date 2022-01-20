@@ -40,9 +40,9 @@ Kubernetes: `>=1.16.0-0`
 | customAttributes | object | `{}` | Custom attributes to be added to the data reported by all integrations reporting in the cluster. |
 | images | object | See `values.yaml` | Images used by the chart for the integration and agents. |
 | images.agent.repository | string | `"newrelic/infrastructure-bundle"` | Image for the agent and integrations bundle. |
-| images.agent.tag | string | `"2.8.0"` | Tag for the agent and integrations bundle. |
+| images.agent.tag | string | `"2.8.1"` | Tag for the agent and integrations bundle. |
 | images.forwarder.repository | string | `"newrelic/k8s-events-forwarder"` | Image for the agent sidecar. |
-| images.forwarder.tag | string | `"1.21.0"` | Tag for the agent sidecar. |
+| images.forwarder.tag | string | `"1.22.0"` | Tag for the agent sidecar. |
 | images.integration.repository | string | `"newrelic/nri-kubernetes"` | Image for the kubernetes integration. |
 | images.integration.tag | string | `"3.0.1-pre"` | Tag for the kubernetes integration. |
 | integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. |
