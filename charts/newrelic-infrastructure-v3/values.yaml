@@ -39,8 +39,6 @@ common:
     # behave properly. Any non-nil value will override the `lowDataMode` default.
     # @default -- `15s` if `lowDataMode == false`, `30s` otherwise.
     interval:
-    # Timeout for the different APIs contacted by the integration: Kubernetes, KSM, Kubelet, etc.
-    timeout: 30s
   # -- Config for the Infrastructure agent.
   # Will be used by the forwarder sidecars and the agent running integrations.
   # See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
@@ -76,7 +74,11 @@ kubelet:
     requests:
       cpu: 100m
       memory: 150M
-  config: {}
+  config:
+    # Timeout for the kubelet APIs contacted by the integration
+    timeout: 5s
+    # Number of retries after timeout expired
+    retries: 3
   # port:
   # scheme:
 
@@ -117,7 +119,11 @@ ksm:
     requests:
       cpu: 100m
       memory: 150M
-  config: {}
+  config:
+    # Timeout for the ksm API contacted by the integration
+    timeout: 5s
+    # Number of retries after timeout expired
+    retries: 3
   # -- if specified autodiscovery is not performed and the specified URL is used
   # staticUrl: "http://test.io:8080/metrics"
   # -- the URL scheme is not discovered and the specified one is used
@@ -176,6 +182,10 @@ controlPlane:
       cpu: 100m
       memory: 150M
   config:
+    # Timeout for the Kubernetes APIs contacted by the integration
+    timeout: 5s
+    # Number of retries after timeout expired
+    retries: 3
     # -- ETCD monitoring configuration
     # @default -- Common settings for most K8s distributions.
     etcd:
