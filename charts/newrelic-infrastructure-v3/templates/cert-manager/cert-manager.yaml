@@ -1,0 +1,54 @@
+{{- if .Values.sinkMTLS }}
+---
+# Create a selfsigned Issuer, in order to create a root CA certificate for
+# signing sink serving certificates
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ template "newrelic.fullname" . }}-self-signed-issuer
+  namespace: {{ .Release.Namespace }}
+spec:
+  selfSigned: {}
+---
+# Generate a CA Certificate used to sign certificates for the sink
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "newrelic.fullname" . }}-ca-cert
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ template "newrelic.fullname" . }}-ca-cert
+  duration: 43800h # 5y
+  issuerRef:
+    name: {{ template "newrelic.fullname" . }}-self-signed-issuer
+  commonName: "ca.sink.nri"
+  isCA: true
+---
+# Create an Issuer that uses the above generated CA certificate to issue certs
+apiVersion: cert-manager.io/v1
+kind: Issuer
+metadata:
+  name: {{ template "newrelic.fullname" . }}-root-issuer
+  namespace: {{ .Release.Namespace }}
+spec:
+  ca:
+    secretName: {{ template "newrelic.fullname" . }}-ca-cert
+---
+# Finally, generate a serving certificate for the sink to use
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ template "newrelic.fullname" . }}-sink-cert
+  namespace: {{ .Release.Namespace }}
+spec:
+  secretName: {{ template "newrelic.fullname" . }}-sink-cert
+  duration: 8760h # 1y
+  issuerRef:
+    name: {{ template "newrelic.fullname" . }}-root-issuer
+  commonName: localhost
+  dnsNames:
+    - localhost
+    - {{ template "newrelic.fullname" . }}
+    - {{ template "newrelic.fullname" . }}.{{ .Release.Namespace }}
+    - {{ template "newrelic.fullname" . }}.{{ .Release.Namespace }}.svc
+{{- end }}

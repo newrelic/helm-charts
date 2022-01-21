@@ -70,6 +70,10 @@ spec:
             - name: nri-kubernetes-config
               mountPath: /etc/newrelic-infra/nri-kubernetes.yml
               subPath: nri-kubernetes.yml
+            {{- if .Values.sinkMTLS }}
+            - name: tls
+              mountPath: /tls
+            {{- end }}
             {{- with .Values.ksm.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -140,6 +144,10 @@ spec:
               name: forwarder-tmpfs-user-data
             - mountPath: /tmp
               name: forwarder-tmpfs-tmp
+            {{- if .Values.sinkMTLS }}
+            - name: tls
+              mountPath: /tls
+            {{- end }}
             {{- if (include "newrelic.compatibility.agentConfig" . ) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
@@ -171,6 +179,11 @@ spec:
             items:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
+        {{- end }}
+        {{- if .Values.sinkMTLS }}
+        - name: tls
+          secret:
+            secretName: {{ template "newrelic.fullname" . }}-sink-cert
         {{- end }}
         {{- with .Values.ksm.extraVolumes }}
         {{- toYaml . | nindent 8 }}

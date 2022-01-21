@@ -1,0 +1,11 @@
+{{ define "nri-kubernetes.mtls" }}
+{{- if .Values.sinkMTLS }}
+sink:
+  http:
+    tls:
+      enabled: true
+      certPath: /tls/tls.crt
+      keyPath: /tls/tls.key
+      caPath: /tls/ca.crt
+{{- end }}
+{{- end }}
