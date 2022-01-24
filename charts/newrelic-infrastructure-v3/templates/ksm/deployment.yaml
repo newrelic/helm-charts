@@ -127,6 +127,11 @@ spec:
             {{- end }}
             - name: NRIA_IS_FORWARD_ONLY
               value: "true"
+            - name: NRIA_OVERRIDE_HOSTNAME_SHORT
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
             {{- with .Values.ksm.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
