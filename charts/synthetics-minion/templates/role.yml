@@ -1,4 +1,8 @@
+{{- if .Capabilities.APIVersions.Has "rbac.authorization.k8s.io/v1/Role" }}
+apiVersion: rbac.authorization.k8s.io/v1
+{{- else }}
 apiVersion: rbac.authorization.k8s.io/v1beta1
+{{- end }}
 kind: Role
 metadata:
   name: synthetics-minion-role
