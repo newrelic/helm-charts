@@ -80,6 +80,11 @@ secretKeyRef:
   value: "false"
 - name: NRIA_IS_FORWARD_ONLY
   value: "true"
+- name: NRIA_OVERRIDE_HOSTNAME_SHORT
+  valueFrom:
+fieldRef:
+  apiVersion: v1
+  fieldPath: spec.nodeName
   volumeMounts:
 - mountPath: /var/db/newrelic-infra/data
   name: tmpfs-data
