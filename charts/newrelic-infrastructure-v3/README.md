@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.6](https://img.shields.io/badge/Version-3.0.6-informational?style=flat-square) ![AppVersion: 0.3.0-pre](https://img.shields.io/badge/AppVersion-0.3.0--pre-informational?style=flat-square)
+![Version: 3.0.8](https://img.shields.io/badge/Version-3.0.8-informational?style=flat-square) ![AppVersion: 3.0.1-pre](https://img.shields.io/badge/AppVersion-3.0.1--pre-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -32,8 +32,10 @@ Kubernetes: `>=1.16.0-0`
 | controlPlane.config.controllerManager.enabled | bool | `true` | Enable controller manager monitoring. |
 | controlPlane.config.etcd | object | Common settings for most K8s distributions. | ETCD monitoring configuration |
 | controlPlane.config.etcd.enabled | bool | `true` | Enable etcd monitoring. Might require manual configuration in some environments. |
+| controlPlane.config.retries | int | `3` | Number of retries after timeout expired |
 | controlPlane.config.scheduler | object | Common settings for most K8s distributions. | Scheduler monitoring configuration |
 | controlPlane.config.scheduler.enabled | bool | `true` | Enable scheduler monitoring. |
+| controlPlane.config.timeout | string | `"5s"` | Timeout for the Kubernetes APIs contacted by the integration |
 | controlPlane.enabled | bool | `true` | Deploy control plane monitoring component. |
 | controlPlane.kind | string | `"DaemonSet"` | How to deploy the control plane scraper. If autodiscovery is in use, it should be `DaemonSet`. Advanced users using static endpoints set this to `Deployment` to avoid reporting metrics twice. |
 | controlPlane.unprivilegedHostNetwork | bool | `false` | Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false. `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost. |
@@ -47,9 +49,13 @@ Kubernetes: `>=1.16.0-0`
 | images.integration.tag | string | `"3.0.1-pre"` | Tag for the kubernetes integration. |
 | integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. |
 | ksm | object | See `values.yaml` | Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics). |
+| ksm.config.retries | int | `3` | Number of retries after timeout expired |
+| ksm.config.timeout | string | `"5s"` | Timeout for the ksm API contacted by the integration |
 | ksm.enabled | bool | `true` | Enable cluster state monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
 | ksm.resources | object | 100m/150M -/850M | Resources for the KSM scraper pod. Keep in mind that sharding is not supported at the moment, so memory usage for this component ramps up quickly on large clusters. |
 | kubelet | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the Kubelet. |
+| kubelet.config.retries | int | `3` | Number of retries after timeout expired |
+| kubelet.config.timeout | string | `"5s"` | Timeout for the kubelet APIs contacted by the integration |
 | kubelet.enabled | bool | `true` | Enable kubelet monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
 | lowDataMode | bool | `false` | Send less data by incrementing the interval from `15s` (the default when `lowDataMode` is `false` or `nil`) to `30s`. Non-nil values of `common.config.interval` will override this value. |
 | podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
