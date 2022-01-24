@@ -32,10 +32,11 @@ asserts:
   path: data.nri-kubernetes\.yml
   value: |-
 interval: 15s
-timeout: 30s
 ksm:
   enabled: true
   port: 22
+  retries: 3
+  timeout: 10s
   - it: kubeStateMetricsPodLabel is taken into account since ksm.config.label is not defined
 set:
   licenseKey: test
@@ -46,10 +47,11 @@ asserts:
   path: data.nri-kubernetes\.yml
   value: |-
 interval: 15s
-timeout: 30s
 ksm:
   enabled: true
+  retries: 3
   selector: label-name=kube-state-metrics
+  timeout: 10s
   - it: kubeStateMetricsPort is ignored since ksm.config.port is defined
 set:
   licenseKey: test
@@ -61,10 +63,11 @@ asserts:
   path: data.nri-kubernetes\.yml
   value: |-
 interval: 15s
-timeout: 30s
 ksm:
   enabled: true
   port: 25
+  retries: 3
+  timeout: 10s
   - it: a mix of values is passed and the config is rendered correctly
 set:
   licenseKey: test
@@ -81,12 +84,13 @@ asserts:
   path: data.nri-kubernetes\.yml
   value: |-
 interval: 15s
-timeout: 30s
 ksm:
   distributed: true
   enabled: true
   namespace: test
   port: 22
+  retries: 3
   scheme: http
   selector: a=b
   staticURL: newURL
+  timeout: 10s
