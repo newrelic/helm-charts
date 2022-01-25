@@ -1,7 +1,7 @@
 suite: test configmap
 templates:
-  - templates/control-plane/daemonset.yaml
-  - templates/control-plane/configmap.yaml
+  - templates/controlplane/daemonset.yaml
+  - templates/controlplane/configmap.yaml
   - templates/kubelet/daemonset.yaml
   - templates/kubelet/configmap.yaml
   - templates/ksm/deployment.yaml
@@ -26,11 +26,11 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsUser
           value: 1000
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
       - equal:
           path: spec.template.spec.containers[1].securityContext.runAsUser
           value: 1000
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsUser
           value: 1000
@@ -57,11 +57,11 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsUser
           value: 1111
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
       - equal:
           path: spec.template.spec.containers[1].securityContext.runAsUser
           value: 1111
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsUser
           value: 1111
