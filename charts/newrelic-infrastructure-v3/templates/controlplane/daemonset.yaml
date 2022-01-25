@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{- include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-control-plane
+  name: {{ template "newrelic.fullname" . }}-controlplane
   {{- with .Values.controlPlane.annotations }}
   annotations: {{ toYaml . | nindent 4 }}
   {{- end }}
@@ -18,11 +18,11 @@ spec:
   selector:
 matchLabels:
   {{- include "newrelic.selectorLabels" . | nindent 6 }}
-  app.kubernetes.io/component: control-plane
+  app.kubernetes.io/component: controlplane
   template:
 metadata:
   annotations:
-checksum/nri-kubernetes: {{ include (print $.Template.BasePath "/control-plane/configmap.yaml") . | sha256sum }}
+checksum/nri-kubernetes: {{ include (print $.Template.BasePath "/controlplane/configmap.yaml") . | sha256sum }}
 {{- if not (include "newrelic.licenseCustomSecretName" .) }}
 checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
 {{- end }}
@@ -34,7 +34,7 @@ checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.y
 {{- end }}
   labels:
 {{- include "newrelic.selectorLabels" . | nindent 8 }}
-app.kubernetes.io/component: control-plane
+app.kubernetes.io/component: controlplane
 {{- with .Values.podLabels }}
   {{- toYaml . | nindent 8 }}
 {{- end }}
@@ -44,13 +44,13 @@ spec:
   imagePullSecrets:
   {{- toYaml . | nindent 8 }}
   {{- end }}
-  serviceAccountName: {{ template "newrelic.serviceAccountName" . }}-control-plane
+  serviceAccountName: {{ template "newrelic.serviceAccountName" . }}-controlplane
   {{- if include "newrelic.controlPlane.hostNetwork" . }}
   hostNetwork: true
   dnsPolicy: ClusterFirstWithHostNet
   {{- end }}
   containers:
-- name: control-plane
+- name: controlplane
   image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
   imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
   securityContext:
@@ -168,7 +168,7 @@ secretKeyRef:
   volumes:
 - name: nri-kubernetes-config
   configMap:
-name: {{ template "newrelic.fullname" . }}-control-plane
+name: {{ template "newrelic.fullname" . }}-controlplane
 items:
   - key: nri-kubernetes.yml
 path: nri-kubernetes.yml
