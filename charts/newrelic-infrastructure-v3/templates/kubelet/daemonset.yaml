@@ -161,6 +161,17 @@ fieldRef:
 {{- with .Values.kubelet.extraEnv }}
 {{- toYaml . | nindent 12 }}
 {{- end }}
+{{- /* Needed to populate clustername in integration metrics */}}
+- name: "CLUSTER_NAME"
+  value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
+- name: "NRIA_PASSTHROUGH_ENVIRONMENT"
+  value: "CLUSTER_NAME"
+{{- /* Needed for autodiscovery since hostNetwork=false */}}
+- name: "NRIA_HOST"
+  valueFrom:
+fieldRef:
+  apiVersion: "v1"
+  fieldPath: "status.hostIP"
   {{- with .Values.kubelet.extraEnvFrom }}
   envFrom: {{ toYaml . | nindent 12 }}
   {{- end }}
