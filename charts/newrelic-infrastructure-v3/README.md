@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.8](https://img.shields.io/badge/Version-3.0.8-informational?style=flat-square) ![AppVersion: 3.0.1-pre](https://img.shields.io/badge/AppVersion-3.0.1--pre-informational?style=flat-square)
+![Version: 3.0.10](https://img.shields.io/badge/Version-3.0.10-informational?style=flat-square) ![AppVersion: 3.0.2-pre](https://img.shields.io/badge/AppVersion-3.0.2--pre-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -46,7 +46,7 @@ Kubernetes: `>=1.16.0-0`
 | images.forwarder.repository | string | `"newrelic/k8s-events-forwarder"` | Image for the agent sidecar. |
 | images.forwarder.tag | string | `"1.22.0"` | Tag for the agent sidecar. |
 | images.integration.repository | string | `"newrelic/nri-kubernetes"` | Image for the kubernetes integration. |
-| images.integration.tag | string | `"3.0.1-pre"` | Tag for the kubernetes integration. |
+| images.integration.tag | string | `"3.0.2-pre"` | Tag for the kubernetes integration. |
 | integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. |
 | ksm | object | See `values.yaml` | Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics). |
 | ksm.config.retries | int | `3` | Number of retries after timeout expired |
