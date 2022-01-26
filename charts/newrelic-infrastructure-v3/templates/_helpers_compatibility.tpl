@@ -50,6 +50,17 @@ Returns a dictionary with legacy runAsUser config
 {{- end -}}
 
 {{/*
+Returns legacy annotations if available
+*/}}
+{{- define "newrelic.compatibility.annotations" -}}
+{{- with  .Values.daemonSet -}}
+{{- with  .annotations -}}
+{{- toYaml . }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns agent configmap merged with legacy config and legacy eventQueueDepth config
 */}}
 {{- define "newrelic.compatibility.agentConfig" -}}
