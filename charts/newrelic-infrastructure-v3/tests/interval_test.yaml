@@ -22,3 +22,13 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "raw: Intervals smaller than 10s are not supported"
+  - it: Non-seconds intervals are rejected
+    set:
+      licenseKey: test
+      cluster: test
+      common:
+        config:
+          interval: 1m
+    asserts:
+      - failedTemplate:
+          errorMessage: "raw: Interval must be between 10s and 45s"
