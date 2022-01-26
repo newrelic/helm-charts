@@ -1,4 +1,4 @@
-suite: test configmap
+suite: test interval
 templates:
   - templates/NOTES.txt
 tests:
@@ -22,11 +22,3 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "raw: Intervals smaller than 10s are not supported"
-  - it: Does not fail with override
-    set:
-      licenseKey: test
-      cluster: test
-      common:
-        config:
-          interval: 1s
-      forceUnsupportedInterval: true
