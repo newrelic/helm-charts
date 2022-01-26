@@ -1,4 +1,3 @@
-{{- if (include "newrelic.compatibility.agentConfig" . ) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -8,5 +7,6 @@ metadata:
   name: {{ template "newrelic.fullname" . }}-agent
 data:
   newrelic-infra.yml: |-
+# This is the configuration file for the infrastructure agent. See:
+# https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
 {{- include "newrelic.compatibility.agentConfig" . | nindent 4 -}}
-{{- end -}}
