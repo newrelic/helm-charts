@@ -1,0 +1,32 @@
+suite: test configmap
+templates:
+  - templates/NOTES.txt
+tests:
+  - it: Fails to render with large intervals
+    set:
+      licenseKey: test
+      cluster: test
+      common:
+        config:
+          interval: 46s
+    asserts:
+      - failedTemplate:
+          errorMessage: "raw: Intervals larger than 45s are not supported"
+  - it: Fails to render with small intervals
+    set:
+      licenseKey: test
+      cluster: test
+      common:
+        config:
+          interval: 1s
+    asserts:
+      - failedTemplate:
+          errorMessage: "raw: Intervals smaller than 10s are not supported"
+  - it: Does not fail with override
+    set:
+      licenseKey: test
+      cluster: test
+      common:
+        config:
+          interval: 1s
+      forceUnsupportedInterval: true
