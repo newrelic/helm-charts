@@ -1,3 +1,17 @@
+{{- if not .Values.forceUnsupportedInterval }}
+{{- $max := 45 }}
+{{- $min := 10 }}
+{{- if not (.Values.common.config.interval | hasSuffix "s") }}
+{{ fail (printf "Interval must be between %ds and %ds" $min $max ) }}
+{{- end }}
+{{- if gt ( .Values.common.config.interval | trimSuffix "s" | int64 ) $max }}
+{{ fail (printf "Intervals larger than %ds are not supported" $max) }}
+{{- end }}
+{{- if lt ( .Values.common.config.interval | trimSuffix "s" | int64 ) $min }}
+{{ fail (printf "Intervals smaller than %ds are not supported" $min) }}
+{{- end }}
+{{- end }}
+
 {{- if or (not .Values.ksm.enabled) (not .Values.kubelet.enabled) }}
 Warning:
 ========
