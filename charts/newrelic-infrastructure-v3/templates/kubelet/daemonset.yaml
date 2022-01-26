@@ -25,9 +25,7 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
-        {{- end }}
         checksum/integrations_config: {{ include (print $.Template.BasePath "/kubelet/integrations-configmap.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -175,11 +173,9 @@ spec:
           envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if (include "newrelic.compatibility.agentConfig" . ) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
-            {{- end }}
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
             {{- if .Values.privileged }}
@@ -232,14 +228,12 @@ spec:
             items:
               - key: nri-kubernetes.yml
                 path: nri-kubernetes.yml
-        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
             items:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
-        {{- end }}
         - name: nri-integrations-cfg-volume
           configMap:
             name: {{ template "newrelic.fullname" . }}-integrations-cfg
