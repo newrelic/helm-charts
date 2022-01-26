@@ -6,8 +6,9 @@ metadata:
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-kubelet
-  {{- with .Values.kubelet.annotations }}
-  annotations: {{ toYaml . | nindent 4 }}
+  {{- $legacyAnnotation:= fromYaml (include "newrelic.compatibility.annotations" .) -}}
+  {{- with  include "newrelic.compatibility.valueWithFallback" (dict "legacy" $legacyAnnotation "supported" .Values.kubelet.annotations )}}
+  annotations: {{ . | nindent 4 }}
   {{- end }}
 spec:
   {{- with .Values.updateStrategy }}
