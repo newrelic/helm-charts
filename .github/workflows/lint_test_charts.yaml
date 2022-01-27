@@ -3,7 +3,21 @@ name: Lint and Test Charts
 on: pull_request
 
 jobs:
+  codespell:
+    name: Check spelling
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - uses: codespell-project/actions-codespell@master
+        with:
+          check_filenames: true
+          check_hidden: true
+          skip: ./.git,./.github/actions/chart-version-bumper/node_modules
+          ignore_words_list: enver
+
   lint-test:
+    name: Lint and test charts
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -20,14 +34,7 @@ jobs:
       - name: Lint charts
         run: ct lint --config ct.yaml
 
-      - uses: codespell-project/actions-codespell@master
-        with:
-          check_filenames: true
-          check_hidden: true
-          skip: ./.git,./.github/actions/chart-version-bumper/node_modules
-          ignore_words_list: enver
-
-      - name: unitTests for supported charts
+      - name: Run unit tests
         run: |
           helm plugin install https://github.com/quintush/helm-unittest
           
