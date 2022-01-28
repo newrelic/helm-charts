@@ -1,0 +1,18 @@
+name: GH Pages Integrity
+
+on:
+  pull_request:
+    branches:
+      - gh-pages
+
+jobs:
+  gh-pages-integrity:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: check index.yaml
+        run: |
+          helm repo add test https://raw.githubusercontent.com/newrelic/helm-charts/${{ github.event.pull_request.base.ref }}
+          helm search repo newrelic -l --devel | grep test
