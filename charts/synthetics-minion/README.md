@@ -6,7 +6,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Minion as 
 
 ## Configuration
 
-| Parameter                                         | Description                                                                                                                                                                                                                                                                | Default                                                                                                                                                                                                                                                        |
+| Parameter                                         | Description                                                                                                                                                                                                                                                                                                                                                          | Default                                                                                                                                                              |
 | ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `synthetics.privateLocationKey`                   | *Required if synthetics.privateLocationKeySecretName not set* - The [authentication key](https://docs.newrelic.com/docs/synthetics/synthetic-monitoring/private-locations/install-containerized-private-minions-cpms#private-location-key) associated with your Synthetics Private Location                                                                          |                                                                                                                                                                      |
 | `synthetics.privateLocationKeySecretName`         | *Required if synthetics.privateLocationKey not set* - Name of the Kubernetes Secret that contains a key called `privateLocationKey` with the [authentication key](https://docs.newrelic.com/docs/synthetics/synthetic-monitoring/private-locations/install-containerized-private-minions-cpms#private-location-key) associated with your Synthetics Private Location |                                                                                                                                                                      |
@@ -45,6 +45,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Minion as 
 | `headlessService.serviceName`                     | The name of the headless service to associate to the StatefulSet. If not set a name is generated using the fullname template.                                                                                                                                                                                                                                        |                                                                                                                                                                      |
 | `podSecurityContextRunAsUser`                     | Assigning a default uid to the Minion Pod, this can be changed as needed                                                                                                                                                                                                                                                                                             | `2379`                                                                                                                                                               |
 | `appArmorProfileName`                             | Name of an AppArmor profile to load.                                                                                                                                                                                                                                                                                                                                 |                                                                                                                                                                      |
+| `priorityClassName`                               | Name of a `priorityclass` to assign to the minion pod. For more details see [this example](https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#example-priorityclass).                                                                                                                                                                  |                                                                                                                                                                      |
 
 ## Example
 
@@ -64,11 +65,11 @@ The default set of resources assigned to the pods is shown below:
 ```yaml
 resources:
   requests:
-    cpu: 0.5
-    memory: 800Mi
+    cpu: "500m"
+    memory: "800Mi"
   limits:
-    cpu: 0.75
-    memory: 1.6Gi
+    cpu: "750m"
+    memory: "1600Mi"
 ```
 
 ## Labels
