@@ -135,6 +135,10 @@ podSecurityContextRunAsUser: 2379
 ## The AppArmor profile name that will be applied to the Minion and Runner pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
 # appArmorProfileName: ""
 
+## Pod scheduling priority
+## Ref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/
+# priorityClassName: high-priority
+
 resources:
   requests:
     cpu: "500m"
@@ -142,6 +146,7 @@ resources:
   limits:
     cpu: "750m"
     memory: "1600Mi"
+
 
 labels: {}
 
