@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.12](https://img.shields.io/badge/Version-3.0.12-informational?style=flat-square) ![AppVersion: 3.0.2-pre](https://img.shields.io/badge/AppVersion-3.0.2--pre-informational?style=flat-square)
+![Version: 3.0.16](https://img.shields.io/badge/Version-3.0.16-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -42,11 +42,11 @@ Kubernetes: `>=1.16.0-0`
 | customAttributes | object | `{}` | Custom attributes to be added to the data reported by all integrations reporting in the cluster. |
 | images | object | See `values.yaml` | Images used by the chart for the integration and agents. |
 | images.agent.repository | string | `"newrelic/infrastructure-bundle"` | Image for the agent and integrations bundle. |
-| images.agent.tag | string | `"2.8.1"` | Tag for the agent and integrations bundle. |
+| images.agent.tag | string | `"2.8.2"` | Tag for the agent and integrations bundle. |
 | images.forwarder.repository | string | `"newrelic/k8s-events-forwarder"` | Image for the agent sidecar. |
-| images.forwarder.tag | string | `"1.22.0"` | Tag for the agent sidecar. |
+| images.forwarder.tag | string | `"1.23.0"` | Tag for the agent sidecar. |
 | images.integration.repository | string | `"newrelic/nri-kubernetes"` | Image for the kubernetes integration. |
-| images.integration.tag | string | `"3.0.2-pre"` | Tag for the kubernetes integration. |
+| images.integration.tag | string | `"3.0.0"` | Tag for the kubernetes integration. |
 | integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. |
 | ksm | object | See `values.yaml` | Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics). |
 | ksm.config.retries | int | `3` | Number of retries after timeout expired |
