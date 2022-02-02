@@ -14,5 +14,5 @@ jobs:
 
       - name: check index.yaml
         run: |
-          helm repo add test https://raw.githubusercontent.com/newrelic/helm-charts/${{ github.event.pull_request.base.ref }}
-          helm search repo newrelic -l --devel | grep test
+          helm repo add test https://raw.githubusercontent.com/newrelic/helm-charts/${{ github.event.pull_request.head.ref }}
+          helm search repo test/ -l --devel | grep test
