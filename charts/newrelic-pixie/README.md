@@ -20,6 +20,7 @@ By default, Pixie is installed in the `pl` namespace.
 | `verbose`  | Whether the integration should run in verbose mode or not. | false |
 | `global.customSecretName` - `customSecretName` | Name of an existing Secret object, not created by this chart, where the New Relic license is stored|   |
 | `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the existing Secret object, indicated by `customSecretName`, where the New Relic license key is stored. |   |
+| `image.pullSecrets`| Image pull secrets.| `nil` |
 | `customSecretApiKeyName`   | Name of an existing Secret object, not created by this chart, where the Pixie API key is stored.   |   |
 | `customSecretApiKeyKey`| Key in the existing Secret object, indicated by `customSecretApiKeyName`, where the Pixie API key is stored.   |   |
 | `nodeSelector` | Node label to use for scheduling  | `{}`   |
@@ -28,6 +29,7 @@ By default, Pixie is installed in the `pl` namespace.
 | `proxy`| Set proxy to connect to Pixie Cloud and New Relic. |   |
 | `excludeNamespacesRegex`   | Observability data for namespaces matching this RE2 regex is not sent to New Relic. If empty, observability data for all namespaces is sent to New Relic.  |   |
 | `excludePodsRegex` | Observability data for pods (across all namespaces) matching this RE2 regex is not sent to New Relic. If empty, observability data for all pods (in non-excluded namespaces) is sent to New Relic. |   |
+
 ## Example
 
 Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)

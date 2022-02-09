@@ -18,6 +18,10 @@ metadata:
 app: {{ template "newrelic-k8s-metrics-adapter.name" $ }}
 {{ include "newrelic-k8s-metrics-adapter.labels" $ | indent 8 }}
 spec:
+  {{- if .Values.apiServicePatchJob.image.pullSecrets }}
+  imagePullSecrets:
+{{- toYaml .Values.apiServicePatchJob.image.pullSecrets | nindent 8 }}
+  {{- end }}
   containers:
 - name: patch
   image: {{ .Values.apiServicePatchJob.image.repository }}:{{ .Values.apiServicePatchJob.image.tag }}
