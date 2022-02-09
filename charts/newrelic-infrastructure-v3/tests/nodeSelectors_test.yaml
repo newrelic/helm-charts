@@ -1,9 +1,10 @@
 suite: test configmap
 templates:
-  - templates/control-plane/daemonset.yaml
-  - templates/control-plane/configmap.yaml
+  - templates/controlplane/daemonset.yaml
+  - templates/controlplane/configmap.yaml
   - templates/kubelet/daemonset.yaml
   - templates/kubelet/configmap.yaml
+  - templates/kubelet/integrations-configmap.yaml
   - templates/ksm/deployment.yaml
   - templates/ksm/configmap.yaml
   - templates/agent-configmap.yaml
@@ -74,7 +75,7 @@ tests:
           path: spec.template.spec.nodeSelector
           value:
             disktype: ssd
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
   - it: nodeSelector is populated from supported value
     set:
       licenseKey: test
@@ -89,4 +90,4 @@ tests:
           path: spec.template.spec.nodeSelector
           value:
             disktype: real
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml

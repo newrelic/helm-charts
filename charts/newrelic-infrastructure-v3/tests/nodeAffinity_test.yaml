@@ -1,9 +1,10 @@
 suite: test configmap
 templates:
-  - templates/control-plane/daemonset.yaml
-  - templates/control-plane/configmap.yaml
+  - templates/controlplane/daemonset.yaml
+  - templates/controlplane/configmap.yaml
   - templates/kubelet/daemonset.yaml
   - templates/kubelet/configmap.yaml
+  - templates/kubelet/integrations-configmap.yaml
   - templates/ksm/deployment.yaml
   - templates/ksm/configmap.yaml
   - templates/agent-configmap.yaml
@@ -136,7 +137,7 @@ tests:
       - equal:
           path: spec.template.spec.affinity
           value: null
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
   - it: nodeAffinity is populated from supported value
     set:
       licenseKey: test
@@ -162,7 +163,7 @@ tests:
                       operator: In
                       values:
                         - new
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml
   - it: nodeAffinity is not populated and the chart renders
     set:
       licenseKey: test
@@ -186,4 +187,4 @@ tests:
                 - matchExpressions:
                   - key: node-role.kubernetes.io/master
                     operator: Exists
-        template: templates/control-plane/daemonset.yaml
+        template: templates/controlplane/daemonset.yaml

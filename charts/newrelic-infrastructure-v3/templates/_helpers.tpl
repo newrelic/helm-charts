@@ -15,7 +15,7 @@ If release name contains chart name it will be used as a full name.
 {{- if .Values.fullnameOverride }}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
-{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- $name := default "nrk8s" .Values.nameOverride }}
 {{- if contains $name .Release.Name }}
 {{- .Release.Name | trunc 63 | trimSuffix "-" }}
 {{- else }}
@@ -185,6 +185,16 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
 {{ $namespaceList := list }}
 {{- range $components := .Values.controlPlane.config }}
   {{- if $components }}
+  {{- if kindIs "map" $components -}}
+  {{- if $components.staticEndpoint }}
+      {{- if $components.staticEndpoint.auth }}
+      {{- if $components.staticEndpoint.auth.mtls }}
+      {{- if $components.staticEndpoint.auth.mtls.secretNamespace }}
+      {{- $namespaceList = append $namespaceList $components.staticEndpoint.auth.mtls.secretNamespace -}}
+      {{- end }}
+      {{- end }}
+      {{- end }}
+  {{- end }}
   {{- if $components.autodiscover }}
     {{- range $autodiscover := $components.autodiscover }}
       {{- if $autodiscover }}
@@ -201,6 +211,7 @@ Returns the list of namespaces where secrets need to be accessed by the controlP
       {{- end }}
       {{- end }}
     {{- end }}
+  {{- end }}
   {{- end }}
   {{- end }}
 {{- end }}

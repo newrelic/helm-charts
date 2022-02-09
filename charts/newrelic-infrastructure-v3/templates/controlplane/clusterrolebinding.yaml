@@ -4,13 +4,13 @@ kind: ClusterRoleBinding
 metadata:
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-control-plane
+  name: {{ template "newrelic.fullname" . }}-controlplane
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ template "newrelic.fullname" . }}-control-plane
+  name: {{ template "newrelic.fullname" . }}-controlplane
 subjects:
   - kind: ServiceAccount
-    name: {{ template "newrelic.serviceAccountName" . }}-control-plane
+    name: {{ template "newrelic.serviceAccountName" . }}-controlplane
     namespace: {{ .Release.Namespace }}
 {{- end -}}

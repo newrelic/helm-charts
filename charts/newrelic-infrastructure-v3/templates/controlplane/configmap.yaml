@@ -5,12 +5,13 @@ kind: ConfigMap
 metadata:
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-control-plane
+  name: {{ template "newrelic.fullname" . }}-controlplane
   namespace: {{ .Release.Namespace }}
 data:
   nri-kubernetes.yml: |-
     {{- (merge .Values.common.config (include "newrelic.integrationConfigDefaults" . | fromYaml)) | toYaml | nindent 4 }}
     controlPlane:
+      {{- omit .Values.controlPlane.config "etcd" "scheduler" "controllerManager" "apiServer" | toYaml | nindent 6 }}
       enabled: true
 
     {{- if  .Values.controlPlane.config.etcd.enabled }}

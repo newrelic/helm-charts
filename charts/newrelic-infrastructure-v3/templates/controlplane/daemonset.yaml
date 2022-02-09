@@ -5,9 +5,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-control-plane
-  {{- with .Values.controlPlane.annotations }}
-  annotations: {{ toYaml . | nindent 4 }}
+  name: {{ template "newrelic.fullname" . }}-controlplane
+  {{- $legacyAnnotation:= fromYaml (include "newrelic.compatibility.annotations" .) -}}
+  {{- with  include "newrelic.compatibility.valueWithFallback" (dict "legacy" $legacyAnnotation "supported" .Values.controlPlane.annotations )}}
+  annotations: {{ . | nindent 4 }}
   {{- end }}
 spec:
   {{- if eq .Values.controlPlane.kind "DaemonSet"}}
@@ -18,23 +19,21 @@ spec:
   selector:
     matchLabels:
       {{- include "newrelic.selectorLabels" . | nindent 6 }}
-      app.kubernetes.io/component: control-plane
+      app.kubernetes.io/component: controlplane
   template:
     metadata:
       annotations:
-        checksum/nri-kubernetes: {{ include (print $.Template.BasePath "/control-plane/configmap.yaml") . | sha256sum }}
+        checksum/nri-kubernetes: {{ include (print $.Template.BasePath "/controlplane/configmap.yaml") . | sha256sum }}
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
-        {{- end }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
       labels:
         {{- include "newrelic.selectorLabels" . | nindent 8 }}
-        app.kubernetes.io/component: control-plane
+        app.kubernetes.io/component: controlplane
         {{- with .Values.podLabels }}
           {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -44,13 +43,13 @@ spec:
       imagePullSecrets:
           {{- toYaml . | nindent 8 }}
       {{- end }}
-      serviceAccountName: {{ template "newrelic.serviceAccountName" . }}-control-plane
+      serviceAccountName: {{ template "newrelic.serviceAccountName" . }}-controlplane
       {{- if include "newrelic.controlPlane.hostNetwork" . }}
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
       containers:
-        - name: control-plane
+        - name: controlplane
           image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.images.integration.pullPolicy }}
           securityContext:
@@ -154,11 +153,9 @@ spec:
               name: forwarder-tmpfs-user-data
             - mountPath: /tmp
               name: forwarder-tmpfs-tmp
-            {{- if (include "newrelic.compatibility.agentConfig" . ) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
-            {{- end }}
             {{- with .Values.controlPlane.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -168,7 +165,7 @@ spec:
       volumes:
         - name: nri-kubernetes-config
           configMap:
-            name: {{ template "newrelic.fullname" . }}-control-plane
+            name: {{ template "newrelic.fullname" . }}-controlplane
             items:
               - key: nri-kubernetes.yml
                 path: nri-kubernetes.yml
@@ -178,14 +175,12 @@ spec:
           emptyDir: {}
         - name: forwarder-tmpfs-tmp
           emptyDir: {}
-        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
             items:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
-        {{- end }}
         {{- with .Values.controlPlane.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

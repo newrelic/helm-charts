@@ -1,6 +1,6 @@
 suite: test configmap
 templates:
-  - templates/control-plane/configmap.yaml
+  - templates/controlplane/configmap.yaml
 tests:
   - it: without any option the chart still render a valid yaml
     set:
@@ -15,8 +15,9 @@ tests:
           path: data.nri-kubernetes\.yml
           value: |-
             interval: 15s
-            timeout: 30s
             controlPlane:
+              retries: 3
+              timeout: 10s
               enabled: true
               etcd:
                 autodiscover: []
@@ -37,8 +38,9 @@ tests:
           path: data.nri-kubernetes\.yml
           value: |-
             interval: 15s
-            timeout: 30s
             controlPlane:
+              retries: 3
+              timeout: 10s
               enabled: true
               etcd:
                 autodiscover: []
@@ -69,8 +71,9 @@ tests:
           path: data.nri-kubernetes\.yml
           value: |-
             interval: 15s
-            timeout: 30s
             controlPlane:
+              retries: 3
+              timeout: 10s
               enabled: true
               etcd:
                 autodiscover: []
@@ -139,8 +142,9 @@ tests:
           path: data.nri-kubernetes\.yml
           value: |-
             interval: 15s
-            timeout: 30s
             controlPlane:
+              retries: 3
+              timeout: 10s
               enabled: true
               etcd:
                 autodiscover:

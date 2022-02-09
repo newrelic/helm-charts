@@ -6,8 +6,9 @@ metadata:
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}-kubelet
-  {{- with .Values.kubelet.annotations }}
-  annotations: {{ toYaml . | nindent 4 }}
+  {{- $legacyAnnotation:= fromYaml (include "newrelic.compatibility.annotations" .) -}}
+  {{- with  include "newrelic.compatibility.valueWithFallback" (dict "legacy" $legacyAnnotation "supported" .Values.kubelet.annotations )}}
+  annotations: {{ . | nindent 4 }}
   {{- end }}
 spec:
   {{- with .Values.updateStrategy }}
@@ -24,12 +25,8 @@ spec:
         {{- if not (include "newrelic.licenseCustomSecretName" .) }}
         checksum/secret: {{ include (print $.Template.BasePath "/secret.yaml") . | sha256sum }}
         {{- end }}
-        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         checksum/agent-config: {{ include (print $.Template.BasePath "/agent-configmap.yaml") . | sha256sum }}
-        {{- end }}
-        {{- if .Values.integrations_config }}
         checksum/integrations_config: {{ include (print $.Template.BasePath "/kubelet/integrations-configmap.yaml") . | sha256sum }}
-        {{- end }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -161,19 +158,26 @@ spec:
             {{- with .Values.kubelet.extraEnv }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
+            {{- /* Needed to populate clustername in integration metrics */}}
+            - name: "CLUSTER_NAME"
+              value: {{ include "newrelic.cluster" . | required "cluster name must be set" }}
+            - name: "NRIA_PASSTHROUGH_ENVIRONMENT"
+              value: "CLUSTER_NAME"
+            {{- /* Needed for autodiscovery since hostNetwork=false */}}
+            - name: "NRIA_HOST"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "status.hostIP"
           {{- with .Values.kubelet.extraEnvFrom }}
           envFrom: {{ toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
-            {{- if (include "newrelic.compatibility.agentConfig" . ) }}
             - name: config
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
-            {{- end }}
-            {{- if or .Values.integrations (include "newrelic.compatibility.integrations" .)}}
             - name: nri-integrations-cfg-volume
               mountPath: /etc/newrelic-infra/integrations.d/
-            {{- end }}
             {{- if .Values.privileged }}
             - name: dev
               mountPath: /dev
@@ -224,19 +228,15 @@ spec:
             items:
               - key: nri-kubernetes.yml
                 path: nri-kubernetes.yml
-        {{- if (include "newrelic.compatibility.agentConfig" . ) }}
         - name: config
           configMap:
             name: {{ template "newrelic.fullname" . }}-agent
             items:
               - key: newrelic-infra.yml
                 path: newrelic-infra.yml
-        {{- end }}
-        {{- if or .Values.integrations (include "newrelic.compatibility.integrations" .) }}
         - name: nri-integrations-cfg-volume
           configMap:
             name: {{ template "newrelic.fullname" . }}-integrations-cfg
-        {{- end }}
         {{- with .Values.kubelet.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
