@@ -171,7 +171,7 @@ kubectl --namespace kube-system patch deploy tiller-deploy \
 
 The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
 
-[helm-hub]: https://artifacthub.io/packages/search?repo=newrelic
+[Artifact Hub]: https://artifacthub.io/packages/search?repo=newrelic
 [helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts
 [helm-install]: https://helm.sh/docs/intro/using_helm/#helm-install-installing-a-package
 [newrelic-kubernetes]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/get-started/introduction-kubernetes-integration
