@@ -17,7 +17,9 @@ metadata:
   labels: {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}-integrations-cfg
 data:
-{{ (.Files.Glob "flex/**.yaml").AsConfig | indent 2 }} # include Flex configs
+{{ if .Values.selfMonitoring.pixie.enabled }}
+{{ (.Files.Glob "flex/nri-pixie-check.yaml").AsConfig | indent 2 }} # include Pixie Health Check
+{{ end }}
 {{ if .Values.integrations_config }}
 {{ range .Values.integrations_config -}}
 {{ .name | indent 2 }}: |

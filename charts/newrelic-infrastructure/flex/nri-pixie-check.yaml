@@ -1,9 +1,10 @@
 ---
 # This Flex config performs periodic checks of the Pixie
-# healthz and statusz endpoints.  A status for each endpoint
-# is sent to New Relic in a pixieHealthCheck event.
+# /healthz and /statusz endpoints exposed by the Pixie Cloud Connector.
+# A status for each endpoint is sent to New Relic in a pixieHealthCheck event.
 #
 # If Pixie is not installed in the cluster, no events will be generated.
+# This can also be disabled with enablePixieHealthCheck: false in the values.yaml file.
 discovery:
   command:
     exec: /var/db/newrelic-infra/nri-discovery-kubernetes
