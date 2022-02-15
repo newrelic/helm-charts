@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.16](https://img.shields.io/badge/Version-3.0.16-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
+![Version: 3.1.0](https://img.shields.io/badge/Version-3.1.0-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -37,8 +37,8 @@ Kubernetes: `>=1.16.0-0`
 | controlPlane.config.scheduler.enabled | bool | `true` | Enable scheduler monitoring. |
 | controlPlane.config.timeout | string | `"10s"` | Timeout for the Kubernetes APIs contacted by the integration |
 | controlPlane.enabled | bool | `true` | Deploy control plane monitoring component. |
+| controlPlane.hostNetwork | bool | true if `Kind` is `DaemonSet` and `privileged` is `true`. false in all the other cases | Run Control Plane scraper with `hostNetwork`. In case this scraper is run as a Deployment or in unprivileged mode this defaults to false to allow the pod to be scheduled properly. See "Control plane `hostNetwork`" in the README.md for more information. |
 | controlPlane.kind | string | `"DaemonSet"` | How to deploy the control plane scraper. If autodiscovery is in use, it should be `DaemonSet`. Advanced users using static endpoints set this to `Deployment` to avoid reporting metrics twice. |
-| controlPlane.unprivilegedHostNetwork | bool | `false` | Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false. `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost. This is meant to be used with DaemonSets over on-premise clusters. |
 | customAttributes | object | `{}` | Custom attributes to be added to the data reported by all integrations reporting in the cluster. |
 | images | object | See `values.yaml` | Images used by the chart for the integration and agents. |
 | images.agent.repository | string | `"newrelic/infrastructure-bundle"` | Image for the agent and integrations bundle. |
@@ -68,8 +68,17 @@ Kubernetes: `>=1.16.0-0`
 | securityContext | object | See `values.yaml` | Security context used in all the containers of the pods When `privileged == true`, the Kubelet scraper will run as root and ignore these settings. |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
-| updateStrategy | object | See `values.yaml` | Update strategy for the DaemonSets deployed. |
+| updateStrategy | object | {} | Update strategy for the DaemonSets/Deployments deployed. |
 | verboseLog | bool | `false` | Enable verbose logging for all components. |
+
+## Control plane `hostNetwork`
+
+The monitoring pods that are used to monitor the Control Plane could be deployed as a DaemonSet or as a Deployment to cover these use cases:
+- On premise clusters where the Control Plane is inside the cluster as a pod (run as a statics manifest, for example) so we need a DaemonSet
+  with the nodeSelector/affinity to run on the control plane nodes and we could need access to `hostNetwork`.
+- Managed clusters that has the control plane outside the cluster. We simply run as any other pod/deployment and we scrape the URLs configured
+
+`hostNetwork` in the control plane is difficult
 
 ## Maintainers
 

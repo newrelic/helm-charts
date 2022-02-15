@@ -15,6 +15,20 @@
 
 {{ template "chart.valuesSection" . }}
 
+## Control plane `hostNetwork`
+
+The monitoring pods that are used to monitor the Control Plane could be deployed as a DaemonSet or as a Deployment to cover these use cases:
+- On premise clusters where the Control Plane is inside the cluster as a pod (run as a statics manifest, for example) so we need a DaemonSet
+  with the nodeSelector/affinity to run on the control plane nodes and we could need access to `hostNetwork`.
+- Managed clusters that has the control plane outside the cluster. We simply run as any other pod/deployment and we scrape the URLs configured
+  using `.controlPlane.config.{etcd,scheduler,controllerManager,apiServer}.staticEndpoint`
+
+Because of this complexity, the `hostNetwork` default will change depending on the way you are deploying chart:
+- The value you can set manually in `.controlPlane.hostNetwork` will always be honored and will override any default value this chart sets.
+- `hostNetwork` will be set to true if this is deployed as a `DaemonSet` in `privileged` mode.
+- In the rest of the cases it will be run with `hostNetwork` set to false.
+
+
 {{ if .Maintainers }}
 ## Maintainers
 {{ range .Maintainers }}

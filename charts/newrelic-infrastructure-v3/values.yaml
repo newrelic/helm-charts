@@ -62,8 +62,7 @@ kubelet:
     - operator: "Exists"
       effect: "NoExecute"
   nodeSelector: {}
-  affinity:
-    nodeAffinity: {}
+  affinity: {}
   extraEnv: []
   extraEnvFrom: []
   extraVolumes: []
@@ -140,10 +139,12 @@ ksm:
 controlPlane:
   # -- Deploy control plane monitoring component.
   enabled: true
-  # -- Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false.
-  # `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost.
-  # This is meant to be used with DaemonSets over on-premise clusters.
-  unprivilegedHostNetwork: false
+
+  # controlPlane.hostNetwork -- (bool) Run Control Plane scraper with `hostNetwork`. In case this scraper is run as a Deployment or in unprivileged
+  # mode this defaults to false to allow the pod to be scheduled properly. See "Control plane `hostNetwork`" in the README.md for more information.
+  # @default -- true if `Kind` is `DaemonSet` and `privileged` is `true`. false in all the other cases
+  hostNetwork:
+
   annotations: {}
   tolerations:
     - operator: "Exists"
@@ -153,22 +154,7 @@ controlPlane:
   nodeSelector: {}
   # -- Affinity for the control plane DaemonSet.
   # @default -- Deployed only in master nodes.
-  affinity:
-    nodeAffinity:
-      requiredDuringSchedulingIgnoredDuringExecution:
-        nodeSelectorTerms:
-          - matchExpressions:
-              - key: node-role.kubernetes.io/control-plane
-                operator: Exists
-          - matchExpressions:
-              - key: node-role.kubernetes.io/controlplane
-                operator: Exists
-          - matchExpressions:
-              - key: node-role.kubernetes.io/etcd
-                operator: Exists
-          - matchExpressions:
-              - key: node-role.kubernetes.io/master
-                operator: Exists
+  affinity: {}
   # -- How to deploy the control plane scraper. If autodiscovery is in use, it should be `DaemonSet`.
   # Advanced users using static endpoints set this to `Deployment` to avoid reporting metrics twice.
   kind: DaemonSet
@@ -198,7 +184,7 @@ controlPlane:
         - selector: "tier=control-plane,component=etcd"
           namespace: kube-system
           # Set to true to consider only pods sharing the node with the scraper pod.
-          # This should be set to `true` if Kind is Daemonset, `false` otherwise.
+          # This should be set to `true` if Kind is DaemonSet, `false` otherwise.
           matchNode: true
           # Try to reach etcd using the following endpoints.
           endpoints:
@@ -240,7 +226,7 @@ controlPlane:
       # -- staticEndpoint configuration.
       # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
       # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
-      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # Notice that if deployed as a DaemonSet and not as a Deployment setting static URLs could lead to duplicate data
       # staticEndpoint:
       #   url: https://url:port
       #   insecureSkipVerify: true
@@ -279,7 +265,7 @@ controlPlane:
       # -- staticEndpoint configuration.
       # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
       # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
-      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # Notice that if deployed as a DaemonSet and not as a Deployment setting static URLs could lead to duplicate data
       # staticEndpoint:
       #   url: https://url:port
       #   insecureSkipVerify: true
@@ -329,7 +315,7 @@ controlPlane:
       # -- staticEndpoint configuration.
       # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
       # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
-      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # Notice that if deployed as a DaemonSet and not as a Deployment setting static URLs could lead to duplicate data
       # staticEndpoint:
       #   url: https://url:port
       #   insecureSkipVerify: true
@@ -375,18 +361,15 @@ controlPlane:
       # -- staticEndpoint configuration.
       # It is possible to specify static endpoint to scrape. If specified 'autodiscover' section is ignored.
       # If set the static endpoint should be reachable, otherwise an error will be returned and the integration stops.
-      # Notice that if deployed as a daemonSet and not as a Deployment setting static URLs could lead to duplicate data
+      # Notice that if deployed as a DaemonSet and not as a Deployment setting static URLs could lead to duplicate data
       # staticEndpoint:
       #   url: https://url:port
       #   insecureSkipVerify: true
       #   auth: {}
 
-# -- Update strategy for the DaemonSets deployed.
-# @default -- See `values.yaml`
-updateStrategy:
-  type: RollingUpdate
-  rollingUpdate:
-    maxUnavailable: 1
+# -- Update strategy for the DaemonSets/Deployments deployed.
+# @default -- {}
+updateStrategy: {}
 
 # -- Custom attributes to be added to the data reported by all integrations reporting in the cluster.
 customAttributes: {}

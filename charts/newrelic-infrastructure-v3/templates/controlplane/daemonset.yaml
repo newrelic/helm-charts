@@ -190,7 +190,7 @@ spec:
       {{- if .Values.controlPlane.affinity.nodeAffinity }}
       affinity:
         nodeAffinity:
-          {{- .Values.controlPlane.affinity.nodeAffinity | toYaml | nindent 10 }}
+          {{- include "newrelic.controlPlane.computedAffinity" . | nindent 10 }}
       {{- end }}
       {{- with .Values.controlPlane.tolerations }}
       tolerations:
