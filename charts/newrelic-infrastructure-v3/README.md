@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.16](https://img.shields.io/badge/Version-3.0.16-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
+![Version: 3.1.0](https://img.shields.io/badge/Version-3.1.0-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
@@ -38,6 +38,7 @@ Kubernetes: `>=1.16.0-0`
 | controlPlane.config.timeout | string | `"10s"` | Timeout for the Kubernetes APIs contacted by the integration |
 | controlPlane.enabled | bool | `true` | Deploy control plane monitoring component. |
 | controlPlane.kind | string | `"DaemonSet"` | How to deploy the control plane scraper. If autodiscovery is in use, it should be `DaemonSet`. Advanced users using static endpoints set this to `Deployment` to avoid reporting metrics twice. |
+| controlPlane.strategy | object | `type: Recreate` | Deployment strategy when `kind` is set to `Deployment`. |
 | controlPlane.unprivilegedHostNetwork | bool | `false` | Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false. `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost. |
 | customAttributes | object | `{}` | Custom attributes to be added to the data reported by all integrations reporting in the cluster. |
 | images | object | See `values.yaml` | Images used by the chart for the integration and agents. |
