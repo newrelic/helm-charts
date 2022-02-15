@@ -143,29 +143,12 @@ licenseKey and cluster are set.
 {{- end -}}
 
 {{/*
-Return the cluster name
-*/}}
-{{- define "newrelic.cluster" -}}
-{{- if .Values.cluster -}}
-  {{- .Values.cluster -}}
-{{- else if .Values.global -}}
-  {{- if .Values.global.cluster -}}
-    {{- .Values.global.cluster -}}
-  {{- end -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Returns Custom Attributes even if formatted as a json string
 */}}
-{{- define "newrelic.customAttributesWithoutClusterName" -}}
+{{- define "newrelic.customAttributes" -}}
 {{- if kindOf .Values.customAttributes | eq "string" -}}
 {{  .Values.customAttributes }}
 {{- else -}}
 {{ .Values.customAttributes | toJson }}
 {{- end -}}
-{{- end -}}
-
-{{- define "newrelic.customAttributes" -}}
-{{- merge (include "newrelic.customAttributesWithoutClusterName" . | fromJson) (dict "clusterName" (include "newrelic.cluster" .)) | toJson }}
 {{- end -}}
