@@ -11,9 +11,13 @@ metadata:
   annotations: {{ . | nindent 4 }}
   {{- end }}
 spec:
-  {{- if eq .Values.controlPlane.kind "DaemonSet"}}
+  {{- if eq .Values.controlPlane.kind "DaemonSet" }}
   {{- with .Values.updateStrategy }}
   updateStrategy: {{ toYaml . | nindent 4 }}
+  {{- end }}
+  {{- else if eq .Values.controlPlane.kind "Deployment" }}
+  {{- with .Values.controlPlane.strategy }}
+  strategy: {{ toYaml . | nindent 4 }}
   {{- end }}
   {{- end }}
   selector:

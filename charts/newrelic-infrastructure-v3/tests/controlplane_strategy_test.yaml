@@ -1,0 +1,88 @@
+suite: Control plane strategy
+templates:
+  - templates/controlplane/daemonset.yaml
+  - templates/controlplane/configmap.yaml
+  - templates/secret.yaml
+  - templates/agent-configmap.yaml
+  - templates/_helpers.tpl
+  - templates/_helpers_compatibility.tpl
+tests:
+- it: DaemonSet defaults to global updateStrategy
+  set:
+    licenseKey: test
+    cluster: test
+  asserts:
+    - equal:
+        path: spec.updateStrategy
+        value:
+          type: RollingUpdate
+          rollingUpdate:
+            maxUnavailable: 1
+      template: templates/controlplane/daemonset.yaml
+- it: DaemonSet updateStrategy can be overridden
+  set:
+    licenseKey: test
+    cluster: test
+    controlPlane:
+      kind: Deployment
+  asserts:
+    - equal:
+        path: spec.strategy
+        value:
+          type: Recreate
+      template: templates/controlplane/daemonset.yaml
+    - isNull:
+        path: spec.updateStrategy
+      template: templates/controlplane/daemonset.yaml
+- it: Deployment defaults to recreate
+  set:
+    licenseKey: test
+    cluster: test
+    controlPlane:
+      kind: Deployment
+  asserts:
+    - equal:
+        path: spec.strategy
+        value:
+          type: Recreate
+      template: templates/controlplane/daemonset.yaml
+- it: Deployment strategy can be overridden
+  set:
+    licenseKey: test
+    cluster: test
+    controlPlane:
+      kind: Deployment
+      strategy:
+        type: Foobar
+  asserts:
+    - equal:
+        path: spec.strategy
+        value:
+          type: Foobar
+      template: templates/controlplane/daemonset.yaml
+    - isNull:
+        path: spec.updateStrategy
+      template: templates/controlplane/daemonset.yaml
+- it: Deployment strategy is not rendered on DaemonSet
+  set:
+    licenseKey: test
+    cluster: test
+    controlPlane:
+      strategy:
+        type: Foobar
+  asserts:
+    - isNull:
+        path: spec.strategy
+      template: templates/controlplane/daemonset.yaml
+- it: DaemonSet strategy is not rendered on Deployment
+  set:
+    licenseKey: test
+    cluster: test
+    controlPlane:
+      kind: Deployment
+      updateStrategy:
+        type: Foobar
+  asserts:
+    - isNull:
+        path: spec.updateStrategy
+      template: templates/controlplane/daemonset.yaml
