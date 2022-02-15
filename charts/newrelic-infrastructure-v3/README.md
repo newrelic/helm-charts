@@ -24,7 +24,7 @@ Kubernetes: `>=1.16.0-0`
 | common | object | See `values.yaml` | Config that applies to all instances of the solution: kubelet, ksm, control plane and sidecars. |
 | common.agentConfig | object | `{}` | Config for the Infrastructure agent. Will be used by the forwarder sidecars and the agent running integrations. See: https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/ |
 | common.config.interval | duration | `15s` if `lowDataMode == false`, `30s` otherwise. | Intervals larger than 40s are not supported and will cause the NR UI to not behave properly. Any non-nil value will override the `lowDataMode` default. |
-| controlPlane | object | See `values.yaml` | Configuration for the control plane scraper. |
+| controlPlane | object | See `values.yaml` | Configuration for the `nrk8s-controlplane` workload, which collects metrics from the control plane. |
 | controlPlane.affinity | object | Deployed only in master nodes. | Affinity for the control plane DaemonSet. |
 | controlPlane.config.apiServer | object | Common settings for most K8s distributions. | API Server monitoring configuration |
 | controlPlane.config.apiServer.enabled | bool | `true` | Enable API Server monitoring |
@@ -47,13 +47,13 @@ Kubernetes: `>=1.16.0-0`
 | images.forwarder.tag | string | `"1.23.0"` | Tag for the agent sidecar. |
 | images.integration.repository | string | `"newrelic/nri-kubernetes"` | Image for the kubernetes integration. |
 | images.integration.tag | string | `"3.0.0"` | Tag for the kubernetes integration. |
-| integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. |
-| ksm | object | See `values.yaml` | Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics). |
+| integrations | object | `{}` | Config files for other New Relic integrations that should run in this cluster. These integrations are run in the `nrk8s-node` pods. |
+| ksm | object | See `values.yaml` | Configuration for the `nrk8s-ksm` Deployment, which collects cluster-wide metrics from KSM (kube-state-metrics). |
 | ksm.config.retries | int | `3` | Number of retries after timeout expired |
 | ksm.config.timeout | string | `"10s"` | Timeout for the ksm API contacted by the integration |
 | ksm.enabled | bool | `true` | Enable cluster state monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |
 | ksm.resources | object | 100m/150M -/850M | Resources for the KSM scraper pod. Keep in mind that sharding is not supported at the moment, so memory usage for this component ramps up quickly on large clusters. |
-| kubelet | object | See `values.yaml` | Configuration for the DaemonSet that collects metrics from the Kubelet. |
+| kubelet | object | See `values.yaml` | Configuration for the `nrk8s-node` DaemonSet, which collects metrics from the Kubelet. |
 | kubelet.config.retries | int | `3` | Number of retries after timeout expired |
 | kubelet.config.timeout | string | `"10s"` | Timeout for the kubelet APIs contacted by the integration |
 | kubelet.enabled | bool | `true` | Enable kubelet monitoring. Advanced users only. Setting this to `false` is not supported and will break the New Relic experience. |

@@ -49,7 +49,7 @@ common:
 # @default -- `false`
 lowDataMode:
 
-# kubelet -- Configuration for the DaemonSet that collects metrics from the Kubelet.
+# kubelet -- Configuration for the `nrk8s-node` DaemonSet, which collects metrics from the Kubelet.
 # @default -- See `values.yaml`
 kubelet:
   # -- Enable kubelet monitoring.
@@ -82,7 +82,7 @@ kubelet:
   # port:
   # scheme:
 
-# ksm -- Configuration for the Deployment that collects state metrics from KSM (kube-state-metrics).
+# ksm -- Configuration for the `nrk8s-ksm` Deployment, which collects cluster-wide metrics from KSM (kube-state-metrics).
 # @default -- See `values.yaml`
 ksm:
   # -- Enable cluster state monitoring.
@@ -135,7 +135,7 @@ ksm:
   # -- only the pods matching this namespace taken into account during autodiscovery
   # namespace: "ksm-namespace"
 
-# controlPlane -- Configuration for the control plane scraper.
+# controlPlane -- Configuration for the `nrk8s-controlplane` workload, which collects metrics from the control plane.
 # @default -- See `values.yaml`
 controlPlane:
   # -- Deploy control plane monitoring component.
@@ -434,6 +434,7 @@ rbac:
   pspEnabled: false
 
 # -- Config files for other New Relic integrations that should run in this cluster.
+# These integrations are run in the `nrk8s-node` pods.
 integrations: {}
 # If you wish to monitor services running on Kubernetes you can provide integrations
 # configuration under `integrations`. You just need to create a new entry where
