@@ -5,7 +5,7 @@ kind: ConfigMap
 metadata:
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-node
+  name: {{ template "newrelic.fullname" . }}-kubelet
   namespace: {{ .Release.Namespace }}
 data:
   nri-kubernetes.yml: |
