@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.labels" . | nindent 4 }}
-  name: {{ template "newrelic.fullname" . }}-kubelet
+  name: {{ template "newrelic.fullname" . }}-node
   {{- $legacyAnnotation:= fromYaml (include "newrelic.compatibility.annotations" .) -}}
   {{- with  include "newrelic.compatibility.valueWithFallback" (dict "legacy" $legacyAnnotation "supported" .Values.kubelet.annotations )}}
   annotations: {{ . | nindent 4 }}
@@ -224,7 +224,7 @@ spec:
           emptyDir: {}
         - name: nri-kubernetes-config
           configMap:
-            name: {{ template "newrelic.fullname" . }}-kubelet
+            name: {{ template "newrelic.fullname" . }}-node
             items:
               - key: nri-kubernetes.yml
                 path: nri-kubernetes.yml
