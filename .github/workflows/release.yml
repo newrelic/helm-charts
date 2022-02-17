@@ -48,7 +48,14 @@ jobs:
       - name: Install Helm
         uses: azure/setup-helm@v1
 
-      - name: Run chart-releaser
+      - name: Release library charts
+        uses: helm/chart-releaser-action@v1.2.1
+        with:
+          charts_dir: library
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Release workload charts
         uses: helm/chart-releaser-action@v1.2.1
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
