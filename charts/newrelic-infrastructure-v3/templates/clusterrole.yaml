@@ -6,16 +6,23 @@ metadata:
     {{- include "newrelic.labels" . | nindent 4 }}
   name: {{ template "newrelic.fullname" . }}
 rules:
+  # Used to authorize Kubelet requests, ref:
+  # https://kubernetes.io/docs/reference/command-line-tools-reference/kubelet-authentication-authorization/#kubelet-authorization
   - apiGroups: [""]
     resources:
+      # For /metrics/cadvisor.
       - "nodes/metrics"
+      # For /stats/summary.
       - "nodes/stats"
+      # For /pods (see ref above), and to reach kubelet through the API Server proxy if direct connection fails.
       - "nodes/proxy"
     verbs: ["get", "list"]
   - apiGroups: [ "" ]
     resources:
+      # endpoints and services are used for target autodiscovery.
       - "endpoints"
       - "services"
+      # nodes is used to fetch node data.
       - "nodes"
     verbs: [ "get", "list", "watch" ]
   - nonResourceURLs: ["/metrics"]
