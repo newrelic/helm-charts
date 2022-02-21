@@ -95,7 +95,7 @@ future. Please migrate your agent config to the new format in the `common.agentC
 {{- end }}
 
 
-{{ $errors:= "\n" }}
+{{ $errors:= "" }}
 
 {{- if .Values.logFile }}
 {{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.logFile" . ) }}
@@ -113,7 +113,7 @@ future. Please migrate your agent config to the new format in the `common.agentC
 {{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.image" . ) }}
 {{- end }}
 
-{{- if (or .Values.enableWindows .Values.windowsOsList .Values.windowsSecurityContext .Values.windowsNodeSelector)}}
+{{- if .Values.enableWindows }}
 {{ $errors = printf "%s\n\n%s" $errors (include "newrelic.compatibility.message.windows" . ) }}
 {{- end }}
 
@@ -130,5 +130,5 @@ future. Please migrate your agent config to the new format in the `common.agentC
 {{- end }}
 
 {{- if $errors | trim}}
-{{- fail $errors }}
+{{- fail (printf "\n\n%s\n%s" (include "newrelic.compatibility.message.common" . ) $errors )  }}
 {{- end }}

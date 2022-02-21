@@ -85,35 +85,52 @@ Returns legacy integrations_config configmap data
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.logFile" -}}
-The `logFile` option is no longer supported and has been replaced by common.agentConfig.log_file.
+The 'logFile' option is no longer supported and has been replaced by:
+ - common.agentConfig.log_file.
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.resources" -}}
-You have specified the legacy `resources` option in your values, which is not fully compatible with the v3 version.
+You have specified the legacy 'resources' option in your values, which is not fully compatible with the v3 version.
 This version deploys three different components and therefore you'll need to specify resources for each of them.
-Please use `ksm.resources`, `controlPlane.resources` and `kubelet.resources`.
+Please use
+ - ksm.resources,
+ - controlPlane.resources,
+ - kubelet.resources.
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.tolerations" -}}
-You have specified the legacy `tolerations` option in your values, which is not fully compatible with the v3 version.
+You have specified the legacy 'tolerations' option in your values, which is not fully compatible with the v3 version.
 This version deploys three different components and therefore you'll need to specify tolerations for each of them.
-Please use `ksm.tolerations`, `controlPlane.tolerations` and `kubelet.tolerations`.
+Please use
+ - ksm.tolerations,
+ - controlPlane.tolerations,
+ - kubelet.tolerations.
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.apiServerSecurePort" -}}
-You have specified the legacy `apiServerSecurePort` option in your values, which is not fully compatible with the v3
+You have specified the legacy 'apiServerSecurePort' option in your values, which is not fully compatible with the v3
 version.
-Please configure the API Server port as a part of `apiServer.autodiscover[].endpoints`.
+Please configure the API Server port as a part of 'apiServer.autodiscover[].endpoints'
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.windows" -}}
 nri-kubernetes v3 does not support deploying into windows Nodes.
 Please use the latest 2.x version of the chart.
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.etcdSecrets" -}}
 Values "etcdTlsSecretName" and "etcdTlsSecretNamespace" are no longer supported, please specify them as a part of the
-`etcd` config in the values, for example:
+'etcd' config in the values, for example:
  - endpoints:
      - url: https://localhost:9979
        insecureSkipVerify: true
@@ -122,11 +139,13 @@ Values "etcdTlsSecretName" and "etcdTlsSecretNamespace" are no longer supported,
          mtls:
            secretName: {{ .Values.etcdTlsSecretName | default "etcdTlsSecretName"}}
            secretNamespace: {{ .Values.etcdTlsSecretNamespace | default "etcdTlsSecretNamespace"}}
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.apiURL" -}}
 Values "controllerManagerEndpointUrl", "etcdEndpointUrl", "apiServerEndpointUrl", "schedulerEndpointUrl" are no longer
-supported, please specify them as a part of the `controlplane` config in the values, for example
+supported, please specify them as a part of the 'controlplane' config in the values, for example
   autodiscover:
     - selector: "tier=control-plane,component=etcd"
       namespace: kube-system
@@ -136,10 +155,12 @@ supported, please specify them as a part of the `controlplane` config in the val
           insecureSkipVerify: true
           auth:
             type: bearer
+
+------
 {{- end -}}
 
 {{- define "newrelic.compatibility.message.image" -}}
-Configuring image repository an tag under `image` is no longer supported.
+Configuring image repository an tag under 'image' is no longer supported.
 The following values are no longer supported and are currently ignored:
  - image.repository
  - image.tag
@@ -151,4 +172,15 @@ Please set:
  - images.forwarder.* to configure the infrastructure-agent forwarder.
  - images.agent.* to configure the image bundling the infrastructure-agent and on-host integrations.
  - images.integration.* to configure the image in charge of scraping k8s data.
+
+------
+{{- end -}}
+
+{{- define "newrelic.compatibility.message.common" -}}
+######
+The chart cannot be rendered since the values listed below are not supported. Please replace those with the new ones compatible with newrelic-infrastructure V3.
+
+Keep in mind that the flag "--reuse-values" is not supported when migrating from V2 to V3.
+Further information can be found in the official docs https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/get-started/changes-since-v3#migration-guide"
+######
 {{- end -}}
