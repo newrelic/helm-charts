@@ -16,7 +16,7 @@ spec:
   updateStrategy: {{ toYaml . | nindent 4 }}
   {{- end }}
   {{- else if eq .Values.controlPlane.kind "Deployment" }}
-  {{- with .Values.controlPlane.strategy }}
+  {{- with .Values.strategy }}
   strategy: {{ toYaml . | nindent 4 }}
   {{- end }}
   {{- end }}

@@ -143,10 +143,6 @@ controlPlane:
   # -- Run Control Plane scraper with `hostNetwork` even if `privileged` is set to false.
   # `hostNetwork` is required for most control plane configurations, as they only accept connections from localhost.
   unprivilegedHostNetwork: false
-  # -- Deployment strategy when `kind` is set to `Deployment`.
-  # @default -- `type: Recreate`
-  strategy:
-    type: Recreate
   annotations: {}
   tolerations:
     - operator: "Exists"
@@ -384,12 +380,17 @@ controlPlane:
       #   insecureSkipVerify: true
       #   auth: {}
 
-# -- Update strategy for the DaemonSets deployed.
+# -- Update strategy for the deployed DaemonSets.
 # @default -- See `values.yaml`
 updateStrategy:
   type: RollingUpdate
   rollingUpdate:
     maxUnavailable: 1
+
+# -- Update strategy for the deployed Deployments.
+# @default -- `type: Recreate`
+strategy:
+  type: Recreate
 
 # -- Custom attributes to be added to the data reported by all integrations reporting in the cluster.
 customAttributes: {}
