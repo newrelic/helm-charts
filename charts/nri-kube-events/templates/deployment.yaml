@@ -85,6 +85,10 @@ secretKeyRef:
 fieldRef:
   apiVersion: v1
   fieldPath: spec.nodeName
+{{- if .Values.customAttributes }}
+- name: NRIA_CUSTOM_ATTRIBUTES
+  value: {{ include "newrelic.customAttributes" . | quote }}
+{{- end }}
   volumeMounts:
 - mountPath: /var/db/newrelic-infra/data
   name: tmpfs-data
