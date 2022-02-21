@@ -141,3 +141,14 @@ licenseKey and cluster are set.
 {{- $customSecretLicenseKey := include "nri-kube-events.customSecretLicenseKey" . -}}
 {{- and (or $licenseKey (and $customSecretName $customSecretLicenseKey)) $cluster}}
 {{- end -}}
+
+{{/*
+Returns Custom Attributes even if formatted as a json string
+*/}}
+{{- define "newrelic.customAttributes" -}}
+{{- if kindOf .Values.customAttributes | eq "string" -}}
+{{  .Values.customAttributes }}
+{{- else -}}
+{{ .Values.customAttributes | toJson }}
+{{- end -}}
+{{- end -}}
