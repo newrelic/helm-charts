@@ -43,6 +43,9 @@ spec:
 {{- toYaml . | nindent 8 }}
   {{- end }}
   serviceAccountName: {{ template "newrelic.serviceAccountName" . }}
+  {{- if .Values.kubelet.initContainers }}
+  initContainers: {{- tpl (.Values.kubelet.initContainers | toYaml) . | nindent 8 }}
+  {{- end }}
   containers:
 - name: kubelet
   image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"

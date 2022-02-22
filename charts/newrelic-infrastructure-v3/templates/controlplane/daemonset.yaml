@@ -48,6 +48,9 @@ spec:
   hostNetwork: true
   dnsPolicy: ClusterFirstWithHostNet
   {{- end }}
+  {{- if .Values.controlPlane.initContainers }}
+  initContainers: {{- tpl (.Values.controlPlane.initContainers | toYaml) . | nindent 8 }}
+  {{- end }}
   containers:
 - name: controlplane
   image: "{{ .Values.images.integration.registry }}/{{ .Values.images.integration.repository }}:{{ .Values.images.integration.tag | default .Chart.AppVersion }}"

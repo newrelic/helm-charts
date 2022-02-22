@@ -240,4 +240,3 @@ interval: 30s
 interval: 15s
 {{- end -}}
 {{- end -}}
-
