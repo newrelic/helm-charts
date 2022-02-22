@@ -28,16 +28,18 @@ If release name contains chart name it will be used as a full name.
 
 {{- $name := default .Chart.Name .Values.nameOverride }}
 
-{{- if contains $name .Release.Name }}
-{{- .Release.Name | trunc 63 | trimSuffix "-" }}
+{{- if contains (lower $name) (lower .Release.Name) }}
+{{- $name = $name | trunc 63 | trimSuffix "-" }}
 {{- else }}
 {{- $name = printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
 {{- if not (hasPrefix "nri-" $name) }}
 {{- /* In case the name is not prefixed with "nri-", add it */}}
-{{- printf "%s-%s" "nri" $name }}
+{{- $name = printf "nri-%s" $name }}
 {{- end }}
+
+{{- $name -}}
 
 {{- end }}
 {{- end }}
@@ -49,17 +51,4 @@ Create chart name and version as used by the chart label.
 */}}
 {{- define "common.naming.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-
-
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "common.naming.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create }}
-{{- default (include "common.naming.fullname" .) .Values.serviceAccount.name }}
-{{- else }}
-{{- default "default" .Values.serviceAccount.name }}
-{{- end }}
 {{- end }}

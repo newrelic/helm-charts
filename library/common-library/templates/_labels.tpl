@@ -1,7 +1,7 @@
 {{/*
 Override common labels
 */}}
-{{- define "common.labels.overrideLabels" -}}
+{{- define "common.labels.overrides.addLabels" -}}
 {{- end }}
 
 
@@ -16,8 +16,8 @@ helm.sh/chart: {{ include "common.naming.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if include "common.labels.overrideLabels" . }}
-{{ include "common.labels.overrideLabels" . }}
+{{- if include "common.labels.overrides.addLabels" . }}
+{{ include "common.labels.overrides.addLabels" . }}
 {{- end }}
 {{- end }}
 
@@ -26,7 +26,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 {{/*
 Override selector labels
 */}}
-{{- define "common.labels.overrideSelectorLabels" -}}
+{{- define "common.labels.overrides.addSelectorLabels" -}}
 {{- end }}
 
 
@@ -37,7 +37,7 @@ Selector labels
 {{- define "common.labels.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "common.naming.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if include "common.labels.overrideSelectorLabels" . }}
-{{ include "common.labels.overrideSelectorLabels" . }}
+{{- if include "common.labels.overrides.addSelectorLabels" . }}
+{{ include "common.labels.overrides.addSelectorLabels" . }}
 {{- end }}
 {{- end }}
