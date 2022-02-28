@@ -57,5 +57,24 @@
 
 {{- /* Merge the global and local annotations for the service account */ -}}
 {{- define "common.serviceAccount.annotations" -}}
-{{- /* TODO: Merge here global and local annotations */ -}}
+{{- $localServiceAccount := dict -}}
+{{- if get .Values "serviceAccount" | kindIs "map" -}}
+    {{- if get .Values.serviceAccount "annotations" -}}
+        {{- $localServiceAccount = .Values.serviceAccount.annotations -}}
+    {{- end -}}
+{{- end -}}
+
+{{- $globalServiceAccount := dict -}}
+{{- $global := index .Values "global" | default dict -}}
+{{- if get $global "serviceAccount" | kindIs "map" -}}
+    {{- if get $global.serviceAccount "annotations" -}}
+        {{- $globalServiceAccount = $global.serviceAccount.annotations -}}
+    {{- end -}}
+{{- end -}}
+
+{{- $merged := mustMergeOverwrite $globalServiceAccount $localServiceAccount -}}
+
+{{- if $merged -}}
+    {{- toYaml $merged -}}
+{{- end -}}
 {{- end -}}
