@@ -30,9 +30,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-
-      - name: Fetch history
-        run: git fetch --prune --unshallow
+        with:
+          fetch-depth: 0
 
       - name: Add kube-state-metrics repository
         run: helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
@@ -45,8 +44,11 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Helm
-        uses: azure/setup-helm@v1
+      # As of today, there is no way to filter/exclude charts to be released. Config does not support it:
+      # https://github.com/helm/chart-releaser/blob/4eb598f96aa53d1c0b8234af2087834e1f2275e1/pkg/config/config.go#L40-L61
+      - name: remove the chart template as it should not be deployed
+        run: |
+          rm -rf library/CHART-TEMPLATE
 
       - name: Release library charts
         uses: helm/chart-releaser-action@v1.2.1
