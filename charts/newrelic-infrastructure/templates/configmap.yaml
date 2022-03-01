@@ -9,7 +9,6 @@ data:
     newrelic-infra.yml: |
 {{ toYaml .Values.config | indent 6 }}
 {{ end }}
-{{ if .Values.integrations_config }}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -18,6 +17,10 @@ metadata:
   labels: {{ include "newrelic.labels" . | indent 4 }}
   name: {{ template "newrelic.fullname" . }}-integrations-cfg
 data:
+{{ if .Values.selfMonitoring.pixie.enabled }}
+{{ (.Files.Glob "flex/nri-pixie-check.yaml").AsConfig | indent 2 }} # include Pixie Health Check
+{{ end }}
+{{ if .Values.integrations_config }}
 {{ range .Values.integrations_config -}}
 {{ .name | indent 2 }}: |
     ---
