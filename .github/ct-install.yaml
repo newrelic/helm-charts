@@ -1,0 +1,19 @@
+# In this repository there are two folder with charts that need to be released. One can think that it would be easier to  simply at to this file
+# a chart-dirs clause pointing to both of the folders at the same time:
+
+# ```yaml
+# chart-dirs:
+#   - library
+#   - charts
+# ```
+
+# In that case `ct install` is going to try to install the library chart and is going to fail. That is the reason there are two `ct.yaml` files, one
+# for the step that lint that includes all the folders at the same time and other of the installation step that test installability
+
+chart-dirs:
+# - library  # left here this comment on purpose for clarity' sake
+  - charts
+
+chart-repos:
+  - kube-state-metrics=https://kubernetes.github.io/kube-state-metrics
+  - pixie-operator=https://pixie-operator-charts.storage.googleapis.com

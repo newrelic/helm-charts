@@ -37,24 +37,20 @@ jobs:
 
       - name: Lint charts
         run: |
-          for realm in library charts; do
-            ct lint --config .github/ct-${realm}.yaml
-          done
+          ct lint --config .github/ct-lint.yaml
 
       - name: Run unit tests
         run: |
-          for realm in library charts; do
-            for chart in $(ct list-changed --config .github/ct-${realm}.yaml); do
-              if [ -d "$chart/tests/" ]; then
-                helm unittest $chart -3
-              fi
-            done
+          for chart in $(ct list-changed --config .github/ct-lint.yaml); do
+            if [ -d "$chart/tests/" ]; then
+              helm unittest $chart -3
+            fi
           done
 
       - name: Check for changed installable charts
         id: list-changed
         run: |
-          changed=$(ct list-changed  --config .github/ct-charts.yaml )
+          changed=$(ct list-changed  --config .github/ct-install.yaml )
           if [[ -n "$changed" ]]; then
             echo "::set-output name=changed::true"
           fi
@@ -67,6 +63,6 @@ jobs:
         run: kubectl create ns ct
 
       - name: Test install charts
-        run: ct install --namespace ct --config .github/ct-charts.yaml
+        run: ct install --namespace ct --config .github/ct-install.yaml
       - name: Test upgrade charts
-        run: ct install --namespace ct --config .github/ct-charts.yaml --upgrade
+        run: ct install --namespace ct --config .github/ct-install.yaml --upgrade

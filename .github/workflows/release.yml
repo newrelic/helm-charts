@@ -46,9 +46,10 @@ jobs:
 
       # As of today, there is no way to filter/exclude charts to be released. Config does not support it:
       # https://github.com/helm/chart-releaser/blob/4eb598f96aa53d1c0b8234af2087834e1f2275e1/pkg/config/config.go#L40-L61
+      # So we delete the Chart.yaml to filter the chart: https://github.com/helm/chart-releaser-action/pull/18
       - name: remove the chart template as it should not be deployed
         run: |
-          rm -rf library/CHART-TEMPLATE
+          rm ./library/CHART-TEMPLATE/Chart.yaml
 
       - name: Release library charts
         uses: helm/chart-releaser-action@v1.2.1
