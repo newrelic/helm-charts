@@ -1,0 +1,56 @@
+suite: test naming helpers
+templates:
+  - templates/deployment.yaml
+  - templates/service.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: default values has its name correctly defined
+    asserts:
+      - equal:
+          path: metadata.name
+          value: nri-my-release-CHART-TEMPLATE
+
+  - it: name of the release is not duplicated
+    release:
+      name: chart-template  # Must be lowercase
+    asserts:
+      - equal:
+          path: metadata.name
+          value: nri-CHART-TEMPLATE
+
+  - it: name of the release is overridable
+    set:
+      nameOverride: test
+    asserts:
+      - equal:
+          path: metadata.name
+          value: nri-my-release-test
+
+  - it: name of the release is overridable with the release name
+    set:
+      nameOverride: my-release
+    asserts:
+      - equal:
+          path: metadata.name
+          value: nri-my-release
+
+  - it: nri- preffix does not duplicate
+    release:
+      name: nri-bundle
+    asserts:
+      - equal:
+          path: metadata.name
+          value: nri-bundle-CHART-TEMPLATE
+
+  - it: full name override
+    set:
+      fullnameOverride: fno
+    asserts:
+      - equal:
+          path: metadata.name
+          value: fno
