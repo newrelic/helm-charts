@@ -31,34 +31,38 @@ with:
   - name: Set up chart-testing
 uses: helm/chart-testing-action@v2.1.0
 
+  - name: Set up helm-unittest
+run: |
+  helm plugin install https://github.com/quintush/helm-unittest
+
   - name: Lint charts
-run: ct lint --config ct.yaml
+run: |
+  ct lint --config .github/ct-lint.yaml
 
   - name: Run unit tests
 run: |
-  helm plugin install https://github.com/quintush/helm-unittest
-  
-  for chart in $(ct list-changed); do
+  for chart in $(ct list-changed --config .github/ct-lint.yaml); do
 if [ -d "$chart/tests/" ]; then
   helm unittest $chart -3
 fi
   done
 
-  - name: Check for changed charts
+  - name: Check for changed installable charts
 id: list-changed
 run: |
   changed=$(ct list-changed)
   if [[ -n "$changed" ]]; then
 echo "::set-output name=changed::true"
   fi
+
   - name: Create kind cluster
 if: steps.list-changed.outputs.changed == 'true'
 uses: helm/kind-action@v1.2.0
   - name: Create test ns
 if: steps.list-changed.outputs.changed == 'true'
 run: kubectl create ns ct
-  - name: Test install charts
-run: ct install --namespace ct --config ct.yaml
 
+  - name: Test install charts
+run: ct install --namespace ct
   - name: Test upgrade charts
-run: ct install --namespace ct --config ct.yaml --upgrade
+run: ct install --namespace ct --upgrade
