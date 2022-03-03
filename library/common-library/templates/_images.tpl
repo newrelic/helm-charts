@@ -25,7 +25,7 @@ Return the proper image name
 {{- end -}}
 
 {{/*
-Return the proper Docker Image Registry Secret Names evaluating values as templates
+Return the proper Image Pull Registry Secret Names evaluating values as templates
 {{ include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.path.to.the.image.pullSecrets1, .Values.path.to.the.image.pullSecrets2) "context" .) }}
 */}}
 {{- define "common.images.renderPullSecrets" -}}
