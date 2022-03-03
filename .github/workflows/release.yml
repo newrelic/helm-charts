@@ -30,6 +30,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        # chart-releaser need all the history of the repo to see what changed in the file tree and evaluate which charts need to be released
         with:
           fetch-depth: 0
 
@@ -52,13 +53,13 @@ jobs:
           rm ./library/CHART-TEMPLATE/Chart.yaml
 
       - name: Release library charts
-        uses: helm/chart-releaser-action@v1.2.1
+        uses: helm/chart-releaser-action@v1.3.0
         with:
           charts_dir: library
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release workload charts
-        uses: helm/chart-releaser-action@v1.2.1
+        uses: helm/chart-releaser-action@v1.3.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

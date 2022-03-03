@@ -50,7 +50,7 @@ jobs:
       - name: Check for changed installable charts
         id: list-changed
         run: |
-          changed=$(ct list-changed  --config .github/ct-install.yaml )
+          changed=$(ct list-changed)
           if [[ -n "$changed" ]]; then
             echo "::set-output name=changed::true"
           fi
@@ -63,6 +63,6 @@ jobs:
         run: kubectl create ns ct
 
       - name: Test install charts
-        run: ct install --namespace ct --config .github/ct-install.yaml
+        run: ct install --namespace ct
       - name: Test upgrade charts
-        run: ct install --namespace ct --config .github/ct-install.yaml --upgrade
+        run: ct install --namespace ct --upgrade
