@@ -17,6 +17,7 @@ spec:
       {{- end }}
       labels:
         {{- include "common.labels.selectorLabels" . | nindent 8 }}
+        {{- include "common.labels.podLabels" . | nindent 8 }}
     spec:
       {{- with include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
       imagePullSecrets:
