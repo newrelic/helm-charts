@@ -166,7 +166,7 @@ helm install newrelic/nri-bundle \
 ```
 
 [1]: https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key
-[2]: https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics
+[2]: https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics
 [3]: https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-infrastructure
 [4]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-prometheus
 [5]: https://github.com/newrelic/helm-charts/tree/master/charts/nri-metadata-injection
