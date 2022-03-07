@@ -1,0 +1,52 @@
+suite: test that lowdatamode works as expected
+templates:
+  - templates/config-map-of-examples.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: By default it should be false
+    asserts:
+      - equal:
+          path: data.lowDataMode
+          value: Low data mode disabled
+
+  - it: Enabling it (globally) should change the values to enabled
+    set:
+      global:
+        lowDataMode: true
+    asserts:
+      - equal:
+          path: data.lowDataMode
+          value: Low data mode enabled
+
+  - it: Enabling it (locally) should change the values to enabled
+    set:
+      lowDataMode: true
+    asserts:
+      - equal:
+          path: data.lowDataMode
+          value: Low data mode enabled
+
+  - it: Allow to override (to false) the global state locally
+    set:
+      global:
+        lowDataMode: true
+      lowDataMode: false
+    asserts:
+      - equal:
+          path: data.lowDataMode
+          value: Low data mode disabled
+
+  - it: Allow to override (to true) the global state locally
+    set:
+      global:
+        lowDataMode: false
+      lowDataMode: true
+    asserts:
+      - equal:
+          path: data.lowDataMode
+          value: Low data mode enabled
