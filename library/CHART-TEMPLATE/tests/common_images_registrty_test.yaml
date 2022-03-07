@@ -44,3 +44,20 @@ asserts:
   - equal:
   path: spec.template.spec.containers[0].image
   value: differentRegistry/nginx:1.16.0
+
+  - it: does not break if global=null
+set:
+  global: null
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].image
+  value: nginx:1.16.0
+
+  - it: does not break if global.image=null
+set:
+  global:
+image: null
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].image
+  value: nginx:1.16.0
