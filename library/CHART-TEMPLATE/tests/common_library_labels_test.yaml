@@ -1,6 +1,7 @@
 suite: test labels helpers
 templates:
-  - templates/deployment.yaml # we could check the same for service and serviceAccount as well
+  - templates/deployment.yaml
+  - templates/serviceaccount.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -11,11 +12,16 @@ tests:
   - it: does not fail if globals=nil
     set:
       global: null
+      serviceAccount:
+        create: true
     asserts:
       - hasDocuments:
           count: 1
+
   - it: sets labels according to values
     set:
+      serviceAccount:
+        create: true
       labels:
         helm.sh/chart: fixed
     asserts:
@@ -26,9 +32,12 @@ tests:
             app.kubernetes.io/managed-by: Helm
             app.kubernetes.io/name: CHART-TEMPLATE
             app.kubernetes.io/version: 1.16.0
-            helm.sh/chart: fixed   # We cannot test behaviour without overwriting this since the version chart often changes
+            helm.sh/chart: fixed  # We cannot test behaviour without overwriting this since the version chart often changes
+
   - it: sets labels with globals giving priority to values
     set:
+      serviceAccount:
+        create: true
       labels:
         helm.sh/chart: fixed
         one: overwriting
