@@ -21,8 +21,10 @@ Return the proper image registry
     {{- if .imageRoot.registry }}
         {{- .imageRoot.registry -}}
     {{- else if .context.Values.global }}
-        {{- if .context.Values.global.image.registry }}
-            {{- .context.Values.global.image.registry  -}}
+        {{- if .context.Values.global.image }}
+            {{- with .context.Values.global.image.registry }}
+                {{- . -}}
+            {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
