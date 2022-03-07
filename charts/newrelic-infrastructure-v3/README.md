@@ -2,7 +2,7 @@
 
 # newrelic-infrastructure-v3
 
-![Version: 3.0.21](https://img.shields.io/badge/Version-3.0.21-informational?style=flat-square) ![AppVersion: 3.0.0](https://img.shields.io/badge/AppVersion-3.0.0-informational?style=flat-square)
+![Version: 3.0.22](https://img.shields.io/badge/Version-3.0.22-informational?style=flat-square) ![AppVersion: 3.1.0](https://img.shields.io/badge/AppVersion-3.1.0-informational?style=flat-square)
 
 A Helm chart to deploy the New Relic Kubernetes monitoring solution
 
