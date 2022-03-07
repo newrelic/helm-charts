@@ -18,9 +18,9 @@ metadata:
   labels:
 {{- include "common.labels.selectorLabels" . | nindent 8 }}
 spec:
-  {{- with .Values.imagePullSecrets }}
+  {{- with include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
   imagePullSecrets:
-{{- toYaml . | nindent 8 }}
+{{- . | nindent 8 }}
   {{- end }}
   serviceAccountName: {{ include "common.serviceAccount.name" . }}
   securityContext:
@@ -29,7 +29,7 @@ spec:
 - name: {{ .Chart.Name }}
   securityContext:
 {{- toYaml .Values.securityContext | nindent 12 }}
-  image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+  image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
   imagePullPolicy: {{ .Values.image.pullPolicy }}
   ports:
 - name: http

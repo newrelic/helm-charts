@@ -1,0 +1,46 @@
+suite: test image registry
+templates:
+  - templates/deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+tests:
+  - it: does not set registry if not specified
+set:
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].image
+  value: nginx:1.16.0
+
+  - it: sets registry if specified in values
+set:
+  image:
+registry: abc
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].image
+  value: abc/nginx:1.16.0
+
+
+  - it: sets registry if specified in globals
+set:
+  global:
+image:
+  registry: abc
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].image
+  value: abc/nginx:1.16.0
+
+  - it: sets registry giving priority to values
+set:
+  global:
+image:
+  registry: abc
+  image:
+registry: differentRegistry
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].image
+  value: differentRegistry/nginx:1.16.0
