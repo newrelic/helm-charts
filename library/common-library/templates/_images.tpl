@@ -23,7 +23,7 @@ Return the proper image registry
     {{- else if .context.Values.global }}
         {{- if .context.Values.global.image }}
             {{- with .context.Values.global.image.registry }}
-                {{- .  -}}
+                {{- . -}}
             {{- end -}}
         {{- end -}}
     {{- end -}}
