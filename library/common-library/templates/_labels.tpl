@@ -16,14 +16,17 @@ helm.sh/chart: {{ include "common.naming.chart" . }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 {{- end }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-{{- if .Values.global }}
-    {{- with .Values.global.labels }}
+
+{{- $global := index .Values "global" | default dict -}}
+
+{{- with $global.labels }}
 {{ toYaml . }}
-    {{- end -}}
-{{- end -}}
+{{- end }}
+
 {{- with .Values.labels }}
 {{ toYaml . }}
-{{- end -}}
+{{- end }}
+
 {{- if include "common.labels.overrides.addLabels" . }}
 {{ include "common.labels.overrides.addLabels" . }}
 {{- end }}
