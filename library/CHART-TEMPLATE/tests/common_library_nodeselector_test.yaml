@@ -1,0 +1,36 @@
+suite: test nodeSelector helpers
+templates:
+  - templates/deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: does not set nodeSelector if not specified
+    set:
+    asserts:
+      - isNull:
+          path: spec.template.spec.nodeSelector
+  - it: does set nodeSelector if specified in values
+    set:
+      nodeSelector:
+        key: value
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            key: value
+  - it: overwrites nodeSelector from globals when specified in values
+    set:
+      global:
+        nodeSelector:
+          keyOnGlobal: foo
+      nodeSelector:
+        keyOnValues: bar
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            keyOnValues: bar
