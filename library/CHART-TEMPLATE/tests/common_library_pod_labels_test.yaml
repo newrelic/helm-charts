@@ -1,0 +1,44 @@
+suite: test pod labels helpers
+templates:
+  - templates/deployment.yaml # we could check the same for service and serviceAccount as well
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: sets pod labels to selectorLabels if no podLabel specified
+asserts:
+  - equal:
+  path: spec.template.metadata.labels
+  value:
+app.kubernetes.io/instance: my-release
+app.kubernetes.io/name: CHART-TEMPLATE
+  - it: sets pod labels according to values
+set:
+  podLabels:
+one: first
+asserts:
+  - equal:
+  path: spec.template.metadata.labels
+  value:
+app.kubernetes.io/instance: my-release
+app.kubernetes.io/name: CHART-TEMPLATE
+one: first
+  - it: sets pod labels according to globals giving priority to values
+set:
+  podLabels:
+one: first
+  global:
+podLabels:
+  one: ignored
+  two: second
+asserts:
+  - equal:
+  path: spec.template.metadata.labels
+  value:
+app.kubernetes.io/instance: my-release
+app.kubernetes.io/name: CHART-TEMPLATE
+one: first
+two: second
