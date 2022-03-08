@@ -1,5 +1,5 @@
 {{/*
-Override common labels
+This function allows easily to add more labels to the function "common.labels"
 */}}
 {{- define "common.labels.overrides.addLabels" -}}
 {{- end }}
@@ -7,7 +7,7 @@ Override common labels
 
 
 {{/*
-Common labels
+This will render the labels that should be used in all the manifests used by the helm chart.
 */}}
 {{- define "common.labels" -}}
 helm.sh/chart: {{ include "common.naming.chart" . }}
@@ -35,7 +35,7 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 
 
 {{/*
-Override selector labels
+This function allows easily to add more labels to the function "common.labels.selectorLabels"
 */}}
 {{- define "common.labels.overrides.addSelectorLabels" -}}
 {{- end }}
@@ -43,7 +43,7 @@ Override selector labels
 
 
 {{/*
-Selector labels
+This will render the labels that should be used in deployments/daemonsets template pods as a selector.
 */}}
 {{- define "common.labels.selectorLabels" -}}
 app.kubernetes.io/name: {{ include "common.naming.name" . }}
@@ -54,25 +54,29 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 
+
 {{/*
-Override pod labels
+This function allows easily to add more labels to the function "common.labels.podLabels"
 */}}
 {{- define "common.labels.overrides.addPodLabels" -}}
 {{- end }}
+
 
 
 {{/*
 Pod labels
 */}}
 {{- define "common.labels.podLabels" -}}
-{{- if .Values.global }}
-    {{- with .Values.global.podLabels }}
+{{- $global := index .Values "global" | default dict -}}
+
+{{- with $global.podLabels }}
 {{ toYaml . }}
-    {{- end -}}
-{{- end -}}
+{{- end }}
+
 {{- with .Values.podLabels }}
 {{ toYaml . }}
-{{- end -}}
+{{- end }}
+
 {{- with include "common.labels.overrides.addPodLabels" . }}
 {{ . }}
 {{- end }}
