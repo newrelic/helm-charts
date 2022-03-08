@@ -48,9 +48,9 @@ httpGet:
   port: http
   resources:
 {{- toYaml .Values.resources | nindent 12 }}
-  {{- with .Values.nodeSelector }}
+  {{- with include "common.nodeSelector" . }}
   nodeSelector:
-{{- toYaml . | nindent 8 }}
+{{- . | nindent 8 }}
   {{- end }}
   {{- with .Values.affinity }}
   affinity:
