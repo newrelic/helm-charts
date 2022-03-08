@@ -17,6 +17,7 @@ spec:
       {{- end }}
       labels:
         {{- include "common.labels.selectorLabels" . | nindent 8 }}
+        {{- include "common.labels.podLabels" . | nindent 8 }}
     spec:
       {{- with include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
       imagePullSecrets:
@@ -48,9 +49,9 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-      {{- with .Values.nodeSelector }}
+      {{- with include "common.nodeSelector" . }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
       {{- with .Values.affinity }}
       affinity:
