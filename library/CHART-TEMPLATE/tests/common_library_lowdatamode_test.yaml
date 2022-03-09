@@ -20,6 +20,21 @@ tests:
           path: data.lowDataMode-with-default
           value: "false"
 
+  - it: Is false with everything null
+    set:
+      global: null
+      lowDataMode: null
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "disabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: ""
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "false"
+
   - it: Enable low data mode (globally)
     set:
       global:
