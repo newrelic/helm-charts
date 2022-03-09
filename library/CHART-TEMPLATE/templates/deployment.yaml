@@ -24,8 +24,10 @@ spec:
         {{- . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "common.serviceAccount.name" . }}
+      {{- with include "common.securityContext.pod" . }}
       securityContext:
-        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+        {{- . | nindent 8 }}
+      {{- end }}
       {{- with include "common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
@@ -35,8 +37,10 @@ spec:
       {{- end }}
       containers:
         - name: {{ .Chart.Name }}
+          {{- with include "common.securityContext.container" . }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- . | nindent 12 }}
+          {{- end }}
           image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
