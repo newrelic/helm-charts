@@ -47,9 +47,9 @@
 {{- end -}}
 
 {{- if (include "common.serviceAccount.create" .) -}}
-    {{- default (include "common.naming.fullname" .) $globalServiceAccount $localServiceAccount -}}
+    {{- $localServiceAccount | default $globalServiceAccount | default (include "common.naming.fullname" .) -}}
 {{- else -}}
-    {{- default "default" $globalServiceAccount $localServiceAccount -}}
+    {{- $localServiceAccount | default $globalServiceAccount | default "default" -}}
 {{- end -}}
 {{- end -}}
 

@@ -1,0 +1,38 @@
+suite: test priorityClassName helpers
+templates:
+  - templates/deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+tests:
+  - it: does not set priorityClassName is not specified
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: null
+  - it: set priorityClassName if specified in values
+    set:
+      priorityClassName: testPriority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: testPriority
+  - it: set priorityClassName if specified in globals
+    set:
+      global:
+        priorityClassName: testPriority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: testPriority
+  - it: set priorityClassName if specified giving priority to values
+    set:
+      global:
+        priorityClassName: different
+      priorityClassName: testPriority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: testPriority
+
