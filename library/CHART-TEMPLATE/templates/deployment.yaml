@@ -49,6 +49,12 @@ spec:
               port: http
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: MY_APP_NON_OPTIONAL_ENV_VAR
+          {{- with include "common.proxy" . }}
+            - name: MY_APP_PROXY_URL
+              value: {{- . | quote| indent 1 }}
+          {{- end }}  
       {{- with include "common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
