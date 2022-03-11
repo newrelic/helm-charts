@@ -35,6 +35,11 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: CLUSTER_NAME
+              value: {{ include "common.cluster" . }}
+            - name: LICENSE_KEY
+              value: {{ include "common.licenseKey" . }}
           ports:
             - name: http
               containerPort: 80
