@@ -53,7 +53,7 @@ spec:
             - name: MY_APP_NON_OPTIONAL_ENV_VAR
           {{- with include "common.proxy" . }}
             - name: MY_APP_PROXY_URL
-              value: {{- . | quote| indent 1 }}
+              value: {{ . | quote }}
           {{- end }}  
       {{- with include "common.nodeSelector" . }}
       nodeSelector:
