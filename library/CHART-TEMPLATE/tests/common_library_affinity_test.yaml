@@ -4,12 +4,10 @@ templates:
 release:
   name: my-release
   namespace: my-namespace
-set:
-  licenseKey: test-license-key
-  cluster: test-cluster
 tests:
   - it: does not set affinity if not specified
     set:
+      cluster: test-cluster
       global: null
       affinity: null
     asserts:
@@ -17,6 +15,7 @@ tests:
           path: spec.template.spec.affinity
   - it: does set affinity if specified in values
     set:
+      cluster: test-cluster
       global: null
       affinity:
         key: value
@@ -27,6 +26,7 @@ tests:
             key: value
   - it: does set affinity if specified in global
     set:
+      cluster: test-cluster
       global:
         affinity:
           key: value
@@ -38,6 +38,7 @@ tests:
             key: value
   - it: overwrites affinity from globals when specified in values
     set:
+      cluster: test-cluster
       global:
         affinity:
           keyOnGlobal: foo
