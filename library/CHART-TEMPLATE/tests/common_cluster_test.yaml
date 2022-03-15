@@ -11,6 +11,13 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[0].value
           value: null
+  - it: works when global is null and no local cluster value
+    set:
+      global: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].value
+          value: null
   - it: sets local cluster as cluster name even if global is set
     set:
       cluster: test-cluster
