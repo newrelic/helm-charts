@@ -50,6 +50,8 @@ httpGet:
   resources:
 {{- toYaml .Values.resources | nindent 12 }}
   env:
+- name: CLUSTER_NAME
+  value: {{ include "common.cluster" . }}
 - name: MY_APP_NON_OPTIONAL_ENV_VAR
   {{- with include "common.proxy" . }}
 - name: MY_APP_PROXY_URL
