@@ -35,9 +35,6 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          env:
-            - name: CLUSTER_NAME
-              value: {{ include "common.cluster" . }}
           ports:
             - name: http
               containerPort: 80
@@ -53,6 +50,8 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
+            - name: CLUSTER_NAME
+              value: {{ include "common.cluster" . }}
             - name: MY_APP_NON_OPTIONAL_ENV_VAR
           {{- with include "common.proxy" . }}
             - name: MY_APP_PROXY_URL
