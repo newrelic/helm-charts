@@ -57,6 +57,9 @@ spec:
             - name: MY_APP_PROXY_URL
               value: {{ . | quote }}
           {{- end }}  
+          {{- if include "common.fedramp.enabled" . }}
+            - name: MY_APP_CUSTOM_ENDPOINT
+          {{- end }}
       {{- with include "common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
