@@ -1,0 +1,9 @@
+# This is a dummy CM to test what licenseKey helpers of the common library return
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "common.naming.fullname" . }}-examples
+  namespace: {{ .Release.Namespace }}
+data:
+  licensekey-secret-name: {{ include "common.license.secretName" . }}
+  licensekey-secret-key-name: {{ include "common.license.secretKeyName" . }}
