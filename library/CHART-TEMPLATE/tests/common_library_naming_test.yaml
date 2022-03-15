@@ -7,16 +7,12 @@ release:
   namespace: my-namespace
 tests:
   - it: default values has its name correctly defined
-    set:
-      cluster: test-cluster
     asserts:
       - equal:
           path: metadata.name
           value: nri-my-release-CHART-TEMPLATE
 
   - it: name of the release is not duplicated
-    set:
-      cluster: test-cluster
     release:
       name: chart-template  # Must be lowercase
     asserts:
@@ -26,7 +22,6 @@ tests:
 
   - it: name of the release is overridable
     set:
-      cluster: test-cluster
       nameOverride: test
     asserts:
       - equal:
@@ -35,7 +30,6 @@ tests:
 
   - it: name of the release is overridable with the release name
     set:
-      cluster: test-cluster
       nameOverride: my-release
     asserts:
       - equal:
@@ -43,8 +37,6 @@ tests:
           value: nri-my-release
 
   - it: nri- preffix does not duplicate
-    set:
-      cluster: test-cluster
     release:
       name: nri-bundle
     asserts:
@@ -54,7 +46,6 @@ tests:
 
   - it: full name override
     set:
-      cluster: test-cluster
       fullnameOverride: fno
     asserts:
       - equal:

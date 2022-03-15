@@ -7,7 +7,6 @@ release:
 tests:
   - it: does not set tolerations if not specified
     set:
-      cluster: test-cluster
       global: null
       tolerations: null
     asserts:
@@ -15,7 +14,6 @@ tests:
           path: spec.template.spec.tolerations
   - it: does set tolerations if specified in values
     set:
-      cluster: test-cluster
       global: null
       tolerations:
         - key: value
@@ -26,7 +24,6 @@ tests:
             - key: value
   - it: does set tolerations if specified in global
     set:
-      cluster: test-cluster
       global:
         tolerations:
           - key: value
@@ -38,7 +35,6 @@ tests:
             - key: value
   - it: overwrites tolerations from globals when specified in values
     set:
-      cluster: test-cluster
       global:
         tolerations:
           - keyOnGlobal: foo

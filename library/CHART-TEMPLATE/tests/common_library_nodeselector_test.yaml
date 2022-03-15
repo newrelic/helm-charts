@@ -7,7 +7,6 @@ release:
 tests:
   - it: does not set nodeSelector if not specified
     set:
-      cluster: test-cluster
       global: null
       nodeSelector: null
     asserts:
@@ -15,7 +14,6 @@ tests:
           path: spec.template.spec.nodeSelector
   - it: does set nodeSelector if specified in values
     set:
-      cluster: test-cluster
       global: null
       nodeSelector:
         key: value
@@ -26,7 +24,6 @@ tests:
             key: value
   - it: does set nodeSelector if specified in global
     set:
-      cluster: test-cluster
       global:
         nodeSelector:
           key: value
@@ -38,7 +35,6 @@ tests:
             key: value
   - it: overwrites nodeSelector from globals when specified in values
     set:
-      cluster: test-cluster
       global:
         nodeSelector:
           keyOnGlobal: foo

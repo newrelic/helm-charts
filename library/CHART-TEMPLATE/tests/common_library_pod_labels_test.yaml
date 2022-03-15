@@ -6,8 +6,6 @@ release:
   namespace: my-namespace
 tests:
   - it: sets pod labels to selectorLabels if no podLabel specified
-    set:
-      cluster: test-cluster
     asserts:
       - equal:
           path: spec.template.metadata.labels
@@ -16,7 +14,6 @@ tests:
             app.kubernetes.io/name: CHART-TEMPLATE
   - it: sets pod labels according to values
     set:
-      cluster: test-cluster
       podLabels:
         one: first
     asserts:
@@ -28,7 +25,6 @@ tests:
             one: first
   - it: sets pod labels according to globals giving priority to values
     set:
-      cluster: test-cluster
       podLabels:
         one: first
       global:

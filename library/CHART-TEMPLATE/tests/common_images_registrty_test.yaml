@@ -6,8 +6,6 @@ release:
   namespace: my-namespace
 tests:
   - it: does not set registry if not specified
-    set:
-      cluster: test-cluster
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
@@ -15,7 +13,6 @@ tests:
 
   - it: sets registry if specified in values
     set:
-      cluster: test-cluster
       image:
         registry: abc
     asserts:
@@ -26,7 +23,6 @@ tests:
 
   - it: sets registry if specified in globals
     set:
-      cluster: test-cluster
       global:
         image:
           registry: abc
@@ -37,7 +33,6 @@ tests:
 
   - it: sets registry giving priority to values
     set:
-      cluster: test-cluster
       global:
         image:
           registry: abc
@@ -50,7 +45,6 @@ tests:
 
   - it: does not break if global=null
     set:
-      cluster: test-cluster
       global: null
     asserts:
       - equal:
@@ -59,7 +53,6 @@ tests:
 
   - it: does not break if global.image=null
     set:
-      cluster: test-cluster
       global:
         image: null
     asserts:

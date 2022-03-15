@@ -6,15 +6,12 @@ release:
   namespace: my-namespace
 tests:
   - it: does not set priorityClassName is not specified
-    set:
-      cluster: test-cluster
     asserts:
       - equal:
           path: spec.template.spec.priorityClassName
           value: null
   - it: set priorityClassName if specified in values
     set:
-      cluster: test-cluster
       priorityClassName: testPriority
     asserts:
       - equal:
@@ -22,7 +19,6 @@ tests:
           value: testPriority
   - it: set priorityClassName if specified in globals
     set:
-      cluster: test-cluster
       global:
         priorityClassName: testPriority
     asserts:
@@ -31,7 +27,6 @@ tests:
           value: testPriority
   - it: set priorityClassName if specified giving priority to values
     set:
-      cluster: test-cluster
       global:
         priorityClassName: different
       priorityClassName: testPriority
