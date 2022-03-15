@@ -1,0 +1,97 @@
+suite: test lowdatamode helper
+templates:
+  - templates/example-cm-lowdatamode.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: Is false by default
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "disabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: ""
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "false"
+
+  - it: Is false with everything null
+    set:
+      global: null
+      lowDataMode: null
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "disabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: ""
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "false"
+
+  - it: Enable low data mode (globally)
+    set:
+      global:
+        lowDataMode: true
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "enabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: "true"
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "true"
+
+  - it: Enable low data mode (locally)
+    set:
+      lowDataMode: true
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "enabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: "true"
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "true"
+
+  - it: Overrides to false the global state locally
+    set:
+      global:
+        lowDataMode: true
+      lowDataMode: false
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "disabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: ""
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "false"
+
+  - it: Overrides to true the global state locally
+    set:
+      global:
+        lowDataMode: false
+      lowDataMode: true
+    asserts:
+      - equal:
+          path: data.lowDataMode-with-if
+          value: "enabled"
+      - equal:
+          path: data.lowDataMode-with-quote
+          value: "true"
+      - equal:
+          path: data.lowDataMode-with-default
+          value: "true"
