@@ -13,13 +13,6 @@ Return the name key for the License Key inside the secret.
 {{- end -}}
 
 {{/*
-Charts using this library can implement this function. If it returns a truthy value, common.license.secret will not
-fail if an empty licenseKey is provided.
-*/}}
-{{- define "common.license.overrides.allowEmpty" -}}
-{{- end }}
-
-{{/*
 Return local licenseKey if set, global otherwise.
 This helper is for internal use.
 */}}
