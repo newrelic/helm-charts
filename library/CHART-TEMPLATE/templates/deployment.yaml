@@ -29,6 +29,10 @@ spec:
       {{- with include "common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- with include "common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
       containers:
         - name: {{ .Chart.Name }}
           securityContext:
