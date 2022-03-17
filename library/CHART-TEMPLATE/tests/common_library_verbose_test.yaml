@@ -1,0 +1,97 @@
+suite: test verbose helper
+templates:
+  - templates/example-cm-verbose.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: Is false by default
+    asserts:
+      - equal:
+          path: data.verbose-with-if
+          value: "disabled"
+      - equal:
+          path: data.verbose-with-quote
+          value: ""
+      - equal:
+          path: data.verbose-with-default
+          value: "false"
+
+  - it: Is false with everything null
+    set:
+      global: null
+      verbose: null
+    asserts:
+      - equal:
+          path: data.verbose-with-if
+          value: "disabled"
+      - equal:
+          path: data.verbose-with-quote
+          value: ""
+      - equal:
+          path: data.verbose-with-default
+          value: "false"
+
+  - it: Enable low data mode (globally)
+    set:
+      global:
+        verbose: true
+    asserts:
+      - equal:
+          path: data.verbose-with-if
+          value: "enabled"
+      - equal:
+          path: data.verbose-with-quote
+          value: "true"
+      - equal:
+          path: data.verbose-with-default
+          value: "true"
+
+  - it: Enable low data mode (locally)
+    set:
+      verbose: true
+    asserts:
+      - equal:
+          path: data.verbose-with-if
+          value: "enabled"
+      - equal:
+          path: data.verbose-with-quote
+          value: "true"
+      - equal:
+          path: data.verbose-with-default
+          value: "true"
+
+  - it: Overrides to false the global state locally
+    set:
+      global:
+        verbose: true
+      verbose: false
+    asserts:
+      - equal:
+          path: data.verbose-with-if
+          value: "disabled"
+      - equal:
+          path: data.verbose-with-quote
+          value: ""
+      - equal:
+          path: data.verbose-with-default
+          value: "false"
+
+  - it: Overrides to true the global state locally
+    set:
+      global:
+        verbose: false
+      verbose: true
+    asserts:
+      - equal:
+          path: data.verbose-with-if
+          value: "enabled"
+      - equal:
+          path: data.verbose-with-quote
+          value: "true"
+      - equal:
+          path: data.verbose-with-default
+          value: "true"
