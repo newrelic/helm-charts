@@ -50,6 +50,12 @@ spec:
 - name: http
   containerPort: 80
   protocol: TCP
+  env:
+- name: NRIA_LICENSE_KEY
+  valueFrom:
+secretKeyRef:
+  name: {{ include "common.license.secretName" . }}
+  key: {{ include "common.license.secretKeyName" . }}
   livenessProbe:
 httpGet:
   path: /
