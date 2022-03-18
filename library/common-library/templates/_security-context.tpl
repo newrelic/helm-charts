@@ -12,7 +12,7 @@
 {{- end -}}
 
 
-{{- /* Allows to change defaults for container security context either staic of dinamically */ -}}
+{{- /* Allows to change defaults for container security context either statically or dynamically */ -}}
 {{- define "common.securityContext.containerDefaults" -}}
 {{- end -}}
 
@@ -31,6 +31,6 @@
 {{- end -}}
 
 
-{{- /* Allows to change defaults for pod security context either staic of dinamically */ -}}
+{{- /* Allows to change defaults for pod security context either statically or dynamically */ -}}
 {{- define "common.securityContext.podDefaults" -}}
 {{- end -}}
