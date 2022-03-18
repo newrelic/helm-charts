@@ -23,6 +23,9 @@ spec:
   imagePullSecrets:
 {{- . | nindent 8 }}
   {{- end }}
+  {{- with include "common.hostNetwork" . }}
+  hostNetwork: {{ . }}
+  {{- end }}
   serviceAccountName: {{ include "common.serviceAccount.name" . }}
   {{- with include "common.securityContext.pod" . }}
   securityContext:
