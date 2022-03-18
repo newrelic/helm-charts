@@ -1,0 +1,66 @@
+suite: test licenseKey helpers
+templates:
+  - templates/example-cm-licensekey.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: creates secret names for local licenseKey
+    set:
+      licenseKey: local
+    asserts:
+      - equal:
+          path: data.licensekey-secret-name
+          value: nri-my-release-CHART-TEMPLATE-license
+      - equal:
+          path: data.licensekey-secret-key-name
+          value: licenseKey
+  - it: creates secret names for global licenseKey
+    set:
+      global:
+        licenseKey: local
+    asserts:
+      - equal:
+          path: data.licensekey-secret-name
+          value: nri-my-release-CHART-TEMPLATE-license
+      - equal:
+          path: data.licensekey-secret-key-name
+          value: licenseKey
+
+  - it: returns local custom secret names
+    set:
+      customSecretName: local
+      customSecretLicenseKey: localkey
+    asserts:
+      - equal:
+          path: data.licensekey-secret-name
+          value: local
+      - equal:
+          path: data.licensekey-secret-key-name
+          value: localkey
+  - it: returns global custom secret names
+    set:
+      global:
+        customSecretName: global
+        customSecretLicenseKey: globalkey
+    asserts:
+      - equal:
+          path: data.licensekey-secret-name
+          value: global
+      - equal:
+          path: data.licensekey-secret-key-name
+          value: globalkey
+  - it: local secret names override global secret names
+    set:
+      customSecretName: local
+      customSecretLicenseKey: localkey
+      global:
+        customSecretName: global
+        customSecretLicenseKey: globalkey
+    asserts:
+      - equal:
+          path: data.licensekey-secret-name
+          value: local
+      - equal:
+          path: data.licensekey-secret-key-name
+          value: localkey
