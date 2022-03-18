@@ -6,6 +6,6 @@ metadata:
 data:
   {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
          Take a look to the tests suite "common_library_lowdatamode_test.yaml" to see who this behaves */}}
-  verbose-with-if: {{ if include "common.verbose" . }}enabled{{ else }}disabled{{ end }}
-  verbose-with-quote: {{ include "common.verbose" . | quote }}
-  verbose-with-default: {{ include "common.verbose" . | default "false" | quote }}
+  verboseLog-with-if: {{ if include "common.verboseLog" . }}enabled{{ else }}disabled{{ end }}
+  verboseLog-with-quote: {{ include "common.verboseLog" . | quote }}
+  verboseLog-with-default: {{ include "common.verboseLog" . | default "false" | quote }}

@@ -11,87 +11,87 @@ tests:
   - it: Is false by default
     asserts:
       - equal:
-          path: data.verbose-with-if
+          path: data.verboseLog-with-if
           value: "disabled"
       - equal:
-          path: data.verbose-with-quote
+          path: data.verboseLog-with-quote
           value: ""
       - equal:
-          path: data.verbose-with-default
+          path: data.verboseLog-with-default
           value: "false"
 
   - it: Is false with everything null
     set:
       global: null
-      verbose: null
+      verboseLog: null
     asserts:
       - equal:
-          path: data.verbose-with-if
+          path: data.verboseLog-with-if
           value: "disabled"
       - equal:
-          path: data.verbose-with-quote
+          path: data.verboseLog-with-quote
           value: ""
       - equal:
-          path: data.verbose-with-default
+          path: data.verboseLog-with-default
           value: "false"
 
-  - it: Enable low data mode (globally)
+  - it: Enable verboseLog (globally)
     set:
       global:
-        verbose: true
+        verboseLog: true
     asserts:
       - equal:
-          path: data.verbose-with-if
+          path: data.verboseLog-with-if
           value: "enabled"
       - equal:
-          path: data.verbose-with-quote
+          path: data.verboseLog-with-quote
           value: "true"
       - equal:
-          path: data.verbose-with-default
+          path: data.verboseLog-with-default
           value: "true"
 
-  - it: Enable low data mode (locally)
+  - it: Enable verboseLog (locally)
     set:
-      verbose: true
+      verboseLog: true
     asserts:
       - equal:
-          path: data.verbose-with-if
+          path: data.verboseLog-with-if
           value: "enabled"
       - equal:
-          path: data.verbose-with-quote
+          path: data.verboseLog-with-quote
           value: "true"
       - equal:
-          path: data.verbose-with-default
+          path: data.verboseLog-with-default
           value: "true"
 
   - it: Overrides to false the global state locally
     set:
       global:
-        verbose: true
-      verbose: false
+        verboseLog: true
+      verboseLog: false
     asserts:
       - equal:
-          path: data.verbose-with-if
+          path: data.verboseLog-with-if
           value: "disabled"
       - equal:
-          path: data.verbose-with-quote
+          path: data.verboseLog-with-quote
           value: ""
       - equal:
-          path: data.verbose-with-default
+          path: data.verboseLog-with-default
           value: "false"
 
   - it: Overrides to true the global state locally
     set:
       global:
-        verbose: false
-      verbose: true
+        verboseLog: false
+      verboseLog: true
     asserts:
       - equal:
-          path: data.verbose-with-if
+          path: data.verboseLog-with-if
           value: "enabled"
       - equal:
-          path: data.verbose-with-quote
+          path: data.verboseLog-with-quote
           value: "true"
       - equal:
-          path: data.verbose-with-default
+          path: data.verboseLog-with-default
           value: "true"
