@@ -1,0 +1,59 @@
+suite: test securityContainer at pod level
+templates:
+  - templates/deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+tests:
+  - it: does not set podSecurityContext if not specified
+set:
+asserts:
+  - equal:
+  path: spec.template.spec.securityContext
+  value: null
+
+  - it: does set podSecurityContext if specified in values
+set:
+  podSecurityContext:
+fsGroup: 123
+runAsNonRoot: true
+runAsUser: 1000
+asserts:
+  - equal:
+  path: spec.template.spec.securityContext
+  value:
+fsGroup: 123
+runAsNonRoot: true
+runAsUser: 1000
+
+  - it: does set podSecurityContext if specified in globals
+set:
+  global:
+podSecurityContext:
+  fsGroup: 123
+  runAsNonRoot: true
+  runAsUser: 1000
+asserts:
+  - equal:
+  path: spec.template.spec.securityContext
+  value:
+fsGroup: 123
+runAsNonRoot: true
+runAsUser: 1000
+
+  - it: allow to fully override globals
+set:
+  podSecurityContext:
+runAsNonRoot: true
+runAsUser: 1001
+  global:
+podSecurityContext:
+  fsGroup: 123
+  runAsUser: 1000
+asserts:
+  - equal:
+  path: spec.template.spec.securityContext
+  value:
+runAsNonRoot: true
+runAsUser: 1001
