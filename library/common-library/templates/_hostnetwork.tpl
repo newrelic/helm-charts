@@ -9,17 +9,9 @@ Returns "true" if `hostNetwork` is enabled, otherwise fallbacks to a overridable
 
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
 {{- if get .Values "hostNetwork" | kindIs "bool" -}}
-    {{- if .Values.hostNetwork -}}
-        true
-    {{- else -}}
-        false
-    {{- end -}}
+    {{- .Values.hostNetwork -}}
 {{- else if get $global "hostNetwork" | kindIs "bool" -}}
-    {{- if $global.hostNetwork -}}
-        true
-    {{- else -}}
-        false
-    {{- end -}}
+    {{- $global.hostNetwork -}}
 {{- else -}}
     {{- include "common.hostNetwork.defaultOverride" . -}}
 {{- end -}}
@@ -27,7 +19,7 @@ Returns "true" if `hostNetwork` is enabled, otherwise fallbacks to a overridable
 
 
 {{- /*
-This allows to change the default of the helper `common.hostNetwork`. Defaults to empty string: "" (Helm falsiness)
+This allows to change the default of the helper `common.hostNetwork`. Defaults to false
 */ -}}
 {{- define "common.hostNetwork.defaultOverride" -}}
 false
