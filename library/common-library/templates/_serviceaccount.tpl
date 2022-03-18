@@ -1,6 +1,8 @@
 {{- /* Defines if the service account has to be created or not */ -}}
 {{- define "common.serviceAccount.create" -}}
 {{- $valueFound := false -}}
+
+{{- /* Look for a global creation of a service account */ -}}
 {{- if get .Values "serviceAccount" | kindIs "map" -}}
 {{- if (get .Values.serviceAccount "create" | kindIs "bool") -}}
 {{- $valueFound = true -}}
@@ -14,19 +16,32 @@ as an evaluation somewhere else.
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- /* Look for a local creation of a service account */ -}}
 {{- if not $valueFound -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */ -}}
 {{- $global := index .Values "global" | default dict -}}
 {{- if get $global "serviceAccount" | kindIs "map" -}}
 {{- if get $global.serviceAccount "create" | kindIs "bool" -}}
+{{- $valueFound = true -}}
 {{- if $global.serviceAccount.create -}}
 {{- $global.serviceAccount.create -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- /* In case no serviceAccount value has been found, default to "true" */ -}}
+{{- if not $valueFound -}}
+  {{- include "common.serviceAccount.createDefaultOverride" . -}}
+{{- end -}}
 {{- end -}}
 
+
+{{- /* Defines the default if a service account should be created or not */ -}}
+{{- define "common.serviceAccount.createDefaultOverride" -}}
+true
+{{- end -}}
 
 
 {{- /* Defines the name of the service account */ -}}
