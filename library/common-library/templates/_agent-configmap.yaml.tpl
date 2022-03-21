@@ -17,7 +17,7 @@ kind: ConfigMap
 metadata:
   labels:
     {{- include "common.labels" .context | nindent 4 }}
-  name: {{ include "common.license.secretName" .context }}
+  name: {{ .name }}
   namespace: {{ .context.Release.Namespace }}
 data:
   {{- include "common.agentConfig._toYaml" . | nindent 2 }}
