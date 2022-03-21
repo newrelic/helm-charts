@@ -30,8 +30,7 @@ as an evaluation somewhere else.
 
 {{- /*
 Abstraction of the hostNetwork toggle.
-This helper allows to override the global `.global.hostNetwork` with the value of `.hostNetwork`.
-Returns "true" if `hostNetwork` is enabled, otherwise fallbacks to a overridable function
+This helper abstracts the function "common.hostNetwork" to return true or false directly.
 */ -}}
 {{- define "common.hostNetwork.value" -}}
 {{- if include "common.hostNetwork" . -}}
