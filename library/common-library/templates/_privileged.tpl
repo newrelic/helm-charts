@@ -18,17 +18,18 @@ And then use the helpers this library provides to render those.
 {{- $global := index .Values "global" | default dict -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
 {{- if get .Values "privileged" | kindIs "bool" -}}
-    {{- with .Values.privileged -}}
-        {{- . -}}
+    {{- if .Values.privileged -}}
+        {{- .Values.privileged -}}
     {{- end -}}
 {{- else if get $global "privileged" | kindIs "bool" -}}
-    {{- with $global.privileged -}}
-        {{- . -}}
+    {{- if $global.privileged -}}
+        {{- $global.privileged -}}
     {{- end -}}
 {{- else -}}
     {{- include "common.privileged.defaultOverride" . -}}
 {{- end -}}
 {{- end -}}
+
 
 {{- /*
 This allows to change the default user setting for `privileged`, by default it returns a falsy value ("").
