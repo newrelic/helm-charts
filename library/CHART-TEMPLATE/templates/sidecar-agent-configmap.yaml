@@ -1,0 +1,6 @@
+{{- include "common.agentConfig.configMap" (dict
+    "global"  .Values.global.agent.config
+    "local"   .Values.agent.config
+    "name"    (printf "%s-example-config" (include "common.naming.fullname" . ))
+    "context" .)
+-}}

@@ -1,0 +1,144 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  name: {{ include "common.naming.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "common.labels.selectorLabels" . | nindent 8 }}
+        {{- include "common.labels.podLabels" . | nindent 8 }}
+    spec:
+      {{- with include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "common.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      hostNetwork: {{ include "common.hostNetwork.value" . }}
+      serviceAccountName: {{ include "common.serviceAccount.name" . }}
+
+      containers:
+        {{- /* The integration that sends its metrics to the agent in its sidecar */}}
+        - name: {{ .Chart.Name }}
+          {{- with include "common.securityContext.container" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
+          image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 80
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /
+              port: http
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: CLUSTER_NAME
+              value: {{ include "common.cluster" . }}
+            - name: MY_APP_NON_OPTIONAL_ENV_VAR
+          {{- with include "common.proxy" . }}
+            - name: MY_APP_PROXY_URL
+              value: {{ . | quote }}
+          {{- end }}  
+          {{- if include "common.fedramp.enabled" . }}
+            - name: MY_APP_CUSTOM_ENDPOINT
+          {{- end }}
+
+
+        {{- /* The agent that sends the data from the integration to the backend */}}
+        - name: agent
+          image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext: {}  #Helper needed here
+          ports:
+            - name: agent-http-sink
+              containerPort: 8003
+              protocol: TCP
+          env:
+            - name: NRIA_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "common.license.secretName" . }}
+                  key: {{ include "common.license.secretKeyName" . }}
+
+            {{- /* At least needed for NRIA_DISPLAY_NAME during special cases below */}}
+            - name: "NRI_KUBERNETES_NODE_NAME"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+
+            {{- /* make the agent stop hammering the DNS server with the pod name that does not exists in in-cluster DNS*/}}
+            - name: "NRIA_OVERRIDE_HOSTNAME_SHORT"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+
+            {{- /* Needed for autodiscovery since hostNetwork=false */}}
+            - name: "NRIA_HOST"
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "status.hostIP"
+
+            {{- if .Values.useNodeNameAsDisplayName }}
+            - name: "NRIA_DISPLAY_NAME"
+              {{- if .Values.prefixDisplayNameWithCluster }}
+              value: "{{ include "newrelic.cluster" . }}:$(NRI_KUBERNETES_NODE_NAME)"
+              {{- else }}
+              valueFrom:
+                fieldRef:
+                  apiVersion: "v1"
+                  fieldPath: "spec.nodeName"
+              {{- end }}
+            {{- end }}
+
+          # env and envFrom are missing here
+          volumeMounts:
+            - name: config
+              mountPath: /etc/newrelic-infra.yml
+              subPath: newrelic-infra.yml
+
+
+      {{- with include "common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "common.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "common.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
