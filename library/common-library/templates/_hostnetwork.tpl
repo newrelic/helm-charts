@@ -33,7 +33,7 @@ Abstraction of the hostNetwork toggle.
 This helper allows to override the global `.global.hostNetwork` with the value of `.hostNetwork`.
 Returns "true" if `hostNetwork` is enabled, otherwise fallbacks to a overridable function
 */ -}}
-{{- define "common.hostNetwork.boolean" -}}
+{{- define "common.hostNetwork.value" -}}
 {{- if include "common.hostNetwork" . -}}
 true
 {{- else -}}
