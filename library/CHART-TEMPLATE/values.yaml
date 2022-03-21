@@ -16,6 +16,15 @@ global:
   nodeSelector: {}
   tolerations: []
   affinity: {}
+  agent:  # This should not touch main/master because it has things that could break all the charts
+    config:
+      global: global
+      global_overriden: test
+
+agent:  # This should not touch main/master because it has things that could break all the charts
+  config:
+    local: test
+    global_overriden: local_overriden
 
 licenseKey: foobar
 cluster: barfoo
