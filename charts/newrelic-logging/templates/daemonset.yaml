@@ -105,6 +105,9 @@ spec:
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
+          {{- if .Values.securityContext }}
+          securityContext: {{ toYaml .Values.securityContext | nindent 12 }}
+          {{- end }}
       volumes:
         - name: fluent-bit-config
           configMap:
