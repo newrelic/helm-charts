@@ -4197,6 +4197,67 @@ entries:
   nri-bundle:
   - apiVersion: v1
     appVersion: "1.0"
+    created: "2022-03-22T14:29:12.869313816Z"
+    dependencies:
+      - alias: newrelic-infrastructure
+        condition: infrastructure.enabled
+        name: newrelic-infrastructure-v3
+        repository: file://../newrelic-infrastructure-v3
+        version: 3.1.0
+      - condition: prometheus.enabled
+        name: nri-prometheus
+        repository: file://../nri-prometheus
+        version: 1.13.2
+      - condition: webhook.enabled
+        name: nri-metadata-injection
+        repository: file://../nri-metadata-injection
+        version: 2.2.0
+      - condition: metrics-adapter.enabled
+        name: newrelic-k8s-metrics-adapter
+        repository: file://../newrelic-k8s-metrics-adapter
+        version: 0.3.1
+      - condition: ksm.enabled
+        name: kube-state-metrics
+        repository: https://kubernetes.github.io/kube-state-metrics
+        version: 2.13.2
+      - condition: kubeEvents.enabled
+        name: nri-kube-events
+        repository: file://../nri-kube-events
+        version: 1.13.0
+      - condition: logging.enabled
+        name: newrelic-logging
+        repository: file://../newrelic-logging
+        version: 1.10.9
+      - condition: newrelic-pixie.enabled
+        name: newrelic-pixie
+        repository: file://../newrelic-pixie
+        version: 1.5.0
+      - alias: pixie-chart
+        condition: pixie-chart.enabled
+        name: pixie-operator-chart
+        repository: https://pixie-operator-charts.storage.googleapis.com
+        version: 0.0.19
+      - condition: newrelic-infra-operator.enabled
+        name: newrelic-infra-operator
+        repository: file://../newrelic-infra-operator
+        version: 0.5.0
+    description: A Helm chart to deploy New Relic integrations bundled together
+    digest: bc1179c2f98150659d92f85d31ad18f1dd01eda7e6d43ff985ec3e2bfdeb3165
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    maintainers:
+      - name: alvarocabanas
+      - name: carlossscastro
+      - name: gsanchezgavier
+      - name: kang-makes
+      - name: paologallinaharbur
+      - name: roobre
+    name: nri-bundle
+    urls:
+      - https://github.com/newrelic-forks/helm-charts/releases/download/nri-bundle-4.2.0-beta/nri-bundle-4.2.0-beta.tgz
+    version: 4.2.0-beta
+  - apiVersion: v1
+    appVersion: "1.0"
     created: "2022-02-22T16:38:30.291627472Z"
     dependencies:
     - alias: newrelic-infrastructure
@@ -11798,4 +11859,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2022-03-22T09:24:41.559851758Z"
+generated: "2022-03-22T14:29:12.873057586Z"
