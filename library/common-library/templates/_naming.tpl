@@ -26,7 +26,7 @@ If release name contains chart name it will be used as a full name.
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 
-{{- $name := default (include "common.naming.chartnameOverride" .) .Values.nameOverride }}
+{{- $name := .Values.nameOverride | default (include "common.naming.chartnameOverride" .) }}
 
 {{- if contains (lower $name) (lower .Release.Name) }}
 {{- $name = $name | trunc 63 | trimSuffix "-" }}
