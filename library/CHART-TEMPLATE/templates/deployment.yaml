@@ -23,10 +23,6 @@ spec:
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "common.hostNetwork" . }}
-      hostNetwork: {{ . }}
-      {{- end }}
-      serviceAccountName: {{ include "common.serviceAccount.name" . }}
       {{- with include "common.securityContext.pod" . }}
       securityContext:
         {{- . | nindent 8 }}
@@ -38,6 +34,10 @@ spec:
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+
+      hostNetwork: {{ include "common.hostNetwork.value" . }}
+      serviceAccountName: {{ include "common.serviceAccount.name" . }}
+
       containers:
         - name: {{ .Chart.Name }}
           {{- with include "common.securityContext.container" . }}
