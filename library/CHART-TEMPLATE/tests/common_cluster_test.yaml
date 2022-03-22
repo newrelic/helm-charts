@@ -4,20 +4,22 @@ templates:
 release:
   name: my-release
   namespace: my-namespace
-set:
+
+# The name of the cluster is mandatory, to not make all the tests fail because they have no license
+# and not having to add license to all the tests I have added it to the `values.yaml`.
+# This change makes this tests a bit funky because we have to manually set local cluster to null
+#constantly to overwrite it.
+
 tests:
-  - it: sets null as cluster name if not specified
-    asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[0].value
-          value: null
-  - it: works when global is null and no local cluster value
+  - it: helper works (and fails) when global is null and no local cluster value
     set:
       global: null
+      cluster: null
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[0].value
           value: null
+
   - it: sets local cluster as cluster name even if global is set
     set:
       cluster: test-cluster
@@ -27,10 +29,12 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[0].value
           value: test-cluster
+
   - it: sets global cluster as name if only global is set
     set:
       global:
         cluster: global-cluster
+      cluster: null
     asserts:
       - equal:
           path: spec.template.spec.containers[0].env[0].value
