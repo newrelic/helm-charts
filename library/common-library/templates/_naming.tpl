@@ -26,7 +26,7 @@ If release name contains chart name it will be used as a full name.
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
 {{- else }}
 
-{{- $name := default .Chart.Name .Values.nameOverride }}
+{{- $name := default (include "common.naming.chartnameOverride" .) .Values.nameOverride }}
 
 {{- if contains (lower $name) (lower .Release.Name) }}
 {{- $name = $name | trunc 63 | trimSuffix "-" }}
@@ -48,6 +48,8 @@ If release name contains chart name it will be used as a full name.
 
 {{/*
 Create chart name and version as used by the chart label.
+Here we do not use (include "common.naming.chartnameOverride" .) because is only used for the labels.
+This function should not be used for naming objects. Use "common.naming.{name,fullname}" instead.
 */}}
 {{- define "common.naming.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
