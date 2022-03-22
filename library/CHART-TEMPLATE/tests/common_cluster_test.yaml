@@ -30,15 +30,13 @@ tests:
           path: spec.template.spec.containers[0].env[0].value
           value: test-cluster
 
-#I found no way of asserting failing configurations. This test fails with:
-# Error: execution error at (CHART-TEMPLATE/templates/deployment.yaml:71:24): There is not cluster name definition set neither in `.global.cluster' nor `.cluster' in your values.yaml. Cluster name is required.
-#  - it: helper works (and fails) when cluster is null everywhere
-#    set:
-#      global: null
-#      cluster: test
-#    asserts:
-#      - hasDocuments:
-#          count: 0
+  - it: helper works (and fails) when cluster is null everywhere
+    set:
+      global: null
+      cluster: null
+    asserts:
+      - failedTemplate:
+          errorMessage: "There is not cluster name definition set neither in `.global.cluster' nor `.cluster' in your values.yaml. Cluster name is required."
 
   - it: sets local cluster as cluster name even if global is set
     set:
