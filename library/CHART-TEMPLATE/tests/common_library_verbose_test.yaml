@@ -19,6 +19,9 @@ tests:
       - equal:
           path: data.verboseLog-with-default
           value: "false"
+      - equal:
+          path: data.verboseLog-value
+          value: "false"
 
   - it: Is false with everything null
     set:
@@ -33,6 +36,9 @@ tests:
           value: ""
       - equal:
           path: data.verboseLog-with-default
+          value: "false"
+      - equal:
+          path: data.verboseLog-value
           value: "false"
 
   - it: Enable verboseLog (globally)
@@ -49,6 +55,9 @@ tests:
       - equal:
           path: data.verboseLog-with-default
           value: "true"
+      - equal:
+          path: data.verboseLog-value
+          value: "true"
 
   - it: Enable verboseLog (locally)
     set:
@@ -62,6 +71,9 @@ tests:
           value: "true"
       - equal:
           path: data.verboseLog-with-default
+          value: "true"
+      - equal:
+          path: data.verboseLog-value
           value: "true"
 
   - it: Overrides to false the global state locally
@@ -79,6 +91,9 @@ tests:
       - equal:
           path: data.verboseLog-with-default
           value: "false"
+      - equal:
+          path: data.verboseLog-value
+          value: "false"
 
   - it: Overrides to true the global state locally
     set:
@@ -94,4 +109,7 @@ tests:
           value: "true"
       - equal:
           path: data.verboseLog-with-default
+          value: "true"
+      - equal:
+          path: data.verboseLog-value
           value: "true"

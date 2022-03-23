@@ -24,3 +24,16 @@ Returns "true" if `verbose` is enabled, otherwise "" (empty string)
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+
+{{- /*
+Abstraction of the verbose toggle.
+This helper abstracts the function "common.verboseLog" to return true or false directly.
+*/ -}}
+{{- define "common.verboseLog.value" -}}
+{{- if include "common.verboseLog" . -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
