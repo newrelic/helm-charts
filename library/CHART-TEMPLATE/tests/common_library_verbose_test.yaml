@@ -1,6 +1,6 @@
-suite: test hostNetwork helper in the configMap example
+suite: test verbose helper
 templates:
-  - templates/example-cm-hostnetwork.yaml
+  - templates/example-cm-verbose.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -11,105 +11,105 @@ tests:
   - it: Is false by default
     asserts:
       - equal:
-          path: data.hostNetwork-with-if
+          path: data.verboseLog-with-if
           value: "disabled"
       - equal:
-          path: data.hostNetwork-with-quote
+          path: data.verboseLog-with-quote
           value: ""
       - equal:
-          path: data.hostNetwork-with-default
+          path: data.verboseLog-with-default
           value: "false"
       - equal:
-          path: data.hostNetwork-value
+          path: data.verboseLog-value
           value: "false"
 
   - it: Is false with everything null
     set:
       global: null
-      hostNetwork: null
+      verboseLog: null
     asserts:
       - equal:
-          path: data.hostNetwork-with-if
+          path: data.verboseLog-with-if
           value: "disabled"
       - equal:
-          path: data.hostNetwork-with-quote
+          path: data.verboseLog-with-quote
           value: ""
       - equal:
-          path: data.hostNetwork-with-default
+          path: data.verboseLog-with-default
           value: "false"
       - equal:
-          path: data.hostNetwork-value
+          path: data.verboseLog-value
           value: "false"
 
-  - it: Enable low data mode (globally)
+  - it: Enable verboseLog (globally)
     set:
       global:
-        hostNetwork: true
+        verboseLog: true
     asserts:
       - equal:
-          path: data.hostNetwork-with-if
+          path: data.verboseLog-with-if
           value: "enabled"
       - equal:
-          path: data.hostNetwork-with-quote
+          path: data.verboseLog-with-quote
           value: "true"
       - equal:
-          path: data.hostNetwork-with-default
+          path: data.verboseLog-with-default
           value: "true"
       - equal:
-          path: data.hostNetwork-value
+          path: data.verboseLog-value
           value: "true"
 
-  - it: Enable low data mode (locally)
+  - it: Enable verboseLog (locally)
     set:
-      hostNetwork: true
+      verboseLog: true
     asserts:
       - equal:
-          path: data.hostNetwork-with-if
+          path: data.verboseLog-with-if
           value: "enabled"
       - equal:
-          path: data.hostNetwork-with-quote
+          path: data.verboseLog-with-quote
           value: "true"
       - equal:
-          path: data.hostNetwork-with-default
+          path: data.verboseLog-with-default
           value: "true"
       - equal:
-          path: data.hostNetwork-value
+          path: data.verboseLog-value
           value: "true"
 
   - it: Overrides to false the global state locally
     set:
       global:
-        hostNetwork: true
-      hostNetwork: false
+        verboseLog: true
+      verboseLog: false
     asserts:
       - equal:
-          path: data.hostNetwork-with-if
+          path: data.verboseLog-with-if
           value: "disabled"
       - equal:
-          path: data.hostNetwork-with-quote
+          path: data.verboseLog-with-quote
           value: ""
       - equal:
-          path: data.hostNetwork-with-default
+          path: data.verboseLog-with-default
           value: "false"
       - equal:
-          path: data.hostNetwork-value
+          path: data.verboseLog-value
           value: "false"
 
   - it: Overrides to true the global state locally
     set:
       global:
-        hostNetwork: false
-      hostNetwork: true
+        verboseLog: false
+      verboseLog: true
     asserts:
       - equal:
-          path: data.hostNetwork-with-if
+          path: data.verboseLog-with-if
           value: "enabled"
       - equal:
-          path: data.hostNetwork-with-quote
+          path: data.verboseLog-with-quote
           value: "true"
       - equal:
-          path: data.hostNetwork-with-default
+          path: data.verboseLog-with-default
           value: "true"
       - equal:
-          path: data.hostNetwork-value
+          path: data.verboseLog-value
           value: "true"
