@@ -129,6 +129,10 @@ spec:
               mountPath: /etc/newrelic-infra.yml
               subPath: newrelic-infra.yml
 
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "common.naming.fullname" . }}-agent-config
 
       {{- with include "common.nodeSelector" . }}
       nodeSelector:
