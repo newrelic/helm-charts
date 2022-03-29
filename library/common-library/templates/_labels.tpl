@@ -10,27 +10,30 @@ This function allows easily to add more labels to the function "common.labels"
 This will render the labels that should be used in all the manifests used by the helm chart.
 */}}
 {{- define "common.labels" -}}
-helm.sh/chart: {{ include "common.naming.chart" . }}
-{{ include "common.labels.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-
 {{- $global := index .Values "global" | default dict -}}
 
-{{- with $global.labels }}
-{{ toYaml . }}
-{{- end }}
+{{- $labels := dict "helm.sh/chart" (include "common.naming.chart" . ) -}}
+{{- $labels = mustMergeOverwrite $labels (fromYaml (include "common.labels.selectorLabels" . )) -}}
+{{- $labels = mustMergeOverwrite $labels (dict "app.kubernetes.io/managed-by" .Release.Service) -}}
 
-{{- with .Values.labels }}
-{{ toYaml . }}
-{{- end }}
+{{- if .Chart.AppVersion -}}
+{{- $labels = mustMergeOverwrite $labels (dict "app.kubernetes.io/version" .Chart.AppVersion) -}}
+{{- end -}}
 
-{{- if include "common.labels.overrides.addLabels" . }}
-{{ include "common.labels.overrides.addLabels" . }}
-{{- end }}
-{{- end }}
+{{- if $global.labels -}}
+{{- $labels = mergeOverwrite $labels $global.labels -}}
+{{- end -}}
+
+{{- if .Values.labels -}}
+{{- $labels = mergeOverwrite $labels .Values.labels -}}
+{{- end -}}
+
+{{- if include "common.labels.overrides.addLabels" . -}}
+{{- $labels = mustMergeOverwrite $labels (fromYaml (include "common.labels.overrides.addLabels" . )) -}}
+{{- end -}}
+
+{{- toYaml $labels -}}
+{{- end -}}
 
 
 
