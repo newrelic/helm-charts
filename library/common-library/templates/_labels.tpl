@@ -12,25 +12,20 @@ This will render the labels that should be used in all the manifests used by the
 {{- define "common.labels" -}}
 {{- $global := index .Values "global" | default dict -}}
 
-{{- $labels := dict "helm.sh/chart" (include "common.naming.chart" . ) -}}
-{{- $labels = mustMergeOverwrite $labels (fromYaml (include "common.labels.selectorLabels" . )) -}}
-{{- $labels = mustMergeOverwrite $labels (dict "app.kubernetes.io/managed-by" .Release.Service) -}}
+{{- $chart := dict "helm.sh/chart" (include "common.naming.chart" . ) -}}
+{{- $managedBy := dict "app.kubernetes.io/managed-by" .Release.Service -}}
+{{- $selectorLabels := fromYaml (include "common.labels.selectorLabels" . ) -}}
 
+{{- $labels := mustMergeOverwrite $chart $managedBy $selectorLabels -}}
 {{- if .Chart.AppVersion -}}
 {{- $labels = mustMergeOverwrite $labels (dict "app.kubernetes.io/version" .Chart.AppVersion) -}}
 {{- end -}}
 
-{{- if $global.labels -}}
-{{- $labels = mergeOverwrite $labels $global.labels -}}
-{{- end -}}
+{{- $globalUserLabels := $global.labels | default dict -}}
+{{- $localUserLabels := .Values.labels | default dict -}}
+{{- $addLabelsOverride := fromYaml (include "common.labels.overrides.addLabels" . ) -}}
 
-{{- if .Values.labels -}}
-{{- $labels = mergeOverwrite $labels .Values.labels -}}
-{{- end -}}
-
-{{- if include "common.labels.overrides.addLabels" . -}}
-{{- $labels = mustMergeOverwrite $labels (fromYaml (include "common.labels.overrides.addLabels" . )) -}}
-{{- end -}}
+{{- $labels = mustMergeOverwrite $labels $globalUserLabels $localUserLabels $addLabelsOverride -}}
 
 {{- toYaml $labels -}}
 {{- end -}}
