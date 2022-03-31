@@ -36,7 +36,8 @@ tests:
       global: null
       cluster: null
     asserts:
-      - failedTemplate:
+      - template: templates/sidecar-deployment.yaml  # Only one of the templates fail so the other template is not included in the test
+        failedTemplate:
           errorMessage: "There is not cluster name definition set neither in `.global.cluster' nor `.cluster' in your values.yaml. Cluster name is required."
 
   - it: sets local cluster as cluster name even if global is set
