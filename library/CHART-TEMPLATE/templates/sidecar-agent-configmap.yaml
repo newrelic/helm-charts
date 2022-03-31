@@ -5,4 +5,6 @@ metadata:
   name: {{ include "common.naming.fullname" . }}-agent-config
 data:
   newrelic-infra.yml: |
-    {{- fromYaml (include "common.agentConfig.defaults" . ) | mustMergeOverwrite .Values.agent | toYaml | nindent 4}}
+    {{- $agentDefaults := fromYaml (include "common.agentConfig.defaults" . ) }}
+    {{- $agentSettings := .Values.agent | default dict }}
+    {{- mustMergeOverwrite $agentDefaults $agentSettings | toYaml | nindent 4 }}
