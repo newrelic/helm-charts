@@ -18,8 +18,8 @@ proxy: {{ . | quote }}
 fedramp: {{ . }}
 {{- end }}
 
-{{- with include "common.customAttributes" . }}
+{{- with fromYaml ( include "common.customAttributes" . ) }}
 custom_attributes:
-  {{- . | nindent 2 }}
+  {{- toYaml . | nindent 2 }}
 {{- end }}
 {{- end -}}

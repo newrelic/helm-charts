@@ -1,10 +1,13 @@
+{{- $agentDefaults := fromYaml ( include "common.agentConfig.defaults" . ) -}}
+{{- $agentSettings := .Values.agent | default dict -}}
+{{- $infraYaml := mustMergeOverwrite $agentDefaults $agentSettings -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: {{ include "common.naming.fullname" . }}-agent-config
+{{- with $infraYaml }}
 data:
   newrelic-infra.yml: |
-    {{- $agentDefaults := fromYaml (include "common.agentConfig.defaults" . ) }}
-    {{- $agentSettings := .Values.agent | default dict }}
-    {{- mustMergeOverwrite $agentDefaults $agentSettings | toYaml | nindent 4 }}
+    {{- . | toYaml | nindent 4 }}
+{{ end }}
