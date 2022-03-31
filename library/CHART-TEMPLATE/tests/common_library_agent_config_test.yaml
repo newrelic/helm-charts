@@ -1,0 +1,204 @@
+suite: test customAttributes helper
+templates:
+  - templates/sidecar-agent-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not fail if globals=nil
+set:
+  global: null
+  verboseLog: null
+  nrStaging: null
+  proxy: null
+  fedramp: null
+  customAttributes: null
+  agent: null
+asserts:
+  - hasDocuments:
+  count: 1
+  - equal:
+  path: data
+  value: null
+
+  # Verbose flag
+  - it: sets verbose according to global values
+set:
+  global:
+verboseLog: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+verbose: 1
+
+  - it: sets verbose according to local values
+set:
+  verboseLog: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+verbose: 1
+
+  - it: sets verbose according to agent's values
+set:
+  agent:
+verbose: 1
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+verbose: 1
+
+  # Staging flag
+  - it: sets staging according to global values
+set:
+  global:
+nrStaging: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+staging: true
+
+  - it: sets staging according to local values
+set:
+  nrStaging: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+staging: true
+
+  - it: sets staging according to agent's values
+set:
+  agent:
+staging: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+staging: true
+
+  # Proxy settings
+  - it: sets proxy according to global values
+set:
+  proxy: test@test:a-proxy.com
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+proxy: test@test:a-proxy.com
+
+  - it: sets proxy according to local values
+set:
+  proxy: test@test:a-proxy.com
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+proxy: test@test:a-proxy.com
+
+  - it: sets proxy according to agent's values
+set:
+  agent:
+proxy: test@test:a-proxy.com
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+proxy: test@test:a-proxy.com
+
+
+  # fedRAMP flag
+  - it: sets fedramp according to global values
+set:
+  global.fedramp.enabled: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+fedramp: true
+
+  - it: sets fedramp according to local values
+set:
+  fedramp.enabled: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+fedramp: true
+
+  - it: sets fedramp according to agent's values
+set:
+  agent.fedramp: true
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+fedramp: true
+
+  # custom attributes
+  - it: sets custom_attributes according to values
+set:
+  customAttributes:
+cluster: name
+test: test
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+custom_attributes:
+  cluster: name
+  test: test
+
+  - it: sets custom_attributes according to agent's values
+set:
+  agent:
+custom_attributes:
+  cluster: name
+  test: test
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |
+custom_attributes:
+  cluster: name
+  test: test
+
+  # test if values in the example are overridable
+  - it: test if values in the example are overridable
+set:
+  global:
+verboseLog: global
+nrStaging: global
+proxy: global:global@global.com
+fedramp.enabled: global
+customAttributes:
+  global: global
+  verboseLog: local
+  nrStaging: local
+  proxy: local:local@local.com
+  fedramp.enabled: local
+  customAttributes:
+local: local
+  agent:
+verbose: 1
+nrStaging: true
+proxy: agent:agent@agent.com
+fedramp: true
+custom_attributes:
+  agent: agent
+asserts:
+  - equal:
+  path: data.newrelic-infra\.yml
+  value: |  # as they are merged and templated with `toYaml` they are alphabetically ordered.
+custom_attributes:
+  agent: agent
+  global: global
+  local: local
+fedramp: true
+nrStaging: true
+proxy: agent:agent@agent.com
+verbose: 1
