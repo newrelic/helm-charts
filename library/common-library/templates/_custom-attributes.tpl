@@ -8,6 +8,7 @@ This function allows easily to overwrite custom attributes to the function "comm
 
 {{/*
 This will render custom attributes as a YAML ready to  be templated or be used with `fromYaml`.
+Chart writers can override `common.customAttributes.overrideAttributes`, which will be included in the output of this helper.
 */}}
 {{- define "common.customAttributes" -}}
 {{- $customAttributes := dict -}}
