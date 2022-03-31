@@ -10,11 +10,6 @@ verbose: 1
 staging: true
 {{- end }}
 
-{{- with include "common.license._licenseKey" . }}
-{{- /* We will mostly override this using a environment variable but we can have it here just in case */}}
-license: {{ . }}
-{{- end }}
-
 {{- with include "common.proxy" . }}
 proxy: {{ . | quote }}
 {{- end }}
