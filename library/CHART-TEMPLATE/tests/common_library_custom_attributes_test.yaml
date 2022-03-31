@@ -1,0 +1,55 @@
+suite: test customAttributes helper
+templates:
+  - templates/example-cm-custom-attributes.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not fail if globals=nil
+    set:
+      global: null
+      customAttributes: null
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: sets customAttributes according to values
+    set:
+      customAttributes:
+        cluster: name
+        test: test
+    asserts:
+      - equal:
+          path: data.customAttributes
+          value: |
+            cluster: name
+            test: test
+
+  - it: sets global customAttributes according to values
+    set:
+      global:
+        customAttributes:
+          cluster: name
+          test: test
+    asserts:
+      - equal:
+          path: data.customAttributes
+          value: |
+            cluster: name
+            test: test
+
+  - it: global customAttributes are overridden by local customAttributes
+    set:
+      global:
+        customAttributes:
+          cluster: name
+          test: test
+      customAttributes:
+        cluster: name
+        test: overwritten
+    asserts:
+      - equal:
+          path: data.customAttributes
+          value: |
+            cluster: name
+            test: overwritten

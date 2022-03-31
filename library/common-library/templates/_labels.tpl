@@ -10,27 +10,25 @@ This function allows easily to add more labels to the function "common.labels"
 This will render the labels that should be used in all the manifests used by the helm chart.
 */}}
 {{- define "common.labels" -}}
-helm.sh/chart: {{ include "common.naming.chart" . }}
-{{ include "common.labels.selectorLabels" . }}
-{{- if .Chart.AppVersion }}
-app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
-{{- end }}
-app.kubernetes.io/managed-by: {{ .Release.Service }}
-
 {{- $global := index .Values "global" | default dict -}}
 
-{{- with $global.labels }}
-{{ toYaml . }}
-{{- end }}
+{{- $chart := dict "helm.sh/chart" (include "common.naming.chart" . ) -}}
+{{- $managedBy := dict "app.kubernetes.io/managed-by" .Release.Service -}}
+{{- $selectorLabels := fromYaml (include "common.labels.selectorLabels" . ) -}}
 
-{{- with .Values.labels }}
-{{ toYaml . }}
-{{- end }}
+{{- $labels := mustMergeOverwrite $chart $managedBy $selectorLabels -}}
+{{- if .Chart.AppVersion -}}
+{{- $labels = mustMergeOverwrite $labels (dict "app.kubernetes.io/version" .Chart.AppVersion) -}}
+{{- end -}}
 
-{{- if include "common.labels.overrides.addLabels" . }}
-{{ include "common.labels.overrides.addLabels" . }}
-{{- end }}
-{{- end }}
+{{- $globalUserLabels := $global.labels | default dict -}}
+{{- $localUserLabels := .Values.labels | default dict -}}
+{{- $addLabelsOverride := fromYaml (include "common.labels.overrides.addLabels" . ) -}}
+
+{{- $labels = mustMergeOverwrite $labels $globalUserLabels $localUserLabels $addLabelsOverride -}}
+
+{{- toYaml $labels -}}
+{{- end -}}
 
 
 
