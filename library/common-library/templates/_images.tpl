@@ -14,6 +14,7 @@ Return the proper image name
     {{- end -}}
 {{- end -}}
 
+{{/*
 Return the proper image registry
 {{ include "common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
 */}}
@@ -29,6 +30,7 @@ Return the proper image registry
     {{- end -}}
 {{- end -}}
 
+{{/*
 Return the proper image repository
 {{ include "common.images.repository" .Values.path.to.the.image }}
 */}}
@@ -36,6 +38,7 @@ Return the proper image repository
     {{- .repository -}}
 {{- end -}}
 
+{{/*
 Return the proper image tag
 {{ include "common.images.tag" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
 */}}
