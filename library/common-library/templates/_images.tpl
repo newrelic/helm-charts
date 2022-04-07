@@ -14,10 +14,10 @@ Return the proper image name
     {{- end -}}
 {{- end -}}
 
-{{/*
+{{- /*
 Return the proper image registry
 {{ include "common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
-*/}}
+*/ -}}
 {{- define "common.images.registry" -}}
     {{- if .imageRoot.registry }}
         {{- .imageRoot.registry -}}
