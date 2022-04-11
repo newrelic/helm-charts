@@ -9,16 +9,7 @@ Return the cluster
     {{- .Values.cluster -}}
 {{- else if $global.cluster -}}
     {{- $global.cluster -}}
-{{- else if (include "common.cluster.failIfEmpty" . ) -}}
+{{- else -}}
     {{ fail "There is not cluster name definition set neither in `.global.cluster' nor `.cluster' in your values.yaml. Cluster name is required." }}
 {{- end -}}
-{{- end -}}
-
-
-
-{{/*
-Return the default behaviour if "common.cluster" helper does not find one in the values
-*/}}
-{{- define "common.cluster.failIfEmpty" -}}
-true
 {{- end -}}

@@ -1,7 +1,7 @@
 {{- /*
 Abstraction of the hostNetwork toggle.
 This helper allows to override the global `.global.hostNetwork` with the value of `.hostNetwork`.
-Returns "true" if `hostNetwork` is enabled, otherwise fallbacks to a overridable function
+Returns "true" if `hostNetwork` is enabled, otherwise "" (empty string)
 */ -}}
 {{- define "common.hostNetwork" -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */ -}}
@@ -22,8 +22,6 @@ as an evaluation somewhere else.
     {{- if $global.hostNetwork -}}
         {{- $global.hostNetwork -}}
     {{- end -}}
-{{- else -}}
-    {{- include "common.hostNetwork.defaultOverride" . -}}
 {{- end -}}
 {{- end -}}
 
@@ -38,10 +36,4 @@ true
 {{- else -}}
 false
 {{- end -}}
-{{- end -}}
-
-{{- /*
-This allows to change the default of the helper `common.hostNetwork`. Defaults to false
-*/ -}}
-{{- define "common.hostNetwork.defaultOverride" -}}
 {{- end -}}

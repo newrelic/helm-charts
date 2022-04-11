@@ -14,6 +14,8 @@ Return the proper image name
     {{- end -}}
 {{- end -}}
 
+
+
 {{- /*
 Return the proper image registry
 {{ include "common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
@@ -30,6 +32,8 @@ Return the proper image registry
     {{- end -}}
 {{- end -}}
 
+
+
 {{- /*
 Return the proper image repository
 {{ include "common.images.repository" .Values.path.to.the.image }}
@@ -38,6 +42,8 @@ Return the proper image repository
     {{- .repository -}}
 {{- end -}}
 
+
+
 {{- /*
 Return the proper image tag
 {{ include "common.images.tag" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
@@ -45,6 +51,8 @@ Return the proper image tag
 {{- define "common.images.tag" -}}
     {{- .imageRoot.tag | default .context.Chart.AppVersion | toString -}}
 {{- end -}}
+
+
 
 {{- /*
 Return the proper Image Pull Registry Secret Names evaluating values as templates
@@ -69,7 +77,7 @@ Return the proper Image Pull Registry Secret Names evaluating values as template
 
   {{- if gt (len $ps) 0 -}}
     {{- range $ps }}
-{{ toYaml . }}
+      {{ toYaml . | nindent 0 }}
     {{- end -}}
   {{- end -}}
 {{- end -}}

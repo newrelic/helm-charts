@@ -12,3 +12,14 @@
         {{- end -}}
     {{- end -}}
 {{- end -}}
+
+
+
+{{- /* Return FedRAMP value directly ready to be templated */ -}}
+{{- define "common.fedramp.enabled.value" -}}
+{{- if include "common.fedramp.enabled" . -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}

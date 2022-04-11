@@ -24,3 +24,16 @@ Returns "true" if `nrStaging` is enabled, otherwise "" (empty string)
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+
+
+{{- /*
+Returns "true" of "false" directly instead of empty string (Helm falsiness) based on the exit of "common.nrStaging"
+*/ -}}
+{{- define "common.nrStaging.value" -}}
+{{- if include "common.nrStaging" . -}}
+true
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}

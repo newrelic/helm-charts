@@ -33,15 +33,10 @@
 
 {{- /* In case no serviceAccount value has been found, default to "true" */ -}}
 {{- if not $valueFound -}}
-  {{- include "common.serviceAccount.createDefaultOverride" . -}}
-{{- end -}}
-{{- end -}}
-
-
-{{- /* Defines the default if a service account should be created or not */ -}}
-{{- define "common.serviceAccount.createDefaultOverride" -}}
 true
 {{- end -}}
+{{- end -}}
+
 
 
 {{- /* Defines the name of the service account */ -}}

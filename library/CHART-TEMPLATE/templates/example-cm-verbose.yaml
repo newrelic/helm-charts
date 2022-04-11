@@ -9,4 +9,5 @@ data:
   verboseLog-with-if: {{ if include "common.verboseLog" . }}enabled{{ else }}disabled{{ end }}
   verboseLog-with-quote: {{ include "common.verboseLog" . | quote }}
   verboseLog-with-default: {{ include "common.verboseLog" . | default "false" | quote }}
-  verboseLog-value: {{ include "common.verboseLog.value" . | quote }}
+  verboseLog-boolean-value: {{ include "common.verboseLog.valueAsBoolean" . }}
+  verboseLog-integer-value: {{ include "common.verboseLog.valueAsInt" . }}

@@ -6,15 +6,9 @@
     {{- toYaml .Values.containerSecurityContext -}}
 {{- else if $global.containerSecurityContext -}}
     {{- toYaml $global.containerSecurityContext -}}
-{{- else -}}
-    {{- include "common.securityContext.containerDefaults" . -}}
 {{- end -}}
 {{- end -}}
 
-
-{{- /* Allows to change defaults for container security context either statically or dynamically */ -}}
-{{- define "common.securityContext.containerDefaults" -}}
-{{- end -}}
 
 
 {{- /* Defines the pod securityContext context */ -}}
@@ -25,12 +19,5 @@
     {{- toYaml .Values.podSecurityContext -}}
 {{- else if $global.podSecurityContext -}}
     {{- toYaml $global.podSecurityContext -}}
-{{- else -}}
-    {{- include "common.securityContext.podDefaults" . -}}
 {{- end -}}
-{{- end -}}
-
-
-{{- /* Allows to change defaults for pod security context either statically or dynamically */ -}}
-{{- define "common.securityContext.podDefaults" -}}
 {{- end -}}

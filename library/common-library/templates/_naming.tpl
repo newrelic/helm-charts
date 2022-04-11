@@ -7,6 +7,8 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- .Values.nameOverride | default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+
+
 {{/*
 Create a default fully qualified app name.
 By default the full name will be "<release_name>-<chart_chart>". This could change if fullnameOverride or
@@ -14,15 +16,12 @@ nameOverride are set.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "common.naming.fullname" -}}
-
 {{- $name := "" }}
 
 {{- if .Values.fullnameOverride }}
     {{- $name = .Values.fullnameOverride  }}
-
 {{- else }}
     {{- $name = printf "%s-%s" .Release.Name (include "common.naming.name" .)}}
-
 {{- end }}
 
 {{- $name | trunc 63 | trimSuffix "-" }}
