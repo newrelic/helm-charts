@@ -4,51 +4,42 @@ templates:
   - templates/sidecar-deployment.yaml
   - templates/service.yaml
 release:
-  name: my-release
-  namespace: my-namespace
+  name: release
 tests:
-  - it: default values has its name correctly defined
+  - it: uses <release_name>-<chart_name> by default
 asserts:
   - equal:
   path: metadata.name
-  value: nri-my-release-CHART-TEMPLATE
+  value: release-CHART-TEMPLATE
 
-  - it: name of the release is not duplicated
-release:
-  name: chart-template  # Must be lowercase
-asserts:
-  - equal:
-  path: metadata.name
-  value: nri-CHART-TEMPLATE
-
-  - it: name of the release is overridable
+  - it: uses nameOverride as <chart_name>
 set:
-  nameOverride: test
+  nameOverride: custom_chart_name
 asserts:
   - equal:
   path: metadata.name
-  value: nri-my-release-test
+  value: release-custom_chart_name
 
-  - it: name of the release is overridable with the release name
+  - it: uses nameOverride as <chart_name>
 set:
-  nameOverride: my-release
+  nameOverride: custom_chart_name
 asserts:
   - equal:
   path: metadata.name
-  value: nri-my-release
+  value: release-custom_chart_name
 
-  - it: nri- preffix does not duplicate
-release:
-  name: nri-bundle
-asserts:
-  - equal:
-  path: metadata.name
-  value: nri-bundle-CHART-TEMPLATE
-
-  - it: full name override
+  - it: uses fullnameOverride
 set:
   fullnameOverride: fno
 asserts:
   - equal:
   path: metadata.name
   value: fno
+
+  - it: truncates the name
+set:
+  fullnameOverride: this_name_has_more_than_63_characters_long_until_this_last_char_this_is_will_be_truncated
+asserts:
+  - equal:
+  path: metadata.name
+  value: this_name_has_more_than_63_characters_long_until_this_last_char
