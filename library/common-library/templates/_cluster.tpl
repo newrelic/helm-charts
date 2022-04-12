@@ -1,7 +1,7 @@
 {{/*
 Return the cluster
 */}}
-{{- define "common.cluster" -}}
+{{- define "newrelic.common.cluster" -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */ -}}
 {{- $global := index .Values "global" | default dict -}}
 

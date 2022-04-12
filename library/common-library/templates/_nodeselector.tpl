@@ -1,5 +1,5 @@
 {{- /* Defines the Pod nodeSelector */ -}}
-{{- define "common.nodeSelector" -}}
+{{- define "newrelic.common.nodeSelector" -}}
     {{- if .Values.nodeSelector -}}
         {{- toYaml .Values.nodeSelector -}}
     {{- else if .Values.global -}}

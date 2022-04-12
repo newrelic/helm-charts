@@ -1,7 +1,7 @@
 {{/*
 Renders the license key secret if user has not specified a custom secret.
 */}}
-{{- define "common.license.secret" }}
+{{- define "newrelic.common.license.secret" }}
 {{- if not (include "common.license._customSecretName" .) }}
 {{- /* Fail if licenseKey is empty and required: */ -}}
 {{- if not (include "common.license._licenseKey" .) }}

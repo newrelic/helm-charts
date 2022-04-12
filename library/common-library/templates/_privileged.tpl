@@ -6,7 +6,7 @@ Chart writers should _not_ use this to populate securityContext.privileged direc
 - common.hostNetwork.defaultOverride
 And then use the helpers this library provides to render those.
 */ -}}
-{{- define "common.privileged" -}}
+{{- define "newrelic.common.privileged" -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists. */ -}}
 {{- $global := index .Values "global" | default dict -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
@@ -24,7 +24,7 @@ And then use the helpers this library provides to render those.
 
 
 {{- /* Return directly "true" or "false" based in the exist of "common.privileged" */ -}}
-{{- define "common.privileged.value" -}}
+{{- define "newrelic.common.privileged.value" -}}
 {{- if include "common.privileged" . -}}
 true
 {{- else -}}

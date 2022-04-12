@@ -3,7 +3,7 @@ Abstraction of the verbose toggle.
 This helper allows to override the global `.global.verboseLog` with the value of `.verboseLog`.
 Returns "true" if `verbose` is enabled, otherwise "" (empty string)
 */ -}}
-{{- define "common.verboseLog" -}}
+{{- define "newrelic.common.verboseLog" -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
 {{- if (get .Values "verboseLog" | kindIs "bool") -}}
     {{- if .Values.verboseLog -}}
@@ -31,7 +31,7 @@ Returns "true" if `verbose` is enabled, otherwise "" (empty string)
 Abstraction of the verbose toggle.
 This helper abstracts the function "common.verboseLog" to return true or false directly.
 */ -}}
-{{- define "common.verboseLog.valueAsBoolean" -}}
+{{- define "newrelic.common.verboseLog.valueAsBoolean" -}}
 {{- if include "common.verboseLog" . -}}
 true
 {{- else -}}
@@ -45,7 +45,7 @@ false
 Abstraction of the verbose toggle.
 This helper abstracts the function "common.verboseLog" to return 1 or 0 directly.
 */ -}}
-{{- define "common.verboseLog.valueAsInt" -}}
+{{- define "newrelic.common.verboseLog.valueAsInt" -}}
 {{- if include "common.verboseLog" . -}}
 1
 {{- else -}}

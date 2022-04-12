@@ -3,7 +3,7 @@ Abstraction of the lowDataMode toggle.
 This helper allows to override the global `.global.lowDataMode` with the value of `.lowDataMode`.
 Returns "true" if `lowDataMode` is enabled, otherwise "" (empty string)
 */ -}}
-{{- define "common.lowDataMode" -}}
+{{- define "newrelic.common.lowDataMode" -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
 {{- if (get .Values "lowDataMode" | kindIs "bool") -}}
     {{- if .Values.lowDataMode -}}

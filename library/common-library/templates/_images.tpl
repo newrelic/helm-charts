@@ -2,7 +2,7 @@
 Return the proper image name
 {{ include "common.images.image" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
 */ -}}
-{{- define "common.images.image" -}}
+{{- define "newrelic.common.images.image" -}}
     {{- $registryName := include "common.images.registry" ( dict "imageRoot" .imageRoot "context" .context) -}}
     {{- $repositoryName := include "common.images.repository" .imageRoot -}}
     {{- $tag := include "common.images.tag" ( dict "imageRoot" .imageRoot "context" .context) -}}
@@ -20,7 +20,7 @@ Return the proper image name
 Return the proper image registry
 {{ include "common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
 */ -}}
-{{- define "common.images.registry" -}}
+{{- define "newrelic.common.images.registry" -}}
     {{- if .imageRoot.registry -}}
         {{- .imageRoot.registry -}}
     {{- else if .context.Values.global -}}
@@ -38,7 +38,7 @@ Return the proper image registry
 Return the proper image repository
 {{ include "common.images.repository" .Values.path.to.the.image }}
 */ -}}
-{{- define "common.images.repository" -}}
+{{- define "newrelic.common.images.repository" -}}
     {{- .repository -}}
 {{- end -}}
 
@@ -48,7 +48,7 @@ Return the proper image repository
 Return the proper image tag
 {{ include "common.images.tag" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
 */ -}}
-{{- define "common.images.tag" -}}
+{{- define "newrelic.common.images.tag" -}}
     {{- .imageRoot.tag | default .context.Chart.AppVersion | toString -}}
 {{- end -}}
 
@@ -58,7 +58,7 @@ Return the proper image tag
 Return the proper Image Pull Registry Secret Names evaluating values as templates
 {{ include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.path.to.the.image.pullSecrets1, .Values.path.to.the.image.pullSecrets2) "context" .) }}
 */ -}}
-{{- define "common.images.renderPullSecrets" -}}
+{{- define "newrelic.common.images.renderPullSecrets" -}}
   {{- $flatlist := list }}
 
   {{- if .context.Values.global -}}

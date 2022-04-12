@@ -1,7 +1,7 @@
 {{/*
 This will render the labels that should be used in all the manifests used by the helm chart.
 */}}
-{{- define "common.labels" -}}
+{{- define "newrelic.common.labels" -}}
 {{- $global := index .Values "global" | default dict -}}
 
 {{- $chart := dict "helm.sh/chart" (include "common.naming.chart" . ) -}}
@@ -26,7 +26,7 @@ This will render the labels that should be used in all the manifests used by the
 {{/*
 This will render the labels that should be used in deployments/daemonsets template pods as a selector.
 */}}
-{{- define "common.labels.selectorLabels" -}}
+{{- define "newrelic.common.labels.selectorLabels" -}}
 {{- $name := dict "app.kubernetes.io/name" ( include "common.naming.name" . ) -}}
 {{- $instance := dict "app.kubernetes.io/instance" .Release.Name -}}
 
@@ -40,7 +40,7 @@ This will render the labels that should be used in deployments/daemonsets templa
 {{/*
 Pod labels
 */}}
-{{- define "common.labels.podLabels" -}}
+{{- define "newrelic.common.labels.podLabels" -}}
 {{- $selectorLabels := fromYaml (include "common.labels.selectorLabels" . ) -}}
 
 {{- $global := index .Values "global" | default dict -}}

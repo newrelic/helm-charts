@@ -3,7 +3,7 @@ Abstraction of the hostNetwork toggle.
 This helper allows to override the global `.global.hostNetwork` with the value of `.hostNetwork`.
 Returns "true" if `hostNetwork` is enabled, otherwise "" (empty string)
 */ -}}
-{{- define "common.hostNetwork" -}}
+{{- define "newrelic.common.hostNetwork" -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */ -}}
 {{- $global := index .Values "global" | default dict -}}
 
@@ -30,7 +30,7 @@ as an evaluation somewhere else.
 Abstraction of the hostNetwork toggle.
 This helper abstracts the function "common.hostNetwork" to return true or false directly.
 */ -}}
-{{- define "common.hostNetwork.value" -}}
+{{- define "newrelic.common.hostNetwork.value" -}}
 {{- if include "common.hostNetwork" . -}}
 true
 {{- else -}}

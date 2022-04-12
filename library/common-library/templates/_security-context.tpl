@@ -1,5 +1,5 @@
 {{- /* Defines the container securityContext context */ -}}
-{{- define "common.securityContext.container" -}}
+{{- define "newrelic.common.securityContext.container" -}}
 {{- $global := index .Values "global" | default dict -}}
 
 {{- if .Values.containerSecurityContext -}}
@@ -12,7 +12,7 @@
 
 
 {{- /* Defines the pod securityContext context */ -}}
-{{- define "common.securityContext.pod" -}}
+{{- define "newrelic.common.securityContext.pod" -}}
 {{- $global := index .Values "global" | default dict -}}
 
 {{- if .Values.podSecurityContext -}}

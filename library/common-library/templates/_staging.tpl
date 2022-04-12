@@ -3,7 +3,7 @@ Abstraction of the nrStaging toggle.
 This helper allows to override the global `.global.nrStaging` with the value of `.nrStaging`.
 Returns "true" if `nrStaging` is enabled, otherwise "" (empty string)
 */ -}}
-{{- define "common.nrStaging" -}}
+{{- define "newrelic.common.nrStaging" -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
 {{- if (get .Values "nrStaging" | kindIs "bool") -}}
     {{- if .Values.nrStaging -}}
@@ -30,7 +30,7 @@ Returns "true" if `nrStaging` is enabled, otherwise "" (empty string)
 {{- /*
 Returns "true" of "false" directly instead of empty string (Helm falsiness) based on the exit of "common.nrStaging"
 */ -}}
-{{- define "common.nrStaging.value" -}}
+{{- define "newrelic.common.nrStaging.value" -}}
 {{- if include "common.nrStaging" . -}}
 true
 {{- else -}}

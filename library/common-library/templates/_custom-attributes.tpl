@@ -1,7 +1,7 @@
 {{/*
 This will render custom attributes as a YAML ready to be templated or be used with `fromYaml`.
 */}}
-{{- define "common.customAttributes" -}}
+{{- define "newrelic.common.customAttributes" -}}
 {{- $customAttributes := dict -}}
 
 {{- $global := index .Values "global" | default dict -}}

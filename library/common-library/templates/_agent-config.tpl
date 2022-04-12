@@ -1,7 +1,7 @@
 {{/*
 This helper should return the defaults that all agents should have
 */}}
-{{- define "common.agentConfig.defaults" -}}
+{{- define "newrelic.common.agentConfig.defaults" -}}
 {{- if include "common.verboseLog" . }}
 verbose: 1
 {{- end }}
