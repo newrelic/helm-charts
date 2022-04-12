@@ -44,11 +44,13 @@ This function allows easily to add more labels to the function "common.labels.se
 This will render the labels that should be used in deployments/daemonsets template pods as a selector.
 */}}
 {{- define "common.labels.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.naming.name" . }}
-app.kubernetes.io/instance: {{ .Release.Name }}
-{{- if include "common.labels.overrides.addSelectorLabels" . }}
-{{ include "common.labels.overrides.addSelectorLabels" . }}
-{{- end }}
+{{- $name := dict "app.kubernetes.io/name" ( include "common.naming.name" . ) -}}
+{{- $instance := dict "app.kubernetes.io/instance" .Release.Name -}}
+{{- $addSelectorLabels := fromYaml ( include "common.labels.overrides.addSelectorLabels" . ) | default dict -}}
+
+{{- $selectorLabels := mustMergeOverwrite $name $instance $addSelectorLabels -}}
+
+{{- toYaml $selectorLabels -}}
 {{- end }}
 
 
@@ -65,17 +67,16 @@ This function allows easily to add more labels to the function "common.labels.po
 Pod labels
 */}}
 {{- define "common.labels.podLabels" -}}
+{{- $selectorLabels := fromYaml (include "common.labels.selectorLabels" . ) -}}
+
 {{- $global := index .Values "global" | default dict -}}
+{{- $globalPodLabels := $global.podLabels | default dict }}
 
-{{- with $global.podLabels }}
-{{ toYaml . }}
-{{- end }}
+{{- $localPodLabels := .Values.podLabels | default dict }}
 
-{{- with .Values.podLabels }}
-{{ toYaml . }}
-{{- end }}
+{{- $overrideAddPodLabels := fromYaml ( include "common.labels.overrides.addPodLabels" . ) | default dict -}}
 
-{{- with include "common.labels.overrides.addPodLabels" . }}
-{{ . }}
-{{- end }}
+{{- $podLabels := mustMergeOverwrite $selectorLabels $globalPodLabels $localPodLabels $overrideAddPodLabels -}}
+
+{{- toYaml $podLabels -}}
 {{- end }}
