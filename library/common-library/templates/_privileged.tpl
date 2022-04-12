@@ -1,10 +1,5 @@
 {{- /*
-common.privileged is a helper that returns whether the chart should assume the user is fine deploying privileged pods.
-Chart writers should _not_ use this to populate securityContext.privileged directly, but rather to tweak their implementation of:
-- common.securityContext.containerDefaults
-- common.securityContext.podDefaults
-- common.hostNetwork.defaultOverride
-And then use the helpers this library provides to render those.
+This is a helper that returns whether the chart should assume the user is fine deploying privileged pods.
 */ -}}
 {{- define "newrelic.common.privileged" -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists. */ -}}
@@ -23,7 +18,7 @@ And then use the helpers this library provides to render those.
 
 
 
-{{- /* Return directly "true" or "false" based in the exist of "common.privileged" */ -}}
+{{- /* Return directly "true" or "false" based in the exist of "newrelic.common.privileged" */ -}}
 {{- define "newrelic.common.privileged.value" -}}
 {{- if include "newrelic.common.privileged" . -}}
 true

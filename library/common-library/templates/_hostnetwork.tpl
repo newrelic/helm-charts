@@ -28,7 +28,7 @@ as an evaluation somewhere else.
 
 {{- /*
 Abstraction of the hostNetwork toggle.
-This helper abstracts the function "common.hostNetwork" to return true or false directly.
+This helper abstracts the function "newrelic.common.hostNetwork" to return true or false directly.
 */ -}}
 {{- define "newrelic.common.hostNetwork.value" -}}
 {{- if include "newrelic.common.hostNetwork" . -}}

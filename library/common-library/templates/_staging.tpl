@@ -28,7 +28,7 @@ Returns "true" if `nrStaging` is enabled, otherwise "" (empty string)
 
 
 {{- /*
-Returns "true" of "false" directly instead of empty string (Helm falsiness) based on the exit of "common.nrStaging"
+Returns "true" of "false" directly instead of empty string (Helm falsiness) based on the exit of "newrelic.common.nrStaging"
 */ -}}
 {{- define "newrelic.common.nrStaging.value" -}}
 {{- if include "newrelic.common.nrStaging" . -}}

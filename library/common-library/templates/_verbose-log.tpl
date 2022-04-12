@@ -29,7 +29,7 @@ Returns "true" if `verbose` is enabled, otherwise "" (empty string)
 
 {{- /*
 Abstraction of the verbose toggle.
-This helper abstracts the function "common.verboseLog" to return true or false directly.
+This helper abstracts the function "newrelic.common.verboseLog" to return true or false directly.
 */ -}}
 {{- define "newrelic.common.verboseLog.valueAsBoolean" -}}
 {{- if include "newrelic.common.verboseLog" . -}}
@@ -43,7 +43,7 @@ false
 
 {{- /*
 Abstraction of the verbose toggle.
-This helper abstracts the function "common.verboseLog" to return 1 or 0 directly.
+This helper abstracts the function "newrelic.common.verboseLog" to return 1 or 0 directly.
 */ -}}
 {{- define "newrelic.common.verboseLog.valueAsInt" -}}
 {{- if include "newrelic.common.verboseLog" . -}}
