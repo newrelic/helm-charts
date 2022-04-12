@@ -1,54 +1,38 @@
 {{/*
-Allow the chart using this library to override naming function
-*/}}
-{{- define "common.naming.chartnameOverride" -}}
-{{- .Chart.Name }}
-{{- end }}
-
-
-
-{{/*
 Expand the name of the chart.
+Uses the Chart name by default if nameOverride is not set.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "common.naming.name" -}}
-{{- (include "common.naming.chartnameOverride" .) | default .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{- .Values.nameOverride | default .Chart.Name | trunc 63 | trimSuffix "-" }}
 {{- end }}
-
-
 
 {{/*
 Create a default fully qualified app name.
+By default the full name will be "<release_name>-<chart_chart>". This could change if fullnameOverride or
+nameOverride are set.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-If release name contains chart name it will be used as a full name.
 */}}
 {{- define "common.naming.fullname" -}}
+
+{{- $name := "" }}
+
 {{- if .Values.fullnameOverride }}
-{{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" }}
+    {{- $name = .Values.fullnameOverride  }}
+
 {{- else }}
-
-{{- $name := .Values.nameOverride | default (include "common.naming.chartnameOverride" .) }}
-
-{{- if contains (lower $name) (lower .Release.Name) }}
-{{- $name = $name | trunc 63 | trimSuffix "-" }}
-{{- else }}
-{{- $name = printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" }}
-{{- end }}
-
-{{- if not (hasPrefix "nri-" $name) }}
-{{- /* In case the name is not prefixed with "nri-", add it */}}
-{{- $name = printf "nri-%s" $name }}
-{{- end }}
-
-{{- $name -}}
+    {{- $name = printf "%s-%s" .Release.Name (include "common.naming.name" .)}}
 
 {{- end }}
+
+{{- $name | trunc 63 | trimSuffix "-" }}
+
 {{- end }}
 
 
 
 {{/*
 Create chart name and version as used by the chart label.
-Here we do not use (include "common.naming.chartnameOverride" .) because is only used for the labels.
 This function should not be used for naming objects. Use "common.naming.{name,fullname}" instead.
 */}}
 {{- define "common.naming.chart" -}}
