@@ -9,7 +9,7 @@ Returns "true" if `lowDataMode` is enabled, otherwise "" (empty string)
     {{- if .Values.lowDataMode -}}
         {{- /*
             We want only to return when this is true, returning `false` here will template "false" (string) when doing
-            an `(include "common.lowDataMode" .)`, which is not an "empty string" so it is `true` if it is used
+            an `(include "newrelic.common.lowDataMode" .)`, which is not an "empty string" so it is `true` if it is used
             as an evaluation somewhere else.
         */ -}}
         {{- .Values.lowDataMode -}}

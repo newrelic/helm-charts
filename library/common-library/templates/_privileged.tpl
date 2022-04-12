@@ -25,7 +25,7 @@ And then use the helpers this library provides to render those.
 
 {{- /* Return directly "true" or "false" based in the exist of "common.privileged" */ -}}
 {{- define "newrelic.common.privileged.value" -}}
-{{- if include "common.privileged" . -}}
+{{- if include "newrelic.common.privileged" . -}}
 true
 {{- else -}}
 false

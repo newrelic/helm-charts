@@ -4,9 +4,9 @@ This will render the labels that should be used in all the manifests used by the
 {{- define "newrelic.common.labels" -}}
 {{- $global := index .Values "global" | default dict -}}
 
-{{- $chart := dict "helm.sh/chart" (include "common.naming.chart" . ) -}}
+{{- $chart := dict "helm.sh/chart" (include "newrelic.common.naming.chart" . ) -}}
 {{- $managedBy := dict "app.kubernetes.io/managed-by" .Release.Service -}}
-{{- $selectorLabels := fromYaml (include "common.labels.selectorLabels" . ) -}}
+{{- $selectorLabels := fromYaml (include "newrelic.common.labels.selectorLabels" . ) -}}
 
 {{- $labels := mustMergeOverwrite $chart $managedBy $selectorLabels -}}
 {{- if .Chart.AppVersion -}}
@@ -27,7 +27,7 @@ This will render the labels that should be used in all the manifests used by the
 This will render the labels that should be used in deployments/daemonsets template pods as a selector.
 */}}
 {{- define "newrelic.common.labels.selectorLabels" -}}
-{{- $name := dict "app.kubernetes.io/name" ( include "common.naming.name" . ) -}}
+{{- $name := dict "app.kubernetes.io/name" ( include "newrelic.common.naming.name" . ) -}}
 {{- $instance := dict "app.kubernetes.io/instance" .Release.Name -}}
 
 {{- $selectorLabels := mustMergeOverwrite $name $instance -}}
@@ -41,7 +41,7 @@ This will render the labels that should be used in deployments/daemonsets templa
 Pod labels
 */}}
 {{- define "newrelic.common.labels.podLabels" -}}
-{{- $selectorLabels := fromYaml (include "common.labels.selectorLabels" . ) -}}
+{{- $selectorLabels := fromYaml (include "newrelic.common.labels.selectorLabels" . ) -}}
 
 {{- $global := index .Values "global" | default dict -}}
 {{- $globalPodLabels := $global.podLabels | default dict }}

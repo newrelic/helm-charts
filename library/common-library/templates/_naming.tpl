@@ -21,7 +21,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- if .Values.fullnameOverride }}
     {{- $name = .Values.fullnameOverride  }}
 {{- else }}
-    {{- $name = printf "%s-%s" .Release.Name (include "common.naming.name" .)}}
+    {{- $name = printf "%s-%s" .Release.Name (include "newrelic.common.naming.name" .)}}
 {{- end }}
 
 {{- $name | trunc 63 | trimSuffix "-" }}

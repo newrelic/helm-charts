@@ -2,13 +2,13 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    {{- include "common.labels" . | nindent 4 }}
-  name: {{ include "common.naming.fullname" . }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
   selector:
     matchLabels:
-      {{- include "common.labels.selectorLabels" . | nindent 6 }}
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
@@ -16,35 +16,35 @@ spec:
         {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
-        {{- include "common.labels.podLabels" . | nindent 8 }}
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
     spec:
-      {{- with include "common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "common.securityContext.pod" . }}
+      {{- with include "newrelic.common.securityContext.pod" . }}
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "common.priorityClassName" . }}
+      {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- with include "common.dnsConfig" . }}
+      {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
 
-      hostNetwork: {{ include "common.hostNetwork.value" . }}
-      serviceAccountName: {{ include "common.serviceAccount.name" . }}
+      hostNetwork: {{ include "newrelic.common.hostNetwork.value" . }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
 
       containers:
         {{- /* The integration that sends its metrics to the agent in its sidecar */}}
         - name: {{ .Chart.Name }}
-          {{- with include "common.securityContext.container" . }}
+          {{- with include "newrelic.common.securityContext.container" . }}
           securityContext:
             {{- . | nindent 12 }}
           {{- end }}
-          image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http
@@ -62,20 +62,20 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           env:
             - name: CLUSTER_NAME
-              value: {{ include "common.cluster" . }}
+              value: {{ include "newrelic.common.cluster" . }}
             - name: MY_APP_NON_OPTIONAL_ENV_VAR
-          {{- with include "common.proxy" . }}
+          {{- with include "newrelic.common.proxy" . }}
             - name: MY_APP_PROXY_URL
               value: {{ . | quote }}
           {{- end }}  
-          {{- if include "common.fedramp.enabled" . }}
+          {{- if include "newrelic.common.fedramp.enabled" . }}
             - name: MY_APP_CUSTOM_ENDPOINT
           {{- end }}
 
 
         {{- /* The agent that sends the data from the integration to the backend */}}
         - name: agent
-          image: {{ include "common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext: {}  #Helper needed here
           ports:
@@ -86,8 +86,8 @@ spec:
             - name: NRIA_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "common.license.secretName" . }}
-                  key: {{ include "common.license.secretKeyName" . }}
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
 
             {{- /* At least needed for NRIA_DISPLAY_NAME during special cases below */}}
             - name: "NRI_KUBERNETES_NODE_NAME"
@@ -131,17 +131,17 @@ spec:
       volumes:
         - name: config
           configMap:
-            name: {{ include "common.naming.fullname" . }}-agent-config
+            name: {{ include "newrelic.common.naming.fullname" . }}-agent-config
 
-      {{- with include "common.nodeSelector" . }}
+      {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "common.affinity" . }}
+      {{- with include "newrelic.common.affinity" . }}
       affinity:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "common.tolerations" . }}
+      {{- with include "newrelic.common.tolerations" . }}
       tolerations:
         {{- . | nindent 8 }}
       {{- end }}

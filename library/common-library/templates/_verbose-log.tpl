@@ -9,7 +9,7 @@ Returns "true" if `verbose` is enabled, otherwise "" (empty string)
     {{- if .Values.verboseLog -}}
         {{- /*
             We want only to return when this is true, returning `false` here will template "false" (string) when doing
-            an `(include "common.verboseLog" .)`, which is not an "empty string" so it is `true` if it is used
+            an `(include "newrelic.common.verboseLog" .)`, which is not an "empty string" so it is `true` if it is used
             as an evaluation somewhere else.
         */ -}}
         {{- .Values.verboseLog -}}
@@ -32,7 +32,7 @@ Abstraction of the verbose toggle.
 This helper abstracts the function "common.verboseLog" to return true or false directly.
 */ -}}
 {{- define "newrelic.common.verboseLog.valueAsBoolean" -}}
-{{- if include "common.verboseLog" . -}}
+{{- if include "newrelic.common.verboseLog" . -}}
 true
 {{- else -}}
 false
@@ -46,7 +46,7 @@ Abstraction of the verbose toggle.
 This helper abstracts the function "common.verboseLog" to return 1 or 0 directly.
 */ -}}
 {{- define "newrelic.common.verboseLog.valueAsInt" -}}
-{{- if include "common.verboseLog" . -}}
+{{- if include "newrelic.common.verboseLog" . -}}
 1
 {{- else -}}
 0

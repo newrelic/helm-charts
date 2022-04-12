@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "common.naming.fullname" . }}-examples-lowdatamode
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-lowdatamode
   namespace: {{ .Release.Namespace }}
 data:
   {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
          Take a look to the tests suite "common_library_lowdatamode_test.yaml" to see who this behaves */}}
-  lowDataMode-with-if: {{ if include "common.lowDataMode" . }}enabled{{ else }}disabled{{ end }}
-  lowDataMode-with-quote: {{ include "common.lowDataMode" . | quote }}
-  lowDataMode-with-default: {{ include "common.lowDataMode" . | default "false" | quote }}
+  lowDataMode-with-if: {{ if include "newrelic.common.lowDataMode" . }}enabled{{ else }}disabled{{ end }}
+  lowDataMode-with-quote: {{ include "newrelic.common.lowDataMode" . | quote }}
+  lowDataMode-with-default: {{ include "newrelic.common.lowDataMode" . | default "false" | quote }}

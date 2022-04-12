@@ -2,14 +2,14 @@
 Return the name of the secret holding the License Key.
 */}}
 {{- define "newrelic.common.license.secretName" -}}
-{{ include "common.license._customSecretName" . | default (printf "%s-license" (include "common.naming.fullname" . )) }}
+{{ include "newrelic.common.license._customSecretName" . | default (printf "%s-license" (include "newrelic.common.naming.fullname" . )) }}
 {{- end -}}
 
 {{/*
 Return the name key for the License Key inside the secret.
 */}}
 {{- define "newrelic.common.license.secretKeyName" -}}
-{{ include "common.license._customSecretKey" . | default "licenseKey" }}
+{{ include "newrelic.common.license._customSecretKey" . | default "licenseKey" }}
 {{- end -}}
 
 {{/*

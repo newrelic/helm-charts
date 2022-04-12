@@ -17,7 +17,7 @@
 
 {{- /* Return FedRAMP value directly ready to be templated */ -}}
 {{- define "newrelic.common.fedramp.enabled.value" -}}
-{{- if include "common.fedramp.enabled" . -}}
+{{- if include "newrelic.common.fedramp.enabled" . -}}
 true
 {{- else -}}
 false

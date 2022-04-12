@@ -9,7 +9,7 @@ Returns "true" if `nrStaging` is enabled, otherwise "" (empty string)
     {{- if .Values.nrStaging -}}
         {{- /*
             We want only to return when this is true, returning `false` here will template "false" (string) when doing
-            an `(include "common.nrStaging" .)`, which is not an "empty string" so it is `true` if it is used
+            an `(include "newrelic.common.nrStaging" .)`, which is not an "empty string" so it is `true` if it is used
             as an evaluation somewhere else.
         */ -}}
         {{- .Values.nrStaging -}}
@@ -31,7 +31,7 @@ Returns "true" if `nrStaging` is enabled, otherwise "" (empty string)
 Returns "true" of "false" directly instead of empty string (Helm falsiness) based on the exit of "common.nrStaging"
 */ -}}
 {{- define "newrelic.common.nrStaging.value" -}}
-{{- if include "common.nrStaging" . -}}
+{{- if include "newrelic.common.nrStaging" . -}}
 true
 {{- else -}}
 false

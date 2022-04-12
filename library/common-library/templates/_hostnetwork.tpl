@@ -11,7 +11,7 @@ Returns "true" if `hostNetwork` is enabled, otherwise "" (empty string)
 `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs
 
 We also want only to return when this is true, returning `false` here will template "false" (string) when doing
-an `(include "common.hostNetwork" .)`, which is not an "empty string" so it is `true` if it is used
+an `(include "newrelic.common.hostNetwork" .)`, which is not an "empty string" so it is `true` if it is used
 as an evaluation somewhere else.
 */ -}}
 {{- if get .Values "hostNetwork" | kindIs "bool" -}}
@@ -31,7 +31,7 @@ Abstraction of the hostNetwork toggle.
 This helper abstracts the function "common.hostNetwork" to return true or false directly.
 */ -}}
 {{- define "newrelic.common.hostNetwork.value" -}}
-{{- if include "common.hostNetwork" . -}}
+{{- if include "newrelic.common.hostNetwork" . -}}
 true
 {{- else -}}
 false

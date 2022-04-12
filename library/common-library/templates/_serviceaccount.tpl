@@ -56,8 +56,8 @@ true
     {{- end -}}
 {{- end -}}
 
-{{- if (include "common.serviceAccount.create" .) -}}
-    {{- $localServiceAccount | default $globalServiceAccount | default (include "common.naming.fullname" .) -}}
+{{- if (include "newrelic.common.serviceAccount.create" .) -}}
+    {{- $localServiceAccount | default $globalServiceAccount | default (include "newrelic.common.naming.fullname" .) -}}
 {{- else -}}
     {{- $localServiceAccount | default $globalServiceAccount | default "default" -}}
 {{- end -}}
