@@ -1,6 +1,6 @@
 {{/*
-This is an auxilir funtion to be called directly with a string just to truncate strings to
-63 chars because some Kubernetes name fields are limited by the DNS naming spec.
+This is an function to be called directly with a string just to truncate strings to
+63 chars because some Kubernetes name fields are limited to that.
 */}}
 {{- define "newrelic.common.naming.trucateToDNS" -}}
 {{- . | trunc 63 | trimSuffix "-" }}
@@ -33,7 +33,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- else -}}
     {{- $name = include "newrelic.common.naming.name" .  -}}
     {{- if not ( contains $name .Release.Name ) -}}
-        {{- $name = printf "%s-%s" .Release.Name (include "newrelic.common.naming.name" .)}}
+        {{- $name = printf "%s-%s" .Release.Name $name .}}
     {{- end -}}
 {{- end -}}
 
