@@ -22,7 +22,8 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 
 {{/*
 Create a default fully qualified app name.
-By default the full name will be "<release_name>-<chart_chart>". This could change if fullnameOverride or
+By default the full name will be "<release_name>" just in if it has the chart name included in that, if not
+it will be concatenated like "<release_name>-<chart_chart>". This could change if fullnameOverride or
 nameOverride are set.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
