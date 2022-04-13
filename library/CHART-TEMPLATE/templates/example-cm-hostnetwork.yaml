@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "common.naming.fullname" . }}-hostnetwork-examples
+  name: {{ include "newrelic.common.naming.fullname" . }}-hostnetwork-examples
   namespace: {{ .Release.Namespace }}
 data:
   {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
  Take a look to the tests suite "common_library_hostnetwork_deployment_test.yaml" to see who this behaves */}}
-  hostNetwork-with-if: {{ if include "common.hostNetwork" . }}enabled{{ else }}disabled{{ end }}
-  hostNetwork-with-quote: {{ include "common.hostNetwork" . | quote }}
-  hostNetwork-with-default: {{ include "common.hostNetwork" . | default "false" | quote }}
-  hostNetwork-value: {{ include "common.hostNetwork.value" . | quote }}
+  hostNetwork-with-if: {{ if include "newrelic.common.hostNetwork" . }}enabled{{ else }}disabled{{ end }}
+  hostNetwork-with-quote: {{ include "newrelic.common.hostNetwork" . | quote }}
+  hostNetwork-with-default: {{ include "newrelic.common.hostNetwork" . | default "false" | quote }}
+  hostNetwork-value: {{ include "newrelic.common.hostNetwork.value" . | quote }}

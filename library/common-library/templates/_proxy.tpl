@@ -1,5 +1,5 @@
 {{- /* Defines the proxy */ -}}
-{{- define "common.proxy" -}}
+{{- define "newrelic.common.proxy" -}}
 {{- if .Values.proxy -}}
 {{- .Values.proxy -}}
 {{- else if .Values.global -}}

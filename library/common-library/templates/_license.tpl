@@ -1,22 +1,22 @@
 {{/*
 Return the name of the secret holding the License Key.
 */}}
-{{- define "common.license.secretName" -}}
-{{ include "common.license._customSecretName" . | default (printf "%s-license" (include "common.naming.fullname" . )) }}
+{{- define "newrelic.common.license.secretName" -}}
+{{ include "newrelic.common.license._customSecretName" . | default (printf "%s-license" (include "newrelic.common.naming.fullname" . )) }}
 {{- end -}}
 
 {{/*
 Return the name key for the License Key inside the secret.
 */}}
-{{- define "common.license.secretKeyName" -}}
-{{ include "common.license._customSecretKey" . | default "licenseKey" }}
+{{- define "newrelic.common.license.secretKeyName" -}}
+{{ include "newrelic.common.license._customSecretKey" . | default "licenseKey" }}
 {{- end -}}
 
 {{/*
 Return local licenseKey if set, global otherwise.
 This helper is for internal use.
 */}}
-{{- define "common.license._licenseKey" -}}
+{{- define "newrelic.common.license._licenseKey" -}}
 {{- if .Values.licenseKey -}}
   {{- .Values.licenseKey -}}
 {{- else if .Values.global -}}
@@ -30,7 +30,7 @@ This helper is for internal use.
 Return the name of the secret holding the License Key.
 This helper is for internal use.
 */}}
-{{- define "common.license._customSecretName" -}}
+{{- define "newrelic.common.license._customSecretName" -}}
 {{- if .Values.customSecretName -}}
   {{- .Values.customSecretName -}}
 {{- else if .Values.global -}}
@@ -44,7 +44,7 @@ This helper is for internal use.
 Return the name key for the License Key inside the secret.
 This helper is for internal use.
 */}}
-{{- define "common.license._customSecretKey" -}}
+{{- define "newrelic.common.license._customSecretKey" -}}
 {{- if .Values.customSecretLicenseKey -}}
   {{- .Values.customSecretLicenseKey -}}
 {{- else if .Values.global -}}

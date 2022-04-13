@@ -1,5 +1,5 @@
 {{- /* Defines the pod priorityClassName */ -}}
-{{- define "common.priorityClassName" -}}
+{{- define "newrelic.common.priorityClassName" -}}
 {{- if .Values.priorityClassName -}}
 {{- .Values.priorityClassName -}}
 {{- else if .Values.global -}}

@@ -1,24 +1,24 @@
 {{/*
 This helper should return the defaults that all agents should have
 */}}
-{{- define "common.agentConfig.defaults" -}}
-{{- if include "common.verboseLog" . }}
+{{- define "newrelic.common.agentConfig.defaults" -}}
+{{- if include "newrelic.common.verboseLog" . }}
 verbose: 1
 {{- end }}
 
-{{- if (include "common.nrStaging" . ) }}
+{{- if (include "newrelic.common.nrStaging" . ) }}
 staging: true
 {{- end }}
 
-{{- with include "common.proxy" . }}
+{{- with include "newrelic.common.proxy" . }}
 proxy: {{ . | quote }}
 {{- end }}
 
-{{- with include "common.fedramp.enabled" . }}
+{{- with include "newrelic.common.fedramp.enabled" . }}
 fedramp: {{ . }}
 {{- end }}
 
-{{- with fromYaml ( include "common.customAttributes" . ) }}
+{{- with fromYaml ( include "newrelic.common.customAttributes" . ) }}
 custom_attributes:
   {{- toYaml . | nindent 2 }}
 {{- end }}

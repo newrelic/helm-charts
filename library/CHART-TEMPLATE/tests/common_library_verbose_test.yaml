@@ -20,8 +20,11 @@ asserts:
   path: data.verboseLog-with-default
   value: "false"
   - equal:
-  path: data.verboseLog-value
-  value: "false"
+  path: data.verboseLog-boolean-value
+  value: false
+  - equal:
+  path: data.verboseLog-integer-value
+  value: 0
 
   - it: Is false with everything null
 set:
@@ -38,8 +41,11 @@ asserts:
   path: data.verboseLog-with-default
   value: "false"
   - equal:
-  path: data.verboseLog-value
-  value: "false"
+  path: data.verboseLog-boolean-value
+  value: false
+  - equal:
+  path: data.verboseLog-integer-value
+  value: 0
 
   - it: Enable verboseLog (globally)
 set:
@@ -56,8 +62,11 @@ asserts:
   path: data.verboseLog-with-default
   value: "true"
   - equal:
-  path: data.verboseLog-value
-  value: "true"
+  path: data.verboseLog-boolean-value
+  value: true
+  - equal:
+  path: data.verboseLog-integer-value
+  value: 1
 
   - it: Enable verboseLog (locally)
 set:
@@ -73,8 +82,11 @@ asserts:
   path: data.verboseLog-with-default
   value: "true"
   - equal:
-  path: data.verboseLog-value
-  value: "true"
+  path: data.verboseLog-boolean-value
+  value: true
+  - equal:
+  path: data.verboseLog-integer-value
+  value: 1
 
   - it: Overrides to false the global state locally
 set:
@@ -92,8 +104,11 @@ asserts:
   path: data.verboseLog-with-default
   value: "false"
   - equal:
-  path: data.verboseLog-value
-  value: "false"
+  path: data.verboseLog-boolean-value
+  value: false
+  - equal:
+  path: data.verboseLog-integer-value
+  value: 0
 
   - it: Overrides to true the global state locally
 set:
@@ -111,5 +126,8 @@ asserts:
   path: data.verboseLog-with-default
   value: "true"
   - equal:
-  path: data.verboseLog-value
-  value: "true"
+  path: data.verboseLog-boolean-value
+  value: true
+  - equal:
+  path: data.verboseLog-integer-value
+  value: 1

@@ -1,5 +1,5 @@
 {{- /* Defines the Pod tolerations */ -}}
-{{- define "common.tolerations" -}}
+{{- define "newrelic.common.tolerations" -}}
 {{- if .Values.tolerations -}}
 {{- toYaml .Values.tolerations -}}
 {{- else if .Values.global -}}
