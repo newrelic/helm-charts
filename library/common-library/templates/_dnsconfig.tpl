@@ -1,5 +1,5 @@
 {{- /* Defines the Pod dnsConfig */ -}}
-{{- define "common.dnsConfig" -}}
+{{- define "newrelic.common.dnsConfig" -}}
     {{- if .Values.dnsConfig -}}
         {{- toYaml .Values.dnsConfig -}}
     {{- else if .Values.global -}}

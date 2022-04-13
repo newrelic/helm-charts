@@ -1,5 +1,5 @@
 {{- /* Defines if the service account has to be created or not */ -}}
-{{- define "common.serviceAccount.create" -}}
+{{- define "newrelic.common.serviceAccount.create" -}}
 {{- $valueFound := false -}}
 
 {{- /* Look for a global creation of a service account */ -}}
@@ -33,19 +33,14 @@
 
 {{- /* In case no serviceAccount value has been found, default to "true" */ -}}
 {{- if not $valueFound -}}
-  {{- include "common.serviceAccount.createDefaultOverride" . -}}
-{{- end -}}
-{{- end -}}
-
-
-{{- /* Defines the default if a service account should be created or not */ -}}
-{{- define "common.serviceAccount.createDefaultOverride" -}}
 true
 {{- end -}}
+{{- end -}}
+
 
 
 {{- /* Defines the name of the service account */ -}}
-{{- define "common.serviceAccount.name" -}}
+{{- define "newrelic.common.serviceAccount.name" -}}
 {{- $localServiceAccount := "" -}}
 {{- if get .Values "serviceAccount" | kindIs "map" -}}
     {{- if (get .Values.serviceAccount "name" | kindIs "string") -}}
@@ -61,8 +56,8 @@ true
     {{- end -}}
 {{- end -}}
 
-{{- if (include "common.serviceAccount.create" .) -}}
-    {{- $localServiceAccount | default $globalServiceAccount | default (include "common.naming.fullname" .) -}}
+{{- if (include "newrelic.common.serviceAccount.create" .) -}}
+    {{- $localServiceAccount | default $globalServiceAccount | default (include "newrelic.common.naming.fullname" .) -}}
 {{- else -}}
     {{- $localServiceAccount | default $globalServiceAccount | default "default" -}}
 {{- end -}}
@@ -71,7 +66,7 @@ true
 
 
 {{- /* Merge the global and local annotations for the service account */ -}}
-{{- define "common.serviceAccount.annotations" -}}
+{{- define "newrelic.common.serviceAccount.annotations" -}}
 {{- $localServiceAccount := dict -}}
 {{- if get .Values "serviceAccount" | kindIs "map" -}}
     {{- if get .Values.serviceAccount "annotations" -}}
