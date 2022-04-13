@@ -1,10 +1,20 @@
 {{/*
+This is an auxilir funtion to be called directly with a string just to truncate strings to
+63 chars because some Kubernetes name fields are limited by the DNS naming spec.
+*/}}
+{{- define "newrelic.common.naming.trucateToDNS" -}}
+{{- . | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+
+
+{{/*
 Expand the name of the chart.
 Uses the Chart name by default if nameOverride is not set.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
 */}}
 {{- define "newrelic.common.naming.name" -}}
-{{- .Values.nameOverride | default .Chart.Name | trunc 63 | trimSuffix "-" }}
+{{- include "newrelic.common.naming.trucateToDNS" ( .Values.nameOverride | default .Chart.Name ) -}}
 {{- end }}
 
 
@@ -18,13 +28,16 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 {{- define "newrelic.common.naming.fullname" -}}
 {{- $name := "" }}
 
-{{- if .Values.fullnameOverride }}
-    {{- $name = .Values.fullnameOverride  }}
-{{- else }}
-    {{- $name = printf "%s-%s" .Release.Name (include "newrelic.common.naming.name" .)}}
-{{- end }}
+{{- if .Values.fullnameOverride -}}
+    {{- $name = .Values.fullnameOverride  -}}
+{{- else -}}
+    {{- $name = include "newrelic.common.naming.name" .  -}}
+    {{- if not ( contains $name .Release.Name ) -}}
+        {{- $name = printf "%s-%s" .Release.Name (include "newrelic.common.naming.name" .)}}
+    {{- end -}}
+{{- end -}}
 
-{{- $name | trunc 63 | trimSuffix "-" }}
+{{- include "newrelic.common.naming.trucateToDNS" $name -}}
 
 {{- end }}
 
