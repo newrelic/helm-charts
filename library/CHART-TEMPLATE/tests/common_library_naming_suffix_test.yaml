@@ -1,0 +1,30 @@
+suite: test suffix naming helper
+templates:
+  - templates/job.yaml
+release:
+  name: release
+tests:
+
+  - it: suffix is included
+    set:
+      fullnameOverride: fno
+    asserts:
+      - equal:
+          path: metadata.name
+          value: fno-job-suffix
+
+  - it: name is truncated but suffix included
+    set:
+      fullnameOverride: including-full-name-as-it-is-would-way-be-longer-than-limit
+    asserts:
+      - equal:
+          path: metadata.name
+          value: including-full-name-as-it-is-would-way-be-longer-than-job-suffix
+
+  - it: fails when suffix is too long
+    set:
+      fullnameOverride: fno
+      jobSuffix: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at-it-is
+    asserts:
+      - failedTemplate:
+          errorMessage: (newrelic.common.naming.truncateToDNSWithSuffix) suffix length is too long to compose a valid name
