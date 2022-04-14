@@ -19,7 +19,7 @@ Usage:
 {{- $maxLen := (sub 63 (len .suffix)) -}}
 
 {{- if (lt $maxLen 1) -}}
-    {{ fail "(newrelic.common.naming.truncateToDNSWithSuffix) suffix length is too long to compose a valid name" }}
+    {{ fail (printf "The suffix chosen (%s) is hitting the Kubernetes limit of 63 chars for the object name. We cannot create %s-%s" .suffix .name .suffix) }}
 {{- end -}}
 
 {{- $newName := .name | trunc ($maxLen | int) | trimSuffix "-"  -}}
