@@ -21,10 +21,11 @@ tests:
           path: metadata.name
           value: including-full-name-as-it-is-would-way-be-longer-than-job-suffix
 
-  - it: fails when suffix is too long
+  - it: suffix is longer than maximum length supported
     set:
       fullnameOverride: fno
       jobSuffix: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at-it-is
     asserts:
-      - failedTemplate:
-          errorMessage: The suffix chosen (this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at-it-is) is hitting the Kubernetes limit of 63 chars for the object name. We cannot create fno-this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at-it-is
+      - equal:
+          path: metadata.name
+          value: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at

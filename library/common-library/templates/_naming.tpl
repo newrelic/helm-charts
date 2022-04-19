@@ -11,19 +11,20 @@ This is an function to be called directly with a string just to truncate strings
 {{- /*
 Given a name and a suffix returns a 'DNS Valid' which always include the suffix, truncating the name if needed.
 We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
-It fails if suffix is too long to fint in the limit set.
+If suffix is too long it gets truncated but it al`ays takes precedence over name, so a 63 chars suffix would suppress the name.
 Usage:
 {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "<my-name>" "suffix" "my-suffix" ) }}
 */ -}}
 {{- define "newrelic.common.naming.truncateToDNSWithSuffix" -}}
-{{- $maxLen := (sub 63 (len .suffix)) -}}
-
-{{- if (lt $maxLen 1) -}}
-    {{ fail (printf "The suffix chosen (%s) is hitting the Kubernetes limit of 63 chars for the object name. We cannot create %s-%s" .suffix .name .suffix) }}
-{{- end -}}
+{{- $suffix := (include "newrelic.common.naming.trucateToDNS" .suffix) -}}
+{{- $maxLen := (sub 63 (len $suffix)) -}}
 
 {{- $newName := .name | trunc ($maxLen | int) | trimSuffix "-"  -}}
-{{- printf "%s-%s" $newName .suffix -}}
+{{- if $newName -}}
+{{- printf "%s-%s" $newName $suffix -}}
+{{- else -}}
+{{ $suffix }}
+{{- end -}}
 
 {{- end -}}
 
