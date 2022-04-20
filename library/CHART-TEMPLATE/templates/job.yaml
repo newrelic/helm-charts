@@ -1,0 +1,13 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" (.Values.jobSuffix | default "job-suffix") ) }}
+spec:
+  template:
+    spec:
+      containers:
+      - name: echo-job
+        image: alpine
+        command: ["echo",  "Hi there!"]
+      restartPolicy: Never
+  backoffLimit: 4

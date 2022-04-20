@@ -8,6 +8,28 @@ This is an function to be called directly with a string just to truncate strings
 
 
 
+{{- /*
+Given a name and a suffix returns a 'DNS Valid' which always include the suffix, truncating the name if needed.
+We truncate at 63 chars because some Kubernetes name fields are limited to this (by the DNS naming spec).
+If suffix is too long it gets truncated but it always takes precedence over name, so a 63 chars suffix would suppress the name.
+Usage:
+{{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "<my-name>" "suffix" "my-suffix" ) }}
+*/ -}}
+{{- define "newrelic.common.naming.truncateToDNSWithSuffix" -}}
+{{- $suffix := (include "newrelic.common.naming.trucateToDNS" .suffix) -}}
+{{- $maxLen := (sub 63 (len $suffix)) -}}
+
+{{- $newName := .name | trunc ($maxLen | int) | trimSuffix "-"  -}}
+{{- if $newName -}}
+{{- printf "%s-%s" $newName $suffix -}}
+{{- else -}}
+{{ $suffix }}
+{{- end -}}
+
+{{- end -}}
+
+
+
 {{/*
 Expand the name of the chart.
 Uses the Chart name by default if nameOverride is not set.
