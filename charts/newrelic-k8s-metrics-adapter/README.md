@@ -1,5 +1,7 @@
 # newrelic-k8s-metrics-adapter
 
+**[DEPRECATED]** This chart was moved into the [New Relic Metrics Adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) repository.
+
 ## Chart Details
 
 This chart will deploy the [New Relic Metrics Adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter), which implements the `external.metrics.k8s.io` API to support the use of external metrics based New Relic NRQL queries.
