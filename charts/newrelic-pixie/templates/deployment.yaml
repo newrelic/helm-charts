@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: {{ template "newrelic-pixie.fullname" . }}
   namespace: {{ template "newrelic-pixie.namespace" . }}
+  annotations:
+  {{- if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 4 }}
+  {{- end }}
   labels:
     {{- include "newrelic-pixie.labels" . | nindent 4 }}
 spec:

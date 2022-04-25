@@ -4,6 +4,10 @@ kind: Deployment
 metadata:
   name: {{ template "nri-prometheus.fullname" . }}
   namespace: {{ .Release.Namespace }}
+  annotations:
+  {{- if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 4 }}
+  {{- end }}
   labels:
 {{ include "nri-prometheus.labels" . | indent 4 }}
 spec:

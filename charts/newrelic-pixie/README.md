@@ -29,6 +29,7 @@ By default, Pixie is installed in the `pl` namespace.
 | `proxy`                                                    | Set proxy to connect to Pixie Cloud and New Relic.                                                                                                                                                 |                       |
 | `excludeNamespacesRegex`                                   | Observability data for namespaces matching this RE2 regex is not sent to New Relic. If empty, observability data for all namespaces is sent to New Relic.                                          |                       |
 | `excludePodsRegex`                                         | Observability data for pods (across all namespaces) matching this RE2 regex is not sent to New Relic. If empty, observability data for all pods (in non-excluded namespaces) is sent to New Relic. |                       |
+| `annotations`                                    | The annotations to add to the `Deployment`.                                                                                                                                                                                                        |                                                                                     |
 
 ## Example
 

@@ -38,6 +38,7 @@ This chart will deploy the New Relic Events Routers as a Deployment.
 | `config`                                                   | Set config option in order to pass any configuration to the agent running as a sidecar. This object is map as a configuration map mounted in /etc/newrelic-infra.yml.                                                                          |                                 |
 | `deployment.annotations`                                   | The annotations to add to the `Deployment`.                                                                                                                                                                                                    | `{}`                            |
 | `customAttributes.*`                                       | Custom attributes/Extra Label that will be added to all the metrics sent by Kube events. Queryable in New Relic.                                                                                                                               | `{}`                            |
+| `annotations`                                    | The annotations to add to the `Deployment`.                                                                                                                                                                                                        |                                                                                     |
 
 ## Example
 

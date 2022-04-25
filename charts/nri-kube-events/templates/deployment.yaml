@@ -7,8 +7,8 @@ metadata:
   labels:
 {{ include "nri-kube-events.labels" . | indent 4 }}
   annotations:
-  {{- if .Values.deployment.annotations }}
-{{ toYaml .Values.deployment.annotations | indent 4 }}
+  {{- if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 4 }}
   {{- end }}
 spec:
   replicas: 1

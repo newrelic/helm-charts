@@ -31,6 +31,7 @@ This chart will deploy the New Relic's Prometheus OpenMetrics Integration.
 | `prometheusScrape`                                         | Value for `prometheus.io/scrape` label                                                                                                                                                                                                | true                                   |
 | `global.nrStaging` - `nrStaging`                           | Send data to staging (requires a staging license key)                                                                                                                                                                                 | false                                  |
 | `config.*`                           | Set values used in the configMap                                                                                                                                                                             |                                   |
+| `annotations`                                    | The annotations to add to the `Deployment`.                                                                                                                                                                                                        |                                                                                     |
 ## Example
 
 

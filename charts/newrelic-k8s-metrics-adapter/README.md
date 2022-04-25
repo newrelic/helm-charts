@@ -1,7 +1,5 @@
 # newrelic-k8s-metrics-adapter
 
-**[DEPRECATED]** This chart was moved into the [New Relic Metrics Adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) repository.
-
 ## Chart Details
 
 This chart will deploy the [New Relic Metrics Adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter), which implements the `external.metrics.k8s.io` API to support the use of external metrics based New Relic NRQL queries.
@@ -46,6 +44,7 @@ This chart will deploy the [New Relic Metrics Adapter](https://github.com/newrel
 | `config.externalMetrics{}`                                                      | ExternalMetrics contains all the external metrics definition of the adapter. Each key of the externalMetric entry represents the metric name and contains the parameters that defines it.                                                                                                                                                   | See External metric below                                                                            |
 | `config.externalMetrics{}.query`                                                | NRQL query that will executed to obtain the metric value. The query must return just one value so is recommended to use aggregator functions like average or latest.                                                                                                                                                                        |                                                                                                      |
 | `config.externalMetrics{}.removeClusterFilter`                                  | Disable the cluster filter added to the query by default. Use when metrics doesn't below to the cluster and doesn't have the clusterName attribute.                                                                                                                                                                                         | `false`                                                                                              |
+| `annotations`                                    | The annotations to add to the `Deployment`.                                                                                                                                                                                                        |                                                                                     |
 
 
 

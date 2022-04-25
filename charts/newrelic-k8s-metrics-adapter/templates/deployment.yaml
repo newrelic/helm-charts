@@ -2,6 +2,10 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: {{ template "newrelic-k8s-metrics-adapter.fullname" . }}
+  annotations:
+  {{- if .Values.annotations }}
+{{ toYaml .Values.annotations | indent 4 }}
+  {{- end }}
   labels:
     {{- include "newrelic-k8s-metrics-adapter.labels" . | nindent 4 }}
 spec:
