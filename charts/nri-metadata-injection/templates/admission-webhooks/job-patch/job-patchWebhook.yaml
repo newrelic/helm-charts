@@ -2,20 +2,21 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "nri-metadata-injection.fullname" . }}-admission-patch
+  name: {{ template "nri-metadata-injection.fullname" . }}
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
     "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
   labels:
-    app: {{ template "nri-metadata-injection.name" $ }}-admission-patch
+    app: {{ template "nri-metadata-injection.name" $ }}
+    action: admission-patch
 {{ include "nri-metadata-injection.labels" $ | indent 4 }}
 spec:
   template:
     metadata:
-      name: {{ template "nri-metadata-injection.fullname" . }}-admission-patch
       labels:
-        app: {{ template "nri-metadata-injection.name" $ }}-admission-patch
+        app: {{ template "nri-metadata-injection.name" $ }}
+        action: admission-patch
 {{ include "nri-metadata-injection.labels" $ | indent 8 }}
     spec:
       {{- if .Values.jobImage.pullSecrets }}
@@ -42,7 +43,7 @@ spec:
       {{- include "tplvalues.render" ( dict "value" .Values.jobImage.volumes "context" $ ) | nindent 8 }}
       {{- end }}
       restartPolicy: OnFailure
-      serviceAccountName: {{ template "nri-metadata-injection.fullname" . }}-admission
+      serviceAccountName: {{ template "nri-metadata-injection.fullname" . }}-sa
       securityContext:
         runAsGroup: 2000
         runAsNonRoot: true
