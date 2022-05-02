@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "nri-metadata-injection.fullname" . }}
+  name: {{ template "nri-metadata-injection.fullname" . }}-patch
   namespace: {{ .Release.Namespace }}
   annotations:
     "helm.sh/hook": post-install,post-upgrade
@@ -43,7 +43,7 @@ spec:
       {{- include "tplvalues.render" ( dict "value" .Values.jobImage.volumes "context" $ ) | nindent 8 }}
       {{- end }}
       restartPolicy: OnFailure
-      serviceAccountName: {{ template "nri-metadata-injection.fullname" . }}-sa
+      serviceAccountName: {{ template "nri-metadata-injection.fullname" . }}
       securityContext:
         runAsGroup: 2000
         runAsNonRoot: true
