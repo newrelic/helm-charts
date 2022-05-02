@@ -32,7 +32,7 @@ Usage:
 This is the same as the idiomatic `CHART-NAME.chart` that is created when you use `helm create`.
 
 It is mostly useless for chart writers. It is used internally for templating the labels but there
-is no reason to keep them "private".
+is no reason to keep it "private".
 
 Usage:
 ```mustache
@@ -101,7 +101,7 @@ spec:
 
 ## _priority-class-name.tpl
 ### `newrelic.common.priorityClassName`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   priorityClassName: ""
@@ -124,7 +124,7 @@ spec:
 
 ## _hostnetwork.tpl
 ### `newrelic.common.hostNetwork`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   hostNetwork:  # Note that this is empty (nil)
@@ -159,7 +159,7 @@ spec:
 
 ## _dnsconfig.tpl
 ### `newrelic.common.dnsConfig`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   dnsConfig: {}
@@ -283,7 +283,7 @@ Usage:
 ## _serviceaccount.tpl
 These functions are used to evaluate if the service account should be created, with which name and add annotations to it.
 
-The functions that the common library has implemented for serve account are:
+The functions that the common library has implemented for service accounts are:
 * `newrelic.common.serviceAccount.create`
 * `newrelic.common.serviceAccount.name`
 * `newrelic.common.serviceAccount.annotations`
@@ -308,8 +308,9 @@ metadata:
 
 
 ## _affinity.tpl, _nodeselector.tpl and _tolerations.tpl
-There three files are almost equal, follow the idiomatic way that `helm create` creates by
-default. It also looks if there is a global value like other helpers.
+These three files are almost the same and they follow the idiomatic way of `helm create`.
+
+Each function also looks if there is a global value like the other helpers.
 ```yaml
 global:
   affinity: {}
@@ -320,7 +321,7 @@ nodeSelector: {}
 tolerations: []
 ```
 
-The values here are replaced. if a value at root level is found, the global one is ignored.
+The values here are replaced instead of be merged. If a value at root level is found, the global one is ignored.
 
 Usage (example in a pod spec):
 ```mustache
@@ -343,7 +344,7 @@ spec:
 
 ## _agent-config.tpl
 ### `newrelic.common.agentConfig.defaults`
-This returns a YAML that the agent can use directly as a config that includes other options from the values file li verbose mode,
+This returns a YAML that the agent can use directly as a config that includes other options from the values file like verbose mode,
 custom attributes, FedRAMP and such.
 
 Usage:
@@ -446,7 +447,8 @@ spec:
 This function templates the secret that is used by agents and integrations with the license Key provided by the user. It will
 template nothing (empty string) if the user provides a custom pair of secret name and key.
 
-This template also does the safety checks of failing in case the user has not provided any license key or custom secret.
+This template also fails in case the user has not provided any license key or custom secret so no safety checks have to be done
+by chart writers.
 
 You just must have a template with these two lines:
 ```mustache
@@ -458,7 +460,7 @@ You just must have a template with these two lines:
 
 ## _low-data-mode.tpl
 ### `newrelic.common.lowDataMode`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   lowDataMode:  # Note that this is empty (nil)
@@ -479,7 +481,7 @@ Usage:
 
 ## _privileged.tpl
 ### `newrelic.common.privileged`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   privileged:  # Note that this is empty (nil)
@@ -521,8 +523,8 @@ Usage:
 
 
 ## _security-context.tpl
-These functions are to share a security context for all the charts in YAML format. Useful in clusters that have security
-enforced to not use the root user like OpenShift or users that had set an admission webhook.
+Use these functions to share the security context among all charts. Useful in clusters that have security enforcing not to
+use the root user (like OpenShift) or users that have an admission webhooks.
 
 The functions are:
 * `newrelic.common.securityContext.container`
@@ -530,7 +532,6 @@ The functions are:
 
 Usage:
 ```mustache
-f and (.Values.controlPlane.enabled) (not (include "newrelic.fargate" .)) }}
 apiVersion: v1
 kind: Pod
 metadata:
@@ -554,7 +555,7 @@ spec:
 
 ## _staging.tpl
 ### `newrelic.common.nrStaging`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   nrStaging:  # Note that this is empty (nil)
@@ -583,7 +584,7 @@ Usage:
 
 ## _verbose-log.tpl
 ### `newrelic.common.verboseLog`
-Like almost everything in this library, it read global and local variables:
+Like almost everything in this library, it reads global and local variables:
 ```yaml
 global:
   verboseLog:  # Note that this is empty (nil)
@@ -599,7 +600,7 @@ Usage:
 ```
 
 ### `newrelic.common.verboseLog.valueAsBoolean`
-Returns true if staging is enabled or false if not. This is to have the staging value ready to be templated as a boolean
+Returns true if verbose is enabled or false if not. This is to have the verbose value ready to be templated as a boolean
 
 Usage:
 ```mustache
@@ -607,7 +608,7 @@ Usage:
 ```
 
 ### `newrelic.common.verboseLog.valueAsInt`
-Returns 1 if staging is enabled or 0 if not. This is to have the staging value ready to be templated as an integer
+Returns 1 if verbose is enabled or 0 if not. This is to have the verbose value ready to be templated as an integer
 
 Usage:
 ```mustache
