@@ -12,7 +12,7 @@ A Helm chart for Kubernetes showing how to use/implement the common-library
 |------------|------|---------|
 | file://../common-library | common-library | 1.0.3 |
 
-Note that calues in this chart is not important:
+Note that the values in this chart are not important:
 This is a example of a chart and how to used it combined with the `common-library`. Values are simply to test
 that the charts are templating correctly and to do unittest over the common-library.
 
