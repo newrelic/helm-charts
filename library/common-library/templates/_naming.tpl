@@ -2,7 +2,7 @@
 This is an function to be called directly with a string just to truncate strings to
 63 chars because some Kubernetes name fields are limited to that.
 */}}
-{{- define "newrelic.common.naming.trucateToDNS" -}}
+{{- define "newrelic.common.naming.truncateToDNS" -}}
 {{- . | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
@@ -16,7 +16,7 @@ Usage:
 {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "<my-name>" "suffix" "my-suffix" ) }}
 */ -}}
 {{- define "newrelic.common.naming.truncateToDNSWithSuffix" -}}
-{{- $suffix := (include "newrelic.common.naming.trucateToDNS" .suffix) -}}
+{{- $suffix := (include "newrelic.common.naming.truncateToDNS" .suffix) -}}
 {{- $maxLen := (sub 63 (len $suffix)) -}}
 
 {{- $newName := .name | trunc ($maxLen | int) | trimSuffix "-"  -}}
@@ -37,7 +37,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
 */}}
 {{- define "newrelic.common.naming.name" -}}
 {{- $name := .Values.nameOverride | default .Chart.Name -}}
-{{- include "newrelic.common.naming.trucateToDNS" $name -}}
+{{- include "newrelic.common.naming.truncateToDNS" $name -}}
 {{- end }}
 
 
@@ -58,7 +58,7 @@ We truncate at 63 chars because some Kubernetes name fields are limited to this 
     {{- $name = printf "%s-%s" .Release.Name $name -}}
 {{- end -}}
 
-{{- include "newrelic.common.naming.trucateToDNS" $name -}}
+{{- include "newrelic.common.naming.truncateToDNS" $name -}}
 
 {{- end -}}
 

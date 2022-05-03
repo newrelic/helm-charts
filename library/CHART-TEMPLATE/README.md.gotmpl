@@ -1,0 +1,38 @@
+[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+{{ template "chart.sourcesSection" . }}
+
+{{ template "chart.requirementsSection" . }}
+
+Note that values in this chart are not important:
+This is an example of a chart and how to use it combined with the `common-library`. Values are simply to test
+that the charts are templating correctly and to do unittest over the common-library.
+
+# Chart particularities
+
+Here is where you should add particularities for this chart like what does the chart do with the privileged and
+low data modes or any other quirk that it could have.
+
+{{ template "chart.valuesSection" . }}
+
+{{ if .Maintainers }}
+## Maintainers
+{{ range .Maintainers }}
+{{- if .Name }}
+{{- if .Url }}
+* [{{ .Name }}]({{ .Url }})
+{{- else }}
+* {{ .Name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
