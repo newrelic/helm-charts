@@ -12,8 +12,19 @@ the functions/templates that we have implemented, what they do and how to use th
 
 ## Values managed globally
 
-Here is a list of options that you can set globally and affect all the charts in the `nri-bundle` (and this chart) at the same time while being
-able to override the behavior for this chart only.
+We want to have a seamless experience through all the charts so we created this library that tries to standardize the behaviour
+of all the charts. Sadly, because of the complexity of all these integrations, not all the charts behave exactly as expected.
+
+An example is `newrelic-infrastructure` that ignores `hostNetwork` in the control plane scraper because most of the users has the
+control plane listening in the node to `localhost`.
+
+For each chart that has a special behavior (or further information of the behavior) there is a "chart particularities" section
+in its README.md that explains which is the expected behavior.
+
+At the time of writing this, all the charts from `nri-bundle` except `newrelic-logging` and `synthetics-minion` implements this
+library and honors global options as described in this document.
+
+Here is a list of global options:
 
 | Global keys | Local keys | Default | Merged[<sup>1</sup>](#values-managed-globally-1) | Description |
 |-------------|------------|---------|--------------------------------------------------|-------------|

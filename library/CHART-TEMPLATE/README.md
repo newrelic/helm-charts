@@ -12,9 +12,14 @@ A Helm chart for Kubernetes showing how to use/implement the common-library
 |------------|------|---------|
 | file://../common-library | common-library | 1.0.3 |
 
-Note that the values in this chart are not important:
-This is a example of a chart and how to used it combined with the `common-library`. Values are simply to test
+Note that values in this chart are not important:
+This is an example of a chart and how to use it combined with the `common-library`. Values are simply to test
 that the charts are templating correctly and to do unittest over the common-library.
+
+# Chart particularities
+
+Here is where you should add particularities for this chart like what does the chart do with the privileged and
+low data modes or any other quirk that it could have.
 
 ## Values
 
@@ -48,6 +53,8 @@ that the charts are templating correctly and to do unittest over the common-libr
 | podSecurityContext | object | `{}` |  |
 | resources | object | `{}` |  |
 | securityContext | object | `{}` |  |
+| service.port | int | `80` |  |
+| service.type | string | `"ClusterIP"` |  |
 | serviceAccount.annotations | string | `nil` |  |
 | serviceAccount.create | string | `nil` |  |
 | serviceAccount.name | string | `nil` |  |
@@ -56,11 +63,11 @@ that the charts are templating correctly and to do unittest over the common-libr
 
 ## Maintainers
 
-* [Alvaro Cabanas](https://github.com/alvarocabanas)
-* [Carlos Castro](https://github.com/carlossscastro)
-* [Christian Felipe](https://github.com/sigilioso)
-* [Guillermo Sanchez](https://github.com/gsanchezgavier)
-* [Juan Manuel Perez](https://github.com/kang-makes)
-* [Marc Sanmiquel](https://github.com/marcsanmi)
-* [Paolo Gallina](https://github.com/paologallinaharbur)
-* [Roberto Santalla](https://github.com/roobre)
+* [alvarocabanas](https://github.com/alvarocabanas)
+* [carlossscastro](https://github.com/carlossscastro)
+* [sigilioso](https://github.com/sigilioso)
+* [gsanchezgavier](https://github.com/gsanchezgavier)
+* [kang-makes](https://github.com/kang-makes)
+* [marcsanmi](https://github.com/marcsanmi)
+* [paologallinaharbur](https://github.com/paologallinaharbur)
+* [roobre](https://github.com/roobre)
