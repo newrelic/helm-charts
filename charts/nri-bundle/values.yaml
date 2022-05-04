@@ -12,6 +12,7 @@ webhook:
 
 ksm:
   # ksm.enabled -- Install the [`kube-state-metrics` chart from the stable helm charts repository](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics)
+  # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0
   enabled: false
 
 kubeEvents:
@@ -56,11 +57,11 @@ global:
   customSecretLicenseKey: ""
   # -- Key in the Secret object where the insights key is stored
   customSecretInsightsKey: ""
-  # -- Additional labels for chart pods
 
-  podLabels: {}
   # -- Additional labels for chart objects
   labels: {}
+  # -- Additional labels for chart pods
+  podLabels: {}
 
   images:
     # -- Changes the registry where to get the images. Useful when there is an internal image cache/proxy
@@ -73,7 +74,7 @@ global:
     annotations: {}
     # -- Configures if the service account should be created or not
     create:
-    # -- Change the name of the service account. This is honored if you disable on this cahrt the creation of the service account so you can use your own
+    # -- Change the name of the service account. This is honored if you disable on this chart the creation of the service account so you can use your own
     name:
 
   # -- (bool) Sets pod's hostNetwork
@@ -127,3 +128,32 @@ global:
   verboseLog:
 
 # To add values to the subcharts. Follow Helm's guide: https://helm.sh/docs/chart_template_guide/subcharts_and_globals
+
+# If you wish to monitor services running on Kubernetes you can provide integrations
+# configuration under `integrations_config` that it will passed down to the `newrelic-infrastructure` chart.
+#
+# You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
+# the integration configuration. The name must end in ".yaml" as this will be the
+# filename generated and the Infrastructure agent only looks for YAML files.
+#
+# The data part is the actual integration configuration as described in the spec here:
+# https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
+#
+# In the following example you can see how to monitor a Redis integration with autodiscovery
+#
+#
+# newrelic-infrastructure:
+#   nri-redis-sampleapp:
+#     discovery:
+#       command:
+#         exec: /var/db/newrelic-infra/nri-discovery-kubernetes --tls --port 10250
+#         match:
+#           label.app: sampleapp
+#     integrations:
+#       - name: nri-redis
+#         env:
+#           # using the discovered IP as the hostname address
+#           HOSTNAME: ${discovery.ip}
+#           PORT: 6379
+#         labels:
+#           env: test

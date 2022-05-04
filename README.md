@@ -25,14 +25,10 @@ This is the official Helm charts repository for New Relic. It is indexed at [Hel
 * New Relic account
 
 ## <a name='Installthecharts'></a>Install
+You can have all the information about the installation in the [New Relic Documentation page for installaing the Kubernetes integration
+using Helm](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/installation/install-kubernetes-integration-using-helm/)
 
-To install the New Relic Helm charts, add the official repository first:
-
-```sh
-helm repo add newrelic https://helm-charts.newrelic.com
-```
-
-To install the bundle, create a values file that looks like this: 
+Just as a glance of the process of installation and configuration the process involves to create a `values.yaml` that will look like this:
 ```yaml
 global:
   licenseKey: YOUR_LICENSE_KEY
@@ -49,7 +45,12 @@ ksm:
   enabled: true
 ```
 
-Then, run `helm updagre`:
+Add the official repository:
+```sh
+helm repo add newrelic https://helm-charts.newrelic.com
+```
+
+Then, run `helm upgrade`:
 ```shell
 helm upgrade --install newrelic-bundle newrelic/nri-bundle -f your-custom-values.yaml
 ```
@@ -79,6 +80,35 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 6. Create your pull request and follow the instructions below.
 
 > Feel free to add different values to the chart.
+
+### <a name='Automatedversionbumps'></a>Automated version bumps
+
+This repository is configured to accept webhook requests to bump chart versions. Upon receiving a version bump request, a GitHub Action generates a pull request with the requested changes. The pull request must still be merged manually.
+
+#### <a name='Triggeranautomatedversionbump'></a>Trigger an automated version bump
+Member
+@paologallinaharbur paologallinaharbur 1 hour ago
+
+This is still used by charts/synthetics-minion #729
+
+Unless we want to "deprecate" it by removing the docs
+@kang-makes
+
+A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
+
+`chart_name`: (required) Name of the helm chart to be bumped.
+`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
+`app_version`: (required) Version of the application.
+
+```sh
+curl -H "Accept: application/vnd.github.everest-preview+json" \
+     -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
+     --request POST \
+     --data '{"event_type": "bump-chart-version", "client_payload": { "chart_name": "simple-nginx", "chart_version": "1.2.3", "app_version": "1.45.7"}}' \
+     https://api.github.com/repos/newrelic/helm-charts/dispatches
+```
+
+Notice the sample `client_payload` object in the request body: the request generates a pull request for the `simple-nginx` chart to update `app_version` to `1.45.7` and `chart_version` to `1.2.3`.
 
 ## <a name='Testing'></a>Testing
 

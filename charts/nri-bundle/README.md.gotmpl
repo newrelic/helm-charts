@@ -73,6 +73,16 @@ newrelic-infrastructure:
           env: test
 ```
 
+## Values managed globally
+
+Some of the subchart implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
+
+Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
+[user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
+
+At the time of writing this document, all the charts from `nri-bundle` except `newrelic-logging` and `synthetics-minion` implements this library and
+honors global options as described below.
 
 {{ template "chart.valuesSection" . }}
 
