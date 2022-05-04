@@ -1,101 +1,154 @@
-# Default values for nri-infrastructure.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-# enables newrelic-infrastructure
 infrastructure:
+  # infrastructure.enabled -- Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)
   enabled: true
 
-# enables nri-prometheus
 prometheus:
+  # prometheus.enabled -- Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus)
   enabled: false
 
-# enables nri-metadata-injection
 webhook:
+  # webhook.enabled -- Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection)
   enabled: true
 
-# enables kube-state-metrics
 ksm:
+  # ksm.enabled -- Install the [`kube-state-metrics` chart from the stable helm charts repository](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics)
+  # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0
   enabled: false
 
-# enables nri-kube-events
 kubeEvents:
+  # kubeEvents.enabled -- Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)
   enabled: false
 
-# enables newrelic-logging
 logging:
+  # logging.enabled -- Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging)
   enabled: false
 
-# enables newrelic-pixie
 newrelic-pixie:
+  # newrelic-pixie.enabled -- Install the [`newrelic-pixie`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie)
   enabled: false
 
-# enables pixie-chart
 pixie-chart:
+  # pixie-chart.enabled -- Install the [`pixie-chart` chart](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy)
   enabled: false
 
-# enables newrelic-infra-operator
 newrelic-infra-operator:
+  # newrelic-infra-operator.enabled -- Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta)
   enabled: false
 
-# enables newrelic-k8s-metrics-adapter
 metrics-adapter:
+  # metrics-adapter.enabled -- Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta)
   enabled: false
 
-# IMPORTANT: the following values are set as global so that they
-# can be shared by other newrelic product's charts
-#
-#   - Specify either the New Relic keys or the secret which
-#   contains them.
-#
-#   - Specify the Kubernetes cluster name.
-# https://docs.newrelic.com/docs/kubernetes-monitoring-integration
-#
-# global:
-#   licenseKey:
-#   insightsKey:
-#   customSecretName:
-#   customSecretLicenseKey:
-#   customSecretInsightsKey:
-#   cluster:
-#   # IMPORTANT: Set this to true when deploying in EKS Fargate. This will pull the sidecar injector operator chart to
-#   # automatically monitor fargate workloads, and also prevent the DaemonSet from being scheduled in Fargate nodes
-#   fargate: true
 
-# It is possible to configure dependencies values from this chart.
-# For example you can configure `verboseLog` variable of the newrelic-infrastructure chart installed as a dependency and enable openshift configs as follows.
+# -- change the behaviour globally to all the supported helm charts.
+# See [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md) for further information.
+# @default -- See [`values.yaml`](values.yaml)
+global:
+  # -- The cluster name for the Kubernetes cluster.
+  cluster: ""
 
-# newrelic-infrastructure:
-#   verboseLog: true
-#   openshift:
-# enabled: true
-# version: "4.x"
+  # -- The license key for your New Relic Account. This will be preferred configuration option if both `licenseKey` and `customSecret` are specified.
+  licenseKey: ""
+  # -- The license key for your New Relic Account. This will be preferred configuration option if both `insightsKey` and `customSecret` are specified.
+  insightsKey: ""
+  # -- Name of the Secret object where the license key is stored
+  customSecretName: ""
+  # -- Key in the Secret object where the license key is stored
+  customSecretLicenseKey: ""
+  # -- Key in the Secret object where the insights key is stored
+  customSecretInsightsKey: ""
 
-# The same approach can be followed to update any of the dependencies.
-# https://helm.sh/docs/chart_template_guide/subcharts_and_globals
+  # -- Additional labels for chart objects
+  labels: {}
+  # -- Additional labels for chart pods
+  podLabels: {}
+
+  images:
+# -- Changes the registry where to get the images. Useful when there is an internal image cache/proxy
+registry: ""
+# -- Set secrets to be able to fetch images
+pullSecrets: []
+
+  serviceAccount:
+# -- Add these annotations to the service account we create
+annotations: {}
+# -- Configures if the service account should be created or not
+create:
+# -- Change the name of the service account. This is honored if you disable on this chart the creation of the service account so you can use your own
+name:
+
+  # -- (bool) Sets pod's hostNetwork
+  # @default -- false
+  hostNetwork:
+  # -- Sets pod's dnsConfig
+  dnsConfig: {}
+
+  # -- Sets pod's priorityClassName
+  priorityClassName: ""
+  # -- Sets security context (at pod level)
+  podSecurityContext: {}
+  # -- Sets security context (at container level)
+  containerSecurityContext: {}
+
+  # -- Sets pod/node affinities
+  affinity: {}
+  # -- Sets pod's node selector
+  nodeSelector: {}
+  # -- Sets pod's tolerations to node taints
+  tolerations: []
+
+  # -- Adds extra attributes to the cluster and all the metrics emitted to the backend
+  customAttributes: {}
+
+  # -- (bool) Reduces number of metrics sent in order to reduce costs
+  # @default -- false
+  lowDataMode:
+
+  # -- (bool) In each integration it has different behavior. See [Further information](#values-managed-globally-3) but all aims to send less metrics to the backend to try to save costs |
+  # @default -- false
+  privileged:
+
+  # -- (bool) Must be set to `true` when deploying in an EKS Fargate environment
+  # @default -- false
+  fargate:
+
+  # -- Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`
+  proxy: ""
+
+  # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key
+  # @default -- false
+  nrStaging:
+  fedramp:
+# fedramp.enabled -- (bool) Enables FedRAMP
+# @default -- false
+enabled:
+
+  # -- (bool) Sets the debug logs to this integration or all integrations if it is set globally
+  # @default -- false
+  verboseLog:
+
+# To add values to the subcharts. Follow Helm's guide: https://helm.sh/docs/chart_template_guide/subcharts_and_globals
 
 # If you wish to monitor services running on Kubernetes you can provide integrations
-# configuration under integrations_config that is pass down to the newrelic-infrastructure chart. You just need to create a new entry where
-# the "name" is the filename of the configuration file and the data is the content of
+# configuration under `integrations_config` that it will passed down to the `newrelic-infrastructure` chart.
+#
+# You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
 # the integration configuration. The name must end in ".yaml" as this will be the
-# filename generated and the Infrastructure agent only looks for YAML files. The data
-# part is the actual integration configuration as described in the spec here:
+# filename generated and the Infrastructure agent only looks for YAML files.
+#
+# The data part is the actual integration configuration as described in the spec here:
 # https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
-
-# For example, if you wanted do to monitor a Redis instance that has a label "app=redis"
-# you could do so by adding following entry:
+#
+# In the following example you can see how to monitor a Redis integration with autodiscovery
+#
 #
 # newrelic-infrastructure:
-#   integrations_config:
-# - name: nri-redis.yaml
-#   data:
+#   nri-redis-sampleapp:
 # discovery:
 #   command:
-# # Run NRI Discovery for Kubernetes
-# # https://github.com/newrelic/nri-discovery-kubernetes
-# exec: /var/db/newrelic-infra/nri-discovery-kubernetes
+# exec: /var/db/newrelic-infra/nri-discovery-kubernetes --tls --port 10250
 # match:
-#   label.app: redis
+#   label.app: sampleapp
 # integrations:
 #   - name: nri-redis
 # env:
