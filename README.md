@@ -32,13 +32,30 @@ To install the New Relic Helm charts, add the official repository first:
 helm repo add newrelic https://helm-charts.newrelic.com
 ```
 
-You can list all the available charts from the `newrelic` repository using [`helm search`][helm-search]:
-
-```sh
-helm search repo newrelic/
+To install the bundle, create a values file that looks like this: 
+```yaml
+global:
+  licenseKey: YOUR_LICENSE_KEY
+  cluster: YOUR_CLUSTER_NAME
+kubeEvents:
+  enabled: true
+webhook:
+  enabled: true
+prometheus:
+  enabled: true
+logging:
+  enabled: true
+ksm:
+  enabled: true
 ```
 
-To install one of the charts, run [`helm install`][helm-install] passing the name of the chart to install and the values you want to set as arguments. You can find a list of all the values and their defaults in the documentation of each chart.
+Then, run `helm updagre`:
+```shell
+helm upgrade --install newrelic-bundle newrelic/nri-bundle -f your-custom-values.yaml
+```
+
+You can find a list of all the global values in the [`nri-bundle`'s README](charts/nri-bundle/README.md). There you can find also links
+to the values of all the subcharts.
 
 ### <a name='Examples'></a>Examples
 
@@ -49,31 +66,6 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
-
-#### <a name='Installnri-bundleusingHelm3'></a>Install `nri-bundle` using Helm 3
-```sh
-helm install newrelic-bundle newrelic/nri-bundle \
-  --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.cluster=YOUR_CLUSTER_NAME \
-  --set kubeEvents.enabled=true \
-  --set webhook.enabled=true \
-  --set prometheus.enabled=true \
-  --set logging.enabled=true \
-  --set ksm.enabled=true
-```
-
-#### <a name='Installnri-bundleusingHelm2'></a>Install `nri-bundle` using Helm 2
-```sh
-helm install newrelic/nri-bundle \
-  --name newrelic-bundle \
-  --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.cluster=YOUR_CLUSTER_NAME \
-  --set kubeEvents.enabled=true \
-  --set webhook.enabled=true \
-  --set prometheus.enabled=true \
-  --set logging.enabled=true \
-  --set ksm.enabled=true
-```
 
 ## <a name='Development'></a>Development
 
@@ -87,28 +79,6 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 6. Create your pull request and follow the instructions below.
 
 > Feel free to add different values to the chart.
-
-### <a name='Automatedversionbumps'></a>Automated version bumps
-
-This repository is configured to accept webhook requests to bump chart versions. Upon receiving a version bump request, a GitHub Action generates a pull request with the requested changes. The pull request must still be merged manually.
-
-#### <a name='Triggeranautomatedversionbump'></a>Trigger an automated version bump
-
-A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
-
-`chart_name`: (required) Name of the helm chart to be bumped.
-`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
-`app_version`: (required) Version of the application.
-
-```sh
-curl -H "Accept: application/vnd.github.everest-preview+json" \
-     -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
-     --request POST \
-     --data '{"event_type": "bump-chart-version", "client_payload": { "chart_name": "simple-nginx", "chart_version": "1.2.3", "app_version": "1.45.7"}}' \
-     https://api.github.com/repos/newrelic/helm-charts/dispatches
-```
-
-Notice the sample `client_payload` object in the request body: the request generates a pull request for the `simple-nginx` chart to update `app_version` to `1.45.7` and `chart_version` to `1.2.3`.
 
 ## <a name='Testing'></a>Testing
 
@@ -154,17 +124,6 @@ Issues and enhancement requests can be submitted in the [Issues tab of this repo
 You need to initialize Helm with:
 ```sh
 helm init
-```
-
-### <a name='TroubleshootCannotLoadRepos'></a>Getting "namespaces 'default' is forbidden" (Helm 2)
-
-If your cluster uses role-based access, create a service account for tiller (Helm's service which runs inside the Kubernetes cluster) using:
-```sh
-kubectl --namespace kube-system create serviceaccount tiller
-kubectl create clusterrolebinding tiller-cluster-rule \
- --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-kubectl --namespace kube-system patch deploy tiller-deploy \
- -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
 ```
 
 ## <a name='License'></a>License

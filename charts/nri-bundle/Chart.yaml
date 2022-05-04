@@ -1,11 +1,19 @@
 apiVersion: v2
 name: nri-bundle
-description: A Helm chart to deploy New Relic integrations bundled together
+description: A chart groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
 home: https://github.com/newrelic/helm-charts
 icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
 sources:
-  - https://github.com/newrelic/nri-kubernetes/
+  - https://github.com/newrelic/nri-bundle/
+  - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
   - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
+  - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+  - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
+  - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
+  - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
+  - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+  - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
+  - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
 version: 4.3.2
 
@@ -13,17 +21,17 @@ dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled
-    version: 3.3.1
+    version: 3.3.3
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled
-    version: 2.1.0
+    version: 2.1.1
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled
-    version: 3.0.0
+    version: 3.0.1
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -38,7 +46,7 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled
-    version: 2.2.0
+    version: 2.2.2
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
@@ -54,7 +62,7 @@ dependencies:
     alias: pixie-chart
     repository: https://pixie-operator-charts.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.0.25
+    version: 0.0.26
 
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
