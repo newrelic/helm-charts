@@ -1,0 +1,100 @@
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+## Configure components
+
+It is possible to configure settings for the individual charts this chart groups by specifying values for them under a key using the name of the chart,
+as specified in [helm documentation](https://helm.sh/docs/chart_template_guide/subcharts_and_globals).
+
+For example, by adding the following to the `values.yml` file:
+
+```yaml
+# Configuration settings for the newrelic-infrastructure chart
+newrelic-infrastructure:
+  # Any key defined in the values.yml file for the newrelic-infrastructure chart can be configured here:
+  # https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml
+
+  verboseLog: false
+
+  resources:
+    limits:
+      memory: 512M
+```
+
+It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure)
+chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml).
+
+The same approach can be followed to update any of the subcharts.
+
+After making these changes to the `values.yml` file, or a custom values file, make sure to apply them using:
+
+```
+$ helm upgrade --reuse-values -f values.yaml [RELEASE] newrelic/nri-bundle
+```
+
+Where `[RELEASE]` is the name of the helm release, e.g. `newrelic-bundle`.
+
+
+## Monitor on host integrations
+
+If you wish to monitor services running on Kubernetes you can provide integrations
+configuration under `integrations_config` that it will passed down to the `newrelic-infrastructure` chart.
+
+You just need to create a new entry where the "name" is the filename of the configuration file and the data is the content of
+the integration configuration. The name must end in ".yaml" as this will be the
+filename generated and the Infrastructure agent only looks for YAML files.
+
+The data part is the actual integration configuration as described in the spec here:
+https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
+
+In the following example you can see how to monitor a Redis integration with autodiscovery
+
+```yaml
+newrelic-infrastructure:
+  nri-redis-sampleapp:
+    discovery:
+      command:
+        exec: /var/db/newrelic-infra/nri-discovery-kubernetes --tls --port 10250
+        match:
+          label.app: sampleapp
+    integrations:
+      - name: nri-redis
+        env:
+          # using the discovered IP as the hostname address
+          HOSTNAME: ${discovery.ip}
+          PORT: 6379
+        labels:
+          env: test
+```
+
+## Values managed globally
+
+Some of the subchart implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
+
+Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
+[user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
+
+At the time of writing this document, all the charts from `nri-bundle` except `newrelic-logging` and `synthetics-minion` implements this library and
+honors global options as described below.
+
+{{ template "chart.valuesSection" . }}
+
+{{ if .Maintainers }}
+## Maintainers
+{{ range .Maintainers }}
+{{- if .Name }}
+{{- if .Url }}
+* [{{ .Name }}]({{ .Url }})
+{{- else }}
+* {{ .Name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

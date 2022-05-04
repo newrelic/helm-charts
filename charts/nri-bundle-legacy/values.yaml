@@ -1,0 +1,106 @@
+# Default values for nri-infrastructure.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# enables newrelic-infrastructure
+infrastructure:
+  enabled: true
+
+# enables nri-prometheus
+prometheus:
+  enabled: false
+
+# enables nri-metadata-injection
+webhook:
+  enabled: true
+
+# enables kube-state-metrics
+ksm:
+  enabled: false
+
+# enables nri-kube-events
+kubeEvents:
+  enabled: false
+
+# enables newrelic-logging
+logging:
+  enabled: false
+
+# enables newrelic-pixie
+newrelic-pixie:
+  enabled: false
+
+# enables pixie-chart
+pixie-chart:
+  enabled: false
+
+# enables newrelic-infra-operator
+newrelic-infra-operator:
+  enabled: false
+
+# enables newrelic-k8s-metrics-adapter
+metrics-adapter:
+  enabled: false
+
+# IMPORTANT: the following values are set as global so that they
+# can be shared by other newrelic product's charts
+#
+#   - Specify either the New Relic keys or the secret which
+#   contains them.
+#
+#   - Specify the Kubernetes cluster name.
+#     https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+#
+# global:
+#   licenseKey:
+#   insightsKey:
+#   customSecretName:
+#   customSecretLicenseKey:
+#   customSecretInsightsKey:
+#   cluster:
+#   # IMPORTANT: Set this to true when deploying in EKS Fargate. This will pull the sidecar injector operator chart to
+#   # automatically monitor fargate workloads, and also prevent the DaemonSet from being scheduled in Fargate nodes
+#   fargate: true
+
+# It is possible to configure dependencies values from this chart.
+# For example you can configure `verboseLog` variable of the newrelic-infrastructure chart installed as a dependency and enable openshift configs as follows.
+
+# newrelic-infrastructure:
+#   verboseLog: true
+#   openshift:
+#     enabled: true
+#     version: "4.x"
+
+# The same approach can be followed to update any of the dependencies.
+# https://helm.sh/docs/chart_template_guide/subcharts_and_globals
+
+# If you wish to monitor services running on Kubernetes you can provide integrations
+# configuration under integrations_config that is pass down to the newrelic-infrastructure chart. You just need to create a new entry where
+# the "name" is the filename of the configuration file and the data is the content of
+# the integration configuration. The name must end in ".yaml" as this will be the
+# filename generated and the Infrastructure agent only looks for YAML files. The data
+# part is the actual integration configuration as described in the spec here:
+# https://docs.newrelic.com/docs/integrations/integrations-sdk/file-specifications/integration-configuration-file-specifications-agent-v180
+
+# For example, if you wanted do to monitor a Redis instance that has a label "app=redis"
+# you could do so by adding following entry:
+#
+# newrelic-infrastructure:
+#   integrations_config:
+#     - name: nri-redis.yaml
+#       data:
+#         discovery:
+#           command:
+#             # Run NRI Discovery for Kubernetes
+#             # https://github.com/newrelic/nri-discovery-kubernetes
+#             exec: /var/db/newrelic-infra/nri-discovery-kubernetes
+#             match:
+#               label.app: redis
+#         integrations:
+#           - name: nri-redis
+#             env:
+#               # using the discovered IP as the hostname address
+#               HOSTNAME: ${discovery.ip}
+#               PORT: 6379
+#             labels:
+#               env: test
