@@ -32,8 +32,10 @@ Here is a list of global options:
 | global.licenseKey | licenseKey | `""` |  | This set this license key to use |
 | global.customSecretName | customSecretName | `""` |  | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there |
 | global.customSecretLicenseKey | customSecretLicenseKey | `""` |  | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located |
-| global.podLabels | podLabels | `{}` | yes | Additional labels for chart pods |
 | global.labels | labels | `{}` | yes | Additional labels for chart objects |
+| global.podLabels | podLabels | `{}` | yes | Additional labels for chart pods |
+| global.deploymentAnnotations | deploymentAnnotations | `{}` | yes | Annotations to add to deployments, statefulSets and daemonSets |
+| global.podAnnotations | podAnnotations | `{}` | yes | Annotations to add to all the pods created by deployments, statefulSets and daemonSets |
 | global.priorityClassName | priorityClassName | `""` |  | Sets pod's priorityClassName |
 | global.hostNetwork | hostNetwork | `false` |  | Sets pod's hostNetwork |
 | global.dnsConfig | dnsConfig | `{}` |  | Sets pod's dnsConfig |

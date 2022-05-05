@@ -72,7 +72,7 @@ Usage:
 These are functions that are used to label objects. They are configured by this `values.yaml`
 ```yaml
 global:
-  podLabels: {}  # included in all the pods of all the charts that implement this library
+  podLabels: {}  # included in all the pods of all the charts
   labels: {}  # included in all the objects of all the charts that implement this library
 podLabels: {}  # included in all the pods of the chart that the chart writes is implementing
 labels: {}  # included in all the objects of the chart that the chart writes is implementing
@@ -96,6 +96,37 @@ spec:
 ```
 
 `newrelic.common.labels.podLabels` includes `newrelic.common.labels.selectorLabels` automatically.
+
+
+
+## _annotations.tpl
+### `newrelic.common.annotations.deployment` and `newrelic.common.annotations.pod`
+These are functions that are used to annotate objects. They are configured by this `values.yaml`
+```yaml
+global:
+  deploymentAnnotations: {}  # included in all the deployments and daemonsets of all the charts
+  podAnnotations: {}  # included in all the pods of all the charts
+deploymentAnnotations: {}  # included in all the deployments and daemonsets of the chart that the chart writes is implementing
+podAnnotations: {}  # included in all the pods of the chart that the chart writes is implementing
+```
+
+Annotation maps are merged from global to local values.
+
+And chart writer should use them like this:
+```mustache
+metadata:
+  {{- with include "newrelic.common.annotations.deployment" . }}
+  annotations:
+    {{- . | nindent 4 }}
+  {{- end }}
+spec:
+  template:
+    metadata:
+      {{- with include "newrelic.common.annotations.pod" . }}
+      annotations:
+        {{- . | nindent 8 }}
+      {{- end }}
+```
 
 
 
