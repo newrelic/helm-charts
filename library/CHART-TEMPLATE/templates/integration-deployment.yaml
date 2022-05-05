@@ -1,10 +1,6 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  {{- with include "newrelic.common.annotations.deployment" . }}
-  annotations:
-    {{- . | nindent 4 }}
-  {{- end }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.fullname" . }}
@@ -15,9 +11,9 @@ spec:
       {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
     metadata:
-      {{- with include "newrelic.common.annotations.pod" . }}
+      {{- with .Values.podAnnotations }}
       annotations:
-        {{- . | nindent 8 }}
+        {{- toYaml . | nindent 8 }}
       {{- end }}
       labels:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
