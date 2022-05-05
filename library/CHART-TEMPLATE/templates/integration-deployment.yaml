@@ -26,19 +26,25 @@ spec:
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
+
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
       {{- with include "newrelic.common.securityContext.pod" . }}
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "newrelic.common.priorityClassName" . }}
-      priorityClassName: {{ . }}
-      {{- end }}
+
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
 
       hostNetwork: {{ include "newrelic.common.hostNetwork.value" . }}
+      {{- if include "newrelic.common.hostNetwork" . }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
 
       containers:
