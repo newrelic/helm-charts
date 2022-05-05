@@ -6,8 +6,9 @@ This will render the labels that should be used in all the manifests used by the
 
 {{- $chart := dict "helm.sh/chart" (include "newrelic.common.naming.chart" . ) -}}
 {{- $managedBy := dict "app.kubernetes.io/managed-by" .Release.Service -}}
+{{- $selectorLabels := fromYaml (include "newrelic.common.labels.selectorLabels" . ) -}}
 
-{{- $labels := mustMergeOverwrite $chart $managedBy -}}
+{{- $labels := mustMergeOverwrite $chart $managedBy $selectorLabels -}}
 {{- if .Chart.AppVersion -}}
 {{- $labels = mustMergeOverwrite $labels (dict "app.kubernetes.io/version" .Chart.AppVersion) -}}
 {{- end -}}
