@@ -1,7 +1,9 @@
+# This is a dummy Job to test and show truncateToDNSWithSuffix function
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" (.Values.jobSuffix | default "job-suffix") ) }}
+  namespace: {{ .Release.Namespace }}
 spec:
   template:
     spec:

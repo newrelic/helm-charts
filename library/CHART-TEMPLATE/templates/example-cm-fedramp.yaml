@@ -1,0 +1,13 @@
+# This is a dummy CM to test that FedRAMP is templated and how to use it
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-fedramp
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
+         Take a look to the tests suite "common_library_lowdatamode_test.yaml" to see who this behaves */}}
+  fedramp-with-if: {{ if include "newrelic.common.fedramp.enabled" . }}enabled{{ else }}disabled{{ end }}
+  fedramp-with-quote: {{ include "newrelic.common.fedramp.enabled" . | quote }}
+  fedramp-with-default: {{ include "newrelic.common.fedramp.enabled" . | default "false" | quote }}
+  fedramp-value: {{ include "newrelic.common.fedramp.enabled.value" . | quote }}

@@ -1,4 +1,4 @@
-suite: test customAttributes helper
+suite: test agent config helper
 templates:
   - templates/sidecar-agent-configmap.yaml
 release:
@@ -18,8 +18,10 @@ tests:
       - hasDocuments:
           count: 1
       - equal:
-          path: data
-          value: null
+          path: data.newrelic-infra\.yml
+          value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
 
   # Verbose flag
   - it: sets verbose according to global values
@@ -30,6 +32,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             verbose: 1
 
   - it: sets verbose according to local values
@@ -39,6 +43,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             verbose: 1
 
   - it: sets verbose according to agent's values
@@ -49,6 +55,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             verbose: 1
 
   # Staging flag
@@ -60,6 +68,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             staging: true
 
   - it: sets staging according to local values
@@ -69,6 +79,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             staging: true
 
   - it: sets staging according to agent's values
@@ -79,6 +91,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             staging: true
 
   # Proxy settings
@@ -89,6 +103,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             proxy: test@test:a-proxy.com
 
   - it: sets proxy according to local values
@@ -98,6 +114,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             proxy: test@test:a-proxy.com
 
   - it: sets proxy according to agent's values
@@ -108,6 +126,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             proxy: test@test:a-proxy.com
 
 
@@ -119,6 +139,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             fedramp: true
 
   - it: sets fedramp according to local values
@@ -128,6 +150,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             fedramp: true
 
   - it: sets fedramp according to agent's values
@@ -137,6 +161,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             fedramp: true
 
   # custom attributes
@@ -149,6 +175,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             custom_attributes:
               cluster: name
               test: test
@@ -163,6 +191,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             custom_attributes:
               cluster: name
               test: test
@@ -194,6 +224,8 @@ tests:
       - equal:
           path: data.newrelic-infra\.yml
           value: |  # as they are merged and templated with `toYaml` they are alphabetically ordered.
+            # This is the configuration file for the infrastructure agent. See:
+            # https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
             custom_attributes:
               agent: agent
               global: global
