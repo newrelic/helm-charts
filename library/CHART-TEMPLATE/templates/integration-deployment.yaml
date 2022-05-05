@@ -82,9 +82,6 @@ spec:
           {{- with include "newrelic.common.proxy" . }}
             - name: MY_APP_PROXY_URL
               value: {{ . | quote }}
-          {{- end }}  
-          {{- if include "newrelic.common.fedramp.enabled" . }}
-            - name: MY_APP_CUSTOM_ENDPOINT
           {{- end }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
