@@ -1,13 +1,16 @@
 {{- $agentDefaults := fromYaml ( include "newrelic.common.agentConfig.defaults" . ) -}}
-{{- $agentSettings := .Values.agent | default dict -}}
+{{- $agentSettings := .Values.agent | default dict -}}{{- /* This is an example about how to get config from Values */ -}}
 {{- $infraYaml := mustMergeOverwrite $agentDefaults $agentSettings -}}
 ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}-agent-config
-{{- with $infraYaml }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" $) "suffix" "agent-config") }}
+  namespace: {{ $.Release.Namespace }}
 data:
   newrelic-infra.yml: |
+# This is the configuration file for the infrastructure agent. See:
+# https://docs.newrelic.com/docs/infrastructure/install-infrastructure-agent/configuration/infrastructure-agent-configuration-settings/
+{{- with $infraYaml }}
 {{- . | toYaml | nindent 4 }}
-{{ end }}
+{{- end }}

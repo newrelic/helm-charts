@@ -1,7 +1,8 @@
+# This is a dummy CM to test that hostNetwork is templated and how to use it
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}-hostnetwork-examples
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-hostnetwork
   namespace: {{ .Release.Namespace }}
 data:
   {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm

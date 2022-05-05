@@ -1,0 +1,119 @@
+suite: test fedRAMP helpers
+templates:
+  - templates/example-cm-fedramp.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Is false by default
+asserts:
+  - equal:
+  path: data.fedramp-with-if
+  value: "disabled"
+  - equal:
+  path: data.fedramp-with-quote
+  value: ""
+  - equal:
+  path: data.fedramp-with-default
+  value: "false"
+  - equal:
+  path: data.fedramp-value
+  value: "false"
+
+  - it: Is false with everything null
+set:
+  global: null
+  fedramp:
+enabled: null
+asserts:
+  - equal:
+  path: data.fedramp-with-if
+  value: "disabled"
+  - equal:
+  path: data.fedramp-with-quote
+  value: ""
+  - equal:
+  path: data.fedramp-with-default
+  value: "false"
+  - equal:
+  path: data.fedramp-value
+  value: "false"
+
+  - it: Enable low data mode (globally)
+set:
+  global:
+fedramp:
+  enabled: true
+asserts:
+  - equal:
+  path: data.fedramp-with-if
+  value: "enabled"
+  - equal:
+  path: data.fedramp-with-quote
+  value: "true"
+  - equal:
+  path: data.fedramp-with-default
+  value: "true"
+  - equal:
+  path: data.fedramp-value
+  value: "true"
+
+  - it: Enable low data mode (locally)
+set:
+  fedramp:
+enabled: true
+asserts:
+  - equal:
+  path: data.fedramp-with-if
+  value: "enabled"
+  - equal:
+  path: data.fedramp-with-quote
+  value: "true"
+  - equal:
+  path: data.fedramp-with-default
+  value: "true"
+  - equal:
+  path: data.fedramp-value
+  value: "true"
+
+  - it: Overrides to false the global state locally
+set:
+  global:
+fedramp:
+  enabled: true
+  fedramp:
+enabled: false
+asserts:
+  - equal:
+  path: data.fedramp-with-if
+  value: "disabled"
+  - equal:
+  path: data.fedramp-with-quote
+  value: ""
+  - equal:
+  path: data.fedramp-with-default
+  value: "false"
+  - equal:
+  path: data.fedramp-value
+  value: "false"
+
+  - it: Overrides to true the global state locally
+set:
+  global:
+fedramp:
+  enabled: false
+  fedramp:
+enabled: true
+asserts:
+  - equal:
+  path: data.fedramp-with-if
+  value: "enabled"
+  - equal:
+  path: data.fedramp-with-quote
+  value: "true"
+  - equal:
+  path: data.fedramp-with-default
+  value: "true"
+  - equal:
+  path: data.fedramp-value
+  value: "true"

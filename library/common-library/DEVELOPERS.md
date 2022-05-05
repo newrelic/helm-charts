@@ -74,8 +74,8 @@ These are functions that are used to label objects. They are configured by this 
 global:
   podLabels: {}  # included in all the pods of all the charts that implement this library
   labels: {}  # included in all the objects of all the charts that implement this library
-podLabels: {}  # included in all the pods of the chart that the chart writes is implementing
-labels: {}  # included in all the objects of the chart that the chart writes is implementing
+podLabels: {}  # included in all the pods of this chart
+labels: {}  # included in all the objects of this chart
 ```
 
 label maps are merged from global to local values.
