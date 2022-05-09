@@ -1,0 +1,1 @@
+This chart has been moved to https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator

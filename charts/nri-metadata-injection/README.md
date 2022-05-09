@@ -1,0 +1,1 @@
+This chart has been moved to https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection
