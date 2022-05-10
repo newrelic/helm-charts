@@ -64,11 +64,11 @@ jobs:
       - name: Release library charts
         uses: helm/chart-releaser-action@v1.3.0
         with:
-          charts_dir: library
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-
-      - name: Release workload charts
-        uses: helm/chart-releaser-action@v1.3.0
+          # This is tricky. chart-releaser has the parameter "charts_dir" quoted so we cannot scape the quote to put
+          # more than one folder: https://github.com/helm/chart-releaser-action/blob/a3454e4/cr.sh#L250
+          # So we set here `.' to fetch all the repository.
+          # Be careful as it will release any chart in any folder in this repository, not only charts and library.
+          # Also, that could lead to release charts that have not been tested.
+          charts_dir: .
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
