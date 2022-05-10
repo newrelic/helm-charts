@@ -21,8 +21,11 @@ with:
   ref: gh-pages
   - name: Download remote index file and check equality
 run: |
-  curl -vsSL https://newrelic.github.io/helm-charts/index.yaml > index.yaml.remote
-  test "$(md5sum < index.yaml)" = "$(md5sum < index.yaml.remote)"
+  curl -vsSL https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/index.yaml > index.yaml.remote
+  LOCAL="$(md5sum < index.yaml)"
+  REMOTE="$(md5sum < index.yaml.remote)"
+  echo "$LOCAL" = "$REMOTE"
+  test "$LOCAL" = "$REMOTE"
 
   release:
 runs-on: ubuntu-latest
