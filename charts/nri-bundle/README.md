@@ -1,6 +1,6 @@
 # nri-bundle
 
-![Version: 4.3.2](https://img.shields.io/badge/Version-4.3.2-informational?style=flat-square)
+![Version: 4.3.3](https://img.shields.io/badge/Version-4.3.3-informational?style=flat-square)
 
 A chart groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
 
@@ -91,7 +91,6 @@ honors global options as described below.
 | global.cluster | string | `""` | The cluster name for the Kubernetes cluster. |
 | global.containerSecurityContext | object | `{}` | Sets security context (at container level) |
 | global.customAttributes | object | `{}` | Adds extra attributes to the cluster and all the metrics emitted to the backend |
-| global.customSecretInsightsKey | string | `""` | Key in the Secret object where the insights key is stored |
 | global.customSecretLicenseKey | string | `""` | Key in the Secret object where the license key is stored |
 | global.customSecretName | string | `""` | Name of the Secret object where the license key is stored |
 | global.dnsConfig | object | `{}` | Sets pod's dnsConfig |
