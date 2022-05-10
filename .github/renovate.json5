@@ -9,9 +9,7 @@
   "enabledManagers": [
     "helm-values",
     "helmv3",
-    // Disable helm-requirements as it bumps requirements.yaml but _not_ requirements.lock, breaking CI workflow.
-    // helmv3 manager should be able to bump Chart.lock, so hopefully we should be fine once we upgrade to Helm 3.
-    // "helm-requirements"
+    "helm-requirements"
   ],
   "packageRules": [
     {
@@ -34,6 +32,8 @@
   ],
   "ignorePaths": [
     // Do not bother bumping versions on the homemade chart-version-bumper action since it will be deprecated soon.
-    ".github/actions/chart-version-bumper"
+    ".github/actions/chart-version-bumper",
+    // Do not bother bumping versions on the legacy nri-bundle.
+    "charts/nri-bundle-legacy"
   ]
 }
