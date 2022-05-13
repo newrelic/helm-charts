@@ -28,12 +28,36 @@
         "major"
       ],
       "enabled": false
+    },
+    {
+      // Disable major updates of nri-kubernetes in the legacy chart.
+      "matchPackageNames": [
+        "newrelic-infrastructure"
+      ],
+      "matchPaths": [
+        "charts/nri-bundle-legacy/**"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
+    },
+    {
+      // Disable updates of the metrics adapter in the legacy chart.
+      "matchPackageNames": [
+        "newrelic-k8s-metrics-adapter"
+      ],
+      "matchPaths": [
+        "charts/nri-bundle-legacy/**"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "enabled": false
     }
   ],
   "ignorePaths": [
     // Do not bother bumping versions on the homemade chart-version-bumper action since it will be deprecated soon.
-    ".github/actions/chart-version-bumper",
-    // Do not bother bumping versions on the legacy nri-bundle.
-    "charts/nri-bundle-legacy"
+    ".github/actions/chart-version-bumper"
   ]
 }
