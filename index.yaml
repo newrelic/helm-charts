@@ -4676,6 +4676,91 @@ entries:
     version: 0.1.0-alpha.1
   nri-bundle:
   - apiVersion: v2
+    created: "2022-05-13T14:27:33.035838777Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: https://newrelic.github.io/nri-kubernetes
+      version: 3.3.6
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: https://newrelic.github.io/nri-prometheus
+      version: 2.1.2
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: https://newrelic.github.io/k8s-metadata-injection
+      version: 3.0.4
+    - condition: metrics-adapter.enabled
+      name: newrelic-k8s-metrics-adapter
+      repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
+      version: 0.7.5
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes.github.io/kube-state-metrics
+      version: 2.13.2
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: https://newrelic.github.io/nri-kube-events
+      version: 2.2.4
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.10.9
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.5.1
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-operator-chart
+      repository: https://pixie-operator-charts.storage.googleapis.com
+      version: 0.0.26
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: https://newrelic.github.io/newrelic-infra-operator
+      version: 1.0.3
+    description: A chart groups together the individual charts for the New Relic Kubernetes
+      solution for more comfortable deployment.
+    digest: b0a036675016c7f29814de2d6565a7b59deb5ed6b75dc042657cbdcf36e5529b
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    keywords:
+    - infrastructure
+    - newrelic
+    - monitoring
+    maintainers:
+    - name: alvarocabanas
+      url: https://github.com/alvarocabanas
+    - name: carlossscastro
+      url: https://github.com/carlossscastro
+    - name: sigilioso
+      url: https://github.com/sigilioso
+    - name: gsanchezgavier
+      url: https://github.com/gsanchezgavier
+    - name: kang-makes
+      url: https://github.com/kang-makes
+    - name: marcsanmi
+      url: https://github.com/marcsanmi
+    - name: paologallinaharbur
+      url: https://github.com/paologallinaharbur
+    - name: roobre
+      url: https://github.com/roobre
+    name: nri-bundle
+    sources:
+    - https://github.com/newrelic/nri-bundle/
+    - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
+    - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
+    - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+    - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
+    - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
+    - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
+    - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-4.4.6/nri-bundle-4.4.6.tgz
+    version: 4.4.6
+  - apiVersion: v2
     created: "2022-05-11T15:44:30.348053325Z"
     dependencies:
     - condition: infrastructure.enabled
@@ -5782,6 +5867,61 @@ entries:
     urls:
     - https://github.com/newrelic-forks/helm-charts/releases/download/nri-bundle-4.0.4-beta/nri-bundle-4.0.4-beta.tgz
     version: 4.0.4-beta
+  - apiVersion: v1
+    appVersion: "1.0"
+    created: "2022-05-13T14:27:32.82592775Z"
+    dependencies:
+    - condition: infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: https://newrelic.github.io/nri-kubernetes
+      version: 2.10.3
+    - condition: prometheus.enabled
+      name: nri-prometheus
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.14.1
+    - condition: webhook.enabled
+      name: nri-metadata-injection
+      repository: https://newrelic.github.io/helm-charts
+      version: 2.2.1
+    - condition: metrics-adapter.enabled
+      name: newrelic-k8s-metrics-adapter
+      repository: https://newrelic.github.io/helm-charts
+      version: 0.3.3
+    - condition: ksm.enabled
+      name: kube-state-metrics
+      repository: https://kubernetes.github.io/kube-state-metrics
+      version: 2.13.2
+    - condition: kubeEvents.enabled
+      name: nri-kube-events
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.13.1
+    - condition: logging.enabled
+      name: newrelic-logging
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.10.9
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.5.1
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-operator-helm2-chart
+      repository: https://pixie-operator-charts.storage.googleapis.com
+      version: 0.0.25
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: https://newrelic.github.io/helm-charts
+      version: 0.6.1
+    deprecated: true
+    description: 'DEPRECATED: A Helm chart to deploy New Relic integrations bundled
+      together'
+    digest: d189dc8a9b437ecc3944e2dc5dea5903b7ae8d79e99108b68f89dca1e07170bd
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    name: nri-bundle
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-3.6.6/nri-bundle-3.6.6.tgz
+    version: 3.6.6
   - apiVersion: v1
     appVersion: "1.0"
     created: "2022-05-10T11:02:42.89874149Z"
@@ -13762,4 +13902,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2022-05-13T13:35:25.710476594Z"
+generated: "2022-05-13T14:27:33.038858166Z"
