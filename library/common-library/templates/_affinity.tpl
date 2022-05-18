@@ -1,5 +1,5 @@
 {{- /* Defines the Pod affinity */ -}}
-{{- define "common.affinity" -}}
+{{- define "newrelic.common.affinity" -}}
     {{- if .Values.affinity -}}
         {{- toYaml .Values.affinity -}}
     {{- else if .Values.global -}}

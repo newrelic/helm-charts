@@ -1,0 +1,48 @@
+suite: test tolerations helpers
+templates:
+  - templates/integration-deployment.yaml
+  - templates/sidecar-deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not set tolerations if not specified
+    set:
+      global: null
+      tolerations: null
+    asserts:
+      - isNull:
+          path: spec.template.spec.tolerations
+  - it: does set tolerations if specified in values
+    set:
+      global: null
+      tolerations:
+        - key: value
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: value
+  - it: does set tolerations if specified in global
+    set:
+      global:
+        tolerations:
+          - key: value
+      tolerations: null
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: value
+  - it: overwrites tolerations from globals when specified in values
+    set:
+      global:
+        tolerations:
+          - keyOnGlobal: foo
+      tolerations:
+        - keyOnValues: bar
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - keyOnValues: bar

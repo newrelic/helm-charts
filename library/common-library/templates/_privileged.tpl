@@ -1,19 +1,7 @@
 {{- /*
-This file contains helpers to handle whether the chart should assume it is fine to deploy itself with elevated
-privileges, thus changing the defaults for hostNetwork, securityContexts, etc.
-Please note that either local or global definitions of the aforementioned settings will override the privileged flag.
+This is a helper that returns whether the chart should assume the user is fine deploying privileged pods.
 */ -}}
-
-{{- /*
-common.privileged is a helper that returns whether the chart should assume the user is fine deploying privileged pods.
-Chart writers should _not_ use this to populate securityContext.privileged directly, but rather to tweak their implementation of:
-- common.securityContext.containerDefaults
-- common.securityContext.podDefaults
-- common.hostNetwork.defaultOverride
-And then use the helpers this library provides to render those.
-*/ -}}
-{{- /* Chart writers should not rely on this helper directly. */ -}}
-{{- define "common.privileged" -}}
+{{- define "newrelic.common.privileged" -}}
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists. */ -}}
 {{- $global := index .Values "global" | default dict -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
@@ -25,14 +13,16 @@ And then use the helpers this library provides to render those.
     {{- if $global.privileged -}}
         {{- $global.privileged -}}
     {{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+
+{{- /* Return directly "true" or "false" based in the exist of "newrelic.common.privileged" */ -}}
+{{- define "newrelic.common.privileged.value" -}}
+{{- if include "newrelic.common.privileged" . -}}
+true
 {{- else -}}
-    {{- include "common.privileged.defaultOverride" . -}}
+false
 {{- end -}}
-{{- end -}}
-
-
-{{- /*
-This allows to change the default user setting for `privileged`, by default it returns a falsy value ("").
-*/ -}}
-{{- define "common.privileged.defaultOverride" -}}
 {{- end -}}
