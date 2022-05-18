@@ -1,0 +1,59 @@
+suite: test hostNetwork helper in the deployment template
+templates:
+  - templates/integration-deployment.yaml
+  - templates/sidecar-deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Is false by default
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+
+  - it: Is false with everything null
+    set:
+      global: null
+      hostNetwork: null
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+
+  - it: Enable hostNetwork (globally)
+    set:
+      global:
+        hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+
+  - it: Enable hostNetwork (locally)
+    set:
+      hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+
+  - it: Overrides to false the global state locally
+    set:
+      global:
+        hostNetwork: true
+      hostNetwork: false
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+
+  - it: Overrides to true the global state locally
+    set:
+      global:
+        hostNetwork: false
+      hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true

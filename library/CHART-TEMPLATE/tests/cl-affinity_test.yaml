@@ -1,0 +1,48 @@
+suite: test affinity helpers
+templates:
+  - templates/integration-deployment.yaml
+  - templates/sidecar-deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not set affinity if not specified
+    set:
+      global: null
+      affinity: null
+    asserts:
+      - isNull:
+          path: spec.template.spec.affinity
+  - it: does set affinity if specified in values
+    set:
+      global: null
+      affinity:
+        key: value
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            key: value
+  - it: does set affinity if specified in global
+    set:
+      global:
+        affinity:
+          key: value
+      affinity: null
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            key: value
+  - it: overwrites affinity from globals when specified in values
+    set:
+      global:
+        affinity:
+          keyOnGlobal: foo
+      affinity:
+        keyOnValues: bar
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            keyOnValues: bar

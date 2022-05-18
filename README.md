@@ -25,20 +25,38 @@ This is the official Helm charts repository for New Relic. It is indexed at [Hel
 * New Relic account
 
 ## <a name='Installthecharts'></a>Install
+You can have all the information about the installation in the [New Relic Documentation page for installaing the Kubernetes integration
+using Helm](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/installation/install-kubernetes-integration-using-helm/)
 
-To install the New Relic Helm charts, add the official repository first:
+Just as a glance of the process of installation and configuration the process involves to create a `values.yaml` that will look like this:
+```yaml
+global:
+  licenseKey: YOUR_LICENSE_KEY
+  cluster: YOUR_CLUSTER_NAME
+kubeEvents:
+  enabled: true
+webhook:
+  enabled: true
+prometheus:
+  enabled: true
+logging:
+  enabled: true
+ksm:
+  enabled: true
+```
 
+Add the official repository:
 ```sh
 helm repo add newrelic https://helm-charts.newrelic.com
 ```
 
-You can list all the available charts from the `newrelic` repository using [`helm search`][helm-search]:
-
-```sh
-helm search repo newrelic/
+Then, run `helm upgrade`:
+```shell
+helm upgrade --install newrelic-bundle newrelic/nri-bundle -f your-custom-values.yaml
 ```
 
-To install one of the charts, run [`helm install`][helm-install] passing the name of the chart to install and the values you want to set as arguments. You can find a list of all the values and their defaults in the documentation of each chart.
+You can find a list of all the global values in the [`nri-bundle`'s README](charts/nri-bundle/README.md). There you can find also links
+to the values of all the subcharts.
 
 ### <a name='Examples'></a>Examples
 
@@ -49,31 +67,6 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
-
-#### <a name='Installnri-bundleusingHelm3'></a>Install `nri-bundle` using Helm 3
-```sh
-helm install newrelic-bundle newrelic/nri-bundle \
-  --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.cluster=YOUR_CLUSTER_NAME \
-  --set kubeEvents.enabled=true \
-  --set webhook.enabled=true \
-  --set prometheus.enabled=true \
-  --set logging.enabled=true \
-  --set ksm.enabled=true
-```
-
-#### <a name='Installnri-bundleusingHelm2'></a>Install `nri-bundle` using Helm 2
-```sh
-helm install newrelic/nri-bundle \
-  --name newrelic-bundle \
-  --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.cluster=YOUR_CLUSTER_NAME \
-  --set kubeEvents.enabled=true \
-  --set webhook.enabled=true \
-  --set prometheus.enabled=true \
-  --set logging.enabled=true \
-  --set ksm.enabled=true
-```
 
 ## <a name='Development'></a>Development
 
@@ -93,6 +86,13 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 This repository is configured to accept webhook requests to bump chart versions. Upon receiving a version bump request, a GitHub Action generates a pull request with the requested changes. The pull request must still be merged manually.
 
 #### <a name='Triggeranautomatedversionbump'></a>Trigger an automated version bump
+Member
+@paologallinaharbur paologallinaharbur 1 hour ago
+
+This is still used by charts/synthetics-minion #729
+
+Unless we want to "deprecate" it by removing the docs
+@kang-makes
 
 A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
 
@@ -154,17 +154,6 @@ Issues and enhancement requests can be submitted in the [Issues tab of this repo
 You need to initialize Helm with:
 ```sh
 helm init
-```
-
-### <a name='TroubleshootCannotLoadRepos'></a>Getting "namespaces 'default' is forbidden" (Helm 2)
-
-If your cluster uses role-based access, create a service account for tiller (Helm's service which runs inside the Kubernetes cluster) using:
-```sh
-kubectl --namespace kube-system create serviceaccount tiller
-kubectl create clusterrolebinding tiller-cluster-rule \
- --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-kubectl --namespace kube-system patch deploy tiller-deploy \
- -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
 ```
 
 ## <a name='License'></a>License

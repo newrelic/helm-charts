@@ -1,0 +1,9 @@
+# This is a dummy CM to test custom attributes
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-custom-attributes
+  namespace: {{ .Release.Namespace }}
+data:
+  customAttributes: |
+    {{- include "newrelic.common.customAttributes" . | nindent 4 }}
