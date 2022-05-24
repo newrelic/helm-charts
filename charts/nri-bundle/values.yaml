@@ -125,6 +125,15 @@ enabled:
   # @default -- false
   verboseLog:
 
+# The k8s integration is not relying on the following collectors and therefore can be disabled
+kube-state-metrics:
+  # -- Collectors configuration of kube-state-metric
+  # @default -- See [`values.yaml`](values.yaml) of the kube-state-metric chart
+  collectors:
+certificatesigningrequests: false
+ingresses: false
+
+
 # To add values to the subcharts. Follow Helm's guide: https://helm.sh/docs/chart_template_guide/subcharts_and_globals
 
 # If you wish to monitor services running on Kubernetes you can provide integrations

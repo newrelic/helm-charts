@@ -1,6 +1,6 @@
 # nri-bundle
 
-![Version: 4.4.6](https://img.shields.io/badge/Version-4.4.6-informational?style=flat-square)
+![Version: 4.4.8](https://img.shields.io/badge/Version-4.4.8-informational?style=flat-square)
 
 A chart groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
 
@@ -116,6 +116,7 @@ honors global options as described below.
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
 | infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
 | ksm.enabled | bool | `false` | Install the [`kube-state-metrics` chart from the stable helm charts repository](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
+| kube-state-metrics.collectors | object | See [`values.yaml`](values.yaml) of the kube-state-metric chart | Collectors configuration of kube-state-metric |
 | kubeEvents.enabled | bool | `false` | Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) |
 | logging.enabled | bool | `false` | Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |
 | metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
