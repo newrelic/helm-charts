@@ -39,8 +39,16 @@ spec:
   imagePullSecrets:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
   {{- end }}
+  {{- with include "common.securityContext.pod" . }}
+  securityContext:
+{{- . | nindent 8 }}
+  {{- end }}
   containers:
 - name: {{ template "newrelic-logging.name" . }}
+  {{- with include "common.securityContext.container" . }}
+  securityContext:
+{{- . | nindent 12 }}
+  {{- end }}
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
   imagePullPolicy: "{{ .Values.image.pullPolicy }}"
   env:
