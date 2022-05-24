@@ -125,6 +125,15 @@ global:
   # @default -- false
   verboseLog:
 
+# The version we are currently running of KSM is 1.x and it is not fully compatible with newer versions of K8s and a annoying log is generated
+# The k8s integration is not relying on the following collectors that can be disabled
+# https://github.com/newrelic/helm-charts/issues/582
+kube-state-metrics:
+  collectors:
+    certificatesigningrequests: false
+    ingresses: false
+
+
 # To add values to the subcharts. Follow Helm's guide: https://helm.sh/docs/chart_template_guide/subcharts_and_globals
 
 # If you wish to monitor services running on Kubernetes you can provide integrations
