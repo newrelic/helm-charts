@@ -39,13 +39,13 @@ spec:
   imagePullSecrets:
 {{ toYaml .Values.image.pullSecrets | indent 8 }}
   {{- end }}
-  {{- with include "common.securityContext.pod" . }}
+  {{- with include "newrelic.common.securityContext.pod" . }}
   securityContext:
 {{- . | nindent 8 }}
   {{- end }}
   containers:
 - name: {{ template "newrelic-logging.name" . }}
-  {{- with include "common.securityContext.container" . }}
+  {{- with include "newrelic.common.securityContext.container" . }}
   securityContext:
 {{- . | nindent 12 }}
   {{- end }}
