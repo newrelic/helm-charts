@@ -30,7 +30,14 @@
   "enabled": false
 },
 {
-  // Disable major updates of nri-kubernetes in the legacy chart.
+  // Disable updates in nri-bundle-legacy chart.
+  "matchPaths": [
+"charts/nri-bundle-legacy/**"
+  ],
+  "enabled": false
+},
+{
+  // Enable updates of nri-kubernetes v2 in the legacy chart.
   "matchPackageNames": [
 "newrelic-infrastructure"
   ],
@@ -38,22 +45,10 @@
 "charts/nri-bundle-legacy/**"
   ],
   "matchUpdateTypes": [
-"major"
+"minor",
+"patch"
   ],
-  "enabled": false
-},
-{
-  // Disable updates of the metrics adapter in the legacy chart.
-  "matchPackageNames": [
-"newrelic-k8s-metrics-adapter"
-  ],
-  "matchPaths": [
-"charts/nri-bundle-legacy/**"
-  ],
-  "matchUpdateTypes": [
-"major"
-  ],
-  "enabled": false
+  "enabled": true
 }
   ],
   "ignorePaths": [
