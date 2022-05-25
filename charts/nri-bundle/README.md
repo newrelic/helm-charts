@@ -1,6 +1,6 @@
 # nri-bundle
 
-![Version: 4.4.8](https://img.shields.io/badge/Version-4.4.8-informational?style=flat-square)
+![Version: 4.5.0](https://img.shields.io/badge/Version-4.5.0-informational?style=flat-square)
 
 A chart groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
 
@@ -114,17 +114,17 @@ honors global options as described below.
 | global.serviceAccount.name | string | `nil` | Change the name of the service account. This is honored if you disable on this chart the creation of the service account so you can use your own |
 | global.tolerations | list | `[]` | Sets pod's tolerations to node taints |
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
-| infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
-| ksm.enabled | bool | `false` | Install the [`kube-state-metrics` chart from the stable helm charts repository](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
 | kube-state-metrics.collectors | object | See [`values.yaml`](values.yaml) of the kube-state-metric chart | Collectors configuration of kube-state-metric |
-| kubeEvents.enabled | bool | `false` | Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) |
-| logging.enabled | bool | `false` | Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |
-| metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
+| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart from the stable helm charts repository](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
+| newrelic-infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
+| newrelic-k8s-metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
+| newrelic-logging.enabled | bool | `false` | Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |
 | newrelic-pixie.enabled | bool | `false` | Install the [`newrelic-pixie`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |
+| nri-kube-events.enabled | bool | `false` | Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) |
+| nri-metadata-injection.enabled | bool | `true` | Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) |
+| nri-prometheus.enabled | bool | `false` | Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |
 | pixie-chart.enabled | bool | `false` | Install the [`pixie-chart` chart](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |
-| prometheus.enabled | bool | `false` | Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |
-| webhook.enabled | bool | `true` | Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) |
 
 ## Maintainers
 
