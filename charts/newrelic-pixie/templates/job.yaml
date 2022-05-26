@@ -1,17 +1,13 @@
 {{- if (include "newrelic-pixie.areValuesValid" .) }}
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: {{ template "newrelic-pixie.fullname" . }}
   namespace: {{ template "newrelic-pixie.namespace" . }}
   labels:
 {{- include "newrelic-pixie.labels" . | nindent 4 }}
 spec:
-  replicas: 1
-  selector:
-matchLabels:
-  app.kubernetes.io/name: {{ template "newrelic-pixie.name" . }}
-  release: {{.Release.Name }}
+  backoffLimit: 4
   template:
 metadata:
   labels:
@@ -22,6 +18,7 @@ spec:
   imagePullSecrets:
 {{- toYaml .Values.image.pullSecrets | nindent 8 }}
   {{- end }}
+  restartPolicy: Never
   containers:
   - name: {{ template "newrelic-pixie.name" . }}
 image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -50,8 +47,8 @@ secretKeyRef:
   key: {{ include "newrelic-pixie.customSecretApiKeyKey" . }}
   {{- end }}
 - name: PIXIE_CLUSTER_ID
-  {{- if .Values.pixieClusterId }}
-  value: {{ .Values.pixieClusterId -}}
+  {{- if .Values.clusterId }}
+  value: {{ .Values.clusterId -}}
   {{- else }}
   valueFrom:
 secretKeyRef:
@@ -74,9 +71,13 @@ secretKeyRef:
 - name: NR_OTLP_HOST
   value: "staging-otlp.nr-data.net:4317"
 {{- end }}
-{{- if (include "newrelic-pixie.nrStaging" .) }}
+{{- if or .Values.endpoint (include "newrelic-pixie.nrStaging" .) }}
 - name: PIXIE_ENDPOINT
+  {{- if .Values.endpoint }}
+  value: {{ .Values.endpoint | quote }}
+  {{- else }}
   value: "staging.withpixie.dev:443"
+  {{- end }}
 {{- end }}
 {{- if .Values.proxy }}
 - name: HTTP_PROXY
@@ -96,6 +97,20 @@ secretKeyRef:
 resources:
   {{- toYaml .Values.resources | nindent 10 }}
 {{- end }}
+  {{- if or .Values.customScriptsConfigMap .Values.customScripts }}
+volumeMounts:
+  - name: scripts
+mountPath: "/scripts"
+readOnly: true
+  volumes:
+- name: scripts
+  configMap:
+{{- if .Values.customScriptsConfigMap }}
+name: {{ .Values.customScriptsConfigMap }}
+{{- else }}
+name: {{ template "newrelic-pixie.fullname" . }}-scripts
+{{- end}}
+  {{- end }}
   {{- if $.Values.nodeSelector }}
   nodeSelector:
 {{- toYaml $.Values.nodeSelector | nindent 8 }}
