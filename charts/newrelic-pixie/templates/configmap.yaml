@@ -1,0 +1,12 @@
+{{- if (include "newrelic-pixie.areValuesValid" .) }}
+{{- if .Values.customScripts }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ template "newrelic-pixie.namespace" . }}
+  labels: {{ include "newrelic-pixie.labels" . | indent 4 }}
+  name: {{ template "newrelic-pixie.fullname" . }}-scripts
+data:
+{{- toYaml .Values.customScripts | nindent 2 }}
+{{- end }}
+{{- end }}
