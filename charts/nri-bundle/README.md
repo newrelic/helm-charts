@@ -2,7 +2,7 @@
 
 ![Version: 4.5.0](https://img.shields.io/badge/Version-4.5.0-informational?style=flat-square)
 
-A chart groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
+A chart which groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
 
 **Homepage:** <https://github.com/newrelic/helm-charts>
 
@@ -17,7 +17,7 @@ For example, by adding the following to the `values.yml` file:
 # Configuration settings for the newrelic-infrastructure chart
 newrelic-infrastructure:
   # Any key defined in the values.yml file for the newrelic-infrastructure chart can be configured here:
-  # https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml
+  # https://github.com/newrelic/nri-kubernetes/blob/main/charts/newrelic-infrastructure/values.yaml
 
   verboseLog: false
 
@@ -26,10 +26,20 @@ newrelic-infrastructure:
       memory: 512M
 ```
 
-It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure)
-chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml).
+It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)
+chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/main/charts/newrelic-infrastructure/values.yaml).
 
-The same approach can be followed to update any of the subcharts.
+The same approach can be followed to update any of the subcharts. Here's another example, for Logging:
+
+```yaml
+# Configuration settings for the newrelic-logging chart
+newrelic-logging:
+  # Any key defined in the values.yml file for the newrelic-logging chart can be configured here:
+  # https://github.com/newrelic/helm-charts/blob/master/charts/newrelic-logging/values.yaml
+  
+  fluentBit:
+    k8sLoggingExclude: "Off"
+```
 
 After making these changes to the `values.yml` file, or a custom values file, make sure to apply them using:
 
@@ -73,7 +83,7 @@ newrelic-infrastructure:
 
 ## Values managed globally
 
-Some of the subchart implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+Some of the subcharts implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
 means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
 
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
