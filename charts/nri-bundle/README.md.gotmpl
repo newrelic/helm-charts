@@ -7,6 +7,27 @@
 
 {{ template "chart.homepageLine" . }}
 
+## Bundled charts
+
+This chart do not deploy anything by itself but has many charts as dependencies install and upgrade the New Relic Kubernetes
+Integration using only one chart.
+
+In case you need more information of each component this chart installs or you are and advanced user that want to install each
+component separated, here is a list of components that this chart installs and where you can have more information about them:
+
+| Component                    | Installed by default? | Github repository                                                                                                                                      |
+|------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| newrelic-infrastructure      | Yes                   | [newrelic/nri-kubernetes](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)                                         |
+| nri-metadata-injection       | Yes                   | [newrelic/k8s-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection)                          |
+| kube-state-metrics           |                       | [kubernetes/kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics)                                |
+| newrelic-infra-operator      |                       | [newrelic/newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta)                |
+| newrelic-k8s-metrics-adapter |                       | [newrelic/newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
+| newrelic-logging             |                       | [newrelic/helm-charts](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging)                                                    |
+| newrelic-pixie               |                       | [newrelic/newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie)                                                   |
+| nri-kube-events              |                       | [newrelic/nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)                                               |
+| nri-prometheus               |                       | [newrelic/nri-prometheus](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus)                                                  |
+| pixie-chart                  |                       | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy)                                                                    |
+
 ## Configure components
 
 It is possible to configure settings for the individual charts this chart groups by specifying values for them under a key using the name of the chart,

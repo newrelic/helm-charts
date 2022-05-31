@@ -1,10 +1,31 @@
 # nri-bundle
 
-![Version: 4.5.0](https://img.shields.io/badge/Version-4.5.0-informational?style=flat-square)
+![Version: 4.5.5](https://img.shields.io/badge/Version-4.5.5-informational?style=flat-square)
 
-A chart which groups together the individual charts for the New Relic Kubernetes solution for more comfortable deployment.
+Groups together the individual charts for the New Relic Kubernetes solution for a more comfortable deployment.
 
 **Homepage:** <https://github.com/newrelic/helm-charts>
+
+## Bundled charts
+
+This chart do not deploy anything by itself but has many charts as dependencies install and upgrade the New Relic Kubernetes
+Integration using only one chart.
+
+In case you need more information of each component this chart installs or you are and advanced user that want to install each
+component separated, here is a list of components that this chart installs and where you can have more information about them:
+
+| Component                    | Installed by default? | Github repository                                                                                                                                      |
+|------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
+| newrelic-infrastructure      | Yes                   | [newrelic/nri-kubernetes](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)                                         |
+| nri-metadata-injection       | Yes                   | [newrelic/k8s-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection)                          |
+| kube-state-metrics           |                       | [kubernetes/kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics)                                |
+| newrelic-infra-operator      |                       | [newrelic/newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta)                |
+| newrelic-k8s-metrics-adapter |                       | [newrelic/newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
+| newrelic-logging             |                       | [newrelic/helm-charts](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging)                                                    |
+| newrelic-pixie               |                       | [newrelic/newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie)                                                   |
+| nri-kube-events              |                       | [newrelic/nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)                                               |
+| nri-prometheus               |                       | [newrelic/nri-prometheus](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus)                                                  |
+| pixie-chart                  |                       | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy)                                                                    |
 
 ## Configure components
 
@@ -17,7 +38,7 @@ For example, by adding the following to the `values.yml` file:
 # Configuration settings for the newrelic-infrastructure chart
 newrelic-infrastructure:
   # Any key defined in the values.yml file for the newrelic-infrastructure chart can be configured here:
-  # https://github.com/newrelic/nri-kubernetes/blob/main/charts/newrelic-infrastructure/values.yaml
+  # https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml
 
   verboseLog: false
 
@@ -26,20 +47,10 @@ newrelic-infrastructure:
       memory: 512M
 ```
 
-It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)
-chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/main/charts/newrelic-infrastructure/values.yaml).
+It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure)
+chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml).
 
-The same approach can be followed to update any of the subcharts. Here's another example, for Logging:
-
-```yaml
-# Configuration settings for the newrelic-logging chart
-newrelic-logging:
-  # Any key defined in the values.yml file for the newrelic-logging chart can be configured here:
-  # https://github.com/newrelic/helm-charts/blob/master/charts/newrelic-logging/values.yaml
-  
-  fluentBit:
-    k8sLoggingExclude: "Off"
-```
+The same approach can be followed to update any of the subcharts.
 
 After making these changes to the `values.yml` file, or a custom values file, make sure to apply them using:
 
@@ -83,7 +94,7 @@ newrelic-infrastructure:
 
 ## Values managed globally
 
-Some of the subcharts implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+Some of the subchart implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
 means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
 
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
@@ -125,7 +136,7 @@ honors global options as described below.
 | global.tolerations | list | `[]` | Sets pod's tolerations to node taints |
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
 | kube-state-metrics.collectors | object | See [`values.yaml`](values.yaml) of the kube-state-metric chart | Collectors configuration of kube-state-metric |
-| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart from the stable helm charts repository](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
+| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
 | newrelic-infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
 | newrelic-k8s-metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
