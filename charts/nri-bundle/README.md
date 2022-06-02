@@ -1,6 +1,6 @@
 # nri-bundle
 
-![Version: 4.5.5](https://img.shields.io/badge/Version-4.5.5-informational?style=flat-square)
+![Version: 4.5.6](https://img.shields.io/badge/Version-4.5.6-informational?style=flat-square)
 
 Groups together the individual charts for the New Relic Kubernetes solution for a more comfortable deployment.
 
@@ -14,53 +14,18 @@ Integration using only one chart.
 In case you need more information of each component this chart installs or you are and advanced user that want to install each
 component separated, here is a list of components that this chart installs and where you can have more information about them:
 
-| Component                    | Installed by default? | Github repository                                                                                                                                      |
-|------------------------------|-----------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------|
-| newrelic-infrastructure      | Yes                   | [newrelic/nri-kubernetes](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)                                         |
-| nri-metadata-injection       | Yes                   | [newrelic/k8s-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection)                          |
-| kube-state-metrics           |                       | [kubernetes/kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics)                                |
-| newrelic-infra-operator      |                       | [newrelic/newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta)                |
-| newrelic-k8s-metrics-adapter |                       | [newrelic/newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
-| newrelic-logging             |                       | [newrelic/helm-charts](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging)                                                    |
-| newrelic-pixie               |                       | [newrelic/newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie)                                                   |
-| nri-kube-events              |                       | [newrelic/nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)                                               |
-| nri-prometheus               |                       | [newrelic/nri-prometheus](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus)                                                  |
-| pixie-chart                  |                       | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy)                                                                    |
-
-### [newrelic-infrastructure](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)
-This component will (in privileged mode) monitor the nodes and run integrations to monitor services inside the Kubernetes cluster (in any mode). It
-will also deploy a daemonset in the control plane nodes to give information about the health of the control plane and deployment to scrape the data
-from the KSM (see below)
-
-### [nri-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection)
-This webhook will inject environments variables to all the pods so the APM agents have the context to know where they are running.
-
-### [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics)
-kube-state-metrics (KSM) listens to the Kubernetes API server and generates metrics about the state of the objects. It is not focused on the health
-of the individual Kubernetes components, but on the health of the various objects inside, such as deployments and pods.
-
-### [nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)
-This component is an active watcher of event resource in the Kubernetes system that take those infrastructure events (like a pod has been created or
-a pod have just crashed) and pushes them to New Relic.
-
-### [newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta)
-This chart is meant to be used with Fargate clusters or serverless clusters that need to deploy the infrastructure agent as a sidecar per pod.
-
-### [newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta)
-This chart provides a source of data for Horizontal Pod Autoscalers (HPA) based on a NRQL query from New Relic.
-
-### [newrelic-logging](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging)
-Install a Daemonset on all the nodes that allow to send logs from the cluster to New Relic.
-
-### [nri-prometheus](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus)
-Fetch metrics in the Prometheus metrics format and send them to the New Relic platform.
-
-### [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie)
-Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin then sends data generated by a set of PxL scripts to New Relic.
-
-### [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy)
-Pixie is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for
-manual instrumentation.
+| Component                    | Installed by default? | Description |
+|------------------------------|-----------------------|-------------|
+| [newrelic-infrastructure](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) | Yes | This component will (in privileged mode) monitor the nodes and run integrations to monitor services inside the Kubernetes cluster (in any mode). It will also deploy a daemonset in the control plane nodes to give information about the health of the control plane and deployment to scrape the data from the KSM (see below) |
+| [nri-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) | Yes | Webhook that will inject environments variables to all the pods so the APM agents have the context to know where they are running. |
+| [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) | | kube-state-metrics (KSM) listens to the Kubernetes API server and generates metrics about the state of the objects. It is not focused on the health of the individual Kubernetes components, but on the health of the various objects inside, such as deployments and pods. |
+| [nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) | | This component is an active watcher of event resource in the Kubernetes system that take those infrastructure events (like a pod has been created or a pod have just crashed) and pushes them to New Relic. |
+| [newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) | | (Beta) This operator is meant to be used with Fargate clusters or serverless clusters that need to deploy the infrastructure agent as a sidecar per pod. |
+| [newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) |  | (Beta) Provides a source of data for Horizontal Pod Autoscalers (HPA) based on a NRQL query from New Relic. |
+| [newrelic-logging](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |  | Install a Daemonset on all the nodes that allow to send logs from the cluster to New Relic. |
+| [nri-prometheus](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |  | Fetch metrics in the Prometheus metrics format and send them to the New Relic platform. |
+| [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |  | Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin then sends data generated by a set of PxL scripts to New Relic. |
+| [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |  | Is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for manual instrumentation. |
 
 ## Configure components
 
