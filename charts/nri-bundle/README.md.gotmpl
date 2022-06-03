@@ -7,6 +7,27 @@
 
 {{ template "chart.homepageLine" . }}
 
+## Bundled charts
+
+This chart does not deploy anything by itself but has many charts as dependencies. This allows you to easily install and upgrade the New Relic
+Kubernetes Integration using only one chart.
+
+In case you need more information about each component this chart installs, or you are an advanced user that want to install each component separately,
+here is a list of components that this chart installs and where you can find more information about them:
+
+| Component| Installed by default? | Description |
+|------------------------------|-----------------------|-------------|
+| [newrelic-infrastructure](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) | Yes | Sends metrics about nodes, cluster objects (e.g. Deployments, Pods), and the control plane to New Relic. |
+| [nri-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) | Yes | Enriches New Relic-instrumented applications (APM) with Kubernetes information. |
+| [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) | | Required for `newrelic-infrastructure` to gather cluster-level metrics. |
+| [nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) | | Reports Kubernetes events to New Relic. |
+| [newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) | | (Beta) Used with Fargate or serverless environments to inject `newrelic-infrastructure` as a sidecar instead of the usual DaemonSet. |
+| [newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) |  | (Beta) Provides a source of data for Horizontal Pod Autoscalers (HPA) based on a NRQL query from New Relic. |
+| [newrelic-logging](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |  | Sends logs for Kubernetes components and workloads running on the cluster to New Relic. |
+| [nri-prometheus](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |  | Sends metrics from applications exposing Prometheus metrics to New Relic. |
+| [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |  | Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin allows you to export data from Pixie to New Relic for long-term data retention. |
+| [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |  | Is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for manual instrumentation. |
+
 ## Configure components
 
 It is possible to configure settings for the individual charts this chart groups by specifying values for them under a key using the name of the chart,
@@ -18,7 +39,7 @@ For example, by adding the following to the `values.yml` file:
 # Configuration settings for the newrelic-infrastructure chart
 newrelic-infrastructure:
   # Any key defined in the values.yml file for the newrelic-infrastructure chart can be configured here:
-  # https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml
+  # https://github.com/newrelic/nri-kubernetes/blob/main/charts/newrelic-infrastructure/values.yaml
 
   verboseLog: false
 
@@ -27,8 +48,8 @@ limits:
   memory: 512M
 ```
 
-It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure)
-chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/master/charts/newrelic-infrastructure/values.yaml).
+It is possible to override any entry of the [`newrelic-infrastructure`](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)
+chart, as defined in their [`values.yml` file](https://github.com/newrelic/nri-kubernetes/blob/main/charts/newrelic-infrastructure/values.yaml).
 
 The same approach can be followed to update any of the subcharts.
 
