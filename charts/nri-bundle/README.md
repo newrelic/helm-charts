@@ -1,6 +1,6 @@
 # nri-bundle
 
-![Version: 4.5.6](https://img.shields.io/badge/Version-4.5.6-informational?style=flat-square)
+![Version: 4.5.8](https://img.shields.io/badge/Version-4.5.8-informational?style=flat-square)
 
 Groups together the individual charts for the New Relic Kubernetes solution for a more comfortable deployment.
 

@@ -147,17 +147,18 @@ global:
 #
 #
 # newrelic-infrastructure:
-#   nri-redis-sampleapp:
-#     discovery:
-#       command:
-#         exec: /var/db/newrelic-infra/nri-discovery-kubernetes --tls --port 10250
-#         match:
-#           label.app: sampleapp
-#     integrations:
-#       - name: nri-redis
-#         env:
-#           # using the discovered IP as the hostname address
-#           HOSTNAME: ${discovery.ip}
-#           PORT: 6379
-#         labels:
-#           env: test
+#   integrations:
+#     nri-redis-sampleapp:
+#       discovery:
+#         command:
+#           exec: /var/db/newrelic-infra/nri-discovery-kubernetes --tls --port 10250
+#           match:
+#             label.app: sampleapp
+#       integrations:
+#         - name: nri-redis
+#           env:
+#             # using the discovered IP as the hostname address
+#             HOSTNAME: ${discovery.ip}
+#             PORT: 6379
+#           labels:
+#             env: test
