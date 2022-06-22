@@ -39,7 +39,7 @@ Breaking (backwards incompatible) changes to a chart must:
 
 We officially support compatibility with the current and the previous minor version of Kubernetes. Generated resources should use the latest possible API versions compatible with these versions.
 
-For extended backwards compatibility, conditional logic based on capabilities may be used (see [built-in objects](https://github.com/helm/helm/blob/master/docs/chart_template_guide/builtin_objects.md)).
+For extended backwards compatibility, conditional logic based on capabilities may be used (see [built-in objects](https://helm.sh/docs/chart_template_guide/builtin_objects)).
 
 ##  4. <a name='Chartmetadata'></a>Chart metadata
 
