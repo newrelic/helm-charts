@@ -135,7 +135,7 @@ honors global options as described below.
 | global.serviceAccount.create | string | `nil` | Configures if the service account should be created or not |
 | global.serviceAccount.name | string | `nil` | Change the name of the service account. This is honored if you disable on this chart the creation of the service account so you can use your own |
 | global.tolerations | list | `[]` | Sets pod's tolerations to node taints |
-| global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
+| global.verboseLog | bool | false | Sets the debug/trace logs to this integration or all integrations if it is set globally |
 | kube-state-metrics.collectors | object | See [`values.yaml`](values.yaml) of the kube-state-metric chart | Collectors configuration of kube-state-metric |
 | kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
