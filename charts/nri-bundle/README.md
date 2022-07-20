@@ -1,7 +1,5 @@
 # nri-bundle
 
-![Version: 4.7.0](https://img.shields.io/badge/Version-4.7.0-informational?style=flat-square)
-
 Groups together the individual charts for the New Relic Kubernetes solution for a more comfortable deployment.
 
 **Homepage:** <https://github.com/newrelic/helm-charts>
