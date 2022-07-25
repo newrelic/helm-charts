@@ -17,6 +17,9 @@ data:
     {{- else }}
       {{- .Values.fluentBit.config.filters | nindent 4 }}
     {{- end }}
+    {{- if .Values.fluentBit.config.extraFilters }}
+      {{- .Values.fluentBit.config.extraFilters | nindent 4 }}
+    {{- end }}
     {{- if .Values.fluentBit.config.outputs }}
       {{- .Values.fluentBit.config.outputs | nindent 4 }}
     {{- end }}
