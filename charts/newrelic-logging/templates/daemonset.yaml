@@ -109,6 +109,9 @@ spec:
               mountPath: /fluent-bit/etc
             - name: var
               mountPath: /var
+          {{- if .Values.ports }}
+          ports: {{ toYaml .Values.ports | nindent 12 }}
+          {{- end }}
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
