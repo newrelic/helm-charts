@@ -52,10 +52,8 @@ spec:
   
             {{- include "synthetics-job-manager.vsePassphrase" . | nindent 12 -}}
 
-            {{- if .Values.synthetics.apiProxy }}
-            - name: API_PROXY
-              value: {{ .Values.synthetics.apiProxy | quote }}
-            {{- end }}
+            {{- include "synthetics-job-manager.apiProxyHost" . | nindent 12 -}}
+            {{- include "synthetics-job-manager.apiProxyPort" . | nindent 12 -}}
   
             {{- if .Values.synthetics.apiProxySelfSignedCert }}
             - name: API_PROXY_SELF_SIGNED_CERT
@@ -66,32 +64,34 @@ spec:
             - name: API_PROXY_AUTH
               value: {{ .Values.synthetics.apiProxyAuth | quote }}
             {{- end }}
+  
+          {{- /*
+          TODO - The following are not yet implemented
+            {{- if .Values.synthetics.checkTimeout }}
+            - name: CHECK_TIMEOUT
+              value: {{ .Values.synthetics.checkTimeout | quote }}
+            {{- end }}
 
-            # TODO - The following are yet not implemented
-#            {{- if .Values.synthetics.checkTimeout }}
-#            - name: CHECK_TIMEOUT
-#              value: {{ .Values.synthetics.checkTimeout | quote }}
-#            {{- end }}
-#
-#            {{- if .Values.synthetics.userDefinedEnvVariable }}
-#            - name: USER_DEFINED_ENV_VARIABLES
-#              value: {{ .Values.synthetics.userDefinedEnvVariable | quote }}
-#            {{- end }}
-#
-#            {{- if .Values.synthetics.networkHealthCheckDisabled }}
-#            - name: NETWORK_HEALTHCHECK_DISABLED
-#              value: {{ .Values.synthetics.networkHealthCheckDisabled | quote }}
-#            {{- end }}
-#
-#            {{- if .Values.appArmorProfileName }}
-#            - name: RUNNER_APPARMOR
-#              value: "{{ .Values.appArmorProfileName }}"
-#            {{- end }}
-#
-#            {{- if .Values.synthetics.jvmOpts }}
-#            - name: JVM_OPTS
-#              value: "{{ .Values.synthetics.jvmOpts }}"
-#            {{- end }}
+            {{- if .Values.synthetics.userDefinedEnvVariable }}
+            - name: USER_DEFINED_ENV_VARIABLES
+              value: {{ .Values.synthetics.userDefinedEnvVariable | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.networkHealthCheckDisabled }}
+            - name: NETWORK_HEALTHCHECK_DISABLED
+              value: {{ .Values.synthetics.networkHealthCheckDisabled | quote }}
+            {{- end }}
+
+            {{- if .Values.appArmorProfileName }}
+            - name: RUNNER_APPARMOR
+              value: "{{ .Values.appArmorProfileName }}"
+            {{- end }}
+
+            {{- if .Values.synthetics.jvmOpts }}
+            - name: JVM_OPTS
+              value: "{{ .Values.synthetics.jvmOpts }}"
+            {{- end }}
+          */}}
 
           ports:
             - name: http

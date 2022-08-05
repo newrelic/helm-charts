@@ -68,6 +68,34 @@ valueFrom:
 {{- end }}
 
 {{/*
+Ensures that proxy port is set if proxy host is set.
+*/}}
+{{- define "synthetics-job-manager.apiProxyHost" }}
+{{- if .Values.synthetics.apiProxyHost -}}
+{{- if .Values.synthetics.apiProxyPort -}}
+- name: HORDE_API_PROXY_HOST
+  value: {{ .Values.synthetics.apiProxyHost | quote }}
+{{- else -}}
+{{- required ".Values.synthetics.apiProxyPort must be set if .Values.synthetics.apiProxyHost is set!" nil }}
+{{- end -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Ensures that proxy host is set if proxy port is set.
+*/}}
+{{- define "synthetics-job-manager.apiProxyPort" }}
+{{- if .Values.synthetics.apiProxyPort -}}
+{{- if .Values.synthetics.apiProxyHost -}}
+- name: HORDE_API_PROXY_PORT
+  value: {{ .Values.synthetics.apiProxyPort | quote }}
+{{- else -}}
+{{- required ".Values.synthetics.apiProxyHost must be set if .Values.synthetics.apiProxyPort is set!" nil }}
+{{- end -}}
+{{- end }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "synthetics-job-manager.labels" -}}
