@@ -31,7 +31,7 @@ spec:
         {{ toYaml .Values.podLabels }}
         {{- end }}
     spec:
-      serviceAccountName: {{ template "newrelic-logging.serviceAccountName" . }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
       dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 10
