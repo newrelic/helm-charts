@@ -1,0 +1,29 @@
+{{- define "newrelic-logging.configmap" -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  name: {{ template "newrelic-logging.fluentBitConfig" . }}
+data:
+  fluent-bit.conf: |
+    {{- if .Values.fluentBit.config.service }}
+      {{- .Values.fluentBit.config.service | nindent 4 }}
+    {{- end }}
+    {{- if .Values.fluentBit.config.inputs }}
+      {{- .Values.fluentBit.config.inputs | nindent 4 }}
+    {{- end }}
+    {{- if and (include "newrelic-logging.lowDataMode" .) (.Values.fluentBit.config.lowDataModeFilters) }}
+      {{- .Values.fluentBit.config.lowDataModeFilters | nindent 4 }}
+    {{- else }}
+      {{- .Values.fluentBit.config.filters | nindent 4 }}
+    {{- end }}
+    {{- if .Values.fluentBit.config.outputs }}
+      {{- .Values.fluentBit.config.outputs | nindent 4 }}
+    {{- end }}
+  parsers.conf: |
+  {{- if .Values.fluentBit.config.parsers }}
+    {{- .Values.fluentBit.config.parsers | nindent 4}}
+  {{- end }}
+
+{{- end }}

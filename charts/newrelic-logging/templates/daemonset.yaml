@@ -6,6 +6,7 @@ metadata:
   labels: {{ include "newrelic-logging.labels" . | indent 4 }}
   name: {{ template "newrelic-logging.fullname" . }}
   annotations:
+    checksum/config: {{ include "newrelic-logging.configmap" . | sha256sum }}
   {{- if .Values.daemonSet.annotations }}
 {{ toYaml .Values.daemonSet.annotations | indent 4 }}
   {{- end }}
