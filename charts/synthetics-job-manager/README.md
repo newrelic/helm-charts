@@ -2,7 +2,7 @@
 
 ## Chart Details
 
-This chart will deploy the New Relic Synthetics Containerized Private Kevin alongside the runtimes that execute synthetics checks.
+This chart will deploy the New Relic Synthetics Containerized Private Job Manager alongside the runtimes that execute synthetics checks.
 
 ## Configuration
 

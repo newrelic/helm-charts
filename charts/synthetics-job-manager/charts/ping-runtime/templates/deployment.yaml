@@ -34,10 +34,10 @@ spec:
             - name: NRS_PINGRUNNER_INTERNALTOKENS_SYNTHETICS
               {{- include "synthetics-job-manager.internalApiKey" . | nindent 14 }}
 
-            - name: NRS_KEVIN_INTERNALTOKENS_SYNTHETICS
+            - name: NRS_SYNTHETICSJOBMANAGER_INTERNALTOKENS_SYNTHETICS
               {{- include "synthetics-job-manager.internalApiKey" . | nindent 14 }}
 
-            - name: NRS_KEVIN_SUBMIT_URL
+            - name: NRS_SYNTHETICSJOBMANAGER_SUBMIT_URL
               value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "synthetics-job-manager.hostname" .) }}"
 
           ports:
