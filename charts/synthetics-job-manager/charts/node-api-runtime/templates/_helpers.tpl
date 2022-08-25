@@ -38,6 +38,13 @@ Allows to override the appVersion to use.
 {{- end -}}
 
 {{/*
+Allows overriding of the synthetics-job-manager Service hostname
+*/}}
+{{- define "synthetics-job-manager.hostname" -}}
+{{- default "synthetics-job-manager" .Values.global.hostnameOverride | trunc 63 | trimSuffix "-" }}
+{{- end }}
+
+{{/*
 Common labels
 */}}
 {{- define "node-api-runtime.labels" -}}
