@@ -128,6 +128,14 @@ helm install newrelic/synthetics-job-manager \
 --set synthetics.privateLocationKey=<enter_synthetics_private_location_key> \
 ```
 
+To install the runtime charts make sure to pass in the `values.yaml` for both synthetics-job-manager and runtime charts. For instance, to install the node-api-runtime the command is as follows:
+
+```sh
+helm install [chart-name] charts/synthetics-job-manager/charts/node-api-runtime \
+--values charts/synthetics-job-manager/values.yaml \
+--values charts/synthetics-job-manager/charts/node-api-runtime/values.yaml \
+```
+
 ## Resources
 
 The default set of resources assigned to synthetics-job-manager is shown below:
