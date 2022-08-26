@@ -1,6 +1,14 @@
 newrelic-infrastructure:
   # newrelic-infrastructure.enabled -- Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure)
   enabled: true
+  privileged: false
+  images:
+    integration:
+      repository: new-relic/nri-kubernetes
+    agent:
+      repository: new-relic/infrastructure-bundle
+    forwarder:
+      repository: new-relic/k8s-events-forwarder
 
 nri-prometheus:
   # nri-prometheus.enabled -- Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus)
@@ -8,17 +16,19 @@ nri-prometheus:
 
 nri-metadata-injection:
   # nri-metadata-injection.enabled -- Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection)
-  enabled: true
+  enabled: false
 
 kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository.
   # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0
-  enabled: false
+  enabled: true
   # kube-state-metrics.collectors -- Collectors configuration of kube-state-metric
   # @default -- See [`values.yaml`](values.yaml) of the kube-state-metric chart
   collectors:
     certificatesigningrequests: false
     ingresses: false
+  image:
+    repository: 709825985650.dkr.ecr.us-east-1.amazonaws.com/new-relic/kube-state-metrics
 
 nri-kube-events:
   # nri-kube-events.enabled -- Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)
@@ -68,7 +78,8 @@ global:
 
   images:
     # -- Changes the registry where to get the images. Useful when there is an internal image cache/proxy
-    registry: ""
+    registry: 709825985650.dkr.ecr.us-east-1.amazonaws.com
+
     # -- Set secrets to be able to fetch images
     pullSecrets: []
 
@@ -109,7 +120,7 @@ global:
 
   # -- (bool) In each integration it has different behavior. See [Further information](#values-managed-globally-3) but all aims to send less metrics to the backend to try to save costs |
   # @default -- false
-  privileged:
+  privileged: false
 
   # -- (bool) Must be set to `true` when deploying in an EKS Fargate environment
   # @default -- false
