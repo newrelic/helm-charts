@@ -98,10 +98,7 @@ secretKeyRef:
   valueFrom:
 fieldRef:
   fieldPath: metadata.name
-{{- range .Values.fluentBit.additionalEnvVariables }}
-- name: {{ .name }}
-  value: {{ .value }}
-{{- end }}
+{{- include "newrelic-logging.extraEnv" . | nindent 12 }}
   command:
 - /fluent-bit/bin/fluent-bit
 - -c
