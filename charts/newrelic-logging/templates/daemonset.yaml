@@ -94,6 +94,10 @@ spec:
               value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             {{- range .Values.fluentBit.additionalEnvVariables }}
             - name: {{ .name }}
               value: {{ .value }}
@@ -144,7 +148,7 @@ spec:
         # We add this only if Windows is enabled to keep backwards-compatibility. Prior to version 1.14, this label was
         # named beta.kubernetes.io/os. In version 1.14, it was deprecated and replaced by this one. Version 1.14 also
         # introduces Windows support. Therefore, anyone wishing to use Windows containers must bet at version >=1.14 and
-        # are going to need this label, in order to avoid placing a linux container on a windows node, and viceversa.
+        # are going to need this label, in order to avoid placing a linux container on a windows node, and vice-versa.
         kubernetes.io/os: linux
         {{- end }}
       {{- if .Values.tolerations }}
