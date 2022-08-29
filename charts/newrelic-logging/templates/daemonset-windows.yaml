@@ -91,10 +91,7 @@ spec:
               value: {{ $.Values.fluentBit.k8sLoggingExclude | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" $ | default "false" | quote }}
-            {{- range $.Values.fluentBit.additionalEnvVariables }}
-            - name: {{ .name }}
-              value: {{ .value }}
-            {{- end }}
+            {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
           command:
             - C:\fluent-bit\bin\fluent-bit.exe
             - -c
