@@ -1,5 +1,7 @@
 # nri-bundle
 
+Trigger a bundle change
+
 Groups together the individual charts for the New Relic Kubernetes solution for a more comfortable deployment.
 
 **Homepage:** <https://github.com/newrelic/helm-charts>
