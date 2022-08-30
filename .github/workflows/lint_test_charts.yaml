@@ -58,7 +58,7 @@ jobs:
             echo "::set-output name=charts::true"
           fi
           if [[ -n "$(echo -n "$charts" | grep charts/nri-bundle)" ]]; then
-            echo "::set-output name=bundle-changed::true"
+            echo "::set-output name=bundle::true"
           fi
 
   install-test:
@@ -79,10 +79,8 @@ jobs:
           version: 'v3.0.0'
 
       - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@v1.2.0
       - name: Create test ns
-        if: steps.list-changed.outputs.changed == 'true'
         run: kubectl create ns ct
 
       - name: Test install charts
