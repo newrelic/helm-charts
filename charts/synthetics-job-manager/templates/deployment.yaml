@@ -31,7 +31,7 @@ spec:
           image: "{{ .Values.image.repository }}:{{ include "synthetics-job-manager.appVersion" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
-            - name: MINION_PRIVATE_LOCATION_KEY
+            - name: PRIVATE_LOCATION_KEY
               {{- include "synthetics-job-manager.privateLocationKey" . | nindent 14 }}
 
             - name: LOG_LEVEL
