@@ -9,7 +9,7 @@
         {{- if .Values.serviceAccount.create -}}
             {{- /*
                 We want only to return when this is true, returning `false` here will template "false" (string) when doing
-                an `(include "newrelic-logging.serviceAccount" .)`, which is not an "empty string" so it is `true` if it is used
+                an `(include "newrelic.common.serviceAccount.name" .)`, which is not an "empty string" so it is `true` if it is used
                 as an evaluation somewhere else.
             */ -}}
             {{- .Values.serviceAccount.create -}}
