@@ -140,15 +140,20 @@ spec:
               value: {{ .Values.synthetics.minionApiProxy | quote }}
             {{- end }}
 
-            {{- if .Values.synthetics.minionApiProxySelfSignedCert }}
-            - name: MINION_API_PROXY_SELF_SIGNED_CERT
-              value: {{ .Values.synthetics.minionApiProxySelfSignedCert | quote }}
+            {{- if .Values.synthetics.hordeApiProxyCert }}
+            - name: HORDE_API_PROXY_CERT
+              value: {{ .Values.synthetics.hordeApiProxyCert | quote }}
             {{- end }}
 
-            {{- if .Values.synthetics.minionApiProxyAuth }}
-            - name: MINION_API_PROXY_AUTH
-              value: {{ .Values.synthetics.minionApiProxyAuth | quote }}
+            {{- if .Values.synthetics.hordeApiProxyUsername }}
+            - name: HORDE_API_PROXY_USERNAME
+              value: {{ .Values.synthetics.hordeApiProxyUsername | quote }}
             {{- end }}
+
+            { { - if .Values.synthetics.hordeApiProxyPw } }
+            - name: HORDE_API_PROXY_PW
+              value: { { .Values.synthetics.hordeApiProxyPw | quote } }
+            { { - end } }
 
             {{- if .Values.synthetics.minionCheckTimeout }}
             - name: MINION_CHECK_TIMEOUT
