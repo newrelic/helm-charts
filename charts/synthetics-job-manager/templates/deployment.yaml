@@ -55,15 +55,20 @@ spec:
             {{- include "synthetics-job-manager.apiProxyHost" . | nindent 12 -}}
             {{- include "synthetics-job-manager.apiProxyPort" . | nindent 12 -}}
   
-            {{- if .Values.synthetics.apiProxySelfSignedCert }}
-            - name: API_PROXY_SELF_SIGNED_CERT
-              value: {{ .Values.synthetics.apiProxySelfSignedCert | quote }}
+            {{- if .Values.synthetics.hordeApiProxySelfSignedCert }}
+            - name: HORDE_API_PROXY_ACCEPT_SELF_SIGNED_CERT
+              value: {{ .Values.synthetics.hordeApiProxySelfSignedCert | quote }}
             {{- end }}
   
-            {{- if .Values.synthetics.apiProxyAuth }}
-            - name: API_PROXY_AUTH
-              value: {{ .Values.synthetics.apiProxyAuth | quote }}
+            {{- if .Values.synthetics.hordeApiProxyUsername }}
+            - name: HORDE_API_PROXY_USERNAME
+              value: {{ .Values.synthetics.hordeApiProxyUsername | quote }}
             {{- end }}
+
+            { { - if .Values.synthetics.hordeApiProxyPw } }
+            - name: HORDE_API_PROXY_PW
+              value: { { .Values.synthetics.hordeApiProxyPw | quote } }
+            { { - end } }
   
           {{- /*
           TODO - The following are not yet implemented
