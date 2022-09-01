@@ -65,10 +65,10 @@ spec:
               value: {{ .Values.synthetics.hordeApiProxyUsername | quote }}
             {{- end }}
 
-            { { - if .Values.synthetics.hordeApiProxyPw } }
+            {{- if .Values.synthetics.hordeApiProxyPw }}
             - name: HORDE_API_PROXY_PW
-              value: { { .Values.synthetics.hordeApiProxyPw | quote } }
-            { { - end } }
+              value: {{ .Values.synthetics.hordeApiProxyPw | quote }}
+            {{- end }}
   
           {{- /*
           TODO - The following are not yet implemented
