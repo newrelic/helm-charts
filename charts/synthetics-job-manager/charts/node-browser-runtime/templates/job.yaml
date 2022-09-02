@@ -26,8 +26,16 @@ spec:
         spec:
           securityContext:
             {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          volumes:
+            - emptyDir:
+                medium: Memory
+                sizeLimit: 2048Mi
+              name: browser
           containers:
             - name: {{ .Chart.Name }}
+              volumeMounts:
+                - mountPath: /dev/shm
+                  name: browser
               securityContext:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               image: "{{ .Values.image.repository }}:{{ include "node-browser-runtime.appVersion" . }}"
