@@ -108,6 +108,8 @@ newrelic-infrastructure:
     config:
       # Selector for your pre-installed KSM Service. You may need to adjust this to fit your existing installation.
       selector: "app.kubernetes.io/name=kube-state-metrics"
+      # Alternatively, you can specify a fixed URL where KSM is available. Doing so will bypass autodiscovery.
+      #staticUrl: http://ksm.ksm.svc.cluster.local:8080/metrics
 ```
 
 ### Run KSM v1.9.8 alongside a different version
