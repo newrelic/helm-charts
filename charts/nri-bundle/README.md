@@ -91,6 +91,44 @@ newrelic-infrastructure:
             env: test
 ```
 
+## Bring your own KSM
+
+New Relic Kubernetes Integration requires an instance of kube-state-metrics (KSM) to be running in the cluster, which this chart pulls as a dependency. If you are already running or want to run your own KSM instance, you will need to make some small adjustments as described below.
+
+### Bring your own KSM v1.9.8
+
+New Relic Kubernetes integration only supports KSM v1.9.8. If you already have one running, you can disable the KSM dependency of this chart, and point `nri-kubernetes` to your instance:
+
+```yaml
+kube-state-metrics:
+  # Disable bundled KSM.
+  enabled: false
+newrelic-infrastructure:
+  ksm:
+    config:
+      # Selector for your pre-installed KSM Service. You may need to adjust this to fit your existing installation.
+      selector: "app.kubernetes.io/name=kube-state-metrics"
+```
+
+### Run KSM v1.9.8 alongside a different version
+
+If you need to run a different version of KSM in your cluster, you can still run a separate v1.9.8 instance for the Kubernetes Integration to work as intended:
+
+```yaml
+kube-state-metrics:
+  # Enable bundled KSM.
+  enabled: true
+  prometheusScrape: false
+  customLabels:
+    # Label unique to this KSM instance.
+    newrelic.com/custom-ksm: "true"
+newrelic-infrastructure:
+  ksm:
+    config:
+      # Use label above as a selector.
+      selector: "newrelic.com/custom-ksm=true"
+```
+
 ## Values managed globally
 
 Some of the subchart implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
