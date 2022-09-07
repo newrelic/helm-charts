@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ping-runtime.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "ping-runtime.labels" . | nindent 4 }}
+    {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "ping-runtime.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "ping-runtime.selectorLabels" . | nindent 8 }}
+        {{- with .Values.labels -}}
+          {{ toYaml . | nindent 8 }}
+        {{- end }}
+      {{- include "ping-runtime.podAnnotations" . | nindent 6 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ include "ping-runtime.appVersion" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: AUTH_TOKEN
+              {{- include "synthetics-job-manager.internalApiKey" . | nindent 14 }}
+
+            - name: JOB_MANAGER_AUTH_TOKEN
+              {{- include "synthetics-job-manager.internalApiKey" . | nindent 14 }}
+
+            - name: POST_RESULT_URL
+              value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "synthetics-job-manager.hostname" .) }}"
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 8082
+              protocol: TCP
+
+          startupProbe:
+            httpGet:
+              path: /status/check
+              port: http
+            # Allow up to 10 minutes for startup before marking as failed
+            failureThreshold: {{ .Values.startupProbeFailureThreshold }}
+            periodSeconds: {{ .Values.startupProbePeriodSeconds }}
+
+          livenessProbe:
+            httpGet:
+              path: /status/check
+              port: http
+            # If two consecutive failures occur the liveness check fails
+            failureThreshold: {{ .Values.livenessProbeFailureThreshold }}
+            periodSeconds: {{ .Values.livenessProbePeriodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbeTimeoutSeconds }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
