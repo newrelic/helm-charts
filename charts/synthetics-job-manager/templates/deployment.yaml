@@ -1,0 +1,152 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "synthetics-job-manager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "synthetics-job-manager.labels" . | nindent 4 }}
+    {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "synthetics-job-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "synthetics-job-manager.selectorLabels" . | nindent 8 }}
+        {{- with .Values.labels -}}
+          {{ toYaml . | nindent 8 }}
+        {{- end }}
+      {{- include "synthetics-job-manager.podAnnotations" . | nindent 6 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ include "synthetics-job-manager.appVersion" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: PRIVATE_LOCATION_KEY
+              {{- include "synthetics-job-manager.privateLocationKey" . | nindent 14 }}
+
+            - name: LOG_LEVEL
+              value: {{ .Values.synthetics.logLevel | quote }}
+  
+            {{- if index .Values "ping-runtime" "enabled" }}
+            - name: PING_RUNTIME_HOSTNAME
+              value: {{ include "ping-runtime.hostname" . }}
+
+            - name: PING_RUNTIME_AUTH_TOKEN
+              {{- include "synthetics-job-manager.internalApiKey" . | nindent 14 }}
+            {{- end }}
+  
+            {{- if .Values.synthetics.hordeApiEndpoint }}
+            - name: HORDE_API_ENDPOINT
+              value: {{ .Values.synthetics.hordeApiEndpoint | quote }}
+            {{- end }}
+  
+            {{- include "synthetics-job-manager.vsePassphrase" . | nindent 12 -}}
+
+            {{- include "synthetics-job-manager.apiProxyHost" . | nindent 12 -}}
+            {{- include "synthetics-job-manager.apiProxyPort" . | nindent 12 -}}
+  
+            {{- if .Values.synthetics.hordeApiProxySelfSignedCert }}
+            - name: HORDE_API_PROXY_ACCEPT_SELF_SIGNED_CERT
+              value: {{ .Values.synthetics.hordeApiProxySelfSignedCert | quote }}
+            {{- end }}
+  
+            {{- if .Values.synthetics.hordeApiProxyUsername }}
+            - name: HORDE_API_PROXY_USERNAME
+              value: {{ .Values.synthetics.hordeApiProxyUsername | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.hordeApiProxyPw }}
+            - name: HORDE_API_PROXY_PW
+              value: {{ .Values.synthetics.hordeApiProxyPw | quote }}
+            {{- end }}
+  
+          {{- /*
+          TODO - The following are not yet implemented
+            {{- if .Values.synthetics.checkTimeout }}
+            - name: CHECK_TIMEOUT
+              value: {{ .Values.synthetics.checkTimeout | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.userDefinedEnvVariable }}
+            - name: USER_DEFINED_ENV_VARIABLES
+              value: {{ .Values.synthetics.userDefinedEnvVariable | quote }}
+            {{- end }}
+
+            {{- if .Values.synthetics.networkHealthCheckDisabled }}
+            - name: NETWORK_HEALTHCHECK_DISABLED
+              value: {{ .Values.synthetics.networkHealthCheckDisabled | quote }}
+            {{- end }}
+
+            {{- if .Values.appArmorProfileName }}
+            - name: RUNNER_APPARMOR
+              value: "{{ .Values.appArmorProfileName }}"
+            {{- end }}
+
+            {{- if .Values.synthetics.jvmOpts }}
+            - name: JVM_OPTS
+              value: "{{ .Values.synthetics.jvmOpts }}"
+            {{- end }}
+          */}}
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 8082
+              protocol: TCP
+
+          startupProbe:
+            httpGet:
+              path: /status/check
+              port: http
+            # Allow up to 10 minutes for startup before marking as failed
+            failureThreshold: {{ .Values.startupProbeFailureThreshold }}
+            periodSeconds: {{ .Values.startupProbePeriodSeconds }}
+
+          livenessProbe:
+            httpGet:
+              path: /status/check
+              port: http
+            # If two consecutive failures occur the liveness check fails
+            failureThreshold: {{ .Values.livenessProbeFailureThreshold }}
+            periodSeconds: {{ .Values.livenessProbePeriodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbeTimeoutSeconds }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          terminationMessagePolicy: FallbackToLogsOnError
+
+      terminationGracePeriodSeconds: {{ include "synthetics-job-manager.terminationGracePeriodSeconds" . }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      restartPolicy: Always

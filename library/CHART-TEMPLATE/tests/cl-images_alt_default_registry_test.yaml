@@ -1,0 +1,61 @@
+suite: test image registry with an alternative default registry
+templates:
+  - templates/job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not set registry if not specified
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nexus-3-instance.internal.clients-domain.tld/nginx:1.16.0
+
+  - it: sets registry if specified in values
+    set:
+      image:
+        registry: abc
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: abc/nginx:1.16.0
+
+
+  - it: sets registry if specified in globals
+    set:
+      global:
+        images:
+          registry: abc
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: abc/nginx:1.16.0
+
+  - it: sets registry giving priority to values
+    set:
+      global:
+        images:
+          registry: abc
+      image:
+        registry: differentRegistry
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: differentRegistry/nginx:1.16.0
+
+  - it: does not break if global=null
+    set:
+      global: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nexus-3-instance.internal.clients-domain.tld/nginx:1.16.0
+
+  - it: does not break if global.image=null
+    set:
+      global:
+        image: null
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nexus-3-instance.internal.clients-domain.tld/nginx:1.16.0

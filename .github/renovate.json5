@@ -13,11 +13,12 @@
   ],
   "packageRules": [
     {
-      // Group all GHA bumps together in a single PR.
-      "matchManagers": [
-        "github-actions"
+      // Group all nri-bundle dependencies together in a single PR.
+      "matchPaths": [
+        "charts/nri-bundle/**"
       ],
-      "groupName": "Github Actions"
+      "groupName": "Bundle dependencies",
+      "groupSlug": "nri-bundle-dependencies"
     },
     {
       // Disable major updates of Kube State Metrics.
@@ -50,9 +51,5 @@
       ],
       "enabled": true
     }
-  ],
-  "ignorePaths": [
-    // Do not bother bumping versions on the homemade chart-version-bumper action since it will be deprecated soon.
-    ".github/actions/chart-version-bumper"
   ]
 }

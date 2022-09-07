@@ -17,7 +17,7 @@ Usage:
 */ -}}
 {{- define "newrelic.common.naming.truncateToDNSWithSuffix" -}}
 {{- $suffix := (include "newrelic.common.naming.truncateToDNS" .suffix) -}}
-{{- $maxLen := (sub 63 (len $suffix)) -}}
+{{- $maxLen := (max (sub 63 (add1 (len $suffix))) 0) -}} {{- /* We prepend "-" to the suffix so an additional character is needed */ -}}
 
 {{- $newName := .name | trunc ($maxLen | int) | trimSuffix "-"  -}}
 {{- if $newName -}}
