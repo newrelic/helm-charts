@@ -91,7 +91,7 @@ secretKeyRef:
   value: {{ $.Values.fluentBit.k8sLoggingExclude | quote }}
 - name: LOW_DATA_MODE
   value: {{ include "newrelic-logging.lowDataMode" $ | default "false" | quote }}
-{{- include "newrelic-logging.extraEnv" . | nindent 12 }}
+{{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
   command:
 - C:\fluent-bit\bin\fluent-bit.exe
 - -c
