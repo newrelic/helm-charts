@@ -18,7 +18,7 @@ Return the proper image name
 
 {{- /*
 Return the proper image registry
-{{ include "newrelic.common.images.registry" ( dict "imageRoot" "defaultRegistry" "your.private.registry.tld" .Values.path.to.the.image "context" .) }}
+{{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "defaultRegistry" "your.private.registry.tld" "context" .) }}
 */ -}}
 {{- define "newrelic.common.images.registry" -}}
 {{- $globalRegistry := "" -}}
