@@ -74,48 +74,50 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 
 ### Node API Runtime Configuration
 
-| Parameter                              | Description                                                                                                   | Default                                |
-|----------------------------------------|---------------------------------------------------------------------------------------------------------------|----------------------------------------|
-| `node-api-runtime.parallelism`         | Number of node-api-runtime replicas to maintain                                                               | `1`                                    |
-| `node-api-runtime.imagePullSecrets`    | The name of a Secret object used to pull an image from a specified container registry                         |                                        |
-| `node-api-runtime.nameOverride`        | The nameOverride replaces the name of the chart in the Chart.yaml file.                                       |                                        |
-| `node-api-runtime.fullnameOverride`    | Name override used for your installation in place of the default                                              |                                        |
-| `node-api-runtime.appVersionOverride`  | Release version of node-api-runtime to use in place of the version specified in [Chart.yaml](Chart.yaml)      |                                        |
-| `node-api-runtime.image.repository`    | The container to pull.                                                                                        | `newrelic/synthetics-node-api-runtime` |
-| `node-api-runtime.image.pullPolicy`    | The pull policy.                                                                                              | `IfNotPresent`                         |
-| `node-api-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                                          |                                        |
-| `node-api-runtime.resources`           | Resource requests and limits.                                                                                 |                                        |
-| `node-api-runtime.podAnnotations`      | Annotations to be added to the node-api-runtime pod                                                           |                                        |
-| `node-api-runtime.podSecurityContext`  | Custom security context for the node-api-runtime pod                                                          |                                        |
-| `node-api-runtime.securityContext`     | Custom security context for the node-api-runtime containers                                                   |                                        |
-| `node-api-runtime.labels`              | labels to be added to all node-api-runtime resources                                                          |                                        |
-| `node-api-runtime.annotations`         | Annotations to be added to the node-api-runtime pod                                                           |                                        |
-| `node-api-runtime.nodeSelector`        | Node labels for node-api-runtime pod assignment                                                               |                                        |
-| `node-api-runtime.tolerations`         | Node taints to tolerate for node-api-runtime                                                                  |                                        |
-| `node-api-runtime.affinity`            | Pod affinity for node-api-runtime                                                                             |                                        |
+| Parameter                              | Description                                                                                                            | Default                                |
+|----------------------------------------|------------------------------------------------------------------------------------------------------------------------|----------------------------------------|
+| `node-api-runtime.parallelism`         | Number of node-api-runtime jobs to execute in parallel                                                                 | `1`                                    |
+| `node-api-runtime.completions`         | Number of node-api-runtime jobs that you expect to execute per minute (multiplied by the value of `parallelism` above) | `6`                                    |
+| `node-api-runtime.imagePullSecrets`    | The name of a Secret object used to pull an image from a specified container registry                                  |                                        |
+| `node-api-runtime.nameOverride`        | The nameOverride replaces the name of the chart in the Chart.yaml file.                                                |                                        |
+| `node-api-runtime.fullnameOverride`    | Name override used for your installation in place of the default                                                       |                                        |
+| `node-api-runtime.appVersionOverride`  | Release version of node-api-runtime to use in place of the version specified in [Chart.yaml](Chart.yaml)               |                                        |
+| `node-api-runtime.image.repository`    | The container to pull.                                                                                                 | `newrelic/synthetics-node-api-runtime` |
+| `node-api-runtime.image.pullPolicy`    | The pull policy.                                                                                                       | `IfNotPresent`                         |
+| `node-api-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                             |                                        |
+| `node-api-runtime.resources`           | Resource requests and limits.                                                                                          |                                        |
+| `node-api-runtime.podAnnotations`      | Annotations to be added to the node-api-runtime pod                                                                    |                                        |
+| `node-api-runtime.podSecurityContext`  | Custom security context for the node-api-runtime pod                                                                   |                                        |
+| `node-api-runtime.securityContext`     | Custom security context for the node-api-runtime containers                                                            |                                        |
+| `node-api-runtime.labels`              | labels to be added to all node-api-runtime resources                                                                   |                                        |
+| `node-api-runtime.annotations`         | Annotations to be added to the node-api-runtime pod                                                                    |                                        |
+| `node-api-runtime.nodeSelector`        | Node labels for node-api-runtime pod assignment                                                                        |                                        |
+| `node-api-runtime.tolerations`         | Node taints to tolerate for node-api-runtime                                                                           |                                        |
+| `node-api-runtime.affinity`            | Pod affinity for node-api-runtime                                                                                      |                                        |
 
 
 ### Node Browser Runtime Configuration
 
-| Parameter                                  | Description                                                                                                   | Default                                    |
-|--------------------------------------------|---------------------------------------------------------------------------------------------------------------|--------------------------------------------|
-| `node-browser-runtime.parallelism`         | Number of node-browser-runtime replicas to maintain                                                           | `1`                                        |
-| `node-browser-runtime.imagePullSecrets`    | The name of a Secret object used to pull an image from a specified container registry                         |                                            |
-| `node-browser-runtime.nameOverride`        | The nameOverride replaces the name of the chart in the Chart.yaml file.                                       |                                            |
-| `node-browser-runtime.fullnameOverride`    | Name override used for your installation in place of the default                                              |                                            |
-| `node-browser-runtime.appVersionOverride`  | Release version of node-browser-runtime to use in place of the version specified in [Chart.yaml](Chart.yaml)  |                                            |
-| `node-browser-runtime.image.repository`    | The container to pull.                                                                                        | `newrelic/synthetics-node-browser-runtime` |
-| `node-browser-runtime.image.pullPolicy`    | The pull policy.                                                                                              | `IfNotPresent`                             |
-| `node-browser-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                                          |                                            |
-| `node-browser-runtime.resources`           | Resource requests and limits.                                                                                 |                                            |
-| `node-browser-runtime.podAnnotations`      | Annotations to be added to the node-browser-runtime pod                                                       |                                            |
-| `node-browser-runtime.podSecurityContext`  | Custom security context for the node-browser-runtime pod                                                      |                                            |
-| `node-browser-runtime.securityContext`     | Custom security context for the node-browser-runtime containers                                               |                                            |
-| `node-browser-runtime.labels`              | labels to be added to all node-browser-runtime resources                                                      |                                            |
-| `node-browser-runtime.annotations`         | Annotations to be added to the node-browser-runtime pod                                                       |                                            |
-| `node-browser-runtime.nodeSelector`        | Node labels for node-browser-runtime pod assignment                                                           |                                            |
-| `node-browser-runtime.tolerations`         | Node taints to tolerate for node-browser-runtime                                                              |                                            |
-| `node-browser-runtime.affinity`            | Pod affinity for node-browser-runtime                                                                         |                                            |
+| Parameter                                  | Description                                                                                                                | Default                                    |
+|--------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
+| `node-browser-runtime.parallelism`         | Number of node-browser-runtime jobs to execute in parallel                                                                 | `1`                                        |
+| `node-browser-runtime.completions`         | Number of node-browser-runtime jobs that you expect to execute per minute (multiplied by the value of `parallelism` above) | `6`                                        |
+| `node-browser-runtime.imagePullSecrets`    | The name of a Secret object used to pull an image from a specified container registry                                      |                                            |
+| `node-browser-runtime.nameOverride`        | The nameOverride replaces the name of the chart in the Chart.yaml file.                                                    |                                            |
+| `node-browser-runtime.fullnameOverride`    | Name override used for your installation in place of the default                                                           |                                            |
+| `node-browser-runtime.appVersionOverride`  | Release version of node-browser-runtime to use in place of the version specified in [Chart.yaml](Chart.yaml)               |                                            |
+| `node-browser-runtime.image.repository`    | The container to pull.                                                                                                     | `newrelic/synthetics-node-browser-runtime` |
+| `node-browser-runtime.image.pullPolicy`    | The pull policy.                                                                                                           | `IfNotPresent`                             |
+| `node-browser-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                                 |                                            |
+| `node-browser-runtime.resources`           | Resource requests and limits.                                                                                              |                                            |
+| `node-browser-runtime.podAnnotations`      | Annotations to be added to the node-browser-runtime pod                                                                    |                                            |
+| `node-browser-runtime.podSecurityContext`  | Custom security context for the node-browser-runtime pod                                                                   |                                            |
+| `node-browser-runtime.securityContext`     | Custom security context for the node-browser-runtime containers                                                            |                                            |
+| `node-browser-runtime.labels`              | labels to be added to all node-browser-runtime resources                                                                   |                                            |
+| `node-browser-runtime.annotations`         | Annotations to be added to the node-browser-runtime pod                                                                    |                                            |
+| `node-browser-runtime.nodeSelector`        | Node labels for node-browser-runtime pod assignment                                                                        |                                            |
+| `node-browser-runtime.tolerations`         | Node taints to tolerate for node-browser-runtime                                                                           |                                            |
+| `node-browser-runtime.affinity`            | Pod affinity for node-browser-runtime                                                                                      |                                            |
 
 
 ## Example
