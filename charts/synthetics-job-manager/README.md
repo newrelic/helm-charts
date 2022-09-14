@@ -84,7 +84,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-api-runtime.image.repository`    | The container to pull.                                                                                        | `newrelic/synthetics-node-api-runtime` |
 | `node-api-runtime.image.pullPolicy`    | The pull policy.                                                                                              | `IfNotPresent`                         |
 | `node-api-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                                          |                                        |
-| `node-api-runtime.resources`           | Resource requests and limits.                                                                                 |                                        |
+| `node-api-runtime.resources`           | Resource requests and limits.    | See the [Resources](#Resources) section below                                                                                |                                        |
 | `node-api-runtime.podAnnotations`      | Annotations to be added to the node-api-runtime pod                                                           |                                        |
 | `node-api-runtime.podSecurityContext`  | Custom security context for the node-api-runtime pod                                                          |                                        |
 | `node-api-runtime.securityContext`     | Custom security context for the node-api-runtime containers                                                   |                                        |
@@ -107,7 +107,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-browser-runtime.image.repository`    | The container to pull.                                                                                        | `newrelic/synthetics-node-browser-runtime` |
 | `node-browser-runtime.image.pullPolicy`    | The pull policy.                                                                                              | `IfNotPresent`                             |
 | `node-browser-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                                          |                                            |
-| `node-browser-runtime.resources`           | Resource requests and limits.                                                                                 |                                            |
+| `node-browser-runtime.resources`           | Resource requests and limits.             | See the [Resources](#Resources) section below                                                                       |                                            |
 | `node-browser-runtime.podAnnotations`      | Annotations to be added to the node-browser-runtime pod                                                       |                                            |
 | `node-browser-runtime.podSecurityContext`  | Custom security context for the node-browser-runtime pod                                                      |                                            |
 | `node-browser-runtime.securityContext`     | Custom security context for the node-browser-runtime containers                                               |                                            |
@@ -149,4 +149,24 @@ resources:
   limits:
     cpu: 0.75
     memory: 1.6Gi
+```
+The default set of resources assignmed to the node-api runtime is shown below: 
+```yaml
+resources:
+  requests:
+    cpu: 0.5
+    memory: 1250Mi
+  limits:
+    cpu: 0.75
+    memory: 2500Mi
+```
+The default set of resources assignmed to the node-browser runtime is shown below: 
+```yaml
+resources:
+  requests:
+    cpu: 0.5
+    memory: 2000Mi
+  limits:
+    cpu: 0.75
+    memory: 3000Mi
 ```
