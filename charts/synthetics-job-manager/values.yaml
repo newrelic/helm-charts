@@ -197,8 +197,11 @@ ping-runtime:
 node-api-runtime:
   enabled: true
 
-  # Set this to the maximum number of node-api-runtime jobs you expect to run per minute
+  # Set this to the maximum number of node-api-runtime jobs you want to run in parallel
   parallelism: 1
+
+  # Set this to the maximum number of node-api-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
 
   # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
   imagePullSecrets: []
@@ -258,8 +261,11 @@ node-api-runtime:
 node-browser-runtime:
   enabled: true
 
-  # Set this to the maximum number of node-browser-runtime jobs you expect to run per minute
+  # Set this to the maximum number of node-browser-runtime jobs you want to run in parallel
   parallelism: 1
+
+  # Set this to the maximum number of node-browser-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
 
   # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
   imagePullSecrets: []
