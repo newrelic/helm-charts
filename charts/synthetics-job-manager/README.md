@@ -61,7 +61,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `ping-runtime.image.repository`             | The container to pull.                                                                               | `newrelic/synthetics-ping-runtime` |
 | `ping-runtime.image.pullPolicy`             | The pull policy.                                                                                     | `IfNotPresent`                     |
 | `ping-runtime.appArmorProfileName`          | *(Not yet supported)* Name of an AppArmor profile to load.                                           |                                    |
-| `ping-runtime.resources`                    | Resource requests and limits.                                                                        |                                    |
+| `ping-runtime.resources`                    | Resource requests and limits.                                  | See the [Resources](#Resources) section below                                                 |                                        |
 | `ping-runtime.podAnnotations`               | Annotations to be added to the ping-runtime pod                                                      |                                    |
 | `ping-runtime.podSecurityContext`           | Custom security context for the ping-runtime pod                                                     |                                    |
 | `ping-runtime.securityContext`              | Custom security context for the ping-runtime containers                                              |                                    |
@@ -141,7 +141,7 @@ helm install [chart-name] charts/synthetics-job-manager/charts/node-api-runtime 
 
 ## Resources
 
-The default set of resources assigned to synthetics-job-manager is shown below:
+The default set of resources assigned to **synthetics-job-manager** is shown below:
 
 ```yaml
 resources:
@@ -152,7 +152,18 @@ resources:
     cpu: 0.75
     memory: 1.6Gi
 ```
-The default set of resources assignmed to the node-api runtime is shown below: 
+The default set of resources assigned to **ping runtime** is shown below:
+
+```yaml
+resources:
+  requests:
+    cpu: 0.5
+    memory: 500Mi
+  limits:
+    cpu: 0.75
+    memory: 1.0Gi
+```
+The default set of resources assignmed to the **node-api runtime** is shown below: 
 ```yaml
 resources:
   requests:
@@ -162,7 +173,7 @@ resources:
     cpu: 0.75
     memory: 2500Mi
 ```
-The default set of resources assignmed to the node-browser runtime is shown below: 
+The default set of resources assignmed to the **node-browser runtime** is shown below: 
 ```yaml
 resources:
   requests:
