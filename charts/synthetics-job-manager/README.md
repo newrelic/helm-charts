@@ -61,7 +61,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `ping-runtime.image.repository`             | The container to pull.                                                                               | `newrelic/synthetics-ping-runtime` |
 | `ping-runtime.image.pullPolicy`             | The pull policy.                                                                                     | `IfNotPresent`                     |
 | `ping-runtime.appArmorProfileName`          | *(Not yet supported)* Name of an AppArmor profile to load.                                           |                                    |
-| `ping-runtime.resources`                    | Resource requests and limits.                                                                        |                                                                                                    | See the [Resources](#Resources) section below                                       |
+| `ping-runtime.resources`                    | Resource requests and limits.                                  | See the [Resources](#Resources) section below                                                 |                                        |
 | `ping-runtime.podAnnotations`               | Annotations to be added to the ping-runtime pod                                                      |                                    |
 | `ping-runtime.podSecurityContext`           | Custom security context for the ping-runtime pod                                                     |                                    |
 | `ping-runtime.securityContext`              | Custom security context for the ping-runtime containers                                              |                                    |
@@ -158,10 +158,10 @@ The default set of resources assigned to ping runtime is shown below:
 resources:
   requests:
     cpu: 0.5
-    memory: 800Mi
+    memory: 500Mi
   limits:
     cpu: 0.75
-    memory: 1.6Gi
+    memory: 1.0Gi
 ```
 The default set of resources assignmed to the node-api runtime is shown below: 
 ```yaml
