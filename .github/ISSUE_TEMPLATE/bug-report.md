@@ -1,35 +1,43 @@
 ---
 name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: bug
+about: Create a bug report to help us improve
+title: '[name of the chart] <issue title>'
+labels: ["bug", "triage/pending"]
 assignees: ''
 
 ---
 
-^^ Provide a general summary of the issue in the title above. ^^ 
+<!-- Thanks for filing an issue! Before hitting the button, please answer these questions. It's helpful to search the existing GitHub issues first. It's likely that another user has already reported the issue you're facing, or it's a known issue that we're already aware of
 
-## Description
-Describe the problem you're encountering.
-TIP: Do NOT share sensitive information, whether personal, proprietary, or otherwise! 
+Fill in as much of the template below as you can.  If you leave out information, we can't help you as well.
 
-## Expected Behavior
-Tell us what you expected to happen.
+Be ready for followup questions, and please respond in a timely manner. If we can't reproduce a bug or think a feature already exists, we might close your issue.  If we're wrong, PLEASE feel free to reopen it and explain why.
+-->
 
-## [Troubleshooting](https://discuss.newrelic.com/t/troubleshooting-frameworks/108787) or [NR Diag](https://docs.newrelic.com/docs/using-new-relic/cross-product-functions/troubleshooting/new-relic-diagnostics) results
-Provide any other relevant log data.
-TIP:  Scrub logs and diagnostic information for sensitive information 
+**Bug description**
 
-## Steps to Reproduce
-Please be as specific as possible.
-TIP:  Link a sample application that demonstrates the issue. 
+A clear and concise description of what the bug is.
 
-## Your Environment
-Include as many relevant details about your environment as possible including the running version of New Relic software and any relevant configurations. 
+**Version of Helm and Kubernetes**
 
-## Additional context
-Add any other context about the problem here. For example, relevant community posts or support tickets.
+The versino of Helm and Kubernetes where the problem occurs.
 
-## For Maintainers Only or Hero Triaging this bug
-*Suggested Priority (P1,P2,P3,P4,P5):*
-*Suggested T-Shirt size (S, M, L, XL, Unknown):*
+**Which chart?**
+
+The chart name and version.
+
+**What happened?**
+
+Described what happened, as detailed as possible and necessary.
+
+**What you expected to happen?**
+
+Please avoid saying "It should just work".
+
+**How to reproduce it?**
+
+Steps to reproduce the problem, as minimally and precisely as possible.
+
+**Anything else we need to know?**
+
+Surprise us!
