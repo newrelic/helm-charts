@@ -141,7 +141,7 @@ helm install [chart-name] charts/synthetics-job-manager/charts/node-api-runtime 
 
 ## Resources
 
-The default set of resources assigned to synthetics-job-manager is shown below:
+The default set of resources assigned to **synthetics-job-manager** is shown below:
 
 ```yaml
 resources:
@@ -152,7 +152,7 @@ resources:
     cpu: 0.75
     memory: 1.6Gi
 ```
-The default set of resources assigned to ping runtime is shown below:
+The default set of resources assigned to **ping runtime** is shown below:
 
 ```yaml
 resources:
@@ -163,7 +163,7 @@ resources:
     cpu: 0.75
     memory: 1.0Gi
 ```
-The default set of resources assignmed to the node-api runtime is shown below: 
+The default set of resources assignmed to the **node-api runtime** is shown below: 
 ```yaml
 resources:
   requests:
@@ -173,7 +173,7 @@ resources:
     cpu: 0.75
     memory: 2500Mi
 ```
-The default set of resources assignmed to the node-browser runtime is shown below: 
+The default set of resources assignmed to the **node-browser runtime** is shown below: 
 ```yaml
 resources:
   requests:
