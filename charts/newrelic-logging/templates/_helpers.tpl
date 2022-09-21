@@ -36,17 +36,6 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "newrelic-logging.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "newrelic-logging.fullname" .) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
 
 {{/*
 Create the name of the fluent bit config
@@ -182,4 +171,17 @@ Returns if the template should render, it checks if the required values are set.
 {{- $customSecretName := include "newrelic-logging.customSecretName" . -}}
 {{- $customSecretKey := include "newrelic-logging.customSecretKey" . -}}
 {{- and (or $licenseKey (and $customSecretName $customSecretKey))}}
+{{- end -}}
+
+{{/*
+If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
+*/}}
+{{- define "newrelic-logging.extraEnv" -}}
+{{- if .Values.fluentBit }}
+  {{- if .Values.fluentBit.additionalEnvVariables }}
+    {{- toYaml .Values.fluentBit.additionalEnvVariables -}}
+  {{- else if .Values.fluentBit.extraEnv }}
+    {{- toYaml .Values.fluentBit.extraEnv  -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}

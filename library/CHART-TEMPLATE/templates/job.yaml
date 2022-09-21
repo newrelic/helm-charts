@@ -1,15 +1,25 @@
-# This is a dummy Job to test and show truncateToDNSWithSuffix function
+# It is common in our charts to have jobs that are using images out of docker.io registry that
+# are responsible of creating certificates and inject them to api services and mutating webhooks
+
+# To do not have colliding name, jobs are usually prefixed and the images we use to patch the webhooks
+# are not in our registry but in k8s.gcr.io.
+
+# This is why we test truncateToDNSWithSuffix and images.image with "defaultRegistry" here.
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" (.Values.jobSuffix | default "job-suffix") ) }}
+# This helper is normally used simply as this
+# name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-suffix" ) }}
+# But we add `(.Values.jobSuffix | default "job-suffix")` to be able to test short and long suffixes in the test suite.
+
   namespace: {{ .Release.Namespace }}
 spec:
   template:
     spec:
       containers:
       - name: echo-job
-        image: alpine
-        command: ["echo",  "Hi there!"]
+        image: {{ include "newrelic.common.images.image" ( dict "defaultRegistry" "nexus-3-instance.internal.clients-domain.tld" "imageRoot" .Values.image "context" .) }}
+        command: ["echo",  "Hello there."]
       restartPolicy: Never
   backoffLimit: 4

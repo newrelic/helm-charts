@@ -1,0 +1,48 @@
+suite: test RBAC creation
+templates:
+  - templates/clusterrolebinding.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: template rbac if it is configured to do it
+    set:
+      rbac.create: true
+    asserts:
+      - hasDocuments:
+          count: 1
+
+  - it: don't template rbac if it is disabled
+    set:
+      rbac.create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: RBAC points to the service account that is created by default
+    set:
+      rbac.create: true
+      serviceAccount.create: true
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: my-release-newrelic-logging
+
+  - it: RBAC points to the service account the user supplies when serviceAccount is disabled
+    set:
+      rbac.create: true
+      serviceAccount.create: false
+      serviceAccount.name: sa-test
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: sa-test
+
+  - it: RBAC points to the default service account when serviceAccount is disabled
+    set:
+      rbac.create: true
+      serviceAccount.create: false
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: default

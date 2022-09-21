@@ -1,9 +1,9 @@
 {{- /*
 Return the proper image name
-{{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
+{{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.path.to.the.image "defaultRegistry" "your.private.registry.tld" "context" .) }}
 */ -}}
 {{- define "newrelic.common.images.image" -}}
-    {{- $registryName := include "newrelic.common.images.registry" ( dict "imageRoot" .imageRoot "context" .context) -}}
+    {{- $registryName := include "newrelic.common.images.registry" ( dict "imageRoot" .imageRoot "defaultRegistry" .defaultRegistry "context" .context ) -}}
     {{- $repositoryName := include "newrelic.common.images.repository" .imageRoot -}}
     {{- $tag := include "newrelic.common.images.tag" ( dict "imageRoot" .imageRoot "context" .context) -}}
 
@@ -18,18 +18,27 @@ Return the proper image name
 
 {{- /*
 Return the proper image registry
-{{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
+{{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "defaultRegistry" "your.private.registry.tld" "context" .) }}
 */ -}}
 {{- define "newrelic.common.images.registry" -}}
-    {{- if .imageRoot.registry -}}
-        {{- .imageRoot.registry -}}
-    {{- else if .context.Values.global -}}
-        {{- if .context.Values.global.images -}}
-            {{- with .context.Values.global.images.registry -}}
-                {{- . -}}
-            {{- end -}}
+{{- $globalRegistry := "" -}}
+{{- if .context.Values.global -}}
+    {{- if .context.Values.global.images -}}
+        {{- with .context.Values.global.images.registry -}}
+            {{- $globalRegistry = . -}}
         {{- end -}}
     {{- end -}}
+{{- end -}}
+
+{{- $localRegistry := "" -}}
+{{- if .imageRoot.registry -}}
+    {{- $localRegistry = .imageRoot.registry -}}
+{{- end -}}
+
+{{- $registry := $localRegistry | default $globalRegistry | default .defaultRegistry -}}
+{{- if $registry -}}
+    {{- $registry -}}
+{{- end -}}
 {{- end -}}
 
 
