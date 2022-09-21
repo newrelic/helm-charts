@@ -175,7 +175,13 @@ ping-runtime:
   # Number of seconds after which the liveness probe times out.
   livenessProbeTimeoutSeconds: 10
 
-  resources: {}
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "750m"
+      memory: "1000Mi"
 
   podAnnotations: {}
 
@@ -197,8 +203,11 @@ ping-runtime:
 node-api-runtime:
   enabled: true
 
-  # Set this to the maximum number of node-api-runtime jobs you expect to run per minute
+  # Set this to the maximum number of node-api-runtime jobs you want to run in parallel
   parallelism: 1
+
+  # Set this to the maximum number of node-api-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
 
   # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
   imagePullSecrets: []
@@ -236,7 +245,13 @@ node-api-runtime:
   # Number of seconds after which the liveness probe times out.
   livenessProbeTimeoutSeconds: 10
 
-  resources: {}
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1250Mi"
+    limits:
+      cpu: "750m"
+      memory: "2500Mi"
 
   podAnnotations: {}
 
@@ -258,8 +273,11 @@ node-api-runtime:
 node-browser-runtime:
   enabled: true
 
-  # Set this to the maximum number of node-browser-runtime jobs you expect to run per minute
+  # Set this to the maximum number of node-browser-runtime jobs you want to run in parallel
   parallelism: 1
+
+  # Set this to the maximum number of node-browser-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
 
   # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
   imagePullSecrets: []
@@ -297,7 +315,13 @@ node-browser-runtime:
   # Number of seconds after which the liveness probe times out.
   livenessProbeTimeoutSeconds: 10
 
-  resources: {}
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2000Mi"
+    limits:
+      cpu: "750m"
+      memory: "3000Mi"
 
   podAnnotations: {}
 
