@@ -133,8 +133,11 @@ spec:
               value: {{ .Values.synthetics.minionDockerRunnerRegistryEndpoint | quote }}
             {{- end }}
 
-            {{- include "synthetics-minion.minionVsePassphrase" . | nindent 12 -}}
-
+            {{- if .Values.synthetics.minionVsePassphrase }}
+            - name: MINION_VSE_PASSPHRASE
+              value: {{ .Values.synthetics.minionVsePassphrase  | quote }}
+            {{- end }}
+            
             {{- if .Values.synthetics.minionApiProxy }}
             - name: MINION_API_PROXY
               value: {{ .Values.synthetics.minionApiProxy | quote }}
