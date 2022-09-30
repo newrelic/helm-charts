@@ -1,0 +1,169 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "$ref": "#/definitions/nriBundle",
+    "definitions": {
+        "nriBundle": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "global": {
+                    "$ref": "#/definitions/Global"
+                },
+                "newrelic-infrastructure": {
+                    "$ref": "#/definitions/NewrelicInfrastructure"
+                },
+                "kube-state-metrics": {
+                    "$ref": "#/definitions/KubeStateMetrics"
+                },
+                "nri-kube-events": {
+                    "$ref": "#/definitions/KubeStateMetrics"
+                }
+            },
+            "required": [
+                "global"
+            ],
+            "title": "nriBundle"
+        },
+        "Global": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "cluster": {
+                    "type": "string"
+                },
+                "licenseKey": {
+                    "type": "string"
+                },
+                "customSecretName": {
+                    "type": "string"
+                },
+                "customSecretLicenseKey": {
+                    "type": "string"
+                },
+                "verboseLog": {
+                    "type": ["boolean", "null"]
+                },
+                "privileged": {
+                    "type": "boolean"
+                },
+                "customAttributes": {
+                    "$ref": "#/definitions/Object"
+                },
+                "labels": {
+                    "$ref": "#/definitions/Object"
+                },
+                "podLabels": {
+                    "$ref": "#/definitions/Object"
+                },
+                "nodeSelector": {
+                    "$ref": "#/definitions/Object"
+                },
+                "tolerations": {
+                    "type": "array",
+                    "items": {}
+                },
+                "proxy": {
+                    "type": "string"
+                },
+                "fedramp": {
+                    "$ref": "#/definitions/Fedramp"
+                }
+            },
+            "required": [
+                "cluster"
+            ],
+            "title": "Global"
+        },
+        "Object": {
+            "type": "object",
+            "additionalProperties": true,
+            "title": "Object"
+        },
+        "Fedramp": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "enabled": {
+                    "type": ["boolean", "null"]
+                }
+            },
+            "title": "Fedramp"
+        },
+        "KubeStateMetrics": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "resources": {
+                    "$ref": "#/definitions/Resources"
+                }
+            },
+            "title": "KubeStateMetrics"
+        },
+        "Resources": {
+            "type": "object",
+            "additionalProperties": false,
+            "properties": {
+                "limits": {
+                    "$ref": "#/definitions/Limits"
+                },
+                "requests": {
+                    "$ref": "#/definitions/Limits"
+                }
+            },
+            "title": "Resources"
+        },
+        "Limits": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "memory": {
+                    "type": "string"
+                },
+                "cpu": {
+                    "type": "string"
+                }
+            },
+            "title": "Limits"
+        },
+        "NewrelicInfrastructure": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "common": {
+                    "$ref": "#/definitions/Common"
+                },
+                "kubelet": {
+                    "$ref": "#/definitions/Ksm"
+                },
+                "ksm": {
+                    "$ref": "#/definitions/Ksm"
+                }
+            },
+            "title": "NewrelicInfrastructure"
+        },
+        "Common": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "agentConfig": {
+                    "$ref": "#/definitions/Object"
+                }
+            },
+            "title": "Common"
+        },
+        "Ksm": {
+            "type": "object",
+            "additionalProperties": true,
+            "properties": {
+                "tolerations": {
+                    "type": "array",
+                    "items": {}
+                },
+                "resources": {
+                    "$ref": "#/definitions/Resources"
+                }
+            },
+            "title": "Ksm"
+        }
+    }
+}
