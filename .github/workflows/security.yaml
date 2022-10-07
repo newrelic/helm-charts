@@ -1,0 +1,40 @@
+name: Security Scan
+
+on:
+  pull_request:
+  schedule:
+    - cron: "0 3 * * *"
+
+jobs:
+  trivy:
+    name: Trivy security scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Run Trivy vulnerability scanner in repo mode
+        uses: aquasecurity/trivy-action@0.6.2
+        if: ${{ ! github.event.schedule }}  # Do not run inline checks when running periodically
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          exit-code: 1
+          severity: 'HIGH,CRITICAL'
+
+      - name: Run Trivy vulnerability scanner sarif output
+        uses: aquasecurity/trivy-action@0.3.0
+        if: ${{ github.event.schedule }}  # Generate sarif when running periodically
+        with:
+          scan-type: fs
+          ignore-unfixed: true
+          severity: 'HIGH,CRITICAL'
+          format: 'template'
+          template: '@/contrib/sarif.tpl'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        if: ${{ github.event.schedule }}  # Upload sarif when running periodically
+        with:
+          sarif_file: 'trivy-results.sarif'
