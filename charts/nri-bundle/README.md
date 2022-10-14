@@ -181,6 +181,7 @@ honors global options as described below.
 | newrelic-k8s-metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
 | newrelic-logging.enabled | bool | `false` | Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |
 | newrelic-pixie.enabled | bool | `false` | Install the [`newrelic-pixie`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |
+| newrelic-prometheus-agent.enabled | bool | `false` | Install the [`newrelic-prometheus-agent` chart](https://github.com/newrelic/newrelic-prometheus-configurator/tree/main/charts/newrelic-prometheus-agent) (Public preview) |
 | nri-kube-events.enabled | bool | `false` | Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) |
 | nri-metadata-injection.enabled | bool | `true` | Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) |
 | nri-prometheus.enabled | bool | `false` | Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |
