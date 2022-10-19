@@ -94,6 +94,8 @@ spec:
               value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
+            - name: RETRY_LIMIT
+              value: {{ .Values.fluentBit.retryLimit | quote }}
             - name: HOSTNAME
               valueFrom:
                 fieldRef:
