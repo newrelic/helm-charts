@@ -92,7 +92,7 @@ spec:
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" $ | default "false" | quote }}
             - name: RETRY_LIMIT
-              value: {{ .Values.fluentBit.retryLimit | quote }}
+              value: {{ $.Values.fluentBit.retryLimit | quote }}
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
           command:
             - C:\fluent-bit\bin\fluent-bit.exe
