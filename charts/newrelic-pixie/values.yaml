@@ -8,6 +8,12 @@
 # The Pixie API key
 # apiKey: ""
 
+# The Pixie Cluster Id
+# clusterId:
+
+# The Pixie endpoint
+# endpoint:
+
 # If you already have a secret where the New Relic license key is stored, indicate its name here
 # customSecretName:
 # The key in the customSecretName secret that contains the New Relic license key
@@ -21,6 +27,8 @@ image:
   repository: newrelic/newrelic-pixie-integration
   tag: ""
   pullPolicy: IfNotPresent
+  pullSecrets: []
+  # - name: regsecret
 
 resources:
   limits:
@@ -36,6 +44,10 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+customScripts: {}
+# Optionally the scripts can be provided in an already existing ConfigMap:
+# customScriptsConfigMap:
 
 excludeNamespacesRegex:
 excludePodsRegex:

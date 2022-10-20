@@ -1,0 +1,12 @@
+# This is a dummy CM to test that nrStaging is templated and how to use it
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-staging
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
+         Take a look to the tests suite "common_library_staging_test.yaml" to see who this behaves */}}
+  staging-with-if: {{ if include "newrelic.common.nrStaging" . }}enabled{{ else }}disabled{{ end }}
+  staging-with-quote: {{ include "newrelic.common.nrStaging" . | quote }}
+  staging-with-default: {{ include "newrelic.common.nrStaging" . | default "false" | quote }}

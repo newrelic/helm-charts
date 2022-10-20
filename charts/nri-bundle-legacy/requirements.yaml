@@ -1,0 +1,51 @@
+dependencies:
+  - name: newrelic-infrastructure
+    repository: https://newrelic.github.io/nri-kubernetes
+    condition: infrastructure.enabled
+    version: 2.10.3
+
+  - name: nri-prometheus
+    repository: https://newrelic.github.io/helm-charts
+    condition: prometheus.enabled
+    version: 1.14.1
+
+  - name: nri-metadata-injection
+    repository: https://newrelic.github.io/helm-charts
+    condition: webhook.enabled
+    version: 2.2.1
+
+  - name: newrelic-k8s-metrics-adapter
+    repository: https://newrelic.github.io/helm-charts
+    condition: metrics-adapter.enabled
+    version: 0.3.3
+
+  - name: kube-state-metrics
+    repository: https://kubernetes.github.io/kube-state-metrics
+    condition: ksm.enabled
+    version: 2.13.2
+
+  - name: nri-kube-events
+    repository: https://newrelic.github.io/helm-charts
+    condition: kubeEvents.enabled
+    version: 1.13.1
+
+  - name: newrelic-logging
+    repository: https://newrelic.github.io/helm-charts
+    condition: logging.enabled
+    version: 1.10.9
+
+  - name: newrelic-pixie
+    repository: https://newrelic.github.io/helm-charts
+    condition: newrelic-pixie.enabled
+    version: 1.5.1
+
+  - name: pixie-operator-helm2-chart
+    alias: pixie-chart
+    repository: https://pixie-operator-charts.storage.googleapis.com
+    condition: pixie-chart.enabled
+    version: 0.0.25
+
+  - name: newrelic-infra-operator
+    repository: https://newrelic.github.io/helm-charts
+    condition: newrelic-infra-operator.enabled
+    version: 0.6.1

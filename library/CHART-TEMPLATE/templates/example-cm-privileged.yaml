@@ -1,0 +1,12 @@
+# This is a dummy CM to test that privileged is templated and how to use it
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-privileged
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
+         Take a look to the tests suite "common_library_privileged_test.yaml" to see who this behaves */}}
+  privileged-with-if: {{ if include "newrelic.common.privileged" . }}enabled{{ else }}disabled{{ end }}
+  privileged-with-quote: {{ include "newrelic.common.privileged" . | quote }}
+  privileged-with-default: {{ include "newrelic.common.privileged" . | default "false" | quote }}

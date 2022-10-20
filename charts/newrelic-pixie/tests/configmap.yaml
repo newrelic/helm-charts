@@ -1,0 +1,44 @@
+suite: test custom scripts ConfigMap
+templates:
+  - templates/configmap.yaml
+tests:
+  - it: ConfigMap is created
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      customScripts:
+        custom1.yaml: |
+          name: "custom1"
+          description: "Custom script 1"
+          frequencyS: 60
+          script: |
+            import px
+            df = px.DataFrame(table='http_events', start_time=px.plugin.start_time)
+    asserts:
+      - isKind:
+          of: ConfigMap
+      - equal:
+          path: data.custom1\.yaml
+          value: |-
+            name: "custom1"
+            description: "Custom script 1"
+            frequencyS: 60
+            script: |
+              import px
+              df = px.DataFrame(table='http_events', start_time=px.plugin.start_time)
+      - equal:
+          path: metadata.name
+          value: RELEASE-NAME-newrelic-pixie-scripts
+      - equal:
+          path: metadata.namespace
+          value: NAMESPACE
+  - it: ConfigMap is empty
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      customScripts: {}
+    asserts:
+      - hasDocuments:
+          count: 0 
