@@ -8,6 +8,7 @@ sources:
   - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
   - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
   - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+  - https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent
   - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
   - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
   - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
@@ -15,7 +16,7 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 4.8.12
+version: 4.9.0
 
 dependencies:
   - name: newrelic-infrastructure
@@ -27,6 +28,11 @@ version: 3.8.11
 repository: https://newrelic.github.io/nri-prometheus
 condition: prometheus.enabled,nri-prometheus.enabled
 version: 2.1.14
+
+  - name: newrelic-prometheus-agent
+repository: https://newrelic.github.io/newrelic-prometheus-configurator
+condition: newrelic-prometheus-configurator.enabled
+version: 0.0.6
 
   - name: nri-metadata-injection
 repository: https://newrelic.github.io/k8s-metadata-injection
