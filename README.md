@@ -33,15 +33,15 @@ Just as a glance of the process of installation and configuration the process in
 global:
   licenseKey: YOUR_LICENSE_KEY
   cluster: YOUR_CLUSTER_NAME
-kubeEvents:
+nri-kube-events:
   enabled: true
-webhook:
+nri-metadata-injection:
   enabled: true
-prometheus:
+nri-prometheus:
   enabled: true
-logging:
+newrelic-logging:
   enabled: true
-ksm:
+kube-state-metrics:
   enabled: true
 ```
 
