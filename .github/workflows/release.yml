@@ -21,8 +21,11 @@ jobs:
           ref: gh-pages
       - name: Download remote index file and check equality
         run: |
-          curl -vsSL https://newrelic.github.io/helm-charts/index.yaml > index.yaml.remote
-          test "$(md5sum < index.yaml)" = "$(md5sum < index.yaml.remote)"
+          curl -vsSL https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/index.yaml > index.yaml.remote
+          LOCAL="$(md5sum < index.yaml)"
+          REMOTE="$(md5sum < index.yaml.remote)"
+          echo "$LOCAL" = "$REMOTE"
+          test "$LOCAL" = "$REMOTE"
 
   release:
     runs-on: ubuntu-latest
@@ -30,25 +33,44 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        # chart-releaser need all the history of the repo to see what changed in the file tree and evaluate which charts need to be released
+        with:
+          fetch-depth: 0
 
-      - name: Fetch history
-        run: git fetch --prune --unshallow
-
-      - name: Add kube-state-metrics repository
-        run: helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
-
-      - name: Add Pixie repository
-        run: helm repo add pixie-operator https://pixie-operator-charts.storage.googleapis.com
+      - name: Add helm repositories
+        run: |
+          helm repo add newrelic-helm-charts https://newrelic.github.io/helm-charts
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
+          helm repo add newrelic-infrastructure https://newrelic.github.io/nri-kubernetes
+          helm repo add nri-prometheus https://newrelic.github.io/nri-prometheus
+          helm repo add newrelic-prometheus-configurator https://newrelic.github.io/newrelic-prometheus-configurator
+          helm repo add nri-metadata-injection https://newrelic.github.io/k8s-metadata-injection
+          helm repo add newrelic-k8s-metrics-adapter https://newrelic.github.io/newrelic-k8s-metrics-adapter
+          helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
+          helm repo add nri-kube-events https://newrelic.github.io/nri-kube-events
+          helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
+          helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
 
       - name: Configure Git
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Helm
-        uses: azure/setup-helm@v1
+      # As of today, there is no way to filter/exclude charts to be released. Config does not support it:
+      # https://github.com/helm/chart-releaser/blob/4eb598f96aa53d1c0b8234af2087834e1f2275e1/pkg/config/config.go#L40-L61
+      # So we delete the Chart.yaml to filter the chart: https://github.com/helm/chart-releaser-action/pull/18
+      - name: remove the chart template as it should not be deployed
+        run: |
+          rm ./library/CHART-TEMPLATE/Chart.yaml
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.2.1
+      - name: Release library charts
+        uses: helm/chart-releaser-action@v1.3.0
+        with:
+          charts_dir: library
+        env:
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+      - name: Release workload charts
+        uses: helm/chart-releaser-action@v1.3.0
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

@@ -1,0 +1,9 @@
+# This is a dummy CM to test what licenseKey helpers of the common library return
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-licensekey
+  namespace: {{ .Release.Namespace }}
+data:
+  licensekey-secret-name: {{ include "newrelic.common.license.secretName" . }}
+  licensekey-secret-key-name: {{ include "newrelic.common.license.secretKeyName" . }}

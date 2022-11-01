@@ -1,0 +1,133 @@
+suite: test verbose helper
+templates:
+  - templates/example-cm-verbose.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: test-license-key
+  cluster: test-cluster
+tests:
+  - it: Is false by default
+    asserts:
+      - equal:
+          path: data.verboseLog-with-if
+          value: "disabled"
+      - equal:
+          path: data.verboseLog-with-quote
+          value: ""
+      - equal:
+          path: data.verboseLog-with-default
+          value: "false"
+      - equal:
+          path: data.verboseLog-boolean-value
+          value: false
+      - equal:
+          path: data.verboseLog-integer-value
+          value: 0
+
+  - it: Is false with everything null
+    set:
+      global: null
+      verboseLog: null
+    asserts:
+      - equal:
+          path: data.verboseLog-with-if
+          value: "disabled"
+      - equal:
+          path: data.verboseLog-with-quote
+          value: ""
+      - equal:
+          path: data.verboseLog-with-default
+          value: "false"
+      - equal:
+          path: data.verboseLog-boolean-value
+          value: false
+      - equal:
+          path: data.verboseLog-integer-value
+          value: 0
+
+  - it: Enable verboseLog (globally)
+    set:
+      global:
+        verboseLog: true
+    asserts:
+      - equal:
+          path: data.verboseLog-with-if
+          value: "enabled"
+      - equal:
+          path: data.verboseLog-with-quote
+          value: "true"
+      - equal:
+          path: data.verboseLog-with-default
+          value: "true"
+      - equal:
+          path: data.verboseLog-boolean-value
+          value: true
+      - equal:
+          path: data.verboseLog-integer-value
+          value: 1
+
+  - it: Enable verboseLog (locally)
+    set:
+      verboseLog: true
+    asserts:
+      - equal:
+          path: data.verboseLog-with-if
+          value: "enabled"
+      - equal:
+          path: data.verboseLog-with-quote
+          value: "true"
+      - equal:
+          path: data.verboseLog-with-default
+          value: "true"
+      - equal:
+          path: data.verboseLog-boolean-value
+          value: true
+      - equal:
+          path: data.verboseLog-integer-value
+          value: 1
+
+  - it: Overrides to false the global state locally
+    set:
+      global:
+        verboseLog: true
+      verboseLog: false
+    asserts:
+      - equal:
+          path: data.verboseLog-with-if
+          value: "disabled"
+      - equal:
+          path: data.verboseLog-with-quote
+          value: ""
+      - equal:
+          path: data.verboseLog-with-default
+          value: "false"
+      - equal:
+          path: data.verboseLog-boolean-value
+          value: false
+      - equal:
+          path: data.verboseLog-integer-value
+          value: 0
+
+  - it: Overrides to true the global state locally
+    set:
+      global:
+        verboseLog: false
+      verboseLog: true
+    asserts:
+      - equal:
+          path: data.verboseLog-with-if
+          value: "enabled"
+      - equal:
+          path: data.verboseLog-with-quote
+          value: "true"
+      - equal:
+          path: data.verboseLog-with-default
+          value: "true"
+      - equal:
+          path: data.verboseLog-boolean-value
+          value: true
+      - equal:
+          path: data.verboseLog-integer-value
+          value: 1

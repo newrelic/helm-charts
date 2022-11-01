@@ -1,0 +1,138 @@
+suite: test job
+templates:
+  - templates/job.yaml
+tests:
+  - it: Test primary fields of job
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      image:
+        tag: "latest"
+    asserts:
+      - isKind:
+          of: Job
+      - equal:
+          path: "metadata.name"
+          value: "RELEASE-NAME-newrelic-pixie"
+      - equal:
+          path: "metadata.namespace"
+          value: "NAMESPACE"
+      - equal:
+          path: "spec.template.spec.containers[0].image"
+          value: "newrelic/newrelic-pixie-integration:latest"
+      - equal:
+          path: "spec.template.spec.containers[0].env"
+          value:
+            - name: CLUSTER_NAME
+              value: test-cluster
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: newrelicLicenseKey
+                  name: RELEASE-NAME-newrelic-pixie-secrets
+            - name: PIXIE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: pixieApiKey
+                  name: RELEASE-NAME-newrelic-pixie-secrets
+            - name: PIXIE_CLUSTER_ID
+              valueFrom:
+                secretKeyRef:
+                  key: cluster-id
+                  name: pl-cluster-secrets
+      - isEmpty:
+          path: "spec.template.spec.containers[0].volumeMounts"
+      - isEmpty:
+          path: "spec.template.spec.volumes"
+  - it: Job with clusterId
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      clusterId: "cid123"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env"
+          value:
+            - name: CLUSTER_NAME
+              value: test-cluster
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: newrelicLicenseKey
+                  name: RELEASE-NAME-newrelic-pixie-secrets
+            - name: PIXIE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: pixieApiKey
+                  name: RELEASE-NAME-newrelic-pixie-secrets
+            - name: PIXIE_CLUSTER_ID
+              value: "cid123"
+  - it: Job with Pixie endpoint
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      clusterId: "cid123"
+      endpoint: "withpixie.ai:443"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env"
+          value:
+            - name: CLUSTER_NAME
+              value: test-cluster
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: newrelicLicenseKey
+                  name: RELEASE-NAME-newrelic-pixie-secrets
+            - name: PIXIE_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: pixieApiKey
+                  name: RELEASE-NAME-newrelic-pixie-secrets
+            - name: PIXIE_CLUSTER_ID
+              value: "cid123"
+            - name: PIXIE_ENDPOINT
+              value: "withpixie.ai:443"
+  - it: Job with custom scripts
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      customScripts:
+        custom1.yaml: |
+          name: "custom1"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].volumeMounts"
+          value:
+            - name: scripts
+              mountPath: "/scripts"
+              readOnly: true
+      - equal:
+          path: "spec.template.spec.volumes[0]"
+          value:
+            name: scripts
+            configMap:
+              name: RELEASE-NAME-newrelic-pixie-scripts
+  - it: Job with custom script in defined ConfigMap
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      customScriptsConfigMap: "myconfigmap"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].volumeMounts"
+          value:
+            - name: scripts
+              mountPath: "/scripts"
+              readOnly: true
+      - equal:
+          path: "spec.template.spec.volumes[0]"
+          value:
+            name: scripts
+            configMap:
+              name: myconfigmap

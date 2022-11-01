@@ -25,20 +25,38 @@ This is the official Helm charts repository for New Relic. It is indexed at [Hel
 * New Relic account
 
 ## <a name='Installthecharts'></a>Install
+You can have all the information about the installation in the [New Relic Documentation page for installaing the Kubernetes integration
+using Helm](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/installation/install-kubernetes-integration-using-helm/)
 
-To install the New Relic Helm charts, add the official repository first:
+Just as a glance of the process of installation and configuration the process involves to create a `values.yaml` that will look like this:
+```yaml
+global:
+  licenseKey: YOUR_LICENSE_KEY
+  cluster: YOUR_CLUSTER_NAME
+nri-kube-events:
+  enabled: true
+nri-metadata-injection:
+  enabled: true
+nri-prometheus:
+  enabled: true
+newrelic-logging:
+  enabled: true
+kube-state-metrics:
+  enabled: true
+```
 
+Add the official repository:
 ```sh
 helm repo add newrelic https://helm-charts.newrelic.com
 ```
 
-You can list all the available charts from the `newrelic` repository using [`helm search`][helm-search]:
-
-```sh
-helm search repo newrelic/
+Then, run `helm upgrade`:
+```shell
+helm upgrade --install newrelic-bundle newrelic/nri-bundle -f your-custom-values.yaml
 ```
 
-To install one of the charts, run [`helm install`][helm-install] passing the name of the chart to install and the values you want to set as arguments. You can find a list of all the values and their defaults in the documentation of each chart.
+You can find a list of all the global values in the [`nri-bundle`'s README](charts/nri-bundle/README.md). There you can find also links
+to the values of all the subcharts.
 
 ### <a name='Examples'></a>Examples
 
@@ -49,31 +67,6 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
-
-#### <a name='Installnri-bundleusingHelm3'></a>Install `nri-bundle` using Helm 3
-```sh
-helm install newrelic-bundle newrelic/nri-bundle \
-  --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.cluster=YOUR_CLUSTER_NAME \
-  --set kubeEvents.enabled=true \
-  --set webhook.enabled=true \
-  --set prometheus.enabled=true \
-  --set logging.enabled=true \
-  --set ksm.enabled=true
-```
-
-#### <a name='Installnri-bundleusingHelm2'></a>Install `nri-bundle` using Helm 2
-```sh
-helm install newrelic/nri-bundle \
-  --name newrelic-bundle \
-  --set global.licenseKey=YOUR_LICENSE_KEY \
-  --set global.cluster=YOUR_CLUSTER_NAME \
-  --set kubeEvents.enabled=true \
-  --set webhook.enabled=true \
-  --set prometheus.enabled=true \
-  --set logging.enabled=true \
-  --set ksm.enabled=true
-```
 
 ## <a name='Development'></a>Development
 
@@ -90,25 +83,9 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 
 ### <a name='Automatedversionbumps'></a>Automated version bumps
 
-This repository is configured to accept webhook requests to bump chart versions. Upon receiving a version bump request, a GitHub Action generates a pull request with the requested changes. The pull request must still be merged manually.
+This repository uses [Renovate](https://docs.renovatebot.com/configuration-options/) to automatically bump dependencies. It currently supports updating dependencies on `nri-bundle` whenever an individual chart gets released.
 
-#### <a name='Triggeranautomatedversionbump'></a>Trigger an automated version bump
-
-A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
-
-`chart_name`: (required) Name of the helm chart to be bumped.
-`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
-`app_version`: (required) Version of the application.
-
-```sh
-curl -H "Accept: application/vnd.github.everest-preview+json" \
-     -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
-     --request POST \
-     --data '{"event_type": "bump-chart-version", "client_payload": { "chart_name": "simple-nginx", "chart_version": "1.2.3", "app_version": "1.45.7"}}' \
-     https://api.github.com/repos/newrelic/helm-charts/dispatches
-```
-
-Notice the sample `client_payload` object in the request body: the request generates a pull request for the `simple-nginx` chart to update `app_version` to `1.45.7` and `chart_version` to `1.2.3`.
+Unfortunately, renovate does not support yet updating `appVersion`, nor [`image.tag` entries in `values.yaml`](https://github.com/renovatebot/renovate/issues/4728).
 
 ## <a name='Testing'></a>Testing
 
@@ -156,22 +133,11 @@ You need to initialize Helm with:
 helm init
 ```
 
-### <a name='TroubleshootCannotLoadRepos'></a>Getting "namespaces 'default' is forbidden" (Helm 2)
-
-If your cluster uses role-based access, create a service account for tiller (Helm's service which runs inside the Kubernetes cluster) using:
-```sh
-kubectl --namespace kube-system create serviceaccount tiller
-kubectl create clusterrolebinding tiller-cluster-rule \
- --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
-kubectl --namespace kube-system patch deploy tiller-deploy \
- -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
-```
-
 ## <a name='License'></a>License
 
 The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
 
-[helm-hub]: https://hub.helm.sh/charts/newrelic
+[Artifact Hub]: https://artifacthub.io/packages/search?repo=newrelic
 [helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts
 [helm-install]: https://helm.sh/docs/intro/using_helm/#helm-install-installing-a-package
 [newrelic-kubernetes]: https://docs.newrelic.com/docs/integrations/kubernetes-integration/get-started/introduction-kubernetes-integration

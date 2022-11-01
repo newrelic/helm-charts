@@ -1,0 +1,45 @@
+suite: test naming helpers
+templates:
+  - templates/integration-deployment.yaml
+  - templates/sidecar-deployment.yaml
+  - templates/service.yaml
+release:
+  name: release
+tests:
+  - it: uses <release_name>-<chart_name> by default
+    asserts:
+      - equal:
+          path: metadata.name
+          value: release-CHART-TEMPLATE
+
+  - it: uses nameOverride as <chart_name>
+    set:
+      nameOverride: custom_chart_name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: release-custom_chart_name
+
+  - it: uses nameOverride as <chart_name>
+    set:
+      nameOverride: custom_chart_name
+    asserts:
+      - equal:
+          path: metadata.name
+          value: release-custom_chart_name
+
+  - it: uses fullnameOverride
+    set:
+      fullnameOverride: fno
+    asserts:
+      - equal:
+          path: metadata.name
+          value: fno
+
+  - it: truncates the name
+    set:
+      fullnameOverride: this_name_has_more_than_63_characters_long_until_this_last_char_this_is_will_be_truncated
+    asserts:
+      - equal:
+          path: metadata.name
+          value: this_name_has_more_than_63_characters_long_until_this_last_char

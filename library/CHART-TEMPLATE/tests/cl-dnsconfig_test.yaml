@@ -1,0 +1,48 @@
+suite: test dnsconfig helpers
+templates:
+  - templates/integration-deployment.yaml
+  - templates/sidecar-deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not set dnsConfig if not specified
+    set:
+      global: null
+      dnsConfig: null
+    asserts:
+      - isNull:
+          path: spec.template.spec.dnsConfig
+  - it: does set dnsConfig if specified in values
+    set:
+      global: null
+      dnsConfig:
+        key: value
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig
+          value:
+            key: value
+  - it: does set dnsConfig if specified in global
+    set:
+      global:
+        dnsConfig:
+          key: value
+      dnsConfig: null
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig
+          value:
+            key: value
+  - it: overwrites dnsConfig from globals when specified in values
+    set:
+      global:
+        dnsConfig:
+          keyOnGlobal: foo
+      dnsConfig:
+        keyOnValues: bar
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig
+          value:
+            keyOnValues: bar

@@ -31,11 +31,17 @@ fluentBit:
   db: "/var/log/flb_kube.db"
   windowsDb: "C:\\var\\log\\flb_kube.db"
   criEnabled: false
+  k8sBufferSize: "32k"
   k8sLoggingExclude: "Off"
-  additionalEnvVariables: []
-  # additionalEnvVariables:
+  retryLimit: 5
+  extraEnv: []
+  # extraEnv:
   # - name: HTTPS_PROXY
   #   value: http://example.com:3128
+  # - name: METADATA_NAME
+  #   valueFrom:
+  #     fieldRef:
+  #       fieldPath: metadata.name
 
   # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
   # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
@@ -69,6 +75,7 @@ fluentBit:
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
           Kube_URL            https://kubernetes.default.svc.cluster.local:443
+          Buffer_Size         ${K8S_BUFFER_SIZE}
           K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
 
       [FILTER]
@@ -89,6 +96,7 @@ fluentBit:
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
           Kube_URL       https://kubernetes.default.svc.cluster.local:443
+          Buffer_Size    ${K8S_BUFFER_SIZE}
           K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
           Labels         Off
           Annotations    Off
@@ -107,6 +115,7 @@ fluentBit:
           Allowlist_key  namespace_name
           Allowlist_key  pod_name
           Allowlist_key  stream
+          Allowlist_key  message
           Allowlist_key  log
 
     outputs: |
@@ -116,6 +125,7 @@ fluentBit:
           licenseKey     ${LICENSE_KEY}
           endpoint       ${ENDPOINT}
           lowDataMode    ${LOW_DATA_MODE}
+          Retry_Limit    ${RETRY_LIMIT}
 
     parsers: |
       [PARSER]
@@ -171,7 +181,7 @@ rbac:
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
-  create: true
+  create:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
@@ -234,4 +244,4 @@ daemonSet:
 # annotations are not included. The plugin.type, plugin.version and plugin.source attributes are minified
 # into the plugin.source attribute.
 # Can be set as a global: global.lowDataMode
-lowDataMode: false
+# lowDataMode: false

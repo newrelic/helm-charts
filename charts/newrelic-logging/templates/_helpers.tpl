@@ -36,17 +36,6 @@ Create chart name and version as used by the chart label.
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Create the name of the service account to use
-*/}}
-{{- define "newrelic-logging.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "newrelic-logging.fullname" .) .Values.serviceAccount.name }}
-{{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
-{{- end -}}
-{{- end -}}
-
 
 {{/*
 Create the name of the fluent bit config
@@ -153,12 +142,24 @@ Returns fargate
 Returns lowDataMode
 */}}
 {{- define "newrelic-logging.lowDataMode" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.lowDataMode }}
-    {{- .Values.global.lowDataMode -}}
+{{/* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */}}
+{{- if (get .Values "lowDataMode" | kindIs "bool") -}}
+  {{- if .Values.lowDataMode -}}
+    {{/*
+        We want only to return when this is true, returning `false` here will template "false" (string) when doing
+        an `(include "newrelic-logging.lowDataMode" .)`, which is not an "empty string" so it is `true` if it is used
+        as an evaluation somewhere else.
+    */}}
+    {{- .Values.lowDataMode -}}
   {{- end -}}
-{{- else if .Values.lowDataMode }}
-  {{- .Values.lowDataMode -}}
+{{- else -}}
+{{/* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists */}}
+{{- $global := index .Values "global" | default dict -}}
+{{- if get $global "lowDataMode" | kindIs "bool" -}}
+  {{- if $global.lowDataMode -}}
+    {{- $global.lowDataMode -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -170,4 +171,17 @@ Returns if the template should render, it checks if the required values are set.
 {{- $customSecretName := include "newrelic-logging.customSecretName" . -}}
 {{- $customSecretKey := include "newrelic-logging.customSecretKey" . -}}
 {{- and (or $licenseKey (and $customSecretName $customSecretKey))}}
+{{- end -}}
+
+{{/*
+If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
+*/}}
+{{- define "newrelic-logging.extraEnv" -}}
+{{- if .Values.fluentBit }}
+  {{- if .Values.fluentBit.additionalEnvVariables }}
+    {{- toYaml .Values.fluentBit.additionalEnvVariables -}}
+  {{- else if .Values.fluentBit.extraEnv }}
+    {{- toYaml .Values.fluentBit.extraEnv  -}}
+  {{- end -}}
+{{- end -}}
 {{- end -}}
