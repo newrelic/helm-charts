@@ -139,8 +139,8 @@ jobs:
   bundle-dependencies-check:
     name: Test the bundle dependency conditions
     runs-on: ubuntu-latest
-    #if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
-    #needs: [ lint-test ]
+    if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
+    needs: [ lint-test ]
     steps:
       - uses: actions/checkout@v2
       - uses: azure/setup-helm@v3
