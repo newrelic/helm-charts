@@ -12,24 +12,24 @@ function checkDependencies()
     chart_sources=$(mktemp)
     helm template charts/nri-bundle --set $values_set | grep "# Source" > $chart_sources
     # Check no unexpected chart would be installed
-    local expected_charts_re=${expected_charts// /|} # replace ' ' with '|' "x y" -> "x|y"
-    local unexpected_documents_count=$(cat $chart_sources | grep -v -E $expected_charts_re | wc -l | xargs)
+    local expected_charts_re="${expected_charts// /|}" # replace ' ' with '|' "x y" -> "x|y"
+    local unexpected_documents_count=$(cat $chart_sources | grep -v -E "$expected_charts_re" | wc -l | xargs)
     if [[ $unexpected_documents_count -gt 0 ]]
     then
         failMessage "${values}" "${expected_charts}"
         echo -e " The following charts are not expected to be installed with values \"$values_set\" but will be installed:"
-        cat $chart_sources | grep -v -E $expected_charts_re | cut -d'/' -f3 | uniq | xargs printf '\t\t* %s\n'
+        cat $chart_sources | grep -v -E "$expected_charts_re" | cut -d'/' -f3 | sort | uniq | xargs printf '\t\t* %s\n'
         return 1
     fi
     for chart in $expected_charts
     do
-       local chart_documents_count=$(cat $chart_sources |grep $chart |wc -l |xargs)
+       local chart_documents_count=$(cat "$chart_sources" |grep "$chart" |wc -l |xargs)
        if [[ $chart_documents_count -eq 0 ]]
        then
             failMessage "${values}" "${expected_charts}"
             echo -e " The chart \"$chart\" is expected to be installed with values \"$values_set\" but it won't be installed."
             echo -e " The charts installed would be:"
-            cat $chart_sources | cut -d'/' -f3 | sort | uniq | xargs printf '\t * %s\n'
+            cat "$chart_sources" | cut -d'/' -f3 | sort | uniq | xargs printf '\t * %s\n'
             return 1
        fi
     done
