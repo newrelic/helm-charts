@@ -99,19 +99,18 @@ jobs:
         with:
           version: 'v3.0.0'
 
+      - name: Install yq dependency
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.9.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
       - name: Add helm repositories
         run: |
-          helm repo add newrelic-helm-charts https://newrelic.github.io/helm-charts
-          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
-          helm repo add newrelic-infrastructure https://newrelic.github.io/nri-kubernetes
-          helm repo add nri-prometheus https://newrelic.github.io/nri-prometheus
-          helm repo add newrelic-prometheus-configurator https://newrelic.github.io/newrelic-prometheus-configurator
-          helm repo add nri-metadata-injection https://newrelic.github.io/k8s-metadata-injection
-          helm repo add newrelic-k8s-metrics-adapter https://newrelic.github.io/newrelic-k8s-metrics-adapter
-          helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
-          helm repo add nri-kube-events https://newrelic.github.io/nri-kube-events
-          helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
-          helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
+          yq '.chart-repos[]' .github/ct-lint.yaml | while read line; do
+            repo_name=$(cut -d= -f1 <<<"$line");
+            repo_url=$(cut -d= -f2- <<<"$line");
+            helm repo add "$repo_name" "$repo_url";
+          done
 
       - name: Build nri-bundle dependencies
         run: helm dependency update ./charts/nri-bundle
@@ -145,27 +144,26 @@ jobs:
   bundle-dependencies-check:
     name: Test the bundle dependency conditions
     runs-on: ubuntu-latest
-    if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
-    needs: [ lint-test ]
+    #if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
+    #needs: [ lint-test ]
     steps:
       - uses: actions/checkout@v2
       - uses: azure/setup-helm@v3
         with:
           version: 'v3.0.0'
 
+      - name: Install yq dependency
+        run: |
+          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.9.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
       - name: Add helm repositories
         run: |
-          helm repo add newrelic-helm-charts https://newrelic.github.io/helm-charts
-          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
-          helm repo add newrelic-infrastructure https://newrelic.github.io/nri-kubernetes
-          helm repo add nri-prometheus https://newrelic.github.io/nri-prometheus
-          helm repo add newrelic-prometheus-configurator https://newrelic.github.io/newrelic-prometheus-configurator
-          helm repo add nri-metadata-injection https://newrelic.github.io/k8s-metadata-injection
-          helm repo add newrelic-k8s-metrics-adapter https://newrelic.github.io/newrelic-k8s-metrics-adapter
-          helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
-          helm repo add nri-kube-events https://newrelic.github.io/nri-kube-events
-          helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
-          helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
+          yq '.chart-repos[]' .github/ct-lint.yaml | while read line; do
+            repo_name=$(cut -d= -f1 <<<"$line");
+            repo_url=$(cut -d= -f2- <<<"$line");
+            helm repo add "$repo_name" "$repo_url";
+          done
 
       - name: Build nri-bundle dependencies
         run: helm dependency update ./charts/nri-bundle
