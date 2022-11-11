@@ -99,11 +99,6 @@ jobs:
         with:
           version: 'v3.0.0'
 
-      - name: Install yq dependency
-        run: |
-          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.9.3/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
-
       - name: Add helm repositories
         run: |
           yq '.chart-repos[]' .github/ct-lint.yaml | while read line; do
@@ -151,11 +146,6 @@ jobs:
       - uses: azure/setup-helm@v3
         with:
           version: 'v3.0.0'
-
-      - name: Install yq dependency
-        run: |
-          sudo wget -O /usr/local/bin/yq https://github.com/mikefarah/yq/releases/download/v4.9.3/yq_linux_amd64
-          sudo chmod +x /usr/local/bin/yq
 
       - name: Add helm repositories
         run: |
