@@ -112,6 +112,9 @@ spec:
               mountPath: /fluent-bit/etc
             - name: var
               mountPath: /var
+          {{- if .Values.extraVolumeMounts }}
+              {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+          {{- end }}
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -123,6 +126,9 @@ spec:
         - name: var
           hostPath:
             path: /var
+      {{- if .Values.extraVolumes }}
+        {{- toYaml .Values.extraVolumes | nindent 8 }}
+      {{- end }}
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
