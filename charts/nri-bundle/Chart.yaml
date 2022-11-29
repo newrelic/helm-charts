@@ -8,6 +8,7 @@ sources:
   - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
   - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
   - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+  - https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent
   - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
   - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
   - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
@@ -15,23 +16,28 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 4.8.12
+version: 4.10.0
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.8.11
+    version: 3.9.0
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled,nri-prometheus.enabled
-    version: 2.1.14
+    version: 2.1.15
+
+  - name: newrelic-prometheus-agent
+    repository: https://newrelic.github.io/newrelic-prometheus-configurator
+    condition: newrelic-prometheus-agent.enabled
+    version: 1.0.0
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 3.0.9
+    version: 3.0.10
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -46,28 +52,28 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 2.2.10
+    version: 2.3.0
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.11.9
+    version: 1.12.0
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
     condition: newrelic-pixie.enabled
-    version: 2.0.1
+    version: 2.0.2
 
   - name: pixie-operator-chart
     alias: pixie-chart
     repository: https://pixie-operator-charts.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.0.31
+    version: 0.0.33
 
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 1.0.10
+    version: 1.0.11
 
 maintainers:
   - name: alvarocabanas
