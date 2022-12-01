@@ -16,6 +16,7 @@ kube-state-metrics:
   enabled: false
   # As the chart was migrated to https://prometheus-community.github.io/helm-charts, it comes with labels updated. So, when upgrading the chart if fails as it tries
   # to update the deployment spec.selector which is an immutable field.
+  # See: https://github.com/prometheus-community/helm-charts/issues/568 for details.
   nameOverride: nr-kube-state-metrics
 
 nri-kube-events:
