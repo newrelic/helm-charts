@@ -1,4 +1,4 @@
-[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+[![Community Plus header](https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
 
 # New Relic's Helm charts repository
 
@@ -33,15 +33,15 @@ Just as a glance of the process of installation and configuration the process in
 global:
   licenseKey: YOUR_LICENSE_KEY
   cluster: YOUR_CLUSTER_NAME
-kubeEvents:
+nri-kube-events:
   enabled: true
-webhook:
+nri-metadata-injection:
   enabled: true
-prometheus:
+nri-prometheus:
   enabled: true
-logging:
+newrelic-logging:
   enabled: true
-ksm:
+kube-state-metrics:
   enabled: true
 ```
 

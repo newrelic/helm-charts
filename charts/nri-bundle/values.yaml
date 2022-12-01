@@ -14,11 +14,6 @@ kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository.
   # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0
   enabled: false
-  # kube-state-metrics.collectors -- Collectors configuration of kube-state-metric
-  # @default -- See [`values.yaml`](values.yaml) of the kube-state-metric chart
-  collectors:
-    certificatesigningrequests: false
-    ingresses: false
 
 nri-kube-events:
   # nri-kube-events.enabled -- Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)
@@ -38,6 +33,10 @@ pixie-chart:
 
 newrelic-infra-operator:
   # newrelic-infra-operator.enabled -- Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta)
+  enabled: false
+
+newrelic-prometheus-agent:
+  # newrelic-prometheus-agent.enabled -- Install the [`newrelic-prometheus-agent` chart](https://github.com/newrelic/newrelic-prometheus-configurator/tree/main/charts/newrelic-prometheus-agent)
   enabled: false
 
 newrelic-k8s-metrics-adapter:
