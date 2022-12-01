@@ -14,10 +14,6 @@ kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository.
   # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0
   enabled: false
-  # As the chart was migrated to https://prometheus-community.github.io/helm-charts, it comes with labels updated. So, when upgrading the chart if fails as it tries
-  # to update the deployment spec.selector which is an immutable field.
-  # See: https://github.com/prometheus-community/helm-charts/issues/568 for details.
-  nameOverride: nr-kube-state-metrics
 
 nri-kube-events:
   # nri-kube-events.enabled -- Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events)
