@@ -112,6 +112,9 @@ spec:
               mountPath: /fluent-bit/etc
             - name: var
               mountPath: /var
+          {{- if .Values.exposedPorts }}
+          ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
+          {{- end }}
           {{- if .Values.extraVolumeMounts }}
               {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
           {{- end }}
