@@ -98,9 +98,9 @@ newrelic-infrastructure:
 
 New Relic Kubernetes Integration requires an instance of kube-state-metrics (KSM) to be running in the cluster, which this chart pulls as a dependency. If you are already running or want to run your own KSM instance, you will need to make some small adjustments as described below.
 
-### Bring your own KSM v1.9.8
+### Bring your own KSM
 
-New Relic Kubernetes integration only supports KSM v1.9.8. If you already have one running, you can disable the KSM dependency of this chart, and point `nri-kubernetes` to your instance:
+If you already have one KSM instance running, you can point `nri-kubernetes` to your instance:
 
 ```yaml
 kube-state-metrics:
@@ -115,9 +115,9 @@ newrelic-infrastructure:
       #staticUrl: http://ksm.ksm.svc.cluster.local:8080/metrics
 ```
 
-### Run KSM v1.9.8 alongside a different version
+### <span id="ksm-different-version">Run KSM alongside a different version</span>
 
-If you need to run a different version of KSM in your cluster, you can still run a separate v1.9.8 instance for the Kubernetes Integration to work as intended:
+If you need to run a different instance of KSM in your cluster, you can still run a separate instance for the Kubernetes Integration to work as intended:
 
 ```yaml
 kube-state-metrics:
@@ -133,6 +133,8 @@ newrelic-infrastructure:
       # Use label above as a selector.
       selector: "newrelic.com/custom-ksm=true"
 ```
+
+For more information on supported KSM version visit the [requirements documentation](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/get-started/kubernetes-integration-compatibility-requirements#reqs)
 
 ## Values managed globally
 
