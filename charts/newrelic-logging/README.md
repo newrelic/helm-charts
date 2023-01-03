@@ -159,7 +159,6 @@ See [values.yaml](values.yaml) for the default values
 | `fluentBit.retryLimit`                                     | Amount of times to retry sending a given batch of logs to New Relic. This prevents data loss if there is a temporary network disruption, if a request to the Logs API is lost or when receiving a recoverable HTTP response. Set it to "False" for unlimited retries.        | 5                                                                               |
 
 
-
 ## Uninstall the Kubernetes plugin
 
 ### Uninstall via Helm (recommended)
