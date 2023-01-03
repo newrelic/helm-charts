@@ -188,6 +188,14 @@ serviceAccount:
   # Specify any annotations to add to the ServiceAccount
   annotations: {}
 
+# Optionally configure ports to expose metrics on /api/v1/metrics/prometheus
+# See - https://docs.fluentbit.io/manual/administration/monitoring
+exposedPorts: []
+#  - containerPort: 2020
+#    hostPort: 2020
+#    name: metrics
+#    protocol: TCP
+
 # If you wish to provide additional labels to apply to the pod(s), specify
 # them here
 # podLabels:
@@ -240,8 +248,20 @@ daemonSet:
   # Annotations to add to the DaemonSet.
   annotations: {}
 
+# Annotations to add to the resulting Pods of the DaemonSet.
+podAnnotations: {}
+
 # When low data mode is enabled only minimal attributes are added to the logs. Kubernetes labels and
 # annotations are not included. The plugin.type, plugin.version and plugin.source attributes are minified
 # into the plugin.source attribute.
 # Can be set as a global: global.lowDataMode
 # lowDataMode: false
+
+extraVolumes: []
+# - name: systemdlog
+#   hostPath:
+#     path: /run/log/journal
+
+extraVolumeMounts: []
+# - name: systemdlog
+#   mountPath: /run/log/journal

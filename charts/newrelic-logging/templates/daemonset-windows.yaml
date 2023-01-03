@@ -100,6 +100,9 @@ spec:
             - c:\fluent-bit\etc\fluent-bit.conf
             - -e
             - C:\fluent-bit\bin\out_newrelic.dll
+          {{- if $.Values.exposedPorts }}
+          ports: {{ toYaml $.Values.exposedPorts | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - mountPath: C:\fluent-bit\etc
               name: fluent-bit-config
