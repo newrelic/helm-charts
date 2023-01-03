@@ -12,6 +12,9 @@ data:
     {{- if .Values.fluentBit.config.inputs }}
       {{- .Values.fluentBit.config.inputs | nindent 4 }}
     {{- end }}
+    {{- if .Values.fluentBit.config.extraInputs }}
+      {{ .Values.fluentBit.config.extraInputs | indent 4}}
+    {{- end }}
     {{- if and (include "newrelic-logging.lowDataMode" .) (.Values.fluentBit.config.lowDataModeFilters) }}
       {{- .Values.fluentBit.config.lowDataModeFilters | nindent 4 }}
     {{- else }}
@@ -22,6 +25,9 @@ data:
     {{- end }}
     {{- if .Values.fluentBit.config.outputs }}
       {{- .Values.fluentBit.config.outputs | nindent 4 }}
+    {{- end }}
+    {{- if .Values.fluentBit.config.extraOutputs }}
+      {{ .Values.fluentBit.config.extraOutputs | indent 4}}
     {{- end }}
   parsers.conf: |
   {{- if .Values.fluentBit.config.parsers }}
