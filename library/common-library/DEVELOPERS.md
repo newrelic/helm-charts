@@ -189,9 +189,10 @@ we are going to use during the documentation of these functions:
 
 ```yaml
 global:
-  registry: nexus-3-instance.internal.clients-domain.tld
+  images:
+    registry: nexus-3-instance.internal.clients-domain.tld
 jobImage:
-  registry: k8s.gcr.io
+  registry: # defaults to "example.tld" when empty in these examples
   repository: ingress-nginx/kube-webhook-certgen
   tag: v1.1.1
   pullPolicy: IfNotPresent
@@ -211,16 +212,19 @@ images:
 ```
 
 ### `newrelic.common.images.image`
-This will return a string with the image ready to be downloaded that includes the registry, the image and the tag. 
+This will return a string with the image ready to be downloaded that includes the registry, the image and the tag.
+`defaultRegistry` is used to keep `registry` field empty in `values.yaml` so you can override the image using
+`global.images.registry`, your local `jobImage.registry` and be able to fallback to a registry that is not `docker.io`
+(Or the default repository that the client could have set in the CRI).
 
 Usage:
 ```mustache
-{{- /* For jobImage */}}
-{{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.jobImage "context" .) }}
 {{- /* For the integration */}}
 {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.images.integration "context" .) }}
 {{- /* For the agent */}}
 {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.images.agent "context" .) }}
+{{- /* For jobImage */}}
+{{ include "newrelic.common.images.image" ( dict "defaultRegistry" "example.tld" "imageRoot" .Values.jobImage "context" .) }}
 ```
 
 ### `newrelic.common.images.registry`
@@ -229,12 +233,12 @@ URL and use `newrelic.common.images.image` instead, but it is there to be used i
 
 Usage:
 ```mustache
-{{- /* For jobImage */}}
-{{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.jobImage "context" .) }}
 {{- /* For the integration */}}
 {{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.images.integration "context" .) }}
 {{- /* For the agent */}}
 {{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.images.agent "context" .) }}
+{{- /* For jobImage */}}
+{{ include "newrelic.common.images.registry" ( dict "defaultRegistry" "example.tld" "imageRoot" .Values.jobImage "context" .) }}
 ```
 
 ### `newrelic.common.images.repository`

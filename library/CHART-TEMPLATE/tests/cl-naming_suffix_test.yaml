@@ -15,17 +15,53 @@ tests:
 
   - it: name is truncated but suffix included
     set:
-      fullnameOverride: including-full-name-as-it-is-would-way-be-longer-than-limit
+      fullnameOverride: including-full-name-as-it-is-would-be-way-longer-than-limit
     asserts:
       - equal:
           path: metadata.name
-          value: including-full-name-as-it-is-would-way-be-longer-than-job-suffix
+          value: including-full-name-as-it-is-would-be-way-longer-tha-job-suffix
 
   - it: suffix is longer than maximum length supported
     set:
       fullnameOverride: fno
-      jobSuffix: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at-it-is
+      jobSuffix: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-as-it-is
     asserts:
       - equal:
           path: metadata.name
-          value: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-at
+          value: this-job-suffix-is-too-long-so-it-is-not-possible-to-include-as
+
+  - it: name has 62 chars
+    set:
+      fullnameOverride: name-with-sixty-two-chars-to-check-possible-edge-case-included
+      jobSuffix: regular-suffix
+    asserts:
+      - equal:
+          path: metadata.name
+          value: name-with-sixty-two-chars-to-check-possible-edge-regular-suffix
+
+  - it: name has 63 chars
+    set:
+      fullnameOverride: another-name-with-sixty-three-chars-to-check-possible-edge-case
+      jobSuffix: regular-suffix
+    asserts:
+      - equal:
+          path: metadata.name
+          value: another-name-with-sixty-three-chars-to-check-pos-regular-suffix
+
+  - it: suffix has 62 characters (only suffix is taken because a hyphen would be also included)
+    set:
+      fullnameOverride: another-name-with-sixty-three-chars-to-check-possible-edge-case
+      jobSuffix: superb-suffix-with-sixty-two-chars-to-check-possible-edge-case
+    asserts:
+      - equal:
+          path: metadata.name
+          value: superb-suffix-with-sixty-two-chars-to-check-possible-edge-case
+
+  - it: suffix has 63 characters (only suffix is taken)
+    set:
+      fullnameOverride: another-name-with-sixty-three-chars-to-check-possible-edge-case
+      jobSuffix: there-suffix-with-sixty-three-chars-to-check-possible-edge-case
+    asserts:
+      - equal:
+          path: metadata.name
+          value: there-suffix-with-sixty-three-chars-to-check-possible-edge-case
