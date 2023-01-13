@@ -6,7 +6,6 @@ metadata:
   labels: {{ include "newrelic-logging.labels" . | indent 4 }}
   name: {{ template "newrelic-logging.fullname" . }}
   annotations:
-    checksum/config: {{ include "newrelic-logging.configmap" . | sha256sum }}
   {{- if .Values.daemonSet.annotations }}
 {{ toYaml .Values.daemonSet.annotations | indent 4 }}
   {{- end }}
@@ -19,8 +18,9 @@ spec:
       release: {{.Release.Name }}
   template:
     metadata:
-    {{- if .Values.podAnnotations }}
       annotations:
+        checksum/fluent-bit-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
