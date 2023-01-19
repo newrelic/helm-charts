@@ -68,6 +68,9 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
 
+### <a name='Upgrading'></a>Upgrading to the new version of KSM
+You can find additional information on how to upgrade to the new version of KSM in the [New Relic Documentation page for Kubernetes Compatibility and Requirements](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/get-started/kubernetes-integration-compatibility-requirements/#upgrading-to-the-new-version-of-ksm)
+
 ## <a name='Development'></a>Development
 
 You can use the [Helm CLI][installing-helm] to develop a chart and add it to this repository.
