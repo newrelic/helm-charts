@@ -16,7 +16,7 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 5.1.0
+version: 6.0.0
 
 dependencies:
   - name: newrelic-infrastructure
@@ -44,17 +44,17 @@ dependencies:
     condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
     version: 1.0.0
 
-  - name: kube-state-metrics
-    version: 4.25.0
-    condition: ksm.enabled,kube-state-metrics.enabled
+  - condition: ksm.enabled,kube-state-metrics.enabled
+    name: kube-state-metrics
+    version: 4.29.0
+    appVersion: 2.7.0
     repository: https://prometheus-community.github.io/helm-charts
-    alias: kube-state-metrics
 
-  - name: kube-state-metrics
-    version: 4.23.0
-    condition: ksm_v26.enabled,kube-state-metrics-v26.enabled
+  - condition: kube-state-metrics-for-k8s-pre-1-23.enabled
+    name: kube-state-metrics
+    version: 4.29.0
+    appVersion: 2.6.0
     repository: https://prometheus-community.github.io/helm-charts
-    alias: kube-state-metrics-v26
      # Due to https://github.com/kubernetes/kube-state-metrics/pull/1906 hpa metrics cannot be reported anymore if
      # kube-state-metrics version 2.7.0 or higher (included by default in helm chart versions after 4.25) is installed on kubernetes
      # versions lower than 1.23, as it uses autoscaler/v2 API which
