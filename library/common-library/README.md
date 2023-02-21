@@ -53,7 +53,7 @@ Here is a list of global options:
 | global.privileged | privileged | Depends on the chart |  | In each integration it has different behavior. See [Further information](#values-managed-globally-3) but all aims to send less metrics to the backend to try to save costs |
 | global.proxy | proxy | `""` |  | Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port` |
 | global.nrStaging | nrStaging | `false` |  | Send the metrics to the staging backend. Requires a valid staging license key |
-| global.verboseLog | verboseLog | `false` |  | Sets the debug logs to this integration or all integrations if it is set globally |
+| global.verboseLog | verboseLog | `false` |  | Sets the debug/trace logs to this integration or all integrations if it is set globally |
 
 ### Further information
 <a name="values-managed-globally-1"></a>

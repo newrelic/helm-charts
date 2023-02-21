@@ -8,6 +8,7 @@ sources:
   - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
   - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
   - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+  - https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent
   - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
   - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
   - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
@@ -15,59 +16,68 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 4.6.2
+version: 5.0.4
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.6.2
+    version: 3.12.0
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled,nri-prometheus.enabled
-    version: 2.1.6
+    version: 2.1.15
+
+  - name: newrelic-prometheus-agent
+    repository: https://newrelic.github.io/newrelic-prometheus-configurator
+    condition: newrelic-prometheus-agent.enabled
+    version: 1.0.1
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 3.0.4
+    version: 4.0.0
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
     condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
-    version: 0.7.5
+    version: 1.0.0
 
   - name: kube-state-metrics
-    repository: https://kubernetes.github.io/kube-state-metrics
+    version: 4.23.0
     condition: ksm.enabled,kube-state-metrics.enabled
-    version: 2.13.2
+    repository: https://prometheus-community.github.io/helm-charts
+     # Due to https://github.com/kubernetes/kube-state-metrics/pull/1906 hpa metrics cannot be reported anymore if
+     # kube-state-metrics version is > 2.6.0 (included by default in helm chart versions after 4.23) for kubernetes
+     # versions lower than 1.23, as it uses autoscaler/v2 API which
+     # [is not available until that kubernetes version](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.23.md#horizontalpodautoscaler-v2-graduates-to-ga).
 
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 2.2.4
+    version: 2.3.1
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.11.0
+    version: 1.12.3
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
     condition: newrelic-pixie.enabled
-    version: 2.0.0
+    version: 2.0.2
 
   - name: pixie-operator-chart
     alias: pixie-chart
     repository: https://pixie-operator-charts.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.0.26
+    version: 0.0.35
 
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 1.0.3
+    version: 2.0.0
 
 maintainers:
   - name: alvarocabanas

@@ -22,8 +22,9 @@ spec:
       kubernetes.io/os: windows
   template:
     metadata:
-    {{- if $.Values.podAnnotations }}
       annotations:
+        checksum/fluent-bit-config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+    {{- if $.Values.podAnnotations }}
 {{ toYaml $.Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
@@ -35,7 +36,7 @@ spec:
 {{ toYaml $.Values.podLabels | indent 8 }}
         {{- end }}
     spec:
-      serviceAccountName: {{ template "newrelic-logging.serviceAccountName" $ }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" $ }}
       hostNetwork: false
       dnsPolicy: ClusterFirst
       terminationGracePeriodSeconds: 10
@@ -85,20 +86,24 @@ spec:
               value: {{ $.Values.fluentBit.windowsDb | quote }}
             - name: PATH
               value: {{ $.Values.fluentBit.windowsPath | quote }}
+            - name: K8S_BUFFER_SIZE
+              value: {{ $.Values.fluentBit.k8sBufferSize | quote }}
             - name: K8S_LOGGING_EXCLUDE
               value: {{ $.Values.fluentBit.k8sLoggingExclude | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" $ | default "false" | quote }}
-            {{- range $.Values.fluentBit.additionalEnvVariables }}
-            - name: {{ .name }}
-              value: {{ .value }}
-            {{- end }}
+            - name: RETRY_LIMIT
+              value: {{ $.Values.fluentBit.retryLimit | quote }}
+            {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
           command:
             - C:\fluent-bit\bin\fluent-bit.exe
             - -c
             - c:\fluent-bit\etc\fluent-bit.conf
             - -e
             - C:\fluent-bit\bin\out_newrelic.dll
+          {{- if $.Values.exposedPorts }}
+          ports: {{ toYaml $.Values.exposedPorts | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - mountPath: C:\fluent-bit\etc
               name: fluent-bit-config

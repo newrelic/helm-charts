@@ -1,0 +1,57 @@
+# This is a YAML-formatted file that contains default values for node-browser-runtime.
+# Declare variables to be passed into your templates.
+
+# Set this to the maximum number of node-browser-runtime jobs you want to run in parallel
+parallelism: 1
+
+# Set this to the maximum number of node-browser-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+completions: 6
+
+# The number of seconds after job execution to wait before cleaning up a finished job. The default value of 0 cleans up jobs immediately after they finish.
+ttlSecondsAfterFinished: 0
+
+# The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+imagePullSecrets: []
+
+# The nameOverride replaces the name of the chart in the Chart.yaml file.
+nameOverride: ""
+
+# By default, fullname uses '-. This overrides that and uses the given string instead.
+fullnameOverride: ""
+
+# The appVersionOverride overrides the current app version.
+appVersionOverride: ""
+
+image:
+  # This parameter determines what container the pod will run as.
+  repository: newrelic/synthetics-node-browser-runtime
+  # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+  pullPolicy: IfNotPresent
+
+## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+# appArmorProfileName: ""
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "2000Mi"
+  limits:
+    cpu: "750m"
+    memory: "3000Mi"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+labels: {}
+
+annotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+

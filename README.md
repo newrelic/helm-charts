@@ -1,4 +1,4 @@
-[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+[![Community Plus header](https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
 
 # New Relic's Helm charts repository
 
@@ -33,15 +33,15 @@ Just as a glance of the process of installation and configuration the process in
 global:
   licenseKey: YOUR_LICENSE_KEY
   cluster: YOUR_CLUSTER_NAME
-kubeEvents:
+nri-kube-events:
   enabled: true
-webhook:
+nri-metadata-injection:
   enabled: true
-prometheus:
+nri-prometheus:
   enabled: true
-logging:
+newrelic-logging:
   enabled: true
-ksm:
+kube-state-metrics:
   enabled: true
 ```
 
@@ -83,32 +83,9 @@ You can use the [Helm CLI][installing-helm] to develop a chart and add it to thi
 
 ### <a name='Automatedversionbumps'></a>Automated version bumps
 
-This repository is configured to accept webhook requests to bump chart versions. Upon receiving a version bump request, a GitHub Action generates a pull request with the requested changes. The pull request must still be merged manually.
+This repository uses [Renovate](https://docs.renovatebot.com/configuration-options/) to automatically bump dependencies. It currently supports updating dependencies on `nri-bundle` whenever an individual chart gets released.
 
-#### <a name='Triggeranautomatedversionbump'></a>Trigger an automated version bump
-Member
-@paologallinaharbur paologallinaharbur 1 hour ago
-
-This is still used by charts/synthetics-minion #729
-
-Unless we want to "deprecate" it by removing the docs
-@kang-makes
-
-A [GitHub Personal Access Token][github-personal-access-token] for this repository is required. If you have the token, execute the following POST request (tailor `client_payload` to your needs):
-
-`chart_name`: (required) Name of the helm chart to be bumped.
-`chart_version`: (optional) If specified the chart version will be set with this value. If left empty the patch version of the chart will be bumped by 1, e.g: 1.2.19 -> 1.2.20
-`app_version`: (required) Version of the application.
-
-```sh
-curl -H "Accept: application/vnd.github.everest-preview+json" \
-     -H "Authorization: token <PERSONAL_ACCESS_TOKEN>" \
-     --request POST \
-     --data '{"event_type": "bump-chart-version", "client_payload": { "chart_name": "simple-nginx", "chart_version": "1.2.3", "app_version": "1.45.7"}}' \
-     https://api.github.com/repos/newrelic/helm-charts/dispatches
-```
-
-Notice the sample `client_payload` object in the request body: the request generates a pull request for the `simple-nginx` chart to update `app_version` to `1.45.7` and `chart_version` to `1.2.3`.
+Unfortunately, renovate does not support yet updating `appVersion`, nor [`image.tag` entries in `values.yaml`](https://github.com/renovatebot/renovate/issues/4728).
 
 ## <a name='Testing'></a>Testing
 

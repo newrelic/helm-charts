@@ -1,0 +1,68 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "node-browser-runtime.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "node-browser-runtime.labels" . | nindent 4 }}
+      {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+      {{- end }}
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      parallelism: {{ .Values.parallelism }}
+      completions: {{ .Values.completions }}
+      ttlSecondsAfterFinished: {{ .Values.ttlSecondsAfterFinished }}
+      template:
+        metadata:
+          labels:
+            {{- include "node-browser-runtime.selectorLabels" . | nindent 12 }}
+              {{- with .Values.labels -}}
+              {{ toYaml . | nindent 12 }}
+              {{- end }}
+          {{- include "node-browser-runtime.podAnnotations" . | nindent 10 }}
+        spec:
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          volumes:
+            - emptyDir:
+                medium: Memory
+                sizeLimit: 2048Mi
+              name: browser
+          containers:
+            - name: {{ .Chart.Name }}
+              volumeMounts:
+                - mountPath: /dev/shm
+                  name: browser
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              image: "{{ .Values.image.repository }}:{{ include "node-browser-runtime.appVersion" . }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              env:
+                - name: GET_JOB_URL
+                  value: "{{- printf "http://%s:8080/job/get" (include "synthetics-job-manager.hostname" .) }}"
+                - name: POST_RESULT_URL
+                  value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "synthetics-job-manager.hostname" .) }}"
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          restartPolicy: OnFailure

@@ -33,10 +33,15 @@ fluentBit:
   criEnabled: false
   k8sBufferSize: "32k"
   k8sLoggingExclude: "Off"
-  additionalEnvVariables: []
-  # additionalEnvVariables:
+  retryLimit: 5
+  extraEnv: []
+  # extraEnv:
   # - name: HTTPS_PROXY
   #   value: http://example.com:3128
+  # - name: METADATA_NAME
+  #   valueFrom:
+  #     fieldRef:
+  #       fieldPath: metadata.name
 
   # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
   # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
@@ -63,6 +68,12 @@ fluentBit:
           Skip_Long_Lines   On
           Refresh_Interval  10
 
+#    extraInputs: |
+#      [INPUT]
+#          Name   dummy
+#          Tag    dummy.log
+
+
     filters: |
       [FILTER]
           Name                kubernetes
@@ -77,6 +88,12 @@ fluentBit:
           Name           record_modifier
           Match          *
           Record         cluster_name ${CLUSTER_NAME}
+
+#    extraFilters: |
+#      [FILTER]
+#          Name   grep
+#          Match  *
+#          Exclude log lvl=debug*
 
     lowDataModeFilters: |
       [FILTER]
@@ -114,6 +131,12 @@ fluentBit:
           licenseKey     ${LICENSE_KEY}
           endpoint       ${ENDPOINT}
           lowDataMode    ${LOW_DATA_MODE}
+          Retry_Limit    ${RETRY_LIMIT}
+
+#    extraOutputs: |
+#      [OUTPUT]
+#          Name null
+#          Match *
 
     parsers: |
       [PARSER]
@@ -169,12 +192,20 @@ rbac:
 
 serviceAccount:
   # Specifies whether a ServiceAccount should be created
-  create: true
+  create:
   # The name of the ServiceAccount to use.
   # If not set and create is true, a name is generated using the fullname template
   name:
   # Specify any annotations to add to the ServiceAccount
   annotations: {}
+
+# Optionally configure ports to expose metrics on /api/v1/metrics/prometheus
+# See - https://docs.fluentbit.io/manual/administration/monitoring
+exposedPorts: []
+#  - containerPort: 2020
+#    hostPort: 2020
+#    name: metrics
+#    protocol: TCP
 
 # If you wish to provide additional labels to apply to the pod(s), specify
 # them here
@@ -228,8 +259,20 @@ daemonSet:
   # Annotations to add to the DaemonSet.
   annotations: {}
 
+# Annotations to add to the resulting Pods of the DaemonSet.
+podAnnotations: {}
+
 # When low data mode is enabled only minimal attributes are added to the logs. Kubernetes labels and
 # annotations are not included. The plugin.type, plugin.version and plugin.source attributes are minified
 # into the plugin.source attribute.
 # Can be set as a global: global.lowDataMode
 # lowDataMode: false
+
+extraVolumes: []
+# - name: systemdlog
+#   hostPath:
+#     path: /run/log/journal
+
+extraVolumeMounts: []
+# - name: systemdlog
+#   mountPath: /run/log/journal

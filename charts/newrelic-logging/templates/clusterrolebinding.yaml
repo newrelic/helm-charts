@@ -10,6 +10,6 @@ roleRef:
   name: {{ template "newrelic-logging.fullname" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ template "newrelic-logging.serviceAccountName" . }}
+  name: {{ include "newrelic.common.serviceAccount.name" . }}
   namespace: {{ .Release.Namespace }}
 {{- end -}}

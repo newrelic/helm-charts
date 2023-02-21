@@ -18,8 +18,9 @@ spec:
       release: {{.Release.Name }}
   template:
     metadata:
-    {{- if .Values.podAnnotations }}
       annotations:
+        checksum/fluent-bit-config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+    {{- if .Values.podAnnotations }}
 {{ toYaml .Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
@@ -31,7 +32,7 @@ spec:
         {{ toYaml .Values.podLabels }}
         {{- end }}
     spec:
-      serviceAccountName: {{ template "newrelic-logging.serviceAccountName" . }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
       dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 10
@@ -94,10 +95,13 @@ spec:
               value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
-            {{- range .Values.fluentBit.additionalEnvVariables }}
-            - name: {{ .name }}
-              value: {{ .value }}
-            {{- end }}
+            - name: RETRY_LIMIT
+              value: {{ .Values.fluentBit.retryLimit | quote }}
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
           command:
             - /fluent-bit/bin/fluent-bit
             - -c
@@ -109,6 +113,12 @@ spec:
               mountPath: /fluent-bit/etc
             - name: var
               mountPath: /var
+          {{- if .Values.exposedPorts }}
+          ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
+          {{- end }}
+          {{- if .Values.extraVolumeMounts }}
+              {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+          {{- end }}
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -120,6 +130,9 @@ spec:
         - name: var
           hostPath:
             path: /var
+      {{- if .Values.extraVolumes }}
+        {{- toYaml .Values.extraVolumes | nindent 8 }}
+      {{- end }}
       {{- if $.Values.priorityClassName }}
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
@@ -144,7 +157,7 @@ spec:
         # We add this only if Windows is enabled to keep backwards-compatibility. Prior to version 1.14, this label was
         # named beta.kubernetes.io/os. In version 1.14, it was deprecated and replaced by this one. Version 1.14 also
         # introduces Windows support. Therefore, anyone wishing to use Windows containers must bet at version >=1.14 and
-        # are going to need this label, in order to avoid placing a linux container on a windows node, and viceversa.
+        # are going to need this label, in order to avoid placing a linux container on a windows node, and vice-versa.
         kubernetes.io/os: linux
         {{- end }}
       {{- if .Values.tolerations }}
