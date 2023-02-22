@@ -68,10 +68,10 @@ fluentBit:
           Skip_Long_Lines   On
           Refresh_Interval  10
 
-    #    extraInputs: |
-    #      [INPUT]
-    #          Name   dummy
-    #          Tag    dummy.log
+#    extraInputs: |
+#      [INPUT]
+#          Name   dummy
+#          Tag    dummy.log
 
     filters: |
       [FILTER]
@@ -88,11 +88,11 @@ fluentBit:
           Match          *
           Record         cluster_name ${CLUSTER_NAME}
 
-    #    extraFilters: |
-    #      [FILTER]
-    #          Name   grep
-    #          Match  *
-    #          Exclude log lvl=debug*
+#    extraFilters: |
+#      [FILTER]
+#          Name   grep
+#          Match  *
+#          Exclude log lvl=debug*
 
     lowDataModeFilters: |
       [FILTER]
@@ -132,10 +132,10 @@ fluentBit:
           lowDataMode    ${LOW_DATA_MODE}
           Retry_Limit    ${RETRY_LIMIT}
 
-    #    extraOutputs: |
-    #      [OUTPUT]
-    #          Name null
-    #          Match *
+#    extraOutputs: |
+#      [OUTPUT]
+#          Name null
+#          Match *
 
     parsers: |
       [PARSER]
@@ -158,7 +158,7 @@ image:
   pullPolicy: IfNotPresent
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   # pullSecrets:
-  # - name: regsecret
+    # - name: regsecret
 
 # By default, the Linux DaemonSet will always be deployed, while the Windows DaemonSet(s) won't.
 enableLinux: true
