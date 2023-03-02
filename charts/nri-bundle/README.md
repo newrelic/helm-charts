@@ -192,11 +192,8 @@ honors global options as described below.
 
 ## Maintainers
 
-* [alvarocabanas](https://github.com/alvarocabanas)
-* [carlossscastro](https://github.com/carlossscastro)
-* [sigilioso](https://github.com/sigilioso)
-* [gsanchezgavier](https://github.com/gsanchezgavier)
-* [kang-makes](https://github.com/kang-makes)
-* [marcsanmi](https://github.com/marcsanmi)
-* [paologallinaharbur](https://github.com/paologallinaharbur)
-* [roobre](https://github.com/roobre)
+* [nserrino](https://github.com/nserrino)
+* [philkuz](https://github.com/philkuz)
+* [htroisi](https://github.com/htroisi)
+* [juanjjaramillo](https://github.com/juanjjaramillo)
+* [svetlanabrennan](https://github.com/svetlanabrennan)
