@@ -82,6 +82,13 @@ spec:
           value: "750"
         - name: DB_SPAN_LIMIT
           value: "250"
+        {{- else }}
+        - name: COLLECT_INTERVAL_SEC
+          value: "10"
+        - name: HTTP_SPAN_LIMIT
+          value: "1500"
+        - name: DB_SPAN_LIMIT
+          value: "500"
         {{- end }}
         {{- if (include "newrelic-pixie.nrStaging" .) }}
         - name: NR_OTLP_HOST

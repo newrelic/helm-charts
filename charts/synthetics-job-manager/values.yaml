@@ -1,0 +1,340 @@
+# This is a YAML-formatted file that contains default values for synthetics-job-manager and associated runtime charts.
+# Declare variables to be passed into your templates.
+
+# The replicaCount allows the specification of how many pods you want running.
+replicaCount: 1
+
+# The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+imagePullSecrets: []
+
+# The nameOverride replaces the name of the chart in the Chart.yaml file.
+nameOverride: ""
+
+# By default, fullname uses '-. This overrides that and uses the given string instead.
+fullnameOverride: ""
+
+# The appVersionOverride overrides the current app version.
+appVersionOverride: ""
+
+global:
+  # The hostnameOverride overrides the default DNS service name for synthetics-job-manager
+  hostnameOverride: ""
+
+  ping-runtime:
+    # The hostnameOverride overrides the default DNS service name for ping-runtime
+    hostnameOverride: ""
+
+  # The internalApiKey is a key used for restricting communication between synthetics-job-manager and runtime
+  # pods. The default value is empty but this is required.
+  internalApiKey: "default"
+
+  # internalApiKeySecretName expects a Kubernetes Secret to exist that includes the key internalApiKey
+  internalApiKeySecretName: ""
+
+synthetics:
+  # The privateLocationKey is a key generated when creating a private location. The default value is empty.
+  # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
+  privateLocationKey: ""
+
+  # privateLocationKeySecretName expects a Kubernetes Secret to exist that includes the key privateLocationKey
+  privateLocationKeySecretName: ""
+
+  # The logLevel is defaulted to INFO, which report about normal operations, but they provide the skeleton of what happened.
+  # Other Options:
+  # 1. DEBUG: These messages report detailed diagnostic information and more information than you'd want in normal production situations.
+  # 2. TRACE: These messages capture every detail you possibly care about
+  logLevel: "INFO"
+
+  ## For US-based accounts, the endpoint is: https://synthetics-horde.nr-data.net.
+  ## For EU-based accounts, the endpoint is: https://synthetics-horde.eu01.nr-data.net/
+  hordeApiEndpoint: "https://synthetics-horde.nr-data.net"
+
+  ## If set, enables verified script execution and uses this value as a passphrase.
+  #  vsePassphrase: ""
+
+  ## If set, enables verified script execution and uses this value from this Kubernetes Secret as a passphrase. Expects a key named `vsePassphrase`.
+  #  vsePassphraseSecretName: ""
+
+  ## Enables the use of a proxy when communicating with New Relic to fetch and process jobs. If set, `apiProxyPort` should also be set.
+  #  apiProxyHost: ""
+
+  ## Enables the use of a proxy when communicating with New Relic to fetch and process jobs. If set, `apiProxyHost` should also be set.
+  #  apiProxyPort: ""
+
+  ## If set, the accepted values are: true, 1, or yes.
+  #  hordeApiProxySelfSignedCert: ""
+
+  ## If set, the format is: "username" and "password". Support HTTP Basic Authentication and additional authentication protocols supported by Chrome.
+  #  hordeApiProxyUsername: ""
+  #  hordeApiProxyPw: ""
+
+  ## The checkTimeout represents the maximum amount of seconds that your monitor checks are allowed to run.
+  ## The minimum allowed value for this parameter is 1 second and the maximum allowed value for this parameter is 900 seconds.
+  ## The default is 65 seconds for ping monitors, 180 seconds for browser monitors, script_browser monitors, and script_api monitors.
+  #  checkTimeout: ""
+
+  ## The userDefinedEnvVariables defines the locally hosted set of user defined key value pairs.
+  #  userDefinedEnvVariable: ""
+
+  ## The jvmOpts passes command line options to the internal JVM.
+  ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
+  #  jvmOpts: "-XX:-UsePerfData"
+
+  ## A synthetics-job-manager is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
+  #  networkHealthCheckDisabled: "false"
+
+image:
+  # This parameter determines what container the pod will run as.
+  repository: newrelic/synthetics-job-manager
+  # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+  pullPolicy: IfNotPresent
+
+## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+# appArmorProfileName: ""
+
+# The number of times the startup probe should retry before giving up.
+startupProbeFailureThreshold: 60
+
+# How often (in seconds) to perform the startup probe.
+startupProbePeriodSeconds: 10
+
+# The number of times the liveness probe should retry before giving up
+livenessProbeFailureThreshold: 1
+
+# How often (in seconds) to perform the liveness probe.
+livenessProbePeriodSeconds: 10
+
+# Number of seconds after which the liveness probe times out.
+livenessProbeTimeoutSeconds: 10
+
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "800Mi"
+  limits:
+    cpu: "750m"
+    memory: "1600Mi"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+labels: {}
+
+annotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+
+ping-runtime:
+  enabled: true
+
+  # The replicaCount allows the specification of how many ping-runtime pods you want running.
+  replicaCount: 1
+
+  # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+  imagePullSecrets: []
+
+  # The nameOverride replaces the name of the chart in the Chart.yaml file.
+  nameOverride: ""
+
+  # By default, fullname uses '-. This overrides that and uses the given string instead.
+  fullnameOverride: ""
+
+  # The appVersionOverride overrides the current app version.
+  appVersionOverride: ""
+
+  image:
+    # This parameter determines what container the pod will run as.
+    repository: newrelic/synthetics-ping-runtime
+    # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+
+  ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+  # appArmorProfileName: ""
+
+  # The number of times the startup probe should retry before giving up.
+  startupProbeFailureThreshold: 60
+
+  # How often (in seconds) to perform the startup probe.
+  startupProbePeriodSeconds: 10
+
+  # The number of times the liveness probe should retry before giving up
+  livenessProbeFailureThreshold: 1
+
+  # How often (in seconds) to perform the liveness probe.
+  livenessProbePeriodSeconds: 10
+
+  # Number of seconds after which the liveness probe times out.
+  livenessProbeTimeoutSeconds: 10
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "500Mi"
+    limits:
+      cpu: "750m"
+      memory: "1000Mi"
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  labels: {}
+
+  annotations: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+
+node-api-runtime:
+  enabled: true
+
+  # Set this to the maximum number of node-api-runtime jobs you want to run in parallel
+  parallelism: 1
+
+  # Set this to the maximum number of node-api-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
+
+  # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+  imagePullSecrets: []
+
+  # The nameOverride replaces the name of the chart in the Chart.yaml file.
+  nameOverride: ""
+
+  # By default, fullname uses '-. This overrides that and uses the given string instead.
+  fullnameOverride: ""
+
+  # The appVersionOverride overrides the current app version.
+  appVersionOverride: ""
+
+  image:
+    # This parameter determines what container the pod will run as.
+    repository: newrelic/synthetics-node-api-runtime
+    # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+
+  ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+  # appArmorProfileName: ""
+
+  # The number of times the startup probe should retry before giving up.
+  startupProbeFailureThreshold: 60
+
+  # How often (in seconds) to perform the startup probe.
+  startupProbePeriodSeconds: 10
+
+  # The number of times the liveness probe should retry before giving up
+  livenessProbeFailureThreshold: 1
+
+  # How often (in seconds) to perform the liveness probe.
+  livenessProbePeriodSeconds: 10
+
+  # Number of seconds after which the liveness probe times out.
+  livenessProbeTimeoutSeconds: 10
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1250Mi"
+    limits:
+      cpu: "750m"
+      memory: "2500Mi"
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  labels: {}
+
+  annotations: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+
+node-browser-runtime:
+  enabled: true
+
+  # Set this to the maximum number of node-browser-runtime jobs you want to run in parallel
+  parallelism: 1
+
+  # Set this to the maximum number of node-browser-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
+
+  # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+  imagePullSecrets: []
+
+  # The nameOverride replaces the name of the chart in the Chart.yaml file.
+  nameOverride: ""
+
+  # By default, fullname uses '-. This overrides that and uses the given string instead.
+  fullnameOverride: ""
+
+  # The appVersionOverride overrides the current app version.
+  appVersionOverride: ""
+
+  image:
+    # This parameter determines what container the pod will run as.
+    repository: newrelic/synthetics-node-browser-runtime
+    # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+
+  ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+  # appArmorProfileName: ""
+
+  # The number of times the startup probe should retry before giving up.
+  startupProbeFailureThreshold: 60
+
+  # How often (in seconds) to perform the startup probe.
+  startupProbePeriodSeconds: 10
+
+  # The number of times the liveness probe should retry before giving up
+  livenessProbeFailureThreshold: 1
+
+  # How often (in seconds) to perform the liveness probe.
+  livenessProbePeriodSeconds: 10
+
+  # Number of seconds after which the liveness probe times out.
+  livenessProbeTimeoutSeconds: 10
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "2000Mi"
+    limits:
+      cpu: "750m"
+      memory: "3000Mi"
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  labels: {}
+
+  annotations: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}

@@ -1,0 +1,50 @@
+# This is a YAML-formatted file that contains default values for ping-runtime.
+# Declare variables to be passed into your templates.
+
+# The replicaCount allows the specification of how many pods you want running.
+replicaCount: 1
+
+# The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+imagePullSecrets: []
+
+# The nameOverride replaces the name of the chart in the Chart.yaml file.
+nameOverride: ""
+
+# By default, fullname uses '-. This overrides that and uses the given string instead.
+fullnameOverride: ""
+
+# The appVersionOverride overrides the current app version.
+appVersionOverride: ""
+
+image:
+  # This parameter determines what container the pod will run as.
+  repository: newrelic/synthetics-ping-runtime
+  # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+  pullPolicy: IfNotPresent
+
+## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+# appArmorProfileName: ""
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "500Mi"
+  limits:
+    cpu: "750m"
+    memory: "1000Mi"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+labels: {}
+
+annotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

@@ -13,31 +13,32 @@ jobs:
         with:
           check_filenames: true
           check_hidden: true
-          skip: ./.git,./.github/actions/chart-version-bumper/node_modules
+          skip: ./.git
           ignore_words_list: enver
 
   lint-test:
     name: Lint and test charts
     runs-on: ubuntu-latest
+    outputs:
+      charts-changed: ${{ steps.changed.outputs.charts }}
+      bundle-changed: ${{ steps.changed.outputs.bundle }}
     steps:
       - name: Checkout
         uses: actions/checkout@v2
         with:
           fetch-depth: 0
 
-      - uses: azure/setup-helm@v1
       - uses: actions/setup-python@v2
-
-      - name: Set up chart-testing
-        uses: helm/chart-testing-action@v2.1.0
+      - uses: helm/chart-testing-action@v2.1.0
+      - uses: azure/setup-helm@v3
+        with:
+          version: 'v3.0.0'
 
       - name: Set up helm-unittest
-        run: |
-          helm plugin install https://github.com/quintush/helm-unittest
+        run: helm plugin install https://github.com/quintush/helm-unittest
 
       - name: Lint charts
-        run: |
-          ct lint --config .github/ct-lint.yaml
+        run: ct lint --config .github/ct-lint.yaml
 
       - name: Run unit tests
         run: |
@@ -48,21 +49,114 @@ jobs:
           done
 
       - name: Check for changed installable charts
-        id: list-changed
+        id: changed
         run: |
-          changed=$(ct list-changed --config .github/ct-install.yaml)
-          if [[ -n "$changed" ]]; then
-            echo "::set-output name=changed::true"
+          set -x
+          charts=$(ct list-changed --config .github/ct-install.yaml)
+
+          if [[ -n "$charts" ]]; then
+            echo "::set-output name=charts::true"
+          fi
+          if [[ -n "$(echo -n "$charts" | grep charts/nri-bundle)" ]]; then
+            echo "::set-output name=bundle::true"
           fi
 
+  install-test:
+    name: Test chart installability
+    runs-on: ubuntu-latest
+    if: ${{ needs.lint-test.outputs.charts-changed == 'true' }}
+    needs: [ lint-test ]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v2
+      - uses: helm/chart-testing-action@v2.1.0
+      - uses: azure/setup-helm@v3
+        with:
+          version: 'v3.0.0'
+
       - name: Create kind cluster
-        if: steps.list-changed.outputs.changed == 'true'
         uses: helm/kind-action@v1.2.0
       - name: Create test ns
-        if: steps.list-changed.outputs.changed == 'true'
         run: kubectl create ns ct
 
       - name: Test install charts
         run: ct install --namespace ct --config .github/ct-install.yaml
       - name: Test upgrade charts
         run: ct install --namespace ct --config .github/ct-install.yaml --upgrade
+
+  bundle-integrity:
+    name: Test nri-bundle dependencies has the same version of the common-library
+    runs-on: ubuntu-latest
+    if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
+    needs: [ lint-test ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: azure/setup-helm@v3
+        with:
+          version: 'v3.0.0'
+
+      - name: Add helm repositories
+        run: |
+          yq '.chart-repos[]' .github/ct-lint.yaml | while read line; do
+            repo_name=$(cut -d= -f1 <<<"$line");
+            repo_url=$(cut -d= -f2- <<<"$line");
+            helm repo add "$repo_name" "$repo_url";
+          done
+
+      - name: Build nri-bundle dependencies
+        run: helm dependency update ./charts/nri-bundle
+
+      - name: Decompress nri-bundle and all its dependencies recursively
+        run: |
+          while [ `find charts/nri-bundle -name \*.tgz -or -name \*.tar.gz | wc -l` -gt 0 ]; do
+            find charts/nri-bundle -name \*.tgz -or -name \*.tar.gz | while read line; do
+              echo "Decompressing $line..."
+              tar xzf "$line" -C $(dirname "$line")
+              echo "Removing $line..."
+              rm "$line"
+            done
+          done
+
+      - name: Find versions of the common library
+        run: |
+          (
+            echo CHART NAME: common-library VERSION
+            find charts/nri-bundle -name Chart.yaml | \
+              xargs yq eval-all '{ .name: (.dependencies | map(select(contains({"name": "common-library"}))) | .[].version ) }' | \
+              tee versions.txt;
+          ) | column -t -s:
+
+          echo ""
+          echo Versions of the common library detected:
+          cut -d\  -f2 versions.txt | sort -u
+
+          [ $(cut -d\  -f2 versions.txt | sort -u | wc -l) -eq 1 ] || exit 1
+
+  bundle-dependencies-check:
+    name: Test the bundle dependency conditions
+    runs-on: ubuntu-latest
+    if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
+    needs: [ lint-test ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: azure/setup-helm@v3
+        with:
+          version: 'v3.0.0'
+
+      - name: Add helm repositories
+        run: |
+          yq '.chart-repos[]' .github/ct-lint.yaml | while read line; do
+            repo_name=$(cut -d= -f1 <<<"$line");
+            repo_url=$(cut -d= -f2- <<<"$line");
+            helm repo add "$repo_name" "$repo_url";
+          done
+
+      - name: Build nri-bundle dependencies
+        run: helm dependency update ./charts/nri-bundle
+
+      - name: Run dependencies check
+        run: ./scripts/check-bundle-dependencies.sh
