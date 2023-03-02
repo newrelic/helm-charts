@@ -197,3 +197,7 @@ honors global options as described below.
 * [htroisi](https://github.com/htroisi)
 * [juanjjaramillo](https://github.com/juanjjaramillo)
 * [svetlanabrennan](https://github.com/svetlanabrennan)
+* [nrepai](https://github.com/nrepai)
+* [csongnr](https://github.com/csongnr)
+* [vuqtran88](https://github.com/vuqtran88)
+* [xqi-nr](https://github.com/xqi-nr)
