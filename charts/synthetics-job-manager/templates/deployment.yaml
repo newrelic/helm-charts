@@ -69,13 +69,15 @@ spec:
             - name: HORDE_API_PROXY_PW
               value: {{ .Values.synthetics.hordeApiProxyPw | quote }}
             {{- end }}
+
+            {{- if .Values.global.checkTimeout }}
+            - name: CHECK_TIMEOUT
+              value: {{ .Values.synthetics.checkTimeout }}
+            {{- end }}
   
           {{- /*
           TODO - The following are not yet implemented
-            {{- if .Values.synthetics.checkTimeout }}
-            - name: CHECK_TIMEOUT
-              value: {{ .Values.synthetics.checkTimeout | quote }}
-            {{- end }}
+
 
             {{- if .Values.synthetics.userDefinedEnvVariable }}
             - name: USER_DEFINED_ENV_VARIABLES
