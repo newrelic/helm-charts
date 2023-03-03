@@ -72,7 +72,7 @@ spec:
 
             {{- if .Values.global.checkTimeout }}
             - name: CHECK_TIMEOUT
-              value: {{ .Values.synthetics.checkTimeout }}
+              value: {{ .Values.global.checkTimeout | quote }}
             {{- end }}
   
           {{- /*

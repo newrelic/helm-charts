@@ -170,6 +170,6 @@ In order to prevent data-loss the grace period should be configured to be > synt
 default
 */}}
 {{- define "synthetics-job-manager.terminationGracePeriodSeconds" -}}
-{{- $checkTimeout := default 240 .Values.synthetics.checkTimeout -}}
+{{- $checkTimeout := default 240 .Values.global.checkTimeout -}}
 {{- printf "%d" (add $checkTimeout 20) -}}
 {{- end -}}
