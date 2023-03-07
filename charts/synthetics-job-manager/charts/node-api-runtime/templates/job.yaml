@@ -38,6 +38,8 @@ spec:
   value: "{{- printf "http://%s:8080/job/get" (include "synthetics-job-manager.hostname" .) }}"
 - name: POST_RESULT_URL
   value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "synthetics-job-manager.hostname" .) }}"
+- name: CHECK_TIMEOUT
+  value: {{ .Values.global.checkTimeout | quote }}
   resources:
 {{- toYaml .Values.resources | nindent 16 }}
   {{- with .Values.nodeSelector }}
