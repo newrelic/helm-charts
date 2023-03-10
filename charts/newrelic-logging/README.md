@@ -157,6 +157,7 @@ See [values.yaml](values.yaml) for the default values
 | `fluentBit.config.extraOutputs`                            | Contains extra fluent-bit.conf Outputs config                                                                                                                                                                                                                                |                                                                                 |
 | `fluentBit.config.parsers`                                 | Contains parsers.conf Parsers config                                                                                                                                                                                                                                         |                                                                                 |
 | `fluentBit.retryLimit`                                     | Amount of times to retry sending a given batch of logs to New Relic. This prevents data loss if there is a temporary network disruption, if a request to the Logs API is lost or when receiving a recoverable HTTP response. Set it to "False" for unlimited retries.        | 5                                                                               |
+| priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
 
 
 ## Uninstall the Kubernetes plugin
