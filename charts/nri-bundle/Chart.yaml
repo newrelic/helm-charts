@@ -16,33 +16,33 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 5.0.5
+version: 5.0.6
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.12.0
+    version: 3.14.0
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled,nri-prometheus.enabled
-    version: 2.1.15
+    version: 2.1.16
 
   - name: newrelic-prometheus-agent
     repository: https://newrelic.github.io/newrelic-prometheus-configurator
     condition: newrelic-prometheus-agent.enabled
-    version: 1.0.1
+    version: 1.1.1
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.0.0
+    version: 4.2.1
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
     condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
-    version: 1.0.0
+    version: 1.1.2
 
   - name: kube-state-metrics
     version: 4.23.0
@@ -56,28 +56,28 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 2.3.1
+    version: 2.3.3
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.12.3
+    version: 1.13.1
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
     condition: newrelic-pixie.enabled
-    version: 2.0.2
+    version: 2.0.6
 
   - name: pixie-operator-chart
     alias: pixie-chart
     repository: https://pixie-operator-charts.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.0.35
+    version: 0.0.38
 
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 2.0.0
+    version: 2.1.1
 
 maintainers:
   - name: nserrino
