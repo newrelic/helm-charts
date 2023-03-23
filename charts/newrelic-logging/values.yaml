@@ -68,6 +68,12 @@ fluentBit:
           Skip_Long_Lines   On
           Refresh_Interval  10
 
+#    extraInputs: |
+#      [INPUT]
+#          Name   dummy
+#          Tag    dummy.log
+
+
     filters: |
       [FILTER]
           Name                kubernetes
@@ -82,6 +88,12 @@ fluentBit:
           Name           record_modifier
           Match          *
           Record         cluster_name ${CLUSTER_NAME}
+
+#    extraFilters: |
+#      [FILTER]
+#          Name   grep
+#          Match  *
+#          Exclude log lvl=debug*
 
     lowDataModeFilters: |
       [FILTER]
@@ -121,6 +133,11 @@ fluentBit:
           lowDataMode    ${LOW_DATA_MODE}
           Retry_Limit    ${RETRY_LIMIT}
 
+#    extraOutputs: |
+#      [OUTPUT]
+#          Name null
+#          Match *
+
     parsers: |
       [PARSER]
           Name         docker
@@ -152,13 +169,14 @@ enableWindows: false
 # Windows containers can only be executed on hosts running the exact same Windows version and build number,
 # because Kubernetes only supports process isolation and not Hyper-V isolation (as of September 2021)
 windowsOsList:
-  # Right now, the windows-2019 worker offerred by GitHub is based on ltsc2019/10.0.17763.2183,
-  # so it can only compile containers running this specific version and compilation number of the OS.
-  # We aim to support (but right now, we can only support LTSC2019 using GitHub actions):
+  # We aim to support (limited to LTSC2019/LTSC2022 using GitHub actions, see https://github.com/actions/runner-images/tree/main/images/win):
   # https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#windows-os-version-support
   - version: ltsc2019
     imageTagSuffix: windows-ltsc-2019
     buildNumber: 10.0.17763
+  - version: ltsc2022
+    imageTagSuffix: windows-ltsc-2022
+    buildNumber: 10.0.20348
 
 resources:
   limits:

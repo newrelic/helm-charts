@@ -1,4 +1,4 @@
-[![Community Plus header](https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+<a href="https://opensource.newrelic.com/oss-category/#community-plus"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/dark/Community_Plus.png"><source media="(prefers-color-scheme: light)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png"><img alt="New Relic Open Source community plus project banner." src="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png"></picture></a>
 
 # New Relic's Helm charts repository
 
@@ -67,6 +67,9 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
+
+### <a name='Upgrading'></a>Upgrading to the new version of KSM
+You can find additional information on how to upgrade to the new version of KSM in the [New Relic Documentation page for Kubernetes Compatibility and Requirements](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/get-started/kubernetes-integration-compatibility-requirements/#upgrading-to-the-new-version-of-ksm)
 
 ## <a name='Development'></a>Development
 
