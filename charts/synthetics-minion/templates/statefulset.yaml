@@ -78,10 +78,6 @@ spec:
       priorityClassName: {{ $.Values.priorityClassName }}
       {{- end }}
 
-      {{- if $.Values.priorityClassName }}
-      priorityClassName: {{ $.Values.priorityClassName }}
-      {{- end }}
-
       initContainers:
         - name: "update-mounted-subpath-permissions"
           image: "{{ .Values.image.repository }}:{{ include "synthetics-minion.appVersion" . }}"
