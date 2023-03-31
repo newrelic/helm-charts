@@ -9,31 +9,45 @@
   "enabledManagers": [
     "helm-values",
     "helmv3",
-    // Disable helm-requirements as it bumps requirements.yaml but _not_ requirements.lock, breaking CI workflow.
-    // helmv3 manager should be able to bump Chart.lock, so hopefully we should be fine once we upgrade to Helm 3.
-    // "helm-requirements"
+    "helm-requirements"
   ],
   "packageRules": [
     {
-      // Group all GHA bumps together in a single PR.
-      "matchManagers": [
-        "github-actions"
+      // Group all nri-bundle dependencies together in a single PR.
+      "matchPaths": [
+        "charts/nri-bundle/**"
       ],
-      "groupName": "Github Actions"
+      "groupName": "Bundle dependencies",
+      "groupSlug": "nri-bundle-dependencies"
     },
     {
-      // Disable major updates of Kube State Metrics.
+      // Disable updates of Kube State Metrics.
+      // See comments in ../charts/nri-bundle/Chart.yaml for details.
       "matchPackageNames": [
         "kube-state-metrics"
       ],
-      "matchUpdateTypes": [
-        "major"
+      "enabled": false
+    },
+    {
+      // Disable updates in nri-bundle-legacy chart.
+      "matchPaths": [
+        "charts/nri-bundle-legacy/**"
       ],
       "enabled": false
+    },
+    {
+      // Enable updates of nri-kubernetes v2 in the legacy chart.
+      "matchPackageNames": [
+        "newrelic-infrastructure"
+      ],
+      "matchPaths": [
+        "charts/nri-bundle-legacy/**"
+      ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "enabled": true
     }
-  ],
-  "ignorePaths": [
-    // Do not bother bumping versions on the homemade chart-version-bumper action since it will be deprecated soon.
-    ".github/actions/chart-version-bumper"
   ]
 }

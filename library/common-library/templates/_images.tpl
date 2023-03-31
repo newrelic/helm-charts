@@ -1,9 +1,9 @@
 {{- /*
 Return the proper image name
-{{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
+{{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.path.to.the.image "defaultRegistry" "your.private.registry.tld" "context" .) }}
 */ -}}
 {{- define "newrelic.common.images.image" -}}
-    {{- $registryName := include "newrelic.common.images.registry" ( dict "imageRoot" .imageRoot "context" .context) -}}
+    {{- $registryName := include "newrelic.common.images.registry" ( dict "imageRoot" .imageRoot "defaultRegistry" .defaultRegistry "context" .context ) -}}
     {{- $repositoryName := include "newrelic.common.images.repository" .imageRoot -}}
     {{- $tag := include "newrelic.common.images.tag" ( dict "imageRoot" .imageRoot "context" .context) -}}
 
@@ -18,18 +18,27 @@ Return the proper image name
 
 {{- /*
 Return the proper image registry
-{{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "context" .) }}
+{{ include "newrelic.common.images.registry" ( dict "imageRoot" .Values.path.to.the.image "defaultRegistry" "your.private.registry.tld" "context" .) }}
 */ -}}
 {{- define "newrelic.common.images.registry" -}}
-    {{- if .imageRoot.registry -}}
-        {{- .imageRoot.registry -}}
-    {{- else if .context.Values.global -}}
-        {{- if .context.Values.global.image -}}
-            {{- with .context.Values.global.image.registry -}}
-                {{- . -}}
-            {{- end -}}
+{{- $globalRegistry := "" -}}
+{{- if .context.Values.global -}}
+    {{- if .context.Values.global.images -}}
+        {{- with .context.Values.global.images.registry -}}
+            {{- $globalRegistry = . -}}
         {{- end -}}
     {{- end -}}
+{{- end -}}
+
+{{- $localRegistry := "" -}}
+{{- if .imageRoot.registry -}}
+    {{- $localRegistry = .imageRoot.registry -}}
+{{- end -}}
+
+{{- $registry := $localRegistry | default $globalRegistry | default .defaultRegistry -}}
+{{- if $registry -}}
+    {{- $registry -}}
+{{- end -}}
 {{- end -}}
 
 
@@ -56,15 +65,15 @@ Return the proper image tag
 
 {{- /*
 Return the proper Image Pull Registry Secret Names evaluating values as templates
-{{ include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.path.to.the.image.pullSecrets1, .Values.path.to.the.image.pullSecrets2) "context" .) }}
+{{ include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.path.to.the.images.pullSecrets1, .Values.path.to.the.images.pullSecrets2) "context" .) }}
 */ -}}
 {{- define "newrelic.common.images.renderPullSecrets" -}}
   {{- $flatlist := list }}
 
   {{- if .context.Values.global -}}
-    {{- if .context.Values.global.image -}}
-      {{- if .context.Values.global.image.pullSecrets -}}
-        {{- range .context.Values.global.image.pullSecrets -}}
+    {{- if .context.Values.global.images -}}
+      {{- if .context.Values.global.images.pullSecrets -}}
+        {{- range .context.Values.global.images.pullSecrets -}}
           {{- $flatlist = append $flatlist . -}}
         {{- end -}}
       {{- end -}}

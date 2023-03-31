@@ -3,7 +3,8 @@ This helper should return the defaults that all agents should have
 */}}
 {{- define "newrelic.common.agentConfig.defaults" -}}
 {{- if include "newrelic.common.verboseLog" . }}
-verbose: 1
+log:
+  level: trace
 {{- end }}
 
 {{- if (include "newrelic.common.nrStaging" . ) }}

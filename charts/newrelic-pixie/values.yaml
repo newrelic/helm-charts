@@ -8,6 +8,12 @@
 # The Pixie API key
 # apiKey: ""
 
+# The Pixie Cluster Id
+# clusterId:
+
+# The Pixie endpoint
+# endpoint:
+
 # If you already have a secret where the New Relic license key is stored, indicate its name here
 # customSecretName:
 # The key in the customSecretName secret that contains the New Relic license key
@@ -39,10 +45,15 @@ tolerations: []
 
 affinity: {}
 
+customScripts: {}
+# Optionally the scripts can be provided in an already existing ConfigMap:
+# customScriptsConfigMap:
+
 excludeNamespacesRegex:
 excludePodsRegex:
 
 # When low data mode is enabled the integration performs heavier sampling on the Pixie span data
 # and sets the collect interval to 15 seconds instead of 10 seconds.
-# Can be set as a global: global.lowDataMode
-lowDataMode: false
+# Can be set as a global: global.lowDataMode or locally as newrelic-pixie.lowDataMode
+# @default -- false
+lowDataMode:
