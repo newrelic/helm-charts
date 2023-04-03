@@ -205,8 +205,8 @@ spec:
 
             {{/* The initial delay takes into account the (average) time required to pull the runner image */}}
             initialDelaySeconds: 600
-            periodSeconds: 300
-            timeoutSeconds: 60
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
