@@ -132,6 +132,11 @@ headlessService:
 # Assigning a uid which will be defaulted to 2379, this can be changed as needed. A uid is needed for the synthetics-minion and synthetics-minion-runner to share data. It must be the same across these containers. Also, uid must match the permissions for the custom-modules if this feature is used.
 podSecurityContextRunAsUser: 2379
 
+#In case healthchecks are failing with timeout issue, heatlhcheck period and timout time could be adjusted.
+livenessProbe:
+  periodSeconds: 300
+  timeoutSeconds: 60
+
 ## The AppArmor profile name that will be applied to the Minion and Runner pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
 # appArmorProfileName: ""
 
