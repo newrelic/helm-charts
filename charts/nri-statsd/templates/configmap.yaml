@@ -12,6 +12,11 @@ data:
   {{- range $k, $v := .Values.additionalConfig }}
     {{ $k }} = {{ $v | squote }}
   {{- end }}
+  
+    [disabled-sub-metrics]
+  {{- range $k, $v := .Values.disabledSubMetrics }}
+    {{ $k }} = {{ $v | squote }}
+  {{- end }}
 
     [newrelic]
     flush-type = '{{ .Values.flushType }}'
