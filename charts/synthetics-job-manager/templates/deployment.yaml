@@ -74,6 +74,9 @@ spec:
 - name: CHECK_TIMEOUT
   value: {{ .Values.global.checkTimeout | quote }}
 {{- end }}
+
+- name: HEAVYWEIGHT_WORKERS
+  value: {{ include "synthetics-job-manager.runtimeParallelism" . | quote }}
   
   {{- /*
   TODO - The following are not yet implemented

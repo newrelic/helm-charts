@@ -173,3 +173,12 @@ default
 {{- $checkTimeout := default 240 .Values.global.checkTimeout -}}
 {{- printf "%d" (add $checkTimeout 20) -}}
 {{- end -}}
+
+{{/*
+Calculates the sum of parallelism of the ephemeral runtimes to configure the SJM parking lot
+*/}}
+{{- define "synthetics-job-manager.runtimeParallelism" -}}
+{{- $browserParallelism := default 1 (index .Values "node-browser-runtime" "parallelism") -}}
+{{- $apiParallelism := default 1 (index .Values "node-api-runtime" "parallelism") -}}
+{{- printf "%d" (add $browserParallelism $apiParallelism) -}}
+{{- end -}}
