@@ -38,4 +38,3 @@ even continue reviewing your changes.
 - [ ] Chart Version bumped
 - [ ] Variables are documented in the README.md
 - [ ] Title of the PR starts with chart name (e.g. `[mychartname]`)
-- [ ] The pixie-operator-chart version is the same as the versions of olm_crd.yaml and px.dev_viziers.yaml in [Kubernetes installation recipe](https://github.com/newrelic/open-install-library/blob/main/recipes/newrelic/infrastructure/kubernetes.yml)
