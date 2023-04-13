@@ -18,6 +18,7 @@ This chart will deploy the New Relic's StatsD Integration. Keep in mind that due
 | `metricsDomain`| The New Relic metrics domain.  | `metric-api.newrelic.com`  |
 | `metricTags.*` | Additional tags to add to all collected metrics.   | `{}`   |
 | `additionalConfig.*`   | Additional GoStatsD configuration. Define config parameters as `additionalConfig.key: value`. The provided values are formatted directly into the GoStatsD configmap.  | `See values.yaml`  |
+| `disabledSubMetrics.*`   | Additional GoStatsD configuration. Define config parameters as `disabledSubMetrics.key: value`. The provided values are formatted directly into the GoStatsD configmap.  | `See values.yaml`  |
 | `additionalNewRelicConfig.*`   | Additional GoStatsD New Relic specific configuration. Define config parameters as `additionalNewRelicConfig.key: value`. The provided values are formatted directly into the GoStatsD configmap.   | `{}`   |
 | `nameOverride` | The name that should be used for the deployment.   ||
 | `image.repository` | The prometheus openmetrics integration image name. | `newrelic/nri-statsd`  |
