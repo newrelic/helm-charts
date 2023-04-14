@@ -19,6 +19,22 @@ spec:
         {{- toYaml .Values.image.pullSecrets | nindent 8 }}
       {{- end }}
       restartPolicy: Never
+      initContainers:
+      - name: cluster-registration-wait
+        image: gcr.io/pixie-oss/pixie-dev-public/curl:1.0
+        command: ['sh', '-c', 'set -x;
+          URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
+          until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
+            echo "Waiting for cluster registration. If this takes too long check the vizier-cloud-connector logs."
+            sleep 2;
+          done;
+        ']
+        env:
+          # The name of the Pixie service which connects to Pixie Cloud for cluster registration. 
+        - name: SERVICE_NAME
+          value: "vizier-cloud-connector-svc"
+        - name: SERVICE_PORT
+          value: "50800"
       containers:
       - name: {{ template "newrelic-pixie.name" . }}
         image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -66,6 +82,13 @@ spec:
           value: "750"
         - name: DB_SPAN_LIMIT
           value: "250"
+        {{- else }}
+        - name: COLLECT_INTERVAL_SEC
+          value: "10"
+        - name: HTTP_SPAN_LIMIT
+          value: "1500"
+        - name: DB_SPAN_LIMIT
+          value: "500"
         {{- end }}
         {{- if (include "newrelic-pixie.nrStaging" .) }}
         - name: NR_OTLP_HOST

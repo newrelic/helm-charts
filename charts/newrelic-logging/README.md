@@ -212,6 +212,7 @@ This Helm chart deploys one `DaemonSet` for each of the Windows versions it supp
 
 This Helm chart currently supports the following Windows versions:
 -  Windows Server LTSC 2019, build 10.0.17763
+-  Windows Server LTSC 2022, build 10.0.20348
 
 ## Troubleshooting
 

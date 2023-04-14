@@ -16,7 +16,7 @@ here is a list of components that this chart installs and where you can find mor
 |------------------------------|-----------------------|-------------|
 | [newrelic-infrastructure](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) | Yes | Sends metrics about nodes, cluster objects (e.g. Deployments, Pods), and the control plane to New Relic. |
 | [nri-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) | Yes | Enriches New Relic-instrumented applications (APM) with Kubernetes information. |
-| [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) | | Required for `newrelic-infrastructure` to gather cluster-level metrics. |
+| [kube-state-metrics](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) | | Required for `newrelic-infrastructure` to gather cluster-level metrics. |
 | [nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) | | Reports Kubernetes events to New Relic. |
 | [newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) | | (Beta) Used with Fargate or serverless environments to inject `newrelic-infrastructure` as a sidecar instead of the usual DaemonSet. |
 | [newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) |  | (Beta) Provides a source of data for Horizontal Pod Autoscalers (HPA) based on a NRQL query from New Relic. |
@@ -178,7 +178,7 @@ honors global options as described below.
 | global.tolerations | list | `[]` | Sets pod's tolerations to node taints |
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
 | kube-state-metrics.collectors | object | See [`values.yaml`](values.yaml) of the kube-state-metric chart | Collectors configuration of kube-state-metric |
-| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
+| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/cli-arguments.md) in your Kubernetes clusters |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
 | newrelic-infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
 | newrelic-k8s-metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
@@ -192,11 +192,12 @@ honors global options as described below.
 
 ## Maintainers
 
-* [alvarocabanas](https://github.com/alvarocabanas)
-* [carlossscastro](https://github.com/carlossscastro)
-* [sigilioso](https://github.com/sigilioso)
-* [gsanchezgavier](https://github.com/gsanchezgavier)
-* [kang-makes](https://github.com/kang-makes)
-* [marcsanmi](https://github.com/marcsanmi)
-* [paologallinaharbur](https://github.com/paologallinaharbur)
-* [roobre](https://github.com/roobre)
+* [nserrino](https://github.com/nserrino)
+* [philkuz](https://github.com/philkuz)
+* [htroisi](https://github.com/htroisi)
+* [juanjjaramillo](https://github.com/juanjjaramillo)
+* [svetlanabrennan](https://github.com/svetlanabrennan)
+* [nrepai](https://github.com/nrepai)
+* [csongnr](https://github.com/csongnr)
+* [vuqtran88](https://github.com/vuqtran88)
+* [xqi-nr](https://github.com/xqi-nr)
