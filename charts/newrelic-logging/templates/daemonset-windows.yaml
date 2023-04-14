@@ -44,8 +44,8 @@ spec:
       imagePullSecrets:
 {{ toYaml $.Values.image.pullSecrets | indent 8 }}
       {{- end }}
-      {{- with include "newrelic.common.priorityClassName" . }}
-      priorityClassName: {{ . }}
+      {{- with include "newrelic.common.priorityClassName" $ }}
+      priorityClassName: {{ $. }}
       {{- end }}
       containers:
         - name: {{ template "newrelic-logging.name" $ }}
@@ -130,9 +130,6 @@ spec:
         - name: progdata
           hostPath:
             path: C:\ProgramData
-      {{- if $.Values.priorityClassName }}
-      priorityClassName: {{ $.Values.priorityClassName }}
-      {{- end }}
       nodeSelector:
         {{- if $.Values.windowsNodeSelector }}
 {{ toYaml $.Values.windowsNodeSelector | indent 8 }}
