@@ -44,9 +44,9 @@ spec:
       imagePullSecrets:
 {{ toYaml $.Values.image.pullSecrets | indent 8 }}
       {{- end }}
-      {{- if $.Values.initContainers }}
+      {{- if $.Values.windows.initContainers }}
       initContainers:
-{{ toYaml $.Values.initContainers | indent 8 }}
+{{ toYaml $.Values.windows.initContainers | indent 8 }}
       {{- end }}
       containers:
         - name: {{ template "newrelic-logging.name" $ }}
