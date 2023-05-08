@@ -44,7 +44,7 @@ run: ct lint --config .github/ct-lint.yaml
 run: |
   for chart in $(ct list-changed --config .github/ct-lint.yaml); do
 if [ -d "$chart/tests/" ]; then
-  helm unittest $chart -3
+  helm unittest $chart
 fi
   done
 
