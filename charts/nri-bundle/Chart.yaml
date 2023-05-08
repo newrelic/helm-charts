@@ -16,13 +16,13 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 5.0.12
+version: 5.0.8
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.16.0
+    version: 3.15.0
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -37,7 +37,7 @@ dependencies:
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.3.0
+    version: 4.2.1
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -51,12 +51,12 @@ dependencies:
      # Due to https://github.com/kubernetes/kube-state-metrics/pull/1906 hpa metrics cannot be reported anymore if
      # kube-state-metrics version is > 2.6.0 (included by default in helm chart versions after 4.23) for kubernetes
      # versions lower than 1.23, as it uses autoscaler/v2 API which
-     # [is not available until that kubernetes version](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-state-metrics/values.yaml).
+     # [is not available until that kubernetes version](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.23.md#horizontalpodautoscaler-v2-graduates-to-ga).
 
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 2.3.4
+    version: 2.3.3
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
@@ -69,7 +69,7 @@ dependencies:
     version: 2.0.6
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
-  # olm_crd.yaml and px.dev_viziers.yaml in
+  # olm_crd.yaml and px.dev_viziers.yaml in 
   # https://github.com/newrelic/open-install-library/blob/main/recipes/newrelic/infrastructure/kubernetes.yml
   - name: pixie-operator-chart
     alias: pixie-chart
@@ -80,7 +80,7 @@ dependencies:
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 2.2.0
+    version: 2.1.2
 
 maintainers:
   - name: nserrino
