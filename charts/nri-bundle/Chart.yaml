@@ -16,13 +16,13 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 5.0.8
+version: 5.0.12
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.15.0
+    version: 3.16.0
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -37,7 +37,7 @@ dependencies:
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.2.1
+    version: 4.3.0
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -56,7 +56,7 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 2.3.3
+    version: 2.3.4
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
@@ -69,7 +69,7 @@ dependencies:
     version: 2.0.6
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
-  # olm_crd.yaml and px.dev_viziers.yaml in 
+  # olm_crd.yaml and px.dev_viziers.yaml in
   # https://github.com/newrelic/open-install-library/blob/main/recipes/newrelic/infrastructure/kubernetes.yml
   - name: pixie-operator-chart
     alias: pixie-chart
@@ -80,7 +80,7 @@ dependencies:
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 2.1.2
+    version: 2.2.0
 
 maintainers:
   - name: nserrino
