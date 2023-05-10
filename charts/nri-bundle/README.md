@@ -145,6 +145,8 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 At the time of writing this document, all the charts from `nri-bundle` except `newrelic-logging` and `synthetics-minion` implements this library and
 honors global options as described below.
 
+Note, the value table below is automatically generated from `values.yaml` by `helm-docs`. If you need to add new fields or update existing fields, please update the `values.yaml` and then run `helm-docs` to update this value table.
+
 ## Values
 
 | Key | Type | Default | Description |
@@ -198,5 +200,4 @@ honors global options as described below.
 * [svetlanabrennan](https://github.com/svetlanabrennan)
 * [nrepai](https://github.com/nrepai)
 * [csongnr](https://github.com/csongnr)
-* [vuqtran88](https://github.com/vuqtran88)
 * [xqi-nr](https://github.com/xqi-nr)
