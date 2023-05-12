@@ -44,6 +44,10 @@ spec:
       imagePullSecrets:
 {{ toYaml $.Values.image.pullSecrets | indent 8 }}
       {{- end }}
+      {{- if $.Values.windows.initContainers }}
+      initContainers:
+{{ toYaml $.Values.windows.initContainers | indent 8 }}
+      {{- end }}
       containers:
         - name: {{ template "newrelic-logging.name" $ }}
           image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion  }}-{{ .imageTagSuffix }}"
