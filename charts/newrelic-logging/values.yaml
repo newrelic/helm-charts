@@ -177,6 +177,7 @@ windowsOsList:
     imageTagSuffix: windows-ltsc-2022
     buildNumber: 10.0.20348
 
+# Default set of resources assigned to the DaemonSet pods
 resources:
   limits:
     cpu: 500m
@@ -241,8 +242,7 @@ nodeSelector: {}
 # Windows containers can only be executed on hosts running the exact same Windows version and build number.
 windowsNodeSelector: {}
 
-# These are default tolerations to be able to run the New Relic Kubernetes
-# integration.
+# These are default tolerations to be able to run the New Relic Kubernetes integration.
 tolerations:
   - operator: "Exists"
     effect: "NoSchedule"
