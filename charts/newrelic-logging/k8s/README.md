@@ -1,3 +1,6 @@
+# :warning: :warning: DEPRECATION NOTE :warning: :warning:
+**The Kubernetes manifests inside this folder are deprecated and will be removed from this repository on June 30th 2023. To install the New Relic Kubernetes plugin for Logging without using Helm, please refer to this [documentation page](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/installation/kubernetes-integration-install-configure/).**
+
 # New Relic Logs: Kubernetes manifests
 This directory provides plain Kubernetes manifests that can be applied to your cluster to install the Kubernetes Logging plugin. It is provided as an alternative for those users who prefer not using Helm.
 
