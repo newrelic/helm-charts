@@ -9,6 +9,7 @@ release:
 tests:
   - it: daemonsets contain dnsConfig block when provided
     set:
+      licenseKey: nr_license_key
       enableWindows: true
       dnsConfig:
         nameservers:
@@ -23,6 +24,7 @@ tests:
 
   - it: daemonsets do not contain dnsConfig block when not provided
     set:
+      licenseKey: nr_license_key
       enableWindows: true
       dnsConfig: {}
     asserts:
@@ -35,6 +37,7 @@ tests:
 
   - it: daemonsets contain provided dnsConfig options
     set:
+      licenseKey: nr_license_key
       enableWindows: true
       dnsConfig:
         options:
