@@ -34,6 +34,10 @@ spec:
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 10
       {{- if .Values.image.pullSecrets }}

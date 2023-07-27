@@ -1,0 +1,62 @@
+suite: test dnsConfig options in daemonsets
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: daemonsets contain dnsConfig block when provided
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      dnsConfig:
+        nameservers:
+          - 192.0.2.1
+    asserts:
+      - exists:
+          path: spec.template.spec.dnsConfig
+        template: templates/daemonset.yaml
+      - exists:
+          path: spec.template.spec.dnsConfig
+        template: templates/daemonset-windows.yaml
+
+  - it: daemonsets do not contain dnsConfig block when not provided
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      dnsConfig: {}
+    asserts:
+      - notExists:
+          path: spec.template.spec.dnsConfig
+        template: templates/daemonset.yaml
+      - notExists:
+          path: spec.template.spec.dnsConfig
+        template: templates/daemonset-windows.yaml
+
+  - it: daemonsets contain provided dnsConfig options
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "1"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].name
+          value: ndots
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].value
+          value: "1"
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].name
+          value: ndots
+        template: templates/daemonset-windows.yaml
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].value
+          value: "1"
+        template: templates/daemonset-windows.yaml
