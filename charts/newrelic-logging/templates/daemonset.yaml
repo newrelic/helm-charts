@@ -40,9 +40,9 @@ spec:
       {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       terminationGracePeriodSeconds: 10
-      {{- if .Values.image.pullSecrets }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.images.pullSecrets) "context" .) }}
       imagePullSecrets:
-{{ toYaml .Values.image.pullSecrets | indent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
       {{- with include "newrelic.common.securityContext.pod" . }}
       securityContext:
@@ -58,8 +58,8 @@ spec:
           securityContext:
             {{- . | nindent 12 }}
           {{- end }}
-          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.images "context" .) }}
+          imagePullPolicy: "{{ .Values.images.pullPolicy }}"
           env:
             - name: ENDPOINT
               {{- if (include "newrelic.nrStaging" .) }}
