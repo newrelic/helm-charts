@@ -34,6 +34,14 @@ jobs:
         with:
           version: 'v3.0.0'
 
+      - name: Update dependencies
+        run: |
+          for chart in $(ct list-changed --config .github/ct-lint.yaml); do
+            if [ -d "$chart/tests/" ]; then
+              helm dep update $chart
+            fi
+          done
+
       - name: Set up helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
 
