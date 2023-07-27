@@ -29,7 +29,7 @@ tests:
       global:
         images:
           registry: global_registry
-      images:
+      image:
         registry: local_registry
     asserts:
       - matchRegex:
@@ -41,7 +41,7 @@ tests:
       - templates/daemonset-windows.yaml
     set:
       enableWindows: true
-      images:
+      image:
         pullSecrets:
           - name: regsecret
     asserts:
@@ -58,7 +58,7 @@ tests:
         images:
           pullSecrets:
             - name: global_regsecret
-      images:
+      image:
         pullSecrets:
           - name: regsecret
     asserts:
