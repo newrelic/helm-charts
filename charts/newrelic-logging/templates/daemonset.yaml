@@ -29,7 +29,7 @@ spec:
         kubernetes.io/os: linux
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
         {{- if .Values.podLabels}}
-        {{ toYaml .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
