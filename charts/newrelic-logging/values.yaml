@@ -137,21 +137,6 @@ fluentBit:
 #          Name null
 #          Match *
 
-    parsers: |
-      [PARSER]
-          Name         docker
-          Format       json
-          Time_Key     time
-          Time_Format  %Y-%m-%dT%H:%M:%S.%L
-          Time_Keep    On
-
-      [PARSER]
-          Name cri
-          Format regex
-          Regex ^(?<time>[^ ]+) (?<stream>stdout|stderr) (?<logtag>[^ ]*) (?<message>.*)$
-          Time_Key    time
-          Time_Format %Y-%m-%dT%H:%M:%S.%L%z
-
 image:
   repository: newrelic/newrelic-fluentbit-output
 #  registry: my_registry
