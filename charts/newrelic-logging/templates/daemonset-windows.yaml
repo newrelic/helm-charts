@@ -86,9 +86,9 @@ secretKeyRef:
   value: {{ $.Values.fluentBit.logLevel | quote }}
 - name: LOG_PARSER
   {{- if $.Values.fluentBit.criEnabled }}
-  value: "cri"
+  value: "cri,docker"
   {{- else }}
-  value: "docker"
+  value: "docker,cri"
   {{- end }}
 - name: FB_DB
   value: {{ $.Values.fluentBit.windowsDb | quote }}

@@ -137,7 +137,6 @@ See [values.yaml](values.yaml) for the default values
 | `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key)  | `false` |
 | `fluentBit.path`   | Node path logs are forwarded from. Patterns are supported, as well as specifying multiple paths/patterns separated by commas.  | `/var/log/containers/*.log` |
 | `fluentBit.db` | Node path used by Fluent Bit to store a database file to keep track of monitored files and offsets.  | `/var/log/containers/*.log` |
-| `fluentBit.criEnabled` | We assume that `kubelet`directly communicates with the Docker container engine. Set this to `true` if your K8s installation uses [CRI](https://kubernetes.io/blog/2016/12/container-runtime-interface-cri-in-kubernetes/) instead, in order to get the logs properly parsed.   | `false` |
 | `fluentBit.k8sBufferSize`  | Set the buffer size for HTTP client when reading responses from Kubernetes API server. A value of 0 results in no limit and the buffer will expand as needed.  | `32k`   |
 | `fluentBit.k8sLoggingExclude`  | Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude.   | `Off`   |
 | `fluentBit.additionalEnvVariables` | Additional environmental variables for fluentbit pods  | `[]]`   |
@@ -156,6 +155,7 @@ See [values.yaml](values.yaml) for the default values
 | `fluentBit.config.parsers` | Contains parsers.conf Parsers config   | |
 | `fluentBit.retryLimit` | Amount of times to retry sending a given batch of logs to New Relic. This prevents data loss if there is a temporary network disruption, if a request to the Logs API is lost or when receiving a recoverable HTTP response. Set it to "False" for unlimited retries.  | 5   |
 | `dnsConfig`| [DNS configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) that will be added to the pods. Can be configured also with `global.dnsConfig`.   | `{}`|
+| `fluentBit.criEnabled` | We assume that `kubelet`directly communicates with the container engine using the [CRI](https://kubernetes.io/docs/concepts/overview/components/#container-runtime) specification. Set this to `false` if your K8s installation uses [dockershim](https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/) instead, in order to get the logs properly parsed. |`true` |
 
 
 ### Proxy support
