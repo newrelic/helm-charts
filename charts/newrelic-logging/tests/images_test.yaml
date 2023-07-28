@@ -1,0 +1,74 @@
+suite: test images settings
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: global registry is used if set
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+set:
+  licenseKey: nr_license_key
+  enableWindows: true
+  global:
+images:
+  registry: global_registry
+asserts:
+  - matchRegex:
+  path: spec.template.spec.containers[0].image
+  pattern: global_registry/.*
+  - it: local registry overrides global
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+set:
+  licenseKey: nr_license_key
+  enableWindows: true
+  global:
+images:
+  registry: global_registry
+  image:
+registry: local_registry
+asserts:
+  - matchRegex:
+  path: spec.template.spec.containers[0].image
+  pattern: local_registry/.*
+  - it: pullSecrets is used if defined
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+set:
+  licenseKey: nr_license_key
+  enableWindows: true
+  image:
+pullSecrets:
+  - name: regsecret
+asserts:
+  - equal:
+  path: spec.template.spec.imagePullSecrets[0].name
+  value: regsecret
+  - it: pullSecrets are merged
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+set:
+  licenseKey: nr_license_key
+  enableWindows: true
+  global:
+images:
+  pullSecrets:
+- name: global_regsecret
+  image:
+pullSecrets:
+  - name: regsecret
+asserts:
+  - equal:
+  path: spec.template.spec.imagePullSecrets[0].name
+  value: global_regsecret
+  - equal:
+  path: spec.template.spec.imagePullSecrets[1].name
+  value: regsecret
