@@ -154,11 +154,12 @@ fluentBit:
 
 image:
   repository: newrelic/newrelic-fluentbit-output
+#  registry: my_registry
   tag: ""
   pullPolicy: IfNotPresent
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
-  # pullSecrets:
-    # - name: regsecret
+  pullSecrets: []
+#    - name: regsecret
 
 # By default, the Linux DaemonSet will always be deployed, while the Windows DaemonSet(s) won't.
 enableLinux: true
