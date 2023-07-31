@@ -7,6 +7,28 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
+  - it: image names are correct
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: newrelic/newrelic-fluentbit-output:1.17.3
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: newrelic/newrelic-fluentbit-output:1.17.3-windows-ltsc-2019
+        template: templates/daemonset-windows.yaml
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: newrelic/newrelic-fluentbit-output:1.17.3-windows-ltsc-2022
+        template: templates/daemonset-windows.yaml
+        documentIndex: 1
   - it: global registry is used if set
     templates:
       - templates/daemonset.yaml
