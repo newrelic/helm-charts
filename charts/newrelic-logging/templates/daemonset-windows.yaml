@@ -54,7 +54,9 @@ spec:
   {{- end }}
   containers:
 - name: {{ template "newrelic-logging.name" $ }}
-  image: {{ include "newrelic.common.images.image" ( dict "imageRoot" $.Values.image "context" $) }}
+  # We have to use 'replace' to remove the double-quotes that "newrelic.common.images.image" has, so that
+  # we can append the Windows image tag suffix (and then re-quote that value)
+  image: "{{ include "newrelic.common.images.image" ( dict "imageRoot" $.Values.image "context" $) | replace "\"" ""}}-{{ .imageTagSuffix }}"
   imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
   securityContext: {}
   env:
