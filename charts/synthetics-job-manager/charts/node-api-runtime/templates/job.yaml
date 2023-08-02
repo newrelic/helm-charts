@@ -33,6 +33,11 @@ spec:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               image: "{{ .Values.image.repository }}:{{ include "node-api-runtime.appVersion" . }}"
               imagePullPolicy: {{ .Values.image.pullPolicy }}
+              {{- if .Values.command }}
+              command: {{- with .Values.command }}
+              {{ toYaml . | indent 16 }}
+              {{- end }}
+              {{- end }}
               env:
                 - name: GET_JOB_URL
                   value: "{{- printf "http://%s:8080/job/get" (include "synthetics-job-manager.hostname" .) }}"

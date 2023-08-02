@@ -23,4 +23,5 @@
 | `annotations`         | Annotations to be added to the node-browser-runtime pod                                                                    |                                            |
 | `nodeSelector`        | Node labels for node-browser-runtime pod assignment                                                                        |                                            |
 | `tolerations`         | Node taints to tolerate for node-browser-runtime                                                                           |                                            |
+| `command`             | Command to run on container start. If set null, then default command will get executed                                     |                                            |
 | `affinity`            | Pod affinity for node-browser-runtime                                                                                      |                                            |

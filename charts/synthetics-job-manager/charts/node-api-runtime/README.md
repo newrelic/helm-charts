@@ -23,4 +23,5 @@
 | `annotations`         | Annotations to be added to the node-api-runtime pod                                                                    |                                        |
 | `nodeSelector`        | Node labels for node-api-runtime pod assignment                                                                        |                                        |
 | `tolerations`         | Node taints to tolerate for node-api-runtime                                                                           |                                        |
+| `command`             | Command to run on container start. If set null, then default command will get executed                                 |                                        |
 | `affinity`            | Pod affinity for node-api-runtime                                                                                      |                                        |
