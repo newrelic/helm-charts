@@ -16,7 +16,7 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 5.0.26
+version: 5.0.27
 
 dependencies:
   - name: newrelic-infrastructure
@@ -45,13 +45,9 @@ condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
 version: 1.2.1
 
   - name: kube-state-metrics
-version: 4.23.0
+version: 5.12.1
 condition: ksm.enabled,kube-state-metrics.enabled
 repository: https://prometheus-community.github.io/helm-charts
- # Due to https://github.com/kubernetes/kube-state-metrics/pull/1906 hpa metrics cannot be reported anymore if
- # kube-state-metrics version is > 2.6.0 (included by default in helm chart versions after 4.23) for kubernetes
- # versions lower than 1.23, as it uses autoscaler/v2 API which
- # [is not available until that kubernetes version](https://github.com/kubernetes/kubernetes/blob/master/CHANGELOG/CHANGELOG-1.23.md#horizontalpodautoscaler-v2-graduates-to-ga).
 
   - name: nri-kube-events
 repository: https://newrelic.github.io/nri-kube-events
