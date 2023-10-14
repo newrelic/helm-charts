@@ -1,4 +1,4 @@
-name: Post Release Tasks
+name: Post-Release Tasks
 
 on:
   release:
@@ -24,7 +24,24 @@ jobs:
       - name: Set up Helm
         uses: azure/setup-helm@v3
 
+      - name: Add Helm repositories
+        run: |
+          helm repo add newrelic-infrastructure https://newrelic.github.io/nri-kubernetes
+          helm repo add nri-prometheus https://newrelic.github.io/nri-prometheus
+          helm repo add newrelic-prometheus-configurator https://newrelic.github.io/newrelic-prometheus-configurator
+          helm repo add nri-metadata-injection https://newrelic.github.io/k8s-metadata-injection
+          helm repo add newrelic-k8s-metrics-adapter https://newrelic.github.io/newrelic-k8s-metrics-adapter
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add nri-kube-events https://newrelic.github.io/nri-kube-events
+          helm repo add newrelic-helm-charts https://newrelic.github.io/helm-charts
+          helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
+          helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
+          helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
+
       - name: Create release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           scripts/write-release-notes.sh ${{ env.RELEASE_FILE }} ${{ env.SLACK_FILE }}
           gh release edit ${{ github.event.release.tag_name }} \
