@@ -38,7 +38,9 @@ function setup() {
   echo "" >> $release_file
 
   # Setup Slack file
-  echo "🚀 Latest Releases" >> $slack_file
+  version=$(cat ./Chart.yaml | yq '.version')
+  url="https://github.com/newrelic/helm-charts/releases/tag/nri-bundle-${version}"
+  echo "🚀 Latest Releases included in <${url}|nri-bundle-${version}>" >> $slack_file
   echo "" >> $slack_file
 
   # Remove charts that we do not include in the release notes
