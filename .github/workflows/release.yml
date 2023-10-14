@@ -4,10 +4,16 @@ on:
   push:
 branches:
   - master
+  # Weekly nri-bundle release
+  schedule:
+- cron: "0 12 * * 2" # Tuesday at 12pm UTC or 5am PT
 
 # Prevent two release workflows from running concurrently, which might cause WAR race conditions in the repository
 # Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
 concurrency: helm-release
+
+env:
+  ORIGINAL_REPO_NAME: ${{ github.event.repository.full_name }}
 
 jobs:
   # Sometimes chart-releaser might fetch an outdated index.yaml from gh-pages, causing a WAW hazard on the repo
@@ -57,6 +63,26 @@ run: |
   git config user.name "$GITHUB_ACTOR"
   git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+  - name: Merge Renovate PR updating bundle dependencies
+if: github.event_name == 'schedule'
+# GITHUB_TOKEN does not allow to merge PRs with admin
+# privilege, so use alternative token
+# Source: https://stackoverflow.com/questions/74274130/allow-github-actions-to-merge-prs-on-protected-branch
+env:
+  CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
+run: |
+  PR_NUMBER=$(gh pr list --search "is:pr is:open author:app/renovate 'Update bundle dependencies' in:title" --json="number" --jq '.[0].number')
+  if [[ -n "${PR_NUMBER}" ]]; then
+echo "Proceeding to merge PR #${PR_NUMBER}"
+gh pr merge ${PR_NUMBER} \
+  --admin \
+  --body "Automatically merged by github-actions" \
+  --delete-branch \
+  --squash
+  else
+echo "No PR found. Nothing to merge"
+  fi
+
   # As of today, there is no way to filter/exclude charts to be released. Config does not support it:
   # https://github.com/helm/chart-releaser/blob/4eb598f96aa53d1c0b8234af2087834e1f2275e1/pkg/config/config.go#L40-L61
   # So we delete the Chart.yaml to filter the chart: https://github.com/helm/chart-releaser-action/pull/18
@@ -74,4 +100,19 @@ env:
   - name: Release workload charts
 uses: helm/chart-releaser-action@v1.3.0
 env:
-  CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  # GITHUB_TOKEN does not allow to create a new workflow run,
+  # so use alternative token to allow post-release workflow to run
+  # Source: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
+  CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
+
+  notify-failure:
+if: ${{ always() && failure() && (github.event_name == 'schedule') }}
+needs: [validate-gh-pages-index, release]
+runs-on: ubuntu-latest
+steps:
+  - name: Notify failure via Slack
+uses: archive/github-actions-slack@v2.8.0
+with:
+  slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
+  slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
+  slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Release Charts' failed>."
