@@ -50,8 +50,11 @@ run: |
   - name: Write Slack announcement
 id: slack-announcement
 run: |
-  announcement=$(cat ${{ env.RELEASE_PATH }}/${{ env.SLACK_FILE }})
-  echo "announcement=$announcement" >> "$GITHUB_OUTPUT"
+  {
+echo 'announcement<<EOF'
+cat ${{ env.RELEASE_PATH }}/${{ env.SLACK_FILE }}
+echo EOF
+  } >> "$GITHUB_OUTPUT"
 
   announce-release:
 if: startsWith(github.event.release.tag_name, 'nri-bundle-')
