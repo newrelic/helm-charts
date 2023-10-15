@@ -115,6 +115,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: 'newrelic/docs-website'
+          # Token used to run authenticated git commands
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
           sparse-checkout: |
             ${{ env.K8S_FOLDER }}
           sparse-checkout-cone-mode: false
