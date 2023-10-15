@@ -106,7 +106,7 @@ echo ""
 echo "For a detailed description of changes, see the [release notes](https://github.com/newrelic/nri-kubernetes/releases/tag/v${appVersion})."
 echo ""
 echo "This integration is included in the following chart versions:"
-echo "* [newrelic-infrastructure-${version}](https://github.com/newrelic/nri-kubernetes/releases/tag/newrelic-infrastructure-${version}) chart"
+echo "* [newrelic-infrastructure-${version}](https://github.com/newrelic/nri-kubernetes/releases/tag/newrelic-infrastructure-${version})"
 echo "* [${{ github.event.release.tag_name }}](https://github.com/newrelic/helm-charts/releases/tag/${{ github.event.release.tag_name }})"
 echo EOF
   } >> "$GITHUB_ENV"
@@ -140,7 +140,7 @@ run: |
 echo "File '${releaseFile}' already exists. Nothing to do"
   else
 echo "Creating '${releaseFile}'"
-echo ${release_notes} >> ${releaseFile}
+echo "${release_notes}" >> ${releaseFile}
 
 git checkout -b ${branchName}
 git add ${releaseFile}
