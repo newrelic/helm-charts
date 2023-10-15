@@ -73,6 +73,8 @@ with:
 if: startsWith(github.event.release.tag_name, 'nri-bundle-')
 name: Update public docs
 runs-on: ubuntu-latest
+env:
+  K8S_FOLDER: src/content/docs/release-notes/infrastructure-release-notes/kubernetes-integration-release-notes
 steps:
   - name: Checkout `nri-kubernetes` chart
 uses: actions/checkout@v4
@@ -94,18 +96,18 @@ run: |
 run: |
   today=$(date "+%Y-%m-%d")
   {
-echo 'release_notes<<EOF'
-echo '---'
-echo 'subject: Kubernetes integration'
+echo "release_notes<<EOF"
+echo "---"
+echo "subject: Kubernetes integration"
 echo "releaseDate: '${today}'"
-echo 'version: ${appVersion}'
-echo '---'
-echo ''
-echo 'For a detailed description of changes, see the [release notes](https://github.com/newrelic/nri-kubernetes/releases/tag/v${appVersion}).'
-echo ''
-echo 'This integration is included in the following chart versions:'
-echo '* [newrelic-infrastructure-${version}](https://github.com/newrelic/nri-kubernetes/releases/tag/newrelic-infrastructure-${version}) chart'
-echo '* [github.event.release.tag_name](https://github.com/newrelic/helm-charts/releases/tag/${{ github.event.release.tag_name }})'
+echo "version: ${appVersion}"
+echo "---"
+echo ""
+echo "For a detailed description of changes, see the [release notes](https://github.com/newrelic/nri-kubernetes/releases/tag/v${appVersion})."
+echo ""
+echo "This integration is included in the following chart versions:"
+echo "* [newrelic-infrastructure-${version}](https://github.com/newrelic/nri-kubernetes/releases/tag/newrelic-infrastructure-${version}) chart"
+echo "* [${{ github.event.release.tag_name }}](https://github.com/newrelic/helm-charts/releases/tag/${{ github.event.release.tag_name }})"
 echo EOF
   } >> "$GITHUB_ENV"
 
@@ -114,7 +116,7 @@ uses: actions/checkout@v4
 with:
   repository: 'newrelic/docs-website'
   sparse-checkout: |
-docs-website/src/content/docs/release-notes/infrastructure-release-notes/kubernetes-integration-release-notes
+${{ env.K8S_FOLDER }}
   sparse-checkout-cone-mode: false
 
   - name: Configure Git
@@ -126,9 +128,9 @@ run: |
 env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 run: |
-  cd docs-website/src/content/docs/release-notes/infrastructure-release-notes/kubernetes-integration-release-notes
+  cd ${{ env.K8S_FOLDER }}
   appVersionModified=$(echo ${appVersion} | sed 's/\./-/g' )
-  branchName=add_kubernetes_release_notes-${{ github.sha }}
+  branchName=add_kubernetes_release_notes-$( date "+%Y-%m-%d_%H_%M" )
   releaseFile=kubernetes-integration-${appVersionModified}.mdx
   summary="Add release notes for Kubernetes integration v${appVersion}"
 
@@ -146,8 +148,8 @@ git push --set-upstream upstream ${branchName}
 gh pr create \
   --base main \
   --head ${branchName} \
-  --title 'feat: ${summary}' \
-  --body '${summary}'
+  --title "feat: ${summary}" \
+  --body "${summary}"
   fi
 
   # update-eks-sleek:
