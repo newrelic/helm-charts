@@ -5091,6 +5091,98 @@ entries:
     version: 0.1.0-alpha.1
   nri-bundle:
   - apiVersion: v2
+    created: "2023-10-15T07:43:13.758093817Z"
+    dependencies:
+    - condition: infrastructure.enabled,newrelic-infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: https://newrelic.github.io/nri-kubernetes
+      version: 3.23.1
+    - condition: prometheus.enabled,nri-prometheus.enabled
+      name: nri-prometheus
+      repository: https://newrelic.github.io/nri-prometheus
+      version: 2.1.17
+    - condition: newrelic-prometheus-agent.enabled
+      name: newrelic-prometheus-agent
+      repository: https://newrelic.github.io/newrelic-prometheus-configurator
+      version: 1.4.1
+    - condition: webhook.enabled,nri-metadata-injection.enabled
+      name: nri-metadata-injection
+      repository: https://newrelic.github.io/k8s-metadata-injection
+      version: 4.10.0
+    - condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
+      name: newrelic-k8s-metrics-adapter
+      repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
+      version: 1.4.1
+    - condition: ksm.enabled,kube-state-metrics.enabled
+      name: kube-state-metrics
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 5.12.1
+    - condition: kubeEvents.enabled,nri-kube-events.enabled
+      name: nri-kube-events
+      repository: https://newrelic.github.io/nri-kube-events
+      version: 3.2.4
+    - condition: logging.enabled,newrelic-logging.enabled
+      name: newrelic-logging
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.18.1
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: https://newrelic.github.io/helm-charts
+      version: 2.1.2
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-operator-chart
+      repository: https://pixie-operator-charts.storage.googleapis.com
+      version: 0.1.4
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: https://newrelic.github.io/newrelic-infra-operator
+      version: 2.3.1
+    description: Groups together the individual charts for the New Relic Kubernetes
+      solution for a more comfortable deployment.
+    digest: 46caa022ca1fc64d67149099e50be9874407039c258465f4a7bf5d73045cc6ae
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    keywords:
+    - infrastructure
+    - newrelic
+    - monitoring
+    maintainers:
+    - name: nserrino
+      url: https://github.com/nserrino
+    - name: philkuz
+      url: https://github.com/philkuz
+    - name: htroisi
+      url: https://github.com/htroisi
+    - name: juanjjaramillo
+      url: https://github.com/juanjjaramillo
+    - name: svetlanabrennan
+      url: https://github.com/svetlanabrennan
+    - name: nrepai
+      url: https://github.com/nrepai
+    - name: csongnr
+      url: https://github.com/csongnr
+    - name: vuqtran88
+      url: https://github.com/vuqtran88
+    - name: xqi-nr
+      url: https://github.com/xqi-nr
+    name: nri-bundle
+    sources:
+    - https://github.com/newrelic/nri-bundle/
+    - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
+    - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
+    - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+    - https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent
+    - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
+    - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
+    - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
+    - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-5.0.40/nri-bundle-5.0.40.tgz
+    version: 5.0.40
+  - apiVersion: v2
     created: "2023-10-15T07:22:13.599484817Z"
     dependencies:
     - condition: infrastructure.enabled,newrelic-infrastructure.enabled
@@ -23542,4 +23634,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2023-10-15T07:22:13.605300387Z"
+generated: "2023-10-15T07:43:13.763789086Z"
