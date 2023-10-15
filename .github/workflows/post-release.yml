@@ -69,15 +69,86 @@ with:
   slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
   slack-text: "${{ needs.release-notes.outputs.announcement }}"
 
-  # update-public-docs:
-  #   if: startsWith(github.event.release.tag_name, 'nri-bundle-')
-  #   name: Update public docs
-  #   runs-on: ubuntu-latest
-  #   steps:
-  # - name: Download release notes
-  #   uses: actions/download-artifact@v3
-  #   with:
-  # name: release-notes-file
+  update-public-docs:
+if: startsWith(github.event.release.tag_name, 'nri-bundle-')
+name: Update public docs
+runs-on: ubuntu-latest
+steps:
+  - name: Checkout `nri-kubernetes` chart
+uses: actions/checkout@v4
+with:
+  repository: 'newrelic/nri-kubernetes'
+  sparse-checkout: |
+charts/newrelic-infrastructure/Chart.yaml
+  sparse-checkout-cone-mode: false
+
+  - name: Resolve versions
+run: |
+  cd charts/newrelic-infrastructure
+  appVersion=$(cat ./Chart.yaml | yq '.appVersion')
+  version=$(cat ./Chart.yaml | yq '.version')
+  echo "appVersion=${appVersion}" >> "$GITHUB_ENV"
+  echo "version=${version}" >> "$GITHUB_ENV"
+
+  - name: Write release notes
+run: |
+  today=$(date "+%Y-%m-%d")
+  {
+echo 'release_notes<<EOF'
+echo '---'
+echo 'subject: Kubernetes integration'
+echo "releaseDate: '${today}'"
+echo 'version: ${appVersion}'
+echo '---'
+echo ''
+echo 'For a detailed description of changes, see the [release notes](https://github.com/newrelic/nri-kubernetes/releases/tag/v${appVersion}).'
+echo ''
+echo 'This integration is included in the following chart versions:'
+echo '* [newrelic-infrastructure-${version}](https://github.com/newrelic/nri-kubernetes/releases/tag/newrelic-infrastructure-${version}) chart'
+echo '* [github.event.release.tag_name](https://github.com/newrelic/helm-charts/releases/tag/${{ github.event.release.tag_name }})'
+echo EOF
+  } >> "$GITHUB_ENV"
+
+  - name: Checkout docs-website
+uses: actions/checkout@v4
+with:
+  repository: 'newrelic/docs-website'
+  sparse-checkout: |
+docs-website/src/content/docs/release-notes/infrastructure-release-notes/kubernetes-integration-release-notes
+  sparse-checkout-cone-mode: false
+
+  - name: Configure Git
+run: |
+  git config user.name "NewRelic-K8s-Agents-Bot"
+  git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
+
+  - name: Create PR
+env:
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+run: |
+  cd docs-website/src/content/docs/release-notes/infrastructure-release-notes/kubernetes-integration-release-notes
+  appVersionModified=$(echo ${appVersion} | sed 's/\./-/g' )
+  branchName=add_kubernetes_release_notes-${{ github.sha }}
+  releaseFile=kubernetes-integration-${appVersionModified}.mdx
+  summary="Add release notes for Kubernetes integration v${appVersion}"
+
+  if [[ -e "${releaseFile}" ]]; then
+echo "File '${releaseFile}' already exists. Nothing to do"
+  else
+echo "Creating '${releaseFile}'"
+echo ${release_notes} >> ${releaseFile}
+
+git checkout -b ${branchName}
+git add ${releaseFile}
+git commit --message="feat: ${summary}"
+git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/docs-website.git
+git push --set-upstream upstream ${branchName}
+gh pr create \
+  --base main \
+  --head ${branchName} \
+  --title 'feat: ${summary}' \
+  --body '${summary}'
+  fi
 
   # update-eks-sleek:
   #   if: startsWith(github.event.release.tag_name, 'nri-bundle-')
