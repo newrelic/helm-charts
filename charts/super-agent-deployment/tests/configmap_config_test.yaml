@@ -1,0 +1,24 @@
+suite: super agent's config values are honored
+templates:
+  - templates/configmap-superagent-config.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: super agent's config does not template
+    set:
+      config: ""
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: super agent's config templates
+    set:
+      config:
+        test: value
+        test2: value2
+    asserts:
+      - equal:
+          path: data["config.yaml"]
+          value: |
+            test: value
+            test2: value2
