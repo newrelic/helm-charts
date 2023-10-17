@@ -6,7 +6,7 @@ branches:
   - master
   # Weekly nri-bundle release
   schedule:
-- cron: "0 12 * * 2" # Tuesday at 12pm UTC or 5am PT
+- cron: "55 18 * * 2" # Tuesday at 12pm UTC or 5am PT
 
 # Prevent two release workflows from running concurrently, which might cause WAR race conditions in the repository
 # Ref: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#concurrency
@@ -69,7 +69,7 @@ if: github.event_name == 'schedule'
 # privilege, so use alternative token
 # Source: https://stackoverflow.com/questions/74274130/allow-github-actions-to-merge-prs-on-protected-branch
 env:
-  CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
+  GITHUB_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
 run: |
   PR_NUMBER=$(gh pr list --search "is:pr is:open author:app/renovate 'Update bundle dependencies' in:title" --json="number" --jq '.[0].number')
   if [[ -n "${PR_NUMBER}" ]]; then
