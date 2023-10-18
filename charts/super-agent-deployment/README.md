@@ -39,6 +39,7 @@ as TODO:
 
 Other TODOs:
  * Add probes for liveness and readiness.
+ * See if a service is needed or not. Enable it or delete the file.
 
 ## Values
 
@@ -46,7 +47,7 @@ Other TODOs:
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| config | object | See `values.yaml` | It holds the New Relic Prometheus configuration. Here you can easily set up Prometheus to get set metrics, discover ponds and endpoints Kubernetes and send metrics to New Relic using remote-write. |
+| config | object | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customAttributes | object | `{}` | Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
