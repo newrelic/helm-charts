@@ -153,16 +153,72 @@ gh pr create \
   --body "${summary}"
   fi
 
-  # update-eks-sleek:
-  #   if: startsWith(github.event.release.tag_name, 'nri-bundle-')
-  #   name: Update EKS Sleek repo
-  #   runs-on: ubuntu-latest
-  #   steps:
-  # - name: 
+  update-eks-sleek:
+if: startsWith(github.event.release.tag_name, 'nri-bundle-')
+name: Update EKS Sleek repo
+runs-on: ubuntu-latest
+steps:
+  - name: Checkout `nri-bundle` chart
+uses: actions/checkout@v4
+with:
+  repository: 'newrelic/helm-charts'
+  sparse-checkout: |
+charts/nri-bundle/Chart.yaml
+  sparse-checkout-cone-mode: false
+
+  - name: Resolve bundle version
+run: |
+  version=$(cat charts/nri-bundle/Chart.yaml | yq '.version')
+  echo "version=${version}" >> "$GITHUB_ENV"
+
+  - name: Checkout eks-anywhere-addons
+uses: actions/checkout@v4
+with:
+  repository: 'aws-samples/eks-anywhere-addons'
+  # Token used to run authenticated git commands
+  token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+  sparse-checkout: |
+eks-anywhere-baremetal/Addons/Partner/newrelic/newrelic.yaml
+eks-anywhere-snow/Addons/Partner/newrelic/newrelic.yaml
+eks-anywhere-vsphere/Addons/Partner/newrelic/newrelic.yaml
+  sparse-checkout-cone-mode: false
+
+  - name: Configure Git
+run: |
+  git config user.name "NewRelic-K8s-Agents-Bot"
+  git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
+
+  - name: Create PR
+env:
+  GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+run: |
+  branchName=update-nri-bundle-$( date "+%Y-%m-%d_%H_%M" )
+  summary="Update nri-bundle to version ${version}"
+
+  git checkout -b ${branchName}
+  folders=(
+'eks-anywhere-baremetal/Addons/Partner/newrelic'
+'eks-anywhere-snow/Addons/Partner/newrelic'
+'eks-anywhere-vsphere/Addons/Partner/newrelic'
+  )
+  for directory in "${folders[@]}"; do
+file_name="${directory}/newrelic.yaml"
+yq eval --inplace '.version=\"${version}\"' "${file_name}"
+git add ${file_name}
+  done
+
+  git commit --message="feat: ${summary}"
+  git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/eks-anywhere-addons.git
+  git push --set-upstream upstream ${branchName}
+  gh pr create \
+--repo aws-samples/eks-anywhere-addons \
+--title "feat: ${summary}" \
+--body "${summary}" \
+--reviewer elamaran11
 
   notify-failure:
 if: ${{ always() && failure() }}
-needs: [release-notes,announce-release]
+needs: [release-notes,announce-release,update-public-docs,update-eks-sleek]
 runs-on: ubuntu-latest
 steps:
   - name: Notify failure via Slack
@@ -170,4 +226,4 @@ uses: archive/github-actions-slack@v2.8.0
 with:
   slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
   slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
-  slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Post Release Tasks' failed>."
+  slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Post Release Tasks (nri-bundle)' failed>."
