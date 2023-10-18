@@ -1,6 +1,6 @@
 {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "config" ) -}}
 {{- $namespace := .Release.Namespace -}}
-{{- with ( include "newrelic-super-agent.config" . ) }}
+{{- with ( include "newrelic-super-agent.config" . ) -}}
 ---
 kind: ConfigMap
 metadata:
