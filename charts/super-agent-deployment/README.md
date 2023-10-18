@@ -39,7 +39,6 @@ as TODO:
 
 Other TODOs:
  * Add probes for liveness and readiness.
- * See if a service is needed or not. Enable it or delete the file.
 
 ## Values
 
@@ -72,7 +71,6 @@ Other TODOs:
 | proxy | string | `""` | Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy` |
 | rbac.create | bool | `true` | Whether the chart should automatically create the RBAC objects required to run. |
 | resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
-| service | object | See `values.yaml` | Service that points to the super agent. |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
 | tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
