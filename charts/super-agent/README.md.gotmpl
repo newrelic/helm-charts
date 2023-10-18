@@ -1,0 +1,70 @@
+[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+# Helm installation
+
+You can install this chart using directly this Helm repository:
+
+```shell
+helm repo add newrelic https://newrelic.github.io/helm-charts
+helm upgrade --install newrelic/CHART-TEMPLATE -f your-custom-values.yaml
+```
+
+{{ template "chart.sourcesSection" . }}
+
+## Values managed globally
+
+This chart implements the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
+
+Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
+[user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
+
+## Values for Flux2
+
+This chart uses the upstream Helm Chart for deploying FluxCD. Everything under the `flux2` belongs to the upstream chart
+and does not honor the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library).
+
+For a complete list of `values.yaml` of this chart you can refer to the [upstream chart's `values.yaml`](https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml).
+
+
+## Chart particularities
+
+> **TODO:** Here is where you should add particularities for this chart like what does the chart do with the privileged and
+low data modes or any other quirk that it could have.
+
+### TODOs
+There are values that should be planned at some point of removed from the `values.yaml`. I leave them here documented
+as TODO:
+ * `licenseKey`: comes from the common library but it would not be needed as it is an ingestion API Key, not a REST one.
+ * `rbac`: the is a placeholder for RBAC that simply list pods. this has to be narrowed to the use case of this agent.
+ * `customAttributes`: decorate everything with this custom attributes, maybe as they come from opamp.
+ * `proxy`, `nrStaging` and `fedramp` support on the meta agent. This could be made from the chart itself changing the opamp endpoint.
+ * `verboseLog`: legacy toggle to enable verbosity.
+
+Other TODOs:
+ * Add probes for liveness and readiness.
+ * See if a service is needed or not. Enable it or delete the file.
+
+{{ template "chart.valuesSection" . }}
+
+{{ if .Maintainers }}
+## Maintainers
+{{ range .Maintainers }}
+{{- if .Name }}
+{{- if .Url }}
+* [{{ .Name }}]({{ .Url }})
+{{- else }}
+* {{ .Name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

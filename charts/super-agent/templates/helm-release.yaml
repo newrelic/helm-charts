@@ -1,0 +1,38 @@
+{{- if .Values.helm.create}}
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  chart:
+    spec:
+      chart: {{ .Values.helm.release.chart }}
+      version: {{ .Values.helm.release.version }}
+      sourceRef:
+        kind: HelmRepository
+        name: {{ include "newrelic.common.naming.fullname" . }}
+        namespace: {{ .Release.Namespace }}
+      interval: {{ .Values.helm.repository.updateInterval }}
+  {{- with .Values.helm.release.values }}
+  values:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+  {{- with .Values.helm.release.valuesFrom }}
+  valuesFrom:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+
+  {{- with .Values.helm.release.install }}
+  install:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+  {{- with .Values.helm.release.upgrade }}
+  upgrade:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+
+{{- end }}

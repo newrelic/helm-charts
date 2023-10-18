@@ -1,0 +1,47 @@
+suite: helm release install/upgrade remediations
+templates:
+  - templates/helm-release.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: test that there are remediations by default
+    asserts:
+      - exists:
+          path: .spec.install
+      - exists:
+          path: .spec.upgrade
+      - equal:
+          path: .spec.install
+          value:
+            crds: CreateReplace
+            replace: true
+            remediation:
+              retries: 3
+      - equal:
+          path: .spec.upgrade
+          value:
+            crds: CreateReplace
+            force: true
+            cleanupOnFail: true
+            remediation:
+              retries: 3
+              strategy: rollback
+
+  - it: test that install remediations can be disabled
+    set:
+      helm:
+        release:
+          install: ""
+    asserts:
+      - notExists:
+          path: .spec.install
+
+  - it: test that upgrade remediations can be disabled
+    set:
+      helm:
+        release:
+          upgrade: ""
+    asserts:
+      - notExists:
+          path: .spec.upgrade
