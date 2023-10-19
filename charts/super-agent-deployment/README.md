@@ -45,36 +45,36 @@ Other TODOs:
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
+| cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
 | config | object | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
-| customAttributes | object | `{}` | Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
-| customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
-| customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
+| customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
+| customSecretLicenseKey | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
+| customSecretName | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
 | extraVolumes | list | `[]` | Volumes to mount in the containers |
-| fedramp.enabled | bool | `false` | Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
+| fedramp.enabled | bool | `false` | TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
 | fullnameOverride | string | `""` | Override the full name of the release |
 | hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
 | image | object | See `values.yaml` | Image for the New Relic Super Agent |
 | image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
-| licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
+| licenseKey | string | `""` | TODO: This set this license key to use. Can be configured also with `global.licenseKey` |
 | nameOverride | string | `""` | Override the name of the chart |
 | nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
+| nrStaging | bool | `false` | TODO: Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
 | podLabels | object | `{}` | Additional labels for chart pods. Can be configured also with `global.podLabels` |
 | podSecurityContext | object | `{}` | Sets security context (at pod level). Can be configured also with `global.podSecurityContext` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
-| proxy | string | `""` | Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy` |
+| proxy | string | `""` | TODO: Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy` |
 | rbac.create | bool | `true` | Whether the chart should automatically create the RBAC objects required to run. |
 | resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
 | tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
-| verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
+| verboseLog | bool | `false` | TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 
 ## Maintainers
 

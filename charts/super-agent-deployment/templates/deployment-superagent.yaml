@@ -52,11 +52,6 @@ spec:
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
 
-          # ports:
-          #   - name: http
-          #     containerPort: 80
-          #     protocol: TCP
-
           # TODO: Add probes
           # livenessProbe:
           #   httpGet:
@@ -70,6 +65,9 @@ spec:
           volumeMounts:
             - name: super-agent-config
               mountPath: /etc/newrelic-super-agent/config.yaml
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
@@ -77,6 +75,9 @@ spec:
         - name: super-agent-config
           configMap:
             name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "config" ) }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
 
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
