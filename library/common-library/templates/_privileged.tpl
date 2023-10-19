@@ -5,7 +5,9 @@ This is a helper that returns whether the chart should assume the user is fine d
 {{- /* This allows us to use `$global` as an empty dict directly in case `Values.global` does not exists. */ -}}
 {{- $global := index .Values "global" | default dict -}}
 {{- /* `get` will return "" (empty string) if value is not found, and the value otherwise, so we can type-assert with kindIs */ -}}
-{{- if get .Values "privileged" | kindIs "bool" -}}
+{{- if include "newrelic.common.gkeAutopilot" . -}}
+    false
+{{- else if get .Values "privileged" | kindIs "bool" -}}
     {{- if .Values.privileged -}}
         {{- .Values.privileged -}}
     {{- end -}}

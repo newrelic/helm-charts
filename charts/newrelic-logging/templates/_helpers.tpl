@@ -185,3 +185,36 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
   {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Returns var volume path
+*/}}
+{{- define "newrelic-logging.varLogPath" -}}
+{{- if (include "newrelic.common.gkeAutopilot" .) -}}
+/var/log
+{{- else -}}
+/var
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns hostNetwork value
+*/}}
+{{- define "newrelic-logging.hostNetwork" -}}
+{{- if (include "newrelic.common.gkeAutopilot" .) -}}
+false
+{{- else -}}
+true
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns FluentBit DB Location
+*/}}
+{{- define "newrelic-logging.fluentDb" -}}
+{{- if (include "newrelic.common.gkeAutopilot" .) -}}
+"/var/flb_kube.db"
+{{- else -}}
+{{ default .Values.fluentBit.db "/var/log/flb_kube.db" }}
+{{- end -}}
+{{- end -}}

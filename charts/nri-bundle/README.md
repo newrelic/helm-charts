@@ -160,6 +160,7 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 | global.customSecretName | string | `""` | Name of the Secret object where the license key is stored |
 | global.dnsConfig | object | `{}` | Sets pod's dnsConfig |
 | global.fargate | bool | false | Must be set to `true` when deploying in an EKS Fargate environment |
+| global.gkeAutopilot | bool | false |  Must be set to `true` when deploying in an GKE Autopilot environment |
 | global.hostNetwork | bool | false | Sets pod's hostNetwork |
 | global.images.pullSecrets | list | `[]` | Set secrets to be able to fetch images |
 | global.images.registry | string | `""` | Changes the registry where to get the images. Useful when there is an internal image cache/proxy |

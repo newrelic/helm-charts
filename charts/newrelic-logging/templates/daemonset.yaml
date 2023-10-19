@@ -33,7 +33,7 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
-      hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
+      hostNetwork: {{ include "newrelic-logging.hostNetwork" . }} # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
@@ -94,7 +94,8 @@ spec:
               value: "docker,cri"
               {{- end }}
             - name: FB_DB
-              value: {{ .Values.fluentBit.db | quote }}
+              value: {{ include "newrelic-logging.fluentDb" . }}
+              value1: {{ .Values.fluentBit.db | quote }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_BUFFER_SIZE
@@ -120,7 +121,7 @@ spec:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
             - name: var
-              mountPath: /var
+              mountPath: {{ include "newrelic-logging.varLogPath" . }}
           {{- if .Values.exposedPorts }}
           ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
