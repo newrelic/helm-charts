@@ -28,17 +28,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 > **TODO:** Here is where you should add particularities for this chart like what does the chart do with the privileged and
 low data modes or any other quirk that it could have.
 
-### TODOs
-There are values that should be planned at some point of removed from the `values.yaml`. I leave them here documented
-as TODO:
- * `licenseKey`: comes from the common library but it would not be needed as it is an ingestion API Key, not a REST one.
- * `rbac`: the is a placeholder for RBAC that simply list pods. this has to be narrowed to the use case of this agent.
- * `customAttributes`: decorate everything with this custom attributes, maybe as they come from opamp.
- * `proxy`, `nrStaging` and `fedramp` support on the meta agent. This could be made from the chart itself changing the opamp endpoint.
- * `verboseLog`: legacy toggle to enable verbosity.
-
-Other TODOs:
- * Add probes for liveness and readiness.
+At the point of the creation of the chart, it has no particularities and this section can be removed safely.
 
 ## Values
 
