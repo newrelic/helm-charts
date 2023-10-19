@@ -1,0 +1,97 @@
+suite: test hostNetwork
+templates:
+  - templates/daemonset.yaml
+tests:
+  - it: hostNetwork defaults (includes the values.yaml)
+    set:
+      licenseKey: test
+      cluster: test
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is false if nothing is set
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: null
+      hostNetwork: null
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is set by global.hostNetwork
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: true
+      hostNetwork: null
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is set by global.hostNetwork
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: false
+      hostNetwork: null
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is overridable to true
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: null
+      hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is overridable to false
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: null
+      hostNetwork: false
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is overridable to true
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: false
+      hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork is overridable to false
+    set:
+      licenseKey: test
+      cluster: test
+      global.hostNetwork: true
+      hostNetwork: false
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: false
+        template: templates/daemonset.yaml
