@@ -2,7 +2,7 @@
 
 # super-agent-deployment
 
-![Version: 0.0.0-beta](https://img.shields.io/badge/Version-0.0.0--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: TODO-FILL-THIS-WITH-CI](https://img.shields.io/badge/AppVersion-TODO--FILL--THIS--WITH--CI-informational?style=flat-square)
+![Version: 0.0.0-beta](https://img.shields.io/badge/Version-0.0.0--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: TODO](https://img.shields.io/badge/AppVersion-TODO-informational?style=flat-square)
 
 A Helm chart to install New Relic Super agent on Kubernetes
 
@@ -11,8 +11,8 @@ A Helm chart to install New Relic Super agent on Kubernetes
 You can install this chart using directly this Helm repository:
 
 ```shell
-helm repo add newrelic https://newrelic.github.io/helm-charts
-helm upgrade --install newrelic/CHART-TEMPLATE -f your-custom-values.yaml
+helm repo add newrelic https://helm-charts.newrelic.com
+helm upgrade --install newrelic/super-agent-deployment -f your-custom-values.yaml
 ```
 
 ## Values managed globally
