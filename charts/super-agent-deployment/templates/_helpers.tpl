@@ -5,18 +5,17 @@ cluster name, licenses, and custom attributes
 {{- define "newrelic-super-agent.config" -}}
 {{- /*
 TODO:
-    * `licenseKey`: comes from the common library but it would not be needed as it is an ingestion API Key, not a REST one.
-    * `rbac`: the is a placeholder for RBAC that simply list pods. this has to be narrowed to the use case of this agent.
-    * `customAttributes`: decorate everything with this custom attributes, maybe as they come from opamp.
-    * `proxy`, `nrStaging` and `fedramp` support on the meta agent. This could be made from the chart itself changing the opamp endpoint.
-    * `verboseLog`: legacy toggle to enable verbosity.
 
-For this iteration, the chart has no way to template tehe license. You might reuse the common-library secret creation helpers:
-{{- include "newrelic.common.license.secret" . -}}
+There are a lot of TODOs to be made in this chart yet and some of them are going to impact the YAML that holds the
+config.
 
+This is the helper that templates the config. For this iteration we simply copy the `config` object from the values
+and template it in the config map.
+
+If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for things that are yet to be implemented.
 */ -}}
 
-{{ if .Values.config }}
+{{- if .Values.config -}}
     {{- .Values.config | toYaml -}}
 {{- end -}}
 
