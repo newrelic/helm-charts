@@ -104,7 +104,7 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself!?
+      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
 
   # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
   # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
@@ -117,19 +117,18 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself!?
+      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
 
   # -- This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
   # Kustomize instead of using templating systems like Helm.
   # 
-  # New Relic' Super Agent will use this controller by creating `Kustomization` CRs based in the configuration stored
-  # on OpAmp.
-  # @default -- Enabled
+  # From New Relic, all releases managed via OpAmp install helm charts so there is no need for this controller to be
+  # up.
+  #
+  # On the other hand, user might want to leverage having FluxCD installed for their own purposes.
+  # @default -- Disabled
   kustomizeController:
-    create: true
-    annotations:
-      prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself!?
+    create: false
 
   # -- The image automation controller updates YAML files based on the latest images scanned by image reflector
   # controller, and commits the changes to a given Git repository.
