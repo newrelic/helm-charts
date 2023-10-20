@@ -25,16 +25,13 @@ helm upgrade --install newrelic/super-agent -f your-custom-values.yaml
 This chart implements the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
 means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
 
+> **Warning**: Note that the flux chart is not maintained by New Relic and thus does not support the `common-library`. Everything under the
+`flux2` belongs to the upstream chart and does not honor the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library).
+>
+> For a complete list of `values.yaml` of this chart you can refer to the [upstream chart's `values.yaml`](https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml).
+
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
 [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
-
-## Values for Flux2
-
-This chart uses the upstream Helm Chart for deploying FluxCD. Everything under the `flux2` belongs to the upstream chart
-and does not honor the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library).
-
-For a complete list of `values.yaml` of this chart you can refer to the [upstream chart's `values.yaml`](https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml).
-
 
 ## Chart particularities
 

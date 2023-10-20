@@ -11,8 +11,8 @@ Bootstraps New Relic' Super Agent
 You can install this chart using directly this Helm repository:
 
 ```shell
-helm repo add newrelic https://newrelic.github.io/helm-charts
-helm upgrade --install newrelic/CHART-TEMPLATE -f your-custom-values.yaml
+helm repo add newrelic https://helm-charts.newrelic.com
+helm upgrade --install newrelic/super-agent -f your-custom-values.yaml
 ```
 
 ## Values managed globally
@@ -20,15 +20,13 @@ helm upgrade --install newrelic/CHART-TEMPLATE -f your-custom-values.yaml
 This chart implements the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
 means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
 
+> **Warning**: Note that the flux chart is not maintained by New Relic and thus does not support the `common-library`. Everything under the
+`flux2` belongs to the upstream chart and does not honor the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library).
+>
+> For a complete list of `values.yaml` of this chart you can refer to the [upstream chart's `values.yaml`](https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml).
+
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
 [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
-
-## Values for Flux2
-
-This chart uses the upstream Helm Chart for deploying FluxCD. Everything under the `flux2` belongs to the upstream chart
-and does not honor the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library).
-
-For a complete list of `values.yaml` of this chart you can refer to the [upstream chart's `values.yaml`](https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml).
 
 ## Chart particularities
 
@@ -43,7 +41,7 @@ As of the creation of the chart, it has no particularities and this section can 
 |-----|------|---------|-------------|
 | flux2 | object | See `values.yaml` | Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml |
 | flux2.clusterDomain | string | `"cluster.local"` | This is the domain name of the cluster. |
-| flux2.enabled | bool | `true` | Enable or disable FluxCD completely. New Relic' Super Agent need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Super Agent. |
+| flux2.enabled | bool | `true` | Enable or disable FluxCD installation. New Relic' Super Agent need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Super Agent. |
 | flux2.helmController | object | Enabled | Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources)) named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.  New Relic' Super Agent will use this controller by creating `HelmRelease` CRs based in the configuration stored on OpAmp. |
 | flux2.imageAutomationController | object | Disabled | The image automation controller updates YAML files based on the latest images scanned by image reflector controller, and commits the changes to a given Git repository.  From New Relic, all releases are managed via OpAmp and there is no need to touch user's repositories.  On the other hand, user might want to leverage having FluxCD installed for their own purposes. |
 | flux2.imageReflectionController | object | Disabled | The image reflector controller scans image repositories and reflects the image metadata in Kubernetes resources ready to be used by other controllers.  From New Relic, all releases are managed via OpAmp and there is no need to touch user's repositories.  On the other hand, user might want to leverage having FluxCD installed for their own purposes. |
