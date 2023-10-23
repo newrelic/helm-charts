@@ -55,7 +55,7 @@ At the point of the creation of the chart, it has no particularities and this se
 | image | object | See `values.yaml` | Image for the New Relic Super Agent |
 | image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
-| licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
+| licenseKey | string | `""` | TODO: This set this license key to use. Can be configured also with `global.licenseKey` |
 | nameOverride | string | `""` | Override the name of the chart |
 | nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
