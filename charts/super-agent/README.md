@@ -12,7 +12,7 @@ You can install this chart using directly this Helm repository:
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm upgrade --install newrelic/super-agent -f your-custom-values.yaml
+helm upgrade --install super-agent newrelic/super-agent -f your-custom-values.yaml
 ```
 
 ## Values managed globally
