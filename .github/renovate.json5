@@ -48,6 +48,15 @@
         "patch"
       ],
       "enabled": true
+    },
+    {
+      // Update Super Agent chart
+      "fileMatch": [ "^charts/super-agent-deployment/Chart.yaml$" ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "newrelic/newrelic-super-agent",
+      "matchStrings": [
+        "appVersion: (?<currentValue>.*)  # .*"
+      ]
     }
   ]
 }

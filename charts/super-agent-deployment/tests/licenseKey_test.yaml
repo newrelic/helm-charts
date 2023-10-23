@@ -1,0 +1,28 @@
+suite: licenseKey temporary tests
+# These tests are to test that a missing licenseKey actually aborts templating the chart.
+# This should be something that the common-library should do, but the common library does
+# it while templating the secret with the license to be used as a envVar.
+# As the super agent does not support it as a envvar (yet), we added it directly on the
+# configuration file. The consequence is that the chart is able to template without
+# license.
+# TODO: Remove this file when the Super Agent supports licensekey as an envVar.
+templates:
+  - templates/configmap-superagent-config.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Using custom secret abort the template
+    set:
+      global:
+        customSecretName: non-empty
+    asserts:
+      - failedTemplate:
+          errorMessage: Common library supports setting an external custom secret for the license but the super agent still does not support the license by an env var. You must specify a .licenseKey or .global.licenseKey
+  - it: Using custom secret abort the template
+    set:
+      global:
+        customSecretLicenseKey: non-empty
+    asserts:
+      - failedTemplate:
+          errorMessage: Common library supports setting an external custom secret for the license but the super agent still does not support the license by an env var. You must specify a .licenseKey or .global.licenseKey

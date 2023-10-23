@@ -1,0 +1,13 @@
+{{- if .Values.config.create -}}
+---
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic-super-agent.config.name" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" $ | nindent 4 }}
+apiVersion: v1
+data:
+   {{ include "newrelic-super-agent.config.key" . }}: |
+    {{- include "newrelic-super-agent.config.content" . | nindent 4 }}
+{{- end }}

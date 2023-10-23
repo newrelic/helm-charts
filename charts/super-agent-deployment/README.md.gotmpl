@@ -1,0 +1,51 @@
+[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.badgesSection" . }}
+
+{{ template "chart.description" . }}
+
+{{ template "chart.homepageLine" . }}
+
+# Helm installation
+
+You can install this chart using directly this Helm repository:
+
+```shell
+helm repo add newrelic https://helm-charts.newrelic.com
+helm upgrade --install newrelic/super-agent-deployment -f your-custom-values.yaml
+```
+
+{{ template "chart.sourcesSection" . }}
+
+## Values managed globally
+
+This chart implements the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
+
+Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
+[user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
+
+## Chart particularities
+
+> **TODO:** Here is where you should add particularities for this chart like what does the chart do with the privileged and
+low data modes or any other quirk that it could have.
+
+At the point of the creation of the chart, it has no particularities and this section can be removed safely.
+
+{{ template "chart.valuesSection" . }}
+
+{{ if .Maintainers }}
+## Maintainers
+{{ range .Maintainers }}
+{{- if .Name }}
+{{- if .Url }}
+* [{{ .Name }}]({{ .Url }})
+{{- else }}
+* {{ .Name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

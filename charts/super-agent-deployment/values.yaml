@@ -1,0 +1,114 @@
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the release
+fullnameOverride: ""
+
+# -- TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
+cluster: ""
+# -- TODO: This set this license key to use. Can be configured also with `global.licenseKey`
+licenseKey: ""
+# -- TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
+customSecretName: ""
+# -- TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
+customSecretLicenseKey: ""
+
+# -- Image for the New Relic Super Agent
+# @default -- See `values.yaml`
+image:
+  registry:
+  repository: newrelic/newrelic-super-agent
+  tag: ""  # Defaults to chart's appVersion
+  imagePullPolicy: IfNotPresent
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+
+# -- Add user environment variables to the agent
+extraEnv: []
+# -- Add user environment from configMaps or secrets as variables to the agent
+extraEnvFrom: []
+# -- Volumes to mount in the containers
+extraVolumes: []
+# -- Defines where to mount volumes specified with `extraVolumes`
+extraVolumeMounts: []
+
+# -- Settings controlling ServiceAccount creation.
+# @default -- See `values.yaml`
+serviceAccount:
+  # -- Whether the chart should automatically create the ServiceAccount objects required to run.
+  create: true
+  annotations: {}
+  # If not set and create is true, a name is generated using the full name template
+  name: ""
+
+# -- Additional labels for chart objects. Can be configured also with `global.labels`
+labels: {}
+# -- Annotations to be added to all pods created by the integration.
+podAnnotations: {}
+# -- Additional labels for chart pods. Can be configured also with `global.podLabels`
+podLabels: {}
+
+# -- Resource limits to be added to all pods created by the integration.
+# @default -- `{}`
+resources: {}
+
+# -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
+priorityClassName: ""
+# -- (bool) Sets pod's hostNetwork. Can be configured also with `global.hostNetwork`
+# @default -- `false`
+hostNetwork:
+# -- Sets security context (at pod level). Can be configured also with `global.podSecurityContext`
+podSecurityContext: {}
+# -- Sets security context (at container level). Can be configured also with `global.containerSecurityContext`
+containerSecurityContext: {}
+
+# -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
+dnsConfig: {}
+
+# Settings controlling RBAC objects creation.
+rbac:
+  # -- Whether the chart should automatically create the RBAC objects required to run.
+  create: true
+
+# -- Sets pod/node affinities. Can be configured also with `global.affinity`
+affinity: {}
+# -- Sets pod's node selector. Can be configured also with `global.nodeSelector`
+nodeSelector: {}
+# -- Sets pod's tolerations to node taints. Can be configured also with `global.tolerations`
+tolerations: []
+
+# -- TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes`
+customAttributes: {}
+
+# -- TODO: Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy`
+proxy: ""
+
+# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+# @default -- `false`
+nrStaging:
+
+fedramp:
+  # -- (bool) TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
+  # @default -- `false`
+  enabled:
+
+# -- (bool) TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+# @default -- `false`
+verboseLog:
+
+config:
+  # -- Set if the configMap is going to be created by this chart or the user will provide its own.
+  create: true
+  # -- The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent.
+  name: ""
+  # -- The key in the configMap that has the configuration for the Super Agent.
+  key: ""
+  # -- Here you can set New Relic' Super Agent configuration.
+  # @default -- See `values.yaml` for examples
+  content:
+  #  opamp:
+  #    headers:
+  #      some-key: some-value
+  #  agents:
+  #    agent_1:
+  #      agent_type: namespace/agent_type:0.0.1

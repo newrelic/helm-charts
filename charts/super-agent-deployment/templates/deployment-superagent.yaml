@@ -1,0 +1,101 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+    spec:
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      hostNetwork: {{ include "newrelic.common.hostNetwork.value" . }}
+      {{- if include "newrelic.common.hostNetwork" . }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with include "newrelic.common.securityContext.container" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --running-mode=Kubernetes
+
+          {{- with .Values.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          # TODO: Add probes
+
+          volumeMounts:
+            - name: super-agent-config
+              mountPath: /etc/newrelic-super-agent
+              readOnly: true
+
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+        - name: super-agent-config
+          configMap:
+            name: {{ include "newrelic-super-agent.config.name" . }}
+            items:
+              - key: {{ include "newrelic-super-agent.config.key" . }}
+                path: config.yaml
+
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
