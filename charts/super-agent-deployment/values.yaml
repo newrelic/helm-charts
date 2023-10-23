@@ -5,7 +5,7 @@ fullnameOverride: ""
 
 # -- TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
 cluster: ""
-# -- TODO: This set this license key to use. Can be configured also with `global.licenseKey`
+# -- This set this license key to use. Can be configured also with `global.licenseKey`
 licenseKey: ""
 # -- TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
@@ -79,12 +79,12 @@ customAttributes: {}
 # -- TODO: Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy`
 proxy: ""
 
-# -- (bool) TODO: Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
 # @default -- `false`
 nrStaging:
 
 fedramp:
-  # -- (bool) TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
+  # -- (bool) Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
   # @default -- `false`
   enabled:
 
@@ -92,12 +92,16 @@ fedramp:
 # @default -- `false`
 verboseLog:
 
-# -- Here you can set New Relic' Super Agent configuration.
-# @default -- See `values.yaml` for examples
-config: {}
-#  opamp:
-#    headers:
-#      some-key: some-value
-#  agents:
-#    agent_1:
-#      agent_type: namespace/agent_type:0.0.1
+config:
+  create: true
+  name: ""
+  key: ""
+  # -- Here you can set New Relic' Super Agent configuration.
+  # @default -- See `values.yaml` for examples
+  content:
+  #  opamp:
+  #    headers:
+  #      some-key: some-value
+  #  agents:
+  #    agent_1:
+  #      agent_type: namespace/agent_type:0.0.1

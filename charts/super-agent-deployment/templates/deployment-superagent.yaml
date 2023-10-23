@@ -70,7 +70,10 @@ spec:
       volumes:
         - name: super-agent-config
           configMap:
-            name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "config" ) }}
+            name: {{ include "newrelic-super-agent.config.name" . }}
+            items:
+              - key: {{ include "newrelic-super-agent.config.key" . }}
+                path: config.yaml
 
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
