@@ -1,6 +1,6 @@
 helm:
   # -- Enable the installation of the CRs so FluxCD deploy the Super Agent is deployed. This an advanced/debug flag. It
-  # should be always be true unless you know what you are going. 
+  # should be always be true unless you know what you are going.
   create: true
 
   # -- Values related to the Helm repository where to download the super agent's chart.
@@ -8,16 +8,16 @@ helm:
   repository:
     # -- Sets the interval the repository is going to be updated on the controller.
     updateInterval: 24h
-    # -- The repository where the super-agent has the chart. This values is meant to be changed only on air-gapped 
+    # -- The repository where the super-agent has the chart. This values is meant to be changed only on air-gapped
     # environments or for development/testing purposes.
     url: https://helm-charts.newrelic.com
 
     # -- A reference to a secret with the keys username and password to authenticate to the repository.
-    # @default -- `nil` (no secret reference) 
+    # @default -- `nil` (no secret reference)
     secretRef:
       # name: name-of-the-secret
     # -- secret of type `kubernetes.io/tls` with the standard keys `tls.crt`, `tls.key`, and `ca.crt`
-    # @default -- `nil` (no secret reference) 
+    # @default -- `nil` (no secret reference)
     certSecretRef:
       # name: name-of-the-secret
 
@@ -46,9 +46,9 @@ helm:
 
       # - kind: ConfigMap or Secret
       #   name: Name of the values referent, in the same namespace as the HelmRelease.
-      #   valuesKey (Optional): The data key where the values.yaml or a specific value can be found. 
+      #   valuesKey (Optional): The data key where the values.yaml or a specific value can be found.
       #                         Defaults to `values.yaml` when omitted.
-      #   targetPath (Optional): The YAML dot notation path at which the value should be merged. When set, the 
+      #   targetPath (Optional): The YAML dot notation path at which the value should be merged. When set, the
       #                          valuesKey is expected to be a single flat value. Defaults to `nil` when omitted, which
       #                          results in the values getting merged at the root.
 
@@ -119,7 +119,7 @@ flux2:
 
   # -- This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
   # Kustomize instead of using templating systems like Helm.
-  # 
+  #
   # From New Relic, all releases managed via OpAmp install helm charts so there is no need for this controller to be
   # up.
   #
@@ -132,7 +132,7 @@ flux2:
   # controller, and commits the changes to a given Git repository.
   #
   # From New Relic, all releases are managed via OpAmp and there is no need to touch user's repositories.
-  # 
+  #
   # On the other hand, user might want to leverage having FluxCD installed for their own purposes.
   # @default -- Disabled
   imageAutomationController:
@@ -151,7 +151,7 @@ flux2:
   # -- The notification controller handles events coming from external systems (GitHub, GitLab, Bitbucket, Harbor,
   # Jenkins, etc) and notifies the GitOps toolkit controllers about source changes. The controller also handles events
   # emitted by the GitOps toolkit controllers (source, kustomize, helm) and dispatches them to external systems (Slack,
-  # Microsoft Teams, Discord) based on event severity and involved objects. 
+  # Microsoft Teams, Discord) based on event severity and involved objects.
   #
   # New Relic provides a powerful alert system with multiple policies and routes to alert users so it is disabled by
   # default on our FluxCD distribution.
@@ -175,5 +175,5 @@ flux2:
   # all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the
   # super agent, this is the way to go so the cluster has deployed all operators needed by the super agent. But if the
   # user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on
-  # the whole cluster.  
+  # the whole cluster.
   watchAllNamespaces: false
