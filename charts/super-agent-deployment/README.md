@@ -49,7 +49,7 @@ At the point of the creation of the chart, it has no particularities and this se
 | extraEnvFrom | list | `[]` | Add user environment from configMaps or secrets as variables to the agent |
 | extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
 | extraVolumes | list | `[]` | Volumes to mount in the containers |
-| fedramp.enabled | bool | `false` | Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
+| fedramp.enabled | bool | `false` | TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
 | fullnameOverride | string | `""` | Override the full name of the release |
 | hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
 | image | object | See `values.yaml` | Image for the New Relic Super Agent |
