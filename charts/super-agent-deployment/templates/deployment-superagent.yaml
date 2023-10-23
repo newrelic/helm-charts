@@ -54,6 +54,14 @@ spec:
           args:
             - --running-mode=Kubernetes
 
+          {{- with .Values.extraEnv }}
+          env:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           # TODO: Add probes
 
           volumeMounts:

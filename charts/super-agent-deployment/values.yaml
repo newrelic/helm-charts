@@ -23,6 +23,10 @@ image:
   pullSecrets: []
   # - name: regsecret
 
+# -- Add user environment variables to the agent
+extraEnv: []
+# -- Add user environment from configMaps or secrets as variables to the agent
+extraEnvFrom: []
 # -- Volumes to mount in the containers
 extraVolumes: []
 # -- Defines where to mount volumes specified with `extraVolumes`
@@ -93,8 +97,11 @@ fedramp:
 verboseLog:
 
 config:
+  # -- Set if the configMap is going to be created by this chart or the user will provide its own.
   create: true
+  # -- The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent.
   name: ""
+  # -- The key in the configMap that has the configuration for the Super Agent.
   key: ""
   # -- Here you can set New Relic' Super Agent configuration.
   # @default -- See `values.yaml` for examples

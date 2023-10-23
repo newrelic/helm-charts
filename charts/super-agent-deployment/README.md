@@ -2,7 +2,7 @@
 
 # super-agent-deployment
 
-![Version: 0.0.0-beta](https://img.shields.io/badge/Version-0.0.0--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: TODO](https://img.shields.io/badge/AppVersion-TODO-informational?style=flat-square)
+![Version: 0.0.0-beta](https://img.shields.io/badge/Version-0.0.0--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: nightly](https://img.shields.io/badge/AppVersion-nightly-informational?style=flat-square)
 
 A Helm chart to install New Relic Super agent on Kubernetes
 
@@ -36,24 +36,29 @@ At the point of the creation of the chart, it has no particularities and this se
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| config | object | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
+| config.content | string | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
+| config.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
+| config.key | string | `""` | The key in the configMap that has the configuration for the Super Agent. |
+| config.name | string | `""` | The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
 | customSecretLicenseKey | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| extraEnv | list | `[]` | Add user environment variables to the agent |
+| extraEnvFrom | list | `[]` | Add user environment from configMaps or secrets as variables to the agent |
 | extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
 | extraVolumes | list | `[]` | Volumes to mount in the containers |
-| fedramp.enabled | bool | `false` | TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
+| fedramp.enabled | bool | `false` | Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
 | fullnameOverride | string | `""` | Override the full name of the release |
 | hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
 | image | object | See `values.yaml` | Image for the New Relic Super Agent |
 | image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
-| licenseKey | string | `""` | TODO: This set this license key to use. Can be configured also with `global.licenseKey` |
+| licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | nameOverride | string | `""` | Override the name of the chart |
 | nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | TODO: Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
+| nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
 | podLabels | object | `{}` | Additional labels for chart pods. Can be configured also with `global.podLabels` |
 | podSecurityContext | object | `{}` | Sets security context (at pod level). Can be configured also with `global.podSecurityContext` |
