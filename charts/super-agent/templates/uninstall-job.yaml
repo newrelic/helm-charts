@@ -32,11 +32,11 @@ spec:
       restartPolicy: Never
       serviceAccountName: helm-controller  # Hardcoded on flux2 chart.
       containers:
-        - name: apply-crs
+        - name: delete-crs
           image: bitnami/kubectl
           command:
             - kubectl
-            - apply
+            - delete
             - -f
             - /manifests/
           volumeMounts:
