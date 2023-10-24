@@ -1,0 +1,49 @@
+{{- if .Values.helm.create -}}
+{{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
+{{- $configMapName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "manifests" ) -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "10000"
+  name: {{ $configMapName }}
+data:
+  helm-release.yaml: |
+    {{- include "newrelic-super-agent.helm.release" . | nindent 4 }}
+  helm-repository.yaml: |
+    {{- include "newrelic-super-agent.helm.repository" . | nindent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "10010"
+  name: {{ $installJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: helm-controller  # Hardcoded on flux2 chart.
+      containers:
+        - name: apply-crs
+          image: bitnami/kubectl
+          command:
+            - kubectl
+            - apply
+            - -f
+            - /manifests/
+          volumeMounts:
+            - name: manifests-configmap
+              mountPath: /manifests
+      volumes:
+        - name: manifests-configmap
+          configMap:
+            name: {{ $configMapName }}
+{{- end }}

@@ -1,11 +1,7 @@
-{{- if .Values.helm.create}}
----
+{{- define "newrelic-super-agent.helm.repository" -}}
 apiVersion: source.toolkit.fluxcd.io/v1beta2
 kind: HelmRepository
 metadata:
-  annotations:
-    helm.sh/hook: post-install,post-upgrade
-    helm.sh/hook-weight: "10000"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.fullname" . }}
@@ -21,4 +17,4 @@ spec:
   certSecretRef:
     {{- . | toYaml | nindent 4 }}
   {{- end }}
-{{- end }}
+{{- end -}}
