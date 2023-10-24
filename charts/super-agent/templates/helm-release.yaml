@@ -3,11 +3,15 @@
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10000"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.fullname" . }}
   namespace: {{ .Release.Namespace }}
 spec:
+  interval: {{ .Values.helm.repository.updateInterval }}
   chart:
     spec:
       chart: {{ .Values.helm.release.chart }}
