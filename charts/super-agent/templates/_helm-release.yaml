@@ -1,10 +1,11 @@
 {{- define "newrelic-super-agent.helm.release" -}}
+{{- $releaseName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "deployment" ) -}}
 apiVersion: helm.toolkit.fluxcd.io/v2beta1
 kind: HelmRelease
 metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ $releaseName }}
   namespace: {{ .Release.Namespace }}
 spec:
   interval: {{ .Values.helm.repository.updateInterval }}
@@ -14,13 +15,14 @@ spec:
       version: {{ .Values.helm.release.version }}
       sourceRef:
         kind: HelmRepository
-        name: {{ include "newrelic.common.naming.fullname" . }}
+        name: newrelic
         namespace: {{ .Release.Namespace }}
       interval: {{ .Values.helm.repository.updateInterval }}
-  {{- with .Values.helm.release.values }}
   values:
+    fullnameOverride: super-agent
+    {{- with .Values.helm.release.values }}
     {{- . | toYaml | nindent 4 }}
-  {{- end }}
+    {{- end }}
   {{- with .Values.helm.release.valuesFrom }}
   valuesFrom:
     {{- . | toYaml | nindent 4 }}
