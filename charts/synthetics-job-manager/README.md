@@ -53,7 +53,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 
 | Parameter                                   | Description                                                                                          | Default                            |
 |---------------------------------------------|------------------------------------------------------------------------------------------------------|------------------------------------|
-| `ping-runtime.replicaCount`                 | *(Not yet configurable)* Number of ping-runtime replicas to maintain                                                          | `1`                                |
+| `ping-runtime.replicaCount`                 | *(Not yet configurable)* Number of ping-runtime replicas to maintain                                 | `1`                                |
 | `ping-runtime.imagePullSecrets`             | The name of a Secret object used to pull an image from a specified container registry                |                                    |
 | `ping-runtime.nameOverride`                 | The nameOverride replaces the name of the chart in the Chart.yaml file.                              |                                    |
 | `ping-runtime.fullnameOverride`             | Name override used for your installation in place of the default                                     |                                    |
