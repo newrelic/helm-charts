@@ -1,6 +1,6 @@
 {{- if .Values.helm.create -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
-{{- $configMapName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "manifests" ) -}}
+{{- $configMapName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-manifests" ) -}}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -8,7 +8,6 @@ metadata:
   annotations:
     helm.sh/hook: pre-delete
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-    helm.sh/hook-weight: "10000"
   name: {{ $configMapName }}
 data:
   helm-release.yaml: |
@@ -22,7 +21,6 @@ metadata:
   annotations:
     helm.sh/hook: pre-delete
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-    helm.sh/hook-weight: "10010"
   name: {{ $installJobName }}
   namespace: {{ .Release.Namespace }}
 spec:
