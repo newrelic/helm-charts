@@ -1,20 +1,9 @@
 {{- if .Values.helm.create -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
 {{- $configMapName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-manifests" ) -}}
----
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  annotations:
-    helm.sh/hook: post-install,post-upgrade
-    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-  name: {{ $configMapName }}
-data:
-  helm-release.yaml: |
-    {{- include "newrelic-super-agent.helm.release" . | nindent 4 }}
-  helm-repository.yaml: |
-    {{- include "newrelic-super-agent.helm.repository" . | nindent 4 }}
----
+{{- /*
+To understand why this job installs manifests instead of using Helm, read the comment at `job-manifests.yaml`.
+*/ -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
