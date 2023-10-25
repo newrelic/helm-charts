@@ -109,7 +109,10 @@ flux2:
   # named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.
   #
   # New Relic' Super Agent will use this controller by creating `HelmRelease` CRs based in the configuration stored on
-  # OpAmp.
+  # OpAmp. This is the only controller that the Super Agent need for now, the other controllers are disabled by default.
+  #
+  # On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the
+  # `values.yaml` to see how to enable other controllers.
   # @default -- Enabled
   helmController:
     create: true
@@ -117,51 +120,33 @@ flux2:
       prometheus.io/port: "8080"
       prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
 
-  # -- This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
+  # This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
   # Kustomize instead of using templating systems like Helm.
-  #
-  # From New Relic, all releases managed via OpAmp install helm charts so there is no need for this controller to be
-  # up.
-  #
-  # On the other hand, user might want to leverage having FluxCD installed for their own purposes.
-  # @default -- Disabled
   kustomizeController:
     create: false
 
-  # -- The image automation controller updates YAML files based on the latest images scanned by image reflector
+  # The image automation controller updates YAML files based on the latest images scanned by image reflector
   # controller, and commits the changes to a given Git repository.
-  #
-  # From New Relic, all releases are managed via OpAmp and there is no need to touch user's repositories.
-  #
-  # On the other hand, user might want to leverage having FluxCD installed for their own purposes.
-  # @default -- Disabled
   imageAutomationController:
     create: false
 
-  # -- The image reflector controller scans image repositories and reflects the image metadata in Kubernetes resources
+  # The image reflector controller scans image repositories and reflects the image metadata in Kubernetes resources
   # ready to be used by other controllers.
-  #
-  # From New Relic, all releases are managed via OpAmp and there is no need to touch user's repositories.
-  #
-  # On the other hand, user might want to leverage having FluxCD installed for their own purposes.
-  # @default -- Disabled
   imageReflectionController:
     create: false
 
-  # -- The notification controller handles events coming from external systems (GitHub, GitLab, Bitbucket, Harbor,
+  # The notification controller handles events coming from external systems (GitHub, GitLab, Bitbucket, Harbor,
   # Jenkins, etc) and notifies the GitOps toolkit controllers about source changes. The controller also handles events
   # emitted by the GitOps toolkit controllers (source, kustomize, helm) and dispatches them to external systems (Slack,
   # Microsoft Teams, Discord) based on event severity and involved objects.
   #
   # New Relic provides a powerful alert system with multiple policies and routes to alert users so it is disabled by
   # default on our FluxCD distribution.
-  # @default -- Disabled
   notificationController:
     create: false
 
-  # -- Upstream chart create Network Policies. They are relaxed to enough to not cut any malicious attack and not
+  # Upstream chart create Network Policies. They are relaxed to enough to not cut any malicious attack and not
   # reduce the attack surface enough on environments where the security is a must.
-  # @default -- Disabled
   policies:
     create: false
 
