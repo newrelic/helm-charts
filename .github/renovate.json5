@@ -1,6 +1,6 @@
 {
   "extends": [
-    "config:base",
+    "config:recommended",
     // Disable the creation of this issue that renovate updates with the pending issue we follow with Zenhub:
     // https://github.com/newrelic/helm-charts/issues/484
     ":disableDependencyDashboard"
@@ -14,7 +14,7 @@
   "packageRules": [
     {
       // Group all nri-bundle dependencies together in a single PR.
-      "matchPaths": [
+      "matchFileNames": [
         "charts/nri-bundle/**"
       ],
       "groupName": "Bundle dependencies",
@@ -30,7 +30,7 @@
     },
     {
       // Disable updates in nri-bundle-legacy chart.
-      "matchPaths": [
+      "matchFileNames": [
         "charts/nri-bundle-legacy/**"
       ],
       "enabled": false
@@ -40,7 +40,7 @@
       "matchPackageNames": [
         "newrelic-infrastructure"
       ],
-      "matchPaths": [
+      "matchFileNames": [
         "charts/nri-bundle-legacy/**"
       ],
       "matchUpdateTypes": [
