@@ -1,0 +1,180 @@
+helm:
+  # -- Enable the installation of the CRs so FluxCD deploy the Super Agent is deployed. This an advanced/debug flag. It
+  # should be always be true unless you know what you are going.
+  create: true
+
+  # -- Values related to the Helm repository where to download the super agent's chart.
+  # @default -- See `values.yaml`
+  repository:
+    # -- Sets the interval the repository is going to be updated on the controller.
+    updateInterval: 24h
+    # -- The repository where the super-agent has the chart. This values is meant to be changed only on air-gapped
+    # environments or for development/testing purposes.
+    url: https://helm-charts.newrelic.com
+
+    # -- A reference to a secret with the keys username and password to authenticate to the repository.
+    # @default -- `nil` (no secret reference)
+    secretRef:
+      # name: name-of-the-secret
+    # -- secret of type `kubernetes.io/tls` with the standard keys `tls.crt`, `tls.key`, and `ca.crt`
+    # @default -- `nil` (no secret reference)
+    certSecretRef:
+      # name: name-of-the-secret
+
+  # -- Values related to the super agent's Helm chart release.
+  # @default -- See `values.yaml`
+  release:
+    # -- The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for
+    # development/testing purposes.
+    chart: super-agent-deployment
+    # -- The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for
+    # development/testing purposes.
+    #
+    # TODO: Point renovatebot here.
+    version: "0.0.0-beta"
+
+    # -- Set values to the super agent helm release directly from this `values.yaml` file. Refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides
+    # @default -- `{}`. Examples on the `values.yaml`
+    values:
+    # These values are the values that the values that are going to be provided to the helm release as user-supplied.
+    # Here you have a example snippet of values that are being used upstream:
+    #
+    # image:
+    #   registry:
+    #   repository: newrelic/newrelic-super-agent
+    #   tag: ""
+    # config:
+    #   create: true
+    #   name: ""
+    #   key: ""
+    #   content:
+    #     opamp:
+    #       headers:
+    #         some-key: LICENSEKEY
+    #     agents:
+    #       agent_1:
+    #         agent_type: namespace/agent_type:0.0.1
+
+    # -- Set values from a `configMap` or a `secret`. You can see examples and better documentation inside the
+    # `values.yaml` file. Also refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides
+    # @default -- empty
+    valuesFrom:
+
+      # - kind: ConfigMap or Secret
+      #   name: Name of the values referent, in the same namespace as the HelmRelease.
+      #   valuesKey (Optional): The data key where the values.yaml or a specific value can be found.
+      #                         Defaults to `values.yaml` when omitted.
+      #   targetPath (Optional): The YAML dot notation path at which the value should be merged. When set, the
+      #                          valuesKey is expected to be a single flat value. Defaults to `nil` when omitted, which
+      #                          results in the values getting merged at the root.
+
+      # Examples:
+      # - kind: ConfigMap
+      #   name: prod-env-values
+      #   valuesKey: values-prod.yaml
+      # - kind: Secret
+      #   name: prod-tls-values
+      #   valuesKey: crt
+      #   targetPath: tls.crt
+
+    # -- Change the behavior of the operator while installing the chart for the first time. This should only be changed
+    # by advanced users that know what they are doing. Exposes the remediations that the operator is going to try
+    # before give up installing the chart in case it hits an error.
+    # @default -- See `values.yaml`
+    install:
+      replace: true  # Tells the Helm install action to reuse the ‘ReleaseName’, but only if that name is a deleted release which remains in the history.
+      remediation:
+        retries: 3  # Retries is the number of retries that should be attempted on failures before givin up. An uninstall is performed between each attempt.
+
+    # -- Change the behavior of the operator while upgrading the chart. This should only be changed by advanced users
+    # that know what they are doing. Exposes the remediations that the operator is going to try before give up
+    # installing the chart in case it hits an error.
+    # @default -- See `values.yaml`
+    upgrade:
+      force: true  # Force forces resource updates through a replacement strategy.
+      cleanupOnFail: true  # Allows deletion of new resources created during the Helm upgrade action when it fails.
+      remediation:
+        retries: 3  # Retries is the number of retries that should be attempted on failures before givin up. An uninstall is performed between each attempt.
+        strategy: rollback  # rollback or uninstall.
+
+# -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
+# @default -- See `values.yaml`
+flux2:
+  # -- Enable or disable FluxCD installation. New Relic' Super Agent need Flux to work, but the user can use an already
+  # existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs
+  # to deploy the Super Agent.
+  enabled: true
+
+  # -- The installation of the CRDs is managed by the chart itself.
+  installCRDs: true
+  # -- This is the domain name of the cluster.
+  clusterDomain: cluster.local
+
+  # -- Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference
+  # [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated
+  # operators to offload the Git, OCO, and Helm repositories management.
+  # @default -- Enabled
+  sourceController:
+    create: true
+    annotations:
+      prometheus.io/port: "8080"
+      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+
+  # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
+  # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
+  # named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.
+  #
+  # New Relic' Super Agent will use this controller by creating `HelmRelease` CRs based in the configuration stored on
+  # OpAmp. This is the only controller that the Super Agent need for now, the other controllers are disabled by default.
+  #
+  # On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the
+  # `values.yaml` to see how to enable other controllers.
+  # @default -- Enabled
+  helmController:
+    create: true
+    annotations:
+      prometheus.io/port: "8080"
+      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+
+  # This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
+  # Kustomize instead of using templating systems like Helm.
+  kustomizeController:
+    create: false
+
+  # The image automation controller updates YAML files based on the latest images scanned by image reflector
+  # controller, and commits the changes to a given Git repository.
+  imageAutomationController:
+    create: false
+
+  # The image reflector controller scans image repositories and reflects the image metadata in Kubernetes resources
+  # ready to be used by other controllers.
+  imageReflectionController:
+    create: false
+
+  # The notification controller handles events coming from external systems (GitHub, GitLab, Bitbucket, Harbor,
+  # Jenkins, etc) and notifies the GitOps toolkit controllers about source changes. The controller also handles events
+  # emitted by the GitOps toolkit controllers (source, kustomize, helm) and dispatches them to external systems (Slack,
+  # Microsoft Teams, Discord) based on event severity and involved objects.
+  #
+  # New Relic provides a powerful alert system with multiple policies and routes to alert users so it is disabled by
+  # default on our FluxCD distribution.
+  notificationController:
+    create: false
+
+  # Upstream chart create Network Policies. They are relaxed to enough to not cut any malicious attack and not
+  # reduce the attack surface enough on environments where the security is a must.
+  policies:
+    create: false
+
+  # -- Create RBAC rules for FluxCD is able to deploy all kind of workloads on the cluster.
+  # @default -- Enabled (See `values.yaml`)
+  rbac:
+    create: true
+    createAggregation: true
+
+  # -- As we are using Flux as a tool from the super agent to release new workloads, we do not want Flux to listen to
+  # all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the
+  # super agent, this is the way to go so the cluster has deployed all operators needed by the super agent. But if the
+  # user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on
+  # the whole cluster.
+  watchAllNamespaces: false

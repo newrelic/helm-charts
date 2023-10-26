@@ -1,0 +1,23 @@
+{{- define "newrelic-super-agent.helm.repository" -}}
+{{- /*
+To understand why this manifest is a template function instead of a manifest that is appyed directly, read the comment at `job-manifests.yaml`.
+*/ -}}
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: newrelic
+  namespace: {{ .Release.Namespace }}
+spec:
+  interval: {{ .Values.helm.repository.updateInterval }}
+  url: {{ .Values.helm.repository.url }}
+  {{- with .Values.helm.repository.secretRef }}
+  secretRef:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+  {{- with .Values.helm.repository.certSecretRef }}
+  certSecretRef:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+{{- end -}}

@@ -1,0 +1,42 @@
+{{- define "newrelic-super-agent.helm.release" -}}
+{{- $releaseName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "deployment" ) -}}
+{{- /*
+To understand why this manifest is a template function instead of a manifest that is appyed directly, read the comment at `job-manifests.yaml`.
+*/ -}}
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ $releaseName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  interval: {{ .Values.helm.repository.updateInterval }}
+  chart:
+    spec:
+      chart: {{ .Values.helm.release.chart }}
+      version: {{ .Values.helm.release.version }}
+      sourceRef:
+        kind: HelmRepository
+        name: newrelic
+        namespace: {{ .Release.Namespace }}
+      interval: {{ .Values.helm.repository.updateInterval }}
+  values:
+    fullnameOverride: super-agent
+    {{- with .Values.helm.release.values }}
+    {{- . | toYaml | nindent 4 }}
+    {{- end }}
+  {{- with .Values.helm.release.valuesFrom }}
+  valuesFrom:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+
+  {{- with .Values.helm.release.install }}
+  install:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+  {{- with .Values.helm.release.upgrade }}
+  upgrade:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
+{{- end -}}

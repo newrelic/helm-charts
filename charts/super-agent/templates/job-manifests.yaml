@@ -1,0 +1,34 @@
+{{- if .Values.helm.create -}}
+{{- $configMapName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-manifests" ) -}}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete,post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "10000"
+  name: {{ $configMapName }}
+  namespace: {{ .Release.Namespace }}
+data:
+{{- /*
+Let's start with some background that allow to understand why configmap has manifests on it.
+
+Helm behaves differently depending on where you place your CRD manifests:
+ * If you set your CRDs on `crds`, Helm apply them before applying the other templates.
+    Pros: CRDs exist at apply time so you can apply CRs without any issue.
+    Cons: Helm does not update CRDs on chart upgrade so it is user's work to maintain them.
+ * If you set your CRDs on `templates`. Helm will apply them at the same time that the other templates of the chart.
+    Pros: Helm follows the manifest so it is able to create, upgrade and delete the CRDs
+    Cons: Helm will do a dry run of all the manifests before applying them in order. CRs will fail because CRDs do not exist on the server (yet)
+
+Flux have it CRDs on the `template` folder, So we cannot have the CRs we need on our template folder. They will fail to apply.
+
+To be able to apply them, we have a post-installation hook that run `kubectl apply` with the manifests after the CRDs exist on the cluster.
+To delete them, there is a pre-delete hook that removes them.
+*/}}
+  helm-release.yaml: |
+    {{- include "newrelic-super-agent.helm.release" . | nindent 4 }}
+  helm-repository.yaml: |
+    {{- include "newrelic-super-agent.helm.repository" . | nindent 4 }}
+{{- end }}
