@@ -78,8 +78,14 @@ with:
 with:
   version: 'v3.0.0'
 
-  - name: Create kind cluster
-uses: helm/kind-action@v1.2.0
+  - name: Install Minikube
+uses: manusa/actions-setup-minikube@v2.9.0
+with:
+  minikube version: v1.31.2
+  kubernetes version: v1.27.7
+  github token: ${{ secrets.GITHUB_TOKEN }}
+  driver: docker
+  start args: "--container-runtime=containerd"
   - name: Create test ns
 run: kubectl create ns ct
 
