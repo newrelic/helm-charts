@@ -34,10 +34,26 @@ helm:
     version: "0.0.0-beta"
 
     # -- Set values to the super agent helm release directly from this `values.yaml` file. Refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides
-    # @default -- no values
+    # @default -- `{}`. Examples on the `values.yaml`
     values:
-    # replicaCount: 5
-    # TODO: Wait for PR #1155 to be merged so we know how to send the `licenseKey` upstream to the SuperAgent.
+    # These values are the values that the values that are going to be provided to the helm release as user-supplied.
+    # Here you have a example snippet of values that are being used upstream:
+    #
+    # image:
+    #   registry:
+    #   repository: newrelic/newrelic-super-agent
+    #   tag: ""
+    # config:
+    #   create: true
+    #   name: ""
+    #   key: ""
+    #   content:
+    #     opamp:
+    #       headers:
+    #         some-key: LICENSEKEY
+    #     agents:
+    #       agent_1:
+    #         agent_type: namespace/agent_type:0.0.1
 
     # -- Set values from a `configMap` or a `secret`. You can see examples and better documentation inside the
     # `values.yaml` file. Also refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides
