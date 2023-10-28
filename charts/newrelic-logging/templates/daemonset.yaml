@@ -111,11 +111,15 @@ spec:
                   fieldPath: metadata.name
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
           command:
+            {{- if .Values.command }}
+              {{- toYaml .Values.command | nindent 12 }}
+            {{- else }}
             - /fluent-bit/bin/fluent-bit
             - -c
             - /fluent-bit/etc/fluent-bit.conf
             - -e
             - /fluent-bit/bin/out_newrelic.so
+            {{- end }}
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
