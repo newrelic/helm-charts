@@ -203,7 +203,7 @@ jobs:
           )
           for directory in "${folders[@]}"; do
             file_name="${directory}/newrelic.yaml"
-            yq eval --inplace ".version=\"${version}\"" "${file_name}"
+            yq eval --inplace ".spec.chart.spec.version=\"${version}\"" "${file_name}"
             git add ${file_name}
           done
 
@@ -213,8 +213,7 @@ jobs:
           gh pr create \
             --repo aws-samples/eks-anywhere-addons \
             --title "feat: ${summary}" \
-            --body "${summary}" \
-            --reviewer elamaran11
+            --body "${summary}"
 
   notify-failure:
     if: ${{ always() && failure() }}
