@@ -51,8 +51,6 @@ spec:
   {{- end }}
   image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
   imagePullPolicy: {{ .Values.image.pullPolicy }}
-  args:
-- --running-mode=Kubernetes
 
   {{- with .Values.extraEnv }}
   env:
