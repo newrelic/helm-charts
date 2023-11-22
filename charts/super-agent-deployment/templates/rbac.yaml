@@ -21,13 +21,23 @@ rules:
       - deletecollection
       - patch
       - update
+  - apiGroups: [ "" ]
+    resources: ["configmaps"]
+    verbs:
+      - get
+      - list
+      - create
+      - delete
+      - patch
+      - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: RoleBinding
 metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.fullname" . }}
+  namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
