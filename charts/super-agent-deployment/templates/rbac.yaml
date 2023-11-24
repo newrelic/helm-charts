@@ -5,7 +5,7 @@ kind: ClusterRole
 metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ include "newrelic.common.naming.fullname" . }}-flux
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups:
@@ -21,6 +21,15 @@ rules:
       - deletecollection
       - patch
       - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.fullname" . }}-cm
+  namespace: {{ .Release.Namespace }}
+rules:
   - apiGroups: [ "" ]
     resources: ["configmaps"]
     verbs:
@@ -36,12 +45,28 @@ kind: RoleBinding
 metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ include "newrelic.common.naming.fullname" . }}-flux
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ include "newrelic.common.naming.fullname" . }}-flux
+subjects:
+- kind: ServiceAccount
+  name: {{ include "newrelic.common.serviceAccount.name" . }}
+  namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.fullname" . }}-cm
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "newrelic.common.naming.fullname" . }}-cm
 subjects:
 - kind: ServiceAccount
   name: {{ include "newrelic.common.serviceAccount.name" . }}

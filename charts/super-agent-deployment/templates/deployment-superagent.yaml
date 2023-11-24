@@ -45,9 +45,9 @@ spec:
 
       containers:
         - name: {{ .Chart.Name }}
-          {{- with include "newrelic.common.securityContext.container" . }}
+          {{- with include "newrelic-super-agent.securityContext.container" . | fromYaml }}
           securityContext:
-            {{- . | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
