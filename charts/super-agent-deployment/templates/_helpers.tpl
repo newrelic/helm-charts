@@ -54,12 +54,9 @@ readOnlyRootFilesystem: true
 {{- $defaults := fromYaml ( include "newrelic-super-agent.securityContext.containerDefaults" . ) -}}
 {{- $commonLibrary := include "newrelic.common.securityContext.container" . | fromYaml -}}
 
-{{- $finalSecurityContext := dict -}}
 {{- if $commonLibrary -}}
-    {{- $finalSecurityContext = mustMergeOverwrite $commonLibrary  -}}
+    {{- toYaml $commonLibrary -}}
 {{- else -}}
-    {{- $finalSecurityContext = $defaults  -}}
+    {{- toYaml $defaults -}}
 {{- end -}}
-
-{{- toYaml $finalSecurityContext -}}
 {{- end -}}
