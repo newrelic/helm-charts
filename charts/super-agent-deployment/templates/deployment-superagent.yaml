@@ -45,9 +45,9 @@ spec:
 
       containers:
         - name: {{ .Chart.Name }}
-          {{- with include "newrelic.common.securityContext.container" . }}
+          {{- with include "newrelic-super-agent.securityContext.container" . | fromYaml }}
           securityContext:
-            {{- . | nindent 12 }}
+            {{- toYaml . | nindent 12 }}
           {{- end }}
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -66,7 +66,10 @@ spec:
             - name: super-agent-config
               mountPath: /etc/newrelic-super-agent
               readOnly: true
-
+            # TODO: when releasing we should check if this is still needed and if we need to persist the data.
+            - mountPath: /var/lib/newrelic-super-agent
+              name: var-lib-newrelic-super-agent
+              readOnly: false
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -80,7 +83,8 @@ spec:
             items:
               - key: {{ include "newrelic-super-agent.config.key" . }}
                 path: config.yaml
-
+        - name: var-lib-newrelic-super-agent
+          emptyDir: {}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
