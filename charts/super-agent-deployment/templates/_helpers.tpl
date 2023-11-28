@@ -41,3 +41,23 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 {{- $config = mustMergeOverwrite (dict "k8s" (dict "namespace" .Release.Namespace)) $config -}}
 {{- $config | toYaml -}}
 {{- end -}}
+
+{{- /* These are the defaults that are used for all the containers in this chart */ -}}
+{{- define "newrelic-super-agent.securityContext.containerDefaults" -}}
+runAsUser: 1000
+runAsGroup: 2000
+allowPrivilegeEscalation: false
+readOnlyRootFilesystem: true
+{{- end -}}
+
+{{- /* Allow to change pod defaults dynamically */ -}}
+{{- define "newrelic-super-agent.securityContext.container" -}}
+{{- $defaults := fromYaml ( include "newrelic-super-agent.securityContext.containerDefaults" . ) -}}
+{{- $commonLibrary := include "newrelic.common.securityContext.container" . | fromYaml -}}
+
+{{- if $commonLibrary -}}
+    {{- toYaml $commonLibrary -}}
+{{- else -}}
+    {{- toYaml $defaults -}}
+{{- end -}}
+{{- end -}}
