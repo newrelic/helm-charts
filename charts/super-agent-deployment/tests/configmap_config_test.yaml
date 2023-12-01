@@ -12,15 +12,20 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: super agent's config could be empty
+  - it: super agent's config always include cluster_name and namespace
     set:
+      cluster: my-cluster
       config: {}
     asserts:
       - equal:
           path: data["config.yaml"]
-          value: ""
+          value: |
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
   - it: super agent's config templates
     set:
+      cluster: my-cluster
       config:
         content:
           test: value
@@ -29,5 +34,27 @@ tests:
       - equal:
           path: data["config.yaml"]
           value: |
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            test: value
+            test2: value2
+  - it: cluster_name and namespace from config have precedence
+    set:
+      cluster: my-cluster
+      config:
+        content:
+          test: value
+          test2: value2
+          k8s:
+            cluster_name: config-cluster
+            namespace: config-namespace
+    asserts:
+      - equal:
+          path: data["config.yaml"]
+          value: |
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
             test: value
             test2: value2
