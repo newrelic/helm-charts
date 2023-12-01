@@ -36,9 +36,10 @@ the config.
 
 If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for things that are yet to be implemented.
 */ -}}
-{{- if .Values.config.content -}}
-  {{- .Values.config.content | toYaml -}}
-{{- end -}}
+{{- $config :=  .Values.config.content | default dict -}}
+{{- $config = mustMergeOverwrite (dict "k8s" (dict "cluster_name" (include "newrelic.common.cluster" .))) $config -}}
+{{- $config = mustMergeOverwrite (dict "k8s" (dict "namespace" .Release.Namespace)) $config -}}
+{{- $config | toYaml -}}
 {{- end -}}
 
 {{- /* These are the defaults that are used for all the containers in this chart */ -}}
