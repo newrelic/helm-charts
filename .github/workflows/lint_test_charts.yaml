@@ -132,7 +132,7 @@ run: |
   (
 echo CHART NAME: common-library VERSION
 find charts/nri-bundle -name Chart.yaml | \
-  xargs yq eval-all '{ .name: (.dependencies | map(select(contains({"name": "common-library"}))) | .[].version ) }' | \
+  xargs yq eval-all --no-doc '{ .name: (.dependencies | map(select(contains({"name": "common-library"}))) | .[].version ) }' | \
   tee versions.txt;
   ) | column -t -s:
 

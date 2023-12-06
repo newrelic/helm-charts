@@ -193,12 +193,5 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 
 ## Maintainers
 
-* [nserrino](https://github.com/nserrino)
-* [philkuz](https://github.com/philkuz)
-* [htroisi](https://github.com/htroisi)
 * [juanjjaramillo](https://github.com/juanjjaramillo)
-* [svetlanabrennan](https://github.com/svetlanabrennan)
-* [nrepai](https://github.com/nrepai)
 * [csongnr](https://github.com/csongnr)
-* [vuqtran88](https://github.com/vuqtran88)
-* [xqi-nr](https://github.com/xqi-nr)
