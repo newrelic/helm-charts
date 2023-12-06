@@ -131,7 +131,7 @@ run: |
 
   - name: Create PR
 env:
-  GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
 run: |
   cd ${{ env.K8S_FOLDER }}
   appVersionModified=$(echo ${appVersion} | sed 's/\./-/g' )
@@ -193,7 +193,7 @@ run: |
 
   - name: Create PR
 env:
-  GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+  GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
 run: |
   branchName=update-nri-bundle-$( date "+%Y-%m-%d_%H_%M" )
   summary="Update nri-bundle to version ${version}"
