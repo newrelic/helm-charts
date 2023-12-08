@@ -119,7 +119,7 @@ jobs:
         with:
           repository: 'newrelic/docs-website'
           # Token used to run authenticated git commands
-          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
           sparse-checkout: |
             ${{ env.K8S_FOLDER }}
           sparse-checkout-cone-mode: false
@@ -129,7 +129,7 @@ jobs:
           git config user.name "NewRelic-K8s-Agents-Bot"
           git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
 
-      - name: Create PR
+      - name: Create branch in forked repo
         env:
           GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
         run: |
@@ -150,6 +150,15 @@ jobs:
             git commit --message="feat: ${summary}"
             git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/docs-website.git
             git push --set-upstream upstream ${branchName}
+          fi
+
+      - name: Create PR in original repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+        run: |
+          if [[ -e "${releaseFile}" ]]; then
+            echo "File '${releaseFile}' already exists. Nothing to do"
+          else
             gh pr create \
               --repo newrelic/docs-website \
               --title "feat: ${summary}" \
@@ -179,7 +188,7 @@ jobs:
         with:
           repository: 'aws-samples/eks-anywhere-addons'
           # Token used to run authenticated git commands
-          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
           sparse-checkout: |
             eks-anywhere-baremetal/Addons/Partner/newrelic/newrelic.yaml
             eks-anywhere-snow/Addons/Partner/newrelic/newrelic.yaml
@@ -191,7 +200,7 @@ jobs:
           git config user.name "NewRelic-K8s-Agents-Bot"
           git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
 
-      - name: Create PR
+      - name: Create branch in forked repo
         env:
           GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
         run: |
@@ -213,6 +222,11 @@ jobs:
           git commit --message="feat: ${summary}"
           git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/eks-anywhere-addons.git
           git push --set-upstream upstream ${branchName}
+
+      - name: Create PR in original repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
           gh pr create \
             --repo aws-samples/eks-anywhere-addons \
             --title "feat: ${summary}" \
