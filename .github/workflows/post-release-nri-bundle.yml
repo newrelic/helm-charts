@@ -138,6 +138,8 @@ jobs:
           branchName=add_kubernetes_release_notes-$( date "+%Y-%m-%d_%H_%M" )
           releaseFile=kubernetes-integration-${appVersionModified}.mdx
           summary="Add release notes for Kubernetes integration v${appVersion}"
+          echo "releaseFile=${releaseFile}" >> "$GITHUB_ENV"
+          echo "summary=${summary}" >> "$GITHUB_ENV"
 
           if [[ -e "${releaseFile}" ]]; then
             echo "File '${releaseFile}' already exists. Nothing to do"
@@ -188,7 +190,7 @@ jobs:
         with:
           repository: 'aws-samples/eks-anywhere-addons'
           # Token used to run authenticated git commands
-          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
           sparse-checkout: |
             eks-anywhere-baremetal/Addons/Partner/newrelic/newrelic.yaml
             eks-anywhere-snow/Addons/Partner/newrelic/newrelic.yaml
@@ -202,10 +204,11 @@ jobs:
 
       - name: Create branch in forked repo
         env:
-          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
         run: |
           branchName=update-nri-bundle-$( date "+%Y-%m-%d_%H_%M" )
           summary="Update nri-bundle to version ${version}"
+          echo "summary=${summary}" >> "$GITHUB_ENV"
 
           git checkout -b ${branchName}
           folders=(
@@ -225,7 +228,7 @@ jobs:
 
       - name: Create PR in original repo
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
         run: |
           gh pr create \
             --repo aws-samples/eks-anywhere-addons \
