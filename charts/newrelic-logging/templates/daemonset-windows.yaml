@@ -37,7 +37,6 @@ app.kubernetes.io/name: {{ template "newrelic-logging.name" $ }}
 {{- end }}
 spec:
   serviceAccountName: {{ include "newrelic.common.serviceAccount.name" $ }}
-  hostNetwork: false
   {{- with include "newrelic.common.dnsConfig" $ }}
   dnsConfig:
 {{- . | nindent 8 }}
