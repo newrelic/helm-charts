@@ -1,0 +1,19 @@
+{{- if .Values.config.fleet -}}
+{{- range $fleetName, $fleetConfig := .Values.config.fleet -}}
+{{- $chartSuffix := include "newrelic.common.naming.fullname" $ -}}
+{{- $configName := printf "%s-%s" "fleet" $fleetName -}}
+{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $chartSuffix "suffix" $configName) }}
+---
+kind: ConfigMap
+metadata:
+  name: {{ $name }}
+  namespace: {{ $.Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" $ | nindent 4 }}
+    suerp-agent-fleet: {{ $fleetName }}
+apiVersion: v1
+data:
+  values.yml: |
+    {{- $fleetConfig | toYaml | nindent 4 }}
+{{- end }}
+{{- end }}

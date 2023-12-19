@@ -1,13 +1,13 @@
-{{- if .Values.config.create -}}
+{{- if .Values.config.superAgent.create -}}
 ---
 kind: ConfigMap
 metadata:
-  name: {{ include "newrelic-super-agent.config.name" . }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "agent-config") }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "newrelic.common.labels" $ | nindent 4 }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
 apiVersion: v1
 data:
-   {{ include "newrelic-super-agent.config.key" . }}: |
+  {{ include "newrelic-super-agent.config.key" . }}: |
     {{- include "newrelic-super-agent.config.content" . | nindent 4 }}
 {{- end }}

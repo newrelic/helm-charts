@@ -1,0 +1,96 @@
+suite: test super agent deployment's fleet configurations
+templates:
+  - templates/deployment-superagent.yaml
+  - templates/configmap-superagent-config.yaml
+  - templates/configmap-fleet-configs.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+
+  - it: there are no fleet configurations by default
+    set:
+      cluster: test
+    asserts:
+      - template: templates/deployment-superagent.yaml
+        equal:
+          path: spec.template.spec.containers[0].volumeMounts
+          value:
+            - name: super-agent-config
+              mountPath: /etc/newrelic-super-agent
+              readOnly: true
+            - mountPath: /var/lib/newrelic-super-agent
+              name: var-lib-newrelic-super-agent
+              readOnly: false
+      - template: templates/deployment-superagent.yaml
+        equal:
+          path: spec.template.spec.volumes
+          value:
+            - name: super-agent-config
+              configMap:
+                name: my-release-super-agent-deployment-config
+                items:
+                  - key: config.yaml
+                    path: config.yaml
+            - name: var-lib-newrelic-super-agent
+              emptyDir: {}
+
+  - it: fleet configurations template file mounts
+    set:
+      cluster: test
+      config:
+        fleet:
+          test-0:
+            a: test
+            value: 0
+          test-1:
+            a: test
+            value: 1
+          test-2:
+            a: test
+            aYAML:
+              canI: HaveSomeYAML
+    asserts:
+      - template: templates/deployment-superagent.yaml
+        equal:
+          path: spec.template.spec.containers[0].volumeMounts
+          value:
+            - name: super-agent-config
+              mountPath: /etc/newrelic-super-agent
+              readOnly: true
+            - name: fleet-configmap-my-release-super-agent-deployment-fleet-test-0
+              mountPath: /etc/newrelic-super-agent/fleet/agents.d/test-0
+              readOnly: true
+            - name: fleet-configmap-my-release-super-agent-deployment-fleet-test-1
+              mountPath: /etc/newrelic-super-agent/fleet/agents.d/test-1
+              readOnly: true
+            - name: fleet-configmap-my-release-super-agent-deployment-fleet-test-2
+              mountPath: /etc/newrelic-super-agent/fleet/agents.d/test-2
+              readOnly: true
+            - mountPath: /var/lib/newrelic-super-agent
+              name: var-lib-newrelic-super-agent
+              readOnly: false
+      - template: templates/deployment-superagent.yaml
+        equal:
+          path: spec.template.spec.volumes
+          value:
+            - name: super-agent-config
+              configMap:
+                name: my-release-super-agent-deployment-config
+                items:
+                  - key: config.yaml
+                    path: config.yaml
+            - name: fleet-configmap-my-release-super-agent-deployment-fleet-test-0
+              configMap:
+                name: my-release-super-agent-deployment-fleet-test-0
+            - name: fleet-configmap-my-release-super-agent-deployment-fleet-test-1
+              configMap:
+                name: my-release-super-agent-deployment-fleet-test-1
+            - name: fleet-configmap-my-release-super-agent-deployment-fleet-test-2
+              configMap:
+                name: my-release-super-agent-deployment-fleet-test-2
+            - name: var-lib-newrelic-super-agent
+              emptyDir: {}
+
+        
+

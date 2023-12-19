@@ -97,18 +97,65 @@ fedramp:
 verboseLog:
 
 config:
-  # -- Set if the configMap is going to be created by this chart or the user will provide its own.
-  create: true
-  # -- The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent.
-  name: ""
-  # -- The key in the configMap that has the configuration for the Super Agent.
-  key: ""
-  # -- Here you can set New Relic' Super Agent configuration.
+  # -- Configuration for the Super Agent.
+  # @default -- See `values.yaml`
+  superAgent:
+    # -- Set if the configMap is going to be created by this chart or the user will provide its own.
+    create: true
+    # -- The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent.
+    name: ""
+    # -- The key in the configMap that has the configuration for the Super Agent.
+    key: ""
+    # -- Here you can set New Relic' Super Agent configuration.
+    # @default -- See `values.yaml` for examples
+    content:
+    #  opamp:
+    #    headers:
+    #      some-key: some-value
+    #  agents:
+    #    infra-test:
+    #      agent_type: namespace/com.newrelic.infrastructure_agent:0.0.2
+    #    on-host-collector:
+    #      agent_type: namespace/io.opentelemetry.collector:0.0.1
+    #    kubernetes-collector:
+    #      agent_type: namespace/io.k8s.opentelemetry.collector:0.0.1
+
+  # -- Values that the fleet is going to have in the deployment.
   # @default -- See `values.yaml` for examples
-  content:
-  #  opamp:
-  #    headers:
-  #      some-key: some-value
-  #  agents:
-  #    agent_1:
-  #      agent_type: namespace/agent_type:0.0.1
+  fleet: {}
+    # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
+    # find the configuration needed for the subagent.
+    #
+    # infra-test:
+    #   config_agent:
+    #     license_key: XXSDAFDS
+    #     staging: true
+    #     log:
+    #       level: debug
+    #   config_ohis:
+    #     nri-redis.yml: |
+    #       integrations:
+    #         - name: nri-redis
+    #           env:
+    #             hostname: localhost
+    #             port: 6380
+    #             keys: '{"0":["<KEY_1>"],"1":["<KEY_2>"]}'
+    #             remote_monitoring: true
+    #             use_unix_socket: true
+    #           labels:
+    #           environment: staging
+    #   logging:
+    #     fluentbit.yml: |
+    #       logs:
+    #         - name: external-fluentbit-config-and-parsers-file
+    #           fluentbit:
+    #             config_file: /home/user/Configs/fluent-bit.conf
+    #             parsers_file: /home/user/Configs/parsers.conf
+    #
+    # on-host-collector:
+    #   config_file: /etc/nr-otel-collector/config.yaml
+    #   otel_exporter_otlp_endpoint: "otlp.nr-data.net:4317"
+    #   new_relic_memory_limit_mib: 100
+    #
+    # kubernetes-collector:
+    #   extralabel: test
