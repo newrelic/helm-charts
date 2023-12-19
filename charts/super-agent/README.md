@@ -2,7 +2,7 @@
 
 # super-agent
 
-![Version: 0.0.0-beta](https://img.shields.io/badge/Version-0.0.0--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.1-beta](https://img.shields.io/badge/Version-0.0.1--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Bootstraps New Relic' Super Agent
 
@@ -54,7 +54,7 @@ As of the creation of the chart, it has no particularities and this section can 
 | helm.release.upgrade | object | See `values.yaml` | Change the behavior of the operator while upgrading the chart. This should only be changed by advanced users that know what they are doing. Exposes the remediations that the operator is going to try before give up installing the chart in case it hits an error. |
 | helm.release.values | string | `{}`. Examples on the `values.yaml` | Set values to the super agent helm release directly from this `values.yaml` file. Refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides |
 | helm.release.valuesFrom | string | empty | Set values from a `configMap` or a `secret`. You can see examples and better documentation inside the `values.yaml` file. Also refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides |
-| helm.release.version | string | `"0.0.0-beta"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes.  TODO: Point renovatebot here. |
+| helm.release.version | string | `"0.0.4-beta"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes.  TODO: Point renovatebot here. |
 | helm.repository | object | See `values.yaml` | Values related to the Helm repository where to download the super agent's chart. |
 | helm.repository.certSecretRef | string | `nil` (no secret reference) | secret of type `kubernetes.io/tls` with the standard keys `tls.crt`, `tls.key`, and `ca.crt` |
 | helm.repository.secretRef | string | `nil` (no secret reference) | A reference to a secret with the keys username and password to authenticate to the repository. |
