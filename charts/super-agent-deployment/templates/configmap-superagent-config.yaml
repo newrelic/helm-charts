@@ -2,7 +2,7 @@
 ---
 kind: ConfigMap
 metadata:
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "agent-config") }}
+  name: {{ include "newrelic-super-agent.config.name" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
