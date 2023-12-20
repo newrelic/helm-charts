@@ -1,4 +1,4 @@
-suite: super agent's config values are honored
+suite: super agent's config
 templates:
   - templates/configmap-superagent-config.yaml
 release:
@@ -8,14 +8,16 @@ tests:
   - it: super agent's config can be disabled
     set:
       config:
-        create: false
+        superAgent:
+          create: false
     asserts:
       - hasDocuments:
           count: 0
   - it: super agent's config always include cluster_name and namespace
     set:
       cluster: my-cluster
-      config: {}
+      config:
+        superAgent: {}
     asserts:
       - equal:
           path: data["config.yaml"]
@@ -27,9 +29,10 @@ tests:
     set:
       cluster: my-cluster
       config:
-        content:
-          test: value
-          test2: value2
+        superAgent:
+          content:
+            test: value
+            test2: value2
     asserts:
       - equal:
           path: data["config.yaml"]
@@ -43,12 +46,13 @@ tests:
     set:
       cluster: my-cluster
       config:
-        content:
-          test: value
-          test2: value2
-          k8s:
-            cluster_name: config-cluster
-            namespace: config-namespace
+        superAgent:
+          content:
+            test: value
+            test2: value2
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
     asserts:
       - equal:
           path: data["config.yaml"]

@@ -1,0 +1,65 @@
+suite: subagent configurations
+templates:
+  - templates/configmap-subagent-configs.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not template nothing by default
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: super agent's config template correctly
+    set:
+      config:
+        subAgents:
+          test-0:
+            content:
+              a: test
+              value: 0
+          test-1:
+            content:
+              a: test
+              value: 1
+          test-2:
+            content:
+              a: test
+              aYAML:
+                canI: HaveSomeYAML
+    asserts:
+      - hasDocuments:
+          count: 3
+
+      - documentIndex: 0
+        equal:
+          path: metadata.name
+          value: my-release-super-agent-deployment-subagent-test-0
+      - documentIndex: 0
+        equal:
+          path: data["values.yml"]
+          value: |
+            a: test
+            value: 0
+
+      - documentIndex: 1
+        equal:
+          path: metadata.name
+          value: my-release-super-agent-deployment-subagent-test-1
+      - documentIndex: 1
+        equal:
+          path: data["values.yml"]
+          value: |
+            a: test
+            value: 1
+
+      - documentIndex: 2
+        equal:
+          path: metadata.name
+          value: my-release-super-agent-deployment-subagent-test-2
+      - documentIndex: 2
+        equal:
+          path: data["values.yml"]
+          value: |
+            a: test
+            aYAML:
+              canI: HaveSomeYAML

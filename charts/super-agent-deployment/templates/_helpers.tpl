@@ -2,7 +2,7 @@
 Return the name of the configMap holding the Super Agent's config. Defaults to release's fill name suffiexed with "-config"
 */ -}}
 {{- define "newrelic-super-agent.config.name" -}}
-{{- .Values.config.name | default (include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "config" )) -}}
+{{- .Values.config.superAgent.name | default (include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "superagent-config" )) -}}
 {{- end -}}
 
 
@@ -10,7 +10,7 @@ Return the name of the configMap holding the Super Agent's config. Defaults to r
 Return the key name of the configMap holding the Super Agent's config. Defaults to "config.yaml"
 */ -}}
 {{- define "newrelic-super-agent.config.key" -}}
-{{- .Values.config.key | default "config.yaml" -}}
+{{- .Values.config.superAgent.key | default "config.yaml" -}}
 {{- end -}}
 
 
@@ -36,7 +36,7 @@ the config.
 
 If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for things that are yet to be implemented.
 */ -}}
-{{- $config :=  .Values.config.content | default dict -}}
+{{- $config := .Values.config.superAgent.content | default dict -}}
 {{- $config = mustMergeOverwrite (dict "k8s" (dict "cluster_name" (include "newrelic.common.cluster" .))) $config -}}
 {{- $config = mustMergeOverwrite (dict "k8s" (dict "namespace" .Release.Namespace)) $config -}}
 {{- $config | toYaml -}}
