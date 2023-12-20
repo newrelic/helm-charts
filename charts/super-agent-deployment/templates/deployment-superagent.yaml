@@ -13,6 +13,7 @@ matchLabels:
 metadata:
   annotations:
 checksum/agent-config: {{ include (print $.Template.BasePath "/configmap-superagent-config.yaml") . | sha256sum }}
+checksum/subagent-config: {{ include (print $.Template.BasePath "/configmap-subagent-configs.yaml") . | sha256sum }}
 {{- with .Values.podAnnotations }}
 {{- toYaml . | nindent 8 }}
 {{- end }}
@@ -67,6 +68,14 @@ spec:
 - name: super-agent-config
   mountPath: /etc/newrelic-super-agent
   readOnly: true
+{{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
+{{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
+{{- $configName := printf "%s-%s" "subagent" $subAgentName }}
+{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
+- name: subagent-configmap-{{ $name }}
+  mountPath: /etc/newrelic-super-agent/fleet/agents.d/{{ $subAgentName }}
+  readOnly: true
+{{- end }}
 # TODO: when releasing we should check if this is still needed and if we need to persist the data.
 - mountPath: /var/lib/newrelic-super-agent
   name: var-lib-newrelic-super-agent
@@ -84,6 +93,15 @@ name: {{ include "newrelic-super-agent.config.name" . }}
 items:
   - key: {{ include "newrelic-super-agent.config.key" . }}
 path: config.yaml
+{{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
+{{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
+{{- $configName := printf "%s-%s" "subagent" $subAgentName }}
+{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
+- name: subagent-configmap-{{ $name }}
+  configMap:
+name: {{ $name }}
+{{- end }}
+
 - name: var-lib-newrelic-super-agent
   emptyDir: {}
 {{- with .Values.extraVolumes }}

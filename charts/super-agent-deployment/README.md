@@ -2,7 +2,7 @@
 
 # super-agent-deployment
 
-![Version: 0.0.0-beta](https://img.shields.io/badge/Version-0.0.0--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: nightly](https://img.shields.io/badge/AppVersion-nightly-informational?style=flat-square)
+![Version: 0.0.5-beta](https://img.shields.io/badge/Version-0.0.5--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: nightly](https://img.shields.io/badge/AppVersion-nightly-informational?style=flat-square)
 
 A Helm chart to install New Relic Super agent on Kubernetes
 
@@ -36,10 +36,12 @@ At the point of the creation of the chart, it has no particularities and this se
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| config.content | string | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
-| config.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
-| config.key | string | `""` | The key in the configMap that has the configuration for the Super Agent. |
-| config.name | string | `""` | The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent. |
+| config.subAgents | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
+| config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
+| config.superAgent.content | string | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
+| config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
+| config.superAgent.key | string | `""` | The key in the configMap that has the configuration for the Super Agent. |
+| config.superAgent.name | string | `""` | The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
 | customSecretLicenseKey | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
