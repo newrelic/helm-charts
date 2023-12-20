@@ -129,35 +129,39 @@ config:
     # These values are the values that are going to be used on the agent types specified above on the super agent configuration.
     #
     # infra-test:
-    #   config_agent:
-    #     license_key: XXSDAFDS
-    #     staging: true
-    #     log:
-    #       level: debug
-    #   config_ohis:
-    #     nri-redis.yml: |
-    #       integrations:
-    #         - name: nri-redis
-    #           env:
-    #             hostname: localhost
-    #             port: 6380
-    #             keys: '{"0":["<KEY_1>"],"1":["<KEY_2>"]}'
-    #             remote_monitoring: true
-    #             use_unix_socket: true
-    #           labels:
-    #           environment: staging
+    #   content:
+    #     config_agent:
+    #       license_key: XXSDAFDS
+    #       staging: true
+    #       log:
+    #         level: debug
+    #     config_ohis:
+    #       nri-redis.yml: |
+    #         integrations:
+    #           - name: nri-redis
+    #             env:
+    #               hostname: localhost
+    #               port: 6380
+    #               keys: '{"0":["<KEY_1>"],"1":["<KEY_2>"]}'
+    #               remote_monitoring: true
+    #               use_unix_socket: true
+    #             labels:
+    #             environment: staging
     #   logging:
-    #     fluentbit.yml: |
-    #       logs:
-    #         - name: external-fluentbit-config-and-parsers-file
-    #           fluentbit:
-    #             config_file: /home/user/Configs/fluent-bit.conf
-    #             parsers_file: /home/user/Configs/parsers.conf
+    #     content:
+    #       fluentbit.yml: |
+    #         logs:
+    #           - name: external-fluentbit-config-and-parsers-file
+    #             fluentbit:
+    #               config_file: /home/user/Configs/fluent-bit.conf
+    #               parsers_file: /home/user/Configs/parsers.conf
     #
     # on-host-collector:
-    #   config_file: /etc/nr-otel-collector/config.yaml
-    #   otel_exporter_otlp_endpoint: "otlp.nr-data.net:4317"
-    #   new_relic_memory_limit_mib: 100
+    #  content:
+    #    config_file: /etc/nr-otel-collector/config.yaml
+    #    otel_exporter_otlp_endpoint: "otlp.nr-data.net:4317"
+    #    new_relic_memory_limit_mib: 100
     #
     # kubernetes-collector:
-    #   extralabel: test
+    #  content:
+    #    extralabel: test
