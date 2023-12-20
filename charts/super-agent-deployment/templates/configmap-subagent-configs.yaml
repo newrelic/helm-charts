@@ -1,7 +1,7 @@
 {{- range $subAgentName, $subAgentConfig := .Values.config.subAgents -}}
-{{- $chartSuffix := include "newrelic.common.naming.fullname" $ -}}
+{{- $releasePrefix := include "newrelic.common.naming.fullname" $ -}}
 {{- $configName := printf "%s-%s" "subagent" $subAgentName -}}
-{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $chartSuffix "suffix" $configName) }}
+{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releasePrefix "suffix" $configName) }}
 ---
 kind: ConfigMap
 metadata:

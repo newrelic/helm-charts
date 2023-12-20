@@ -69,9 +69,9 @@ spec:
               mountPath: /etc/newrelic-super-agent
               readOnly: true
             {{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
-            {{- $chartSuffix := include "newrelic.common.naming.fullname" $ }}
+            {{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
             {{- $configName := printf "%s-%s" "subagent" $subAgentName }}
-            {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $chartSuffix "suffix" $configName) }}
+            {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
             - name: subagent-configmap-{{ $name }}
               mountPath: /etc/newrelic-super-agent/fleet/agents.d/{{ $subAgentName }}
               readOnly: true
@@ -94,9 +94,9 @@ spec:
               - key: {{ include "newrelic-super-agent.config.key" . }}
                 path: config.yaml
         {{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
-        {{- $chartSuffix := include "newrelic.common.naming.fullname" $ }}
+        {{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
         {{- $configName := printf "%s-%s" "subagent" $subAgentName }}
-        {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $chartSuffix "suffix" $configName) }}
+        {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
         - name: subagent-configmap-{{ $name }}
           configMap:
             name: {{ $name }}

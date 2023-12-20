@@ -36,7 +36,7 @@ At the point of the creation of the chart, it has no particularities and this se
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| config.fleet | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
+| config.subAgents | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
 | config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
 | config.superAgent.content | string | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
 | config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
