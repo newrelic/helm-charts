@@ -72,7 +72,7 @@ spec:
 {{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
 {{- $configName := printf "%s-%s" "subagent" $subAgentName }}
 {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
-- name: subagent-configmap-{{ $name }}
+- name: {{ $name }}
   mountPath: /etc/newrelic-super-agent/fleet/agents.d/{{ $subAgentName }}
   readOnly: true
 {{- end }}
@@ -97,7 +97,7 @@ path: config.yaml
 {{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
 {{- $configName := printf "%s-%s" "subagent" $subAgentName }}
 {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
-- name: subagent-configmap-{{ $name }}
+- name: {{ $name }}
   configMap:
 name: {{ $name }}
 {{- end }}
