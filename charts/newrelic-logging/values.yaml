@@ -284,3 +284,12 @@ windows:
 
 # -- Sets pod dnsConfig. Can also be configured with `global.dnsConfig`
 dnsConfig: {}
+
+# -- Use persistent volumes to store the fluent-bit db, this will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead
+persistentVolume:
+  enabled: false
+  size: 10Gi
+  # -- The storage class should allow ReadWriteMany mode
+  storageClassName: "standard-rwx"
+  # -- If dynamicProvisioning is enabled the chart will create only the PersistentVolumeClaim
+  dynamicProvisioning: true

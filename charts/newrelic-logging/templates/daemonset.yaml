@@ -92,8 +92,17 @@ spec:
               {{- else }}
               value: "docker,cri"
               {{- end }}
+            {{- if .Values.persistentVolume.enabled }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: FB_DB
+              value: "/db/$(NODE_NAME)-fb.db"
+            {{- else }}
             - name: FB_DB
               value: {{ .Values.fluentBit.db | quote }}
+            {{- end }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_BUFFER_SIZE
@@ -118,8 +127,13 @@ spec:
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
-            - name: var
-              mountPath: /var
+            - name: var-log
+              mountPath: /var/log
+            {{- if .Values.persistentVolume.enabled }}
+              readOnly: true
+            - name: fb-db-pvc
+              mountPath: /db
+            {{- end}}
           {{- if .Values.exposedPorts }}
           ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
@@ -134,9 +148,14 @@ spec:
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
-        - name: var
+        - name: var-log
           hostPath:
-            path: /var
+            path: /var/log
+        {{- if .Values.persistentVolume.enabled }}
+        - name: fb-db-pvc
+          persistentVolumeClaim:
+            claimName: {{ template "newrelic-logging.fullname" . }}-pvc
+        {{- end}}
       {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
       {{- end }}

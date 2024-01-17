@@ -1,0 +1,39 @@
+{{- if .Values.persistentVolume.enabled }}
+{{- if not .Values.persistentVolume.dynamicProvisioning }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  name: {{ template "newrelic-logging.fullname" . }}-pv
+  annotations:
+  {{- if .Values.persistentVolume.annotations }}
+{{ toYaml .Values.persistentVolume.annotations | indent 4 }}
+  {{- end }}
+spec: 
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: {{ .Values.persistentVolume.size }}
+  storageClassName: {{ .Values.persistentVolume.storageClassName }}
+  persistentVolumeReclaimPolicy: Retain
+---
+{{- end }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  name: {{ template "newrelic-logging.fullname" . }}-pvc
+  annotations:
+  {{- if .Values.persistentVolume.annotations }}
+{{ toYaml .Values.persistentVolume.annotations | indent 4 }}
+  {{- end }}
+spec:
+  storageClassName: {{ .Values.persistentVolume.storageClassName }}
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: {{ .Values.persistentVolume.size }}
+{{- end }}
