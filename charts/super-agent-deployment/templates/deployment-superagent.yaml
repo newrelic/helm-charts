@@ -70,10 +70,9 @@ spec:
               readOnly: true
             {{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
             {{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
-            {{- $configName := printf "%s-%s" "subagent" $subAgentName }}
-            {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
+            {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $subAgentName) }}
             - name: {{ $name }}
-              mountPath: /etc/newrelic-super-agent/fleet/agents.d/{{ $subAgentName }}
+              mountPath: /etc/newrelic-super-agent/fleet/agents.d/{{ $subAgentName }}/values
               readOnly: true
             {{- end }}
             # TODO: when releasing we should check if this is still needed and if we need to persist the data.
@@ -95,8 +94,7 @@ spec:
                 path: config.yaml
         {{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
         {{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
-        {{- $configName := printf "%s-%s" "subagent" $subAgentName }}
-        {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $configName) }}
+        {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $subAgentName) }}
         - name: {{ $name }}
           configMap:
             name: {{ $name }}
