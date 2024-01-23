@@ -92,14 +92,14 @@ jobs:
           rm ./library/CHART-TEMPLATE/Chart.yaml
 
       - name: Release library charts
-        uses: helm/chart-releaser-action@v1.3.0
+        uses: helm/chart-releaser-action@v1.6.0
         with:
           charts_dir: library
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
       - name: Release workload charts
-        uses: helm/chart-releaser-action@v1.3.0
+        uses: helm/chart-releaser-action@v1.6.0
         env:
           # GITHUB_TOKEN does not allow to create a new workflow run,
           # so use alternative token to allow post-release workflow to run
