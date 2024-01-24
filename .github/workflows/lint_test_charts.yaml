@@ -8,7 +8,7 @@ name: Check spelling
 runs-on: ubuntu-latest
 steps:
   - name: Checkout
-uses: actions/checkout@v2
+uses: actions/checkout@v4
   - uses: codespell-project/actions-codespell@master
 with:
   check_filenames: true
@@ -24,7 +24,7 @@ outputs:
   bundle-changed: ${{ steps.changed.outputs.bundle }}
 steps:
   - name: Checkout
-uses: actions/checkout@v2
+uses: actions/checkout@v4
 with:
   fetch-depth: 0
 
@@ -68,7 +68,7 @@ if: ${{ needs.lint-test.outputs.charts-changed == 'true' }}
 needs: [ lint-test ]
 steps:
   - name: Checkout
-uses: actions/checkout@v2
+uses: actions/checkout@v4
 with:
   fetch-depth: 0
 
@@ -100,7 +100,7 @@ runs-on: ubuntu-latest
 if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
 needs: [ lint-test ]
 steps:
-  - uses: actions/checkout@v2
+  - uses: actions/checkout@v4
   - uses: azure/setup-helm@v3
 with:
   version: 'v3.0.0'
@@ -148,7 +148,7 @@ runs-on: ubuntu-latest
 if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
 needs: [ lint-test ]
 steps:
-  - uses: actions/checkout@v2
+  - uses: actions/checkout@v4
   - uses: azure/setup-helm@v3
 with:
   version: 'v3.0.0'
