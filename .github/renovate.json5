@@ -4,6 +4,13 @@
   ],
   "bumpVersion": "patch",
   "packageRules": [
+    // This is a shared repository where it is not clear that generic rules apply
+    // Making rules per folders or properties runs the risk that future 
+    // projects get accidentally automerged because they are not covered in old presets
+    {
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest"],
+      "automerge": false
+    },
     {
       // Group all nri-bundle dependencies together in a single PR.
       "matchFileNames": [
