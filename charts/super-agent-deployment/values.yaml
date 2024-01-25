@@ -109,16 +109,15 @@ key: ""
 # -- Here you can set New Relic' Super Agent configuration.
 # @default -- See `values.yaml` for examples
 content:
-#  opamp:
-#headers:
-#  some-key: some-value
-#  agents:
-#infra-test:
-#  agent_type: namespace/com.newrelic.infrastructure_agent:0.0.2
-#on-host-collector:
-#  agent_type: namespace/io.opentelemetry.collector:0.0.1
-#kubernetes-collector:
-#  agent_type: namespace/io.k8s.opentelemetry.collector:0.0.1
+  # agents:
+  #   open-telemetry:
+  # # TODO the .k8s will disappear in the release 0.0.8 of the SA
+  # agent_type: newrelic/io.k8s.opentelemetry.collector:0.0.1
+  #  opamp:
+  #endpoint: https://opamp.service.newrelic.com/v1/opamp
+  #headers:
+  #  api-key: LICENSE_KEY
+
 
   # -- Values that the fleet is going to have in the deployment.
   # @default -- See `values.yaml` for examples
@@ -128,39 +127,9 @@ content:
 #
 # These values are the values that are going to be used on the agent types specified above on the super agent configuration.
 #
-# infra-test:
+# open-telemetry:
 #   content:
-# config_agent:
-#   license_key: XXSDAFDS
-#   staging: true
-#   log:
-# level: debug
-# config_ohis:
-#   nri-redis.yml: |
-# integrations:
-#   - name: nri-redis
-# env:
-#   hostname: localhost
-#   port: 6380
-#   keys: '{"0":["<KEY_1>"],"1":["<KEY_2>"]}'
-#   remote_monitoring: true
-#   use_unix_socket: true
-# labels:
-# environment: staging
-# logging:
-#   fluentbit.yml: |
-# logs:
-#   - name: external-fluentbit-config-and-parsers-file
-# fluentbit:
-#   config_file: /home/user/Configs/fluent-bit.conf
-#   parsers_file: /home/user/Configs/parsers.conf
-#
-# on-host-collector:
-#   content:
-# config_file: /etc/nr-otel-collector/config.yaml
-# otel_exporter_otlp_endpoint: "otlp.nr-data.net:4317"
-# new_relic_memory_limit_mib: 100
-#
-# kubernetes-collector:
-#   content:
-# extralabel: test
+# # TODO config_file has been changed to chart_values in the release 0.0.8 of the SA
+# config_file: |
+#   exporters:
+# logging: {}
