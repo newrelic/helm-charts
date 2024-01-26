@@ -1,4 +1,4 @@
-{{- if and (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
+{{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
 {{- if and (not .Values.fluentBit.persistence.persistentVolume.dynamicProvisioning) (not .Values.fluentBit.persistence.persistentVolume.existingVolume) }}
 apiVersion: v1
 kind: PersistentVolume
