@@ -54,16 +54,16 @@ fluentBit:
 
     # In case persistence.mode is set to persistentVolume this will be needed
     persistentVolume:
+      # The storage class should allow ReadWriteMany mode
+      storageClass:
+      # Volume and claim size.
+      size: 10Gi
+      # If dynamicProvisioning is enabled the chart will create only the PersistentVolumeClaim
+      dynamicProvisioning: true
       # If an existingVolume is provided, we'll use it instead creating a new one
       existingVolume:
       # If an existingVolumeClaim is provided, we'll use it instead creating a new one
       existingVolumeClaim:
-      # Volume and claim size.
-      size: 10Gi
-      # The storage class should allow ReadWriteMany mode
-      storageClass:
-      # If dynamicProvisioning is enabled the chart will create only the PersistentVolumeClaim
-      dynamicProvisioning: true
       # In case you need to add annotations to the created volume or claim
       annotations:
         volume: {}
