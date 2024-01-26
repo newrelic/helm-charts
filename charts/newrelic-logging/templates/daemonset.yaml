@@ -47,8 +47,17 @@ spec:
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- if .Values.initContainers }}
       initContainers:
+      {{- if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
+        - name: init
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args: ["/bin/find /db -type f -mtime +1 -delete"] # Delete all db files not updated in the last 24h
+          volumeMounts:
+            - name: fb-db-pvc
+              mountPath: /db
+      {{- end }}
+      {{- if .Values.initContainers }}
 {{ toYaml .Values.initContainers | indent 8 }}
       {{- end }}
       containers:
@@ -92,8 +101,20 @@ spec:
               {{- else }}
               value: "docker,cri"
               {{- end }}
+            {{- if eq .Values.fluentBit.persistence.mode "hostPath" }}
             - name: FB_DB
               value: {{ .Values.fluentBit.db | quote }}
+            {{- else if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: FB_DB
+              value: "/db/$(NODE_NAME)-fb.db"
+            {{- else }}
+            - name: FB_DB
+              value: ""
+            {{- end }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_BUFFER_SIZE
@@ -118,8 +139,15 @@ spec:
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
-            - name: var
-              mountPath: /var
+            - name: logs
+              mountPath: {{ .Values.fluentBit.linuxMountPath }}
+              {{- if ne .Values.fluentBit.persistence.mode "hostPath" }}
+              readOnly: true
+              {{- end }}
+            {{- if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
+            - name: fb-db-pvc
+              mountPath: /db
+            {{- end }}
           {{- if .Values.exposedPorts }}
           ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
@@ -134,9 +162,18 @@ spec:
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
-        - name: var
+        - name: logs
           hostPath:
-            path: /var
+            path: {{ .Values.fluentBit.linuxMountPath }}
+        {{- if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
+        - name: fb-db-pvc
+          persistentVolumeClaim:
+            {{- if .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim }}
+            claimName: {{ .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim }}
+            {{- else }}
+            claimName: {{ template "newrelic-logging.fullname" . }}-pvc
+            {{- end }}
+        {{- end }}
       {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
       {{- end }}
