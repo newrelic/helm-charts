@@ -1,4 +1,10 @@
-{{- if and (not (empty .Values.fluentBit.persistence)) (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
+{{- if (not (empty .Values.fluentBit.persistence)) }}
+
+{{- if and (not (empty .Values.fluentBit.persistence)) (eq .Values.fluentBit.persistence.mode "persistentVolume") (.Values.fluentBit.persistence.persistentVolume.existingVolume) (not .Values.fluentBit.persistence.persistentVolume.storageClass) }}
+{{ fail "You should provide a ReadWriteMany StorageClass if using persitentVolume as Fluent Bit persistence mode." }}
+{{- end }}
+
+{{- if (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
 {{- if and (not .Values.fluentBit.persistence.persistentVolume.dynamicProvisioning) (not .Values.fluentBit.persistence.persistentVolume.existingVolume) }}
 apiVersion: v1
 kind: PersistentVolume
@@ -47,4 +53,5 @@ spec:
   {{- if .Values.fluentBit.persistence.persistentVolume.extra.claim }}
 {{ toYaml .Values.fluentBit.persistence.persistentVolume.extra.claim | indent 2 }}
   {{- end }}
+{{- end }}
 {{- end }}

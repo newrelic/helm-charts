@@ -167,11 +167,6 @@ See [values.yaml](values.yaml) for the default values
 | `dnsConfig`                                                  | [DNS configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) that will be added to the pods. Can be configured also with `global.dnsConfig`.                                                                                                                                                                                         | `{}`                                                                            |
 | `fluentBit.criEnabled`                                       | We assume that `kubelet`directly communicates with the container engine using the [CRI](https://kubernetes.io/docs/concepts/overview/components/#container-runtime) specification. Set this to `false` if your K8s installation uses [dockershim](https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/) instead, in order to get the logs properly parsed. | `true`                                                                          |
 
-
-### Proxy support
-
-Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https://github.com/newrelic/newrelic-fluent-bit-output) we can configure the [proxy support](https://github.com/newrelic/newrelic-fluent-bit-output#proxy-support) in order to set up the proxy configuration.
-
 ### Fluent Bit persistence modes
 
 Fluent Bit uses a database file to keep track of tailed and sent log lines from files, this database file is by default stored on the node using a `hostPath` mount. It's specifically stored (by default) on `/var/log/flb_kube.db` to keep things simple, as we're already mounting `/var` for accessing container logs.
@@ -182,6 +177,22 @@ persistence modes. Each one have their pros and cons.
 - `hostPath` (default) will use hostPath mount to store the db file on the node disk, the easier an most reliable, but prohibited by some security policies.
 - `none` will disable the fluent-bit db file, this could cause log duplication or data loss in case fluent-bit gets restarted.
 - `persistentVolume` (linux only) will use a ReadWriteMany persistent volume to store the db file. This will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead.
+
+#### GKE Autopilot example
+
+If you're using the persistentVolume persistence mode you need to provide at least the storageClass, and it should be ReadWriteMany. This is an example of the configuration for persistence in GKE Autopilot.
+
+```
+fluentBit:
+  persistence:
+    mode: persistentVolume
+    persistentVolume:
+      storageClass: standard-rwx
+```
+
+### Proxy support
+
+Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https://github.com/newrelic/newrelic-fluent-bit-output) we can configure the [proxy support](https://github.com/newrelic/newrelic-fluent-bit-output#proxy-support) in order to set up the proxy configuration.
 
 #### As environment variables
 
