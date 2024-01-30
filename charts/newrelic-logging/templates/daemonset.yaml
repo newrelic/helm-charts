@@ -140,6 +140,7 @@ spec:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
             - name: logs
+              # We mount /var by default because container logs could be on /var/log or /var/lib/docker/containers (symlinked to /var/log)
               mountPath: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
               {{- if and (.Values.fluentBit.persistence) (ne .Values.fluentBit.persistence.mode "hostPath") }}
               readOnly: true
