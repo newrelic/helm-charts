@@ -88,6 +88,8 @@ tests:
       fluentBit:
         persistence:
           mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -150,6 +152,7 @@ tests:
         persistence:
           mode: persistentVolume
           persistentVolume:
+            storageClass: sample-rwx
             dynamicProvisioning: false
     asserts:
       - hasDocuments:
@@ -202,6 +205,7 @@ tests:
         persistence:
           mode: persistentVolume
           persistentVolume:
+            storageClass: sample-rwx
             dynamicProvisioning: false
             size: 100Gi
     asserts:
@@ -222,6 +226,7 @@ tests:
         persistence:
           mode: persistentVolume
           persistentVolume:
+            storageClass: sample-rwx
             dynamicProvisioning: false
             existingVolume: existing-volume
     asserts:
@@ -242,6 +247,7 @@ tests:
         persistence:
           mode: persistentVolume
           persistentVolume:
+            storageClass: sample-rwx
             dynamicProvisioning: false
             existingVolumeClaim: existing-claim
     asserts:
@@ -262,6 +268,7 @@ tests:
         persistence:
           mode: persistentVolume
           persistentVolume:
+            storageClass: sample-rwx
             annotations:
               volume:
                 foo: bar
@@ -286,6 +293,7 @@ tests:
         persistence:
           mode: persistentVolume
           persistentVolume:
+            storageClass: sample-rwx
             extra:
               volume:
                 nfs:
