@@ -1,10 +1,6 @@
 {{- if (not (empty .Values.fluentBit.persistence)) }}
 
-{{- if and
-  (eq .Values.fluentBit.persistence.mode "persistentVolume")
-  (not .Values.fluentBit.persistence.persistentVolume.storageClass)
-  (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim)
-}}
+{{- if and (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.storageClass) (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
 {{ fail "You should provide a ReadWriteMany storageClass or an existingVolumeClaim if using persitentVolume as Fluent Bit persistence mode." }}
 {{- end }}
 
