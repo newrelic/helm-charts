@@ -180,7 +180,7 @@ persistence modes. Each one has their pros and cons.
 
 #### GKE Autopilot example
 
-If you're using the persistentVolume persistence mode you need to provide at least the storageClass, and it should be ReadWriteMany. This is an example of the configuration for persistence in GKE Autopilot.
+If you're using the `persistentVolume` persistence mode you need to provide at least the `storageClass`, and it should be `ReadWriteMany`. This is an example of the configuration for persistence in [GKE Autopilot](https://cloud.google.com/kubernetes-engine/docs/concepts/autopilot-overview).
 
 ```
 fluentBit:
