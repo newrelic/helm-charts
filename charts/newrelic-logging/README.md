@@ -169,7 +169,7 @@ See [values.yaml](values.yaml) for the default values
 
 ### Fluent Bit persistence modes
 
-Fluent Bit uses a database file to keep track of tailed and sent log lines from files, this database file is by default stored on the node using a `hostPath` mount. It's specifically stored (by default) on `/var/log/flb_kube.db` to keep things simple, as we're already mounting `/var` for accessing container logs.
+Fluent Bit uses a database file to keep track of log lines read from files (offsets). This database file is stored in the host node by default, using a `hostPath` mount. It's specifically stored (by default) in `/var/log/flb_kube.db` to keep things simple, as we're already mounting `/var` for accessing container logs.
 
 Sometimes the security constraints of some clusters doesn't allow to mount hostPath in read-write mode, that's why you can chose among the following
 persistence modes. Each one have their pros and cons.
