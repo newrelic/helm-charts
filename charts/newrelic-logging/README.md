@@ -176,7 +176,7 @@ persistence modes. Each one has their pros and cons.
 
 - `hostPath` (default) will use a `hostPath` mount to store the DB file on the node disk. This is the easiest, cheapest an most reliable option, but prohibited by some cloud vendor security policies.
 - `none` will disable the Fluent Bit DB file. This can cause log duplication or data loss in case Fluent Bit gets restarted.
-- `persistentVolume` (linux only) will use a ReadWriteMany persistent volume to store the db file. This will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead. If you use this option in a windows cluster it will default to none on windows nodes.
+- `persistentVolume` (Linux only) will use a `ReadWriteMany` persistent volume to store the DB file. This will override the `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` instead. If you use this option in a Windows cluster it will default to `none` on Windows nodes.
 
 #### GKE Autopilot example
 
