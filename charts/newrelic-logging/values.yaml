@@ -27,6 +27,7 @@
 fluentBit:
   logLevel: "info"
   path: "/var/log/containers/*.log"
+  linuxMountPath: /var
   windowsPath: "C:\\var\\log\\containers\\*.log"
   db: "/var/log/flb_kube.db"
   windowsDb: "C:\\var\\log\\flb_kube.db"
@@ -42,6 +43,39 @@ fluentBit:
   #   valueFrom:
   #     fieldRef:
   #       fieldPath: metadata.name
+
+  # Indicates how fluent-bit database is persisted
+  persistence:
+    # Define the persistent mode for fluent-bit db, allowed options are `hostPath` (default), `none`, `persistentVolume`.
+    # - `hostPath` will use hostPath to store the db file on the node disk.
+    # - `none` will disable the fluent-bit db file, this could cause log duplication or data loss in case fluent-bit gets restarted.
+    # - `persistentVolume` will use a ReadWriteMany persistent volume to store the db file. This will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead.
+    mode: "hostPath"
+
+    # In case persistence.mode is set to persistentVolume this will be needed
+    persistentVolume:
+      # The storage class should allow ReadWriteMany mode
+      storageClass:
+      # Volume and claim size.
+      size: 10Gi
+      # If dynamicProvisioning is enabled the chart will create only the PersistentVolumeClaim
+      dynamicProvisioning: true
+      # If an existingVolume is provided, we'll use it instead creating a new one
+      existingVolume:
+      # If an existingVolumeClaim is provided, we'll use it instead creating a new one
+      existingVolumeClaim:
+      # In case you need to add annotations to the created volume or claim
+      annotations:
+        volume: {}
+        claim: {}
+      # In case you need to specify any other option to your volume or claim
+      extra:
+        volume:
+        #  nfs:
+        #    path: /tmp/
+        #    server: 1.1.1.1
+        claim: {}
+
 
   # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
   # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
