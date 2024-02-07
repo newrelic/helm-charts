@@ -1,0 +1,37 @@
+suite: test fluent-bit linux mount for logs
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: is set to /var by default an
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[1].mountPath
+          value: /var
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].hostPath.path
+          value: /var
+        template: templates/daemonset.yaml
+        documentIndex: 0
+  - it: is set to linuxMountPath if set
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit.linuxMountPath: /var/log
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[1].mountPath
+          value: /var/log
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.volumes[1].hostPath.path
+          value: /var/log
+        template: templates/daemonset.yaml
+        documentIndex: 0

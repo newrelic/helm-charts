@@ -1,0 +1,57 @@
+{{- if (not (empty .Values.fluentBit.persistence)) }}
+
+{{- if and (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.storageClass) (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
+{{ fail "You should provide a ReadWriteMany storageClass or an existingVolumeClaim if using persitentVolume as Fluent Bit persistence mode." }}
+{{- end }}
+
+{{- if and (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
+{{- if and (not .Values.fluentBit.persistence.persistentVolume.dynamicProvisioning) (not .Values.fluentBit.persistence.persistentVolume.existingVolume) }}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  name: {{ template "newrelic-logging.fullname" . }}-pv
+  annotations:
+  {{- if .Values.fluentBit.persistence.persistentVolume.annotations.volume }}
+{{ toYaml .Values.fluentBit.persistence.persistentVolume.annotations.volume | indent 4 }}
+  {{- end }}
+spec: 
+  accessModes:
+    - ReadWriteMany
+  capacity:
+    storage: {{ .Values.fluentBit.persistence.persistentVolume.size }}
+  storageClassName: {{ .Values.fluentBit.persistence.persistentVolume.storageClass }}
+  persistentVolumeReclaimPolicy: Delete
+  {{- if .Values.fluentBit.persistence.persistentVolume.extra.volume }}
+{{ toYaml .Values.fluentBit.persistence.persistentVolume.extra.volume | indent 2 }}
+  {{- end }}
+---
+{{- end }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  name: {{ template "newrelic-logging.fullname" . }}-pvc
+  annotations:
+  {{- if .Values.fluentBit.persistence.persistentVolume.annotations.claim }}
+{{ toYaml .Values.fluentBit.persistence.persistentVolume.annotations.claim | indent 4 }}
+  {{- end }}
+spec:
+  storageClassName: {{ .Values.fluentBit.persistence.persistentVolume.storageClass }}
+  accessModes:
+    - ReadWriteMany
+{{- if .Values.fluentBit.persistence.persistentVolume.existingVolume }}
+  volumeName: {{ .Values.fluentBit.persistence.persistentVolume.existingVolume }}
+{{- else if not .Values.fluentBit.persistence.persistentVolume.dynamicProvisioning }}
+  volumeName: {{ template "newrelic-logging.fullname" . }}-pv
+{{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.fluentBit.persistence.persistentVolume.size }}
+  {{- if .Values.fluentBit.persistence.persistentVolume.extra.claim }}
+{{ toYaml .Values.fluentBit.persistence.persistentVolume.extra.claim | indent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}

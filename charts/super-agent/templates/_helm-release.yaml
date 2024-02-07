@@ -39,4 +39,8 @@ spec:
   upgrade:
     {{- . | toYaml | nindent 4 }}
   {{- end }}
+  {{- with .Values.helm.release.rollback }}
+  rollback:
+    {{- . | toYaml | nindent 4 }}
+  {{- end }}
 {{- end -}}
