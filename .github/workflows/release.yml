@@ -105,6 +105,7 @@ env:
   # so use alternative token to allow post-release workflow to run
   # Source: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
   CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
+  CR_SKIP_EXISTING: true
 
   notify-failure:
 if: ${{ always() && failure() && (github.event_name == 'schedule') }}
