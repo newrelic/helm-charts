@@ -82,6 +82,7 @@ valuesFrom:
 # before give up installing the chart in case it hits an error.
 # @default -- See `values.yaml`
 install:
+  disableWait: true  # Prevents blocking the modification/deletions of the HelmRelease
   replace: true  # Tells the Helm install action to reuse the ‘ReleaseName’, but only if that name is a deleted release which remains in the history.
   remediation:
 retries: 3  # Retries is the number of retries that should be attempted on failures before givin up. An uninstall is performed between each attempt.
@@ -91,11 +92,17 @@ retries: 3  # Retries is the number of retries that should be attempted on failu
 # installing the chart in case it hits an error.
 # @default -- See `values.yaml`
 upgrade:
+  disableWait: true  # Prevents blocking the modification/deletions of the HelmRelease
   force: true  # Force forces resource updates through a replacement strategy.
   cleanupOnFail: true  # Allows deletion of new resources created during the Helm upgrade action when it fails.
   remediation:
 retries: 3  # Retries is the number of retries that should be attempted on failures before givin up. An uninstall is performed between each attempt.
 strategy: rollback  # rollback or uninstall.
+
+# -- Optional configuration of rollback strategy when upgrading. This should only be changed by advanced users that know what they are doing.
+# @default -- See `values.yaml`
+rollback:
+  disableWait: true  # Prevents blocking the modification/deletions of the HelmRelease
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
