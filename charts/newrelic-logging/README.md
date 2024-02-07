@@ -106,62 +106,93 @@ helm upgrade --install newrelic-bundle newrelic/nri-bundle \
 ### Supported configuration parameters
 See [values.yaml](values.yaml) for the default values
 
-| Parameter  | Description| Default |
-|------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-| `global.cluster` - `cluster`   | The cluster name for the Kubernetes cluster.   | |
-| `global.licenseKey` - `licenseKey` | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified.  | |
-| `global.customSecretName` - `customSecretName` | Name of the Secret object where the license key is stored  | |
-| `global.customSecretLicenseKey` - `customSecretLicenseKey` | Key in the Secret object where the license key is stored.  | |
-| `global.fargate`   | Must be set to `true` when deploying in an EKS Fargate environment. Prevents DaemonSet pods from being scheduled in Fargate nodes. | |
-| `global.lowDataMode` - `lowDataMode`   | If `true`, send minimal attributes on Kubernetes logs. Labels and annotations are not sent when lowDataMode is enabled.| `false` |
-| `rbac.create`  | Enable Role-based authentication   | `true`  |
-| `rbac.pspEnabled`  | Enable pod security policy support | `false` |
-| `image.repository` | The container to pull. | `newrelic/newrelic-fluentbit-output`|
-| `image.pullPolicy` | The pull policy.   | `IfNotPresent`  |
-| `image.pullSecrets`| Image pull secrets.| `nil`   |
-| `image.tag`| The version of the container to pull.  | See value in [values.yaml]` |
-| `exposedPorts` | Any ports you wish to expose from the pod.  Ex. 2020 for metrics   | `[]`|
-| `resources`| Any resources you wish to assign to the pod.   | See Resources below |
-| `priorityClassName`| Scheduling priority of the pod | `nil`   |
-| `nodeSelector` | Node label to use for scheduling on Linux nodes| `{ kubernetes.io/os: linux }`   |
-| `windowsNodeSelector`  | Node label to use for scheduling on Windows nodes  | `{ kubernetes.io/os: windows, node.kubernetes.io/windows-build: BUILD_NUMBER }` |
-| `tolerations`  | List of node taints to tolerate (requires Kubernetes >= 1.6)   | See Tolerations below   |
-| `updateStrategy`   | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)| `RollingUpdate` |
-| `extraVolumeMounts`| Additional DaemonSet volume mounts	| `[]`|
-| `extraVolumes` | Additional DaemonSet volumes   | `[]`|
-| `initContainers`   | [Init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that will be executed before the actual container in charge of shipping logs to New Relic is initialized. Use this if you are using a custom Fluent Bit configuration that requires downloading certain files inside the volumes being accessed by the log-shipping pod. | `[]`|
-| `windows.initContainers`   | [Init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that will be executed before the actual container in charge of shipping logs to New Relic is initialized. Use this if you are using a custom Fluent Bit configuration that requires downloading certain files inside the volumes being accessed by the log-shipping pod. | `[]`|
-| `serviceAccount.create`| If true, a service account would be created and assigned to the deployment | `true`  |
-| `serviceAccount.name`  | The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account  | |
-| `serviceAccount.annotations`   | The annotations to add to the service account if `serviceAccount.create` is set to true.   | |
-| `global.nrStaging` - `nrStaging`   | Send data to staging (requires a staging license key)  | `false` |
-| `fluentBit.path`   | Node path logs are forwarded from. Patterns are supported, as well as specifying multiple paths/patterns separated by commas.  | `/var/log/containers/*.log` |
-| `fluentBit.db` | Node path used by Fluent Bit to store a database file to keep track of monitored files and offsets.  | `/var/log/containers/*.log` |
-| `fluentBit.k8sBufferSize`  | Set the buffer size for HTTP client when reading responses from Kubernetes API server. A value of 0 results in no limit and the buffer will expand as needed.  | `32k`   |
-| `fluentBit.k8sLoggingExclude`  | Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude.   | `Off`   |
-| `fluentBit.additionalEnvVariables` | Additional environmental variables for fluentbit pods  | `[]]`   |
-| `daemonSet.annotations`| The annotations to add to the `DaemonSet`. | |
-| `podAnnotations`   | The annotations to add to the `DaemonSet` created `Pod`s.  | |
-| `enableLinux`  | Enable log collection from Linux containers. This is the default behavior. In case you are only interested of collecting logs from Windows containers, set this to `false`.| `true`  |
-| `enableWindows`| Enable log collection from Windows containers. Please refer to the [Windows support](#windows-support) section for more details.   | `false` |
-| `fluentBit.config.service` | Contains fluent-bit.conf Service config| |
-| `fluentBit.config.inputs`  | Contains fluent-bit.conf Inputs config | |
-| `fluentBit.config.extraInputs` | Contains extra fluent-bit.conf Inputs config   | |
-| `fluentBit.config.filters` | Contains fluent-bit.conf Filters config| |
-| `fluentBit.config.extraFilters`| Contains extra fluent-bit.conf Filters config  | |
-| `fluentBit.config.lowDataModeFilters`  | Contains fluent-bit.conf Filters config for lowDataMode| |
-| `fluentBit.config.outputs` | Contains fluent-bit.conf Outputs config| |
-| `fluentBit.config.extraOutputs`| Contains extra fluent-bit.conf Outputs config  | |
-| `fluentBit.config.parsers` | Contains parsers.conf Parsers config   | |
-| `fluentBit.retryLimit` | Amount of times to retry sending a given batch of logs to New Relic. This prevents data loss if there is a temporary network disruption, if a request to the Logs API is lost or when receiving a recoverable HTTP response. Set it to "False" for unlimited retries.  | 5   |
-| `dnsConfig`| [DNS configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) that will be added to the pods. Can be configured also with `global.dnsConfig`.   | `{}`|
-| `fluentBit.criEnabled` | We assume that `kubelet`directly communicates with the container engine using the [CRI](https://kubernetes.io/docs/concepts/overview/components/#container-runtime) specification. Set this to `false` if your K8s installation uses [dockershim](https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/) instead, in order to get the logs properly parsed. |`true` |
+| Parameter| Description  | Default |
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `global.cluster` - `cluster` | The cluster name for the Kubernetes cluster. | |
+| `global.licenseKey` - `licenseKey`   | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified.| |
+| `global.customSecretName` - `customSecretName`   | Name of the Secret object where the license key is stored| |
+| `global.customSecretLicenseKey` - `customSecretLicenseKey`   | Key in the Secret object where the license key is stored.| |
+| `global.fargate` | Must be set to `true` when deploying in an EKS Fargate environment. Prevents DaemonSet pods from being scheduled in Fargate nodes.   | |
+| `global.lowDataMode` - `lowDataMode` | If `true`, send minimal attributes on Kubernetes logs. Labels and annotations are not sent when lowDataMode is enabled.  | `false` |
+| `rbac.create`| Enable Role-based authentication | `true`  |
+| `rbac.pspEnabled`| Enable pod security policy support   | `false` |
+| `image.repository`   | The container to pull.   | `newrelic/newrelic-fluentbit-output`|
+| `image.pullPolicy`   | The pull policy. | `IfNotPresent`  |
+| `image.pullSecrets`  | Image pull secrets.  | `nil`   |
+| `image.tag`  | The version of the container to pull.| See value in [values.yaml]` |
+| `exposedPorts`   | Any ports you wish to expose from the pod.  Ex. 2020 for metrics | `[]`|
+| `resources`  | Any resources you wish to assign to the pod. | See Resources below |
+| `priorityClassName`  | Scheduling priority of the pod   | `nil`   |
+| `nodeSelector`   | Node label to use for scheduling on Linux nodes  | `{ kubernetes.io/os: linux }`   |
+| `windowsNodeSelector`| Node label to use for scheduling on Windows nodes| `{ kubernetes.io/os: windows, node.kubernetes.io/windows-build: BUILD_NUMBER }` |
+| `tolerations`| List of node taints to tolerate (requires Kubernetes >= 1.6) | See Tolerations below   |
+| `updateStrategy` | Strategy for DaemonSet updates (requires Kubernetes >= 1.6)  | `RollingUpdate` |
+| `extraVolumeMounts`  | Additional DaemonSet volume mounts   | `[]`|
+| `extraVolumes`   | Additional DaemonSet volumes | `[]`|
+| `initContainers` | [Init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that will be executed before the actual container in charge of shipping logs to New Relic is initialized. Use this if you are using a custom Fluent Bit configuration that requires downloading certain files inside the volumes being accessed by the log-shipping pod.  | `[]`|
+| `windows.initContainers` | [Init containers](https://kubernetes.io/docs/concepts/workloads/pods/init-containers/) that will be executed before the actual container in charge of shipping logs to New Relic is initialized. Use this if you are using a custom Fluent Bit configuration that requires downloading certain files inside the volumes being accessed by the log-shipping pod.  | `[]`|
+| `serviceAccount.create`  | If true, a service account would be created and assigned to the deployment   | `true`  |
+| `serviceAccount.name`| The service account to assign to the deployment. If `serviceAccount.create` is true then this name will be used when creating the service account| |
+| `serviceAccount.annotations` | The annotations to add to the service account if `serviceAccount.create` is set to true. | |
+| `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key)| `false` |
+| `fluentBit.path` | Node path logs are forwarded from. Patterns are supported, as well as specifying multiple paths/patterns separated by commas.| `/var/log/containers/*.log` |
+| `fluentBit.db`   | Node path used by Fluent Bit to store a database file to keep track of monitored files and offsets.  | `/var/log/containers/*.log` |
+| `fluentBit.k8sBufferSize`| Set the buffer size for HTTP client when reading responses from Kubernetes API server. A value of 0 results in no limit and the buffer will expand as needed.| `32k`   |
+| `fluentBit.k8sLoggingExclude`| Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude. | `Off`   |
+| `fluentBit.additionalEnvVariables`   | Additional environmental variables for fluentbit pods| `[]]`   |
+| `fluentBit.persistence.mode` | The [persistence mode](#Fluent-Bit-persistence-modes) you want to use, options are "hostPath", "none" or "persistentVolume" (this last one available only for linux)
+| `fluentBit.persistence.persistentVolume.storageClass`| On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates the storage class that will be used for create the PersistentVolume and PersistentVolumeClaim.| |
+| `fluentBit.persistence.persistentVolume.size`| On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates the capacity for the PersistentVolume and PersistentVolumeClaim   | 10Gi|
+| `fluentBit.persistence.persistentVolume.dynamicProvisioning` | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates if  the storage class used provide dynamic provisioning. If it does, only the PersistentVolumeClaim will be created.  | true|
+| `fluentBit.persistence.persistentVolume.existingVolume`  | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates and existing volume in case you want to reuse one, bear in mind that it should allow ReadWriteMany access mode. A PersistentVolumeClaim will be created using it. | |
+| `fluentBit.persistence.persistentVolume.existingVolumeClaim` | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates and existing volume claim that will be used on the daemonset. It should allow ReadWriteMany access mode.  | |
+| `fluentBit.persistence.persistentVolume.annotations.volume`  | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), allows to add annotations to the PersistentVolume (if created). | |
+| `fluentBit.persistence.persistentVolume.annotations.claim`   | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), allows to add annotations to the PersistentVolumeClaim (if created).| |
+| `fluentBit.persistence.persistentVolume.extra.volume`| On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), allows to add extra properties to the PersistentVolume (if created).| |
+| `fluentBit.persistence.persistentVolume.extra.claim` | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), allows to add extra properties to the PersistentVolumeClaim (if created).   | |
+| `daemonSet.annotations`  | The annotations to add to the `DaemonSet`.   | |
+| `podAnnotations` | The annotations to add to the `DaemonSet` created `Pod`s.| |
+| `enableLinux`| Enable log collection from Linux containers. This is the default behavior. In case you are only interested of collecting logs from Windows containers, set this to `false`.  | `true`  |
+| `enableWindows`  | Enable log collection from Windows containers. Please refer to the [Windows support](#windows-support) section for more details. | `false` |
+| `fluentBit.config.service`   | Contains fluent-bit.conf Service config  | |
+| `fluentBit.config.inputs`| Contains fluent-bit.conf Inputs config   | |
+| `fluentBit.config.extraInputs`   | Contains extra fluent-bit.conf Inputs config | |
+| `fluentBit.config.filters`   | Contains fluent-bit.conf Filters config  | |
+| `fluentBit.config.extraFilters`  | Contains extra fluent-bit.conf Filters config| |
+| `fluentBit.config.lowDataModeFilters`| Contains fluent-bit.conf Filters config for lowDataMode  | |
+| `fluentBit.config.outputs`   | Contains fluent-bit.conf Outputs config  | |
+| `fluentBit.config.extraOutputs`  | Contains extra fluent-bit.conf Outputs config| |
+| `fluentBit.config.parsers`   | Contains parsers.conf Parsers config | |
+| `fluentBit.retryLimit`   | Amount of times to retry sending a given batch of logs to New Relic. This prevents data loss if there is a temporary network disruption, if a request to the Logs API is lost or when receiving a recoverable HTTP response. Set it to "False" for unlimited retries.| 5   |
+| `dnsConfig`  | [DNS configuration](https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config) that will be added to the pods. Can be configured also with `global.dnsConfig`. | `{}`|
+| `fluentBit.criEnabled`   | We assume that `kubelet`directly communicates with the container engine using the [CRI](https://kubernetes.io/docs/concepts/overview/components/#container-runtime) specification. Set this to `false` if your K8s installation uses [dockershim](https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/) instead, in order to get the logs properly parsed. | `true`  |
 
+### Fluent Bit persistence modes
+
+Fluent Bit uses a database file to keep track of log lines read from files (offsets). This database file is stored in the host node by default, using a `hostPath` mount. It's specifically stored (by default) in `/var/log/flb_kube.db` to keep things simple, as we're already mounting `/var` for accessing container logs.
+
+Sometimes the security constraints of some clusters don't allow mounting `hostPath`s in read-write mode. That's why you can chose among the following
+persistence modes. Each one has their pros and cons.
+
+- `hostPath` (default) will use a `hostPath` mount to store the DB file on the node disk. This is the easiest, cheapest an most reliable option, but prohibited by some cloud vendor security policies.
+- `none` will disable the Fluent Bit DB file. This can cause log duplication or data loss in case Fluent Bit gets restarted.
+- `persistentVolume` (Linux only) will use a `ReadWriteMany` persistent volume to store the DB file. This will override the `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` instead. If you use this option in a Windows cluster it will default to `none` on Windows nodes.
+
+#### GKE Autopilot example
+
+If you're using the `persistentVolume` persistence mode you need to provide at least the `storageClass`, and it should be `ReadWriteMany`. This is an example of the configuration for persistence in [GKE Autopilot](https://cloud.google.com/kubernetes-engine/docs/concepts/autopilot-overview).
+
+```
+fluentBit:
+  persistence:
+mode: persistentVolume
+persistentVolume:
+  storageClass: standard-rwx
+```
 
 ### Proxy support
 
 Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https://github.com/newrelic/newrelic-fluent-bit-output) we can configure the [proxy support](https://github.com/newrelic/newrelic-fluent-bit-output#proxy-support) in order to set up the proxy configuration.
-
 
 #### As environment variables
 

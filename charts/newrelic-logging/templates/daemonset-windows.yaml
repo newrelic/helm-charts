@@ -91,8 +91,13 @@ secretKeyRef:
   {{- else }}
   value: "docker,cri"
   {{- end }}
+{{- if or (not $.Values.fluentBit.persistence) (eq $.Values.fluentBit.persistence.mode "hostPath") }}
 - name: FB_DB
   value: {{ $.Values.fluentBit.windowsDb | quote }}
+{{- else }}
+- name: FB_DB
+  value: ""
+{{- end }}
 - name: PATH
   value: {{ $.Values.fluentBit.windowsPath | quote }}
 - name: K8S_BUFFER_SIZE
@@ -117,11 +122,17 @@ secretKeyRef:
 - mountPath: C:\fluent-bit\etc
   name: fluent-bit-config
 - mountPath: C:\var\log
-  name: varlog
+  name: logs
+  {{- if and ($.Values.fluentBit.persistence) (ne $.Values.fluentBit.persistence.mode "hostPath") }}
+  readOnly: true
+  {{- end }}
   # We need to also mount this because the logs in C:\var\logs are actually symlinks to C:\ProgramData.
   # So, in order to be able to read these logs, the reading process needs to also have access to C:\ProgramData.
 - mountPath: C:\ProgramData
   name: progdata
+  {{- if and ($.Values.fluentBit.persistence) (ne $.Values.fluentBit.persistence.mode "hostPath") }}
+  readOnly: true
+  {{- end }}
   {{- if $.Values.resources }}
   resources:
 {{ toYaml $.Values.resources | indent 12 }}
@@ -130,7 +141,7 @@ secretKeyRef:
 - name: fluent-bit-config
   configMap:
 name: {{ template "newrelic-logging.fluentBitConfig" $ }}
-- name: varlog
+- name: logs
   hostPath:
 path: C:\var\log
 - name: progdata
