@@ -136,11 +136,12 @@ See [values.yaml](values.yaml) for the default values
 | `serviceAccount.annotations` | The annotations to add to the service account if `serviceAccount.create` is set to true. | |
 | `global.nrStaging` - `nrStaging` | Send data to staging (requires a staging license key)| `false` |
 | `fluentBit.path` | Node path logs are forwarded from. Patterns are supported, as well as specifying multiple paths/patterns separated by commas.| `/var/log/containers/*.log` |
+| `fluentBit.linuxMountPath`   | The path mounted on linux Fluent-Bit pods to read logs from. Defaults to /var because some engines write the logs to /var/log and others to /var/lib (symlinked to /var/log) so Fluent-Bit need access to both in those cases| `/var`  |
 | `fluentBit.db`   | Node path used by Fluent Bit to store a database file to keep track of monitored files and offsets.  | `/var/log/containers/*.log` |
 | `fluentBit.k8sBufferSize`| Set the buffer size for HTTP client when reading responses from Kubernetes API server. A value of 0 results in no limit and the buffer will expand as needed.| `32k`   |
 | `fluentBit.k8sLoggingExclude`| Set to "On" to allow excluding pods by adding the annotation `fluentbit.io/exclude: "true"` to pods you wish to exclude. | `Off`   |
 | `fluentBit.additionalEnvVariables`   | Additional environmental variables for fluentbit pods| `[]]`   |
-| `fluentBit.persistence.mode` | The [persistence mode](#Fluent-Bit-persistence-modes) you want to use, options are "hostPath", "none" or "persistentVolume" (this last one available only for linux)
+| `fluentBit.persistence.mode` | The [persistence mode](#Fluent-Bit-persistence-modes) you want to use, options are "hostPath", "none" or "persistentVolume" (this last one available only for linux) |
 | `fluentBit.persistence.persistentVolume.storageClass`| On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates the storage class that will be used for create the PersistentVolume and PersistentVolumeClaim.| |
 | `fluentBit.persistence.persistentVolume.size`| On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates the capacity for the PersistentVolume and PersistentVolumeClaim   | 10Gi|
 | `fluentBit.persistence.persistentVolume.dynamicProvisioning` | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), indicates if  the storage class used provide dynamic provisioning. If it does, only the PersistentVolumeClaim will be created.  | true|
@@ -188,6 +189,7 @@ fluentBit:
 mode: persistentVolume
 persistentVolume:
   storageClass: standard-rwx
+  linuxMountPath: /var/log
 ```
 
 ### Proxy support
