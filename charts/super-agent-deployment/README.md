@@ -2,7 +2,7 @@
 
 # super-agent-deployment
 
-![Version: 0.0.8-beta](https://img.shields.io/badge/Version-0.0.8--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: nightly](https://img.shields.io/badge/AppVersion-nightly-informational?style=flat-square)
+![Version: 0.0.8-beta](https://img.shields.io/badge/Version-0.0.8--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.0](https://img.shields.io/badge/AppVersion-0.7.0-informational?style=flat-square)
 
 A Helm chart to install New Relic Super agent on Kubernetes
 
@@ -35,6 +35,7 @@ At the point of the creation of the chart, it has no particularities and this se
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
+| cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and / or agent configurations could remain in the cluster after the chart is uninstalled. |
 | cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
 | config.subAgents | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
 | config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |

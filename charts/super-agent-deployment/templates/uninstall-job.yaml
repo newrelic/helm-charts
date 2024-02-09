@@ -1,0 +1,36 @@
+{{- if .Values.cleanupManagedResources -}}
+{{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
+{{- /*
+The resources managed by the super-agent and the label selector are hardcoded on the super-agent.
+*/ -}}
+{{- $saResourcesList := (list "configmaps" "helmreleases" "helmrepositories") -}}
+{{- $saResourcesLabelSelector := "app.kubernetes.io/managed-by=newrelic-super-agent" -}}
+{{- /*
+To understand why this job installs manifests instead of using Helm, read the comment at `job-manifests.yaml`.
+*/ -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "10010"
+  name: {{ $uninstallJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      containers:
+        - name: delete-crs
+          image: bitnami/kubectl
+          command:
+            - bash
+          args:
+            - -c
+            - {{ range $i, $resourceName := $saResourcesList }}
+              {{- if $i }} &&{{ end }} kubectl delete {{ $resourceName }} -l {{ $saResourcesLabelSelector }}
+              {{- end -}}
+{{- end -}}
