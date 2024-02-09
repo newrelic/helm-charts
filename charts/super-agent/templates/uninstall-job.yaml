@@ -2,6 +2,11 @@
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
 {{- $configMapName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-manifests" ) -}}
 {{- /*
+The CRD managed by the super-agent and the label selector are hardcoded on the super-agent.
+*/ -}}
+{{- $saCRList := (list "helmreleases" "helmrepositories") -}}
+{{- $saResourcesLabelSelector := "app.kubernetes.io/managed-by=newrelic-super-agent" -}}
+{{- /*
 To understand why this job installs manifests instead of using Helm, read the comment at `job-manifests.yaml`.
 */ -}}
 apiVersion: batch/v1
@@ -23,10 +28,13 @@ spec:
         - name: delete-crs
           image: bitnami/kubectl
           command:
-            - kubectl
-            - delete
-            - -f
-            - /manifests/
+            - bash
+          args:
+            - -c
+            - kubectl delete -f /manifests/
+              {{- if .Values.helm.cleanupManagedResources -}}
+              {{- range $crName := $saCRList }} && kubectl delete {{ $crName }} -l {{ $saResourcesLabelSelector }}{{ end }}
+              {{- end }}
           volumeMounts:
             - name: manifests-configmap
               mountPath: /manifests

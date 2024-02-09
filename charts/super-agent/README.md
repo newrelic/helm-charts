@@ -2,7 +2,7 @@
 
 # super-agent
 
-![Version: 0.0.1-beta](https://img.shields.io/badge/Version-0.0.1--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.4-beta](https://img.shields.io/badge/Version-0.0.4--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Bootstraps New Relic' Super Agent
 
@@ -47,14 +47,16 @@ As of the creation of the chart, it has no particularities and this section can 
 | flux2.rbac | object | Enabled (See `values.yaml`) | Create RBAC rules for FluxCD is able to deploy all kind of workloads on the cluster. |
 | flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the super agent to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the super agent, this is the way to go so the cluster has deployed all operators needed by the super agent. But if the user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on the whole cluster. |
+| helm.cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. should be always be true unless you know what you are going. |
 | helm.create | bool | `true` | Enable the installation of the CRs so FluxCD deploy the Super Agent is deployed. This an advanced/debug flag. It should be always be true unless you know what you are going. |
 | helm.release | object | See `values.yaml` | Values related to the super agent's Helm chart release. |
 | helm.release.chart | string | `"super-agent-deployment"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes. |
 | helm.release.install | object | See `values.yaml` | Change the behavior of the operator while installing the chart for the first time. This should only be changed by advanced users that know what they are doing. Exposes the remediations that the operator is going to try before give up installing the chart in case it hits an error. |
+| helm.release.rollback | object | See `values.yaml` | Optional configuration of rollback strategy when upgrading. This should only be changed by advanced users that know what they are doing. |
 | helm.release.upgrade | object | See `values.yaml` | Change the behavior of the operator while upgrading the chart. This should only be changed by advanced users that know what they are doing. Exposes the remediations that the operator is going to try before give up installing the chart in case it hits an error. |
 | helm.release.values | string | `{}`. Examples on the `values.yaml` | Set values to the super agent helm release directly from this `values.yaml` file. Refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides |
 | helm.release.valuesFrom | string | empty | Set values from a `configMap` or a `secret`. You can see examples and better documentation inside the `values.yaml` file. Also refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides |
-| helm.release.version | string | `"0.0.4-beta"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes.  TODO: Point renovatebot here. |
+| helm.release.version | string | `"0.0.8-beta"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes.  TODO: Point renovatebot here. |
 | helm.repository | object | See `values.yaml` | Values related to the Helm repository where to download the super agent's chart. |
 | helm.repository.certSecretRef | string | `nil` (no secret reference) | secret of type `kubernetes.io/tls` with the standard keys `tls.crt`, `tls.key`, and `ca.crt` |
 | helm.repository.secretRef | string | `nil` (no secret reference) | A reference to a secret with the keys username and password to authenticate to the repository. |
