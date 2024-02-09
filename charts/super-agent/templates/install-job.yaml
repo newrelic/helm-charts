@@ -15,6 +15,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   ttlSecondsAfterFinished: 120
+  backoffLimit: 1
   template:
     spec:
       restartPolicy: Never
@@ -22,11 +23,22 @@ spec:
       containers:
         - name: apply-crs
           image: bitnami/kubectl
-          command:
-            - kubectl
-            - apply
-            - -f
-            - /manifests/
+          command: [ "/bin/bash","-c" ]
+          args:
+          - |
+            set -o pipefail
+
+            ERROR_OUTPUT=$(kubectl apply -f /manifests/ 2>&1)
+            EXIT_CODE=$?
+
+            # Check if kubectl command was successful or if it contains success keywords
+            if [ $EXIT_CODE -ne 0 ] || ! echo "$ERROR_OUTPUT"; then
+              echo "Applying CRs failed. Please check the values YAML syntax and Kubernetes resource definitions."
+              echo "Error details: $ERROR_OUTPUT"
+              exit $EXIT_CODE
+            fi
+
+            echo "Manifests applied successfully."
           volumeMounts:
             - name: manifests-configmap
               mountPath: /manifests
