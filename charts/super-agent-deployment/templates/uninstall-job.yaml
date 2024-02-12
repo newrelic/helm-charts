@@ -3,7 +3,8 @@
 {{- /*
 The resources managed by the super-agent and the label selector are hardcoded on the super-agent.
 */ -}}
-{{- $saResourcesList := (list "configmaps" "helmreleases" "helmrepositories") -}}
+{{- $saResourceList := (list "configmaps") -}}
+{{- $saCRList := (list "helmreleases.helm.toolkit.fluxcd.io" "helmrepositories.source.toolkit.fluxcd.io") -}}
 {{- $saResourcesLabelSelector := "app.kubernetes.io/managed-by=newrelic-super-agent" -}}
 {{- /*
 To understand why this job installs manifests instead of using Helm, read the comment at `job-manifests.yaml`.
@@ -30,7 +31,17 @@ spec:
             - bash
           args:
             - -c
-            - {{ range $i, $resourceName := $saResourcesList }}
-              {{- if $i }} &&{{ end }} kubectl delete {{ $resourceName }} -l {{ $saResourcesLabelSelector }}
-              {{- end -}}
+            - |
+              set -o pipefail
+              {{- /* Delete the standard resources managed by the super-agent */ -}}
+              {{ range $i, $resourceName := $saResourceList }}
+              kubectl delete {{ $resourceName }} -l {{ $saResourcesLabelSelector }}
+              {{ end -}}
+              {{- /* Delete the CRs managed by the super-agent if the corresponding CRDs exist */ -}}
+              {{ range $i, $cr := $saCRList }}
+              if kubectl api-resources -o name |grep {{ $cr }}; then
+                kubectl delete {{ (splitList "." $cr) |first }} -l {{ $saResourcesLabelSelector }}
+              fi
+              {{ end -}}
+
 {{- end -}}
