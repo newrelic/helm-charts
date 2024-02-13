@@ -35,7 +35,7 @@ At the point of the creation of the chart, it has no particularities and this se
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and / or agent configurations could remain in the cluster after the chart is uninstalled. |
+| cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled. |
 | cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
 | config.subAgents | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
 | config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
