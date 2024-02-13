@@ -33,12 +33,11 @@ spec:
             - |
               set -o pipefail
               {{- /* Delete the standard resources (configmaps) managed by the super-agent */ -}}
-              {{ $managedResourcesNamespace := .Release.Namespace }}
-              kubectl delete configmaps -n {{ $managedResourcesNamespace }} -l {{ $saResourcesLabelSelector }}
+              kubectl delete configmaps -n {{ .Release.Namespace }} -l {{ $saResourcesLabelSelector }}
               {{- /* Delete the CRs managed by the super-agent if the corresponding CRDs exist */ -}}
               {{ range $i, $cr := $saCRList }}
               if kubectl api-resources -o name |grep {{ $cr }}; then
-                kubectl delete {{ $cr }} -n {{ $managedResourcesNamespace }} -l {{ $saResourcesLabelSelector }}
+                kubectl delete {{ $cr }} -n {{ $.Release.Namespace }} -l {{ $saResourcesLabelSelector }}
               fi
               {{ end -}}
 
