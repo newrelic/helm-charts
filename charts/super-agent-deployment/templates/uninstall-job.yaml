@@ -3,7 +3,6 @@
 {{- /*
 The resources managed by the super-agent and the label selector are hardcoded on the super-agent.
 */ -}}
-{{- $saResourceList := (list "configmaps") -}}
 {{- $saCRList := (list "helmreleases.helm.toolkit.fluxcd.io" "helmrepositories.source.toolkit.fluxcd.io") -}}
 {{- $saResourcesLabelSelector := "app.kubernetes.io/managed-by=newrelic-super-agent" -}}
 {{- /*
@@ -25,7 +24,7 @@ spec:
       restartPolicy: Never
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       containers:
-        - name: delete-crs
+        - name: delete-managed-resources
           image: bitnami/kubectl
           command:
             - bash
@@ -33,14 +32,13 @@ spec:
             - -c
             - |
               set -o pipefail
-              {{- /* Delete the standard resources managed by the super-agent */ -}}
-              {{ range $i, $resourceName := $saResourceList }}
-              kubectl delete {{ $resourceName }} -l {{ $saResourcesLabelSelector }}
-              {{ end -}}
+              {{- /* Delete the standard resources (configmaps) managed by the super-agent */ -}}
+              {{ $managedResourcesNamespace := .Release.Namespace }}
+              kubectl delete configmaps -n {{ $managedResourcesNamespace }} -l {{ $saResourcesLabelSelector }}
               {{- /* Delete the CRs managed by the super-agent if the corresponding CRDs exist */ -}}
               {{ range $i, $cr := $saCRList }}
               if kubectl api-resources -o name |grep {{ $cr }}; then
-                kubectl delete {{ (splitList "." $cr) |first }} -l {{ $saResourcesLabelSelector }}
+                kubectl delete {{ $cr }} -n {{ $managedResourcesNamespace }} -l {{ $saResourcesLabelSelector }}
               fi
               {{ end -}}
 
