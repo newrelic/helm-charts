@@ -28,13 +28,10 @@ spec:
         - name: delete-crs
           image: bitnami/kubectl
           command:
-            - bash
-          args:
-            - -c
-            - kubectl delete -f /manifests/
-              {{- if .Values.helm.cleanupManagedResources -}}
-              {{- range $crName := $saCRList }} && kubectl delete {{ $crName }} -l {{ $saResourcesLabelSelector }}{{ end }}
-              {{- end }}
+            - kubectl
+            - delete
+            - -f
+            - /manifests/
           volumeMounts:
             - name: manifests-configmap
               mountPath: /manifests

@@ -43,4 +43,7 @@ spec:
   rollback:
     {{- . | toYaml | nindent 4 }}
   {{- end }}
+  uninstall: # Explicitly set to false since executing hooks and waiting for uninstall termination is needed to remove super-agent managed reseources.
+    disableWait: false
+    disableHooks: false
 {{- end -}}
