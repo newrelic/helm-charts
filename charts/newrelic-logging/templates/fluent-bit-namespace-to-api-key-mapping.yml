@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-namespace-to-api-key-mapping
+  # TODO: do we need namespace and labels? I stole them from configmap.yml
+  namespace: {{ .Release.Namespace }}
+  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+data:
+  # TODO: this needs to be a Vault path instead of hard-coding keys
+  fluent-bit-namespace-to-api-key-mapping.json: |
+    {
+      "logging": "<REDACTED_KEY_FOR_PRODUCTION_756053>"
+    }
