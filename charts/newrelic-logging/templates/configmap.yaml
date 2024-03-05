@@ -6,29 +6,42 @@ metadata:
   name: {{ template "newrelic-logging.fluentBitConfig" . }}
 data:
   fluent-bit.conf: |
-    {{- if .Values.fluentBit.config.service }}
-      {{- .Values.fluentBit.config.service | nindent 4 }}
-    {{- end }}
-    {{- if .Values.fluentBit.config.inputs }}
-      {{- .Values.fluentBit.config.inputs | nindent 4 }}
-    {{- end }}
-    {{- if .Values.fluentBit.config.extraInputs }}
-      {{- .Values.fluentBit.config.extraInputs | nindent 4}}
-    {{- end }}
-    {{- if and (include "newrelic-logging.lowDataMode" .) (.Values.fluentBit.config.lowDataModeFilters) }}
-      {{- .Values.fluentBit.config.lowDataModeFilters | nindent 4 }}
-    {{- else }}
-      {{- .Values.fluentBit.config.filters | nindent 4 }}
-    {{- end }}
-    {{- if .Values.fluentBit.config.extraFilters }}
-      {{- .Values.fluentBit.config.extraFilters | nindent 4}}
-    {{- end }}
-    {{- if .Values.fluentBit.config.outputs }}
-      {{- .Values.fluentBit.config.outputs | nindent 4 }}
-    {{- end }}
-    {{- if .Values.fluentBit.config.extraOutputs }}
-      {{- .Values.fluentBit.config.extraOutputs | nindent 4}}
-    {{- end }}
+    [SERVICE]
+        Flush         1
+        Log_Level     ${LOG_LEVEL}
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+
+    [INPUT]
+        Name              tail
+        Tag               kube.*
+        Path              ${PATH}
+        multiline.parser  ${LOG_PARSER}
+        DB                ${FB_DB}
+        Mem_Buf_Limit     7MB
+        Skip_Long_Lines   On
+        Refresh_Interval  10
+
+    [FILTER]
+        Name                kubernetes
+        Match               kube.*
+        # We need the full DNS suffix as Windows only supports resolving names with this suffix
+        # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+        Kube_URL            https://kubernetes.default.svc.cluster.local:443
+        Buffer_Size         ${K8S_BUFFER_SIZE}
+        K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+
+    [FILTER]
+        Name           record_modifier
+        Match          *
+        Record         cluster_name ${CLUSTER_NAME}
+
+    # Include the output blocks that we build during Helm chart installation/upgrade
+    @INCLUDE /etc/teams-config/newrelic-teams-output.conf
+
   parsers.conf: |
   {{- if .Values.fluentBit.config.parsers }}
     {{- .Values.fluentBit.config.parsers | nindent 4}}

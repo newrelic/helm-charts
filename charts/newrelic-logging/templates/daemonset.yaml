@@ -139,6 +139,8 @@ spec:
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
+            - name: fluent-bit-teams-config
+              mountPath: /etc/teams-config
             - name: logs
               # We mount /var by default because container logs could be on /var/log or /var/lib/docker/containers (symlinked to /var/log)
               mountPath: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
@@ -163,6 +165,9 @@ spec:
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
+        - name: fluent-bit-teams-config
+          hostPath:
+            path: /etc/teams-config
         - name: logs
           hostPath:
             path: {{ .Values.fluentBit.linuxMountPath | default "/var" }}

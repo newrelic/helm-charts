@@ -1,0 +1,67 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: newrelic-logging-config-creator
+  # TODO: do we need namespace and labels like in configmap.yml?annotations:
+  annotations:
+    # This makes it so that this job is run first before any other resources
+    # are created during chart installation/upgrade
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  template:
+    spec:
+      containers:
+        - name: config-creator
+          image: node # TODO: what image should we use
+          command:
+          - node
+          - -e
+          - |
+            const fs = require('fs');
+
+            // Read configuration information
+            const mappingFileName = '/etc/namespace-to-api-key-mapping/fluent-bit-namespace-to-api-key-mapping.json';
+            const mappingFileContents = fs.readFileSync(mappingFileName);
+            const keysByNamespace = JSON.parse(mappingFileContents);
+
+            // Write out the Fluent Bit config file
+            const outputBlock = (namespace, key) => {
+              return `[OUTPUT]
+                  Name          newrelic
+                  Match_regex   .*_${namespace}_.*
+                  apiKey        ${key}
+                  endpoint      \${ENDPOINT}`;
+            };
+            const namespaces = Object.keys(keysByNamespace);
+            const regexTerms = namespaces
+              .map(namespace => `_${namespace}_`)
+              .join('|');
+            const fallbackRegex = `^(?:(?!${regexTerms}).)*$`
+            const fallbackBlock = `[OUTPUT]
+                  Name          newrelic
+                  Match_regex   ${fallbackRegex}
+                  apiKey        \${LICENSE_KEY}
+                  endpoint      \${ENDPOINT}`;
+            const teamOutputBlocks = Object.entries(keysByNamespace)
+              .map(([namespace, key]) => outputBlock(namespace, key));
+            const outputBlocks = [
+              ...teamOutputBlocks,
+              fallbackBlock,
+            ];
+            const configFileContents = outputBlocks.join('\n\n');
+            const configFileName = '/etc/fluent-bit-teams-config/newrelic-teams-output.conf';
+            fs.writeFileSync(configFileName, configFileContents);
+          volumeMounts:
+            - name: fluent-bit-namespace-to-api-key-mapping-volume
+              mountPath: /etc/namespace-to-api-key-mapping
+            - name: fluent-bit-teams-config-volume
+              mountPath: /etc/fluent-bit-teams-config
+      volumes:
+        - name: fluent-bit-namespace-to-api-key-mapping-volume
+          configMap:
+            name: fluent-bit-namespace-to-api-key-mapping
+        - name: fluent-bit-teams-config-volume
+          hostPath:
+            path: /etc/teams-config
+      # TODO: docs had this, but do we need it? https://docs.openshift.com/dedicated/3/dev_guide/configmaps.html
+      restartPolicy: Never
