@@ -6,9 +6,9 @@ Return the cluster
 {{- $global := index .Values "global" | default dict -}}
 
 {{- if .Values.cluster -}}
-    {{- .Values.cluster -}}
+    {{- tpl .Values.cluster . -}}
 {{- else if $global.cluster -}}
-    {{- $global.cluster -}}
+    {{- tpl $global.cluster . -}}
 {{- else -}}
     {{ fail "There is not cluster name definition set neither in `.global.cluster' nor `.cluster' in your values.yaml. Cluster name is required." }}
 {{- end -}}
