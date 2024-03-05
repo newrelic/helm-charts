@@ -207,7 +207,8 @@ fluentBit:
           Uri                  /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
           Header               Authorization Bearer ${LICENSE_KEY}
           Tls                  On
-          Tls.verify           On
+          # Windows pods using prometheus_remote_write currently have issues if TLS verify is On
+          Tls.verify           Off
           # User-defined labels
           add_label            app fluent-bit
           add_label            cluster_name ${CLUSTER_NAME}
