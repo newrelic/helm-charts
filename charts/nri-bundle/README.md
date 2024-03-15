@@ -195,3 +195,4 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 
 * [juanjjaramillo](https://github.com/juanjjaramillo)
 * [csongnr](https://github.com/csongnr)
+* [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
