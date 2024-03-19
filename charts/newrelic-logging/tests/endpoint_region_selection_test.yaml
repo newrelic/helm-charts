@@ -1,0 +1,128 @@
+suite: test endpoint selection based on region settings
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: endpoint-selection-release
+  namespace: endpoint-selection-namespace
+tests:
+
+  - it: selects staging endpoints if nrStaging is enabled
+    set:
+      licenseKey: nr_license_key
+      nrStaging: true
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://staging-log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "staging-metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://staging-log-api.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "staging-metric-api.newrelic.com"
+        template: templates/daemonset-windows.yaml
+
+  - it: selects US endpoints for a US license key
+    set:
+      licenseKey: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.newrelic.com"
+        template: templates/daemonset-windows.yaml
+  
+  - it: selects EU endpoints for a EU license key
+    set:
+      licenseKey: euaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.eu.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.eu.newrelic.com"
+        template: templates/daemonset-windows.yaml
+
+
+  - it: selects custom logs endpoint if provided
+    set:
+      licenseKey: euaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      endpoint: custom
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "custom"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "custom"
+        template: templates/daemonset-windows.yaml

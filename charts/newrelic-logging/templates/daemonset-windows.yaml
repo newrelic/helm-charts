@@ -60,15 +60,7 @@ spec:
           securityContext: {}
           env:
             - name: ENDPOINT
-              {{- if (include "newrelic.nrStaging" $) }}
-              value: "https://staging-log-api.newrelic.com/log/v1"
-              {{- else if $.Values.endpoint }}
-              value: {{ $.Values.endpoint }}
-              {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" $)) "eu" }}
-              value: "https://log-api.eu.newrelic.com/log/v1"
-              {{- else }}
-              value: "https://log-api.newrelic.com/log/v1"
-              {{- end }}
+              value: {{ include "newrelic-logging.logsEndpoint" $ | quote }}
             - name: SOURCE
               value: {{ if (include "newrelic-logging.lowDataMode" $) }} "k8s" {{- else }} "kubernetes" {{- end }}
             - name: LICENSE_KEY
@@ -108,6 +100,18 @@ spec:
               value: {{ include "newrelic-logging.lowDataMode" $ | default "false" | quote }}
             - name: RETRY_LIMIT
               value: {{ $.Values.fluentBit.retryLimit | quote }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: SEND_OUTPUT_PLUGIN_METRICS
+              value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
+            - name: METRICS_HOST
+              value: {{ include "newrelic-logging.metricsHost" $ | quote }}
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
           command:
             - C:\fluent-bit\bin\fluent-bit.exe
