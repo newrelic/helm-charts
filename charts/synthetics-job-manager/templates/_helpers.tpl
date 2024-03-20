@@ -164,6 +164,74 @@ secretKeyRef:
 {{- end -}}
 {{- end }}
 
+
+{{/*
+Create the name of the volume to associate to the SJM pod
+*/}}
+{{- define "synthetics-job-manager.volumeName" -}}
+sjm-volume
+{{- end -}}
+
+{{/*
+Create the name of the PersistentVolumeClaim to use if Helm is generating one
+*/}}
+{{- define "synthetics-job-manager.defaultClaimName" -}}
+sjm-pvc
+{{- end -}}
+
+{{/*
+Use either the provided PersistentVolumeClaim name or the default PVC name
+*/}}
+{{- define "synthetics-job-manager.claimName" -}}
+  {{ if (.Values.synthetics.persistence).existingClaimName }}
+  {{- (.Values.synthetics.persistence).existingClaimName -}}
+  {{ else }}
+  {{- include "synthetics-job-manager.defaultClaimName" . -}}
+  {{ end }}
+{{- end -}}
+
+{{/*
+Config map name to be used when user provides user-defined variable file contents
+*/}}
+{{- define "synthetics-job-manager.configMapName" -}}
+sjm-config
+{{- end -}}
+
+{{/*
+Mount path for user defined variables directory
+*/}}
+{{- define "synthetics-job-manager.userDefinedVariablesPath" -}}
+{{ "/var/lib/newrelic/synthetics/variables/" }}
+{{- end -}}
+
+{{/*
+Define the optional volume mounts for the SJM
+*/}}
+{{- define "synthetics-job-manager.volumeMounts" -}}
+- mountPath: {{ include "synthetics-job-manager.userDefinedVariablesPath" . | quote }}
+  name: {{ include "synthetics-job-manager.volumeName" . | quote -}}
+  {{ if .Values.synthetics.userDefinedVariables.userDefinedPath }}
+  subPath: {{ .Values.synthetics.userDefinedVariables.userDefinedPath -}}
+  {{ end }}
+{{- end -}}
+
+{{/*
+Define whether to mount volumes for the SJM and ensure expected Values are present
+*/}}
+{{- define "synthetics-job-manager.toMount" -}}
+  {{ if or (.Values.synthetics.userDefinedVariables).userDefinedPath (.Values.synthetics.userDefinedVariables).userDefinedFile }} {{/* can add additional check for custom node modules path when the time comes */}}
+  {{ end }}
+{{- end -}}
+
+{{/*
+Define whether to generate a PVC for the SJM. Checks whether the user has already provided an existing PVC name and if not,
+whether they've provided an existing PV name.
+*/}}
+{{- define "synthetics-job-manager.generatePVC" -}}
+  {{ if and (not (.Values.synthetics.persistence).existingClaimName) (.Values.synthetics.persistence).existingVolumeName }}
+  {{ end }}
+{{- end -}}
+
 {{/*
 Calculates the terminationGracePeriodSeconds.
 In order to prevent data-loss the grace period should be configured to be > synthetics job timeout, which is 240s by
