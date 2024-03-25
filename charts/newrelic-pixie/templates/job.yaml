@@ -6,7 +6,7 @@ metadata:
   namespace: {{ template "newrelic-pixie.namespace" . }}
   labels: 
   {{- include "newrelic-pixie.labels" . | trim | nindent 4}}
-  {{- if .Values.job.labels }}
+  {{- if ((.Values.job).labels) }}
     {{- toYaml .Values.job.labels | nindent 4 }}
   {{- end }}
   {{- if .Values.job.annotations }}
