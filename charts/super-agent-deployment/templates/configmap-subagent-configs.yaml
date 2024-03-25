@@ -1,6 +1,5 @@
 {{- range $subAgentName, $subAgentConfig := .Values.config.subAgents -}}
-{{- $releasePrefix := include "newrelic.common.naming.fullname" $ -}}
-{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releasePrefix "suffix" $subAgentName) }}
+{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" "local-data" "suffix" $subAgentName) }}
 ---
 kind: ConfigMap
 metadata:
@@ -11,6 +10,6 @@ metadata:
     subagent: {{ $subAgentName }}
 apiVersion: v1
 data:
-  values.yaml: |
+  local_config: |
     {{- $subAgentConfig.content | toYaml | nindent 4 }}
 {{- end }}
