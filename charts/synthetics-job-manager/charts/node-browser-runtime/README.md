@@ -4,7 +4,7 @@
 
 ## Configuration
 
-| Parameter             | Description                                                                                                                | Default                                    |
+| Parameters             | Description                                                                                                                | Default                                    |
 |-----------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
 | `parallelism`         | Number of node-browser-runtime jobs to execute in parallel                                                                 | `1`                                        |
 | `completions`         | Number of node-browser-runtime jobs that you expect to execute per minute (multiplied by the value of `parallelism` above) | `6`                                        |
