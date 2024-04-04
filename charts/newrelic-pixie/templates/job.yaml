@@ -4,8 +4,15 @@ kind: Job
 metadata:
   name: {{ template "newrelic-pixie.fullname" . }}
   namespace: {{ template "newrelic-pixie.namespace" . }}
-  labels:
-    {{- include "newrelic-pixie.labels" . | nindent 4 }}
+  labels: 
+  {{- include "newrelic-pixie.labels" . | trim | nindent 4}}
+  {{- if ((.Values.job).labels) }}
+    {{- toYaml .Values.job.labels | nindent 4 }}
+  {{- end }}
+  {{- if ((.Values.job).annotations) }}
+  annotations:
+    {{ toYaml .Values.job.annotations | nindent 4 | trim }}
+  {{- end }}
 spec:
   backoffLimit: 4
   ttlSecondsAfterFinished: 600
@@ -14,6 +21,13 @@ spec:
       labels:
         app.kubernetes.io/name: {{ template "newrelic-pixie.name" . }}
         release: {{.Release.Name }}
+        {{- if .Values.podLabels }}
+          {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- end }}
+      {{- if .Values.podAnnotations }}
+      annotations:
+          {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
