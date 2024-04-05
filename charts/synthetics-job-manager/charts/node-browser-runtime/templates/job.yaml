@@ -50,6 +50,10 @@ sizeLimit: 2048Mi
   value: {{ .Values.global.checkTimeout | quote }}
   resources:
 {{- toYaml .Values.resources | nindent 16 }}
+  {{ if include "synthetics-job-manager.toMountCustomNodeModules" . }}
+  volumeMounts:
+{{- include "synthetics-job-manager.customNodeModulesMount" . | nindent 16 }}
+  {{ end }}
   {{- with .Values.nodeSelector }}
   nodeSelector:
 {{- toYaml . | nindent 12 }}
@@ -62,9 +66,15 @@ sizeLimit: 2048Mi
   tolerations:
 {{- toYaml . | nindent 12 }}
   {{- end }}
-  
+
   {{- with .Values.imagePullSecrets }}
   imagePullSecrets:
 {{- toYaml . | nindent 12 }}
   {{- end }}
   restartPolicy: OnFailure
+  {{ if include "synthetics-job-manager.toMountCustomNodeModules" . }}
+  volumes:
+- name: {{ include "synthetics-job-manager.volumeName" . | quote }}
+  persistentVolumeClaim:
+claimName: {{ include "synthetics-job-manager.claimName" . | quote }}
+  {{ end }}
