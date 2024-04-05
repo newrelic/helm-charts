@@ -144,14 +144,14 @@ spec:
       restartPolicy: Always
       {{ if include "synthetics-job-manager.toMount" . }}
       volumes:
-        - name: {{ include "synthetics-job-manager.volumeName" . | quote -}}
-          {{ if .Values.synthetics.userDefinedVariables.userDefinedFile }}
+        {{ if (.Values.synthetics.userDefinedVariables).userDefinedFile }}
+        - name: {{ include "synthetics-job-manager.configMapName" . | quote }}
           configMap:
             name: {{ include "synthetics-job-manager.configMapName" . | quote }}
-          {{ else }}
+        {{ end }}
+        - name: {{ include "synthetics-job-manager.volumeName" . | quote }}
           persistentVolumeClaim:
             claimName: {{ include "synthetics-job-manager.claimName" . | quote }}
-          {{ end }}
       {{ end }}
 
 
