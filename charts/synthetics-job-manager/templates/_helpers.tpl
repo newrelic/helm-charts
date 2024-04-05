@@ -183,8 +183,8 @@ sjm-pvc
 Use either the provided PersistentVolumeClaim name or the default PVC name
 */}}
 {{- define "synthetics-job-manager.claimName" -}}
-  {{ if (.Values.synthetics.persistence).existingClaimName }}
-  {{- (.Values.synthetics.persistence).existingClaimName -}}
+  {{ if (.Values.global.persistence).existingClaimName }}
+  {{- (.Values.global.persistence).existingClaimName -}}
   {{ else }}
   {{- include "synthetics-job-manager.defaultClaimName" . -}}
   {{ end }}
@@ -205,21 +205,69 @@ Mount path for user defined variables directory
 {{- end -}}
 
 {{/*
-Define the optional volume mounts for the SJM
+Mount path for custom node modules directory
 */}}
-{{- define "synthetics-job-manager.volumeMounts" -}}
+{{- define "synthetics-job-manager.customNodeModulesPath" -}}
+{{ "/var/lib/newrelic/synthetics/modules/" }}
+{{- end -}}
+
+{{/*
+yaml for User Defined Variables volume mount
+*/}}
+{{- define "synthetics-job-manager.userDefinedVarMount" -}}
 - mountPath: {{ include "synthetics-job-manager.userDefinedVariablesPath" . | quote }}
-  name: {{ include "synthetics-job-manager.volumeName" . | quote -}}
-  {{ if .Values.synthetics.userDefinedVariables.userDefinedPath }}
-  subPath: {{ .Values.synthetics.userDefinedVariables.userDefinedPath -}}
+  {{- if (.Values.synthetics.userDefinedVariables).userDefinedFile }}
+  name: {{ include "synthetics-job-manager.configMapName" . | quote -}}
+  {{ else }}
+  name: {{ include "synthetics-job-manager.volumeName" . | quote }}
+  {{ end }}
+  {{ if (.Values.synthetics.userDefinedVariables).userDefinedPath }}
+  subPath: {{ .Values.synthetics.userDefinedVariables.userDefinedPath | quote }}
   {{ end }}
 {{- end -}}
 
 {{/*
-Define whether to mount volumes for the SJM and ensure expected Values are present
+yaml for Custom Node Modules volume mount
+*/}}
+{{- define "synthetics-job-manager.customNodeModulesMount" -}}
+- mountPath: {{ include "synthetics-job-manager.customNodeModulesPath" . | quote }}
+  name: {{ include "synthetics-job-manager.volumeName" . | quote }}
+  subPath: {{ .Values.global.customNodeModules.customNodeModulesPath  | quote }}
+{{- end -}}
+
+{{/*
+Define the optional volume mounts for the SJM
+*/}}
+{{- define "synthetics-job-manager.volumeMounts" -}}
+{{- if or (.Values.synthetics.userDefinedVariables).userDefinedPath (.Values.synthetics.userDefinedVariables).userDefinedFile -}}
+{{ include "synthetics-job-manager.userDefinedVarMount" . }}
+{{- end -}}
+{{ if (.Values.global.customNodeModules).customNodeModulesPath }}
+{{ include "synthetics-job-manager.customNodeModulesMount" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Define whether to mount volumes for the SJM
 */}}
 {{- define "synthetics-job-manager.toMount" -}}
-  {{ if or (.Values.synthetics.userDefinedVariables).userDefinedPath (.Values.synthetics.userDefinedVariables).userDefinedFile }} {{/* can add additional check for custom node modules path when the time comes */}}
+  {{ if or (include "synthetics-job-manager.toMountUserDefinedVars" .) (include "synthetics-job-manager.toMountCustomNodeModules" .) }}
+  {{ end }}
+{{- end -}}
+
+{{/*
+Define whether to mount custom node modules volume
+*/}}
+{{- define "synthetics-job-manager.toMountCustomNodeModules" -}}
+  {{ if (.Values.global.customNodeModules).customNodeModulesPath }}
+  {{ end }}
+{{- end -}}
+
+{{/*
+Define whether to mount user-defined vars volume
+*/}}
+{{- define "synthetics-job-manager.toMountUserDefinedVars" -}}
+  {{ if or (.Values.synthetics.userDefinedVariables).userDefinedPath (.Values.synthetics.userDefinedVariables).userDefinedFile }}
   {{ end }}
 {{- end -}}
 
@@ -228,7 +276,7 @@ Define whether to generate a PVC for the SJM. Checks whether the user has alread
 whether they've provided an existing PV name.
 */}}
 {{- define "synthetics-job-manager.generatePVC" -}}
-  {{ if and (not (.Values.synthetics.persistence).existingClaimName) (.Values.synthetics.persistence).existingVolumeName }}
+  {{ if and (not (.Values.global.persistence).existingClaimName) (.Values.global.persistence).existingVolumeName }}
   {{ end }}
 {{- end -}}
 
