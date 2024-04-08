@@ -1,0 +1,26 @@
+{{- if include "synthetics-job-manager.generatePVC" . }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "synthetics-job-manager.defaultClaimName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "synthetics-job-manager.labels" . | nindent 4 }}
+    {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  volumeName: {{ .Values.global.persistence.existingVolumeName | quote }}
+  accessModes:
+    - ReadWriteOnce
+  {{- if .Values.global.persistence.storageClass }}
+  storageClassName: {{ .Values.global.persistence.storageClass | quote }}
+  {{- end }}
+  resources:
+    requests:
+      {{- if .Values.global.persistence.size }}
+      storage: {{ .Values.global.persistence.size | quote }}
+      {{- else }}
+      storage: 2Gi
+      {{- end }}
+{{- end }}

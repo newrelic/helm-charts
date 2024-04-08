@@ -33,59 +33,44 @@ spec:
           env:
             - name: PRIVATE_LOCATION_KEY
               {{- include "synthetics-job-manager.privateLocationKey" . | nindent 14 }}
-
             - name: LOG_LEVEL
               value: {{ .Values.synthetics.logLevel | quote }}
-  
             {{- if index .Values "ping-runtime" "enabled" }}
             - name: PING_RUNTIME_HOSTNAME
               value: {{ include "ping-runtime.hostname" . }}
-
             - name: PING_RUNTIME_AUTH_TOKEN
               {{- include "synthetics-job-manager.internalApiKey" . | nindent 14 }}
             {{- end }}
-  
             {{- if .Values.synthetics.hordeApiEndpoint }}
             - name: HORDE_API_ENDPOINT
               value: {{ .Values.synthetics.hordeApiEndpoint | quote }}
             {{- end }}
-  
             {{- include "synthetics-job-manager.vsePassphrase" . | nindent 12 -}}
-
-            {{- include "synthetics-job-manager.apiProxyHost" . | nindent 12 -}}
-            {{- include "synthetics-job-manager.apiProxyPort" . | nindent 12 -}}
-  
             {{- if .Values.synthetics.hordeApiProxySelfSignedCert }}
             - name: HORDE_API_PROXY_ACCEPT_SELF_SIGNED_CERT
               value: {{ .Values.synthetics.hordeApiProxySelfSignedCert | quote }}
             {{- end }}
-  
             {{- if .Values.synthetics.hordeApiProxyUsername }}
             - name: HORDE_API_PROXY_USERNAME
               value: {{ .Values.synthetics.hordeApiProxyUsername | quote }}
             {{- end }}
-
             {{- if .Values.synthetics.hordeApiProxyPw }}
             - name: HORDE_API_PROXY_PW
               value: {{ .Values.synthetics.hordeApiProxyPw | quote }}
             {{- end }}
-
             {{- if .Values.global.checkTimeout }}
             - name: CHECK_TIMEOUT
               value: {{ .Values.global.checkTimeout | quote }}
             {{- end }}
-
+            {{- if (.Values.synthetics.userDefinedVariables).userDefinedJson }}
+            - name: USER_DEFINED_VARIABLES
+              value: {{ .Values.synthetics.userDefinedVariables.userDefinedJson | quote }}
+            {{- end }}
             - name: HEAVYWEIGHT_WORKERS
               value: {{ include "synthetics-job-manager.runtimeParallelism" . | quote }}
-  
+
           {{- /*
           TODO - The following are not yet implemented
-
-
-            {{- if .Values.synthetics.userDefinedEnvVariable }}
-            - name: USER_DEFINED_ENV_VARIABLES
-              value: {{ .Values.synthetics.userDefinedEnvVariable | quote }}
-            {{- end }}
 
             {{- if .Values.synthetics.networkHealthCheckDisabled }}
             - name: NETWORK_HEALTHCHECK_DISABLED
@@ -102,7 +87,10 @@ spec:
               value: "{{ .Values.synthetics.jvmOpts }}"
             {{- end }}
           */}}
-
+          {{ if include "synthetics-job-manager.toMount" . }}
+          volumeMounts:
+            {{- include "synthetics-job-manager.volumeMounts" . | nindent 12 }}
+          {{ end }}
           ports:
             - name: http
               containerPort: 8080
@@ -110,7 +98,6 @@ spec:
             - name: admin
               containerPort: 8082
               protocol: TCP
-
           startupProbe:
             httpGet:
               path: /status/check
@@ -155,3 +142,16 @@ spec:
       {{- end }}
 
       restartPolicy: Always
+      {{ if include "synthetics-job-manager.toMount" . }}
+      volumes:
+        {{ if (.Values.synthetics.userDefinedVariables).userDefinedFile }}
+        - name: {{ include "synthetics-job-manager.configMapName" . | quote }}
+          configMap:
+            name: {{ include "synthetics-job-manager.configMapName" . | quote }}
+        {{ end }}
+        - name: {{ include "synthetics-job-manager.volumeName" . | quote }}
+          persistentVolumeClaim:
+            claimName: {{ include "synthetics-job-manager.claimName" . | quote }}
+      {{ end }}
+
+

@@ -36,6 +36,28 @@ global:
   ## The default is 180 seconds for browser monitors, script_browser monitors, and script_api monitors.
   checkTimeout: "180"
 
+  ## For users who are mounting a volume in order to provide a JSON file of user-defined variables or custom node modules,
+  ## provide one of the following
+  ## * an existing PersistentVolumeClaim resource
+  ## * an existing PersistentVolume resource, storageClass (optional), & size (optional)
+  persistence:
+    ## The name of the PersistentVolumeClaim to use
+    # existingClaimName: ""
+
+    ## If the volume exists but no claim exists we'll create the claim
+    # existingVolumeName: ""
+
+    ## Indicate the storage class of your existing volume. If an existingVolumeName is provided and no storageClass, Kubernetes
+    ## will use the default storage class.
+    # storageClass: ""
+
+    ## Set the size to be used for the claim. Default is 2Gi
+    # size: ""
+
+  # Users may include a package.json file in their persistent volume to install custom node modules for their scripted monitors
+  customNodeModules:
+   # customNodeModulesPath: "modules"
+
 synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
   # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
@@ -53,6 +75,20 @@ synthetics:
   ## For US-based accounts, the endpoint is: https://synthetics-horde.nr-data.net.
   ## For EU-based accounts, the endpoint is: https://synthetics-horde.eu01.nr-data.net/
   hordeApiEndpoint: "https://synthetics-horde.nr-data.net"
+
+  ## Users have 3 different options when providing user-defined variables to their SJM -
+  userDefinedVariables:
+    ## The userDefinedVariables defines the locally hosted set of user-defined key value pairs.
+    ## eg: '{"key":"value","key2":"value2"}'
+    # userDefinedJson: ''
+
+    ## The userDefinedVariable file contents, set using --set-file when installing the Helm Chart. Just uncomment
+    ## and leave the value as-is
+    # userDefinedFile: "{}"
+
+    ## Path on the Persistent Volume to the user-defined variables file. Requires that the user set up a PersistentVolume
+    ## and include user_defined_variables.json file before installing Helm Chart.
+    # userDefinedPath: "variables"
 
   ## If set, enables verified script execution and uses this value as a passphrase.
   #  vsePassphrase: ""
@@ -72,9 +108,6 @@ synthetics:
   ## If set, the format is: "username" and "password". Support HTTP Basic Authentication and additional authentication protocols supported by Chrome.
   #  hordeApiProxyUsername: ""
   #  hordeApiProxyPw: ""
-
-  ## The userDefinedEnvVariables defines the locally hosted set of user defined key value pairs.
-  #  userDefinedEnvVariable: ""
 
   ## The jvmOpts passes command line options to the internal JVM.
   ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
@@ -106,7 +139,6 @@ livenessProbePeriodSeconds: 10
 
 # Number of seconds after which the liveness probe times out.
 livenessProbeTimeoutSeconds: 10
-
 
 resources:
   requests:

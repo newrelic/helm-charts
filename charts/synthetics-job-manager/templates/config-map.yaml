@@ -1,0 +1,14 @@
+{{- if (.Values.synthetics.userDefinedVariables).userDefinedFile -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "synthetics-job-manager.configMapName" . | quote }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "synthetics-job-manager.labels" . | nindent 4 }}
+    {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  user_defined_variables.json: {{ .Values.synthetics.userDefinedVariables.userDefinedFile | quote }}
+{{- end -}}
