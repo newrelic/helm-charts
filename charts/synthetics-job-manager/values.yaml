@@ -42,7 +42,7 @@ global:
   ## * an existing PersistentVolume resource, storageClass (optional), & size (optional)
   persistence:
     ## The name of the PersistentVolumeClaim to use
-    # existingClaimName: ""
+    existingClaimName: ""
 
     ## If the volume exists but no claim exists we'll create the claim
     # existingVolumeName: ""
@@ -55,8 +55,11 @@ global:
     # size: ""
 
   # Users may include a package.json file in their persistent volume to install custom node modules for their scripted monitors
+  # Example: add "modules" if the package.json file is in the modules folder.
   customNodeModules:
-   # customNodeModulesPath: "modules"
+    ## Path on the Persistent Volume to the package.json file. Requires that the user set up a PersistentVolume
+    ## and include the package.json file before installing Helm Chart.
+    customNodeModulesPath: ""
 
 synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
@@ -80,18 +83,19 @@ synthetics:
   userDefinedVariables:
     ## The userDefinedVariables defines the locally hosted set of user-defined key value pairs.
     ## eg: '{"key":"value","key2":"value2"}'
-    # userDefinedJson: ''
+    userDefinedJson: ''
 
     ## The userDefinedVariable file contents, set using --set-file when installing the Helm Chart. Just uncomment
     ## and leave the value as-is
     # userDefinedFile: "{}"
 
     ## Path on the Persistent Volume to the user-defined variables file. Requires that the user set up a PersistentVolume
-    ## and include user_defined_variables.json file before installing Helm Chart.
-    # userDefinedPath: "variables"
+    ## and include user_defined_variables.json file before installing Helm Chart. Example: add "variables" if the
+    ## user_defined_variables.json file is in the variables folder.
+    # userDefinedPath: ""
 
   ## If set, enables verified script execution and uses this value as a passphrase.
-  #  vsePassphrase: ""
+  vsePassphrase: ""
 
   ## If set, enables verified script execution and uses this value from this Kubernetes Secret as a passphrase. Expects a key named `vsePassphrase`.
   #  vsePassphraseSecretName: ""
