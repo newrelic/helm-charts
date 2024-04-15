@@ -1,4 +1,4 @@
-# synthetics-job-manager
+# synthetics-job-manager 
 
 ## Chart Details
 
