@@ -90,6 +90,8 @@ spec:
             - name: LOG_PARSER
               {{- if .Values.fluentBit.criEnabled }}
               value: "cri,docker"
+              {{- else if .Values.fluentBit.logParsers }}
+              value: {{ .Values.fluentBit.logParsers | quote }}
               {{- else }}
               value: "docker,cri"
               {{- end }}

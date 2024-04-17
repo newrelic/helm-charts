@@ -31,7 +31,14 @@ fluentBit:
   windowsPath: "C:\\var\\log\\containers\\*.log"
   db: "/var/log/flb_kube.db"
   windowsDb: "C:\\var\\log\\flb_kube.db"
-  criEnabled: true
+
+  ## Deprecated: please use logParsers paramater instead
+  # criEnabled: true
+
+  ## Append to default log parsers using comma separated values.  
+  ## You must also update the parsers.conf stanza futher down in this file.
+  logParsers: "cri, docker"
+
   k8sBufferSize: "32k"
   k8sLoggingExclude: "Off"
   retryLimit: 5
