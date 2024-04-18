@@ -35,8 +35,8 @@ fluentBit:
   ## Deprecated: please use logParsers parameter instead
   # criEnabled: true
 
-  ## Append to default log parsers using comma separated values.  
-  ## You must also update the parsers.conf stanza futher down in this file.
+  ## Append to the default log parsers using comma separated values.  
+  ## If supplying a custom parser, must also update the parsers stanza futher down in this file.
   logParsers: "cri, docker"
 
   k8sBufferSize: "32k"
@@ -112,10 +112,10 @@ fluentBit:
           Skip_Long_Lines   On
           Refresh_Interval  10
 
-#    extraInputs: |
-#      [INPUT]
-#          Name   dummy
-#          Tag    dummy.log
+    # extraInputs: |
+    #   [INPUT]
+    #       Name   dummy
+    #       Tag    dummy.log
 
     filters: |
       [FILTER]
@@ -183,18 +183,19 @@ fluentBit:
           sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
           Retry_Limit    ${RETRY_LIMIT}
 
-#    extraOutputs: |
-#      [OUTPUT]
-#          Name null
-#          Match *
+    # extraOutputs: |
+    #   [OUTPUT]
+    #       Name null
+    #       Match *
 
-#    parsers: |
-#      [PARSER]
-#          Name         my_custom_parser
-#          Format       json
-#          Time_Key     time
-#          Time_Format  %Y-%m-%dT%H:%M:%S.%L
-#          Time_Keep    On
+    # parsers: |
+    #   [PARSER]
+    #       Name         my_custom_parser
+    #       Format       json
+    #       Time_Key     time
+    #       Time_Format  %Y-%m-%dT%H:%M:%S.%L
+    #       Time_Keep    On
+
     metricInstrumentation: |
       [INPUT]
           name prometheus_scrape
