@@ -2,7 +2,7 @@
 
 # super-agent-deployment
 
-![Version: 0.0.12-beta](https://img.shields.io/badge/Version-0.0.12--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.8.0](https://img.shields.io/badge/AppVersion-0.8.0-informational?style=flat-square)
+![Version: 0.0.13-beta](https://img.shields.io/badge/Version-0.0.13--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.13.1](https://img.shields.io/badge/AppVersion-0.13.1-informational?style=flat-square)
 
 A Helm chart to install New Relic Super agent on Kubernetes
 
@@ -41,8 +41,6 @@ At the point of the creation of the chart, it has no particularities and this se
 | config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
 | config.superAgent.content | string | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
 | config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
-| config.superAgent.key | string | `""` | The key in the configMap that has the configuration for the Super Agent. |
-| config.superAgent.name | string | `""` | The name the configMap is going to have. If create is set to false, the name of an existing configMap that will be used to config the Super Agent. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
 | customSecretLicenseKey | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |

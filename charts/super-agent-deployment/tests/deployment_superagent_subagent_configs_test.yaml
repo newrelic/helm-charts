@@ -8,34 +8,7 @@ release:
   namespace: my-namespace
 tests:
 
-  - it: there are no subagent configurations by default
-set:
-  cluster: test
-asserts:
-  - template: templates/deployment-superagent.yaml
-equal:
-  path: spec.template.spec.containers[0].volumeMounts
-  value:
-- name: super-agent-config
-  mountPath: /etc/newrelic-super-agent
-  readOnly: true
-- mountPath: /var/lib/newrelic-super-agent
-  name: var-lib-newrelic-super-agent
-  readOnly: false
-  - template: templates/deployment-superagent.yaml
-equal:
-  path: spec.template.spec.volumes
-  value:
-- name: super-agent-config
-  configMap:
-name: my-release-super-agent-deployment-superagent-config
-items:
-  - key: config.yaml
-path: config.yaml
-- name: var-lib-newrelic-super-agent
-  emptyDir: {}
-
-  - it: subagent configurations template file mounts
+  - it: there is no subagent configuration
 set:
   cluster: test
   config:
@@ -61,15 +34,6 @@ equal:
 - name: super-agent-config
   mountPath: /etc/newrelic-super-agent
   readOnly: true
-- name: my-release-super-agent-deployment-test-0
-  mountPath: /etc/newrelic-super-agent/fleet/agents.d/test-0/values
-  readOnly: true
-- name: my-release-super-agent-deployment-test-1
-  mountPath: /etc/newrelic-super-agent/fleet/agents.d/test-1/values
-  readOnly: true
-- name: my-release-super-agent-deployment-test-2
-  mountPath: /etc/newrelic-super-agent/fleet/agents.d/test-2/values
-  readOnly: true
 - mountPath: /var/lib/newrelic-super-agent
   name: var-lib-newrelic-super-agent
   readOnly: false
@@ -79,19 +43,10 @@ equal:
   value:
 - name: super-agent-config
   configMap:
-name: my-release-super-agent-deployment-superagent-config
+name: local-data-super-agent
 items:
-  - key: config.yaml
+  - key: local_config
 path: config.yaml
-- name: my-release-super-agent-deployment-test-0
-  configMap:
-name: my-release-super-agent-deployment-test-0
-- name: my-release-super-agent-deployment-test-1
-  configMap:
-name: my-release-super-agent-deployment-test-1
-- name: my-release-super-agent-deployment-test-2
-  configMap:
-name: my-release-super-agent-deployment-test-2
 - name: var-lib-newrelic-super-agent
   emptyDir: {}
 

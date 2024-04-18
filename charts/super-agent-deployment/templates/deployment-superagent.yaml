@@ -68,13 +68,6 @@ spec:
 - name: super-agent-config
   mountPath: /etc/newrelic-super-agent
   readOnly: true
-{{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
-{{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
-{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $subAgentName) }}
-- name: {{ $name }}
-  mountPath: /etc/newrelic-super-agent/fleet/agents.d/{{ $subAgentName }}/values
-  readOnly: true
-{{- end }}
 # TODO: when releasing we should check if this is still needed and if we need to persist the data.
 - mountPath: /var/lib/newrelic-super-agent
   name: var-lib-newrelic-super-agent
@@ -88,18 +81,10 @@ spec:
   volumes:
 - name: super-agent-config
   configMap:
-name: {{ include "newrelic-super-agent.config.name" . }}
+name: local-data-super-agent
 items:
-  - key: {{ include "newrelic-super-agent.config.key" . }}
+  - key: local_config
 path: config.yaml
-{{- range $subAgentName, $subAgentConfig := .Values.config.subAgents }}
-{{- $releaseSuffx := include "newrelic.common.naming.fullname" $ }}
-{{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseSuffx "suffix" $subAgentName) }}
-- name: {{ $name }}
-  configMap:
-name: {{ $name }}
-{{- end }}
-
 - name: var-lib-newrelic-super-agent
   emptyDir: {}
 {{- with .Values.extraVolumes }}
