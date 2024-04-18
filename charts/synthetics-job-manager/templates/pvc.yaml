@@ -10,16 +10,16 @@ metadata:
       {{ toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  volumeName: {{ .Values.synthetics.persistence.existingVolumeName | quote }}
+  volumeName: {{ .Values.global.persistence.existingVolumeName | quote }}
   accessModes:
     - ReadWriteOnce
-  {{- if .Values.synthetics.persistence.storageClass }}
-  storageClassName: {{ .Values.synthetics.persistence.storageClass | quote }}
+  {{- if .Values.global.persistence.storageClass }}
+  storageClassName: {{ .Values.global.persistence.storageClass | quote }}
   {{- end }}
   resources:
     requests:
-      {{- if .Values.synthetics.persistence.size }}
-      storage: {{ .Values.synthetics.persistence.size | quote }}
+      {{- if .Values.global.persistence.size }}
+      storage: {{ .Values.global.persistence.size | quote }}
       {{- else }}
       storage: 2Gi
       {{- end }}
