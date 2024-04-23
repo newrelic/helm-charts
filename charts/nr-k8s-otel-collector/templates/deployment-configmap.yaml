@@ -1,0 +1,334 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-k8s-otel-collector.fullname" . }}-deployment-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nr-k8s-otel-collector.labels" . | nindent 4 }}
+data:
+  deployment-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
+          http:
+            endpoint: ${env:MY_POD_IP}:4318
+      k8s_events:
+    #    namespaces: [default]
+      prometheus:
+        config:
+          scrape_configs: 
+            - job_name: kube-state-metrics
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - action: keep
+                  regex: kube-state-metrics
+                  source_labels:
+                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+            - job_name: apiserver
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names:
+                      - default
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+                - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
+                  action: keep
+                  regex: kubernetes;https
+                - action: replace
+                  source_labels:
+                  - __meta_kubernetes_namespace
+                  target_label: Namespace
+                - action: replace
+                  source_labels:
+                  - __meta_kubernetes_service_name
+                  target_label: Service
+
+      k8s_cluster:
+        auth_type: serviceAccount
+        node_conditions_to_report:
+          - Ready 
+        collection_interval: 1m
+        metrics: 
+          k8s.container.cpu_request: 
+            enabled: false
+          k8s.container.cpu_limit:
+            enabled: false
+          k8s.container.memory_request:
+            enabled: false
+          k8s.container.memory_limit:
+            enabled: false
+          k8s.container.storage_request:
+            enabled: false
+          k8s.container.storage_limit:
+            enabled: false
+          k8s.container.ephemeralstorage_request:
+            enabled: false
+          k8s.container.ephemeralstorage_limit:
+            enabled: false
+          k8s.container.restarts:
+            enabled: false
+          k8s.container.ready:
+            enabled: false
+          k8s.pod.phase:
+            enabled: false
+          k8s.pod.status_reason:
+            enabled: false
+          k8s.deployment.desired:
+            enabled: false
+          k8s.deployment.available:
+            enabled: false
+          k8s.cronjob.active_jobs:
+            enabled: false
+          k8s.daemonset.current_scheduled_nodes:
+            enabled: false
+          k8s.daemonset.desired_scheduled_nodes:
+            enabled: false
+          k8s.daemonset.misscheduled_nodes:
+            enabled: false
+          k8s.daemonset.ready_nodes:
+            enabled: false
+          k8s.hpa.max_replicas:
+            enabled: false
+          k8s.hpa.min_replicas:
+            enabled: false
+          k8s.hpa.current_replicas:
+            enabled: false
+          k8s.hpa.desired_replicas:
+            enabled: false
+          k8s.job.active_pods:
+            enabled: false
+          k8s.job.desired_successful_pods:
+            enabled: false
+          k8s.job.failed_pods:
+            enabled: false
+          k8s.job.max_parallel_pods:
+            enabled: false
+          k8s.job.successful_pods:
+            enabled: false
+          k8s.namespace.phase:
+            enabled: false
+          k8s.replicaset.desired:
+            enabled: false
+          k8s.replicaset.available:
+            enabled: false
+          k8s.replication_controller.desired:
+            enabled: false
+          k8s.replication_controller.available:
+            enabled: false
+          k8s.resource_quota.hard_limit:
+            enabled: false
+          k8s.resource_quota.used:
+            enabled: false
+          k8s.statefulset.desired_pods:
+            enabled: false
+          k8s.statefulset.ready_pods:
+            enabled: false
+          k8s.statefulset.current_pods:
+            enabled: false
+          k8s.statefulset.updated_pods:
+            enabled: false
+          k8s.node.condition:
+            enabled: false
+        resource_attributes:
+            k8s.namespace.uid:
+              enabled: false
+            k8s.namespace.name:
+              enabled: false
+            k8s.node.uid:
+              enabled: false
+            k8s.node.name:
+              enabled: false
+            container.id:
+              enabled: false
+            container.image.name:
+              enabled: false
+            container.image.tag:
+              enabled: false
+            k8s.container.name:
+              enabled: false
+            k8s.pod.name:
+              enabled: false
+            k8s.pod.uid:
+              enabled: false
+            k8s.pod.qos_class:
+              enabled: false
+            k8s.replicaset.name:
+              enabled: false
+            k8s.replicaset.uid:
+              enabled: false
+            k8s.replicationcontroller.name:
+              enabled: false
+            k8s.replicationcontroller.uid:
+              enabled: false
+            k8s.resourcequota.uid:
+              enabled: false
+            k8s.resourcequota.name:
+              enabled: false
+            k8s.statefulset.uid:
+              enabled: false
+            k8s.statefulset.name:
+              enabled: false
+            k8s.deployment.uid:
+              enabled: false
+            k8s.deployment.name:
+              enabled: false
+            k8s.cronjob.uid:
+              enabled: false
+            k8s.cronjob.name:
+              enabled: false
+            k8s.daemonset.name:
+              enabled: false
+            k8s.daemonset.uid:
+              enabled: false
+            k8s.hpa.uid:
+              enabled: false
+            k8s.hpa.name:
+              enabled: false
+            k8s.job.name:
+              enabled: false
+            k8s.job.uid:
+              enabled: false
+    
+    processors:
+      metricstransform/k8s_cluster_info:
+        transforms:
+          - include: k8s.node.condition_ready 
+            action: update
+            new_name: k8s.cluster.info 
+
+      metricstransform/kube_pod_status_phase:
+        transforms:
+          - include: 'kube_pod_container_status_waiting'
+            match_type: strict 
+            action: update
+            new_name: 'kube_pod_container_status_phase'
+            operations:
+            - action: add_label
+              new_label: container_phase
+              new_value: waiting 
+          - include: 'kube_pod_container_status_running'
+            match_type: strict
+            action: update
+            new_name: 'kube_pod_container_status_phase'
+            operations:
+            - action: add_label
+              new_label: container_phase
+              new_value: running 
+          - include: 'kube_pod_container_status_terminated'
+            match_type: strict
+            action: update
+            new_name: 'kube_pod_container_status_phase'
+            operations:
+            - action: add_label
+              new_label: container_phase
+              new_value: terminated 
+
+      filter/exclude_zero_value_kube_pod_container_status:
+        metrics:
+          datapoint:
+            - metric.name == "kube_pod_container_status" and value_double == 0.0
+
+      resource/metrics:
+        attributes:
+          - key: host.id
+            from_attribute: host.name
+            action: upsert
+          # TODO chris: Upsert only when cluster name not found (resource detection override: true)
+          - key: k8s.cluster.name
+            action: upsert
+            value: {{ .Values.cluster.name }}
+          - key: newrelicOnly
+            action: upsert
+            value: 'true'
+          - key: service.name
+            action: delete
+          - key: service_name
+            action: delete
+
+      batch:
+      
+      resource/events:
+        attributes:
+          - key: "event.name"
+            action: upsert
+            value: "InfrastructureEvent"
+          - key: "event.domain"
+            action: upsert
+            value: "newrelic-otel-event"
+          - key: "category"
+            action: upsert
+            value: "kubernetes"
+          - key: k8s.cluster.name
+            action: upsert
+            value: {{ .Values.cluster }}
+          - key: newrelicOnly
+            action: upsert
+            value: 'true'
+
+      k8sattributes:
+        auth_type: "serviceAccount"
+        passthrough: false
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+        extract:
+          metadata:
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.deployment.name
+            - k8s.namespace.name
+            - k8s.node.name
+            - k8s.pod.start_time
+        pod_association:
+          - sources: 
+            - from: resource_attribute
+              name: k8s.pod.uid
+
+    exporters:
+      otlp:
+        endpoint: "nr-k8s-otel-collector-gateway:4317"
+        tls:
+          insecure: true
+      otlphttp/newrelic:
+        endpoint: {{ .Values.newRelicEndpoint }}
+        headers:
+          api-key: ${env:NR_LICENSE_KEY}
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+    service:
+      telemetry:
+        logs:
+          level: "debug"
+      pipelines:
+        # Uncomment below if exporting traces to NR
+        # traces:
+        #   receivers: [otlp]
+        #   processors: [batch]
+        #   exporters: [otlphttp/newrelic, debug]
+        metrics:
+          receivers: [otlp, prometheus, k8s_cluster]
+          processors: 
+            - metricstransform/k8s_cluster_info
+            - metricstransform/kube_pod_status_phase
+            - filter/exclude_zero_value_kube_pod_container_status
+            - resource/metrics
+            - batch
+            - k8sattributes
+          exporters: [otlphttp/newrelic, debug]
+        logs:
+          receivers: [otlp]
+          processors: [batch]
+          exporters: [otlphttp/newrelic, debug]
+        logs/events:
+          receivers: [k8s_events]
+          processors: [resource/events, batch]
+          exporters: [otlp, debug]

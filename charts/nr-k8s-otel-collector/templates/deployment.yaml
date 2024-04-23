@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nr-k8s-otel-collector.fullname" . }}-deployment
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nr-k8s-otel-collector.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 6 }}
+      component: deployment
+  template:
+    metadata:
+      labels:
+        {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 8 }}
+        component: deployment
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/deployment-configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "nr-k8s-otel-collector.serviceAccountName" . }}
+      containers:
+        - name: otel-collector
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          args: ["--config", "/config/deployment-config.yaml"]
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            {{ if .Values.customSecretName }}
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.customSecretName }}
+                  key: {{ .Values.customSecretLicenseKey }}
+            {{ else }}
+            - name: NR_LICENSE_KEY
+              value: {{ .Values.licenseKey }}
+            {{ end }}
+          ports:
+            - containerPort: 4317   # otlp grpc
+            - containerPort: 4318   # otlp http
+          volumeMounts:
+            - name: deployment-config
+              mountPath: /config
+      volumes:
+        - name: deployment-config
+          configMap:
+            name: {{ include "nr-k8s-otel-collector.fullname" . }}-deployment-config
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

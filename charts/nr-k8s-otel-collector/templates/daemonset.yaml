@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nr-k8s-otel-collector.fullname" . }}-daemonset
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "nr-k8s-otel-collector.labels" . | nindent 4 }}
+spec: 
+  selector:
+    matchLabels:
+      {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 6 }}
+      component: daemonset
+  template:
+    metadata:
+      labels:
+        {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 8 }}
+        component: daemonset
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "nr-k8s-otel-collector.serviceAccountName" . }}
+      containers: 
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          command:
+            - /otelcol-contrib
+            - --config=/conf/otel-collector-config.yaml
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          env:
+            - name: HOST_IP
+              valueFrom: 
+                fieldRef:
+                  fieldPath: status.hostIP 
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT 
+              value: "http://$(HOST_IP):55680"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_UID
+              valueFrom: 
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
+            {{ if .Values.customSecretName }}
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.customSecretName }}
+                  key: {{ .Values.customSecretLicenseKey }}
+            {{ else }}
+            - name: NR_LICENSE_KEY
+              value: {{ .Values.licenseKey }}
+            {{ end }}
+          volumeMounts:
+            - name: config-volume
+              mountPath: /conf
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: varlibdockercontainers
+              mountPath: /var/lib/docker/containers
+              readOnly: true
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "nr-k8s-otel-collector.fullname" . }}-daemonset-config
+        - name: varlogpods 
+          hostPath:
+            path: /var/log/pods
+        - name: varlibdockercontainers
+          hostPath:
+            path: /var/lib/docker/containers
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
