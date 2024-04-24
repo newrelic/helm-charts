@@ -4,7 +4,7 @@ metadata:
   name: nr-k8s-otel-collector-gateway
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "nr-k8s-otel-collector.labels" . | nindent 4 }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
   ports:
@@ -17,6 +17,6 @@ spec:
       protocol: TCP
       targetPort: 4318
   selector:
-    {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 4 }}
+    {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
     component: deployment
   internalTrafficPolicy: Cluster

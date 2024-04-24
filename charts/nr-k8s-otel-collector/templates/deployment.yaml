@@ -1,26 +1,26 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "nr-k8s-otel-collector.fullname" . }}-deployment
+  name: {{ include "newrelic.common.naming.fullname" . }}-deployment
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "nr-k8s-otel-collector.labels" . | nindent 4 }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
   replicas: 1
   minReadySeconds: 5
   selector:
     matchLabels:
-      {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 6 }}
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
       component: deployment
   template:
     metadata:
       labels:
-        {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 8 }}
+        {{- include "newrelic.common.labels.selectorLabels" . | nindent 8 }}
         component: deployment
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/deployment-configmap.yaml") . | sha256sum }}
     spec:
-      serviceAccountName: {{ include "nr-k8s-otel-collector.serviceAccountName" . }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       containers:
         - name: otel-collector
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -56,7 +56,7 @@ spec:
       volumes:
         - name: deployment-config
           configMap:
-            name: {{ include "nr-k8s-otel-collector.fullname" . }}-deployment-config
+            name: {{ include "newrelic.common.naming.fullname" . }}-deployment-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

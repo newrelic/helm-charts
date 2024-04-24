@@ -1,24 +1,24 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "nr-k8s-otel-collector.fullname" . }}-daemonset
+  name: {{ include "newrelic.common.naming.fullname" . }}-daemonset
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "nr-k8s-otel-collector.labels" . | nindent 4 }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
 spec: 
   selector:
     matchLabels:
-      {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 6 }}
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
       component: daemonset
   template:
     metadata:
       labels:
-        {{- include "nr-k8s-otel-collector.selectorLabels" . | nindent 8 }}
+        {{- include "newrelic.common.labels.selectorLabels" . | nindent 8 }}
         component: daemonset
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
     spec:
-      serviceAccountName: {{ include "nr-k8s-otel-collector.serviceAccountName" . }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       containers: 
         - name: {{ .Chart.Name }}
           securityContext:
@@ -78,7 +78,7 @@ spec:
       volumes:
         - name: config-volume
           configMap:
-            name: {{ include "nr-k8s-otel-collector.fullname" . }}-daemonset-config
+            name: {{ include "newrelic.common.naming.fullname" . }}-daemonset-config
         - name: varlogpods 
           hostPath:
             path: /var/log/pods
