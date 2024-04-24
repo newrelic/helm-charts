@@ -218,7 +218,7 @@ data:
           # TODO chris: Upsert only when cluster name not found (resource detection override: true)
           - key: k8s.cluster.name
             action: upsert
-            value: {{ .Values.cluster }}
+            value: {{ include "newrelic.common.cluster" . }}
           - key: newrelicOnly
             action: upsert
             value: 'true'

@@ -56,12 +56,12 @@ spec:
                   fieldPath: spec.nodeName
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
-            {{ if .Values.customSecretName }}
+            {{ if include "newrelic.common.license.secretName" }}
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.customSecretName }}
-                  key: {{ .Values.customSecretLicenseKey }}
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
             {{ else }}
             - name: NR_LICENSE_KEY
               value: {{ .Values.licenseKey }}
@@ -85,15 +85,15 @@ spec:
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
-      {{- with .Values.nodeSelector }}
+     {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.affinity }}
+       {{- . | nindent 8 -}}
+     {{- end }}
+     {{- with include "newrelic.common.affinity" . }}
       affinity:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
-      {{- with .Values.tolerations }}
+       {{- . | nindent 8 -}}
+     {{- end }}
+     {{- with include "newrelic.common.tolerations" . }}
       tolerations:
-        {{- toYaml . | nindent 8 }}
-      {{- end }}
+       {{- . | nindent 8 -}}
+     {{- end }}
