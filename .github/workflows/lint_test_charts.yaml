@@ -30,7 +30,7 @@ jobs:
 
       - uses: actions/setup-python@v5
       - uses: helm/chart-testing-action@v2.6.1
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
         with:
           version: 'v3.0.0'
 
@@ -74,14 +74,14 @@ jobs:
 
       - uses: actions/setup-python@v5
       - uses: helm/chart-testing-action@v2.6.1
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
         with:
           version: 'v3.0.0'
 
       - name: Install Minikube
         uses: manusa/actions-setup-minikube@v2.10.0
         with:
-          minikube version: v1.32.0
+          minikube version: v1.33.0
           kubernetes version: v1.27.7
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
@@ -101,7 +101,7 @@ jobs:
     needs: [ lint-test ]
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
         with:
           version: 'v3.0.0'
 
@@ -149,7 +149,7 @@ jobs:
     needs: [ lint-test ]
     steps:
       - uses: actions/checkout@v4
-      - uses: azure/setup-helm@v3
+      - uses: azure/setup-helm@v4
         with:
           version: 'v3.0.0'
 
