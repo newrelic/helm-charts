@@ -39,16 +39,11 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
-            {{ if include "newrelic.common.license.secretName" }}
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
                   name: {{ include "newrelic.common.license.secretName" . }}
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
-            {{ else }}
-            - name: NR_LICENSE_KEY
-              value: {{ .Values.licenseKey }}
-            {{ end }}
           ports:
             - containerPort: 4317   # otlp grpc
             - containerPort: 4318   # otlp http
