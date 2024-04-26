@@ -315,7 +315,10 @@ data:
         #   processors: [batch]
         #   exporters: [otlphttp/newrelic, debug]
         metrics:
-          receivers: [otlp, prometheus, k8s_cluster]
+          receivers:
+            - otlp
+            - prometheus
+            - k8s_cluster]
           processors: 
             - metricstransform/k8s_cluster_info
             - metricstransform/kube_pod_status_phase

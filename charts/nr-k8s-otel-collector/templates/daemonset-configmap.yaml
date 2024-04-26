@@ -266,7 +266,11 @@ data:
           level: "debug"
       pipelines:
         metrics:
-          receivers: [otlp, hostmetrics, kubeletstats, prometheus]
+          receivers:
+            - otlp
+            - hostmetrics
+            - kubeletstats
+            - prometheus]
           processors:
             # - transform/truncate
             - filter/exclude_cpu_utilization
