@@ -288,6 +288,8 @@ data:
             - batch
           exporters: [otlphttp/newrelic, logging]
         logs:
-          receivers: [otlp, filelog]
+          receivers:
+            - otlp
+            - filelog
           processors: [transform/truncate, resource, k8sattributes, batch]
           exporters: [logging, otlphttp/newrelic]
