@@ -317,8 +317,12 @@ data:
         metrics:
           receivers:
             - otlp
+            {{ if .Values.enablePrometheusReceiver }}
             - prometheus
-            - k8s_cluster]
+            {{ end }}
+            {{ if .Values.enableK8sClusterReceiver }}
+            - k8s_cluster
+            {{ end }}
           processors: 
             - metricstransform/k8s_cluster_info
             - metricstransform/kube_pod_status_phase
@@ -333,6 +337,8 @@ data:
           exporters: [otlphttp/newrelic, debug]
         logs/events:
           receivers:
+            {{ if .Values.enableK8sEventsReceiver }}
             - k8s_events
+            {{ end }}
           processors: [resource/events, batch]
           exporters: [otlp, debug]

@@ -268,9 +268,15 @@ data:
         metrics:
           receivers:
             - otlp
+            {{ if .Values.enableHostmetricsReceiver }}
             - hostmetrics
+            {{ end }}
+            {{ if .Values.enableKubeletstatsReceiver }}
             - kubeletstats
-            - prometheus]
+            {{ end }}
+            {{ if .Values.enablePrometheusReceiver }}
+            - prometheus
+            {{ end }}
           processors:
             # - transform/truncate
             - filter/exclude_cpu_utilization
@@ -290,6 +296,8 @@ data:
         logs:
           receivers:
             - otlp
+            {{ if .Values.enableFilelogReceiver }}
             - filelog
+            {{ end }}
           processors: [transform/truncate, resource, k8sattributes, batch]
           exporters: [logging, otlphttp/newrelic]
