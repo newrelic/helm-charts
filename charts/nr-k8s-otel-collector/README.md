@@ -18,7 +18,6 @@ cluster: "SampleApp"
 ```
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo update
-helm install nodeexporter prometheus-community/prometheus-node-exporter 
 ```
 2. Comment out [these lines](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/templates/daemonset-configmap.yaml#L277-L292) in the configuration. 
 
