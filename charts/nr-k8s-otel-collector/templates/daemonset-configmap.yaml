@@ -8,10 +8,6 @@ metadata:
 data:
   otel-collector-config.yaml: |
     receivers:
-      otlp:
-        protocols:
-          grpc:
-          http:
       hostmetrics:  
         collection_interval: 20s
         scrapers:
@@ -253,7 +249,7 @@ data:
       {{ end }}
       pipelines:
         metrics:
-          receivers: [otlp, hostmetrics, kubeletstats, prometheus]
+          receivers: [hostmetrics, kubeletstats, prometheus]
           processors:
             # - transform/truncate
             - filter/exclude_cpu_utilization
@@ -275,7 +271,7 @@ data:
             - debug
             {{ end }}
         logs:
-          receivers: [otlp, filelog]
+          receivers: [filelog]
           processors: [transform/truncate, resource, k8sattributes, batch]
           exporters:
             - otlphttp/newrelic
