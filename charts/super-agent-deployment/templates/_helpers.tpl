@@ -2,17 +2,8 @@
 Return the name of the configMap holding the Super Agent's config. Defaults to release's fill name suffiexed with "-config"
 */ -}}
 {{- define "newrelic-super-agent.config.name" -}}
-{{- .Values.config.superAgent.name | default (include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "superagent-config" )) -}}
+{{- (include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "local-data" "suffix" "superagent-config" )) -}}
 {{- end -}}
-
-
-{{- /*
-Return the key name of the configMap holding the Super Agent's config. Defaults to "config.yaml"
-*/ -}}
-{{- define "newrelic-super-agent.config.key" -}}
-{{- .Values.config.superAgent.key | default "config.yaml" -}}
-{{- end -}}
-
 
 {{- /*
 Builds the configuration from config on the values and add more config options like
