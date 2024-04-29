@@ -125,7 +125,7 @@ fluentBit:
           Name           record_modifier
           Alias          node-attributes-enricher
           Match          *
-          Record         cluster_name ${CLUSTER_NAME}
+          Record         cluster_name "${CLUSTER_NAME}"
 
 #    extraFilters: |
 #      [FILTER]
@@ -157,7 +157,7 @@ fluentBit:
           Name           record_modifier
           Match          *
           Alias          node-attributes-enricher-filter
-          Record         cluster_name ${CLUSTER_NAME}
+          Record         cluster_name "${CLUSTER_NAME}"
           Allowlist_key  container_name
           Allowlist_key  namespace_name
           Allowlist_key  pod_name
@@ -211,7 +211,7 @@ fluentBit:
           Tls.verify           Off
           # User-defined labels
           add_label            app fluent-bit
-          add_label            cluster_name ${CLUSTER_NAME}
+          add_label            cluster_name "${CLUSTER_NAME}"
           add_label            hostname ${HOSTNAME}
           add_label            node_name ${NODE_NAME}
           add_label            source kubernetes
