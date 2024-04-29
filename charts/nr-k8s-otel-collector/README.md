@@ -13,14 +13,6 @@ newRelicEndpoint: "https://otlp.nr-data.net"
 cluster: "SampleApp" 
 ```
 
-#### [Optional] Enable node-exporter (not required for New Relic Kubernetes monitoring experience) 
-1. Run: 
-```
-helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm repo update
-```
-2. Comment out [these lines](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/templates/daemonset-configmap.yaml#L277-L292) in the configuration. 
-
 
 ### 3. From the root directory of this chart, run:
 ```
