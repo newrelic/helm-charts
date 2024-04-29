@@ -22,7 +22,7 @@ spec:
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       containers:
-        - name: otel-collector
+        - name: otel-collector-deployment
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           args: ["--config", "/config/deployment-config.yaml"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
