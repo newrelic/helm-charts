@@ -305,15 +305,12 @@ data:
         sampling_initial: 5
         sampling_thereafter: 200
     service:
+      {{ if include "newrelic.common.verboseLog" . }}
       telemetry:
         logs:
           level: "debug"
+      {{ end }}
       pipelines:
-        # Uncomment below if exporting traces to NR
-        # traces:
-        #   receivers: [otlp]
-        #   processors: [batch]
-        #   exporters: [otlphttp/newrelic, debug]
         metrics:
           receivers: [otlp, prometheus, k8s_cluster]
           processors: 
@@ -323,12 +320,24 @@ data:
             - resource/metrics
             - batch
             - k8sattributes
-          exporters: [otlphttp/newrelic, debug]
+          exporters:
+            - otlphttp/newrelic
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
         logs:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlphttp/newrelic, debug]
+          exporters:
+            - otlphttp/newrelic
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
         logs/events:
           receivers: [k8s_events]
           processors: [resource/events, batch]
-          exporters: [otlp, debug]
+          exporters:
+            - otlp
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
