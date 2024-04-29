@@ -13,7 +13,6 @@ newRelicEndpoint: "https://otlp.nr-data.net"
 cluster: "SampleApp" 
 ```
 
-
 ### 3. From the root directory of this chart, run:
 ```
 helm install nr-k8s-otel-collector nr-k8s-otel-collector -n newrelic --create-namespace
