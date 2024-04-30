@@ -109,13 +109,19 @@ data:
           - /var/log/messages
           - /var/log/secure
           - /var/log/yum.log
-          - /var/log/alternatives.log
         exclude:
-          # Exclude logs from all containers named nr-k8s-otel-collector and otelcontribcol
-          - /var/log/pods/*/nr-k8s-otel-collector/*.log
-          - /var/log/pods/*/otelcontribcol/*.log
+          # Exclude logs from opentelemetry containers
+          # TODO(chris): dynamically generate filelog paths based on CRI
+          # filelog paths for containerd and CRI-O
+          - /var/log/pods/*/otel-collector-daemonset/*.log
+          - /var/log/pods/*/otel-collector-deployment/*.log
+          - /var/log/pods/*/containers/*-exec.log
+          # konnectivity-agent is GKE specific (gke uses containerd as default)
           - /var/log/pods/*/konnectivity-agent/*.log
-          # - /var/log/pods/*/containers/*-exec.log
+          # filelog paths for docker CRI
+          - /var/log/container/otel-collector-daemonset/*.log
+          - /var/log/container/otel-collector-deployment/*.log
+          - /var/log/containers/*-exec.log
         start_at: beginning
         include_file_path: true
         include_file_name: true

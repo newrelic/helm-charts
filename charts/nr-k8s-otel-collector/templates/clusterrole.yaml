@@ -8,24 +8,45 @@ rules:
   - apiGroups:
     - ""
     resources:
+    # following required for k8s_events, k8s_cluster receiver
     - events
-    - endpoints
+    # following required for k8s_cluster receiver
     - namespaces
-    - namespaces/status
+    # following required for prometheus, k8s_cluster receiver
     - nodes
-    - nodes/spec
-    - nodes/stats
-    - nodes/proxy
+    # following required for prometheus, k8s_cluster receiver
     - pods
     - pods/status
-    - replicationcontrollers
-    - replicationcontrollers/status
-    - resourcequotas
+    # following required for prometheus, k8s_cluster receiver
     - services
     verbs:
     - get
     - list
     - watch
+  - apiGroups:
+    - ""
+    resources:
+    # following required for hostmetrics, prometheus receiver
+    - nodes/spec
+    - nodes/stats
+    - nodes/proxy
+    # following required for hostmetrics, kubeletstats, and prometheus receiver
+    - nodes/metrics
+    # following required for filelog receiver
+    - pods/logs
+    verbs:
+    - get
+  # following required for prometheus receiver
+  - apiGroups:
+    - ""
+    resources:
+    - endpoints
+    - replicationcontrollers
+    - resourcequotas
+    verbs:
+    - list
+    - watch
+  # following required for prometheus receiver
   - apiGroups:
     - apps
     resources:
@@ -37,30 +58,20 @@ rules:
     - get
     - list
     - watch
-  - apiGroups:
-    - extensions
-    resources:
-    - daemonsets
-    - deployments
-    - replicasets
-    verbs:
-    - get
-    - list
-    - watch
+  # following required for prometheus receiver
   - apiGroups:
     - batch
     resources:
     - jobs
     - cronjobs
     verbs:
-    - get
     - list
     - watch
+  # following required for prometheus receiver
   - apiGroups:
-      - autoscaling
+    - autoscaling
     resources:
-      - horizontalpodautoscalers
+    - horizontalpodautoscalers
     verbs:
-      - get
-      - list
-      - watch
+    - list
+    - watch
