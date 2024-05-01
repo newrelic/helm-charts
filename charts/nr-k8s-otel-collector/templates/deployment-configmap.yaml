@@ -10,8 +10,10 @@ data:
     receivers:
       otlp:
         protocols:
+          {{ if .Values.enableGrpcGatewayEndpoint }}
           grpc:
             endpoint: ${env:MY_POD_IP}:4317
+          {{ end }}
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
@@ -289,10 +291,10 @@ data:
               name: k8s.pod.uid
 
     exporters:
-      otlp:
-        endpoint: "nr-k8s-otel-collector-gateway:4317"
-        tls:
-          insecure: true
+      #  otlphttp:
+      #    endpoint: "nr-k8s-otel-collector-gateway"
+      #    tls:
+      #      insecure: true
       otlphttp/newrelic:
         endpoint: {{ .Values.newRelicEndpoint }}
         headers:
