@@ -30,9 +30,6 @@ data:
             - job_name: apiserver
               kubernetes_sd_configs:
                 - role: endpoints
-                  namespaces:
-                    names:
-                      - default
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -305,15 +302,12 @@ data:
         sampling_initial: 5
         sampling_thereafter: 200
     service:
+      {{ if include "newrelic.common.verboseLog" . }}
       telemetry:
         logs:
           level: "debug"
+      {{ end }}
       pipelines:
-        # Uncomment below if exporting traces to NR
-        # traces:
-        #   receivers: [otlp]
-        #   processors: [batch]
-        #   exporters: [otlphttp/newrelic, debug]
         metrics:
           receivers:
             - otlp
@@ -330,15 +324,27 @@ data:
             - resource/metrics
             - batch
             - k8sattributes
-          exporters: [otlphttp/newrelic, debug]
+          exporters:
+            - otlphttp/newrelic
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
         logs:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlphttp/newrelic, debug]
+          exporters:
+            - otlphttp/newrelic
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
         logs/events:
           receivers:
             {{ if .Values.enableK8sEventsReceiver }}
             - k8s_events
             {{ end }}
           processors: [resource/events, batch]
-          exporters: [otlp, debug]
+          exporters:
+            - otlp
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}

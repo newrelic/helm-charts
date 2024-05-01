@@ -8,10 +8,6 @@ metadata:
 data:
   otel-collector-config.yaml: |
     receivers:
-      otlp:
-        protocols:
-          grpc:
-          http:
       hostmetrics:  
         collection_interval: 20s
         scrapers:
@@ -100,23 +96,6 @@ data:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
-            # node_exporter job not needed, but leaving configuration in case users want to enable it
-            # - job_name: node_exporter
-            #   kubernetes_sd_configs:
-            #     - role: pod
-            #   relabel_configs:
-            #     - action: keep
-            #       regex: prometheus-node-exporter.*
-            #       source_labels:
-            #         - __meta_kubernetes_pod_label_app_kubernetes_io_name
-            #     - action: replace
-            #       source_labels:
-            #         - __meta_kubernetes_pod_node_name
-            #       target_label: instance
-            #     - action: replace
-            #       source_labels:
-            #         - __meta_kubernetes_namespace
-            #       target_label: namespace
       filelog:
         include:
           - /var/log/pods/*/*/*.log
@@ -130,13 +109,19 @@ data:
           - /var/log/messages
           - /var/log/secure
           - /var/log/yum.log
-          - /var/log/alternatives.log
         exclude:
-          # Exclude logs from all containers named nr-k8s-otel-collector and otelcontribcol
-          - /var/log/pods/*/nr-k8s-otel-collector/*.log
-          - /var/log/pods/*/otelcontribcol/*.log
+          # Exclude logs from opentelemetry containers
+          # TODO(chris): dynamically generate filelog paths based on CRI
+          # filelog paths for containerd and CRI-O
+          - /var/log/pods/*/otel-collector-daemonset/*.log
+          - /var/log/pods/*/otel-collector-deployment/*.log
+          - /var/log/pods/*/containers/*-exec.log
+          # konnectivity-agent is GKE specific (gke uses containerd as default)
           - /var/log/pods/*/konnectivity-agent/*.log
-          # - /var/log/pods/*/containers/*-exec.log
+          # filelog paths for docker CRI
+          - /var/log/container/otel-collector-daemonset/*.log
+          - /var/log/container/otel-collector-deployment/*.log
+          - /var/log/containers/*-exec.log
         start_at: beginning
         include_file_path: true
         include_file_name: true
@@ -257,17 +242,20 @@ data:
       #   endpoint: "nr-k8s-otel-collector-gateway:4317"
       #   tls:
       #     insecure: true
-      logging:
+      debug:
         verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
 
     service:
+      {{ if include "newrelic.common.verboseLog" . }}
       telemetry:
         logs:
           level: "debug"
+      {{ end }}
       pipelines:
         metrics:
           receivers:
-            - otlp
             {{ if .Values.enableHostmetricsReceiver }}
             - hostmetrics
             {{ end }}
@@ -292,12 +280,19 @@ data:
             - resource
             - k8sattributes
             - batch
-          exporters: [otlphttp/newrelic, logging]
+          exporters:
+            - otlphttp/newrelic
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
         logs:
           receivers:
-            - otlp
             {{ if .Values.enableFilelogReceiver }}
             - filelog
             {{ end }}
           processors: [transform/truncate, resource, k8sattributes, batch]
-          exporters: [logging, otlphttp/newrelic]
+          exporters:
+            - otlphttp/newrelic
+            {{ if include "newrelic.common.verboseLog" . }}
+            - debug
+            {{ end }}
