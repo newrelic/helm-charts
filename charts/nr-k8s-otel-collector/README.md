@@ -26,7 +26,7 @@ kubectl get pods -A --watch
 
 ### Check logs of opentelemetry pod that spins up: 
 ```
-kubectl logs <otel-pod-name>
+kubectl logs <otel-pod-name> -n newrelic
 ```
 
 ### Confirm data coming through in New Relic 
@@ -46,7 +46,7 @@ FROM Log SELECT *
 1. Make changes to the [opentelemetry configuration](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/templates/configmap.yaml#L6-L485) 
 2. Upgrade the release:
 ```
-helm upgrade nr-k8s-otel-collector nr-k8s-otel-collector
+helm upgrade nr-k8s-otel-collector nr-k8s-otel-collector -n newrelic
 ```
 
 
