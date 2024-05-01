@@ -10,8 +10,10 @@ data:
     receivers:
       otlp:
         protocols:
+          {{ if .Values.enableGrpcGatewayEndpoint }}
           grpc:
             endpoint: ${env:MY_POD_IP}:4317
+          {{ end }}
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
@@ -238,7 +240,7 @@ data:
           - key: host.id
             from_attribute: host.name
             action: upsert
-          # TODO chris: Upsert only when cluster name not found (resource detection override: true)
+          # TODO (chris): Upsert only when cluster name not found (resource detection override: true)
           - key: k8s.cluster.name
             action: upsert
             value: {{ include "newrelic.common.cluster" . }}
@@ -289,10 +291,10 @@ data:
               name: k8s.pod.uid
 
     exporters:
-      otlp:
-        endpoint: "nr-k8s-otel-collector-gateway:4317"
-        tls:
-          insecure: true
+      #  otlphttp:
+      #    endpoint: "nr-k8s-otel-collector-gateway"
+      #    tls:
+      #      insecure: true
       otlphttp/newrelic:
         endpoint: {{ .Values.newRelicEndpoint }}
         headers:
@@ -329,14 +331,15 @@ data:
             {{ if include "newrelic.common.verboseLog" . }}
             - debug
             {{ end }}
-        logs:
-          receivers: [otlp]
-          processors: [batch]
-          exporters:
-            - otlphttp/newrelic
-            {{ if include "newrelic.common.verboseLog" . }}
-            - debug
-            {{ end }}
+        # TODO(chris): uncomment when writing daemonset metrics through deployment
+        # logs:
+        #   receivers: [otlp]
+        #   processors: [batch]
+        #   exporters:
+        #     - otlphttp/newrelic
+        #     {{ if include "newrelic.common.verboseLog" . }}
+        #     - debug
+        #     {{ end }}
         logs/events:
           receivers:
             {{ if .Values.enableK8sEventsReceiver }}
@@ -344,7 +347,7 @@ data:
             {{ end }}
           processors: [resource/events, batch]
           exporters:
-            - otlp
+            - otlphttp/newrelic
             {{ if include "newrelic.common.verboseLog" . }}
             - debug
             {{ end }}

@@ -200,7 +200,7 @@ data:
           - key: host.id
             from_attribute: host.name
             action: upsert
-          # TODO chris: Upsert only when cluster name not found (resource detection override: true)
+          # TODO (chris): Upsert only when cluster name not found (resource detection override: true)
           - key: k8s.cluster.name
             action: upsert
             value: {{ include "newrelic.common.cluster" . }}
@@ -237,9 +237,9 @@ data:
         endpoint: {{ .Values.newRelicEndpoint }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      # uncomment when writing daemonset metrics through deployment
-      # otlp:
-      #   endpoint: "nr-k8s-otel-collector-gateway:4317"
+      # TODO(chris): uncomment when writing daemonset metrics through deployment
+      # otlphttp:
+      #   endpoint: "nr-k8s-otel-collector-gateway"
       #   tls:
       #     insecure: true
       debug:
