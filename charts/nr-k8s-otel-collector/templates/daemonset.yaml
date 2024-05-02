@@ -17,19 +17,24 @@ spec:
         component: daemonset
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
+        {{- with .Values.daemonset.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      securityContext:
+        {{- toYaml .Values.daemonset.podSecurityContext | nindent 8 }}
       containers: 
         - name: otel-collector-daemonset
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- toYaml .Values.daemonset.containerSecurityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - /otelcol-contrib
             - --config=/conf/otel-collector-config.yaml
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.daemonset.resources | nindent 12 }}
           env:
             - name: HOST_IP
               valueFrom: 

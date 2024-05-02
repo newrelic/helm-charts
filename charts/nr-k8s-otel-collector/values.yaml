@@ -26,23 +26,36 @@ customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
 
-podAnnotations: {}
+daemonset:
+  # -- Annotations to be added to the daemonset.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the daemonset.
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the daemonset.
+  containerSecurityContext: {}
+  # -- Sets resources for the daemonset.
+  resources: {}
 
-podSecurityContext: {}
+deployment:
+  # -- Annotations to be added to the deployment.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the deployment.
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the deployment.
+  containerSecurityContext: {}
+  # -- Sets resources for the deployment.
+  resources: {}
 
-securityContext: {}
-
-resources: {}
-
+# -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
-
+# -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
 tolerations: []
-
+# -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
-
-enableGrpcGatewayEndpoint: false
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
 verboseLog: false
 
+enableGrpcGatewayEndpoint: false
 enablePrometheusReceiver: true
 enableK8sClusterReceiver: true
 enableK8sEventsReceiver: true
