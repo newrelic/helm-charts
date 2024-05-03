@@ -193,9 +193,13 @@ with:
   token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
   sparse-checkout: |
 eks-anywhere-baremetal/Addons/Partner/newrelic/newrelic.yaml
+eks-anywhere-baremetal/Addons/Partner/newrelic/namespace.yaml
 eks-anywhere-snow/Addons/Partner/newrelic/newrelic.yaml
+eks-anywhere-snow/Addons/Partner/newrelic/namespace.yaml
 eks-anywhere-vsphere/Addons/Partner/newrelic/newrelic.yaml
+eks-anywhere-vsphere/Addons/Partner/newrelic/namespace.yaml
 eks-cloud/Partner/newrelic/newrelic.yaml
+eks-cloud/Partner/newrelic/namespace.yaml
   sparse-checkout-cone-mode: false
 
   - name: Configure Git
@@ -221,6 +225,10 @@ run: |
   for directory in "${folders[@]}"; do
 file_name="${directory}/newrelic.yaml"
 yq eval --inplace ".spec.chart.spec.version=\"${version}\"" "${file_name}"
+git add ${file_name}
+
+file_name="${directory}/namespace.yaml"
+yq eval --inplace '.metadata.labels."aws.conformance.vendor-solution-version"=env(version)' "${file_name}"
 git add ${file_name}
   done
 
