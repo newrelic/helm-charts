@@ -32,23 +32,29 @@ data:
             - job_name: apiserver
               kubernetes_sd_configs:
                 - role: endpoints
+                  namespaces:
+                    names:
+                      - default
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: true
+                insecure_skip_verify: false
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
-                - source_labels: [__meta_kubernetes_service_name, __meta_kubernetes_endpoint_port_name]
-                  action: keep
-                  regex: kubernetes;https
-                - action: replace
-                  source_labels:
-                  - __meta_kubernetes_namespace
-                  target_label: Namespace
-                - action: replace
-                  source_labels:
-                  - __meta_kubernetes_service_name
-                  target_label: Service
+              - action: keep
+                regex: default;kubernetes;https
+                source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
 
       k8s_cluster:
         auth_type: serviceAccount
@@ -251,8 +257,6 @@ data:
             action: delete
           - key: service_name
             action: delete
-
-      batch:
       
       resource/events:
         attributes:
@@ -290,6 +294,20 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
 
+      attributes:
+        actions:
+          - key: k8s.pod.name
+            action: upsert
+            from_attribute: pod
+          - key: k8s.deployment.name
+            action: upsert
+            from_attribute: deployment
+          - key: k8s.node.name
+            action: upsert
+            from_attribute: node
+
+      batch:
+
     exporters:
       #  otlphttp:
       #    endpoint: "nr-k8s-otel-collector-gateway"
@@ -317,8 +335,9 @@ data:
             - metricstransform/kube_pod_status_phase
             - filter/exclude_zero_value_kube_pod_container_status
             - resource/metrics
-            - batch
             - k8sattributes
+            - attributes
+            - batch
           exporters:
             - otlphttp/newrelic
             {{ if include "newrelic.common.verboseLog" . }}
