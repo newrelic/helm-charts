@@ -9,6 +9,7 @@ data:
   otel-collector-config.yaml: |
     receivers:
       hostmetrics:  
+        root_path: /hostfs
         collection_interval: 20s
         scrapers:
           cpu:
@@ -51,11 +52,16 @@ data:
                 enabled: true
               process.cpu.time:
                 enabled: false
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
+
       kubeletstats:
         collection_interval: 20s
         auth_type: "serviceAccount"
         endpoint: "${KUBE_NODE_NAME}:10250"
-        insecure_skip_verify: true
+        insecure_skip_verify: false
         metrics: 
           k8s.container.cpu_limit_utilization:
             enabled: true 
