@@ -65,15 +65,15 @@ spec:
         - name: deployment-config
           configMap:
             name: {{ include "newrelic.common.naming.fullname" . }}-deployment-config
-      {{- with include "newrelic.common.nodeSelector" . }}
+      {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
-        {{- . | nindent 8 -}}
+        {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "newrelic.common.affinity" . }}
+      {{- with include "nrKubernetesOtel.deployment.affinity" . }}
       affinity:
-        {{- . | nindent 8 -}}
+        {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "newrelic.common.tolerations" . }}
+      {{- with include "nrKubernetesOtel.deployment.tolerations" . }}
       tolerations:
-        {{- . | nindent 8 -}}
+        {{- . | nindent 8 }}
       {{- end }}

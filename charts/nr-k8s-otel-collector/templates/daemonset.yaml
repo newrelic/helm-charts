@@ -81,15 +81,15 @@ spec:
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
-     {{- with include "newrelic.common.nodeSelector" . }}
+      {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
-       {{- . | nindent 8 -}}
-     {{- end }}
-     {{- with include "newrelic.common.affinity" . }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.affinity" . }}
       affinity:
-       {{- . | nindent 8 -}}
-     {{- end }}
-     {{- with include "newrelic.common.tolerations" . }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.tolerations" . }}
       tolerations:
-       {{- . | nindent 8 -}}
-     {{- end }}
+        {{- . | nindent 8 }}
+      {{- end }}
