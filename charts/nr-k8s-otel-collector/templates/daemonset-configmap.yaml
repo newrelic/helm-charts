@@ -8,7 +8,8 @@ metadata:
 data:
   otel-collector-config.yaml: |
     receivers:
-      hostmetrics:  
+      hostmetrics:
+        # TODO (chris): Comment out below when not linux
         root_path: /hostfs
         collection_interval: 20s
         scrapers:
@@ -236,6 +237,18 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
 
+      attributes/self:
+        actions:
+          - key: k8s.pod.name
+            action: upsert
+            from_attribute: pod
+          - key: k8s.deployment.name
+            action: upsert
+            from_attribute: deployment
+          - key: k8s.node.name
+            action: upsert
+            from_attribute: node
+
       batch:
 
     exporters:
@@ -276,6 +289,7 @@ data:
             - attributes/exclude_system_paging
             - resource
             - k8sattributes
+            - attributes/self
             - batch
           exporters:
             - otlphttp/newrelic

@@ -294,7 +294,7 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
 
-      attributes:
+      attributes/self:
         actions:
           - key: k8s.pod.name
             action: upsert
@@ -336,7 +336,7 @@ data:
             - filter/exclude_zero_value_kube_pod_container_status
             - resource/metrics
             - k8sattributes
-            - attributes
+            - attributes/self
             - batch
           exporters:
             - otlphttp/newrelic
