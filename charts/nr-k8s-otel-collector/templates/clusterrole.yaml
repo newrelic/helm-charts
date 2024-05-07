@@ -14,11 +14,11 @@ rules:
     - namespaces
     # following required for prometheus, k8s_cluster receiver
     - nodes
-    # following required for prometheus, k8s_cluster receiver
+    - nodes/metrics
     - pods
     - pods/status
-    # following required for prometheus, k8s_cluster receiver
     - services
+    - endpoints
     verbs:
     - get
     - list
@@ -30,8 +30,6 @@ rules:
     - nodes/spec
     - nodes/stats
     - nodes/proxy
-    # following required for hostmetrics, kubeletstats, and prometheus receiver
-    - nodes/metrics
     # following required for filelog receiver
     - pods/logs
     verbs:
@@ -40,7 +38,6 @@ rules:
   - apiGroups:
     - ""
     resources:
-    - endpoints
     - replicationcontrollers
     - resourcequotas
     verbs:
@@ -75,3 +72,6 @@ rules:
     verbs:
     - list
     - watch
+  # following required for prometheus receiver
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]

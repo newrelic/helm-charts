@@ -8,7 +8,9 @@ metadata:
 data:
   otel-collector-config.yaml: |
     receivers:
-      hostmetrics:  
+      hostmetrics:
+        # TODO (chris): Comment out below when not linux
+        root_path: /hostfs
         collection_interval: 20s
         scrapers:
           cpu:
@@ -51,11 +53,16 @@ data:
                 enabled: true
               process.cpu.time:
                 enabled: false
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
+
       kubeletstats:
         collection_interval: 20s
         auth_type: "serviceAccount"
         endpoint: "${KUBE_NODE_NAME}:10250"
-        insecure_skip_verify: true
+        insecure_skip_verify: false
         metrics: 
           k8s.container.cpu_limit_utilization:
             enabled: true 
@@ -230,6 +237,18 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
 
+      attributes/self:
+        actions:
+          - key: k8s.pod.name
+            action: upsert
+            from_attribute: pod
+          - key: k8s.deployment.name
+            action: upsert
+            from_attribute: deployment
+          - key: k8s.node.name
+            action: upsert
+            from_attribute: node
+
       batch:
 
     exporters:
@@ -279,6 +298,7 @@ data:
             - attributes/exclude_system_paging
             - resource
             - k8sattributes
+            - attributes/self
             - batch
           exporters:
             - otlphttp/newrelic
