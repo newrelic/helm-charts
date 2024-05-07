@@ -241,6 +241,16 @@ data:
           datapoint:
             - metric.name == "kube_node_status_condition" and value_double == 0.0
 
+      filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase:
+        metrics:
+          datapoint: 
+            - metric.name == "kube_persistentvolumeclaim_status_phase" and value_double == 0.0 
+
+      filter/exclude_zero_value_kube_pod_status_phase:
+        metrics:
+          datapoint: 
+            - metric.name == "kube_pod_status_phase" and value_double == 0.0
+
       filter/exclude_zero_value_kube_pod_container_status:
         metrics:
           datapoint:
@@ -310,6 +320,9 @@ data:
           - key: k8s.node.name
             action: upsert
             from_attribute: node
+          - key: k8s.namespace.name
+            action: upsert 
+            from_attribute: namespace
 
       batch:
 
@@ -339,6 +352,7 @@ data:
             - metricstransform/k8s_cluster_info
             - metricstransform/kube_pod_status_phase
             - filter/exclude_zero_value_kube_node_status_condition
+            - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/exclude_zero_value_kube_pod_container_status
             - resource/metrics
             - k8sattributes

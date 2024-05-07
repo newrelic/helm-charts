@@ -240,14 +240,17 @@ data:
       attributes/self:
         actions:
           - key: k8s.pod.name
-            action: upsert
+            action: update
             from_attribute: pod
           - key: k8s.deployment.name
-            action: upsert
+            action: update
             from_attribute: deployment
           - key: k8s.node.name
-            action: upsert
+            action: update
             from_attribute: node
+          - key: k8s.namespace.name
+            action: upsert 
+            from_attribute: namespace
 
       batch:
 
