@@ -9,7 +9,6 @@ git clone https://github.com/newrelic/helm-charts.git
 Example: 
 ```
 licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
-newRelicEndpoint: "https://otlp.nr-data.net"
 cluster: "SampleApp" 
 ```
 
