@@ -13,7 +13,7 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "newrelic.common.labels.selectorLabels" . | nindent 8 }}
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
         component: daemonset
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}

@@ -10,14 +10,14 @@ data:
     receivers:
       otlp:
         protocols:
-          {{ if .Values.enableGrpcGatewayEndpoint }}
+          {{ if .Values.gateway.grpc.enable }}
           grpc:
             endpoint: ${env:MY_POD_IP}:4317
           {{ end }}
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
-    #    namespaces: [default]
+
       prometheus:
         config:
           scrape_configs: 
@@ -327,18 +327,10 @@ data:
       batch:
 
     exporters:
-      #  otlphttp:
-      #    endpoint: "nr-k8s-otel-collector-gateway"
-      #    tls:
-      #      insecure: true
       otlphttp/newrelic:
         endpoint: {{ .Values.newRelicEndpoint }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
     service:
       {{ if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -361,23 +353,14 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-            {{ if include "newrelic.common.verboseLog" . }}
-            - debug
-            {{ end }}
         # TODO(chris): uncomment when writing daemonset metrics through deployment
         # logs:
         #   receivers: [otlp]
         #   processors: [batch]
         #   exporters:
         #     - otlphttp/newrelic
-        #     {{ if include "newrelic.common.verboseLog" . }}
-        #     - debug
-        #     {{ end }}
         logs/events:
           receivers: [k8s_events]
           processors: [resource/events, batch]
           exporters:
             - otlphttp/newrelic
-            {{ if include "newrelic.common.verboseLog" . }}
-            - debug
-            {{ end }}
