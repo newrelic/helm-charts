@@ -1,0 +1,1933 @@
+{
+  "name": "Kubernetes Fluent Bit monitoring",
+  "description": null,
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "name": "General",
+      "description": null,
+      "widgets": [
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 6,
+            "height": 6
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# START HERE\n## How to use this page\n\nThis page represents most of the [metrics exposed by Fluent Bit](https://docs.fluentbit.io/manual/administration/monitoring#for-v2-metrics). The metric representations are grouped by categories and faceted by each plugin instance where appropriate.\n\nThe table below displays all the Fluent Bit instances running in all your clusters. You will typically want to narrow the troubleshooting to a single cluster by selecting one from the \"Cluster Name\" template variable above. You can then use any of the values in the `Node name` and `Hostname` columns to further filter the metrics displayed in the graphs below.\n\n## Legend\n### Metric dimensions\n- **name**: the name of the Fluent Bit plugin. Version 1.21.0 of our Helm chart names them according to the plugin names described in the following section.\n- **hostname**: name of the `newrelic-logging` pod (Fluent Bit instance) that emitted this metric.\n- **node_name**: physical Kubernetes node where the `newrelic-logging` pod is running.\n\n### Plugin names\n- **pod-logs-tailer**: `tail` *INPUT* plugin normally reading from `/var/log/containers/*.log`\n- **kubernetes-enricher**: `kubernetes` *FILTER* plugin that queries the Kubernetes API to enrich the logs with pod/container metadata.\n- **node-attributes-enricher**: `record_modifier` *FILTER* plugin that enriches logs with `cluster_name`.\n- **kubernetes-attribute-lifter** (only when in low data mode): `nest` *FILTER* plugin that lifts all the keys under `kubernetes`. This plugin is transparent to the final shape of the log.\n- **node-attributes-enricher-filter** (only when in low data mode): same as  node-attributes-enricher`, but it also removes attributes that are not strictly necessary for correct platform functioning.\n- **newrelic-logs-forwarder**: `newrelic` *OUTPUT* plugin that sends logs to the New Relic Logs API"
+          }
+        },
+        {
+          "title": "Fluent Bit version",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT latest(os) as 'OS', latest(version) as 'FB version', latest(cluster_name)  FROM Metric where metricName = 'fluentbit_build_info' AND cluster_name IN ({{cluster_name}}) since 1 hour ago facet hostname, node_name limit max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Fluent Bit uptime",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT latest(fluentbit_uptime) FROM Metric where cluster_name IN ({{cluster_name}}) facet hostname timeseries"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# INPUTS"
+          }
+        },
+        {
+          "title": "Input byte rate (bytes/minute)",
+          "layout": {
+            "column": 1,
+            "row": 8,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_input_bytes_total), 1 minute) as 'bytes/minute' FROM Metric where name != 'fb-metrics-collector' and cluster_name IN ({{cluster_name}}) timeseries max facet name, hostname"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Input log rate (records/minute)",
+          "layout": {
+            "column": 5,
+            "row": 8,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_input_records_total), 1 minute) as 'logs/minute' FROM Metric where name != 'fb-metrics-collector' and cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Average incoming record size (bytes)",
+          "layout": {
+            "column": 9,
+            "row": 8,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT sum(fluentbit_input_bytes_total)/sum(fluentbit_input_records_total) as 'Average incoming record size (bytes)' FROM Metric where name != 'fb-metrics-collector' and cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 11,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# FILTERS"
+          }
+        },
+        {
+          "title": "Filter byte rate (bytes/minute)",
+          "layout": {
+            "column": 1,
+            "row": 12,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_filter_bytes_total), 1 minute) FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Filter log rate (records/minute)",
+          "layout": {
+            "column": 5,
+            "row": 12,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_filter_records_total), 1 minute) FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Average filtered record size (bytes)",
+          "layout": {
+            "column": 9,
+            "row": 12,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT sum(fluentbit_filter_bytes_total)/sum(fluentbit_filter_records_total) AS 'Average filtered record size (bytes)' FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Record add/drop rate per FILTER plugin",
+          "layout": {
+            "column": 1,
+            "row": 15,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_filter_add_records_total), 1 minute) as 'Added back to pipeline', rate(sum(fluentbit_filter_drop_records_total), 1 minute) as 'Removed from pipeline' FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries MAX"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "REQUESTS_PER_MINUTE"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 18,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# OUTPUTS"
+          }
+        },
+        {
+          "title": "Output byte rate (bytes/minute)",
+          "layout": {
+            "column": 1,
+            "row": 19,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_proc_bytes_total), 1 minute) as 'bytes/minute' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Output log rate (records/minute)",
+          "layout": {
+            "column": 5,
+            "row": 19,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_proc_records_total), 1 minute) as 'records/minute' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Average outgoing record size (bytes)",
+          "layout": {
+            "column": 9,
+            "row": 19,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT sum(fluentbit_output_proc_bytes_total)/sum(fluentbit_output_proc_records_total) as 'bytes' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries MAX"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "newrelic plugin statistics (records/minute)",
+          "layout": {
+            "column": 1,
+            "row": 22,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_proc_records_total), 1 minute) as 'Processed', rate(sum(fluentbit_output_dropped_records_total), 1 minute) as 'Dropped', rate(sum(fluentbit_output_retried_records_total), 1 minute) as 'Retried' FROM Metric where cluster_name IN ({{cluster_name}}) AND name = 'newrelic-logs-forwarder' facet hostname  timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Other OUTPUT plugin statistics (records/minute)",
+          "layout": {
+            "column": 5,
+            "row": 22,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_proc_records_total), 1 minute) as 'Processed', rate(sum(fluentbit_output_dropped_records_total), 1 minute) as 'Dropped', rate(sum(fluentbit_output_retried_records_total), 1 minute) as 'Retried' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'newrelic-logs-forwarder' and name != 'fb-metrics-forwarder' facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Connections per OUTPUT plugin",
+          "layout": {
+            "column": 9,
+            "row": 22,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_output_upstream_total_connections) as 'Total', max(fluentbit_output_upstream_busy_connections) as 'Busy' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries MAX"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "newrelic plugin errors (errors/minute)",
+          "layout": {
+            "column": 1,
+            "row": 25,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_errors_total), 1 minute) AS 'Errors/minute' FROM Metric where cluster_name IN ({{cluster_name}}) AND name = 'newrelic-logs-forwarder' facet hostname timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "newrelic plugin chunk retry statistics (retries/minute)",
+          "layout": {
+            "column": 5,
+            "row": 25,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_retries_total), 1 minute) as 'Retries', rate(sum(fluentbit_output_retries_failed_total), 1 minute) as 'Expirations' FROM Metric where cluster_name IN ({{cluster_name}}) AND name = 'newrelic-logs-forwarder' facet hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 28,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# MEMORY USAGE"
+          }
+        },
+        {
+          "title": "Input plugin memory usage",
+          "layout": {
+            "column": 1,
+            "row": 29,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_memory_bytes) as 'Max' FROM Metric where cluster_name IN ({{cluster_name}}) and name != 'fb-metrics-collector' timeseries max facet name, hostname "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "INPUT memory buffer over limit",
+          "layout": {
+            "column": 5,
+            "row": 29,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "colors": {
+              "seriesOverrides": [
+                {
+                  "color": "#013ef4",
+                  "seriesName": "pod-logs-tailer"
+                }
+              ]
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_overlimit) FROM Metric where cluster_name IN ({{cluster_name}}) and name != 'fb-metrics-collector' timeseries max facet name, hostname"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true,
+              "thresholds": [
+                {
+                  "from": 0.95,
+                  "name": "Mem buf overlimit",
+                  "severity": "critical",
+                  "to": 1.05
+                }
+              ]
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Chunk statistics per INPUT plugin",
+          "layout": {
+            "column": 9,
+            "row": 29,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT average(fluentbit_input_storage_chunks_up) AS 'Up (in memory)', average(fluentbit_input_storage_chunks_down) AS 'Down (in fs)', average(fluentbit_input_storage_chunks_busy) AS 'Busy', average(fluentbit_input_storage_chunks) as 'Total'  FROM Metric where name != 'fb-metrics-collector' since 1 hour ago timeseries MAX facet name, hostname "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Buffered chunks",
+          "layout": {
+            "column": 1,
+            "row": 32,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_chunks) AS 'Total', max(fluentbit_storage_mem_chunks) AS 'Memory', max(fluentbit_storage_fs_chunks) AS 'Filesystem'  FROM Metric where cluster_name IN ({{cluster_name}}) facet hostname timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Busy chunks' size",
+          "layout": {
+            "column": 5,
+            "row": 32,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_chunks_busy_bytes) FROM Metric where name != 'fb-metrics-collector' facet name, hostname timeseries MAX since 1 hour ago"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Filesystem chunks state",
+          "layout": {
+            "column": 9,
+            "row": 32,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT average(fluentbit_storage_fs_chunks_up) AS 'Up (in memory)', average(fluentbit_storage_fs_chunks_down) AS 'Down (fs only)'  FROM Metric since '2024-02-29 13:22:00+0000' UNTIL '2024-02-29 14:31:00+0000' timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Pipeline View",
+      "description": null,
+      "widgets": [
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 6,
+            "height": 6
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# START HERE\n## How to use this page\n\nThis page represents the same metrics that are displayed in the \"General\" page. Nevertheless, they are grouped differently so that it makes it easier to visualize the whole pipeline behavior.\n\nThe table below displays all the Fluent Bit instances running in all your clusters. You will typically want to narrow the troubleshooting to a single cluster by selecting one from the \"Cluster Name\" template variable above. You can then use any of the values in the `Node name` and `Hostname` columns to further filter the metrics displayed in the graphs below.\n\n## Legend\n### Metric dimensions\n- **name**: the name of the Fluent Bit plugin. Version 1.21.0 of our Helm chart names them according to the plugin names described in the following section.\n- **hostname**: name of the `newrelic-logging` pod (Fluent Bit instance) that emitted this metric.\n- **node_name**: physical Kubernetes node where the `newrelic-logging` pod is running.\n\n### Plugin names\n- **pod-logs-tailer**: `tail` *INPUT* plugin normally reading from `/var/log/containers/*.log`\n- **kubernetes-enricher**: `kubernetes` *FILTER* plugin that queries the Kubernetes API to enrich the logs with pod/container metadata.\n- **node-attributes-enricher**: `record_modifier` *FILTER* plugin that enriches logs with `cluster_name`.\n- **kubernetes-attribute-lifter** (only when in low data mode): `nest` *FILTER* plugin that lifts all the keys under `kubernetes`. This plugin is transparent to the final shape of the log.\n- **node-attributes-enricher-filter** (only when in low data mode): same as  node-attributes-enricher`, but it also removes attributes that are not strictly necessary for correct platform functioning.\n- **newrelic-logs-forwarder**: `newrelic` *OUTPUT* plugin that sends logs to the New Relic Logs API"
+          }
+        },
+        {
+          "title": "Fluent Bit version",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.table"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT latest(os) as 'OS', latest(version) as 'FB version', latest(cluster_name)  FROM Metric where metricName = 'fluentbit_build_info' AND cluster_name IN ({{cluster_name}}) since 1 hour ago facet hostname, node_name limit max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            }
+          }
+        },
+        {
+          "title": "Fluent Bit uptime",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT latest(fluentbit_uptime) FROM Metric where cluster_name IN ({{cluster_name}}) timeseries facet hostname "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "SECONDS"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# BYTE RATES"
+          }
+        },
+        {
+          "title": "Input byte rate (bytes/minute)",
+          "layout": {
+            "column": 1,
+            "row": 8,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_input_bytes_total), 1 minute) as 'bytes/minute' FROM Metric where name != 'fb-metrics-collector' and cluster_name IN ({{cluster_name}}) timeseries max facet name, hostname"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Filter byte rate (bytes/minute)",
+          "layout": {
+            "column": 5,
+            "row": 8,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_filter_bytes_total), 1 minute) FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Output byte rate (bytes/minute)",
+          "layout": {
+            "column": 9,
+            "row": 8,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_proc_bytes_total), 1 minute) as 'bytes/minute' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 11,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# LOG RECORD RATES"
+          }
+        },
+        {
+          "title": "Input log rate (records/minute)",
+          "layout": {
+            "column": 1,
+            "row": 12,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_input_records_total), 1 minute) as 'logs/minute' FROM Metric where name != 'fb-metrics-collector' and cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Filter log rate (records/minute)",
+          "layout": {
+            "column": 5,
+            "row": 12,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_filter_records_total), 1 minute) FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Output log rate (records/minute)",
+          "layout": {
+            "column": 9,
+            "row": 12,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_proc_records_total), 1 minute) as 'records/minute' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Record add/drop rate per FILTER plugin",
+          "layout": {
+            "column": 5,
+            "row": 15,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_filter_add_records_total), 1 minute) as 'Added back to pipeline', rate(sum(fluentbit_filter_drop_records_total), 1 minute) as 'Removed from pipeline' FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries MAX"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "REQUESTS_PER_MINUTE"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 18,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# AVERAGE LOG RECORD SIZES AT THE END OF EACH STAGE"
+          }
+        },
+        {
+          "title": "Average incoming record size (bytes)",
+          "layout": {
+            "column": 1,
+            "row": 19,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT sum(fluentbit_input_bytes_total)/sum(fluentbit_input_records_total) as 'Average incoming record size (bytes)' FROM Metric where name != 'fb-metrics-collector' and cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Average filtered record size (bytes)",
+          "layout": {
+            "column": 5,
+            "row": 19,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT sum(fluentbit_filter_bytes_total)/sum(fluentbit_filter_records_total) AS 'Average filtered record size (bytes)' FROM Metric WHERE cluster_name IN ({{cluster_name}}) facet name, hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Average outgoing record size (bytes)",
+          "layout": {
+            "column": 9,
+            "row": 19,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT sum(fluentbit_output_proc_bytes_total)/sum(fluentbit_output_proc_records_total) as 'bytes' FROM Metric where cluster_name IN ({{cluster_name}}) AND name != 'fb-metrics-forwarder' facet name, hostname timeseries MAX"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 22,
+            "width": 12,
+            "height": 1
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# MEMORY USAGE AND BACKPRESSURE"
+          }
+        },
+        {
+          "title": "Input plugin memory usage",
+          "layout": {
+            "column": 1,
+            "row": 23,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_memory_bytes) as 'Max' FROM Metric where cluster_name IN ({{cluster_name}}) and name != 'fb-metrics-collector' timeseries max facet name, hostname "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Busy chunks' size",
+          "layout": {
+            "column": 5,
+            "row": 23,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_chunks_busy_bytes) FROM Metric where name != 'fb-metrics-collector' facet name, hostname timeseries MAX since 1 hour ago"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "newrelic plugin chunk retry statistics (retries/minute)",
+          "layout": {
+            "column": 9,
+            "row": 23,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_retries_total), 1 minute) as 'Retries', rate(sum(fluentbit_output_retries_failed_total), 1 minute) as 'Expirations' FROM Metric where cluster_name IN ({{cluster_name}}) AND name = 'newrelic-logs-forwarder' facet hostname timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "INPUT memory buffer over limit",
+          "layout": {
+            "column": 1,
+            "row": 26,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "colors": {
+              "seriesOverrides": [
+                {
+                  "color": "#013ef4",
+                  "seriesName": "pod-logs-tailer"
+                }
+              ]
+            },
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT max(fluentbit_input_storage_overlimit) FROM Metric where cluster_name IN ({{cluster_name}}) and name != 'fb-metrics-collector' timeseries max facet name, hostname"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true,
+              "thresholds": [
+                {
+                  "from": 0.95,
+                  "name": "Mem buf overlimit",
+                  "severity": "critical",
+                  "to": 1.05
+                }
+              ]
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Chunk statistics per INPUT plugin",
+          "layout": {
+            "column": 5,
+            "row": 26,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT average(fluentbit_input_storage_chunks_up) AS 'Up (in memory)', average(fluentbit_input_storage_chunks_down) AS 'Down (in fs)', average(fluentbit_input_storage_chunks_busy) AS 'Busy', average(fluentbit_input_storage_chunks) as 'Total'  FROM Metric where name != 'fb-metrics-collector' since 1 hour ago timeseries MAX facet name, hostname "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "newrelic plugin errors (errors/minute)",
+          "layout": {
+            "column": 9,
+            "row": 26,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(fluentbit_output_errors_total), 1 minute) AS 'Errors/minute' FROM Metric where cluster_name IN ({{cluster_name}}) AND name = 'newrelic-logs-forwarder' facet hostname timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": {
+              "isLabelVisible": true
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variables": [
+    {
+      "name": "cluster_name",
+      "items": null,
+      "defaultValues": [
+        {
+          "value": {
+            "string": "*"
+          }
+        }
+      ],
+      "nrqlQuery": {
+        "accountIds": [
+          YOUR_ACCOUNT_ID
+        ],
+        "query": "SELECT uniques(cluster_name) FROM Metric where metricName = 'fluentbit_input_storage_overlimit'"
+      },
+      "options": {
+        "ignoreTimeRange": true
+      },
+      "title": "Cluster Name",
+      "type": "NRQL",
+      "isMultiSelection": true,
+      "replacementStrategy": "STRING"
+    }
+  ]
+}
