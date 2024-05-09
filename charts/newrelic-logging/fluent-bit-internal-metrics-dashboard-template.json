@@ -4,7 +4,7 @@
   "permissions": "PUBLIC_READ_WRITE",
   "pages": [
     {
-      "name": "General",
+      "name": "Fluent Bit metrics: General",
       "description": null,
       "widgets": [
         {
@@ -20,7 +20,7 @@
             "id": "viz.markdown"
           },
           "rawConfiguration": {
-            "text": "# START HERE\n## How to use this page\n\nThis page represents most of the [metrics exposed by Fluent Bit](https://docs.fluentbit.io/manual/administration/monitoring#for-v2-metrics). The metric representations are grouped by categories and faceted by each plugin instance where appropriate.\n\nThe table below displays all the Fluent Bit instances running in all your clusters. You will typically want to narrow the troubleshooting to a single cluster by selecting one from the \"Cluster Name\" template variable above. You can then use any of the values in the `Node name` and `Hostname` columns to further filter the metrics displayed in the graphs below.\n\n## Legend\n### Metric dimensions\n- **name**: the name of the Fluent Bit plugin. Version 1.21.0 of our Helm chart names them according to the plugin names described in the following section.\n- **hostname**: name of the `newrelic-logging` pod (Fluent Bit instance) that emitted this metric.\n- **node_name**: physical Kubernetes node where the `newrelic-logging` pod is running.\n\n### Plugin names\n- **pod-logs-tailer**: `tail` *INPUT* plugin normally reading from `/var/log/containers/*.log`\n- **kubernetes-enricher**: `kubernetes` *FILTER* plugin that queries the Kubernetes API to enrich the logs with pod/container metadata.\n- **node-attributes-enricher**: `record_modifier` *FILTER* plugin that enriches logs with `cluster_name`.\n- **kubernetes-attribute-lifter** (only when in low data mode): `nest` *FILTER* plugin that lifts all the keys under `kubernetes`. This plugin is transparent to the final shape of the log.\n- **node-attributes-enricher-filter** (only when in low data mode): same as  node-attributes-enricher`, but it also removes attributes that are not strictly necessary for correct platform functioning.\n- **newrelic-logs-forwarder**: `newrelic` *OUTPUT* plugin that sends logs to the New Relic Logs API"
+            "text": "# README\n\n## About this page\nThis page represents most of [Fluent Bit's internal metrics](https://docs.fluentbit.io/manual/administration/monitoring#for-v2-metrics). The metric representations are grouped by categories and faceted by each plugin instance where appropriate.\n\n## How to filter\n1. Select the Kubernetes cluster you want to troubleshoot in the \"Cluster Name\" variable above.\n2. [OPTIONAL] You can use any of the values in the `Node name` and `Hostname` columns on the \"Fluent Bit version\" table to further filter the metrics displayed in the graphs below. To do so, you need to enable [facet filtering](https://docs.newrelic.com/docs/query-your-data/explore-query-data/dashboards/filter-new-relic-one-dashboards-facets/) on that table by clicking on the \"Edit\" submenu and select \"Filter the current dashboard\" under \"Facet Linking\". \n\n## Legend\n### Metric dimensions\n- **name**: the name of the Fluent Bit plugin. Version 1.21.0 of our Helm chart names them according to the plugin names described in the following section.\n- **hostname**: name of the `newrelic-logging` pod (Fluent Bit instance) that emitted this metric.\n- **node_name**: physical Kubernetes node where the `newrelic-logging` pod is running.\n\n### Plugin names\n- **pod-logs-tailer**: `tail` *INPUT* plugin normally reading from `/var/log/containers/*.log`\n- **kubernetes-enricher**: `kubernetes` *FILTER* plugin that queries the Kubernetes API to enrich the logs with pod/container metadata.\n- **node-attributes-enricher**: `record_modifier` *FILTER* plugin that enriches logs with `cluster_name`.\n- **kubernetes-attribute-lifter** (only when in low data mode): `nest` *FILTER* plugin that lifts all the keys under `kubernetes`. This plugin is transparent to the final shape of the log.\n- **node-attributes-enricher-filter** (only when in low data mode): same as  node-attributes-enricher`, but it also removes attributes that are not strictly necessary for correct platform functioning.\n- **newrelic-logs-forwarder**: `newrelic` *OUTPUT* plugin that sends logs to the New Relic Logs API"
           }
         },
         {
@@ -1055,7 +1055,7 @@
       ]
     },
     {
-      "name": "Pipeline View",
+      "name": "Fluent Bit metrics: Pipeline View",
       "description": null,
       "widgets": [
         {
@@ -1071,7 +1071,7 @@
             "id": "viz.markdown"
           },
           "rawConfiguration": {
-            "text": "# START HERE\n## How to use this page\n\nThis page represents the same metrics that are displayed in the \"General\" page. Nevertheless, they are grouped differently so that it makes it easier to visualize the whole pipeline behavior.\n\nThe table below displays all the Fluent Bit instances running in all your clusters. You will typically want to narrow the troubleshooting to a single cluster by selecting one from the \"Cluster Name\" template variable above. You can then use any of the values in the `Node name` and `Hostname` columns to further filter the metrics displayed in the graphs below.\n\n## Legend\n### Metric dimensions\n- **name**: the name of the Fluent Bit plugin. Version 1.21.0 of our Helm chart names them according to the plugin names described in the following section.\n- **hostname**: name of the `newrelic-logging` pod (Fluent Bit instance) that emitted this metric.\n- **node_name**: physical Kubernetes node where the `newrelic-logging` pod is running.\n\n### Plugin names\n- **pod-logs-tailer**: `tail` *INPUT* plugin normally reading from `/var/log/containers/*.log`\n- **kubernetes-enricher**: `kubernetes` *FILTER* plugin that queries the Kubernetes API to enrich the logs with pod/container metadata.\n- **node-attributes-enricher**: `record_modifier` *FILTER* plugin that enriches logs with `cluster_name`.\n- **kubernetes-attribute-lifter** (only when in low data mode): `nest` *FILTER* plugin that lifts all the keys under `kubernetes`. This plugin is transparent to the final shape of the log.\n- **node-attributes-enricher-filter** (only when in low data mode): same as  node-attributes-enricher`, but it also removes attributes that are not strictly necessary for correct platform functioning.\n- **newrelic-logs-forwarder**: `newrelic` *OUTPUT* plugin that sends logs to the New Relic Logs API"
+            "text": "# README\n\n## About this page\nThis page represents the same metrics that are displayed in the \"Fluent Bit metrics: General\" page. Nevertheless, they are grouped differently to allow you to visualize a given metric across the whole pipeline with a single glance.\n\n## How to filter\n1. Select the Kubernetes cluster you want to troubleshoot in the \"Cluster Name\" variable above.\n2. [OPTIONAL] You can use any of the values in the `Node name` and `Hostname` columns on the \"Fluent Bit version\" table to further filter the metrics displayed in the graphs below. To do so, you need to enable [facet filtering](https://docs.newrelic.com/docs/query-your-data/explore-query-data/dashboards/filter-new-relic-one-dashboards-facets/) on that table by clicking on the \"Edit\" submenu and select \"Filter the current dashboard\" under \"Facet Linking\". \n\n## Legend\n### Metric dimensions\n- **name**: the name of the Fluent Bit plugin. Version 1.21.0 of our Helm chart names them according to the plugin names described in the following section.\n- **hostname**: name of the `newrelic-logging` pod (Fluent Bit instance) that emitted this metric.\n- **node_name**: physical Kubernetes node where the `newrelic-logging` pod is running.\n\n### Plugin names\n- **pod-logs-tailer**: `tail` *INPUT* plugin normally reading from `/var/log/containers/*.log`\n- **kubernetes-enricher**: `kubernetes` *FILTER* plugin that queries the Kubernetes API to enrich the logs with pod/container metadata.\n- **node-attributes-enricher**: `record_modifier` *FILTER* plugin that enriches logs with `cluster_name`.\n- **kubernetes-attribute-lifter** (only when in low data mode): `nest` *FILTER* plugin that lifts all the keys under `kubernetes`. This plugin is transparent to the final shape of the log.\n- **node-attributes-enricher-filter** (only when in low data mode): same as  node-attributes-enricher`, but it also removes attributes that are not strictly necessary for correct platform functioning.\n- **newrelic-logs-forwarder**: `newrelic` *OUTPUT* plugin that sends logs to the New Relic Logs API"
           }
         },
         {
@@ -1902,6 +1902,310 @@
           }
         }
       ]
+    },
+    {
+      "name": "newrelic-fluent-bit-output plugin metrics",
+      "description": null,
+      "widgets": [
+        {
+          "title": "",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 4,
+            "height": 9
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.markdown"
+          },
+          "rawConfiguration": {
+            "text": "# README\n## About this page\nThis page displays metrics collected internally in the [New Relic Fluent Bit output plugin](https://github.com/newrelic/newrelic-fluent-bit-output) (in short, **NR FB plugin**). These metrics are independent of Fluent Bit's, and **must not be considered as a stable API: they can change its naming or dimensions at any time in newer plugin versions**.\n\nPlease note that the NR FB plugin does not include metric dimensions such as `cluster_name` or `node_name`. Therefore, the graphs below represent an aggregation of all your running Fluent Bit instances across all your clusters. As a consequence, we recommend setting `sendMetrics=true` to one cluster at a time while troubleshooting.\n\n## Basic naming conventions\n- Fluent Bit aggregates logs in batches, also referred as **[chunks](https://docs.fluentbit.io/manual/administration/buffering-and-storage#chunks-memory-filesystem-and-backpressure)**. Each chunk therefore contains an unknown amount of logs.\n- Chunks are received sequentially at the NR FB plugin, which takes care of reading the logs they contain and splitting them into the so-called New Relic *payloads*.\n- Each **payload** is a compressed stream of bytes that can be [at most 1MB long](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#limits), and follows the [data format required by the Logs API](https://docs.newrelic.com/docs/logs/log-api/introduction-log-api/#json-content).\n\n\n## Error-detection graphs and recommended actions\n\nThe following are the main graphs used to detect potential problems in your log forwarding setup. Refer to each section to learn the recommended actions for each graph.\n\n### Payload packaging errors\nRepresents the percentage of Fluent Bit chunks that threw an error when they were attempted to be packaged as New Relic payloads. Such errors are never expected to happen. Therefore, **any value greater than 0% should be thoroughly investigated**.\n\nIf you find errors in this graph, please open a support ticket and include a  sample of your logs for further investigation.\n\n### Payload sending errors\nRepresents the percentage of New Relic payloads that threw an unexpected error when they were attempted to be sent to New Relic. Such errors can happen sporadically: timeouts due to poor network performance or sudden network changes can cause them from time to time. Observing **values greater than 0% can sometimes be normal, but any value above 10% should be considered as an annomalous situation and should be thoroughly investigated**.\n\nIf you find errors in this graph, please ensure that you don't have any weak spots in your network path to New Relic: are you using a proxy? Is it or any network hop introducing too much latency due to being saturated? If you can't find anything on you side, please open a support ticket and include as much information as possible from your network setup.\n\n### Payload send results\nRepresents the amount of API requests that were performed to send logs to New Relic. **Ideally, you should only observe 202 responses here**. Sometimes, intermediary CDN providers can introduce some errors (503 error codes) from time to time, in which case your logs will not be lost and reattempted to be sent.\n\nIf you find a considerable amount of non-202 responses in this graph, please open a customer support ticket.\n\n## Additional troubleshooting graphs\n\nThe following graphs include additional fine-grained information that will be useful for New Relic to troubleshoot your potential installation issues.\n\n### Average timings\nRepresents the average amount of time the plugin spent packaging the log payloads and sending them to New Relic, respectively.\n\n### Accumulated time per minute\nRepresents the amount of time per minute the plugin spent packaging the log payloads and sending them to New Relic, respectively.\n\n### Payload size\nRepresents the size in bytes of the individual compressed payloads sent to New Relic.\n\n### Payload packets per Fluent Bit chunk\nRepresents the amount of payloads sent to New Relic per each Fluent Bit chunk."
+          }
+        },
+        {
+          "title": "Payload packaging errors",
+          "layout": {
+            "column": 5,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "FROM Metric SELECT percentage(count(`logs.fb.packaging.time`), WHERE hasError = true) AS 'packaging errors'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 0
+              }
+            ]
+          }
+        },
+        {
+          "title": "Payload sending errors",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 2,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.billboard"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "FROM Metric SELECT percentage(count(`logs.fb.payload.send.time`), WHERE hasError = true) AS 'send errors'"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "thresholds": [
+              {
+                "alertSeverity": "WARNING",
+                "value": 0
+              },
+              {
+                "alertSeverity": "CRITICAL",
+                "value": 0.1
+              }
+            ]
+          }
+        },
+        {
+          "title": "Payload send results",
+          "layout": {
+            "column": 9,
+            "row": 1,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(count(logs.fb.payload.send.time), 1 minute) AS 'Status Code' FROM Metric FACET CASES(WHERE statusCode = 0 AS 'Send error') OR statusCode timeseries max"
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "units": {
+              "unit": "REQUESTS_PER_MINUTE"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Average timings",
+          "layout": {
+            "column": 5,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT average(logs.fb.payload.send.time) AS 'Payload sending', average(logs.fb.packaging.time) AS 'Payload packaging' FROM Metric timeseries max"
+              }
+            ],
+            "nullValues": {
+              "nullValue": "zero"
+            },
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "units": {
+              "unit": "MS"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Accumulated time per minute",
+          "layout": {
+            "column": 9,
+            "row": 4,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT rate(sum(logs.fb.total.send.time), 1 minute) AS 'Sending', rate(sum(logs.fb.packaging.time), 1 minute) AS 'Packaging' FROM Metric TIMESERIES max"
+              }
+            ],
+            "nullValues": {
+              "nullValue": "zero"
+            },
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "units": {
+              "unit": "MS"
+            }
+          }
+        },
+        {
+          "title": "Payload size",
+          "layout": {
+            "column": 5,
+            "row": 7,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT min(logs.fb.payload.size) AS 'Minimum', average(logs.fb.payload.size) AS 'Average', max(logs.fb.payload.size) AS 'Maximum' FROM Metric timeseries MAX "
+              }
+            ],
+            "nullValues": {
+              "nullValue": "default"
+            },
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "units": {
+              "unit": "BYTES"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "Payload packets per Fluent Bit chunk",
+          "layout": {
+            "column": 9,
+            "row": 7,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountIds": [
+                  YOUR_ACCOUNT_ID
+                ],
+                "query": "SELECT min(logs.fb.payload.count) AS 'Minimum', average(logs.fb.payload.count) AS 'Average', max(logs.fb.payload.count) AS 'Maximum' FROM Metric timeseries MAX "
+              }
+            ],
+            "platformOptions": {
+              "ignoreTimeRange": false
+            },
+            "units": {
+              "unit": "COUNT"
+            },
+            "yAxisLeft": {
+              "zero": true
+            },
+            "yAxisRight": {
+              "zero": true
+            }
+          }
+        }
+      ]
     }
   ],
   "variables": [
@@ -1922,7 +2226,7 @@
         "query": "SELECT uniques(cluster_name) FROM Metric where metricName = 'fluentbit_input_storage_overlimit'"
       },
       "options": {
-        "ignoreTimeRange": true
+        "ignoreTimeRange": false
       },
       "title": "Cluster Name",
       "type": "NRQL",
