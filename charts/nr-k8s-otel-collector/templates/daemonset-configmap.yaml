@@ -256,7 +256,7 @@ data:
 
     exporters:
       otlphttp/newrelic:
-        endpoint: "https://otlp.nr-data.net"
+        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
       # TODO(chris): uncomment when writing daemonset metrics through deployment
