@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}-daemonset
+  name: {{ include "nrKubernetesOtel.daemonset.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
@@ -77,7 +77,7 @@ spec:
             path: /
         - name: config-volume
           configMap:
-            name: {{ include "newrelic.common.naming.fullname" . }}-daemonset-config
+            name: {{ include "nrKubernetesOtel.daemonset.configmap.fullname" . }}
         - name: varlogpods 
           hostPath:
             path: /var/log/pods

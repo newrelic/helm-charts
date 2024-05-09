@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}-deployment
+  name: {{ include "nrKubernetesOtel.deployment.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
@@ -59,7 +59,7 @@ spec:
       volumes:
         - name: deployment-config
           configMap:
-            name: {{ include "newrelic.common.naming.fullname" . }}-deployment-config
+            name: {{ include "nrKubernetesOtel.deployment.configmap.fullname" . }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 -}}
