@@ -10,10 +10,6 @@ data:
     receivers:
       otlp:
         protocols:
-          {{ if .Values.gateway.grpc.enable }}
-          grpc:
-            endpoint: ${env:MY_POD_IP}:4317
-          {{ end }}
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
