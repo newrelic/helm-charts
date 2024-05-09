@@ -9,7 +9,7 @@ data:
   otel-collector-config.yaml: |
     receivers:
       hostmetrics:
-        # TODO (chris): Comment out below when not linux
+        # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
         collection_interval: 20s
         scrapers:
@@ -62,7 +62,7 @@ data:
         collection_interval: 20s
         auth_type: "serviceAccount"
         endpoint: "${KUBE_NODE_NAME}:10250"
-        insecure_skip_verify: false
+        insecure_skip_verify: true
         metrics: 
           k8s.container.cpu_limit_utilization:
             enabled: true 
@@ -106,6 +106,7 @@ data:
       filelog:
         include:
           - /var/log/pods/*/*/*.log
+          - /var/log/*/*/*.log
           - /var/log/*/*
           - /var/log/*
           - /var/log/alternatives.log
@@ -118,7 +119,6 @@ data:
           - /var/log/yum.log
         exclude:
           # Exclude logs from opentelemetry containers
-          # TODO(chris): dynamically generate filelog paths based on CRI
           # filelog paths for containerd and CRI-O
           - /var/log/pods/*/otel-collector-daemonset/*.log
           - /var/log/pods/*/otel-collector-deployment/*.log
@@ -259,7 +259,7 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      # TODO(chris): uncomment when writing daemonset metrics through deployment
+      # TODO(chris): revisit using the gateway collector
       # otlphttp:
       #   endpoint: "nr-k8s-otel-collector-gateway"
       #   tls:
