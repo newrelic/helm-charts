@@ -63,7 +63,7 @@ info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request
 
 ### No such file or directory 
 
-Sometimes we see failed to open file errors on the `filelog` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, process) and the pod or process was terminated before the collector could read the file. 
+Sometimes we see failed to open file errors on the `filelog` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, sleep) and the pod or process was terminated before the collector could read the file. 
 
 `filelog` error: 
 ```
