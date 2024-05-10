@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nr-k8s-otel-collector-gateway
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: otlp-http # Default endpoint for OpenTelemetry HTTP receiver.
+      port: 4318
+      protocol: TCP
+      targetPort: 4318
+  selector:
+    {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
+    component: deployment
+  internalTrafficPolicy: Cluster
