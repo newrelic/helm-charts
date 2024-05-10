@@ -1,0 +1,48 @@
+apiVersion: v2
+name: nr-k8s-otel-collector
+description: A Helm chart to deploy OpenTelemetry Collector as an agent.
+home: https://github.com/newrelic/helm-charts
+icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+
+# A chart can be either an 'application' or a 'library' chart.
+#
+# Application charts are a collection of templates that can be packaged into versioned archives
+# to be deployed.
+#
+# Library charts provide useful utilities or functions for the chart developer. They're included as
+# a dependency of application charts to inject those utilities and functions into the rendering
+# pipeline. Library charts do not define any templates and therefore cannot be deployed.
+type: application
+
+# This is the chart version. This version number should be incremented each time you make changes
+# to the chart and its templates, including the app version.
+# Versions are expected to follow Semantic Versioning (https://semver.org/)
+version: 0.1.0-beta
+
+dependencies:
+  - name: common-library
+version: 1.1.1
+repository: "https://helm-charts.newrelic.com"
+  - name: kube-state-metrics
+version: 5.18.0
+condition: kube-state-metrics.enabled
+repository: https://prometheus-community.github.io/helm-charts
+
+# This is the version number of the application being deployed. This version number should be
+# incremented each time you make changes to the application. Versions are not expected to
+# follow Semantic Versioning. They should reflect the version the application is using.
+# It is recommended to use it with quotes.
+appVersion: "0.91.0"
+
+maintainers:
+  - name: juanjjaramillo
+url: https://github.com/juanjjaramillo
+  - name: csongnr
+url: https://github.com/csongnr
+  - name: dbudziwojskiNR
+url: https://github.com/dbudziwojskiNR
+
+keywords:
+  - infrastructure
+  - newrelic
+  - monitoring
