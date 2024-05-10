@@ -67,9 +67,6 @@ spec:
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
-            - name: varlibdockercontainers
-              mountPath: /var/lib/docker/containers
-              readOnly: true
       volumes:
         # TODO (chris): this is a linux specific configuration
         - name: host-fs
@@ -81,9 +78,6 @@ spec:
         - name: varlogpods 
           hostPath:
             path: /var/log/pods
-        - name: varlibdockercontainers
-          hostPath:
-            path: /var/lib/docker/containers
      {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
        {{- . | nindent 8 -}}
