@@ -55,7 +55,7 @@ helm upgrade nr-k8s-otel-collector nr-k8s-otel-collector -n newrelic
 ### Exporting Errors
 
 Timeout errors while starting up the collector are expected as the collector attempts to establish a connection with NR. 
-These timeout errors can also pop up over time as the collector is running but are transient and expected to self-resolve. 
+These timeout errors can also pop up over time as the collector is running but are transient and expected to self-resolve. Further improvements are underway to mitigate the amount of timeout errors we're seeing from the NR1 endpoint.
 
 ```
 info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlphttp/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
