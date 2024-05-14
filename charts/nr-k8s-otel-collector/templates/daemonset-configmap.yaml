@@ -1,7 +1,7 @@
 apiVersion: v1 
 kind: ConfigMap
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}-daemonset-config
+  name: {{ include "nrKubernetesOtel.daemonset.configmap.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
@@ -9,7 +9,7 @@ data:
   otel-collector-config.yaml: |
     receivers:
       hostmetrics:
-        # TODO (chris): Comment out below when not linux
+        # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
         collection_interval: 20s
         scrapers:
@@ -62,7 +62,7 @@ data:
         collection_interval: 20s
         auth_type: "serviceAccount"
         endpoint: "${KUBE_NODE_NAME}:10250"
-        insecure_skip_verify: false
+        insecure_skip_verify: true
         metrics: 
           k8s.container.cpu_limit_utilization:
             enabled: true 
@@ -106,19 +106,8 @@ data:
       filelog:
         include:
           - /var/log/pods/*/*/*.log
-          - /var/log/*/*
-          - /var/log/*
-          - /var/log/alternatives.log
-          - /var/log/cloud-init.log
-          - /var/log/auth.log
-          - /var/log/dpkg.log
-          - /var/log/syslog
-          - /var/log/messages
-          - /var/log/secure
-          - /var/log/yum.log
         exclude:
           # Exclude logs from opentelemetry containers
-          # TODO(chris): dynamically generate filelog paths based on CRI
           # filelog paths for containerd and CRI-O
           - /var/log/pods/*/otel-collector-daemonset/*.log
           - /var/log/pods/*/otel-collector-deployment/*.log
@@ -132,6 +121,71 @@ data:
         start_at: beginning
         include_file_path: true
         include_file_name: true
+        operators:
+          - type: router
+            id: get-format
+            routes:
+              - output: parser-docker
+                expr: 'body matches "^\\{"'
+              - output: parser-crio
+                expr: 'body matches "^[^ Z]+ "'
+              - output: parser-containerd
+                expr: 'body matches "^[^ Z]+Z"'
+          # CRI-O format
+          - type: regex_parser
+            id: parser-crio
+            regex:
+              '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            output: extract_metadata_from_filepath
+            timestamp:
+              parse_from: attributes.time
+              layout_type: gotime
+              layout: '2006-01-02T15:04:05.999999999Z07:00'
+          # Parse CRI-Containerd format
+          - type: regex_parser
+            id: parser-containerd
+            regex:
+              '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            output: extract_metadata_from_filepath
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          # Parse Docker format
+          - type: json_parser
+            id: parser-docker
+            output: extract_metadata_from_filepath
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          - type: move
+            from: attributes.log
+            to: body
+          # Extract metadata from file path
+          - type: regex_parser
+            id: extract_metadata_from_filepath
+            regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]{36})\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
+            parse_from: attributes["log.file.path"]
+            cache:
+              size: 128
+          # Rename attributes
+          - type: move
+            from: attributes.stream
+            to: attributes["log.iostream"]
+          - type: move
+            from: attributes.container_name
+            to: resource["k8s.container.name"]
+          - type: move
+            from: attributes.namespace
+            to: resource["k8s.namespace.name"]
+          - type: move
+            from: attributes.pod_name
+            to: resource["k8s.pod.name"]
+          - type: move
+            from: attributes.restart_count
+            to: resource["k8s.container.restart_count"]
+          - type: move
+            from: attributes.uid
+            to: resource["k8s.pod.uid"]
 
     processors:
       transform/truncate:
@@ -240,31 +294,30 @@ data:
       attributes/self:
         actions:
           - key: k8s.pod.name
-            action: upsert
+            action: update
             from_attribute: pod
           - key: k8s.deployment.name
-            action: upsert
+            action: update
             from_attribute: deployment
           - key: k8s.node.name
-            action: upsert
+            action: update
             from_attribute: node
+          - key: k8s.namespace.name
+            action: upsert
+            from_attribute: namespace
 
       batch:
 
     exporters:
       otlphttp/newrelic:
-        endpoint: {{ .Values.newRelicEndpoint }}
+        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      # TODO(chris): uncomment when writing daemonset metrics through deployment
+      # TODO(chris): revisit using the gateway collector
       # otlphttp:
       #   endpoint: "nr-k8s-otel-collector-gateway"
       #   tls:
       #     insecure: true
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
 
     service:
       {{ if include "newrelic.common.verboseLog" . }}
@@ -302,9 +355,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-            {{ if include "newrelic.common.verboseLog" . }}
-            - debug
-            {{ end }}
         logs:
           receivers:
             {{ if .Values.enableFilelogReceiver }}
@@ -313,6 +363,3 @@ data:
           processors: [transform/truncate, resource, k8sattributes, batch]
           exporters:
             - otlphttp/newrelic
-            {{ if include "newrelic.common.verboseLog" . }}
-            - debug
-            {{ end }}

@@ -8,6 +8,7 @@ kube-state-metrics:
   # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
   # your Kubernetes clusters.
   enabled: true
+  prometheusScrape: false  # Disable prometheus from auto-discovering KSM and potentially scraping duplicate data.
 
 image:
   repository: otel/opentelemetry-collector-contrib
@@ -15,8 +16,6 @@ image:
   # Overrides the image tag whose default is the chart appVersion.
   tag: "0.91.0"
 
-# -- This is the New Relic endpoint to send data to.
-newRelicEndpoint: "https://otlp.nr-data.net"
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
 # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -64,10 +63,14 @@ nodeSelector: {}
 tolerations: []
 # -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
-# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
-verboseLog: false
 
-enableGrpcGatewayEndpoint: false
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+# @default -- `false`
+verboseLog:
+# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+# @default -- `false`
+nrStaging:
+
 enablePrometheusReceiver: true
 enableK8sClusterReceiver: true
 enableK8sEventsReceiver: true
