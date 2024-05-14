@@ -328,13 +328,13 @@ data:
       pipelines:
         metrics:
           receivers:
-            {{ if .Values.enableHostmetricsReceiver }}
+            {{ if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics
             {{ end }}
-            {{ if .Values.enableKubeletstatsReceiver }}
+            {{ if .Values.receivers.kubeletstats.enabled }}
             - kubeletstats
             {{ end }}
-            {{ if .Values.enablePrometheusReceiver }}
+            {{ if .Values.receivers.prometheus.enabled }}
             - prometheus
             {{ end }}
           processors:
@@ -357,7 +357,7 @@ data:
             - otlphttp/newrelic
         logs:
           receivers:
-            {{ if .Values.enableFilelogReceiver }}
+            {{ if .Values.receivers.filelog.enabled }}
             - filelog
             {{ end }}
           processors: [transform/truncate, resource, k8sattributes, batch]

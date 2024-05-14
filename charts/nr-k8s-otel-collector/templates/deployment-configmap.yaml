@@ -336,10 +336,10 @@ data:
       pipelines:
         metrics:
           receivers:
-            {{ if .Values.enablePrometheusReceiver }}
+            {{ if .Values.receivers.prometheus.enabled }}
             - prometheus
             {{ end }}
-            {{ if .Values.enableK8sClusterReceiver }}
+            {{ if .Values.receivers.k8sCluster.enabled }}
             - k8s_cluster
             {{ end }}
           processors:
@@ -363,7 +363,7 @@ data:
         #     - otlphttp/newrelic
         logs/events:
           receivers:
-            {{ if .Values.enableK8sEventsReceiver }}
+            {{ if .Values.receivers.k8sEvents.enabled }}
             - k8s_events
             {{ end }}
           processors: [resource/events, batch]
