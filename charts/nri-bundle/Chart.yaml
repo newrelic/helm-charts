@@ -16,13 +16,13 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
 
-version: 5.0.76
+version: 5.0.77
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.33.5
+    version: 3.33.6
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -37,7 +37,7 @@ dependencies:
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.19.0
+    version: 4.19.1
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -52,12 +52,12 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 3.9.6
+    version: 3.9.7
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.21.3
+    version: 1.21.5
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
@@ -71,7 +71,7 @@ dependencies:
     alias: pixie-chart
     repository: https://pixie-operator-charts.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.1.5
+    version: 0.1.6
 
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
