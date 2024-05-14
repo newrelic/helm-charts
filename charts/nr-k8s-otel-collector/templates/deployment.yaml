@@ -61,7 +61,7 @@ spec:
       volumes:
         - name: deployment-config
           configMap:
-            name: {{ include "nrKubernetesOtel.deployment.configmap.fullname" . }}-deployment-config
+            name: {{ include "nrKubernetesOtel.deployment.configmap.fullname" . }}
       {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
