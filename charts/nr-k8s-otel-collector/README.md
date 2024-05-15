@@ -18,7 +18,7 @@ You can install this chart using directly this Helm repository:
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm upgrade --install newrelic/nr-k8s-otel-collector -f your-custom-values.yaml  -n newrelic --create-namespace
+helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml  -n newrelic --create-namespace
 ```
 
 ## Confirm installation
