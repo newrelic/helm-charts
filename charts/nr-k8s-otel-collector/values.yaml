@@ -8,12 +8,15 @@ kube-state-metrics:
   # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
   # your Kubernetes clusters.
   enabled: true
-  prometheusScrape: false  # Disable prometheus from auto-discovering KSM and potentially scraping duplicate data.
+  # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
+  prometheusScrape: false
 
 image:
+  # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
   repository: otel/opentelemetry-collector-contrib
+  # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
-  # Overrides the image tag whose default is the chart appVersion.
+  # --  Overrides the image tag whose default is the chart appVersion.
   tag: "0.91.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
@@ -25,11 +28,14 @@ customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
 
+# -- Annotations to be added to each pod created by the chart
 podAnnotations: {}
 
+# -- Sets security context (at pod level). Can be configured also with `global.podSecurityContext`
 podSecurityContext: {}
   # fsGroup: 2000
 
+# -- Sets security context (at container level). Can be configured also with `global.podSecurityContext`
 securityContext:
   privileged: true
   # capabilities:
@@ -39,6 +45,7 @@ securityContext:
   # runAsNonRoot: true
   # runAsUser: 1000
 
+# -- The default set of resources assigned to the pods is shown below:
 resources: {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
@@ -51,15 +58,19 @@ resources: {}
   #   cpu: 100m
   #   memory: 128Mi
 
+# -- Sets pod's node selector. Can be configured also with `global.nodeSelector
 nodeSelector: {}
 
+# -- Sets pod's tolerations to node taints. Cab be configured also with `global.tolerations`
 tolerations: []
 
+# -- Sets pod/node affinities
 affinity: {}
 
 # -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
 # @default -- `false`
 verboseLog:
+
 # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
 # @default -- `false`
 nrStaging:
