@@ -44,6 +44,13 @@ FROM InfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 FROM Log SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
+## Uninstall
+
+Run the following command.
+
+```
+helm uninstall nr-k8s-otel-collector -n newrelic
+```
 
 ## Values managed globally
 
