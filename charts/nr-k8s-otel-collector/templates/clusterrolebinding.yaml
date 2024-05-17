@@ -1,3 +1,4 @@
+{{- if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -12,3 +13,4 @@ roleRef:
   kind: ClusterRole
   name: {{ include "newrelic.common.naming.fullname" . }}
   apiGroup: rbac.authorization.k8s.io
+{{- end -}}

@@ -64,6 +64,21 @@ tolerations: []
 # -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
 
+rbac:
+  # -- Specifies whether RBAC resources should be created
+  create: true
+
+# -- Settings controlling ServiceAccount creation
+# @default -- See `values.yaml`
+serviceAccount:
+  # serviceAccount.create -- (bool) Specifies whether a ServiceAccount should be created
+  # @default -- `true`
+  create:
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # Specify any annotations to add to the ServiceAccount
+  annotations:
+
 # -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
 # @default -- `false`
 verboseLog:
