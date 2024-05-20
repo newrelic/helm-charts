@@ -43,13 +43,13 @@ daemonset:
   tolerations: []
   # -- Sets daemonset pod affinities. Overrides `affinity` and `global.affinity`
   affinity: {}
-  # -- Annotations to be added to the daemonset.
+  # -- Annotations to be added to the daemonset. Overrides `podAnnotations` and `global.podAnnotations`
   podAnnotations: {}
-  # -- Sets security context (at pod level) for the daemonset.
+  # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
-  # -- Sets security context (at container level) for the daemonset.
+  # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
   containerSecurityContext: {}
-  # -- Sets resources for the daemonset.
+  # -- Sets resources for the daemonset. Overrides `resources` and `global.resources`
   resources: {}
 
 deployment:
@@ -59,13 +59,13 @@ deployment:
   tolerations: []
   # -- Sets deployment pod affinities. Overrides `affinity` and `global.affinity`
   affinity: {}
-  # -- Annotations to be added to the deployment.
+  # -- Annotations to be added to the deployment. Overrides `podAnnotations` and `global.podAnnotations`
   podAnnotations: {}
-  # -- Sets security context (at pod level) for the deployment.
+  # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
-  # -- Sets security context (at container level) for the deployment.
+  # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
   containerSecurityContext: {}
-  # -- Sets resources for the deployment.
+  # -- Sets resources for the deployment. Overrides `resources` and `global.resources`
   resources: {}
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
@@ -74,6 +74,14 @@ nodeSelector: {}
 tolerations: []
 # -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
+# -- Sell all pod annotations.
+podAnnotations: {}
+# -- Sets all security contexts (at pod level).
+podSecurityContext: {}
+# -- Sets all security context (at container level).
+containerSecurityContext: {}
+# -- Sets all pods' resources.
+resources: {}
 
 rbac:
   # -- Specifies whether RBAC resources should be created
