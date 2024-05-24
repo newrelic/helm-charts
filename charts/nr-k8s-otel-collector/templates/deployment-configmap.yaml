@@ -328,20 +328,21 @@ data:
         headers:
           api-key: ${env:NR_LICENSE_KEY}
     service:
-      {{ if include "newrelic.common.verboseLog" . }}
+      {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
         logs:
           level: "debug"
-      {{ end }}
+      {{- end }}
       pipelines:
+        {{- if or .Values.receivers.prometheus.enabled .Values.receivers.k8sCluster.enabled }}
         metrics:
           receivers:
-            {{ if .Values.receivers.prometheus.enabled }}
+            {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
-            {{ end }}
-            {{ if .Values.receivers.k8sCluster.enabled }}
+            {{- end }}
+            {{- if .Values.receivers.k8sCluster.enabled }}
             - k8s_cluster
-            {{ end }}
+            {{- end }}
           processors:
             - metricstransform/k8s_cluster_info
             - metricstransform/kube_pod_status_phase
@@ -355,17 +356,18 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
+        {{- end }}
         # TODO(chris): revisit using the gateway collector
         # logs:
         #   receivers: [otlp]
         #   processors: [batch]
         #   exporters:
         #     - otlphttp/newrelic
+        {{- if .Values.receivers.k8sEvents.enabled }}
         logs/events:
           receivers:
-            {{ if .Values.receivers.k8sEvents.enabled }}
             - k8s_events
-            {{ end }}
           processors: [resource/events, batch]
           exporters:
             - otlphttp/newrelic
+        {{- end }}

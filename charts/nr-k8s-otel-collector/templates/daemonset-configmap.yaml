@@ -320,23 +320,24 @@ data:
       #     insecure: true
 
     service:
-      {{ if include "newrelic.common.verboseLog" . }}
+      {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
         logs:
           level: "debug"
-      {{ end }}
+      {{- end }}
       pipelines:
+        {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
-            {{ if .Values.receivers.hostmetrics.enabled }}
+            {{- if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics
-            {{ end }}
-            {{ if .Values.receivers.kubeletstats.enabled }}
+            {{- end }}
+            {{- if .Values.receivers.kubeletstats.enabled }}
             - kubeletstats
-            {{ end }}
-            {{ if .Values.receivers.prometheus.enabled }}
+            {{- end }}
+            {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
-            {{ end }}
+            {{- end }}
           processors:
             # - transform/truncate
             - filter/exclude_cpu_utilization
@@ -355,11 +356,12 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
+        {{- end }}
+        {{- if .Values.receivers.filelog.enabled }}
         logs:
           receivers:
-            {{ if .Values.receivers.filelog.enabled }}
             - filelog
-            {{ end }}
           processors: [transform/truncate, resource, k8sattributes, batch]
           exporters:
             - otlphttp/newrelic
+        {{- end }}
