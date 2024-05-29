@@ -77,9 +77,9 @@ nodeSelector: {}
 tolerations: []
 # -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
-# -- Sets all security contexts (at pod level).
+# -- Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod`
 podSecurityContext: {}
-# -- Sets all security context (at container level).
+# -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
 containerSecurityContext: {}
 
 rbac:
@@ -107,14 +107,26 @@ nrStaging:
 
 receivers:
   prometheus:
+    # -- (bool) Specifies whether the `prometheus` receiver is enabled
+    # @default -- `true`
     enabled: true
   k8sCluster:
+    # -- (bool) Specifies whether the `k8s_cluster` receiver is enabled
+    # @default -- `true`
     enabled: true
   k8sEvents:
+    # -- (bool) Specifies whether the `k8s_events` receiver is enabled
+    # @default -- `true`
     enabled: true
   hostmetrics:
+    # -- (bool) Specifies whether the `hostmetrics` receiver is enabled
+    # @default -- `true`
     enabled: true
   kubeletstats:
+    # -- (bool) Specifies whether the `kubeletstats` receiver is enabled
+    # @default -- `true`
     enabled: true
   filelog:
+    # -- (bool) Specifies whether the `filelog` receiver is enabled
+    # @default -- `true`
     enabled: true
