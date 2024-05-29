@@ -310,7 +310,7 @@ data:
 
     exporters:
       otlphttp/newrelic:
-        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+        endpoint: {{- include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
       # TODO(chris): revisit using the gateway collector
