@@ -18,7 +18,7 @@ You can install this chart using directly this Helm repository:
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml  -n newrelic --create-namespace  --install
+helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
 ## Confirm installation
@@ -64,24 +64,51 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` | Sets pod/node affinities |
+| affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
+| containerSecurityContext | object | `{}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
+| daemonset.affinity | object | `{}` | Sets daemonset pod affinities. Overrides `affinity` and `global.affinity` |
+| daemonset.containerSecurityContext | object | `{}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
+| daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
+| daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
+| daemonset.resources | object | `{}` | Sets resources for the daemonset. |
+| daemonset.tolerations | list | `[]` | Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations` |
+| deployment.affinity | object | `{}` | Sets deployment pod affinities. Overrides `affinity` and `global.affinity` |
+| deployment.containerSecurityContext | object | `{}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
+| deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
+| deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
+| deployment.resources | object | `{}` | Sets resources for the deployment. |
+| deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
+| dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| image.repository | string | `"otel/opentelemetry-collector-contrib"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.  |
+| image.repository | string | `"otel/opentelemetry-collector-contrib"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"0.91.0"` | Overrides the image tag whose default is the chart appVersion. |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
+| labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
-| nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector |
+| nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
-| podAnnotations | object | `{}` | Annotations to be added to each pod created by the chart |
-| podSecurityContext | object | `{}` | Sets security context (at pod level). Can be configured also with `global.podSecurityContext` |
-| resources | object | `{}` | The default set of resources assigned to the pods is shown below: |
-| securityContext | object | `{"privileged":true}` | Sets security context (at container level). Can be configured also with `global.podSecurityContext` |
-| tolerations | list | `[]` | Sets pod's tolerations to node taints. Cab be configured also with `global.tolerations` |
+| podLabels | object | `{}` | Additional labels for chart pods |
+| podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
+| priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
+| rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
+| receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
+| receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
+| receivers.k8sCluster.enabled | bool | `true` | Specifies whether the `k8s_cluster` receiver is enabled |
+| receivers.k8sEvents.enabled | bool | `true` | Specifies whether the `k8s_events` receiver is enabled |
+| receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
+| receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
+| serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
+| serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |
+| tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |
 | verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
+
+**Note:** If all receivers are disabled in the deployment or in the daemonset, the agent will not start.
 
 ## Common Errors
 
@@ -91,7 +118,7 @@ Timeout errors while starting up the collector are expected as the collector att
 These timeout errors can also pop up over time as the collector is running but are transient and expected to self-resolve. Further improvements are underway to mitigate the amount of timeout errors we're seeing from the NR1 endpoint.
 
 ```
-infoexporterhelper/retry_sender.go:154  Exporting failed. Will retry the request after interval.{"kind": "exporter", "data_type": "metrics", "name": "otlphttp/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
+info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlphttp/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
 ```
 
 ### No such file or directory
@@ -100,11 +127,11 @@ Sometimes we see failed to open file errors on the `filelog` and `hostmetrics` r
 
 `filelog` error:
 ```
-Failed to open file {"kind": "receiver", "name": "filelog", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
+Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
 ```
 `hostmetrics` error:
 ```
-Error scraping metrics  {"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
+Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
 
 ## Maintainers

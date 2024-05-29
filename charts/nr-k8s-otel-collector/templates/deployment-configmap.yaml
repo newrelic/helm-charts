@@ -239,12 +239,12 @@ metrics:
 
   filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase:
 metrics:
-  datapoint: 
-- metric.name == "kube_persistentvolumeclaim_status_phase" and value_double == 0.0 
+  datapoint:
+- metric.name == "kube_persistentvolumeclaim_status_phase" and value_double == 0.0
 
   filter/exclude_zero_value_kube_pod_status_phase:
 metrics:
-  datapoint: 
+  datapoint:
 - metric.name == "kube_pod_status_phase" and value_double == 0.0
 
   filter/exclude_zero_value_kube_pod_container_status:
@@ -317,7 +317,7 @@ from_attribute: deployment
 action: upsert
 from_attribute: node
   - key: k8s.namespace.name
-action: upsert 
+action: upsert
 from_attribute: namespace
 
   batch:
@@ -328,15 +328,22 @@ endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
 headers:
   api-key: ${env:NR_LICENSE_KEY}
 service:
-  {{ if include "newrelic.common.verboseLog" . }}
+  {{- if include "newrelic.common.verboseLog" . }}
   telemetry:
 logs:
   level: "debug"
-  {{ end }}
+  {{- end }}
   pipelines:
+{{- if or .Values.receivers.prometheus.enabled .Values.receivers.k8sCluster.enabled }}
 metrics:
-  receivers: [prometheus, k8s_cluster]
-  processors: 
+  receivers:
+{{- if .Values.receivers.prometheus.enabled }}
+- prometheus
+{{- end }}
+{{- if .Values.receivers.k8sCluster.enabled }}
+- k8s_cluster
+{{- end }}
+  processors:
 - metricstransform/k8s_cluster_info
 - metricstransform/kube_pod_status_phase
 - filter/exclude_zero_value_kube_node_status_condition
@@ -349,14 +356,18 @@ metrics:
 - batch
   exporters:
 - otlphttp/newrelic
+{{- end }}
 # TODO(chris): revisit using the gateway collector
 # logs:
 #   receivers: [otlp]
 #   processors: [batch]
 #   exporters:
 # - otlphttp/newrelic
+{{- if .Values.receivers.k8sEvents.enabled }}
 logs/events:
-  receivers: [k8s_events]
+  receivers:
+- k8s_events
   processors: [resource/events, batch]
   exporters:
 - otlphttp/newrelic
+{{- end }}
