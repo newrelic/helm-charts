@@ -19,15 +19,33 @@ spec:
         component: deployment
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/deployment-configmap.yaml") . | sha256sum }}
+        {{- with .Values.deployment.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
       containers:
         - name: otel-collector-deployment
+          {{- with include "nrKubernetesOtel.deployment.securityContext.container" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           args: ["--config", "/config/deployment-config.yaml"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
           env:
             - name: KUBE_NODE_NAME
               valueFrom:
@@ -55,15 +73,15 @@ spec:
         - name: deployment-config
           configMap:
             name: {{ include "nrKubernetesOtel.deployment.configmap.fullname" . }}
-      {{- with include "newrelic.common.nodeSelector" . }}
+      {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
-        {{- . | nindent 8 -}}
+        {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "newrelic.common.affinity" . }}
+      {{- with include "nrKubernetesOtel.deployment.affinity" . }}
       affinity:
-        {{- . | nindent 8 -}}
+        {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "newrelic.common.tolerations" . }}
+      {{- with include "nrKubernetesOtel.deployment.tolerations" . }}
       tolerations:
-        {{- . | nindent 8 -}}
+        {{- . | nindent 8 }}
       {{- end }}

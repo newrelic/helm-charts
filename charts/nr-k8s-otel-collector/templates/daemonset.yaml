@@ -17,19 +17,35 @@ spec:
         component: daemonset
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
+        {{- with .Values.daemonset.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
-      containers: 
+      {{- with include "nrKubernetesOtel.daemonset.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
         - name: otel-collector-daemonset
+          {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
           securityContext:
-            {{- toYaml .Values.securityContext | nindent 12 }}
+            {{- . | nindent 12 }}
+          {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - /otelcol-contrib
             - --config=/conf/otel-collector-config.yaml
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.daemonset.resources | nindent 12 }}
           env:
             - name: HOST_IP
               valueFrom: 
@@ -75,18 +91,18 @@ spec:
         - name: config-volume
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configmap.fullname" . }}
-        - name: varlogpods 
+        - name: varlogpods
           hostPath:
             path: /var/log/pods
-     {{- with include "newrelic.common.nodeSelector" . }}
+      {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
-       {{- . | nindent 8 -}}
-     {{- end }}
-     {{- with include "newrelic.common.affinity" . }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.affinity" . }}
       affinity:
-       {{- . | nindent 8 -}}
-     {{- end }}
-     {{- with include "newrelic.common.tolerations" . }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.tolerations" . }}
       tolerations:
-       {{- . | nindent 8 -}}
-     {{- end }}
+        {{- . | nindent 8 }}
+      {{- end }}
