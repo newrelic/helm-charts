@@ -28,44 +28,74 @@ customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
 
-# -- Annotations to be added to each pod created by the chart
-podAnnotations: {}
+# -- Additional labels for chart pods
+podLabels: {}
+# -- Additional labels for chart objects
+labels: {}
 
-# -- Sets security context (at pod level). Can be configured also with `global.podSecurityContext`
-podSecurityContext: {}
-  # fsGroup: 2000
+# -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
+priorityClassName: ""
 
-# -- Sets security context (at container level). Can be configured also with `global.podSecurityContext`
-securityContext:
-  privileged: true
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+# -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
+dnsConfig: {}
 
-# -- The default set of resources assigned to the pods is shown below:
-resources: {}
-  # We usually recommend not to specify default resources and to leave this as a conscious
-  # choice for the user. This also increases chances charts run on environments with little
-  # resources, such as Minikube. If you do want to specify resources, uncomment the following
-  # lines, adjust them as necessary, and remove the curly braces after 'resources:'.
-  # limits:
-  #   cpu: 100m
-  #   memory: 128Mi
-  # requests:
-  #   cpu: 100m
-  #   memory: 128Mi
+daemonset:
+  # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
+  nodeSelector: {}
+  # -- Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets daemonset pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Annotations to be added to the daemonset.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
+  containerSecurityContext: {}
+  # -- Sets resources for the daemonset.
+  resources: {}
 
-# -- Sets pod's node selector. Can be configured also with `global.nodeSelector
+deployment:
+  # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
+  nodeSelector: {}
+  # -- Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets deployment pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Annotations to be added to the deployment.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
+  containerSecurityContext: {}
+  # -- Sets resources for the deployment.
+  resources: {}
+
+# -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
-
-# -- Sets pod's tolerations to node taints. Cab be configured also with `global.tolerations`
+# -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
 tolerations: []
-
-# -- Sets pod/node affinities
+# -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
+# -- Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod`
+podSecurityContext: {}
+# -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
+containerSecurityContext: {}
+
+rbac:
+  # -- Specifies whether RBAC resources should be created
+  create: true
+
+# -- Settings controlling ServiceAccount creation
+# @default -- See `values.yaml`
+serviceAccount:
+  # serviceAccount.create -- (bool) Specifies whether a ServiceAccount should be created
+  # @default -- `true`
+  create:
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # Specify any annotations to add to the ServiceAccount
+  annotations:
 
 # -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
 # @default -- `false`
@@ -74,3 +104,29 @@ verboseLog:
 # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
 # @default -- `false`
 nrStaging:
+
+receivers:
+  prometheus:
+    # -- (bool) Specifies whether the `prometheus` receiver is enabled
+    # @default -- `true`
+    enabled: true
+  k8sCluster:
+    # -- (bool) Specifies whether the `k8s_cluster` receiver is enabled
+    # @default -- `true`
+    enabled: true
+  k8sEvents:
+    # -- (bool) Specifies whether the `k8s_events` receiver is enabled
+    # @default -- `true`
+    enabled: true
+  hostmetrics:
+    # -- (bool) Specifies whether the `hostmetrics` receiver is enabled
+    # @default -- `true`
+    enabled: true
+  kubeletstats:
+    # -- (bool) Specifies whether the `kubeletstats` receiver is enabled
+    # @default -- `true`
+    enabled: true
+  filelog:
+    # -- (bool) Specifies whether the `filelog` receiver is enabled
+    # @default -- `true`
+    enabled: true
