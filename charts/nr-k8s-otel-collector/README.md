@@ -71,6 +71,7 @@ receivers:
     enabled: false
 
 ```
+
 ## Values
 
 | Key | Type | Default | Description |
@@ -95,7 +96,6 @@ receivers:
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
-| gkeAutopilot | bool | `true` | Specifies whether the cluster is a GKE Autopilot cluster or not @default == `false` |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | image.repository | string | `"otel/opentelemetry-collector-contrib"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"0.91.0"` | Overrides the image tag whose default is the chart appVersion. |
