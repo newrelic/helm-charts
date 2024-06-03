@@ -60,6 +60,17 @@ means that it honors a wide range of defaults and globals common to most New Rel
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations` and others. The full list can be found at
 [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
 
+## GKE Autopilot
+
+If using GKE Autopilot, please set `privileged` to `false` as well as `receivers.filelog.enabled` to `false` in your values.yaml file in order for the agent to work with GKE Autopilot.
+
+```
+privileged: false
+receivers:
+  filelog:
+    enabled: false
+
+```
 ## Values
 
 | Key | Type | Default | Description |
