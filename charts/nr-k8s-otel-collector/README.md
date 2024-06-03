@@ -60,17 +60,6 @@ means that it honors a wide range of defaults and globals common to most New Rel
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations` and others. The full list can be found at
 [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
 
-## GKE Autopilot
-
-If using GKE Autopilot, please set `privileged` to `false` as well as `receivers.filelog.enabled` to `false` in your values.yaml file in order for the agent to work with GKE Autopilot.
-
-```
-privileged: false
-receivers:
-  filelog:
-    enabled: false
-
-```
 ## Values
 
 | Key | Type | Default | Description |
@@ -95,7 +84,6 @@ receivers:
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
-| gkeAutopilot | bool | `true` | Specifies whether the cluster is a GKE Autopilot cluster or not @default == `false` |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | image.repository | string | `"otel/opentelemetry-collector-contrib"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"0.91.0"` | Overrides the image tag whose default is the chart appVersion. |
