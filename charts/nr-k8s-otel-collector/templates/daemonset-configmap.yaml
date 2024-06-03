@@ -10,7 +10,7 @@ data:
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if not .Values.gkeAutopilot }}
+        {{- if and .Values.privileged (not .Values.gkeAutopilot) }}
         root_path: /hostfs
         {{- end }}
         collection_interval: 20s
