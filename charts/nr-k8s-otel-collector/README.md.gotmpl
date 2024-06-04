@@ -66,14 +66,16 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 ## GKE Autopilot
 
-If using GKE Autopilot, please set `privileged` to `false` as well as `receivers.filelog.enabled` to `false` in your values.yaml file in order for the agent to work with GKE Autopilot.
+If using GKE Autopilot, please set the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
 
 ```
 privileged: false
 receivers:
   filelog:
     enabled: false
-
+daemonset:
+  containerSecurityContext:
+    privileged: false
 ```
 
 {{ template "chart.valuesSection" . }}
