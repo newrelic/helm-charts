@@ -11,7 +11,7 @@ data:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
-        collection_interval: 20s
+        collection_interval: {{ .Values.scrapeInterval }}
         scrapers:
           cpu:
             metrics:
@@ -59,7 +59,7 @@ data:
             mute_process_user_error: true
 
       kubeletstats:
-        collection_interval: 20s
+        collection_interval: {{ .Values.scrapeInterval }}
         auth_type: "serviceAccount"
         endpoint: "${KUBE_NODE_NAME}:10250"
         insecure_skip_verify: true
@@ -70,6 +70,7 @@ data:
         config:
           scrape_configs:
             - job_name: cadvisor
+              scrape_interval: {{ .Values.scrapeInterval }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -87,6 +88,7 @@ data:
                 insecure_skip_verify: false
                 server_name: kubernetes
             - job_name: kubelet
+              scrape_interval: {{ .Values.scrapeInterval }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
