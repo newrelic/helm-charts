@@ -62,16 +62,13 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 ## GKE Autopilot
 
-If using GKE Autopilot, please add the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
+If using GKE Autopilot, please set `privileged` to `false` as well as `receivers.filelog.enabled` to `false` in your values.yaml file in order for the agent to work with GKE Autopilot.
 
 ```
 privileged: false
 receivers:
   filelog:
     enabled: false
-daemonset:
-  containerSecurityContext:
-    privileged: false
 
 ```
 
@@ -85,7 +82,7 @@ daemonset:
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | daemonset.affinity | object | `{}` | Sets daemonset pod affinities. Overrides `affinity` and `global.affinity` |
-| daemonset.containerSecurityContext | object | `{}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
