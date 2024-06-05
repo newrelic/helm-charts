@@ -10,7 +10,9 @@ data:
 receivers:
   hostmetrics:
 # TODO (chris): this is a linux specific configuration
+{{- if include "newrelic.common.privileged" . -}}
 root_path: /hostfs
+{{- end }}
 collection_interval: 20s
 scrapers:
   cpu:
@@ -59,13 +61,19 @@ mute_process_io_error: true
 mute_process_user_error: true
 
   kubeletstats:
-collection_interval: 20s
-auth_type: "serviceAccount"
+collection_interval: 10s
+{{- if include "newrelic.common.privileged" . -}}
 endpoint: "${KUBE_NODE_NAME}:10250"
+auth_type: "serviceAccount"
 insecure_skip_verify: true
+{{- else }}
+endpoint: "${KUBE_NODE_NAME}:10255"
+auth_type: "none"
+{{- end }}
 metrics: 
   k8s.container.cpu_limit_utilization:
 enabled: true 
+
   prometheus:
 config:
   scrape_configs:
@@ -329,13 +337,13 @@ logs:
 {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
 metrics:
   receivers:
-{{- if .Values.receivers.hostmetrics.enabled }}
+{{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
 - hostmetrics
 {{- end }}
 {{- if .Values.receivers.kubeletstats.enabled }}
 - kubeletstats
 {{- end }}
-{{- if .Values.receivers.prometheus.enabled }}
+{{- if and .Values.receivers.prometheus.enabled (include "newrelic.common.privileged" .) }}
 - prometheus
 {{- end }}
   processors:
