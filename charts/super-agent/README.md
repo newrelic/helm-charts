@@ -2,7 +2,7 @@
 
 # super-agent
 
-![Version: 0.0.6-beta](https://img.shields.io/badge/Version-0.0.6--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
+![Version: 0.0.8-beta](https://img.shields.io/badge/Version-0.0.8--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
 
 Bootstraps New Relic' Super Agent
 
