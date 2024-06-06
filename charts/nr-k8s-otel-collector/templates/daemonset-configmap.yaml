@@ -10,7 +10,7 @@ data:
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if include "newrelic.common.privileged" . -}}
+        {{- if include "newrelic.common.privileged" . }}
         root_path: /hostfs
         {{- end }}
         collection_interval: 20s
@@ -62,7 +62,7 @@ data:
 
       kubeletstats:
         collection_interval: 10s
-        {{- if include "newrelic.common.privileged" . -}}
+        {{- if include "newrelic.common.privileged" . }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
@@ -337,7 +337,7 @@ data:
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
-            {{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
+            {{- if and .Values.receivers.hostmetrics.enabled  (include "newrelic.common.privileged" .) }}
             - hostmetrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
