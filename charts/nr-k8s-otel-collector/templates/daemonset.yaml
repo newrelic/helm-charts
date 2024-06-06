@@ -75,7 +75,7 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
           volumeMounts:
             # TODO (chris): this is a linux specific configuration
-            {{- if .Values.privileged }}
+            {{- if include "newrelic.common.privileged" . }}
             - name: host-fs
               mountPath: /hostfs
               readOnly: true
@@ -87,7 +87,7 @@ spec:
               mountPath: /conf
       volumes:
         # TODO (chris): this is a linux specific configuration
-        {{- if .Values.privileged }}
+        {{- if include "newrelic.common.privileged" . }}
         - name: host-fs
           hostPath:
             path: /
