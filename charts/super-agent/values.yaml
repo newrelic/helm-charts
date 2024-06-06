@@ -1,108 +1,41 @@
-helm:
-  # -- Enable the installation of the CRs so FluxCD deploy the Super Agent is deployed. This an advanced/debug flag. It
-  # should be always be true unless you know what you are going.
-  create: true
-
-  # -- Values related to the Helm repository where to download the super agent's chart.
-  # @default -- See `values.yaml`
-  repository:
-# -- Sets the interval the repository is going to be updated on the controller.
-updateInterval: 24h
-# -- The repository where the super-agent has the chart. This values is meant to be changed only on air-gapped
-# environments or for development/testing purposes.
-url: https://helm-charts.newrelic.com
-
-# -- A reference to a secret with the keys username and password to authenticate to the repository.
-# @default -- `nil` (no secret reference)
-secretRef:
-  # name: name-of-the-secret
-# -- secret of type `kubernetes.io/tls` with the standard keys `tls.crt`, `tls.key`, and `ca.crt`
-# @default -- `nil` (no secret reference)
-certSecretRef:
-  # name: name-of-the-secret
-
-  # -- Values related to the super agent's Helm chart release.
-  # @default -- See `values.yaml`
-  release:
-# -- The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for
-# development/testing purposes.
-chart: super-agent-deployment
-# -- The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for
-# development/testing purposes.
-#
-# TODO: Point renovatebot here.
-version: "0.0.12-beta"
-
-# -- Set values to the super agent helm release directly from this `values.yaml` file. Refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides
-# @default -- `{}`. Examples on the `values.yaml`
-values:
-# These values are the values that the values that are going to be provided to the helm release as user-supplied.
-# Here you have a example snippet of values that are being used upstream:
-#
-# image:
-#   registry:
-#   repository: newrelic/newrelic-super-agent
-#   tag: ""
-# config:
-#   create: true
-#   name: ""
-#   key: ""
-#   content:
-# opamp:
-#   headers:
-# some-key: LICENSEKEY
-# agents:
-#   agent_1:
-# agent_type: namespace/agent_type:0.0.1
-
-# -- Set values from a `configMap` or a `secret`. You can see examples and better documentation inside the
-# `values.yaml` file. Also refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides
-# @default -- empty
-valuesFrom:
-
-  # - kind: ConfigMap or Secret
-  #   name: Name of the values referent, in the same namespace as the HelmRelease.
-  #   valuesKey (Optional): The data key where the values.yaml or a specific value can be found.
-  # Defaults to `values.yaml` when omitted.
-  #   targetPath (Optional): The YAML dot notation path at which the value should be merged. When set, the
-  #  valuesKey is expected to be a single flat value. Defaults to `nil` when omitted, which
-  #  results in the values getting merged at the root.
-
-  # Examples:
-  # - kind: ConfigMap
-  #   name: prod-env-values
-  #   valuesKey: values-prod.yaml
-  # - kind: Secret
-  #   name: prod-tls-values
-  #   valuesKey: crt
-  #   targetPath: tls.crt
-
-# -- Change the behavior of the operator while installing the chart for the first time. This should only be changed
-# by advanced users that know what they are doing. Exposes the remediations that the operator is going to try
-# before give up installing the chart in case it hits an error.
+# -- Values related to the super agent's Helm chart release.
 # @default -- See `values.yaml`
-install:
-  disableWait: true  # Prevents blocking the modification/deletions of the HelmRelease
-  replace: true  # Tells the Helm install action to reuse the ‘ReleaseName’, but only if that name is a deleted release which remains in the history.
-  remediation:
-retries: 3  # Retries is the number of retries that should be attempted on failures before giving up. An uninstall is performed between each attempt.
+super-agent-deployment:
+  # -- Enable the installation of the Super Agent. This an advanced/debug flag. It should be always be true unless
+  # you know what you are going.
+  enabled: true
 
-# -- Change the behavior of the operator while upgrading the chart. This should only be changed by advanced users
-# that know what they are doing. Exposes the remediations that the operator is going to try before give up
-# installing the chart in case it hits an error.
-# @default -- See `values.yaml`
-upgrade:
-  disableWait: true  # Prevents blocking the modification/deletions of the HelmRelease
-  force: true  # Force forces resource updates through a replacement strategy.
-  cleanupOnFail: true  # Allows deletion of new resources created during the Helm upgrade action when it fails.
-  remediation:
-retries: 3  # Retries is the number of retries that should be attempted on failures before giving up. An uninstall is performed between each attempt.
-strategy: rollback  # rollback or uninstall.
-
-# -- Optional configuration of rollback strategy when upgrading. This should only be changed by advanced users that know what they are doing.
-# @default -- See `values.yaml`
-rollback:
-  disableWait: true  # Prevents blocking the modification/deletions of the HelmRelease
+  # image:
+  #   registry:
+  #   repository: newrelic/newrelic-super-agent
+  #   tag: ""
+  # config:
+  #   superAgent:
+  # create: true
+  # name: ""
+  # key: ""
+  # content:
+  #   agents:
+  # open-telemetry:
+  #   agent_type: newrelic/io.opentelemetry.collector:0.1.1
+  #opamp:
+  #  endpoint: https://opamp.service.newrelic.com/v1/opamp
+  #  headers:
+  #api-key: LICENSE_KEY
+  #-- This option enables a status server that can be useful for troubleshooting.
+  #-- Port-forward it `$ kubectl port-forward pod/{pod-name} 51200:51200`
+  #-- And query it as `$ curl localhost:51200/status`
+  #server:
+  #  enabled: true
+  #  port: 51200
+  #   subAgents:
+  # open-telemetry:
+  #   content:
+  # chart_values:
+  #   mode: deployment
+  #   config:
+  # exporters:
+  #   logging: {}
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
