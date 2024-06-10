@@ -42,8 +42,8 @@ spec:
             {{- . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-          args: ["--config", "/config/deployment-config.yaml"]
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["--config", "/config/deployment-config.yaml"]
           resources:
             {{- toYaml .Values.deployment.resources | nindent 12 }}
           env:

@@ -1,0 +1,314 @@
+suite: affinity
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets affinity to default when no values provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity
+        template: templates/deployment.yaml
+      - notExists:
+          path: spec.template.spec.affinity
+        template: templates/daemonset.yaml
+  - it: sets affinity from global by common-library
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      global:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: globalKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: globalKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: globalKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/daemonset.yaml
+  - it: sets affinity from values by common-library
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: topLevelKey
+                    operator: In
+                    values:
+                      - S1
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: topLevelKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: topLevelKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/daemonset.yaml
+  - it: sets affinity from values by common-library overriding global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: topLevelKey
+                    operator: In
+                    values:
+                      - S1
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+      global:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: globalKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: topLevelKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: topLevelKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/daemonset.yaml
+  - it: sets affinity from deployment values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      deployment:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: deploymentKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: deploymentKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/deployment.yaml
+  - it: sets affinity from daemonset values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      daemonset:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: daemonsetKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: daemonsetKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/daemonset.yaml
+  - it: sets affinity from deployment values overriding top level and global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      deployment:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: deploymentKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: topLevelKey
+                    operator: In
+                    values:
+                      - S1
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+      global:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: globalKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: deploymentKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/deployment.yaml
+  - it: sets affinity from daemonset values overriding top level and global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      daemonset:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: daemonsetKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+      affinity:
+        podAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: topLevelKey
+                    operator: In
+                    values:
+                      - S1
+              topologyKey: failure-domain.beta.kubernetes.io/zone
+      global:
+        affinity:
+          podAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              - labelSelector:
+                  matchExpressions:
+                    - key: globalKey
+                      operator: In
+                      values:
+                        - S1
+                topologyKey: failure-domain.beta.kubernetes.io/zone
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity
+          value:
+            podAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: daemonsetKey
+                        operator: In
+                        values:
+                          - S1
+                  topologyKey: failure-domain.beta.kubernetes.io/zone
+        template: templates/daemonset.yaml

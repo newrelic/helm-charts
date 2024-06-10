@@ -39,6 +39,11 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
+# -- Run the integration with full access to the host filesystem and network.
+# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
+# @default -- `true`
+privileged: true
+
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
@@ -131,8 +136,3 @@ receivers:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
     enabled: true
-
-# -- Run the integration with full access to the host filesystem and network.
-# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
-# @default -- `true`
-privileged: true
