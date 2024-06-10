@@ -6,11 +6,13 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
-  otel-collector-config.yaml: |
+  daemonset-config.yaml: |
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
+        {{- if include "newrelic.common.privileged" . }}
         root_path: /hostfs
+        {{- end }}
         collection_interval: {{ .Values.scrapeInterval }}
         scrapers:
           cpu:
@@ -60,12 +62,18 @@ data:
 
       kubeletstats:
         collection_interval: {{ .Values.scrapeInterval }}
-        auth_type: "serviceAccount"
+        {{- if include "newrelic.common.privileged" . }}
         endpoint: "${KUBE_NODE_NAME}:10250"
+        auth_type: "serviceAccount"
         insecure_skip_verify: true
-        metrics: 
+        {{- else }}
+        endpoint: "${KUBE_NODE_NAME}:10255"
+        auth_type: "none"
+        {{- end }}
+        metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true 
+
       prometheus:
         config:
           scrape_configs:
@@ -331,13 +339,13 @@ data:
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
-            {{- if .Values.receivers.hostmetrics.enabled }}
+            {{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
             - hostmetrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
             - kubeletstats
             {{- end }}
-            {{- if .Values.receivers.prometheus.enabled }}
+            {{- if and .Values.receivers.prometheus.enabled (include "newrelic.common.privileged" .) }}
             - prometheus
             {{- end }}
           processors:

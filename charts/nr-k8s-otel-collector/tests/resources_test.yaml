@@ -1,0 +1,62 @@
+suite: resources
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets pod resources to default when no values provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notExists:
+          path: spec.template.metadata.resources
+        template: templates/deployment.yaml
+      - notExists:
+          path: spec.template.metadata.resources
+        template: templates/daemonset.yaml
+  - it: sets pod resources from values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "250m"
+            limits:
+              memory: "128Mi"
+              cpu: "500m"
+      daemonset:
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "125m"
+            limits:
+              memory: "64Mi"
+              cpu: "250m"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests:
+              memory: "64Mi"
+              cpu: "250m"
+              limits:
+                memory: "128Mi"
+                cpu: "500m"
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            requests:
+              memory: "32Mi"
+              cpu: "125m"
+              limits:
+                memory: "64Mi"
+                cpu: "250m"
+        template: templates/daemonset.yaml

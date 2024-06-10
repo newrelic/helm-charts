@@ -46,6 +46,9 @@ spec:
               value: {{ .Values.synthetics.hordeApiEndpoint | quote }}
             {{- end }}
             {{- include "synthetics-job-manager.vsePassphrase" . | nindent 12 -}}
+
+            {{- include "synthetics-job-manager.apiProxyHost" . | nindent 12 -}}
+            {{- include "synthetics-job-manager.apiProxyPort" . | nindent 12 -}}
             {{- if .Values.synthetics.hordeApiProxySelfSignedCert }}
             - name: HORDE_API_PROXY_ACCEPT_SELF_SIGNED_CERT
               value: {{ .Values.synthetics.hordeApiProxySelfSignedCert | quote }}

@@ -39,6 +39,11 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
+# -- Run the integration with full access to the host filesystem and network.
+# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
+# @default -- `true`
+privileged: true
+
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
@@ -51,7 +56,8 @@ daemonset:
   # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext: {}
+  containerSecurityContext:
+    privileged: true
   # -- Sets resources for the daemonset.
   resources: {}
 
