@@ -1,0 +1,88 @@
+suite: privileged
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets privileged to default when no values provided
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- name: host-fs
+  mountPath: /hostfs
+  readOnly: true
+- name: varlogpods
+  mountPath: /var/log/pods
+  readOnly: true
+- name: daemonset-config
+  mountPath: /config
+template: templates/daemonset.yaml
+  - lengthEqual:
+  path: spec.template.spec.volumes
+  count: 3
+template: templates/daemonset.yaml
+  - it: does not set privileged from global by common-library
+set:
+  cluster: test-cluster
+  licenseKey: us-whatever
+  global:
+privileged: false
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- name: host-fs
+  mountPath: /hostfs
+  readOnly: true
+- name: varlogpods
+  mountPath: /var/log/pods
+  readOnly: true
+- name: daemonset-config
+  mountPath: /config
+template: templates/daemonset.yaml
+  - lengthEqual:
+  path: spec.template.spec.volumes
+  count: 3
+template: templates/daemonset.yaml
+  - it: sets privileged from values by common-library
+set:
+  cluster: test-cluster
+  licenseKey: us-whatever
+  privileged: false
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- name: daemonset-config
+  mountPath: /config
+template: templates/daemonset.yaml
+  - lengthEqual:
+  path: spec.template.spec.volumes
+  count: 1
+template: templates/daemonset.yaml
+  - it: sets privileged from values by common-library overriding global values
+set:
+  cluster: test-cluster
+  licenseKey: us-whatever
+  privileged: false
+  global:
+privileged: true
+asserts:
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- name: daemonset-config
+  mountPath: /config
+template: templates/daemonset.yaml
+  - lengthEqual:
+  path: spec.template.spec.volumes
+  count: 1
+template: templates/daemonset.yaml
