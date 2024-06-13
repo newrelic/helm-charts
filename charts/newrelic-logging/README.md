@@ -7,12 +7,22 @@ New Relic offers a [Fluent Bit](https://fluentbit.io/) output [plugin](https://g
 This document explains how to install it in your cluster using our [Helm](https://helm.sh/) chart.
 
 
-## Install / Uninstall instructions
+## Install / Upgrade / Uninstall instructions
 Despite the `newrelic-logging` chart being able to work standalone, we recommend installing it as part of the [`nri-bundle`](https://github.com/newrelic/helm-charts/tree/master/charts/nri-bundle) chart. The best way of doing so is through the guided installation process documented [here](https://docs.newrelic.com//docs/kubernetes-pixie/kubernetes-integration/installation/kubernetes-integration-install-configure/). This guided install can generate the Helm 3 commands required to install it (select "Helm 3" in Step 3 from the previous documentation link). You can also opt to install it manually using Helm by following [these steps](https://docs.newrelic.com//docs/kubernetes-pixie/kubernetes-integration/installation/install-kubernetes-integration-using-helm/#install-k8-helm). To uninstall it, refer to the steps outlined in [this page](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/uninstall-kubernetes/).
 
+### Installing or updating the helm New Relic repository
+
+To install the repo you can run:
+```
+helm repo add newrelic https://helm-charts.newrelic.com
+```
+
+To update the repo you can run:
+```
+helm repo update newrelic
+```
 
 ## Configuration
-
 
 ### How to configure the chart
 The `newrelic-logging` chart can be installed either alone or as part of the [`nri-bundle`](https://github.com/newrelic/helm-charts/tree/master/charts/nri-bundle) chart (recommended). The chart default settings should be suitable for most users. Nevertheless, you may be interested in overriding the defaults, either by passing them through a `values-newrelic.yaml` file or via the command line when installing the chart. Depending on how you installed it, you'll need to specify the `newrelic-logging`-specific configuration values using the chart name (`newrelic-logging`) as a prefix. In the table below, you can find a quick reference of how to configure the chart in these scenarios. The example depicts how you'd specify the mandatory `licenseKey` and `cluster` settings and how you'd override the `fluentBit.retryLimit` setting to `10`.
@@ -39,7 +49,7 @@ fluentBit:
 ```
 
 ```
-# Installation command
+# Install / upgrade command
 
 helm upgrade --install newrelic-logging newrelic/newrelic-logging \
 --namespace newrelic \
@@ -50,7 +60,7 @@ helm upgrade --install newrelic-logging newrelic/newrelic-logging \
         <td>
 
 ```
-# Installation/configuration command
+# Install / upgrade command
 
 helm upgrade --install newrelic-logging newrelic/newrelic-logging \
 --namespace=newrelic \
@@ -79,7 +89,7 @@ newrelic-logging:
 ```
 
 ```
-# Installation command
+# Install / upgrade command
 
 helm upgrade --install newrelic-bundle newrelic/nri-bundle \
   --namespace newrelic \
@@ -90,7 +100,7 @@ helm upgrade --install newrelic-bundle newrelic/nri-bundle \
         <td>
 
 ```
-# Installation/configuration command
+# Install / upgrade command
 
 helm upgrade --install newrelic-bundle newrelic/nri-bundle \
 --namespace=newrelic \
