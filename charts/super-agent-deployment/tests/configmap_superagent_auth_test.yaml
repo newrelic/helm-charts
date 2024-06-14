@@ -1,0 +1,29 @@
+suite: super agent's auth
+templates:
+  - templates/configmap-superagent-auth.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: super agent's auth can be disabled
+    set:
+      config:
+        auth:
+          create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: super agent's auth templates
+    set:
+      cluster: my-cluster
+      config:
+        auth:
+          content:
+            test: value
+            test2: value2
+    asserts:
+      - equal:
+          path: data["auth.yaml"]
+          value: |
+            test: value
+            test2: value2

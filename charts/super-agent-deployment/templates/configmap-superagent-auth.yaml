@@ -1,0 +1,13 @@
+{{- if .Values.config.auth.create -}}
+---
+kind: ConfigMap
+metadata:
+  name: auth-super-agent
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+apiVersion: v1
+data:
+  auth.yaml: |
+    {{- .Values.config.auth.content | toYaml | nindent 4 }}
+{{- end }}
