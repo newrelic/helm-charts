@@ -75,6 +75,11 @@ spec:
 {{- with .Values.extraVolumeMounts }}
 {{- toYaml . | nindent 12 }}
 {{- end }}
+{{- if eq (include "newrelic-super-agent.shouldCreateAuthSecret" .) "true" }}
+- name: auth-secret-volume
+  mountPath: "/etc/newrelic-super-agent"
+  readOnly: true
+{{- end }}
 
   resources:
 {{- toYaml .Values.resources | nindent 12 }}
@@ -89,6 +94,11 @@ path: config.yaml
   emptyDir: {}
 {{- with .Values.extraVolumes }}
 {{- toYaml . | nindent 8 }}
+{{- end }}
+{{- if eq (include "newrelic-super-agent.shouldCreateAuthSecret" .) "true" }}
+- name: auth-secret-volume
+  secret:
+secretName: {{ .Values.authSecret.name | default .Release.Name }}
 {{- end }}
 
   {{- with include "newrelic.common.nodeSelector" . }}

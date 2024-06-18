@@ -52,3 +52,32 @@ readOnlyRootFilesystem: true
 {{- toYaml $defaults -}}
 {{- end -}}
 {{- end -}}
+
+{{- /*
+Check if authSecret.create is explicitly set to true. If authSecret is not empty and create is not defined, default it to false.
+*/ -}}
+{{- define "newrelic-super-agent.shouldCreateAuthSecret" -}}
+{{- $authSecret := .Values.authSecret }}
+{{- if and (hasKey $authSecret "create") }}
+  {{- toYaml $authSecret.create -}}
+{{- else if not (empty $authSecret) }}
+  {{- toYaml false -}}
+{{- else }}
+  {{- toYaml false -}}
+{{- end }}
+{{- end -}}
+
+{{- /*
+Check if authSecret.data and auth_key are provided. Fail if not.
+*/ -}}
+{{- define "newrelic-super-agent.authSecret.validateData" -}}
+{{- $authSecret := .Values.authSecret }}
+{{- if and $authSecret (not (empty $authSecret)) }}
+  {{- if not $authSecret.data }}
+{{- fail "authSecret.data must be provided when authSecret.create is true" }}
+  {{- end }}
+  {{- if not $authSecret.data.auth_key }}
+{{- fail "auth_key must be provided when authSecret.create is true" }}
+  {{- end }}
+{{- end }}
+{{- end -}}

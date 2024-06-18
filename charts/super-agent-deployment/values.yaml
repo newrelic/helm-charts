@@ -84,8 +84,9 @@ customAttributes: {}
 proxy: ""
 
 # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+# When enabled, in case `authSecret.create` is set to `true`, OpAMP `endpoint` and auth `token_url` need to be updated.
 # @default -- `false`
-nrStaging:
+nrStaging:  # TODO: Update OpAMP `endpoint` and auth `token_url` for staging and Europe when nrStaging is enabled.
 
 fedramp:
   # -- (bool) TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
@@ -99,6 +100,18 @@ verboseLog:
 # -- Enable the cleanup of super-agent managed resources when the chart is uninstalled.
 # If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled.
 cleanupManagedResources: true
+
+# -- Settings controlling authentication secret creation.
+# If `create` is true, a Kubernetes secret will be created containing a key named `auth_key`.
+# This secret will be mounted in the deployment pod at the path `/etc/newrelic-super-agent/auth_key`
+# for authentication purposes.
+authSecret:
+  create: false
+  # -- The name of the Kubernetes secret to use or create.
+  # name: auth-secret
+  # -- Data to include in the secret. The key should be an RSA256 value.
+  # data:
+  #   auth_key: ""
 
 config:
   # -- Configuration for the Super Agent.
@@ -116,6 +129,11 @@ content:
   #endpoint: https://opamp.service.newrelic.com/v1/opamp
   #headers:
   #  api-key: LICENSE_KEY
+  #auth_config:
+  #  token_url: "http://fake.com/oauth2/v1/token"
+  #  client_id: "fake"
+  # -- Note: To use the authentication configuration, ensure authSecret.create is set to true.
+
   #  -- This option enables a status server that can be useful for troubleshooting.
   #  -- Port-forward it `$ kubectl port-forward pod/{pod-name} 51200:51200`
   #  -- And query it as `$ curl localhost:51200/status`
