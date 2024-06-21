@@ -2,14 +2,15 @@
 Return the name of the secret holding the License Key.
 */}}
 {{- define "newrelic.common.license.secretName" -}}
-{{ include "newrelic.common.license._customSecretName" . | default (printf "%s-license" (include "newrelic.common.naming.fullname" . )) }}
+{{- $default := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "license" ) -}}
+{{- include "newrelic.common.license._customSecretName" . | default $default -}}
 {{- end -}}
 
 {{/*
 Return the name key for the License Key inside the secret.
 */}}
 {{- define "newrelic.common.license.secretKeyName" -}}
-{{ include "newrelic.common.license._customSecretKey" . | default "licenseKey" }}
+{{- include "newrelic.common.license._customSecretKey" . | default "licenseKey" -}}
 {{- end -}}
 
 {{/*

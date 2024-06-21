@@ -9,9 +9,8 @@ tests:
   - it: does not set securityContext if not specified
 set:
 asserts:
-  - equal:
+  - notExists:
   path: spec.template.spec.containers[0].securityContext
-  value: null
 
   - it: does set securityContext if specified in values
 set:

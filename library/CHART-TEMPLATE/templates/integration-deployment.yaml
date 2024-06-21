@@ -56,11 +56,24 @@ spec:
   containerPort: 80
   protocol: TCP
   env:
+- name: CLUSTER_NAME
+  value: {{ include "newrelic.common.cluster" . }}
+- name: MY_APP_NON_OPTIONAL_ENV_VAR
+  {{- with include "newrelic.common.proxy" . }}
+- name: MY_APP_PROXY_URL
+  value: {{ . | quote }}
+  {{- end }}
+
 - name: NRIA_LICENSE_KEY
   valueFrom:
 secretKeyRef:
   name: {{ include "newrelic.common.license.secretName" . }}
   key: {{ include "newrelic.common.license.secretKeyName" . }}
+- name: NR_INSIGHTS_KEY
+  valueFrom:
+secretKeyRef:
+  name: {{ include "newrelic.common.insightsKey.secretName" . }}
+  key: {{ include "newrelic.common.insightsKey.secretKeyName" . }}
   livenessProbe:
 httpGet:
   path: /
@@ -71,14 +84,6 @@ httpGet:
   port: http
   resources:
 {{- toYaml .Values.resources | nindent 12 }}
-  env:
-- name: CLUSTER_NAME
-  value: {{ include "newrelic.common.cluster" . }}
-- name: MY_APP_NON_OPTIONAL_ENV_VAR
-  {{- with include "newrelic.common.proxy" . }}
-- name: MY_APP_PROXY_URL
-  value: {{ . | quote }}
-  {{- end }}
   {{- with include "newrelic.common.nodeSelector" . }}
   nodeSelector:
 {{- . | nindent 8 }}
