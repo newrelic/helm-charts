@@ -9,9 +9,8 @@ tests:
   - it: does not set podSecurityContext if not specified
     set:
     asserts:
-      - equal:
+      - notExists:
           path: spec.template.spec.securityContext
-          value: null
 
   - it: does set podSecurityContext if specified in values
     set:
