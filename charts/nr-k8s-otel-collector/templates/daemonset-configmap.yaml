@@ -90,6 +90,9 @@ config:
   source_labels:
 - __meta_kubernetes_node_name
   target_label: __metrics_path__
+- action: replace
+  target_label: job_label
+  replacement: cadvisor
   scheme: https
   tls_config:
 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -108,11 +111,15 @@ server_name: kubernetes
   source_labels:
 - __meta_kubernetes_node_name
   target_label: __metrics_path__
+- action: replace
+  target_label: job_label
+  replacement: kubelet
   scheme: https
   tls_config:
 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
 insecure_skip_verify: false
 server_name: kubernetes
+
   filelog:
 include:
   - /var/log/pods/*/*/*.log
