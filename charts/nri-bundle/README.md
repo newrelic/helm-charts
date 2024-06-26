@@ -25,6 +25,7 @@ here is a list of components that this chart installs and where you can find mor
 | [newrelic-prometheus-configurator](https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent) |  | Configures instances of Prometheus in Agent mode to send metrics to the New Relic Prometheus endpoint. |
 | [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |  | Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin allows you to export data from Pixie to New Relic for long-term data retention. |
 | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |  | Is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for manual instrumentation. |
+| [k8s-agents-operator](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) | | (Preview) Streamlines full-stack observability for Kubernetes environments by automating APM instrumentation alongside Kubernetes agent deployment. |
 
 ## Configure components
 
@@ -179,6 +180,7 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 | global.serviceAccount.name | string | `nil` | Change the name of the service account. This is honored if you disable on this chart the creation of the service account so you can use your own |
 | global.tolerations | list | `[]` | Sets pod's tolerations to node taints |
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
+| k8s-agents-operator.enabled | bool | `false` | Install the [`k8s-agents-operator` chart](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) |
 | kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
 | newrelic-infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |

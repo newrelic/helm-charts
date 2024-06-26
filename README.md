@@ -41,6 +41,8 @@ nri-prometheus:
   enabled: true
 newrelic-logging:
   enabled: true
+k8s-agents-operator:
+  enabled: true
 kube-state-metrics:
   enabled: true
 ```
