@@ -15,8 +15,9 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
+  - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 5.0.83
+version: 5.0.84
 
 dependencies:
   - name: newrelic-infrastructure
@@ -63,6 +64,11 @@ dependencies:
     repository: https://newrelic.github.io/helm-charts
     condition: newrelic-pixie.enabled
     version: 2.1.4
+
+  - name: k8s-agents-operator
+    repository: https://newrelic.github.io/k8s-agents-operator
+    condition: k8s-agents-operator.enabled
+    version: 0.9.0
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
   # olm_crd.yaml and px.dev_viziers.yaml in
