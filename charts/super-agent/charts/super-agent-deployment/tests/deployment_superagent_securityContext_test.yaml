@@ -1,0 +1,49 @@
+suite: test super agent deployment's securityContext
+templates:
+  - templates/deployment-superagent.yaml
+  - templates/configmap-superagent-config.yaml
+  - templates/configmap-subagent-configs.yaml
+tests:
+  - it: securityContext.runAsUser is populated with defaults
+    set:
+      cluster: test
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsUser
+          value: 1000
+        template: templates/deployment-superagent.yaml
+
+  - it: securityContext from the common library is templated
+    set:
+      licenseKey: test
+      cluster: test
+      global.containerSecurityContext:
+        runAsUser: 200
+        runAsGroup: 2000
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            runAsUser: 200
+            runAsGroup: 2000
+        template: templates/deployment-superagent.yaml
+
+  - it: global securityContext is ignored if local value is present
+    set:
+      licenseKey: test
+      cluster: test
+      global.containerSecurityContext:
+        runAsUser: 200
+        runAsGroup: 2000
+      containerSecurityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        runAsUser: 300
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext
+          value:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsUser: 300
+        template: templates/deployment-superagent.yaml

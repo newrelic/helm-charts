@@ -1,0 +1,79 @@
+suite: super agent's config
+templates:
+  - templates/configmap-superagent-config.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: super agent's config can be disabled
+    set:
+      config:
+        superAgent:
+          create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: super agent's config always include cluster_name, namespace and defaults
+    set:
+      cluster: my-cluster
+      config:
+        superAgent: {}
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+  - it: super agent's config templates
+    set:
+      cluster: my-cluster
+      config:
+        superAgent:
+          content:
+            test: value
+            test2: value2
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+            test: value
+            test2: value2
+  - it: cluster_name and namespace from config have precedence
+    set:
+      cluster: my-cluster
+      config:
+        superAgent:
+          content:
+            test: value
+            test2: value2
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
+            server:
+              enabled: true
+            test: value
+            test2: value2
