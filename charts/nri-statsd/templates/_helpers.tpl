@@ -78,14 +78,18 @@ Define the statsd metric tags
 Return the insightsKey
 */}}
 {{- define "nri-statsd.insightsKey" -}}
-{{- if .Values.global}}
-  {{- if .Values.global.insightsKey }}
-      {{- .Values.global.insightsKey -}}
-  {{- else -}}
-      {{- .Values.insightsKey | default "" -}}
-  {{- end -}}
+{{- if or (include "newrelic.common.license._customSecretName" .) (include "newrelic.common.license._customSecretKey" .) -}}
+    {{- if .Values.global}}
+        {{- if .Values.global.insightsKey }}
+            {{- .Values.global.insightsKey -}}
+        {{- else -}}
+            {{- .Values.insightsKey | default "" -}}
+        {{- end -}}
+    {{- else -}}
+        {{- .Values.insightsKey | default "" -}}
+    {{- end -}}
 {{- else -}}
-    {{- .Values.insightsKey | default "" -}}
+    {{- "" -}}
 {{- end -}}
 {{- end -}}
 
