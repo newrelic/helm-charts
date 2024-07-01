@@ -100,7 +100,19 @@ jobs:
       - name: Test install charts
         run: ct install --namespace ct --config .github/ct-install.yaml
       - name: Test upgrade charts
-        run: ct install --namespace ct --config .github/ct-install.yaml --upgrade
+        run: |
+          ct install --namespace ct --config .github/ct-install.yaml --upgrade
+          kubectl get helmrelease --all-namespaces || true
+          kubectl get helmrepository --all-namespaces || true
+          kubectl get helmrelease --all-namespaces -o yaml || true
+          kubectl get helmrepository --all-namespaces -o yaml || true
+          kubectl get pods -n ct
+          kubectl get pods -n ct -o yaml 
+          kubectl get namespaces
+          helm list -a -n ct
+          kubectl api-resources 
+
+
 
   bundle-integrity:
     name: Test nri-bundle dependencies has the same version of the common-library
