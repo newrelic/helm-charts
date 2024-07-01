@@ -100,7 +100,7 @@ jobs:
       - name: Test install charts
         run: ct install --namespace ct --config .github/ct-install.yaml
       - name: Test upgrade charts 
-        run: for i in 1 2 3 4 5 6 7 8 9 10; do ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config; done        
+        run: for i in 1 2 3 4 5 6 7 8 9 10; do HELM_DEBUG=true HELM_WAIT=true ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug ; done        
  
 
   bundle-integrity:
