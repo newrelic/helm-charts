@@ -1,10 +1,11 @@
 super-agent-deployment:
   cluster: sa-cluster
   licenseKey: test
+  # The idea is to avoid creating helmresources that could trigger race conditions when running "ct upgrade"
   config:
     subAgents:
-      open-telemetry:
-        content:
-          chart_values:
-            cluster: "sa-cluster"
-            licenseKey: "test"
+      open-telemetry: null
+    superAgent:
+      content:
+        agents:
+          open-telemetry: null

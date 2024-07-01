@@ -99,40 +99,9 @@ jobs:
 
       - name: Test install charts
         run: ct install --namespace ct --config .github/ct-install.yaml
-      - name: Test upgrade charts
-        # for i in 1 2 3 4 5 6 7 8 9 10; do ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config; done        
-          
-        run: |
-
-          ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config || true
-          echo CT FINISHED 1
-          kubectl get crd
-          kubectl get helmrelease --all-namespaces || true
-          kubectl get helmrepository --all-namespaces || true
-          
-          echo LIST OF PODS
-          kubectl get pods -n ct
-          kubectl get namespaces
-          
-          echo HELM RELEASE
-          helm list -a -n ct
-          echo API RESources
-          kubectl api-resources 
-
-          ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config || true
-          echo CT FINISHED 2
-          kubectl get crd
-          kubectl get helmrelease --all-namespaces || true
-          kubectl get helmrepository --all-namespaces || true
-          
-          echo LIST OF PODS
-          kubectl get pods -n ct
-          kubectl get namespaces
-          
-          echo HELM RELEASE
-          helm list -a -n ct
-          echo API RESources
-          kubectl api-resources 
+      - name: Test upgrade charts 
+        run: for i in 1 2 3 4 5 6 7 8 9 10; do ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config; done        
+ 
 
   bundle-integrity:
     name: Test nri-bundle dependencies has the same version of the common-library
