@@ -101,16 +101,20 @@ jobs:
         run: ct install --namespace ct --config .github/ct-install.yaml
       - name: Test upgrade charts
         run: |
-          ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config || true
+
+          for i in 1 2 3 4 5 6 7 8 9 10; ct install --namespace ct --config .github/ct-install.yaml --upgrade --debug --print-config; done        
+          
           echo CT FINISHED
           kubectl get helmrelease --all-namespaces || true
           kubectl get helmrepository --all-namespaces || true
           kubectl get helmrelease --all-namespaces -o yaml || true
           kubectl get helmrepository --all-namespaces -o yaml || true
+          
           echo LIST OF PODS
           kubectl get pods -n ct
           kubectl get pods -n ct -o yaml 
           kubectl get namespaces
+          
           echo HELM RELEASE
           helm list -a -n ct
           echo API RESources
