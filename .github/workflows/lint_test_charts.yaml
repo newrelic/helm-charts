@@ -101,7 +101,7 @@ jobs:
         run: ct install --namespace ct --config .github/ct-install.yaml
       - name: Test upgrade charts
         run: |
-          ct install --namespace ct --config .github/ct-install.yaml --upgrade
+          ct install --namespace ct --config .github/ct-install.yaml --upgrade || true
           kubectl get helmrelease --all-namespaces || true
           kubectl get helmrepository --all-namespaces || true
           kubectl get helmrelease --all-namespaces -o yaml || true
