@@ -102,6 +102,7 @@ jobs:
       - name: Test upgrade charts
         run: |
           ct install --namespace ct --config .github/ct-install.yaml --upgrade || true
+          echo CT FINISHED
           kubectl get helmrelease --all-namespaces || true
           kubectl get helmrepository --all-namespaces || true
           kubectl get helmrelease --all-namespaces -o yaml || true
