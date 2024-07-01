@@ -106,10 +106,13 @@ jobs:
           kubectl get helmrepository --all-namespaces || true
           kubectl get helmrelease --all-namespaces -o yaml || true
           kubectl get helmrepository --all-namespaces -o yaml || true
+          echo LIST OF PODS
           kubectl get pods -n ct
           kubectl get pods -n ct -o yaml 
           kubectl get namespaces
+          echo HELM RELEASE
           helm list -a -n ct
+          echo API RESources
           kubectl api-resources 
 
 
