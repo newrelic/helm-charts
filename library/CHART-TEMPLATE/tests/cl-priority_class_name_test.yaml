@@ -8,9 +8,8 @@ release:
 tests:
   - it: does not set priorityClassName is not specified
     asserts:
-      - equal:
+      - notExists:
           path: spec.template.spec.priorityClassName
-          value: null
   - it: set priorityClassName if specified in values
     set:
       priorityClassName: testPriority

@@ -82,12 +82,20 @@ jobs:
         uses: manusa/actions-setup-minikube@v2.11.0
         with:
           minikube version: v1.33.1
-          kubernetes version: v1.27.7
+          kubernetes version: v1.28.11
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
       - name: Create test ns
         run: kubectl create ns ct
+
+      - name: Create certificate manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          kubectl create ns cert-manager
+          helm install cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --set crds.enabled=true
 
       - name: Test install charts
         run: ct install --namespace ct --config .github/ct-install.yaml
