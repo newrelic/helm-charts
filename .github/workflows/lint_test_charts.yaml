@@ -86,8 +86,6 @@ jobs:
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
-      - name: Create test ns
-        run: kubectl create ns ct
 
       - name: Create certificate manager
         run: |
@@ -98,9 +96,9 @@ jobs:
             --set crds.enabled=true
 
       - name: Test install charts
-        run: ct install --namespace ct --config .github/ct-install.yaml
+        run: ct install --config .github/ct-install.yaml
       - name: Test upgrade charts
-        run: ct install --namespace ct --config .github/ct-install.yaml --upgrade
+        run: ct install --config .github/ct-install.yaml --upgrade
 
   bundle-integrity:
     name: Test nri-bundle dependencies has the same version of the common-library
