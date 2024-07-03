@@ -450,6 +450,7 @@ logs:
   level: "debug"
   {{- end }}
   pipelines:
+{{- if .Values.receivers.prometheus.enabled }}
 metrics/ksm:
   receivers:
 - prometheus/ksm
@@ -465,6 +466,7 @@ metrics/ksm:
 - transform/ksm
   exporters:
 - otlphttp/newrelic
+{{- end }}
 {{- if or .Values.receivers.prometheus.enabled .Values.receivers.k8sCluster.enabled }}
 metrics:
   receivers:
