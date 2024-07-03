@@ -1,3 +1,8 @@
+# -- Override the name of the chart
+nameOverride: ""
+# -- Override the full name of the release
+fullnameOverride: ""
+
 # -- Values related to the super agent's Helm chart release.
 # @default -- See `values.yaml`
 super-agent-deployment:
@@ -5,37 +10,164 @@ super-agent-deployment:
   # you know what you are going.
   enabled: true
 
-  # image:
-  #   registry:
-  #   repository: newrelic/newrelic-super-agent
-  #   tag: ""
-  # config:
-  #   superAgent:
-  #     create: true
-  #     name: ""
-  #     key: ""
-  #     content:
-  #       agents:
-  #         open-telemetry:
-  #           agent_type: newrelic/io.opentelemetry.collector:0.1.1
-  #        opamp:
-  #          endpoint: https://opamp.service.newrelic.com/v1/opamp
-  #          headers:
-  #            api-key: LICENSE_KEY
-  #        -- This option enables a status server that can be useful for troubleshooting.
-  #        -- Port-forward it `$ kubectl port-forward pod/{pod-name} 51200:51200`
-  #        -- And query it as `$ curl localhost:51200/status`
-  #        server:
-  #          enabled: true
-  #          port: 51200
-  #   subAgents:
-  #     open-telemetry:
-  #       content:
-  #         chart_values:
-  #           mode: deployment
-  #           config:
-  #             exporters:
-  #               logging: {}
+  # -- TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
+  cluster: ""
+  # -- TODO: This set this license key to use. Can be configured also with `global.licenseKey`
+  licenseKey: ""
+  # -- TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
+  customSecretName: ""
+  # -- TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
+  customSecretLicenseKey: ""
+
+  # -- Image for the New Relic Super Agent
+  # @default -- See `values.yaml`
+  image:
+    registry:
+    repository: newrelic/newrelic-super-agent
+    tag: 0.17.0
+    imagePullPolicy: IfNotPresent
+    # -- The secrets that are needed to pull images from a custom registry.
+    pullSecrets: []
+    # - name: regsecret
+
+  # -- Add user environment variables to the agent
+  extraEnv: []
+  # -- Add user environment from configMaps or secrets as variables to the agent
+  extraEnvFrom: []
+  # -- Volumes to mount in the containers
+  extraVolumes: []
+  # -- Defines where to mount volumes specified with `extraVolumes`
+  extraVolumeMounts: []
+
+  # -- Settings controlling ServiceAccount creation.
+  # @default -- See `values.yaml`
+  serviceAccount:
+    # -- Whether the chart should automatically create the ServiceAccount objects required to run.
+    create: true
+    annotations: {}
+    # If not set and create is true, a name is generated using the full name template
+    name: ""
+
+  # -- Additional labels for chart objects. Can be configured also with `global.labels`
+  labels: {}
+  # -- Annotations to be added to all pods created by the integration.
+  podAnnotations: {}
+  # -- Additional labels for chart pods. Can be configured also with `global.podLabels`
+  podLabels: {}
+
+  # -- Resource limits to be added to all pods created by the integration.
+  # @default -- `{}`
+  resources: {}
+
+  # -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
+  priorityClassName: ""
+  # -- (bool) Sets pod's hostNetwork. Can be configured also with `global.hostNetwork`
+  # @default -- `false`
+  hostNetwork:
+  # -- Sets security context (at pod level). Can be configured also with `global.podSecurityContext`
+  podSecurityContext: {}
+  # -- Sets security context (at container level). Can be configured also with `global.containerSecurityContext`
+  containerSecurityContext: {}
+
+  # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
+  dnsConfig: {}
+
+  # Settings controlling RBAC objects creation.
+  rbac:
+    # -- Whether the chart should automatically create the RBAC objects required to run.
+    create: true
+
+  # -- Sets pod/node affinities. Can be configured also with `global.affinity`
+  affinity: {}
+  # -- Sets pod's node selector. Can be configured also with `global.nodeSelector`
+  nodeSelector: {}
+  # -- Sets pod's tolerations to node taints. Can be configured also with `global.tolerations`
+  tolerations: []
+
+  # -- TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes`
+  customAttributes: {}
+
+  # -- TODO: Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy`
+  proxy: ""
+
+  # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+  # When enabled, in case `authSecret.create` is set to `true`, OpAMP `endpoint` and auth `token_url` need to be updated.
+  # @default -- `false`
+  nrStaging:  # TODO: Update OpAMP `endpoint` and auth `token_url` for staging and Europe when nrStaging is enabled.
+
+  fedramp:
+    # -- (bool) TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
+    # @default -- `false`
+    enabled:
+
+  # -- (bool) TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+  # @default -- `false`
+  verboseLog:
+
+  # -- Enable the cleanup of super-agent managed resources when the chart is uninstalled.
+  # If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled.
+  cleanupManagedResources: true
+
+  # -- Settings controlling authentication secret creation.
+  # If `create` is true, a Kubernetes secret will be created containing a key named `auth_key`.
+  # This secret will be mounted in the deployment pod at the path `/etc/newrelic-super-agent/auth_key`
+  # for authentication purposes.
+  authSecret:
+    create: false
+    # -- The name of the Kubernetes secret to use or create.
+    # name: auth-secret
+    # -- Data to include in the secret. The key should be an RSA256 value.
+    # data:
+    #   auth_key: ""
+
+  config:
+    # -- Configuration for the Super Agent.
+    # @default -- See `values.yaml`
+    superAgent:
+      # -- Set if the configMap is going to be created by this chart or the user will provide its own.
+      create: true
+      # -- Here you can set New Relic' Super Agent configuration.
+      # @default -- See `values.yaml` for examples
+      content:
+        agents:
+          open-telemetry:
+            agent_type: newrelic/io.opentelemetry.collector:0.2.0
+
+        # opamp:
+        #   # TODO The endpoint should be set automatically based on the licenseKey and on the nrStaging option if opamp.enable=true
+        #   endpoint: https://opamp.service.newrelic.com/v1/opamp
+        #   headers:
+        #     # TODO this value should be automatically injected
+        #     api-key: LICENSE_KEY
+
+        #  # -- Note: To use the authentication configuration, ensure authSecret is configured.
+        #   auth_config:
+        #     token_url: "http://fake.com/oauth2/v1/token"
+        #     client_id: "fake"
+
+        # -- This option enables a status server that can be useful for troubleshooting.
+        # -- Port-forward it `$ kubectl port-forward pod/{pod-name} 51200:51200`
+        # -- And query it as `$ curl localhost:51200/status`
+        server:
+          enabled: true
+        #   port: 51200
+
+
+    # -- Values that the fleet is going to have in the deployment.
+    # @default -- See `values.yaml` for examples
+    subAgents:
+      # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
+      # find the configuration needed for the subagent.
+      #
+      open-telemetry:
+        content:
+          # chart_version: "0.4.0"
+          chart_values:
+            # TODO the following values are set twice in the config, we have to add some logic to improve UX either in the chart or in the agentType
+            # cluster: ""
+            # licenseKey: ""
+            # customSecretName: ""
+            # customSecretLicenseKey: ""
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`

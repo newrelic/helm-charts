@@ -13,7 +13,7 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
-  - it: super agent's config always include cluster_name and namespace
+  - it: super agent's config always include cluster_name, namespace and defaults
     set:
       cluster: my-cluster
       config:
@@ -22,9 +22,14 @@ tests:
       - equal:
           path: data["local_config"]
           value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
             k8s:
               cluster_name: my-cluster
               namespace: my-namespace
+            server:
+              enabled: true
   - it: super agent's config templates
     set:
       cluster: my-cluster
@@ -37,9 +42,14 @@ tests:
       - equal:
           path: data["local_config"]
           value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
             k8s:
               cluster_name: my-cluster
               namespace: my-namespace
+            server:
+              enabled: true
             test: value
             test2: value2
   - it: cluster_name and namespace from config have precedence
@@ -57,8 +67,13 @@ tests:
       - equal:
           path: data["local_config"]
           value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
             k8s:
               cluster_name: config-cluster
               namespace: config-namespace
+            server:
+              enabled: true
             test: value
             test2: value2
