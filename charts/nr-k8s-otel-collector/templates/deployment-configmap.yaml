@@ -13,8 +13,7 @@ data:
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
-
-      prometheus:
+      prometheus/ksm:
         config:
           scrape_configs: 
             - job_name: kube-state-metrics
@@ -29,6 +28,10 @@ data:
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
+
+      prometheus:
+        config:
+          scrape_configs:
             - job_name: apiserver
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
@@ -266,6 +269,52 @@ data:
               enabled: false
     
     processors:
+      groupbyattrs:
+        keys:
+          - pod
+          - daemonset
+          - replicaset
+          - statefulset
+          - deployment
+          - cronjob
+          - configmap
+          - job
+          - job_name
+          - horizontalpodautoscaler
+          - persistentvolume
+          - persistentvolumeclaim
+          - endpoint
+          - mutatingwebhookconfiguration
+          - validatingwebhookconfiguration
+          - lease
+          - storageclass
+          - secret
+          - service
+          - resourcequota
+          - node
+          - namespace
+          - container
+
+      transform/ksm:
+        metric_statements:
+          - context: resource
+            statements:
+              - delete_key(attributes, "k8s.pod.name")
+              - delete_key(attributes, "k8s.pod.uid")
+              - delete_key(attributes, "k8s.container.name")
+              - delete_key(attributes, "k8s.namespace.name")
+              - delete_key(attributes, "k8s.node.name")
+              - delete_key(attributes, "k8s.replicaset.name")
+              - set(attributes["k8s.pod.name"], attributes["pod"])
+              - set(attributes["k8s.daemonset.name"], attributes["daemonset"])
+              - set(attributes["k8s.replicaset.name"], attributes["replicaset"])
+              - set(attributes["k8s.statefulset.name"], attributes["statefulset"])
+              - set(attributes["k8s.deployment.name"], attributes["deployment"])
+              - set(attributes["k8s.node.name"], attributes["node"])
+              - set(attributes["k8s.namespace.name"], attributes["namespace"])
+              - set(attributes["k8s.container.name"], attributes["container"])
+              - set(attributes["k8s.uid.uid"], attributes["po"])
+
       metricstransform/k8s_cluster_info:
         transforms:
           - include: k8s.node.condition_ready 
@@ -386,7 +435,7 @@ data:
           - key: k8s.namespace.name
             action: upsert
             from_attribute: namespace
-
+      
       batch:
 
     exporters:
@@ -401,6 +450,22 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
+        metrics/ksm:
+          receivers:
+            - prometheus/ksm
+          processors:
+            - metricstransform/kube_pod_status_phase
+            - filter/exclude_zero_value_kube_node_status_condition
+            - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
+            - filter/exclude_zero_value_kube_pod_status_phase
+            - filter/exclude_zero_value_kube_pod_container_status
+            - resource/metrics
+            - batch
+            - groupbyattrs
+            - transform/ksm
+          exporters:
+            - otlphttp/newrelic
+            # - debug
         {{- if or .Values.receivers.prometheus.enabled .Values.receivers.k8sCluster.enabled }}
         metrics:
           receivers:
@@ -412,11 +477,6 @@ data:
             {{- end }}
           processors:
             - metricstransform/k8s_cluster_info
-            - metricstransform/kube_pod_status_phase
-            - filter/exclude_zero_value_kube_node_status_condition
-            - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
-            - filter/exclude_zero_value_kube_pod_status_phase
-            - filter/exclude_zero_value_kube_pod_container_status
             - resource/metrics
             - k8sattributes
             - attributes/self
