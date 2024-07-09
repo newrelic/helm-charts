@@ -17,13 +17,13 @@ sources:
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 5.0.84
+version: 5.0.85
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.34.0
+    version: 3.34.1
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -38,7 +38,7 @@ dependencies:
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.20.0
+    version: 4.20.1
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -53,7 +53,7 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 3.10.0
+    version: 3.10.1
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
@@ -68,7 +68,7 @@ dependencies:
   - name: k8s-agents-operator
     repository: https://newrelic.github.io/k8s-agents-operator
     condition: k8s-agents-operator.enabled
-    version: 0.9.0
+    version: 0.10.0
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
   # olm_crd.yaml and px.dev_viziers.yaml in
