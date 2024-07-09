@@ -33,6 +33,9 @@ spec:
             - |
               set -o pipefail
 
+              # We want to avoid having the SA recreating some of the resources we are deleting running this job
+              kubectl scale deployment --replicas=0 {{ include "newrelic.common.naming.fullname" . }}  -n {{ $.Release.Namespace }} --timeout=60s
+
               # Delete the standard resources (configmaps) managed by the super-agent
               kubectl delete configmaps -n {{ .Release.Namespace }} -l {{ $saResourcesLabelSelector }}
 
