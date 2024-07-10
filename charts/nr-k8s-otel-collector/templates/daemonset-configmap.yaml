@@ -395,6 +395,11 @@ data:
           - key: service_name
             action: delete
 
+      resource/low_data_mode_incinerator:
+        attributes:
+          - key: "description"
+            action: delete
+
       k8sattributes:
         auth_type: "serviceAccount"
         passthrough: false
@@ -488,6 +493,9 @@ data:
             - filter/exclude_network
             - attributes/exclude_system_paging
             - resource
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - resource/low_data_mode_incinerator
+            {{- end }}
             - k8sattributes
             - attributes/self
             - memory_limiter
@@ -499,7 +507,14 @@ data:
         logs:
           receivers:
             - filelog
-          processors: [transform/truncate, resource, k8sattributes, batch]
+          processors:
+            - transform/truncate
+            - resource
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - resource/low_data_mode_incinerator
+            {{- end }}
+            - k8sattributes
+            - batch
           exporters:
             - otlphttp/newrelic
         {{- end }}

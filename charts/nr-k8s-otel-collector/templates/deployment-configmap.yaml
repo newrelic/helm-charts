@@ -375,6 +375,12 @@ data:
             action: upsert
             value: 'true'
 
+      resource/low_data_mode_incinerator:
+        attributes:
+          - key: "description"
+            action: delete
+
+
       k8sattributes:
         auth_type: "serviceAccount"
         passthrough: false
@@ -451,6 +457,9 @@ data:
             - filter/exclude_zero_value_kube_pod_status_phase
             - filter/exclude_zero_value_kube_pod_container_status
             - resource/metrics
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - resource/low_data_mode_incinerator
+            {{- end }}
             - k8sattributes
             - attributes/self
             - memory_limiter
@@ -468,7 +477,12 @@ data:
         logs/events:
           receivers:
             - k8s_events
-          processors: [resource/events, batch]
+          processors:
+            - resource/events
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - resource/low_data_mode_incinerator
+            {{- end }}
+            - batch
           exporters:
             - otlphttp/newrelic
         {{- end }}
