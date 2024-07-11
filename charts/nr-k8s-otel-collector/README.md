@@ -115,12 +115,12 @@ daemonset:
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
-| receivers.hostmetrics.scrapeInterval | string | `20s` | Sets the scrape interval for the `hostmetrics` receiver |
+| receivers.hostmetrics.scrapeInterval | string | `15s` | Sets the scrape interval for the `hostmetrics` receiver |
 | receivers.k8sEvents.enabled | bool | `true` | Specifies whether the `k8s_events` receiver is enabled |
 | receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
-| receivers.kubeletstats.scrapeInterval | string | `20s` | Sets the scrape interval for the `kubeletstats` receiver |
+| receivers.kubeletstats.scrapeInterval | string | `15s` | Sets the scrape interval for the `kubeletstats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
-| receivers.prometheus.scrapeInterval | string | `20s` | Sets the scrape interval for the `prometheus` receiver |
+| receivers.prometheus.scrapeInterval | string | `15s` | Sets the scrape interval for the `prometheus` receiver |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |

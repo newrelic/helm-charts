@@ -430,6 +430,15 @@ data:
             statements:
               - set(description, " ")
 
+      resource/low_data_mode_trash_compactor:
+        attributes:
+          - key: http.scheme
+            action: delete
+          - key: net.host.name
+            action: delete
+          - key: net.host.port
+            action: delete
+
       k8sattributes:
         auth_type: "serviceAccount"
         passthrough: false
@@ -501,6 +510,7 @@ data:
             - metricstransform/ksm
             - filter/exclude_metrics_low_data_mode
             - transform/low_data_mode_incinerator
+            - resource/low_data_mode_trash_compactor
             {{- end }}
             - resource/metrics
             - batch
@@ -521,6 +531,7 @@ data:
             - metricstransform/apiserver
             - filter/exclude_metrics_low_data_mode
             - transform/low_data_mode_incinerator
+            - resource/low_data_mode_trash_compactor
             {{- end }}
             - resource/metrics
             - k8sattributes

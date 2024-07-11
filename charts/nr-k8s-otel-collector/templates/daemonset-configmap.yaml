@@ -401,6 +401,15 @@ data:
             statements:
               - set(description, " ")
 
+      resource/low_data_mode_trash_compactor:
+        attributes:
+          - key: http.scheme
+            action: delete
+          - key: net.host.name
+            action: delete
+          - key: net.host.port
+            action: delete
+
       k8sattributes:
         auth_type: "serviceAccount"
         passthrough: false
@@ -496,6 +505,7 @@ data:
             - resource
             {{- if include "newrelic.common.lowDataMode" . }}
             - transform/low_data_mode_incinerator
+            - resource/low_data_mode_trash_compactor
             {{- end }}
             - k8sattributes
             - attributes/self
