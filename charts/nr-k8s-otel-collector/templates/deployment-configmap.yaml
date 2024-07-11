@@ -424,11 +424,11 @@ data:
             action: upsert
             value: 'true'
 
-      resource/low_data_mode_incinerator:
-        attributes:
-          - key: "description"
-            action: delete
-
+      transform/low_data_mode_incinerator:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(description, " ")
 
       k8sattributes:
         auth_type: "serviceAccount"
@@ -500,7 +500,7 @@ data:
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
             - filter/exclude_metrics_low_data_mode
-            - resource/low_data_mode_incinerator
+            - transform/low_data_mode_incinerator
             {{- end }}
             - resource/metrics
             - batch
@@ -520,7 +520,7 @@ data:
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/apiserver
             - filter/exclude_metrics_low_data_mode
-            - resource/low_data_mode_incinerator
+            - transform/low_data_mode_incinerator
             {{- end }}
             - resource/metrics
             - k8sattributes
@@ -542,9 +542,6 @@ data:
             - k8s_events
           processors:
             - resource/events
-            {{- if include "newrelic.common.lowDataMode" . }}
-            - resource/low_data_mode_incinerator
-            {{- end }}
             - batch
           exporters:
             - otlphttp/newrelic
