@@ -58,6 +58,9 @@ spec:
           image: "{{ include "newrelic.common.images.image" ( dict "imageRoot" $.Values.image "context" $) | replace "\"" ""}}-{{ .imageTagSuffix }}"
           imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
           securityContext: {}
+          {{- if $.Values.hostNetwork }}
+          hostNetwork: {{ $.Values.hostNetwork }}
+          {{- end }}
           env:
             - name: ENDPOINT
               value: {{ include "newrelic-logging.logsEndpoint" $ | quote }}
