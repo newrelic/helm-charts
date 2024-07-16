@@ -28,9 +28,9 @@ spec:
         release: {{.Release.Name }}
         kubernetes.io/os: linux
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
-        {{- if .Values.podLabels}}
-        {{ toYaml .Values.podLabels }}
-        {{- end }}
+{{- if .Values.podLabels}}
+{{ toYaml .Values.podLabels | indent 8 }}
+{{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       {{- with include "newrelic.common.dnsConfig" . }}

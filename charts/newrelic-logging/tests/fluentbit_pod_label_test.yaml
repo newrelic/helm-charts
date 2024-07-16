@@ -1,0 +1,43 @@
+suite: test fluent-bit pods labels
+templates:
+  - templates/daemonset.yaml
+  - templates/configmap.yaml
+  - templates/persistentvolume.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+- it: pod labels are correct
+  templates:
+    - templates/daemonset.yaml
+  set:
+    podLabels:
+      key1: value1
+      key2: value2
+  asserts:
+    - equal:
+        - spec.template.metadata.labels.key1
+        - value1
+    - equal:
+        - spec.template.metadata.labels.key2
+        - value2
+- it: pod labels are not set
+  templates:
+    - templates/daemonset.yaml
+  asserts:
+    - notExists:
+        - spec.template.metadata.labels.key1
+    - notExists:
+        - spec.template.metadata.labels.key2
+- it: pod labels are correctly indented
+  set:
+    podLabels:
+      customLabel1: customValue1
+      customLabel2: customValue2
+  asserts:
+    - matchSnippet:
+        path: spec.template.metadata.labels
+        snippet: |
+          customLabel1: customValue1
+          customLabel2: customValue2
+        indent: 8
