@@ -16,11 +16,13 @@ tests:
       key2: value2
   asserts:
     - equal:
-        - spec.template.metadata.labels.key1
-        - value1
+        path: spec.template.metadata.labels.key1
+        value: value1
+      template: templates/daemonset.yaml
     - equal:
-        - spec.template.metadata.labels.key2
-        - value2
+        path: spec.template.metadata.labels.key2
+        value: value2
+      template: templates/daemonset.yaml
 - it: single pod label set properly
   templates:
     - templates/daemonset.yaml
@@ -29,13 +31,14 @@ tests:
       key1: value1       
   asserts:
     - equal:
-        - spec.template.metadata.labels.key1
-        - value1
+        path: spec.template.metadata.labels.key1
+        value: value1
+      template: templates/daemonset.yaml
 - it: pod labels are not set
   templates:
     - templates/daemonset.yaml
   asserts:
     - notExists:
-        - spec.template.metadata.labels.key1
+        path: spec.template.metadata.labels.key1
     - notExists:
-        - spec.template.metadata.labels.key2        
+        path: spec.template.metadata.labels.key2
