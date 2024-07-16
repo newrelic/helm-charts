@@ -368,6 +368,11 @@ metrics:
   datapoint:
 - metric.name == "kube_pod_container_status" and value_double == 0.0
 
+  resourcedetection/cloudproviders:
+detectors: [env, gcp, eks, azure, aks, ec2, ecs]
+timeout: 2s
+override: false
+
   resource/metrics:
 attributes:
   - key: host.id
@@ -461,6 +466,7 @@ metrics/ksm:
 - filter/exclude_zero_value_kube_pod_status_phase
 - filter/exclude_zero_value_kube_pod_container_status
 - resource/metrics
+- resourcedetection/cloudproviders
 - batch
 - groupbyattrs
 - transform/ksm

@@ -273,6 +273,11 @@ actions:
   - key: type
 action: delete
 
+  resourcedetection/cloudproviders:
+detectors: [env, gcp, eks, azure, aks, ec2, ecs]
+timeout: 2s
+override: false
+
   resource:
 attributes:
   - key: host.id
@@ -367,6 +372,7 @@ metrics:
 - filter/exclude_system_paging
 - filter/exclude_network
 - attributes/exclude_system_paging
+- resourcedetection/cloudproviders
 - resource
 - k8sattributes
 - attributes/self
