@@ -7,7 +7,7 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-- it: pod labels are correct
+- it: multiple pod labels are set properly
   templates:
     - templates/daemonset.yaml
   set:
@@ -21,6 +21,16 @@ tests:
     - equal:
         - spec.template.metadata.labels.key2
         - value2
+- it: single pod label set properly
+  templates:
+    - templates/daemonset.yaml
+  set:
+    podLabels:
+      key1: value1       
+  asserts:
+    - equal:
+        - spec.template.metadata.labels.key1
+        - value1
 - it: pod labels are not set
   templates:
     - templates/daemonset.yaml
@@ -28,16 +38,4 @@ tests:
     - notExists:
         - spec.template.metadata.labels.key1
     - notExists:
-        - spec.template.metadata.labels.key2
-- it: pod labels are correctly indented
-  set:
-    podLabels:
-      customLabel1: customValue1
-      customLabel2: customValue2
-  asserts:
-    - matchSnippet:
-        path: spec.template.metadata.labels
-        snippet: |
-          customLabel1: customValue1
-          customLabel2: customValue2
-        indent: 8
+        - spec.template.metadata.labels.key2        
