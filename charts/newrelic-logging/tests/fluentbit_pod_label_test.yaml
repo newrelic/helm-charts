@@ -11,6 +11,7 @@ tests:
   templates:
     - templates/daemonset.yaml
   set:
+    licenseKey: nr_license_key
     podLabels:
       key1: value1
       key2: value2
@@ -27,6 +28,7 @@ tests:
   templates:
     - templates/daemonset.yaml
   set:
+    licenseKey: nr_license_key
     podLabels:
       key1: value1       
   asserts:
@@ -37,6 +39,8 @@ tests:
 - it: pod labels are not set
   templates:
     - templates/daemonset.yaml
+  set:
+    licenseKey: nr_license_key  
   asserts:
     - notExists:
         path: spec.template.metadata.labels.key1
