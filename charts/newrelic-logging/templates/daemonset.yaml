@@ -29,7 +29,7 @@ spec:
         kubernetes.io/os: linux
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
         {{- if .Values.podLabels}}
-        {{ toYaml .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
@@ -108,7 +108,7 @@ spec:
             - name: K8S_BUFFER_SIZE
               value: {{ .Values.fluentBit.k8sBufferSize | quote }}
             - name: K8S_LOGGING_EXCLUDE
-              value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
+              value: {{ .Values.fluentBit.k8sLoggingExclude | default "false" | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
             - name: RETRY_LIMIT
