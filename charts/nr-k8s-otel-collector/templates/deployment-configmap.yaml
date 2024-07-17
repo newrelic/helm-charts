@@ -424,13 +424,14 @@ data:
             action: upsert
             value: 'true'
 
-      transform/low_data_mode_incinerator:
+      transform/low_data_mode_inator:
         metric_statements:
           - context: metric
             statements:
-              - set(description, " ")
+              - set(description, "")
+              - set(unit, "")
 
-      resource/low_data_mode_trash_compactor:
+      resource/low_data_mode_inator:
         attributes:
           - key: http.scheme
             action: delete
@@ -509,8 +510,8 @@ data:
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
             - filter/exclude_metrics_low_data_mode
-            - transform/low_data_mode_incinerator
-            - resource/low_data_mode_trash_compactor
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
             - batch
@@ -530,8 +531,8 @@ data:
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/apiserver
             - filter/exclude_metrics_low_data_mode
-            - transform/low_data_mode_incinerator
-            - resource/low_data_mode_trash_compactor
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
             - k8sattributes
