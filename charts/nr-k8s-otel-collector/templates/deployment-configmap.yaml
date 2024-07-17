@@ -122,152 +122,6 @@ target_label: service
 target_label: job_label
 replacement: scheduler
 
-  k8s_cluster:
-auth_type: serviceAccount
-node_conditions_to_report:
-  - Ready 
-collection_interval: {{ .Values.receivers.k8sCluster.scrapeInterval }}
-metrics: 
-  k8s.container.cpu_request: 
-enabled: false
-  k8s.container.cpu_limit:
-enabled: false
-  k8s.container.memory_request:
-enabled: false
-  k8s.container.memory_limit:
-enabled: false
-  k8s.container.storage_request:
-enabled: false
-  k8s.container.storage_limit:
-enabled: false
-  k8s.container.ephemeralstorage_request:
-enabled: false
-  k8s.container.ephemeralstorage_limit:
-enabled: false
-  k8s.container.restarts:
-enabled: false
-  k8s.container.ready:
-enabled: false
-  k8s.pod.phase:
-enabled: false
-  k8s.pod.status_reason:
-enabled: false
-  k8s.deployment.desired:
-enabled: false
-  k8s.deployment.available:
-enabled: false
-  k8s.cronjob.active_jobs:
-enabled: false
-  k8s.daemonset.current_scheduled_nodes:
-enabled: false
-  k8s.daemonset.desired_scheduled_nodes:
-enabled: false
-  k8s.daemonset.misscheduled_nodes:
-enabled: false
-  k8s.daemonset.ready_nodes:
-enabled: false
-  k8s.hpa.max_replicas:
-enabled: false
-  k8s.hpa.min_replicas:
-enabled: false
-  k8s.hpa.current_replicas:
-enabled: false
-  k8s.hpa.desired_replicas:
-enabled: false
-  k8s.job.active_pods:
-enabled: false
-  k8s.job.desired_successful_pods:
-enabled: false
-  k8s.job.failed_pods:
-enabled: false
-  k8s.job.max_parallel_pods:
-enabled: false
-  k8s.job.successful_pods:
-enabled: false
-  k8s.namespace.phase:
-enabled: false
-  k8s.replicaset.desired:
-enabled: false
-  k8s.replicaset.available:
-enabled: false
-  k8s.replication_controller.desired:
-enabled: false
-  k8s.replication_controller.available:
-enabled: false
-  k8s.resource_quota.hard_limit:
-enabled: false
-  k8s.resource_quota.used:
-enabled: false
-  k8s.statefulset.desired_pods:
-enabled: false
-  k8s.statefulset.ready_pods:
-enabled: false
-  k8s.statefulset.current_pods:
-enabled: false
-  k8s.statefulset.updated_pods:
-enabled: false
-  k8s.node.condition:
-enabled: false
-resource_attributes:
-k8s.namespace.uid:
-  enabled: false
-k8s.namespace.name:
-  enabled: false
-k8s.node.uid:
-  enabled: false
-k8s.node.name:
-  enabled: false
-container.id:
-  enabled: false
-container.image.name:
-  enabled: false
-container.image.tag:
-  enabled: false
-k8s.container.name:
-  enabled: false
-k8s.pod.name:
-  enabled: false
-k8s.pod.uid:
-  enabled: false
-k8s.pod.qos_class:
-  enabled: false
-k8s.replicaset.name:
-  enabled: false
-k8s.replicaset.uid:
-  enabled: false
-k8s.replicationcontroller.name:
-  enabled: false
-k8s.replicationcontroller.uid:
-  enabled: false
-k8s.resourcequota.uid:
-  enabled: false
-k8s.resourcequota.name:
-  enabled: false
-k8s.statefulset.uid:
-  enabled: false
-k8s.statefulset.name:
-  enabled: false
-k8s.deployment.uid:
-  enabled: false
-k8s.deployment.name:
-  enabled: false
-k8s.cronjob.uid:
-  enabled: false
-k8s.cronjob.name:
-  enabled: false
-k8s.daemonset.name:
-  enabled: false
-k8s.daemonset.uid:
-  enabled: false
-k8s.hpa.uid:
-  enabled: false
-k8s.hpa.name:
-  enabled: false
-k8s.job.name:
-  enabled: false
-k8s.job.uid:
-  enabled: false
-
 processors:
   groupbyattrs:
 keys:
@@ -317,7 +171,7 @@ statements:
 
   metricstransform/k8s_cluster_info:
 transforms:
-  - include: k8s.node.condition_ready 
+  - include: kubernetes_build_info
 action: update
 new_name: k8s.cluster.info 
 
@@ -347,6 +201,173 @@ operations:
 - action: add_label
   new_label: container_phase
   new_value: terminated 
+
+  metricstransform/ldm:
+transforms:
+  - include: .*
+match_type: regexp
+action: update
+operations:
+- action: add_label
+  new_label: low.data.mode
+  new_value: 'false'
+  
+  metricstransform/k8s_cluster_info_ldm:
+transforms:
+  - include: k8s.cluster.info
+action: update
+operations: 
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+
+  metricstransform/ksm:
+transforms:
+  - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_daemonset_(created|status_(current_number_scheduled|desired_number_scheduled|updated_number_scheduled)|status_number_(available|misscheduled|ready|unavailable))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_horizontalpodautoscaler_(spec_(max_replicas|min_replicas)|status_(condition|current_replicas|desired_replicas))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_job_(complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_node_status_(allocatable|condition)
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_persistentvolume_(capacity_bytes|created|info|status_phase)
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase)
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_pod_container_(resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_pod_(created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  
+  metricstransform/apiserver:
+transforms:
+  - include: apiserver_storage_objects
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: go_(goroutines|threads)
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: process_resident_memory_bytes
+action: update
+match_type: regexp
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+  - value: 'false'
+new_value: 'true'
+
+  filter/exclude_metrics_low_data_mode:
+metrics:
+  metric:
+- 'HasAttrOnDatapoint("low.data.mode", "false")'
 
   filter/exclude_zero_value_kube_node_status_condition:
 metrics:
@@ -408,6 +429,22 @@ value: {{ include "newrelic.common.cluster" . }}
 action: upsert
 value: 'true'
 
+  transform/low_data_mode_inator:
+metric_statements:
+  - context: metric
+statements:
+  - set(description, "")
+  - set(unit, "")
+
+  resource/low_data_mode_inator:
+attributes:
+  - key: http.scheme
+action: delete
+  - key: net.host.name
+action: delete
+  - key: net.host.port
+action: delete
+
   k8sattributes:
 auth_type: "serviceAccount"
 passthrough: false
@@ -441,7 +478,15 @@ from_attribute: node
 action: upsert
 from_attribute: namespace
 
+  memory_limiter:
+ check_interval: 1s
+ limit_percentage: 80
+ spike_limit_percentage: 25
+
   batch:
+send_batch_max_size: 1000
+timeout: 30s
+send_batch_size : 800
 
 exporters:
   otlphttp/newrelic:
@@ -465,6 +510,14 @@ metrics/ksm:
 - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
 - filter/exclude_zero_value_kube_pod_status_phase
 - filter/exclude_zero_value_kube_pod_container_status
+{{- if include "newrelic.common.lowDataMode" . }}
+- metricstransform/ldm
+- metricstransform/k8s_cluster_info_ldm
+- metricstransform/ksm
+- filter/exclude_metrics_low_data_mode
+- transform/low_data_mode_inator
+- resource/low_data_mode_inator
+{{- end }}
 - resource/metrics
 - resourcedetection/cloudproviders
 - batch
@@ -473,20 +526,24 @@ metrics/ksm:
   exporters:
 - otlphttp/newrelic
 {{- end }}
-{{- if or .Values.receivers.prometheus.enabled .Values.receivers.k8sCluster.enabled }}
+{{- if .Values.receivers.prometheus.enabled }}
 metrics:
   receivers:
-{{- if .Values.receivers.prometheus.enabled }}
 - prometheus
-{{- end }}
-{{- if .Values.receivers.k8sCluster.enabled }}
-- k8s_cluster
-{{- end }}
   processors:
 - metricstransform/k8s_cluster_info
+{{- if include "newrelic.common.lowDataMode" . }}
+- metricstransform/ldm
+- metricstransform/k8s_cluster_info_ldm
+- metricstransform/apiserver
+- filter/exclude_metrics_low_data_mode
+- transform/low_data_mode_inator
+- resource/low_data_mode_inator
+{{- end }}
 - resource/metrics
 - k8sattributes
 - attributes/self
+- memory_limiter
 - batch
   exporters:
 - otlphttp/newrelic
@@ -501,7 +558,9 @@ metrics:
 logs/events:
   receivers:
 - k8s_events
-  processors: [resource/events, batch]
+  processors:
+- resource/events
+- batch
   exporters:
 - otlphttp/newrelic
 {{- end }}

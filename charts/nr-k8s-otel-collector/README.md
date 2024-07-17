@@ -105,6 +105,7 @@ privileged: false
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
+| lowDataMode | bool | `false` | Send only the metrics required to light up the NR kubernetes UI |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podLabels | object | `{}` | Additional labels for chart pods |
@@ -114,14 +115,12 @@ privileged: false
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
-| receivers.hostmetrics.scrapeInterval | string | `20s` | Sets the scrape interval for the `hostmetrics` receiver |
-| receivers.k8sCluster.enabled | bool | `true` | Specifies whether the `k8s_cluster` receiver is enabled |
-| receivers.k8sCluster.scrapeInterval | string | `20s` | Sets the scrape interval for the `k8s_cluster` receiver |
+| receivers.hostmetrics.scrapeInterval | string | `1m` | Sets the scrape interval for the `hostmetrics` receiver |
 | receivers.k8sEvents.enabled | bool | `true` | Specifies whether the `k8s_events` receiver is enabled |
 | receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
-| receivers.kubeletstats.scrapeInterval | string | `20s` | Sets the scrape interval for the `kubeletstats` receiver |
+| receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubeletstats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
-| receivers.prometheus.scrapeInterval | string | `20s` | Sets the scrape interval for the `prometheus` receiver |
+| receivers.prometheus.scrapeInterval | string | `1m` | Sets the scrape interval for the `prometheus` receiver |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |

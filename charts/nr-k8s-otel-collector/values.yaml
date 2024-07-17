@@ -117,15 +117,8 @@ receivers:
 # @default -- `true`
 enabled: true
 # -- Sets the scrape interval for the `prometheus` receiver
-# @default -- `20s`
-scrapeInterval: 20s
-  k8sCluster:
-# -- (bool) Specifies whether the `k8s_cluster` receiver is enabled
-# @default -- `true`
-enabled: true
-# -- Sets the scrape interval for the `k8s_cluster` receiver
-# @default -- `20s`
-scrapeInterval: 20s
+# @default -- `1m`
+scrapeInterval: 1m
   k8sEvents:
 # -- (bool) Specifies whether the `k8s_events` receiver is enabled
 # @default -- `true`
@@ -135,16 +128,20 @@ enabled: true
 # @default -- `true`
 enabled: true
 # -- Sets the scrape interval for the `hostmetrics` receiver
-# @default -- `20s`
-scrapeInterval: 20s
+# @default -- `1m`
+scrapeInterval: 1m
   kubeletstats:
 # -- (bool) Specifies whether the `kubeletstats` receiver is enabled
 # @default -- `true`
 enabled: true
 # -- Sets the scrape interval for the `kubeletstats` receiver
-# @default -- `20s`
-scrapeInterval: 20s
+# @default -- `1m`
+scrapeInterval: 1m
   filelog:
 # -- (bool) Specifies whether the `filelog` receiver is enabled
 # @default -- `true`
 enabled: true
+
+# -- (bool) Send only the metrics required to light up the NR kubernetes UI
+# @default -- `false`
+lowDataMode:
