@@ -389,10 +389,23 @@ data:
           datapoint:
             - metric.name == "kube_pod_container_status" and value_double == 0.0
 
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+              enabled: true
+
       resourcedetection/cloudproviders:
-        detectors: [env, gcp, eks, azure, aks, ec2, ecs]
+        detectors: [gcp, eks, azure, aks, ec2, ecs]
         timeout: 2s
         override: false
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
 
       resource/metrics:
         attributes:
@@ -519,6 +532,7 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
+            - resourcedetection/env
             - resourcedetection/cloudproviders
             - batch
             - groupbyattrs
