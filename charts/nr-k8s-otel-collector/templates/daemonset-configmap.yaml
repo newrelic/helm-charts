@@ -443,8 +443,9 @@ data:
           - key: type
             action: delete
 
-      resourcedetection:
+      resourcedetection/env:
         detectors: ["env", "system"]
+        override: false
         system:
           hostname_sources: ["os"]
           resource_attributes:
@@ -587,6 +588,7 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
+            - resourcedetection/env
             - resourcedetection/cloudproviders
             - resource
             {{- if include "newrelic.common.lowDataMode" . }}
