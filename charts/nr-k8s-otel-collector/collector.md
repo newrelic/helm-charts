@@ -367,7 +367,7 @@ We upsert various attributes to every metric reported by otel to support various
             action: delete
 ```
 
-The k8s attribute processor is probaby already used if you are using opentelemetry to monitor your kubernetes cluster; it works to decorate the metrics with various kubernetes related metadata to support querying and clarity in understanding where the metrics come from. 
+The k8s attribute processor is probably already used if you are using opentelemetry to monitor your kubernetes cluster; it works to decorate the metrics with various kubernetes related metadata to support querying and clarity in understanding where the metrics come from. 
 ```
     k8sattributes:
         auth_type: "serviceAccount"
