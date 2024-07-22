@@ -6,7 +6,7 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 # Helm installation
 
-Download and Update config [here](https://github.com/newrelic/helm-charts/tree/master/charts/ebpf-agent/values.yaml#L1-L4) to add a cluster name, and New Relic Ingest - License key
+Download and Update config [here](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent/values.yaml#L1-L4) to add a cluster name, and New Relic Ingest - License key
 
 Example:
 ```
