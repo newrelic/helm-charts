@@ -1,6 +1,6 @@
 [![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
 
-# ebpf-agent
+# nr-ebpf-agent
 
 A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 

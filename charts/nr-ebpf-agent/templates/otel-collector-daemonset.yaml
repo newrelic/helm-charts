@@ -44,7 +44,7 @@ spec:
           - name: CLUSTER_NAME
             valueFrom:
               configMapKeyRef:
-                name: {{ include "ebpf-agent.fullname" . }}-config
+                name: {{ include "nr-ebpf-agent.fullname" . }}-config
                 key: clusterName
         ports:
         - containerPort: 4317
@@ -55,12 +55,12 @@ spec:
             readOnly: true
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
-      serviceAccountName: {{ include "ebpf-agent.fullname" . }}-collector
+      serviceAccountName: {{ include "nr-ebpf-agent.fullname" . }}-collector
       terminationGracePeriodSeconds: 30
       volumes:
       - name: data
         configMap:
-          name: {{ include "ebpf-agent.fullname" . }}-config
+          name: {{ include "nr-ebpf-agent.fullname" . }}-config
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 -}}
