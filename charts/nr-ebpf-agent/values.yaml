@@ -1,0 +1,64 @@
+# -- Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster`
+cluster: ""
+# -- The license key to use. Can be configured with `global.licenseKey`
+licenseKey: ""
+# Endpoint to export data to.
+nrStaging: false
+# The primary lever to control RAM use of the eBPF agent. Specified in MiB.
+tableStoreDataLimitMB: "250"
+# The source connectors (and data export scripts) to enable.
+stirlingSources: "socket_tracer,tcp_stats,jvm_stats"
+
+# Configuration to apply on the eBPF agent daemonset.
+ebpfAgent:
+  image:
+    repository: us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-agent
+    pullPolicy: IfNotPresent
+    tag: 0.0.1
+  resources:
+    limits:
+      memory: 2Gi
+    requests:
+      cpu: 100m
+      memory: 250Mi
+
+# Configuration to apply on the eBPF client daemonset.
+ebpfClient:
+  image:
+    repository: us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-client
+    pullPolicy: IfNotPresent
+    tag: 0.0.1
+  resources:
+    limits:
+      memory: 100Mi
+    requests:
+      cpu: 50m
+      memory: 50Mi
+
+# Configuration to apply on the OpenTelemetry collector daemonset.
+otelCollector:
+  image:
+    repository: us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/nr-ebpf-otel-collector
+    pullPolicy: IfNotPresent
+    tag: 0.0.1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 200Mi
+    requests:
+      cpu: 100m
+      memory: 200Mi
+  collector:
+    serviceAccount:
+      annotations: {}
+
+# -- Additional labels for chart pods
+podLabels: {}
+# -- Additional labels for chart objects
+labels: {}
+# -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
+nodeSelector: {}
+# -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
+tolerations: []
+# -- Sets all pods' affinities. Can be configured also with `global.affinity`
+affinity: {}
