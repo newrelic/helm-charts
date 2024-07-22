@@ -7,6 +7,9 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   daemonset-config.yaml: |
+    {{- with .Values.daemonset.configMap.config }}
+    {{- toYaml . | nindent 4 }}
+    {{- else }}
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
@@ -533,3 +536,4 @@ data:
           exporters:
             - otlphttp/newrelic
         {{- end }}
+    {{- end }}
