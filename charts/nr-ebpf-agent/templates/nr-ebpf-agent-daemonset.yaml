@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nr-ebpf-agent
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: nr-ebpf-agent
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
+        env:
+          - name: PL_HOST_PATH
+            value: "/host"
+          - name: PL_STIRLING_SOURCES
+            value: "{{ .Values.stirlingSources }}"
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "cluster.local"
+          - name: PL_TABLE_STORE_DATA_LIMIT_MB
+            value: "{{ .Values.tableStoreDataLimitMB }}"
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: host-root-volume
+            mountPath: /host
+            readOnly: true
+          - name: sys-volume
+            mountPath: /sys
+            readOnly: true
+      - name: nr-ebpf-client
+        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
+        resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
+        env:
+          - name: DEPLOYMENT_NAME
+            value: {{ .Values.cluster }}
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: ENDPOINT
+            value: "$(HOST_IP):4317"
+          - name: PL_STIRLING_SOURCES
+            value: "{{ .Values.stirlingSources }}"
+          # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
+          - name: IS_INSECURE
+            value: "True"
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "cluster.local"
+        envFrom:
+        - secretRef:
+            name: nr-ebpf-agent-secrets
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      restartPolicy: Always
+      volumes:
+      - name: host-root-volume
+        hostPath:
+          path: /
+          type: Directory
+      - name: sys-volume
+        hostPath:
+          path: /sys
+          type: Directory
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- with include "newrelic.common.affinity" . }}
+      affinity:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- with include "newrelic.common.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 -}}
+      {{- end }}
