@@ -19,18 +19,18 @@ You can install this chart directly using this Helm repository:
 ```shell
 # Use Options 1-3 to easily deploy the helm chart.
 # Option 1:
-helm install ebpf-agent-chart \ 
+helm install nr-ebpf-agent \ 
   --set licenseKey=<License Key> \
   --set cluster=<Name of Kubernetes cluster> \
   --create-namespace --namespace newrelic \
   --generate-name
 
 # Option 2:
-helm install ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace ebpf-agent-chart
+helm install nr-ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace nr-ebpf-agent
 
 # Option 3:
 helm repo add newrelic https://helm-charts.newrelic.com
-helm upgrade ebpf-agent newrelic/ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace --install
+helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
 ## Confirm installation
