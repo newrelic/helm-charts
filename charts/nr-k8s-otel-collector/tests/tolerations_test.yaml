@@ -1,0 +1,182 @@
+suite: tolerations
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets tolerations to default when no values provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notExists:
+          path: spec.template.spec.tolerations
+        template: templates/deployment.yaml
+      - notExists:
+          path: spec.template.spec.tolerations
+        template: templates/daemonset.yaml
+  - it: sets tolerations from global by common-library
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      global:
+        tolerations:
+          - key: "globalKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "globalKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "globalKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/daemonset.yaml
+  - it: sets tolerations from values by common-library
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      tolerations:
+        - key: "topLevelKey"
+          operator: "Exists"
+          effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "topLevelKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "topLevelKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/daemonset.yaml
+  - it: sets tolerations from values by common-library overriding global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      tolerations:
+        - key: "topLevelKey"
+          operator: "Exists"
+          effect: "NoSchedule"
+      global:
+        tolerations:
+          - key: "globalKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "topLevelKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "topLevelKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/daemonset.yaml
+  - it: sets tolerations from deployment values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      deployment:
+        tolerations:
+          - key: "deploymentKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "deploymentKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/deployment.yaml
+  - it: sets tolerations from daemonset values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      daemonset:
+        tolerations:
+          - key: "daemonsetKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "daemonsetKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/daemonset.yaml
+  - it: sets tolerations from deployment values overriding top level and global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      deployment:
+        tolerations:
+          - key: "deploymentKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+      tolerations:
+        - key: "topLevelKey"
+          operator: "Exists"
+          effect: "NoSchedule"
+      global:
+        tolerations:
+          - key: "globalKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "deploymentKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/deployment.yaml
+  - it: sets tolerations from daemonset values overriding top level and global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      daemonset:
+        tolerations:
+          - key: "daemonsetKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+      tolerations:
+        - key: "topLevelKey"
+          operator: "Exists"
+          effect: "NoSchedule"
+      global:
+        tolerations:
+          - key: "globalKey"
+            operator: "Exists"
+            effect: "NoSchedule"
+    asserts:
+      - equal:
+          path: spec.template.spec.tolerations
+          value:
+            - key: "daemonsetKey"
+              operator: "Exists"
+              effect: "NoSchedule"
+        template: templates/daemonset.yaml

@@ -6,12 +6,14 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
-  otel-collector-config.yaml: |
+  daemonset-config.yaml: |
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
+        {{- if include "newrelic.common.privileged" . }}
         root_path: /hostfs
-        collection_interval: 20s
+        {{- end }}
+        collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
         scrapers:
           cpu:
             metrics:
@@ -59,17 +61,24 @@ data:
             mute_process_user_error: true
 
       kubeletstats:
-        collection_interval: 20s
-        auth_type: "serviceAccount"
+        collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
+        {{- if include "newrelic.common.privileged" . }}
         endpoint: "${KUBE_NODE_NAME}:10250"
+        auth_type: "serviceAccount"
         insecure_skip_verify: true
-        metrics: 
+        {{- else }}
+        endpoint: "${KUBE_NODE_NAME}:10255"
+        auth_type: "none"
+        {{- end }}
+        metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true 
+
       prometheus:
         config:
           scrape_configs:
             - job_name: cadvisor
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -81,12 +90,16 @@ data:
                   source_labels:
                     - __meta_kubernetes_node_name
                   target_label: __metrics_path__
+                - action: replace
+                  target_label: job_label
+                  replacement: cadvisor
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
             - job_name: kubelet
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -98,11 +111,15 @@ data:
                   source_labels:
                     - __meta_kubernetes_node_name
                   target_label: __metrics_path__
+                - action: replace
+                  target_label: job_label
+                  replacement: kubelet
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
+
       filelog:
         include:
           - /var/log/pods/*/*/*.log
@@ -188,12 +205,182 @@ data:
             to: resource["k8s.pod.uid"]
 
     processors:
+      metricstransform/ldm:
+        transforms:
+          - include: .*
+            match_type: regexp
+            action: update
+            operations:
+            - action: add_label
+              new_label: low.data.mode
+              new_value: 'false'
+
+      metricstransform/kubeletstats:
+        transforms:
+          - include: container\.(cpu\.utilization|filesystem\.(capacity|usage)|memory\.usage)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.node\.(cpu\.(time|utilization)|filesystem\.(capacity|usage)|memory\.(available|working_set))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.(working_set))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/cadvisor:
+        transforms:
+          - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_memory_working_set_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_network_(working_set_bytes|receive_(bytes_total|errors_total)|transmit_(bytes_total|errors_total))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_spec_memory_limit_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/kubelet:
+        transforms:
+          - include: go_(goroutines|threads)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: process_resident_memory_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/hostmetrics:
+        transforms:
+          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.disk\.(io_time|operation_time|operations)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.(filesystem|memory)\.(usage|utilization)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.network\.(errors|io|packets)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+
+      filter/exclude_metrics_low_data_mode:
+        metrics:
+          metric:
+            - 'HasAttrOnDatapoint("low.data.mode", "false")'
+
       transform/truncate:
         log_statements:
           - context: log
             statements:
               - truncate_all(attributes, 4095)
               - truncate_all(resource.attributes, 4095)
+
+      # group system.cpu metrics by cpu
+      metricstransform/hostmetrics_cpu:
+        transforms:
+          - include: system.cpu.utilization
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ state ]
+                aggregation_type: mean
+          - include: system.paging.operations
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ direction ]
+                aggregation_type: sum
 
       # following system.% metrics reduce metrics reported by hostmetrics receiver
       filter/exclude_cpu_utilization:
@@ -256,6 +443,24 @@ data:
           - key: type
             action: delete
 
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+              enabled: true
+
+      resourcedetection/cloudproviders:
+        detectors: [gcp, eks, azure, aks, ec2, ecs]
+        timeout: 2s
+        override: false
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
+
       resource:
         attributes:
           - key: host.id
@@ -271,6 +476,22 @@ data:
           - key: service.name
             action: delete
           - key: service_name
+            action: delete
+
+      transform/low_data_mode_inator:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(description, "")
+              - set(unit, "")
+
+      resource/low_data_mode_inator:
+        attributes:
+          - key: http.scheme
+            action: delete
+          - key: net.host.name
+            action: delete
+          - key: net.host.port
             action: delete
 
       k8sattributes:
@@ -306,7 +527,15 @@ data:
             action: upsert
             from_attribute: namespace
 
+      memory_limiter:
+         check_interval: 1s
+         limit_percentage: 80
+         spike_limit_percentage: 25
+
       batch:
+        send_batch_max_size: 1000
+        timeout: 30s
+        send_batch_size : 800
 
     exporters:
       otlphttp/newrelic:
@@ -329,17 +558,26 @@ data:
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
-            {{- if .Values.receivers.hostmetrics.enabled }}
+            {{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
             - hostmetrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
             - kubeletstats
             {{- end }}
-            {{- if .Values.receivers.prometheus.enabled }}
+            {{- if and .Values.receivers.prometheus.enabled (include "newrelic.common.privileged" .) }}
             - prometheus
             {{- end }}
           processors:
-            # - transform/truncate
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - metricstransform/ldm
+            - metricstransform/kubeletstats
+            - metricstransform/cadvisor
+            - metricstransform/kubelet
+            - metricstransform/hostmetrics
+            - filter/exclude_metrics_low_data_mode
+            {{- end }}
+            - metricstransform/hostmetrics_cpu
+            - transform/truncate
             - filter/exclude_cpu_utilization
             - filter/exclude_memory_utilization
             - filter/exclude_memory_usage
@@ -350,9 +588,16 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
+            - resourcedetection/env
+            - resourcedetection/cloudproviders
             - resource
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            {{- end }}
             - k8sattributes
             - attributes/self
+            - memory_limiter
             - batch
           exporters:
             - otlphttp/newrelic
@@ -361,7 +606,11 @@ data:
         logs:
           receivers:
             - filelog
-          processors: [transform/truncate, resource, k8sattributes, batch]
+          processors:
+            - transform/truncate
+            - resource
+            - k8sattributes
+            - batch
           exporters:
             - otlphttp/newrelic
         {{- end }}

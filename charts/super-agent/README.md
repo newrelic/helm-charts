@@ -2,8 +2,6 @@
 
 # super-agent
 
-![Version: 0.0.6-beta](https://img.shields.io/badge/Version-0.0.6--beta-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square)
-
 Bootstraps New Relic' Super Agent
 
 # Helm installation
@@ -47,20 +45,47 @@ As of the creation of the chart, it has no particularities and this section can 
 | flux2.rbac | object | Enabled (See `values.yaml`) | Create RBAC rules for FluxCD is able to deploy all kind of workloads on the cluster. |
 | flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the super agent to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the super agent, this is the way to go so the cluster has deployed all operators needed by the super agent. But if the user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on the whole cluster. |
-| helm.create | bool | `true` | Enable the installation of the CRs so FluxCD deploy the Super Agent is deployed. This an advanced/debug flag. It should be always be true unless you know what you are going. |
-| helm.release | object | See `values.yaml` | Values related to the super agent's Helm chart release. |
-| helm.release.chart | string | `"super-agent-deployment"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes. |
-| helm.release.install | object | See `values.yaml` | Change the behavior of the operator while installing the chart for the first time. This should only be changed by advanced users that know what they are doing. Exposes the remediations that the operator is going to try before give up installing the chart in case it hits an error. |
-| helm.release.rollback | object | See `values.yaml` | Optional configuration of rollback strategy when upgrading. This should only be changed by advanced users that know what they are doing. |
-| helm.release.upgrade | object | See `values.yaml` | Change the behavior of the operator while upgrading the chart. This should only be changed by advanced users that know what they are doing. Exposes the remediations that the operator is going to try before give up installing the chart in case it hits an error. |
-| helm.release.values | string | `{}`. Examples on the `values.yaml` | Set values to the super agent helm release directly from this `values.yaml` file. Refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides |
-| helm.release.valuesFrom | string | empty | Set values from a `configMap` or a `secret`. You can see examples and better documentation inside the `values.yaml` file. Also refer to https://fluxcd.io/flux/components/helm/helmreleases/#values-overrides |
-| helm.release.version | string | `"0.0.12-beta"` | The Helm chart of the super-agent. This values is meant to be changed only on air-gapped environments or for development/testing purposes.  TODO: Point renovatebot here. |
-| helm.repository | object | See `values.yaml` | Values related to the Helm repository where to download the super agent's chart. |
-| helm.repository.certSecretRef | string | `nil` (no secret reference) | secret of type `kubernetes.io/tls` with the standard keys `tls.crt`, `tls.key`, and `ca.crt` |
-| helm.repository.secretRef | string | `nil` (no secret reference) | A reference to a secret with the keys username and password to authenticate to the repository. |
-| helm.repository.updateInterval | string | `"24h"` | Sets the interval the repository is going to be updated on the controller. |
-| helm.repository.url | string | `"https://helm-charts.newrelic.com"` | The repository where the super-agent has the chart. This values is meant to be changed only on air-gapped environments or for development/testing purposes. |
+| fullnameOverride | string | `""` | Override the full name of the release |
+| nameOverride | string | `""` | Override the name of the chart |
+| super-agent-deployment | object | See `values.yaml` | Values related to the super agent's Helm chart release. |
+| super-agent-deployment.affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
+| super-agent-deployment.authSecret | object | `{"create":false}` | Settings controlling authentication secret creation. If `create` is true, a Kubernetes secret will be created containing a key named `auth_key`. This secret will be mounted in the deployment pod at the path `/etc/newrelic-super-agent/auth_key` for authentication purposes. |
+| super-agent-deployment.cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled. |
+| super-agent-deployment.cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
+| super-agent-deployment.config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
+| super-agent-deployment.config.superAgent.content | object | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
+| super-agent-deployment.config.superAgent.content.server | object | `{"enabled":true}` | And query it as `$ curl localhost:51200/status` |
+| super-agent-deployment.config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
+| super-agent-deployment.containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
+| super-agent-deployment.customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
+| super-agent-deployment.customSecretLicenseKey | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
+| super-agent-deployment.customSecretName | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
+| super-agent-deployment.dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| super-agent-deployment.enabled | bool | `true` | Enable the installation of the Super Agent. This an advanced/debug flag. It should be always be true unless you know what you are going. |
+| super-agent-deployment.extraEnv | list | `[]` | Add user environment variables to the agent |
+| super-agent-deployment.extraEnvFrom | list | `[]` | Add user environment from configMaps or secrets as variables to the agent |
+| super-agent-deployment.extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
+| super-agent-deployment.extraVolumes | list | `[]` | Volumes to mount in the containers |
+| super-agent-deployment.fedramp.enabled | bool | `false` | TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
+| super-agent-deployment.hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
+| super-agent-deployment.image | object | See `values.yaml` | Image for the New Relic Super Agent |
+| super-agent-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| super-agent-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
+| super-agent-deployment.licenseKey | string | `""` | TODO: This set this license key to use. Can be configured also with `global.licenseKey` |
+| super-agent-deployment.nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
+| super-agent-deployment.nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` When enabled, in case `authSecret.create` is set to `true`, OpAMP `endpoint` and auth `token_url` need to be updated. |
+| super-agent-deployment.podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
+| super-agent-deployment.podLabels | object | `{}` | Additional labels for chart pods. Can be configured also with `global.podLabels` |
+| super-agent-deployment.podSecurityContext | object | `{}` | Sets security context (at pod level). Can be configured also with `global.podSecurityContext` |
+| super-agent-deployment.priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
+| super-agent-deployment.proxy | string | `""` | TODO: Configures the integration to send all HTTP/HTTPS request through the proxy in that URL. The URL should have a standard format like `https://user:password@hostname:port`. Can be configured also with `global.proxy` |
+| super-agent-deployment.rbac.create | bool | `true` | Whether the chart should automatically create the RBAC objects required to run. |
+| super-agent-deployment.resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
+| super-agent-deployment.serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
+| super-agent-deployment.serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
+| super-agent-deployment.subAgents | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
+| super-agent-deployment.tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
+| super-agent-deployment.verboseLog | bool | `false` | TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 
 ## Maintainers
 

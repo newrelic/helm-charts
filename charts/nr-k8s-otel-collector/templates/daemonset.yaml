@@ -41,9 +41,7 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          command:
-            - /otelcol-contrib
-            - --config=/conf/otel-collector-config.yaml
+          args: ["--config", "/config/daemonset-config.yaml"]
           resources:
             {{- toYaml .Values.daemonset.resources | nindent 12 }}
           env:
@@ -75,25 +73,29 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
           volumeMounts:
             # TODO (chris): this is a linux specific configuration
+            {{- if include "newrelic.common.privileged" . }}
             - name: host-fs
               mountPath: /hostfs
               readOnly: true
-            - name: config-volume
-              mountPath: /conf
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
+            {{- end }}
+            - name: daemonset-config
+              mountPath: /config
       volumes:
         # TODO (chris): this is a linux specific configuration
+        {{- if include "newrelic.common.privileged" . }}
         - name: host-fs
           hostPath:
             path: /
-        - name: config-volume
-          configMap:
-            name: {{ include "nrKubernetesOtel.daemonset.configmap.fullname" . }}
         - name: varlogpods
           hostPath:
             path: /var/log/pods
+        {{- end }}
+        - name: daemonset-config
+          configMap:
+            name: {{ include "nrKubernetesOtel.daemonset.configmap.fullname" . }}
       {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}

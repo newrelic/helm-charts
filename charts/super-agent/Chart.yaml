@@ -3,15 +3,19 @@ name: super-agent
 description: Bootstraps New Relic' Super Agent
 
 type: application
-version: 0.0.6-beta
+version: 0.0.13-beta
 
 dependencies:
   - name: flux2
     repository: https://fluxcd-community.github.io/helm-charts
-    version: 2.12.2
+    version: 2.13.0
     condition: flux2.enabled
+  - name: super-agent-deployment
+    version: 0.0.19-beta
+    condition: super-agent-deployment.enabled
+    # The following dependency is needed as sub-dependency of super-agent-deployment
   - name: common-library
-    version: 1.1.1
+    version: 1.2.0
     repository: https://helm-charts.newrelic.com
 
 keywords:

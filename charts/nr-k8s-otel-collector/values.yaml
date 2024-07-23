@@ -13,11 +13,11 @@ kube-state-metrics:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: otel/opentelemetry-collector-contrib
+  repository: newrelic/nr-otel-collector
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "0.91.0"
+  tag: "0.7.1"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -39,6 +39,11 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
+# -- Run the integration with full access to the host filesystem and network.
+# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
+# @default -- `true`
+privileged: true
+
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
@@ -51,7 +56,8 @@ daemonset:
   # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext: {}
+  containerSecurityContext:
+    privileged: true
   # -- Sets resources for the daemonset.
   resources: {}
 
@@ -110,10 +116,9 @@ receivers:
     # -- (bool) Specifies whether the `prometheus` receiver is enabled
     # @default -- `true`
     enabled: true
-  k8sCluster:
-    # -- (bool) Specifies whether the `k8s_cluster` receiver is enabled
-    # @default -- `true`
-    enabled: true
+    # -- Sets the scrape interval for the `prometheus` receiver
+    # @default -- `1m`
+    scrapeInterval: 1m
   k8sEvents:
     # -- (bool) Specifies whether the `k8s_events` receiver is enabled
     # @default -- `true`
@@ -122,11 +127,21 @@ receivers:
     # -- (bool) Specifies whether the `hostmetrics` receiver is enabled
     # @default -- `true`
     enabled: true
+    # -- Sets the scrape interval for the `hostmetrics` receiver
+    # @default -- `1m`
+    scrapeInterval: 1m
   kubeletstats:
     # -- (bool) Specifies whether the `kubeletstats` receiver is enabled
     # @default -- `true`
     enabled: true
+    # -- Sets the scrape interval for the `kubeletstats` receiver
+    # @default -- `1m`
+    scrapeInterval: 1m
   filelog:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
     enabled: true
+
+# -- (bool) Send only the metrics required to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
+# @default -- `false`
+lowDataMode: true

@@ -1,0 +1,48 @@
+suite: test fluent-bit pods labels
+templates:
+  - templates/daemonset.yaml
+  - templates/configmap.yaml
+  - templates/persistentvolume.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+- it: multiple pod labels are set properly
+  templates:
+    - templates/daemonset.yaml
+  set:
+    licenseKey: nr_license_key
+    podLabels:
+      key1: value1
+      key2: value2
+  asserts:
+    - equal:
+        path: spec.template.metadata.labels.key1
+        value: value1
+      template: templates/daemonset.yaml
+    - equal:
+        path: spec.template.metadata.labels.key2
+        value: value2
+      template: templates/daemonset.yaml
+- it: single pod label set properly
+  templates:
+    - templates/daemonset.yaml
+  set:
+    licenseKey: nr_license_key
+    podLabels:
+      key1: value1       
+  asserts:
+    - equal:
+        path: spec.template.metadata.labels.key1
+        value: value1
+      template: templates/daemonset.yaml
+- it: pod labels are not set
+  templates:
+    - templates/daemonset.yaml
+  set:
+    licenseKey: nr_license_key  
+  asserts:
+    - notExists:
+        path: spec.template.metadata.labels.key1
+    - notExists:
+        path: spec.template.metadata.labels.key2
