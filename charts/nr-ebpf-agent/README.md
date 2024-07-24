@@ -86,13 +86,13 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | protocols.pgsql | bool | `true` | Enable tracing of Postgres. |
 | ebpfAgent.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-agent"` | eBPF agent image to be deployed. |
 | ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| ebpfAgent.image.tag | string | `"0.0.1"` | Tag of the image to deploy. |
+| ebpfAgent.image.tag | string | `"0.0.2"` | Tag of the image to deploy. |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocatable to the container. |
 | ebpfAgent.resources.requests.cpu | string | `"100m"` | Minimum cpu allocated to the container. |
 | ebpfAgent.resources.requests.memory | string | `"250Mi"` | Minimum memory allocated to the container. |
 | ebpfClient.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | ebpfClient.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-client"` | eBPF client image to be deployed. |
-| ebpfClient.image.tag | string | `"0.0.1"` | Tag of the image to deploy. |
+| ebpfClient.image.tag | string | `"0.0.2"` | Tag of the image to deploy. |
 | ebpfClient.resources.limits.memory | string | `"100Mi"` | Max memory allocatable to the container. |
 | ebpfClient.resources.requests.cpu | string | `"50m"` | Minimum cpu allocated to the container. |
 | ebpfClient.resources.requests.memory | string | `"50Mi"` | Minimum memory allocated to the container. |
