@@ -63,7 +63,8 @@ daemonset:
   # -- Settings for daemonset configmap
   # @default -- See `values.yaml`
   configMap:
-    config:
+    # -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
+    config: {}
 
 deployment:
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -83,7 +84,8 @@ deployment:
   # -- Settings for deployment configmap
   # @default -- See `values.yaml`
   configMap:
-    config:
+    # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
+    config: {}
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
