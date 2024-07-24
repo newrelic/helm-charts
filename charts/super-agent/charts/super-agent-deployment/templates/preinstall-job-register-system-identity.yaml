@@ -5,6 +5,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-install # TODO we cannot enable auth after installation, we should add pre-upgrade and check if the secret exists
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1005"
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "system-identity-installer" ) }}
   namespace: {{ .Release.Namespace }}
 spec:
@@ -85,6 +86,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1010"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
@@ -104,6 +106,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1009"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
@@ -114,7 +117,7 @@ roleRef:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
   namespace: {{ .Release.Namespace }}
 {{- end }}
 
@@ -126,12 +129,13 @@ metadata:
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1010"
   {{- if include "newrelic.common.serviceAccount.annotations" . }}
     {{- include "newrelic.common.serviceAccount.annotations" . | nindent 4 }}
   {{- end }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
   namespace: {{ .Release.Namespace }}
 {{- end -}}
 {{- end -}}
