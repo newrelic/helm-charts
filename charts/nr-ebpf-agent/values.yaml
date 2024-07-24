@@ -6,8 +6,20 @@ licenseKey: ""
 nrStaging: false
 # The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
-# The source connectors (and data export scripts) to enable.
+# Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
+# while tcp_stats tracks TCP metrics and jvm_stats tracks JVM metrics.
 stirlingSources: "socket_tracer,tcp_stats,jvm_stats"
+# The protocols to enable for tracing in the socket_tracer.
+protocols:
+  http: true
+  kafka: true
+  mysql: true
+  redis: true
+  mongodb: true
+  amqp: true
+  cass: true
+  dns: true
+  pgsql: true
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:

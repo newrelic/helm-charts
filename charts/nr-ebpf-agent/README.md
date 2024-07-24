@@ -6,29 +6,16 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 # Helm installation
 
-Download and Update config [here](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent/values.yaml#L1-L4) to add a cluster name, and New Relic Ingest - License key
+1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `cluster` field with the name of the cluster to monitor.
 
 Example:
 ```
 licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
-cluster: "SampleApp"
+cluster: "name-of-cluster-to-monitor"
 ```
 
-You can install this chart directly using this Helm repository:
-
-```shell
-# Use Options 1-3 to easily deploy the helm chart.
-# Option 1:
-helm install nr-ebpf-agent \ 
-  --set licenseKey=<License Key> \
-  --set cluster=<Name of Kubernetes cluster> \
-  --create-namespace --namespace newrelic \
-  --generate-name
-
-# Option 2:
-helm install nr-ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace nr-ebpf-agent
-
-# Option 3:
+2. Install the helm chart, passing the configuration file created above.
+```sh
 helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
@@ -40,24 +27,28 @@ helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -f your-custom-values.yaml -n 
 kubectl get pods -n newrelic --watch
 ```
 
-### Check the logs of the eBPF agent pod that spins up:
+### Check the logs of the eBPF agent pod:
 ```
-kubectl logs <ebpf-pod-name> -n newrelic
+# The client container logs report data export metrics.
+kubectl logs <ebpf-pod-name> -c nr-ebpf-client -n newrelic
+
+# The agent container logs detail probe attachment and data collection.
+kubectl logs <ebpf-pod-name> -c nr-ebpf-agent -n newrelic
 ```
 
-### Check the logs of the OpenteTemetry collector pod that spins up:
+### Check the logs of the OpenteTemetry collector pod:
 ```
 kubectl logs <otel-pod-name> -n newrelic
 ```
 
-### Confirm data coming through in New Relic
+### Confirm data ingest to New Relic
 You should see data reporting into New Relic within a couple of seconds to the `Metric` and `Span` tables.
 ```
 FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
-```
-```
+
 FROM Span SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
+The entities view should show OTel services and an "APM-lite" rendition of the data for each entity when clicked on.
 
 ## Uninstall
 
@@ -79,10 +70,22 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
-| ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
+| licenseKey | string | `""` | The NR license key to use. Can be configured also with `global.licenseKey` |
+| nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
+| tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
+| stirlingSources | string | `"socket_tracer,tcp_stats,jvm_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics and jvm_stats tracks JVM metrics. |
+| protocols.http | bool | `true` | Enable tracing of HTTP and HTTP2. |
+| protocols.kafka | bool | `true` | Enable tracing of Kafka. |
+| protocols.mysql | bool | `true` | Enable tracing of MySQL. |
+| protocols.redis | bool | `true` | Enable tracing of Redis. |
+| protocols.mongodb | bool | `true` | Enable tracing of MongoDB. |
+| protocols.amqp | bool | `true` | Enable tracing of AMQP. |
+| protocols.cass | bool | `true` | Enable tracing of Cassandra. |
+| protocols.dns | bool | `true` | Enable tracing of DNS. |
+| protocols.pgsql | bool | `true` | Enable tracing of Postgres. |
 | ebpfAgent.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-agent"` | eBPF agent image to be deployed. |
+| ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | ebpfAgent.image.tag | string | `"0.0.1"` | Tag of the image to deploy. |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocatable to the container. |
 | ebpfAgent.resources.requests.cpu | string | `"100m"` | Minimum cpu allocated to the container. |
@@ -101,12 +104,11 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | otelCollector.resources.requests.cpu | string | `"100m"` | Minimum cpu allocated to the container. |
 | otelCollector.resources.requests.memory | string | `"200Mi"` | Minimum memory allocated to the container. |
 | otelCollector.collector.serviceAccount.annotations | object | `{}` | Annotations for the OTel collector service account. |
-| labels | object | `{}` | Additional labels for chart objects |
-| licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
-| nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podLabels | object | `{}` | Additional labels for chart pods |
+| labels | object | `{}` | Additional labels for chart objects |
+| nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |
+| affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 
 ## Common Errors
 
