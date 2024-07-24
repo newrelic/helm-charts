@@ -23,11 +23,13 @@ spec:
             value: "/host"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
+          {{- if .Values.protocols }}
           {{- $allProtocols := list "http" "kafka" "mysql" "redis" "mongodb" "amqp" "cass" "dns" "pgsql" }}
           {{- range $protocol := $allProtocols }}
           {{- if (and (index $.Values.protocols $protocol) (eq (index $.Values.protocols $protocol) false)) }}
           - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
             value: "0"
+          {{- end }}
           {{- end }}
           {{- end }}
           - name: KUBERNETES_CLUSTER_DOMAIN
@@ -58,11 +60,13 @@ spec:
             value: "$(HOST_IP):4317"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
+          {{- if .Values.protocols }}
           {{- $allProtocols := list "http" "kafka" "mysql" "redis" "mongodb" "amqp" "cass" "dns" "pgsql" }}
           {{- range $protocol := $allProtocols }}
           {{- if (and (index $.Values.protocols $protocol) (eq (index $.Values.protocols $protocol) false)) }}
           - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
             value: "0"
+          {{- end }}
           {{- end }}
           {{- end }}
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
