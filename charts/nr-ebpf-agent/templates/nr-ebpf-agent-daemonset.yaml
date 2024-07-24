@@ -24,9 +24,8 @@ spec:
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
           {{- if .Values.protocols }}
-          {{- $allProtocols := list "http" "kafka" "mysql" "redis" "mongodb" "amqp" "cass" "dns" "pgsql" }}
-          {{- range $protocol := $allProtocols }}
-          {{- if (and (index $.Values.protocols $protocol) (eq (index $.Values.protocols $protocol) false)) }}
+          {{- range $protocol, $enabled := .Values.protocols }}
+          {{- if (eq $enabled false) }}
           - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
             value: "0"
           {{- end }}
@@ -61,9 +60,8 @@ spec:
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
           {{- if .Values.protocols }}
-          {{- $allProtocols := list "http" "kafka" "mysql" "redis" "mongodb" "amqp" "cass" "dns" "pgsql" }}
-          {{- range $protocol := $allProtocols }}
-          {{- if (and (index $.Values.protocols $protocol) (eq (index $.Values.protocols $protocol) false)) }}
+          {{- range $protocol, $enabled := .Values.protocols }}
+          {{- if (eq $enabled false) }}
           - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
             value: "0"
           {{- end }}
