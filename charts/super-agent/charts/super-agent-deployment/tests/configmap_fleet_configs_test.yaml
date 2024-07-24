@@ -5,20 +5,19 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: default value can be overridden
+  - it: A malformed subAgent fail with a useful error message
     set:
       config:
         subAgents:
           open-telemetry: null
     asserts:
-      - hasDocuments:
-          count: 1
+      - failedTemplate:
+          errorMessage: Agent open-telemetry does not have agent type
 
-  - it: super agent's config template correctly
+  - it: default value can be overridden
     set:
       config:
         subAgents:
-          open-telemetry: null
           test-0:
             type: org.newrelic/test:0.0.0
             content:

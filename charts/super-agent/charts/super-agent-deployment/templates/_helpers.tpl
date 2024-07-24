@@ -14,7 +14,7 @@ Return the agents part that should go in the super agent config. It is created f
 {{- if (.Values.config).subAgents -}}
 {{- $agents := dict -}}
 {{- range $subAgentName, $subAgentConfig := (.Values.config).subAgents -}}
-  {{- if not $subAgentConfig.type -}}
+  {{- if not ($subAgentConfig).type -}}
     {{- fail (printf "Agent %s does not have agent type" $subAgentName) -}}
   {{- end -}}
   {{- $_ := dict $subAgentName (dict "agent_type" $subAgentConfig.type "content" $subAgentConfig.content) | mustMerge $agents -}}
@@ -155,10 +155,11 @@ readOnlyRootFilesystem: true
 Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
 {{- define "newrelic-super-agent.auth.organizationId" -}}
-{{- if not ((.Values.config).auth).organizationId -}}
-  {{- fail ".Values.config.auth.organizationId is required." -}}
+{{- if ((.Values.config).auth).organizationId -}}
+  {{- .Values.config.auth.organizationId -}}
+{{- else -}}
+  {{- fail ".config.auth.organizationId is required." -}}
 {{- end -}}
-{{- .Values.config.auth.organizationId -}}
 {{- end -}}
 
 
@@ -211,7 +212,7 @@ Helper to toggle the creation of the secret that has the system identity as valu
 
 
 {{- /*
-Check if .Values.config.auth.secret.private_key.secret_key exists and use it for the key in the secret contaning the private
+Check if .Values.config.auth.secret.private_key.secret_key exists and use it for the key in the secret containing the private
 key needed for the system identity. Fallbacks to `private_key`.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.privateKey.key" -}}

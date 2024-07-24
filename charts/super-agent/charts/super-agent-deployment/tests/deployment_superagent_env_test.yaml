@@ -12,9 +12,9 @@ tests:
       cluster: test
       licenseKey: fake-license
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[0]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -28,9 +28,9 @@ tests:
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[0]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -48,9 +48,9 @@ tests:
             opamp:
               endpoint: test
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[2]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_SA_OPAMP__HEADERS__API-KEY
             valueFrom:
               secretKeyRef:
@@ -69,9 +69,9 @@ tests:
             opamp:
               endpoint: test
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[2]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_SA_OPAMP__HEADERS__API-KEY
             valueFrom:
               secretKeyRef:
@@ -82,9 +82,9 @@ tests:
     set:
       cluster: test
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[1]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_CLUSTER_NAME
             value: test
         template: templates/deployment-superagent.yaml
