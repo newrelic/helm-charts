@@ -7,8 +7,8 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   daemonset-config.yaml: |
-    {{- with .Values.daemonset.configMap.config }}
-    {{- toYaml . | nindent 4 }}
+    {{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
+    {{- . | nindent 4 }}
     {{- else }}
     receivers:
       hostmetrics:

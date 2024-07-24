@@ -7,8 +7,8 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   deployment-config.yaml: |
-    {{- with .Values.deployment.configMap.config }}
-    {{- toYaml . | nindent 4 }}
+    {{- with include "nrKubernetesOtel.deployment.configMap.config" . }}
+    {{- . | nindent 4 }}
     {{- else }}
     receivers:
       otlp:
