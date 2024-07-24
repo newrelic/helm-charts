@@ -60,6 +60,11 @@ daemonset:
 privileged: true
   # -- Sets resources for the daemonset.
   resources: {}
+  # -- Settings for daemonset configmap
+  # @default -- See `values.yaml`
+  configMap:
+# -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
+config: {}
 
 deployment:
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -76,6 +81,11 @@ deployment:
   containerSecurityContext: {}
   # -- Sets resources for the deployment.
   resources: {}
+  # -- Settings for deployment configmap
+  # @default -- See `values.yaml`
+  configMap:
+# -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
+config: {}
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
@@ -142,6 +152,6 @@ scrapeInterval: 1m
 # @default -- `true`
 enabled: true
 
-# -- (bool) Send only the metrics required to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
+# -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
 # @default -- `false`
 lowDataMode: true

@@ -7,10 +7,10 @@
 {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "daemonset") -}}
 {{- end -}}
 
-{{- define "nrKubernetesOtel.deployment.configmap.fullname" -}}
+{{- define "nrKubernetesOtel.deployment.configMap.fullname" -}}
 {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "deployment-config") -}}
 {{- end -}}
 
-{{- define "nrKubernetesOtel.daemonset.configmap.fullname" -}}
+{{- define "nrKubernetesOtel.daemonset.configMap.fullname" -}}
 {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "daemonset-config") -}}
 {{- end -}}

@@ -1,12 +1,15 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "nrKubernetesOtel.deployment.configmap.fullname" . }}
+  name: {{ include "nrKubernetesOtel.deployment.configMap.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
 {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   deployment-config.yaml: |
+{{- with include "nrKubernetesOtel.deployment.configMap.config" . }}
+{{- . | nindent 4 }}
+{{- else }}
 receivers:
   otlp:
 protocols:
@@ -577,4 +580,5 @@ logs/events:
 - batch
   exporters:
 - otlphttp/newrelic
+{{- end }}
 {{- end }}
