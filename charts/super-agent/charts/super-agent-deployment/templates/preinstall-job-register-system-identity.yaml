@@ -1,5 +1,4 @@
-{{- if .Values.config.auth -}}
-{{- if and .Values.config.auth.enabled .Values.config.auth.secret.create -}}
+{{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -13,10 +12,16 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+      serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
       containers:
         - name: register-system-identity
           image: alpine 
+          env:
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic.common.apiKey.secretName" . }}
+                  key: {{ include "newrelic.common.apiKey.secretKeyName" . }}
           command:
             - ash
           args:
@@ -46,7 +51,7 @@ spec:
                   curl \
                     -s -w "%{http_code}" \
                     -H "Content-Type: application/json" \
-                    -H "API-Key: {{ .Values.config.auth.userApiKey }}" \
+                    -H "API-Key: $API_KEY" \
                     -o "$TEMPORAL_FOLDER/response.json" \
                     --data @- \
                     "{{ include "newrelic-super-agent.config.endpoints.systemIdentityRegistration" . }}"
@@ -111,9 +116,9 @@ subjects:
 - kind: ServiceAccount
   name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
   namespace: {{ .Release.Namespace }}
-{{- end -}}
+{{- end }}
 
-{{ if include "newrelic.common.serviceAccount.create" . }}
+{{- if include "newrelic.common.serviceAccount.create" . }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -128,6 +133,5 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
   namespace: {{ .Release.Namespace }}
-{{- end -}}
 {{- end -}}
 {{- end -}}
