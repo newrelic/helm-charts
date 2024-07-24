@@ -308,6 +308,55 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      metricstransform/hostmetrics:
+        transforms:
+          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.disk\.(io_time|operation_time|operations)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.(filesystem|memory)\.(usage|utilization)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.network\.(errors|io|packets)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -319,6 +368,22 @@ data:
             statements:
               - truncate_all(attributes, 4095)
               - truncate_all(resource.attributes, 4095)
+
+      # group system.cpu metrics by cpu
+      metricstransform/hostmetrics_cpu:
+        transforms:
+          - include: system.cpu.utilization
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ state ]
+                aggregation_type: mean
+          - include: system.paging.operations
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ direction ]
+                aggregation_type: sum
 
       # following system.% metrics reduce metrics reported by hostmetrics receiver
       filter/exclude_cpu_utilization:
@@ -381,10 +446,23 @@ data:
           - key: type
             action: delete
 
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+              enabled: true
+
       resourcedetection/cloudproviders:
-        detectors: [env, gcp, eks, azure, aks, ec2, ecs]
+        detectors: [gcp, eks, azure, aks, ec2, ecs]
         timeout: 2s
         override: false
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
 
       resource:
         attributes:
@@ -483,7 +561,7 @@ data:
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
-            {{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) (not (include "newrelic.common.lowDataMode" .)) }}
+            {{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
             - hostmetrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
@@ -498,8 +576,10 @@ data:
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
             - metricstransform/kubelet
+            - metricstransform/hostmetrics
             - filter/exclude_metrics_low_data_mode
             {{- end }}
+            - metricstransform/hostmetrics_cpu
             - transform/truncate
             - filter/exclude_cpu_utilization
             - filter/exclude_memory_utilization
@@ -511,6 +591,7 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
+            - resourcedetection/env
             - resourcedetection/cloudproviders
             - resource
             {{- if include "newrelic.common.lowDataMode" . }}
