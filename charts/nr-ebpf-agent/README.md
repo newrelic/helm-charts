@@ -6,12 +6,23 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 # Helm installation
 
-1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `cluster` field with the name of the cluster to monitor.
+1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key, the `cluster` field with the name of the cluster to monitor, and the protocols to capture.
 
 Example:
 ```
 licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
 cluster: "name-of-cluster-to-monitor"
+# The protocols to enable for tracing in the socket_tracer.
+protocols:
+  http: true
+  kafka: true
+  mysql: true
+  redis: true
+  mongodb: true
+  amqp: true
+  cass: true
+  dns: true
+  pgsql: true
 ```
 
 2. Install the helm chart, passing the configuration file created above.

@@ -25,8 +25,10 @@ spec:
             value: "{{ .Values.stirlingSources }}"
           {{- $allProtocols := list "http" "kafka" "mysql" "redis" "mongodb" "amqp" "cass" "dns" "pgsql" }}
           {{- range $protocol := $allProtocols }}
+          {{- if (and (index $.Values.protocols $protocol) (eq (index $.Values.protocols $protocol) false)) }}
           - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
-            value: "{{ if index $.Values.protocols $protocol }}1{{ else }}0{{ end }}"
+            value: "0"
+          {{- end }}
           {{- end }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
@@ -58,8 +60,10 @@ spec:
             value: "{{ .Values.stirlingSources }}"
           {{- $allProtocols := list "http" "kafka" "mysql" "redis" "mongodb" "amqp" "cass" "dns" "pgsql" }}
           {{- range $protocol := $allProtocols }}
+          {{- if (and (index $.Values.protocols $protocol) (eq (index $.Values.protocols $protocol) false)) }}
           - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
-            value: "{{ if index $.Values.protocols $protocol }}1{{ else }}0{{ end }}"
+            value: "0"
+          {{- end }}
           {{- end }}
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
