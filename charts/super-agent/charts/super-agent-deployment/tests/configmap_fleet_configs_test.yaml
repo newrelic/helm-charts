@@ -5,7 +5,11 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: does not template nothing by default
+  - it: default value can be overridden
+set:
+  config:
+subAgents:
+  open-telemetry: null
 asserts:
   - hasDocuments:
   count: 0
@@ -13,6 +17,7 @@ asserts:
 set:
   config:
 subAgents:
+  open-telemetry: null
   test-0:
 content:
   a: test
