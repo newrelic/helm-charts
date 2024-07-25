@@ -24,7 +24,7 @@ super-agent-deployment:
   image:
     registry:
     repository: newrelic/newrelic-super-agent
-    tag: 0.17.0
+    tag: 0.20.0
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -163,9 +163,9 @@ super-agent-deployment:
         content:
           # chart_version: "0.4.0"
           chart_values:
+            licenseKey: ${nr-env:NR_LICENSE_KEY}
             # TODO the following values are set twice in the config, we have to add some logic to improve UX either in the chart or in the agentType
             # cluster: ""
-            # licenseKey: ""
             # customSecretName: ""
             # customSecretLicenseKey: ""
 
