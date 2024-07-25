@@ -14,14 +14,17 @@ tests:
       config:
         subAgents:
           test-0:
+            type: org.newrelic/test:0.0.0
             content:
               a: test
               value: 0
           test-1:
+            type: org.newrelic/test:0.0.1
             content:
               a: test
               value: 1
           test-2:
+            type: org.newrelic/test:0.0.2
             content:
               a: test
               aYAML:
@@ -37,6 +40,10 @@ tests:
             - mountPath: /var/lib/newrelic-super-agent
               name: var-lib-newrelic-super-agent
               readOnly: false
+            - mountPath: /etc/newrelic-super-agent/keys/from-secret.key
+              name: auth-secret-private-key
+              readOnly: true
+              subPath: private_key
       - template: templates/deployment-superagent.yaml
         equal:
           path: spec.template.spec.volumes
@@ -49,6 +56,6 @@ tests:
                     path: config.yaml
             - name: var-lib-newrelic-super-agent
               emptyDir: {}
-
-        
-
+            - name: auth-secret-private-key
+              secret:
+                secretName: my-release-super-agent-deployment-auth

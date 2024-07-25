@@ -3,6 +3,9 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-2000"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux") }}
@@ -11,7 +14,7 @@ rules:
   - apiGroups:
       - source.toolkit.fluxcd.io
       - helm.toolkit.fluxcd.io
-    resources: ["*"]
+    resources: [ "*" ]
     verbs:
       - get
       - list
@@ -25,13 +28,16 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-2000"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: [ "" ]
-    resources: ["configmaps"]
+    resources: [ "configmaps", "secrets" ]
     verbs:
       - get
       - list
@@ -41,7 +47,7 @@ rules:
       - patch
       - update
   - apiGroups: [ "" ]
-    resources: ["namespaces"]
+    resources: [ "namespaces" ]
     verbs:
       - get
   - apiGroups: [ "apps" ]
@@ -65,6 +71,9 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-2000"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux") }}
@@ -81,6 +90,9 @@ subjects:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-2000"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}

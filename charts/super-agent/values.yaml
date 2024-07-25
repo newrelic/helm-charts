@@ -24,7 +24,7 @@ super-agent-deployment:
   image:
     registry:
     repository: newrelic/newrelic-super-agent
-    tag: 0.17.0
+    tag: 0.18.0
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -91,9 +91,8 @@ super-agent-deployment:
   proxy: ""
 
   # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
-  # When enabled, in case `authSecret.create` is set to `true`, OpAMP `endpoint` and auth `token_url` need to be updated.
   # @default -- `false`
-  nrStaging:  # TODO: Update OpAMP `endpoint` and auth `token_url` for staging and Europe when nrStaging is enabled.
+  nrStaging:
 
   fedramp:
     # -- (bool) TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
@@ -108,18 +107,6 @@ super-agent-deployment:
   # If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled.
   cleanupManagedResources: true
 
-  # -- Settings controlling authentication secret creation.
-  # If `create` is true, a Kubernetes secret will be created containing a key named `auth_key`.
-  # This secret will be mounted in the deployment pod at the path `/etc/newrelic-super-agent/auth_key`
-  # for authentication purposes.
-  authSecret:
-    create: false
-    # -- The name of the Kubernetes secret to use or create.
-    # name: auth-secret
-    # -- Data to include in the secret. The key should be an RSA256 value.
-    # data:
-    #   auth_key: ""
-
   config:
     # -- Configuration for the Super Agent.
     # @default -- See `values.yaml`
@@ -129,10 +116,6 @@ super-agent-deployment:
       # -- Here you can set New Relic' Super Agent configuration.
       # @default -- See `values.yaml` for examples
       content:
-        agents:
-          open-telemetry:
-            agent_type: newrelic/io.opentelemetry.collector:0.2.0
-
         # opamp:
         #   # TODO The endpoint should be set automatically based on the licenseKey and on the nrStaging option if opamp.enable=true
         #   endpoint: https://opamp.service.newrelic.com/v1/opamp
@@ -156,18 +139,49 @@ super-agent-deployment:
     # -- Values that the fleet is going to have in the deployment.
     # @default -- See `values.yaml` for examples
     subAgents:
-      # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
-      # find the configuration needed for the subagent.
-      #
-      open-telemetry:
-        content:
-          # chart_version: "0.4.0"
-          chart_values:
-            # TODO the following values are set twice in the config, we have to add some logic to improve UX either in the chart or in the agentType
-            # cluster: ""
-            # licenseKey: ""
-            # customSecretName: ""
-            # customSecretLicenseKey: ""
+    # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
+    # find the configuration needed for the subagent.
+    #
+    # The example below, open-telemetry, is enabled by default if no subagent is set up.
+    #
+    #  open-telemetry:
+    #    type: newrelic/io.opentelemetry.collector:0.2.0
+    #    content:
+    #      chart_version: "0.4.0"
+    #      chart_values:
+    #        # TODO the following values are set twice in the config, we have to add some logic to improve UX either in the chart or in the agentType
+    #        cluster: ""
+    #        licenseKey: ""
+    #        customSecretName: ""
+    #        customSecretLicenseKey: ""
+
+    auth:
+      enabled: true
+      organizationId:
+      experimental:
+        headers:
+        # - "-H \"Service-Gateway-Login-Context: ${SERVICE_GATEWAY_LOGIN_CONTEXT}\""
+        # - "-H \"Service-Gateway-Email: ${SERVICE_GATEWAY_EMAIL}\""
+        # - "-H \"Service-Gateway-Organization-Id: ${SERVICE_GATEWAY_ORGANIZATION_ID}\""
+        # - "-H \"Service-Gateway-User-Id: ${SERVICE_GATEWAY_USER_ID}\""
+      secret:
+        create: true
+        # -- Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret
+        # will have.
+        # @default -- release name suffixed with "-auth"
+        name:
+        private_key:
+          # -- Key inside the secret contaning the private key.
+          # @default -- `private_key`
+          secret_key:
+          base64_pem:
+          plain_pem:
+        client_id:
+          # -- Key inside the secret contaning the private key.
+          # @default -- `client_id`
+          secret_key:
+          base64:
+          plain:
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`

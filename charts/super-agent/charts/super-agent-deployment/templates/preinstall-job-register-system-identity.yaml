@@ -1,0 +1,92 @@
+{{- if and .Values.config.auth.enabled .Values.config.auth.secret.create -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: pre-install
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1000"
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict
+    "name" (include "newrelic.common.naming.fullname" .)
+    "suffix" "system-identity-installer" ) }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      containers:
+        - name: register-system-identity
+          image: alpine  # TODO: We'll have to build an image for this.
+          command:
+            - ash
+          args:
+            - -c
+            - |
+              set -uo pipefail
+
+              apk update
+              apk add curl kubectl jq openssl
+
+              NAME="System Identity for Kubernetes cluster '{{ include "newrelic.common.cluster" . }}'"
+              SECRET_NAME="{{ include "newrelic-super-agent.auth.secret.name" . }}"
+              PRIVATE_KEY_SECRET_KEY="{{ include "newrelic-super-agent.auth.secret.privateKey.key" . }}"
+              CLIENT_ID_SECRET_KEY="{{ include "newrelic-super-agent.auth.secret.clientId.key" . }}"
+              REGISTRATION_ENDPOINT="{{ include "newrelic-super-agent.config.endpoints.systemIdentityRegistration" . }}"
+
+              {{- /* We know Helm has a template `genrsa` tp create certificates but we use this so we can debug easier */}}
+              TEMPORAL_FOLDER=$(mktemp -d newrelic-super-agent.XXXXXXXXXX)
+              trap "rm -rf $TEMPORAL_FOLDER" EXIT
+              openssl genrsa -out "$TEMPORAL_FOLDER/key" 4096
+              openssl rsa -in "$TEMPORAL_FOLDER/key" -pubout -out "$TEMPORAL_FOLDER/pub"
+
+              for RETRY in 1 2 3; do
+                HTTP_CODE=$(echo '{ "query":
+                    "mutation {
+                      systemIdentityCreate(
+                        name: \"'$NAME'\",
+                        organizationId: \"{{ include "newrelic-super-agent.auth.organizationId" . }}\",
+                        publicKey: \"'$(openssl enc -base64 -A -in "$TEMPORAL_FOLDER/pub")'\"
+                      ) {
+                        clientId,
+                        name
+                      }
+                    }"
+                  }' | tr -d $'\n' | \
+                  curl -X POST \
+                    -s -w "%{http_code}" \
+                    -H "Content-Type: application/json" \
+                    {{- range (((.Values.config).auth).experimental).headers | default list }}
+                    -H "{{ . }}" \
+                    {{- end }}
+                    -H "API-Key: {{ index .Values "config" "superAgent" "content" "opamp" "headers" "API-Key" }}" \
+                    -o "$TEMPORAL_FOLDER/response.json" \
+                    --data @- \
+                    "$REGISTRATION_ENDPOINT"
+                )
+
+                if [ $HTTP_CODE -eq 200 ]; then
+                  break
+                fi
+                echo "Error creating the new system identity. The API endpoint returned $HTTP_CODE. Retrying ($RETRY/3)..."
+                sleep 2
+              done
+
+              # Retry mechanism failed. Exiting...
+              if [ $HTTP_CODE -ne 200 ]; then exit 1; fi
+
+              ERROR_MESSAGE=$(jq -r '.errors[0].message // "NOERROR"' "$TEMPORAL_FOLDER/response.json")
+              if [ "$ERROR_MESSAGE" != "NOERROR" ]; then
+                echo "Error creating an identity: $ERROR_MESSAGE"
+                exit 1
+              fi
+
+              kubectl create secret generic --dry-run -o json \
+                {{ include "newrelic-super-agent.auth.secret.name" . }} \
+                --from-literal="{{ include "newrelic-super-agent.auth.secret.clientId.key" . }}=$(jq -r '.data.createSystemIdentity.clientId' "$TEMPORAL_FOLDER/response.json")" \
+                --from-file="{{ include "newrelic-super-agent.auth.secret.privateKey.key" . }}=$TEMPORAL_FOLDER/key" | \
+              jq '.metadata.labels |= {{ include "newrelic.common.labels" . | fromYaml | toJson }}' | \
+              kubectl apply -n "{{ .Release.Namespace }}" -f -
+
+{{- end -}}

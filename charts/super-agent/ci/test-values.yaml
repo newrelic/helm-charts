@@ -2,9 +2,15 @@ super-agent-deployment:
   cluster: sa-cluster
   licenseKey: test
   config:
+    superAgent:
+      content:
+        opamp:
+          headers:
+            api-key: &licensekey TEST_LICENSE_KEY
     subAgents:
       open-telemetry:
+        type: newrelic/io.opentelemetry.collector:0.2.0
         content:
           chart_values:
             cluster: "sa-cluster"
-            licenseKey: "test"
+            licenseKey: *licensekey
