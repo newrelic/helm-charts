@@ -55,6 +55,15 @@ spec:
   imagePullPolicy: {{ .Values.image.pullPolicy }}
 
   env:
+  {{- if .Values.config.auth }}
+  {{- if .Values.config.auth.enabled }}
+- name: NR_SA_OPAMP__AUTH_CONFIG__CLIENT_ID
+  valueFrom:
+secretKeyRef:
+  name: {{ include "newrelic-super-agent.auth.secret.name" . }}
+  key: CLIENT_ID
+  {{- end }}
+  {{- end }}
 - name: NR_LICENSE_KEY
   valueFrom:
 secretKeyRef:
@@ -84,13 +93,14 @@ secretKeyRef:
 - mountPath: /var/lib/newrelic-super-agent
   name: var-lib-newrelic-super-agent
   readOnly: false
+{{- if .Values.config.auth }}
+{{- if .Values.config.auth.enabled }}
+- name: auth-secret-private-key
+  mountPath: "/etc/newrelic-super-agent/keys"
+{{- end }}
+{{- end }}
 {{- with .Values.extraVolumeMounts }}
 {{- toYaml . | nindent 12 }}
-{{- end }}
-{{- if eq (include "newrelic-super-agent.shouldCreateAuthSecret" .) "true" }}
-- name: auth-secret-volume
-  mountPath: "/etc/newrelic-super-agent"
-  readOnly: true
 {{- end }}
 
   resources:
@@ -104,13 +114,18 @@ items:
 path: config.yaml
 - name: var-lib-newrelic-super-agent
   emptyDir: {}
+{{- if .Values.config.auth }}
+{{- if .Values.config.auth.enabled }}
+- name: auth-secret-private-key
+  secret:
+secretName: {{ include "newrelic-super-agent.auth.secret.name" . }}
+items:
+  - key: private_key
+path: from-secret.key
+{{- end }}
+{{- end }}  
 {{- with .Values.extraVolumes }}
 {{- toYaml . | nindent 8 }}
-{{- end }}
-{{- if eq (include "newrelic-super-agent.shouldCreateAuthSecret" .) "true" }}
-- name: auth-secret-volume
-  secret:
-secretName: {{ .Values.authSecret.name | default .Release.Name }}
 {{- end }}
 
   {{- with include "newrelic.common.nodeSelector" . }}

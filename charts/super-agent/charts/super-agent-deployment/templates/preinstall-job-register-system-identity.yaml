@@ -1,0 +1,133 @@
+{{- if .Values.config.auth -}}
+{{- if and .Values.config.auth.enabled .Values.config.auth.secret.create -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+helm.sh/hook: pre-install # TODO we cannot enable auth after installation, we should add pre-upgrade and check if the secret exists
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "system-identity-installer" ) }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+spec:
+  restartPolicy: Never
+  serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  containers:
+- name: register-system-identity
+  image: alpine 
+  command:
+- ash
+  args:
+- -c
+- |
+  set -uo pipefail
+  apk update
+  apk add curl kubectl jq openssl
+  TEMPORAL_FOLDER=gen-folder
+  mkdir $TEMPORAL_FOLDER
+  openssl genrsa -out "$TEMPORAL_FOLDER/key" 4096
+  openssl rsa -in "$TEMPORAL_FOLDER/key" -pubout -out "$TEMPORAL_FOLDER/pub"
+
+  for RETRY in 1 2 3; do
+HTTP_CODE=$(echo '{ "query":
+"mutation {
+  systemIdentityCreate(
+name: \"System Identity for Kubernetes cluster '{{ include "newrelic.common.cluster" . }}'\",
+organizationId: \"{{ include "newrelic-super-agent.auth.organizationId" . }}\",
+publicKey: \"'$(openssl enc -base64 -A -in "$TEMPORAL_FOLDER/pub")'\"
+  ) {
+clientId,
+name
+  }
+}"
+  }' | tr -d $'\n' | \
+  curl \
+-s -w "%{http_code}" \
+-H "Content-Type: application/json" \
+-H "API-Key: {{ .Values.config.auth.userApiKey }}" \
+-o "$TEMPORAL_FOLDER/response.json" \
+--data @- \
+"{{ include "newrelic-super-agent.config.endpoints.systemIdentityRegistration" . }}"
+)
+if [ $HTTP_CODE -eq 200 ]; then
+  break
+fi
+echo "Error creating the new system identity. The API endpoint returned $HTTP_CODE. Retrying ($RETRY/3)..."
+sleep 2
+  done
+  # Retry mechanism failed. Exiting...
+  if [ $HTTP_CODE -ne 200 ]; then exit 1; fi
+
+  ERROR_MESSAGE=$(jq -r '.errors[0].message // "NOERROR"' "$TEMPORAL_FOLDER/response.json")
+  if [ "$ERROR_MESSAGE" != "NOERROR" ]; then
+echo "Error creating an identity: $ERROR_MESSAGE"
+exit 1
+  fi
+
+  kubectl create secret generic --dry-run -o json \
+{{ include "newrelic-super-agent.auth.secret.name" . }} \
+--from-literal=CLIENT_ID=$(jq -r '.data.systemIdentityCreate.clientId' "$TEMPORAL_FOLDER/response.json") \
+--from-file="private_key=$TEMPORAL_FOLDER/key" | \
+  jq '.metadata.labels |= {{ include "newrelic.common.labels" . | fromYaml | toJson }}' | \
+  kubectl apply -n "{{ .Release.Namespace }}" -f -
+---
+{{ if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+helm.sh/hook: pre-install
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [ "" ]
+resources: ["secrets"]
+verbs:
+  - create
+  - patch
+  - update
+  - get
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+helm.sh/hook: pre-install
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  namespace: {{ .Release.Namespace }}
+{{- end -}}
+
+{{ if include "newrelic.common.serviceAccount.create" . }}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  annotations:
+helm.sh/hook: pre-install
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+  {{- if include "newrelic.common.serviceAccount.annotations" . }}
+{{- include "newrelic.common.serviceAccount.annotations" . | nindent 4 }}
+  {{- end }}
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  namespace: {{ .Release.Namespace }}
+{{- end -}}
+{{- end -}}
+{{- end -}}
