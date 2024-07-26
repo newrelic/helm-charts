@@ -6,6 +6,36 @@ Return the name of the configMap holding the Super Agent's config. Defaults to r
 {{- end -}}
 
 {{- /*
+Return to which endpoint should the super agent ask to renew its token
+*/ -}}
+{{- define "newrelic-super-agent.config.endpoints.tokenRenewal" -}}
+{{- if include "newrelic.common.nrStaging" . -}}
+  https://system-identity-oauth.staging-service.newrelic.com/oauth2/token
+{{- else if .Values.euEndpoints -}}
+  https://system-identity-oauth.service.eu.newrelic.com/oauth2/token
+{{- else -}}
+  https://system-identity-oauth.service.newrelic.com/oauth2/token
+{{- end -}}
+{{- end -}}
+
+
+
+{{- /*
+Return to which endpoint should the super agent register its system identity
+*/ -}}
+{{- define "newrelic-super-agent.config.endpoints.systemIdentityRegistration" -}}
+{{- if include "newrelic.common.nrStaging" . -}}
+  https://staging-api.newrelic.com/graphql
+{{- else if .Values.euEndpoints -}}
+  https://api.eu.newrelic.com/graphql
+{{- else -}}
+  https://api.newrelic.com/graphql
+{{- end -}}
+{{- end -}}
+
+
+
+{{- /*
 Builds the configuration from config on the values and add more config options like
 cluster name, licenses, and custom attributes
 */ -}}
@@ -13,13 +43,6 @@ cluster name, licenses, and custom attributes
 {{- /*
 This snippet should execute always to block all unsupported features from the common-lirary that are not yet supported
 by this chart.
-
-TODO: Remove this file when the Super Agent supports licensekey as an envVar.
-*/ -}}
-{{ $licenseKey := include "newrelic.common.license._licenseKey" . }}
-{{- if or (include "newrelic.common.license._customSecretName" .) (include "newrelic.common.license._customSecretKey" .) -}}
-    {{- fail "Common library supports setting an external custom secret for the license but the super agent still does not support the license by an env var. You must specify a .licenseKey or .global.licenseKey" -}}
-{{- end -}}
 
 {{- /*
 TODO: There are a lot of TODOs to be made in this chart yet and some of them are going to impact the YAML that holds 
@@ -30,6 +53,18 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 {{- $config := .Values.config.superAgent.content | default dict -}}
 {{- $config = mustMergeOverwrite (dict "k8s" (dict "cluster_name" (include "newrelic.common.cluster" .))) $config -}}
 {{- $config = mustMergeOverwrite (dict "k8s" (dict "namespace" .Release.Namespace)) $config -}}
+
+{{- if .Values.config.superAgent.content -}}
+{{- if .Values.config.superAgent.content.opamp -}}
+{{- if .Values.config.auth }}
+{{- if .Values.config.auth.enabled -}}
+{{- $opamp := (dict "opamp" (dict "auth_config" (dict "token_url" (include "newrelic-super-agent.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-super-agent/keys/from-secret.key"))) -}}
+{{- $_ := $opamp | mustMergeOverwrite $config -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
 {{- $config | toYaml -}}
 {{- end -}}
 
@@ -53,31 +88,25 @@ readOnlyRootFilesystem: true
 {{- end -}}
 {{- end -}}
 
-{{- /*
-Check if authSecret.create is explicitly set to true. If authSecret is not empty and create is not defined, default it to false.
-*/ -}}
-{{- define "newrelic-super-agent.shouldCreateAuthSecret" -}}
-{{- $authSecret := .Values.authSecret }}
-{{- if and (hasKey $authSecret "create") }}
-  {{- toYaml $authSecret.create -}}
-{{- else if not (empty $authSecret) }}
-  {{- toYaml false -}}
-{{- else }}
-  {{- toYaml false -}}
-{{- end }}
-{{- end -}}
+
+
+
 
 {{- /*
-Check if authSecret.data and auth_key are provided. Fail if not.
+Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
-{{- define "newrelic-super-agent.authSecret.validateData" -}}
-{{- $authSecret := .Values.authSecret }}
-{{- if and $authSecret (not (empty $authSecret)) }}
-  {{- if not $authSecret.data }}
-    {{- fail "authSecret.data must be provided when authSecret.create is true" }}
-  {{- end }}
-  {{- if not $authSecret.data.auth_key }}
-    {{- fail "auth_key must be provided when authSecret.create is true" }}
-  {{- end }}
-{{- end }}
+{{- define "newrelic-super-agent.auth.organizationId" -}}
+{{- if not ((.Values.config).auth).organizationId -}}
+  {{- fail ".Values.config.auth.organizationId is required." -}}
+{{- end -}}
+{{- .Values.config.auth.organizationId -}}
+{{- end -}}
+
+
+
+{{- /*
+Releases with "-auth" suffix.
+*/ -}}
+{{- define "newrelic-super-agent.auth.secret.name" -}}
+  {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
 {{- end -}}
