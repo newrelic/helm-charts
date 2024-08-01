@@ -13,16 +13,13 @@ set:
   licenseKey: fake-license
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].env[0].name
-  value: NR_LICENSE_KEY
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
-  value: my-release-super-agent-deployment-license
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.key
-  value: licenseKey
+  path: spec.template.spec.containers[0].env[0]
+  value:
+name: NR_LICENSE_KEY
+valueFrom:
+  secretKeyRef:
+key: licenseKey
+name: my-release-super-agent-deployment-license
 template: templates/deployment-superagent.yaml
 
   - it: license key gets added as env var from custom secret
@@ -32,16 +29,13 @@ set:
   customSecretLicenseKey: "custom-key"
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].env[0].name
-  value: NR_LICENSE_KEY
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
-  value: custom-secret
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.key
-  value: custom-key
+  path: spec.template.spec.containers[0].env[0]
+  value:
+name: NR_LICENSE_KEY
+valueFrom:
+  secretKeyRef:
+key: custom-key
+name: custom-secret
 template: templates/deployment-superagent.yaml
  
   - it: api-key config gets added as env var from secret
@@ -55,16 +49,13 @@ opamp:
   endpoint: test
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].env[1].name
-  value: NR_SA_OPAMP__HEADERS__API-KEY
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
-  value: my-release-super-agent-deployment-license
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
-  value: licenseKey
+  path: spec.template.spec.containers[0].env[2]
+  value:
+name: NR_SA_OPAMP__HEADERS__API-KEY
+valueFrom:
+  secretKeyRef:
+key: licenseKey
+name: my-release-super-agent-deployment-license
 template: templates/deployment-superagent.yaml
 
   - it: api-key config gets added as env var from custom secret
@@ -79,14 +70,21 @@ opamp:
   endpoint: test
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].env[1].name
-  value: NR_SA_OPAMP__HEADERS__API-KEY
+  path: spec.template.spec.containers[0].env[2]
+  value:
+name: NR_SA_OPAMP__HEADERS__API-KEY
+valueFrom:
+  secretKeyRef:
+key: custom-key
+name: custom-secret
 template: templates/deployment-superagent.yaml
+  - it: cluster name added as env var
+set:
+  cluster: test
+asserts:
   - equal:
-  path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name
-  value: custom-secret
-template: templates/deployment-superagent.yaml
-  - equal:
-  path: spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key
-  value: custom-key
+  path: spec.template.spec.containers[0].env[1]
+  value:
+name: NR_CLUSTER_NAME
+value: test
 template: templates/deployment-superagent.yaml
