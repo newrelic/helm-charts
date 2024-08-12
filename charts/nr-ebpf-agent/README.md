@@ -78,13 +78,13 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
 | ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | ebpfAgent.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-agent"` | eBPF agent image to be deployed. |
-| ebpfAgent.image.tag | string | `"0.0.2"` | The tag of the eBPF agent image to be deployed. |
+| ebpfAgent.image.tag | string | `"0.0.3"` | The tag of the eBPF agent image to be deployed. |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocated to the container. |
 | ebpfAgent.resources.requests.cpu | string | `"100m"` | Min CPU allocated to the container. |
 | ebpfAgent.resources.requests.memory | string | `"250Mi"` | Min memory allocated to the container. |
 | ebpfClient.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always. |
 | ebpfClient.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-client"` | eBPF client image to be deployed. |
-| ebpfClient.image.tag | string | `"0.0.2"` | The tag of the eBPF client image to be deployed. |
+| ebpfClient.image.tag | string | `"0.0.4"` | The tag of the eBPF client image to be deployed. |
 | ebpfClient.resources.limits.memory | string | `"100Mi"` | Max memory allocated to the container. |
 | ebpfClient.resources.requests.cpu | string | `"50m"` | Min CPU allocated to the container. |
 | ebpfClient.resources.requests.memory | string | `"50Mi"` | Min memory allocated to the container. |
@@ -102,7 +102,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | otelCollector.resources.requests.memory | string | `"200Mi"` | Min memory allocated to the container. |
 | podLabels | object | `{}` | Additional labels for chart pods |
 | protocols | object | `{"amqp":true,"cass":true,"dns":true,"http":true,"kafka":true,"mongodb":true,"mysql":true,"pgsql":true,"redis":true}` | The protocols (and data export scripts) to enable for tracing in the socket_tracer. |
-| stirlingSources | string | `"socket_tracer,tcp_stats,jvm_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics and jvm_stats tracks JVM metrics. |
+| stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
 | tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |
 
