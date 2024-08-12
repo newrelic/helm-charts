@@ -84,7 +84,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | ebpfAgent.resources.requests.memory | string | `"250Mi"` | Min memory allocated to the container. |
 | ebpfClient.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always. |
 | ebpfClient.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-client"` | eBPF client image to be deployed. |
-| ebpfClient.image.tag | string | `"0.0.3"` | The tag of the eBPF client image to be deployed. |
+| ebpfClient.image.tag | string | `"0.0.4"` | The tag of the eBPF client image to be deployed. |
 | ebpfClient.resources.limits.memory | string | `"100Mi"` | Max memory allocated to the container. |
 | ebpfClient.resources.requests.cpu | string | `"50m"` | Min CPU allocated to the container. |
 | ebpfClient.resources.requests.memory | string | `"50Mi"` | Min memory allocated to the container. |
