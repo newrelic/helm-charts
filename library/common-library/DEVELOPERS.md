@@ -505,6 +505,49 @@ You just must have a template with these two lines:
 
 
 
+## _apikey.tpl
+### `newrelic.common.apiKey.secretName` and ### `newrelic.common.apiKey.secretKeyName`
+Returns the secret and key inside the secret where to read the API key.
+
+The common library will take care of using a user-provided custom secret or creating a secret that contains the insights key.
+
+To create the secret use `newrelic.common.apiKey.secret`.
+
+Usage:
+```mustache
+apiVersion: v1
+kind: Pod
+metadata:
+  name: statsd
+spec:
+  containers:
+  - name: statsd
+    env:
+    - name: "API_KEY"
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "newrelic.common.apiKey.secretName" . }}
+          key: {{ include "newrelic.common.apiKey.secretKeyName" . }}
+```
+
+
+
+## _apikey_secret.tpl
+### `newrelic.common.apiKey.secret`
+This function templates the secret that is used by agents and integrations with the API key provided by the user. It will
+template nothing (empty string) if the user provides a custom pair of secret name and key.
+
+This template also fails in case the user has not provided any API key or custom secret so no safety checks have to be done
+by chart writers.
+
+You just must have a template with these two lines:
+```mustache
+{{- /* Common library will take care of creating the secret or not. */ -}}
+{{- include "newrelic.common.apiKey.secret" . -}}
+```
+
+
+
 ## _region.tpl
 ### `newrelic.common.region.validate`
 Given a string, return a normalized name for the region if valid.

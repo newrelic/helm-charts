@@ -1,0 +1,9 @@
+# This is a dummy CM to test what API Key helpers of the common library return
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-apikey
+  namespace: {{ .Release.Namespace }}
+data:
+  apikey-secret-name: {{ include "newrelic.common.apiKey.secretName" . }}
+  apikey-secret-key-name: {{ include "newrelic.common.apiKey.secretKeyName" . }}

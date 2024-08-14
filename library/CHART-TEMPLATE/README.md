@@ -36,8 +36,11 @@ low data modes or any other quirk that it could have.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
+| apiKey | string | `"barqux"` |  |
 | cluster | string | `"barfoo"` |  |
 | containerSecurityContext | object | `{}` |  |
+| customAPIKeySecretKey | string | `""` |  |
+| customAPIKeySecretName | string | `""` |  |
 | customInsightsKeySecretKey | string | `""` |  |
 | customInsightsKeySecretName | string | `""` |  |
 | customSecretLicenseKey | string | `""` |  |
@@ -47,8 +50,11 @@ low data modes or any other quirk that it could have.
 | fedRamp.enabled | string | `nil` |  |
 | fullnameOverride | string | `""` |  |
 | global.affinity | object | `{}` |  |
+| global.apiKey | string | `""` |  |
 | global.cluster | string | `""` |  |
 | global.containerSecurityContext | object | `{}` |  |
+| global.customAPIKeySecretKey | string | `""` |  |
+| global.customAPIKeySecretName | string | `""` |  |
 | global.customInsightsKeySecretKey | string | `""` |  |
 | global.customInsightsKeySecretName | string | `""` |  |
 | global.customSecretLicenseKey | string | `""` |  |
