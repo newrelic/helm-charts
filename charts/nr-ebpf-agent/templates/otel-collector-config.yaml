@@ -79,6 +79,10 @@ data:
             - key: peer.service
               from_attribute: k8s.service.name
               action: upsert
+            # From the perspective of entity platform, we build the source guid from `parent.service.name` and the target from `service.name`. Hence server-side spans will show the client->server direction.
+            - key: parent.service.name
+              from_attribute: peer.service
+              action: upsert
             # Delete the k8s service name attribute
             - key: k8s.service.name
               action: delete
