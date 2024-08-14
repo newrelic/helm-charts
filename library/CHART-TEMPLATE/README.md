@@ -2,7 +2,7 @@
 
 # CHART-TEMPLATE
 
-![Version: 1.2.0](https://img.shields.io/badge/Version-1.2.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.16.0](https://img.shields.io/badge/AppVersion-1.16.0-informational?style=flat-square)
+![Version: 1.3.0](https://img.shields.io/badge/Version-1.3.0-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 1.16.0](https://img.shields.io/badge/AppVersion-1.16.0-informational?style=flat-square)
 
 A Helm chart for Kubernetes showing how to use/implement the common-library
 
@@ -38,6 +38,8 @@ low data modes or any other quirk that it could have.
 | affinity | object | `{}` |  |
 | cluster | string | `"barfoo"` |  |
 | containerSecurityContext | object | `{}` |  |
+| customInsightsKeySecretKey | string | `""` |  |
+| customInsightsKeySecretName | string | `""` |  |
 | customSecretLicenseKey | string | `""` |  |
 | customSecretName | string | `""` |  |
 | deploymentAnnotations | object | `{}` |  |
@@ -47,6 +49,8 @@ low data modes or any other quirk that it could have.
 | global.affinity | object | `{}` |  |
 | global.cluster | string | `""` |  |
 | global.containerSecurityContext | object | `{}` |  |
+| global.customInsightsKeySecretKey | string | `""` |  |
+| global.customInsightsKeySecretName | string | `""` |  |
 | global.customSecretLicenseKey | string | `""` |  |
 | global.customSecretName | string | `""` |  |
 | global.deploymentAnnotations | object | `{}` |  |
@@ -55,6 +59,7 @@ low data modes or any other quirk that it could have.
 | global.hostNetwork | string | `nil` |  |
 | global.image.pullPolicy | list | `[]` |  |
 | global.image.registry | string | `nil` |  |
+| global.insightsKey | string | `""` |  |
 | global.labels | object | `{}` |  |
 | global.licenseKey | string | `""` |  |
 | global.lowDataMode | string | `nil` |  |
@@ -66,6 +71,7 @@ low data modes or any other quirk that it could have.
 | global.priorityClassName | string | `""` |  |
 | global.privileged | string | `nil` |  |
 | global.proxy | string | `nil` |  |
+| global.region | string | `""` |  |
 | global.serviceAccount.annotations | string | `nil` |  |
 | global.serviceAccount.create | string | `nil` |  |
 | global.serviceAccount.name | string | `nil` |  |
@@ -77,6 +83,7 @@ low data modes or any other quirk that it could have.
 | image.repository | string | `"nginx"` |  |
 | image.tag | string | `""` |  |
 | imagePullSecrets | list | `[]` |  |
+| insightsKey | string | `"foobaz"` |  |
 | labels | object | `{}` |  |
 | licenseKey | string | `"foobar"` |  |
 | lowDataMode | string | `nil` |  |
@@ -89,6 +96,7 @@ low data modes or any other quirk that it could have.
 | priorityClassName | string | `""` |  |
 | privileged | string | `nil` |  |
 | proxy | string | `nil` |  |
+| region | string | `""` |  |
 | resources | object | `{}` |  |
 | service.port | int | `80` |  |
 | service.type | string | `"ClusterIP"` |  |

@@ -505,6 +505,47 @@ You just must have a template with these two lines:
 
 
 
+## _region.tpl
+### `newrelic.common.region.validate`
+Given a string, return a normalized name for the region if valid.
+
+This function does not need the context of the chart, only the value to be validated. The region returned
+honors the region [definition of the newrelic-client-go implementation](https://github.com/newrelic/newrelic-client-go/blob/cbe3e4cf2b95fd37095bf2ffdc5d61cffaec17e2/pkg/region/region_constants.go#L8-L21)
+so (as of 2024/09/14) it returns the region as "US", "EU", "Staging", or "Local".
+
+In case the region provided does not match these 4, the helper calls `fail` and abort the templating.
+
+Usage:
+```mustache
+{{ include "newrelic.common.region.validate" "us" }}
+```
+
+### `newrelic.common.region`
+It reads global and local variables for `region`:
+```yaml
+global:
+  region:  # Note that this can be empty (nil) or "" (empty string)
+region:  # Note that this can be empty (nil) or "" (empty string)
+```
+
+Be careful: chart writers should NOT PUT ANY VALUE for this library to work properly. If in your
+values a `region` is defined, the global one is going to be always ignored.
+
+This function gives protection so it enforces users to give the license key as a value in their
+`values.yaml` or specify a global or local `region` value. To understand how the `region` value
+works, read the documentation of `newrelic.common.region.validate`.
+
+The function will change the region from US, EU or Staging based of the license key and the
+`nrStaging` toggle. Whichever region is computed from the license/toggle can be overridden by
+the `region` value.
+
+Usage:
+```mustache
+{{ include "newrelic.common.region" . }}
+```
+
+
+
 ## _low-data-mode.tpl
 ### `newrelic.common.lowDataMode`
 Like almost everything in this library, it reads global and local variables:
