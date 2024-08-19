@@ -16,8 +16,9 @@ sources:
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
+  - https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent
 
-version: 5.0.89
+version: 5.0.90
 
 dependencies:
   - name: newrelic-infrastructure
@@ -83,6 +84,11 @@ dependencies:
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
     version: 2.11.1
+
+  - name: nr-ebpf-agent
+    repository: https://newrelic.github.io/nr-ebpf-agent
+    condition: nr-ebpf-agent.enabled
+    version: 0.1.3
 
 maintainers:
   - name: juanjjaramillo
