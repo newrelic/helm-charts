@@ -117,7 +117,7 @@ helm upgrade --install newrelic-bundle newrelic/nri-bundle \
 See [values.yaml](values.yaml) for the default values
 
 | Parameter| Description  | Default |
-|--------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
+| ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------- |
 | `global.cluster` - `cluster` | The cluster name for the Kubernetes cluster. | |
 | `global.licenseKey` - `licenseKey`   | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified.| |
 | `global.customSecretName` - `customSecretName`   | Name of the Secret object where the license key is stored| |
@@ -163,6 +163,7 @@ See [values.yaml](values.yaml) for the default values
 | `fluentBit.persistence.persistentVolume.extra.claim` | On "persistentVolume" [persistence mode](#Fluent-Bit-persistence-modes), allows to add extra properties to the PersistentVolumeClaim (if created).   | |
 | `daemonSet.annotations`  | The annotations to add to the `DaemonSet`.   | |
 | `podAnnotations` | The annotations to add to the `DaemonSet` created `Pod`s.| |
+| `hostNetwork`| Set the hostNetwork property for fluentbit pods. | |
 | `enableLinux`| Enable log collection from Linux containers. This is the default behavior. In case you are only interested of collecting logs from Windows containers, set this to `false`.  | `true`  |
 | `enableWindows`  | Enable log collection from Windows containers. Please refer to the [Windows support](#windows-support) section for more details. | `false` |
 | `fluentBit.config.service`   | Contains fluent-bit.conf Service config  | |

@@ -47,6 +47,9 @@ spec:
   imagePullSecrets:
 {{- . | nindent 8 }}
   {{- end }}
+  {{- if $.Values.hostNetwork }}
+  hostNetwork: {{ $.Values.hostNetwork }}
+  {{- end }}
   {{- if $.Values.windows.initContainers }}
   initContainers:
 {{ toYaml $.Values.windows.initContainers | indent 8 }}
