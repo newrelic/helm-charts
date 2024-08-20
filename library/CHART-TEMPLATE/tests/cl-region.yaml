@@ -20,6 +20,16 @@ tests:
           path: data.region
           value: US
 
+  - it: Detects an EU license key
+    set:
+      global: null
+      region: null
+      licenseKey: eu01xx77XXXXf1XXXX0bXXXX6aXXXX9eFFFFNRAL
+    asserts:
+      - equal:
+          path: data.region
+          value: EU
+
   - it: Set region (globally)
     set:
       global:
