@@ -17,13 +17,13 @@ sources:
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 5.0.88
+version: 5.0.90
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.34.3
+    version: 3.34.4
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -38,7 +38,7 @@ dependencies:
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.20.3
+    version: 4.20.4
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
@@ -53,12 +53,12 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 3.10.2
+    version: 3.10.4
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.22.3
+    version: 1.22.4
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
