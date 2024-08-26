@@ -36,29 +36,27 @@ low data modes or any other quirk that it could have.
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` |  |
-| apiKey | string | `"barqux"` |  |
 | cluster | string | `"barfoo"` |  |
 | containerSecurityContext | object | `{}` |  |
-| customAPIKeySecretKey | string | `""` |  |
-| customAPIKeySecretName | string | `""` |  |
 | customInsightsKeySecretKey | string | `""` |  |
 | customInsightsKeySecretName | string | `""` |  |
 | customSecretLicenseKey | string | `""` |  |
 | customSecretName | string | `""` |  |
+| customUserKeySecretKey | string | `""` |  |
+| customUserKeySecretName | string | `""` |  |
 | deploymentAnnotations | object | `{}` |  |
 | dnsconfig | object | `{}` |  |
 | fedRamp.enabled | string | `nil` |  |
 | fullnameOverride | string | `""` |  |
 | global.affinity | object | `{}` |  |
-| global.apiKey | string | `""` |  |
 | global.cluster | string | `""` |  |
 | global.containerSecurityContext | object | `{}` |  |
-| global.customAPIKeySecretKey | string | `""` |  |
-| global.customAPIKeySecretName | string | `""` |  |
 | global.customInsightsKeySecretKey | string | `""` |  |
 | global.customInsightsKeySecretName | string | `""` |  |
 | global.customSecretLicenseKey | string | `""` |  |
 | global.customSecretName | string | `""` |  |
+| global.customUserKeySecretKey | string | `""` |  |
+| global.customUserKeySecretName | string | `""` |  |
 | global.deploymentAnnotations | object | `{}` |  |
 | global.dnsconfig | object | `{}` |  |
 | global.fedRamp.enabled | string | `nil` |  |
@@ -82,6 +80,7 @@ low data modes or any other quirk that it could have.
 | global.serviceAccount.create | string | `nil` |  |
 | global.serviceAccount.name | string | `nil` |  |
 | global.tolerations | list | `[]` |  |
+| global.userKey | string | `""` |  |
 | global.verboseLog | string | `nil` |  |
 | hostNetwork | string | `nil` |  |
 | image.pullPolicy | string | `"IfNotPresent"` |  |
@@ -110,6 +109,7 @@ low data modes or any other quirk that it could have.
 | serviceAccount.create | string | `nil` |  |
 | serviceAccount.name | string | `nil` |  |
 | tolerations | list | `[]` |  |
+| userKey | string | `"barqux"` |  |
 | verboseLog | string | `nil` |  |
 
 ## Maintainers
