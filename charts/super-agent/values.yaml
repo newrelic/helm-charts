@@ -99,7 +99,7 @@ super-agent-deployment:
     # @default -- `false`
     enabled:
 
-  # -- (bool) TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+  # -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
   # @default -- `false`
   verboseLog:
 
@@ -108,6 +108,9 @@ super-agent-deployment:
   cleanupManagedResources: true
 
   config:
+    opamp:
+      enable: true
+
     # -- Configuration for the Super Agent.
     # @default -- See `values.yaml`
     superAgent:
@@ -252,3 +255,14 @@ flux2:
   # user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on
   # the whole cluster.
   watchAllNamespaces: false
+
+# -- Set of experimental configurations for super-agent chart.
+# @default -- See `values.yaml`
+experimental:
+  # Forces which is the minimal supported Kubernetes version for this chart without failing.
+  # Useful for development, testing, or if the chart is being templated in a unsupported way.
+  forceMinimumSupportedVersion: ""
+  # In case use uses `helm template`, helm uses the latest version supported by `helm`. This allows to
+  # change that version. Useful for testing, developing and to change some templates from subcharts that
+  # change manifests depending on the version of the cluster.
+  forceKubeVersion: ""

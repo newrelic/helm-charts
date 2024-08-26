@@ -111,16 +111,32 @@ the config.
 If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for things that are yet to be implemented.
 */ -}}
 
-{{- $opamp := (dict "endpoint" (include "newrelic-super-agent.config.endpoints.opamp" .)) -}}
-{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
+{{- /* Empty config so we can populate it as we enable and disable snippets. */ -}}
+{{- $config := dict -}}
 
-{{- if .Values.config.auth.enabled -}}
-  {{- $auth_config := dict "token_url" (include "newrelic-super-agent.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-super-agent/keys/from-secret.key" -}}
-  {{- $_ := mustMerge $opamp (dict "auth_config" $auth_config) -}}
+{{- /* Add to config k8s cluster and namespace config */ -}}
+{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
+{{- $_ := mustMerge $config (dict "k8s" $k8s) -}}
+
+{{- /* Add opamp if enabled */ -}}
+{{- if ((.Values.config).opamp).enable -}}
+  {{- $opamp := (dict "endpoint" (include "newrelic-super-agent.config.endpoints.opamp" .)) -}}
+
+  {{- /* Add auth to opamp if it is enabled */ -}}
+  {{- if ((.Values.config).auth).enabled -}}
+    {{- $auth_config := dict "token_url" (include "newrelic-super-agent.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-super-agent/keys/from-secret.key" -}}
+    {{- $_ := mustMerge $opamp (dict "auth_config" $auth_config) -}}
+  {{- end -}}
+
+  {{- $_ := mustMerge $config (dict "opamp" $opamp) -}}
 {{- end -}}
 
-{{- $config := dict "opamp" $opamp "k8s" $k8s "agents" (include "newrelic-super-agent.config.agents.yaml" . | fromYaml) -}}
 
+{{- /* Add subagents to the config */ -}}
+{{- $agents := include "newrelic-super-agent.config.agents.yaml" . | fromYaml -}}
+{{- $_ := mustMerge $config (dict "agents" $agents) -}}
+
+{{- /* Overwrite $config with everything in `config.superAgent.content` if present */ -}}
 {{- $_ := deepCopy (.Values.config.superAgent.content | default dict) | mustMergeOverwrite $config -}}
 {{- $config | toYaml -}}
 {{- end -}}
