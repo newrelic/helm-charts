@@ -1,4 +1,4 @@
-suite: test super agent deployment's securityContext
+suite: test super agent deployment's env vars are injected
 templates:
   - templates/deployment-superagent.yaml
   - templates/configmap-superagent-config.yaml
@@ -27,6 +27,7 @@ tests:
       cluster: test
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
+      region: us  # With a custom secret we cannot know the region so we have to ask for it.
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -63,6 +64,7 @@ tests:
       cluster: test
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
+      region: us  # With a custom secret we cannot know the region so we have to ask for it.
       config:
         superAgent:
           content: 
