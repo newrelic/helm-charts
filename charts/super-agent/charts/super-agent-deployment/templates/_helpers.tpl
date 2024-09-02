@@ -26,8 +26,12 @@ open-telemetry:
   type: newrelic/io.opentelemetry.collector:0.2.0
   content:
     chart_values:
-      licenseKey: ${nr-env:NR_LICENSE_KEY}
-      cluster: ${nr-env:NR_CLUSTER_NAME}
+      global:
+        licenseKey: ${nr-env:NR_LICENSE_KEY}
+        cluster: ${nr-env:NR_CLUSTER_NAME}
+        nrStaging: ${nr-env:NR_STAGING}
+        verboseLog: ${nr-env:NR_VERBOSE}
+        region: ${nr-env:NR_REGION}
 {{- end -}}
 {{- end -}}
 

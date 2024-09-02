@@ -18,11 +18,11 @@ spec:
         - name: register-system-identity
           image: alpine 
           env:
-            - name: API_KEY
+            - name: USER_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "newrelic.common.apiKey.secretName" . }}
-                  key: {{ include "newrelic.common.apiKey.secretKeyName" . }}
+                  name: {{ include "newrelic.common.userKey.secretName" . }}
+                  key: {{ include "newrelic.common.userKey.secretKeyName" . }}
           command:
             - ash
           args:
@@ -52,7 +52,7 @@ spec:
                   curl \
                     -s -w "%{http_code}" \
                     -H "Content-Type: application/json" \
-                    -H "API-Key: $API_KEY" \
+                    -H "API-Key: $USER_KEY" \
                     -o "$TEMPORAL_FOLDER/response.json" \
                     --data @- \
                     "{{ include "newrelic-super-agent.config.endpoints.systemIdentityRegistration" . }}"
