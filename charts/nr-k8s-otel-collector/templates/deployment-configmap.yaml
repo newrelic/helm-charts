@@ -526,7 +526,7 @@ data:
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/exclude_zero_value_kube_pod_status_phase
             - filter/exclude_zero_value_kube_pod_container_status
-            {{- if include "newrelic.common.lowDataMode" . }}
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
@@ -549,7 +549,7 @@ data:
             - prometheus
           processors:
             - metricstransform/k8s_cluster_info
-            {{- if include "newrelic.common.lowDataMode" . }}
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/apiserver

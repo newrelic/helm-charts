@@ -571,7 +571,7 @@ data:
             - prometheus
             {{- end }}
           processors:
-            {{- if include "newrelic.common.lowDataMode" . }}
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
@@ -594,7 +594,7 @@ data:
             - resourcedetection/env
             - resourcedetection/cloudproviders
             - resource
-            {{- if include "newrelic.common.lowDataMode" . }}
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
