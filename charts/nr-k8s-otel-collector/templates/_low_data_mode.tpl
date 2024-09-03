@@ -1,5 +1,5 @@
 {{- /*
-This helper detect if the user set a value for the LowDataMode toogle and use it or defaults to `true`.
+This helper detect if the user set a value for the LowDataMode toggle and use it or defaults to `true`.
 */ -}}
 {{- define "nrKubernetesOtel.lowDataMode" -}}
 {{- $userSetAValue := false -}}
