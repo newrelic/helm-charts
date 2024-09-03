@@ -90,9 +90,9 @@ spec:
             - name: NR_CLUSTER_NAME
               value: {{ include "newrelic.common.cluster" . }}
             - name: NR_STAGING
-              value: {{ include "newrelic.common.nrStaging.value" . }}
+              value: {{ include "newrelic.common.nrStaging.value" . | quote }}
             - name: NR_VERBOSE
-              value: {{ include "newrelic.common.verboseLog.valueAsBoolean" . }}
+              value: {{ include "newrelic.common.verboseLog.valueAsBoolean" . | quote }}
             - name: NR_REGION
               value: {{ include "newrelic.common.region" . }}
           {{- /* ----- Variables used to send data downstream to subagents */}}

@@ -1,4 +1,26 @@
 {{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . -}}
+{{- /*
+User key secret is used only in the step that create the system identity.
+The secret that is created by the common-library does not allow to add annotations so the secret is removed
+once the installation hook is finished, so I have to add it as a hook.
+*/ -}}
+{{- if not (include "newrelic.common.userKey._customSecretName" .) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    helm.sh/hook: pre-install # TODO we cannot enable auth after installation, we should add pre-upgrade and check if the secret exists
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1010"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
+  namespace: {{ .Release.Namespace }}
+data:
+  {{ include "newrelic.common.userKey.secretKeyName" . }}: {{ include "newrelic.common.userKey._userKey" . | b64enc }}
+{{- end }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -21,7 +43,11 @@ spec:
             - name: USER_KEY
               valueFrom:
                 secretKeyRef:
+                  {{- if include "newrelic.common.userKey._customSecretName" . }}
                   name: {{ include "newrelic.common.userKey.secretName" . }}
+                  {{- else }}
+                  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
+                  {{- end }}
                   key: {{ include "newrelic.common.userKey.secretKeyName" . }}
           command:
             - ash
