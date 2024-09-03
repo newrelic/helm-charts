@@ -37,7 +37,6 @@ As of the creation of the chart, it has no particularities and this section can 
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| experimental | object | See `values.yaml` | Set of experimental configurations for super-agent chart. |
 | flux2 | object | See `values.yaml` | Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml |
 | flux2.clusterDomain | string | `"cluster.local"` | This is the domain name of the cluster. |
 | flux2.enabled | bool | `true` | Enable or disable FluxCD installation. New Relic' Super Agent need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Super Agent. |
