@@ -10,7 +10,7 @@ apiVersion: v1
 kind: Secret
 metadata:
   annotations:
-    helm.sh/hook: pre-install # TODO we cannot enable auth after installation, we should add pre-upgrade and check if the secret exists
+    helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
     helm.sh/hook-weight: "-1010"
   labels:
@@ -25,7 +25,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   annotations:
-    helm.sh/hook: pre-install # TODO we cannot enable auth after installation, we should add pre-upgrade and check if the secret exists
+    helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
     helm.sh/hook-weight: "-1005"
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "system-identity-installer" ) }}
@@ -54,9 +54,16 @@ spec:
           args:
             - -c
             - |
-              set -uo pipefail
+              set -euo pipefail
               apk update
-              apk add curl kubectl jq openssl
+              apk add kubectl
+
+              if kubectl get secret {{ include "newrelic-super-agent.auth.secret.name" . }}; then
+                echo System identity already exists. Exiting gracefully...
+                exit 0
+              fi
+
+              apk add curl jq openssl
               TEMPORAL_FOLDER=gen-folder
               mkdir $TEMPORAL_FOLDER
               openssl genrsa -out "$TEMPORAL_FOLDER/key" 4096
