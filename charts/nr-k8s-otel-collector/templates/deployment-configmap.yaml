@@ -445,6 +445,12 @@ data:
             action: upsert
             value: 'true'
 
+      transform/events:
+        log_statements:
+          - context: log
+            statements:
+              - set(attributes["event.source.host"], resource.attributes["k8s.node.name"])
+
       transform/low_data_mode_inator:
         metric_statements:
           - context: metric
@@ -576,6 +582,7 @@ data:
           receivers:
             - k8s_events
           processors:
+            - transform/events
             - resource/events
             - batch
           exporters:
