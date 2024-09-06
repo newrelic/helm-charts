@@ -26,6 +26,7 @@ here is a list of components that this chart installs and where you can find mor
 | [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |  | Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin allows you to export data from Pixie to New Relic for long-term data retention. |
 | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |  | Is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for manual instrumentation. |
 | [k8s-agents-operator](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) | | (Preview) Streamlines full-stack observability for Kubernetes environments by automating APM instrumentation alongside Kubernetes agent deployment. |
+| [nr-ebpf-agent](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) | | (Preview) Provides a zero instrumentation APM-lite experience for Kubernetes environments. |
 
 ## Configure components
 
@@ -188,6 +189,7 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 | newrelic-logging.enabled | bool | `false` | Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |
 | newrelic-pixie.enabled | bool | `false` | Install the [`newrelic-pixie`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |
 | newrelic-prometheus-agent.enabled | bool | `false` | Install the [`newrelic-prometheus-agent` chart](https://github.com/newrelic/newrelic-prometheus-configurator/tree/main/charts/newrelic-prometheus-agent) |
+| nr-ebpf-agent.enabled | bool | `false` | Install the [`nr-ebpf-agent` chart](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) |
 | nri-kube-events.enabled | bool | `false` | Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) |
 | nri-metadata-injection.enabled | bool | `true` | Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) |
 | nri-prometheus.enabled | bool | `false` | Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |
