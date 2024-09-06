@@ -68,7 +68,7 @@ Return to which endpoint should the super agent ask to renew its token
 {{- if eq $region "Staging" -}}
   https://system-identity-oauth.staging-service.newrelic.com/oauth2/token
 {{- else if eq $region "EU" -}}
-  https://system-identity-oauth.service.eu.newrelic.com/oauth2/token
+  https://system-identity-oauth.service.newrelic.com/oauth2/token
 {{- else if eq $region "US" -}}
   https://system-identity-oauth.service.newrelic.com/oauth2/token
 {{- else if eq $region "Local" -}}
