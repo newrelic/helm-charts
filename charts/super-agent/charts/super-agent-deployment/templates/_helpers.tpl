@@ -122,8 +122,8 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
-{{- /* Add opamp if auth enabled */ -}}
-{{- if ((.Values.config).auth).enabled -}}
+{{- /* Add opamp if enabled */ -}}
+{{- if ((.Values.config).opamp).enabled -}}
   {{- $opamp := (dict "endpoint" (include "newrelic-super-agent.config.endpoints.opamp" .)) -}}
 
   {{- $auth_config := dict "token_url" (include "newrelic-super-agent.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-super-agent/keys/from-secret.key" -}}
@@ -205,7 +205,7 @@ Helper to toggle the creation of the job that creates and registers the system i
 {{- $privateKey := include "newrelic-super-agent.auth.secret.privateKey.data" . -}}
 {{- $clientId := include "newrelic-super-agent.auth.secret.clientId.data" . -}}
 
-{{- if and ((.Values.config).auth).enabled (((.Values.config).auth).secret).create (not $privateKey) (not $clientId) -}}
+{{- if and ((.Values.config).opamp).enabled (((.Values.config).auth).secret).create (not $privateKey) (not $clientId) -}}
   true
 {{- end -}}
 {{- end -}}
@@ -216,7 +216,7 @@ Helper to toggle the creation of the job that creates and registers the system i
 Helper to toggle the creation of the secret that has the system identity as values.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.shouldTemplate" -}}
-{{- if and ((.Values.config).auth).enabled (((.Values.config).auth).secret).create -}}
+{{- if and ((.Values.config).opamp).enabled (((.Values.config).auth).secret).create -}}
   {{- $privateKey := include "newrelic-super-agent.auth.secret.privateKey.data" . -}}
   {{- $clientId := include "newrelic-super-agent.auth.secret.clientId.data" . -}}
 

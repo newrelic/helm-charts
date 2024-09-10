@@ -13,6 +13,26 @@ tests:
     asserts:
       - hasDocuments:
           count: 0
+
+  - it: opamp can be disabled
+    set:
+      cluster: my-cluster
+      config:
+        opamp:
+          enabled: false
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents:
+              open-telemetry:
+                agent_type: newrelic/io.opentelemetry.collector:0.2.0
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+
   - it: super agent's config always include cluster_name, namespace and defaults
     set:
       cluster: my-cluster
@@ -36,6 +56,7 @@ tests:
               endpoint: https://opamp.service.newrelic.com/v1/opamp
             server:
               enabled: true
+
   - it: super agent's config templates
     set:
       cluster: my-cluster
@@ -64,6 +85,7 @@ tests:
               enabled: true
             test: value
             test2: value2
+
   - it: cluster_name and namespace from config have precedence
     set:
       cluster: my-cluster
@@ -95,6 +117,7 @@ tests:
               enabled: true
             test: value
             test2: value2
+
   - it: super agent's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
     set:
       cluster: my-cluster
