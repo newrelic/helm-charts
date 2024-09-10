@@ -12,7 +12,7 @@ Return to which endpoint should the super agent ask to renew its token
 {{- if include "newrelic.common.nrStaging" . -}}
   https://system-identity-oauth.staging-service.newrelic.com/oauth2/token
 {{- else if .Values.euEndpoints -}}
-  https://system-identity-oauth.service.eu.newrelic.com/oauth2/token
+  https://system-identity-oauth.service.newrelic.com/oauth2/token
 {{- else -}}
   https://system-identity-oauth.service.newrelic.com/oauth2/token
 {{- end -}}
