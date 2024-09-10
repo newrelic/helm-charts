@@ -113,7 +113,35 @@ tests:
               auth_config:
                 private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
                 provider: local
-                token_url: https://system-identity-oauth.service.eu.newrelic.com/oauth2/token
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
             server:
               enabled: true
+
+  - it: default config for super agent can be overridden
+    template: templates/configmap-superagent-config.yaml
+    set:
+      cluster: my-cluster
+      region: eu
+      config:
+        subAgents:
+          test-0:
+            type: org.newrelic/test:0.0.0
+            content:
+              a: test
+              value: 0
+          test-1:
+            type: org.newrelic/test:0.0.1
+            content:
+              a: test
+              value: 1
+          test-2:
+            type: org.newrelic/test:0.0.2
+            content:
+              a: test
+              aYAML:
+                canI: HaveSomeYAML
+    asserts:
+      - matchRegex:
+          path: data["local_config"]
+          pattern: "agents:\n  test-0:\n    agent_type: org.newrelic/test:0.0.0\n  test-1:\n    agent_type: org.newrelic/test:0.0.1\n  test-2:\n    agent_type: org.newrelic/test:0.0.2"

@@ -8,7 +8,7 @@ Return the name of the configMap holding the Super Agent's config. Defaults to r
 
 
 {{- /*
-Return the agents part that should go in the super agent config. It is created from `.Values.config.subAgents`.
+Test that the value of `.Values.config.subAgents` exists and its valid. If empty, returns the default.
 */ -}}
 {{- define "newrelic-super-agent.config.agents.yaml" -}}
 {{- if (.Values.config).subAgents -}}
@@ -17,7 +17,7 @@ Return the agents part that should go in the super agent config. It is created f
   {{- if not ($subAgentConfig).type -}}
     {{- fail (printf "Agent %s does not have agent type" $subAgentName) -}}
   {{- end -}}
-  {{- $_ := dict $subAgentName (dict "agent_type" $subAgentConfig.type "content" $subAgentConfig.content) | mustMerge $agents -}}
+  {{- $agents = mustMerge $agents (dict $subAgentName $subAgentConfig) -}}
 {{- end -}}
 {{- $agents | toYaml -}}
 {{- else -}}
