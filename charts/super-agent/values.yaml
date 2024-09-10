@@ -242,3 +242,14 @@ flux2:
   # user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on
   # the whole cluster.
   watchAllNamespaces: false
+
+# -- Set of experimental configurations for super-agent chart.
+# @default -- See `values.yaml`
+experimental:
+  # Forces which is the minimal supported Kubernetes version for this chart without failing.
+  # Useful for development, testing, or if the chart is being templated in a unsupported way.
+  forceMinimumSupportedVersion: ""
+  # In case use uses `helm template`, helm uses the latest version supported by `helm`. This allows to
+  # change that version. Useful for testing, developing and to change some templates from subcharts that
+  # change manifests depending on the version of the cluster.
+  forceKubeVersion: ""

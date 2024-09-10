@@ -3,7 +3,11 @@ name: super-agent
 description: Bootstraps New Relic' Super Agent
 
 type: application
-version: 0.0.18-beta
+version: 0.0.19-beta
+
+# TODO: Can we set renovatebot here with a regex?
+# Ref: https://github.com/fluxcd/flux2/blob/cc87ffd66e243fb85fc275792fa3708e44048048/cmd/flux/check.go#L62-L64
+kubeVersion: ">=1.28.0-0"
 
 dependencies:
   - name: flux2
@@ -11,7 +15,7 @@ dependencies:
     version: 2.13.0
     condition: flux2.enabled
   - name: super-agent-deployment
-    version: 0.0.22-beta
+    version: 0.0.23-beta
     condition: super-agent-deployment.enabled
     # The following dependency is needed as sub-dependency of super-agent-deployment
   - name: common-library
@@ -25,8 +29,6 @@ keywords:
 maintainers:
   - name: sigilioso
     url: https://github.com/sigilioso
-  - name: gsanchezgavier
-    url: https://github.com/gsanchezgavier
   - name: kang-makes
     url: https://github.com/kang-makes
   - name: paologallinaharbur
