@@ -120,27 +120,27 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
-{{- $_ := mustMerge $config (dict "k8s" $k8s) -}}
+{{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- /* Add opamp if auth enabled */ -}}
 {{- if ((.Values.config).auth).enabled -}}
   {{- $opamp := (dict "endpoint" (include "newrelic-super-agent.config.endpoints.opamp" .)) -}}
 
   {{- $auth_config := dict "token_url" (include "newrelic-super-agent.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-super-agent/keys/from-secret.key" -}}
-  {{- $_ := mustMerge $opamp (dict "auth_config" $auth_config) -}}
+  {{- $opamp = mustMerge $opamp (dict "auth_config" $auth_config) -}}
 
-  {{- $_ := mustMerge $config (dict "opamp" $opamp) -}}
+  {{- $config = mustMerge $config (dict "opamp" $opamp) -}}
 {{- end -}}
 
 {{- /* Add subagents to the config */ -}}
 {{- $agents := dict -}}
 {{- range $subagent, $object := (include "newrelic-super-agent.config.agents.yaml" . | fromYaml) -}}
-  {{- $_ := mustMerge $agents (dict $subagent (dict "agent_type" $object.type)) -}}
+  {{- $agents = mustMerge $agents (dict $subagent (dict "agent_type" $object.type)) -}}
 {{- end -}}
-{{- $_ := mustMerge $config (dict "agents" $agents) -}}
+{{- $config = mustMerge $config (dict "agents" $agents) -}}
 
 {{- /* Overwrite $config with everything in `config.superAgent.content` if present */ -}}
-{{- $_ := deepCopy (.Values.config.superAgent.content | default dict) | mustMergeOverwrite $config -}}
+{{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).superAgent).content | default dict)) -}}
 {{- $config | toYaml -}}
 {{- end -}}
 
