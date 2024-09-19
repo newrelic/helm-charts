@@ -88,6 +88,10 @@ spec:
                   {{- end }}
             - name: CLUSTER_NAME
               value: {{ include "newrelic-logging.cluster" . }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
             - name: LOG_LEVEL
               value: {{ .Values.fluentBit.logLevel | quote }}
             - name: LOG_PARSER
@@ -116,10 +120,6 @@ spec:
               value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
             - name: RETRY_LIMIT
               value: {{ .Values.fluentBit.retryLimit | quote }}
-            - name: NODE_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: spec.nodeName
             - name: HOSTNAME
               valueFrom:
                 fieldRef:
