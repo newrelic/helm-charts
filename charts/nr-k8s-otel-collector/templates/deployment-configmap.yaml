@@ -467,6 +467,8 @@ data:
           - key: net.host.port
             action: delete
 
+      cumulativetodelta:
+
       k8sattributes:
         auth_type: "serviceAccount"
         passthrough: false
@@ -515,6 +517,8 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
+      logging:
+        verbosity: detailed
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -567,9 +571,11 @@ data:
             - k8sattributes
             - attributes/self
             - memory_limiter
+            - cumulativetodelta
             - batch
           exporters:
             - otlphttp/newrelic
+            - logging
         {{- end }}
         # TODO(chris): revisit using the gateway collector
         # logs:

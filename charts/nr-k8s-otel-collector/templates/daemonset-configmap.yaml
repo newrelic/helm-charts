@@ -51,17 +51,18 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
-          processes:
-          process:
-            metrics:
-              process.cpu.utilization:
-                enabled: true
-              process.cpu.time:
-                enabled: false
-            mute_process_name_error: true
-            mute_process_exe_error: true
-            mute_process_io_error: true
-            mute_process_user_error: true
+          # Uncomment to enable process metrics, which can be noisy but valuable.
+          # processes:
+          # process:
+          #   metrics:
+          #     process.cpu.utilization:
+          #       enabled: true
+          #     process.cpu.time:
+          #       enabled: false
+          #   mute_process_name_error: true
+          #   mute_process_exe_error: true
+          #   mute_process_io_error: true
+          #   mute_process_user_error: true
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
@@ -535,16 +536,21 @@ data:
          limit_percentage: 80
          spike_limit_percentage: 25
 
+      cumulativetodelta:
+
       batch:
         send_batch_max_size: 1000
         timeout: 30s
         send_batch_size : 800
+      
 
     exporters:
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
+      logging:
+        verbosity: detailed
       # TODO(chris): revisit using the gateway collector
       # otlphttp:
       #   endpoint: "nr-k8s-otel-collector-gateway"
@@ -601,9 +607,11 @@ data:
             - k8sattributes
             - attributes/self
             - memory_limiter
+            - cumulativetodelta
             - batch
           exporters:
             - otlphttp/newrelic
+            - logging
         {{- end }}
         {{- if .Values.receivers.filelog.enabled }}
         logs:
