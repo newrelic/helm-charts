@@ -517,8 +517,6 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      logging:
-        verbosity: detailed
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -575,7 +573,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-            - logging
         {{- end }}
         # TODO(chris): revisit using the gateway collector
         # logs:

@@ -542,15 +542,12 @@ data:
         send_batch_max_size: 1000
         timeout: 30s
         send_batch_size : 800
-      
 
     exporters:
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      logging:
-        verbosity: detailed
       # TODO(chris): revisit using the gateway collector
       # otlphttp:
       #   endpoint: "nr-k8s-otel-collector-gateway"
@@ -611,7 +608,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-            - logging
         {{- end }}
         {{- if .Values.receivers.filelog.enabled }}
         logs:
