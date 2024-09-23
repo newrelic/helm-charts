@@ -174,7 +174,7 @@ readOnlyRootFilesystem: true
 Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
 {{- define "newrelic-super-agent.auth.organizationId" -}}
-{{- if ((.Values.config).auth).organizationId -}}
+{{- if (((.Values.config).opamp).auth).organizationId -}}
   {{- .Values.config.auth.organizationId -}}
 {{- else -}}
   {{- fail ".config.auth.organizationId is required." -}}
@@ -188,7 +188,7 @@ Check if .Values.config.auth.secret.name exists and use it to name auth' secret.
 of the releases with "-auth" suffix.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.name" -}}
-{{- $secretName := ((((.Values.config).auth).secret).name) -}}
+{{- $secretName := (((((.Values.config).opamp).auth).secret).name) -}}
 {{- if $secretName -}}
   {{- $secretName -}}
 {{- else -}}
@@ -205,7 +205,7 @@ Helper to toggle the creation of the job that creates and registers the system i
 {{- $privateKey := include "newrelic-super-agent.auth.secret.privateKey.data" . -}}
 {{- $clientId := include "newrelic-super-agent.auth.secret.clientId.data" . -}}
 
-{{- if and ((.Values.config).opamp).enabled (((.Values.config).auth).secret).create (not $privateKey) (not $clientId) -}}
+{{- if and ((.Values.config).opamp).enabled ((((.Values.config).opamp).auth).secret).create (not $privateKey) (not $clientId) -}}
   true
 {{- end -}}
 {{- end -}}
@@ -216,7 +216,7 @@ Helper to toggle the creation of the job that creates and registers the system i
 Helper to toggle the creation of the secret that has the system identity as values.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.shouldTemplate" -}}
-{{- if and ((.Values.config).opamp).enabled (((.Values.config).auth).secret).create -}}
+{{- if and ((.Values.config).opamp).enabled ((((.Values.config).opamp).auth).secret).create -}}
   {{- $privateKey := include "newrelic-super-agent.auth.secret.privateKey.data" . -}}
   {{- $clientId := include "newrelic-super-agent.auth.secret.clientId.data" . -}}
 
@@ -235,7 +235,7 @@ Check if .Values.config.auth.secret.private_key.secret_key exists and use it for
 key needed for the system identity. Fallbacks to `private_key`.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.privateKey.key" -}}
-{{- $key := (((((.Values.config).auth).secret).private_key).secret_key) -}}
+{{- $key := ((((((.Values.config).opamp).auth).secret).private_key).secret_key) -}}
 {{- if $key -}}
   {{- $key -}}
 {{- else -}}
@@ -250,8 +250,8 @@ Check if .Values.config.auth.secret.private_key.(plain_pem or base64_pem) exists
 auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.privateKey.data" -}}
-{{- $plain_pem := (((((.Values.config).auth).secret).private_key).plain_pem) -}}
-{{- $base64_pem := (((((.Values.config).auth).secret).private_key).base64_pem) -}}
+{{- $plain_pem := ((((((.Values.config).opamp).auth).secret).private_key).plain_pem) -}}
+{{- $base64_pem := ((((((.Values.config).opamp).auth).secret).private_key).base64_pem) -}}
 {{- if and $plain_pem $base64_pem -}}
   {{- fail "Only one of base64_pem or plain_pem should be provided it you want to provide your own certificate." -}}
 {{- else if $base64_pem -}}
@@ -270,7 +270,7 @@ Check if .Values.config.auth.secret.client_id.secret_key exists and use it for t
 needed for the system identity. Fallbacks to `client_id`.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.clientId.key" -}}
-{{- $key := (((((.Values.config).auth).secret).client_id).secret_key) -}}
+{{- $key := ((((((.Values.config).opamp).auth).secret).client_id).secret_key) -}}
 {{- if $key -}}
   {{- $key -}}
 {{- else -}}
@@ -285,8 +285,8 @@ Check if .Values.config.auth.secret.client_id.(plain or base64) exists and use i
 value is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
 */ -}}
 {{- define "newrelic-super-agent.auth.secret.clientId.data" -}}
-{{- $plain := (((((.Values.config).auth).secret).client_id).plain) -}}
-{{- $base64 := (((((.Values.config).auth).secret).client_id).base64) -}}
+{{- $plain := ((((((.Values.config).opamp).auth).secret).client_id).plain) -}}
+{{- $base64 := ((((((.Values.config).opamp).auth).secret).client_id).base64) -}}
 {{- if and $plain $base64 -}}
   {{- fail "Only one of base64 or plain should be provided it you want to provide your own client id." -}}
 {{- else if $base64 -}}

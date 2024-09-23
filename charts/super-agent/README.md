@@ -51,18 +51,18 @@ As of the creation of the chart, it has no particularities and this section can 
 | super-agent-deployment.affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
 | super-agent-deployment.cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and/or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled. |
 | super-agent-deployment.cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| super-agent-deployment.config.auth.organization_id | string | `""` | Organization ID where fleets will live. |
-| super-agent-deployment.config.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64. This options is mutually exclusive with `plain`. |
-| super-agent-deployment.config.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text. This options is mutually exclusive with `base64`. |
-| super-agent-deployment.config.auth.secret.client_id.secret_key | string | `client_id` | Key inside the secret containing the client ID. |
-| super-agent-deployment.config.auth.secret.name | string | release name suffixed with "-auth" | Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret will have. |
-| super-agent-deployment.config.auth.secret.private_key.base64_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64. This options is mutually exclusive with `plain_pem`. |
-| super-agent-deployment.config.auth.secret.private_key.plain_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text. This options is mutually exclusive with `base64_pem`. |
-| super-agent-deployment.config.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
+| super-agent-deployment.config.opamp.auth.organization_id | string | `""` | Organization ID where fleets will live. |
+| super-agent-deployment.config.opamp.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64. This options is mutually exclusive with `plain`. |
+| super-agent-deployment.config.opamp.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text. This options is mutually exclusive with `base64`. |
+| super-agent-deployment.config.opamp.auth.secret.client_id.secret_key | string | `client_id` | Key inside the secret containing the client ID. |
+| super-agent-deployment.config.opamp.auth.secret.name | string | release name suffixed with "-auth" | Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret will have. |
+| super-agent-deployment.config.opamp.auth.secret.private_key.base64_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64. This options is mutually exclusive with `plain_pem`. |
+| super-agent-deployment.config.opamp.auth.secret.private_key.plain_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text. This options is mutually exclusive with `base64_pem`. |
+| super-agent-deployment.config.opamp.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
 | super-agent-deployment.config.opamp.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | super-agent-deployment.config.subAgents | string | `newrelic/io.opentelemetry.collector` (See `values.yaml`) | Values that the fleet is going to have in the deployment. If empty, chart will automatically add `newrelic/io.opentelemetry.collector` subagent. On the other hand, if populated the list of agent created is the one specified overwriting the default. |
 | super-agent-deployment.config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
-| super-agent-deployment.config.superAgent.content | object | `{}` | It you are a PowerUser, you can use this to override the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
+| super-agent-deployment.config.superAgent.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
 | super-agent-deployment.config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
 | super-agent-deployment.containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | super-agent-deployment.customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
@@ -96,6 +96,9 @@ As of the creation of the chart, it has no particularities and this section can 
 
 ## Maintainers
 
-* [sigilioso](https://github.com/sigilioso)
-* [kang-makes](https://github.com/kang-makes)
+* [alvarocabanas](https://github.com/alvarocabanas)
+* [DavSanchez](https://github.com/DavSanchez)
+* [gsanchezgavier](https://github.com/gsanchezgavier)
 * [paologallinaharbur](https://github.com/paologallinaharbur)
+* [rubenruizdegauna](https://github.com/rubenruizdegauna)
+* [sigilioso](https://github.com/sigilioso)
