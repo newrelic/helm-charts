@@ -25,7 +25,7 @@ spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       containers:
         - name: delete-managed-resources
-          image: bitnami/kubectl
+          image: bitnami/kubectl  # TODO: Pin version to the latest that we support.
           command:
             - bash
           args:
@@ -42,8 +42,17 @@ spec:
               # Delete the CRs managed by the super-agent if the corresponding CRDs exist
               {{ range $i, $cr := $saCRList }}
               if kubectl api-resources -o name |grep {{ $cr }}; then
-                kubectl delete {{ $cr }} -n {{ $.Release.Namespace }} -l {{ $saResourcesLabelSelector }}
+                kubectl -n {{ $.Release.Namespace }} delete {{ $cr }} -l {{ $saResourcesLabelSelector }}
               fi
-              {{ end -}}
-
+              {{ end }}
+        {{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . }}
+        - name: delete-system-identity
+          image: bitnami/kubectl  # TODO: Pin version to the latest that we support.
+          command:
+            - bash
+          args:
+            - -c
+            - |
+              kubectl -n {{ $.Release.Namespace }} delete secret {{ include "newrelic-super-agent.auth.secret.name" . }}
+        {{- end }}
 {{- end -}}

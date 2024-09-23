@@ -12,6 +12,15 @@ spec:
   template:
     metadata:
       annotations:
+        {{/* TODO: This hash is not reliable anymore. The identity is being generated/patched by a job.
+          With the introduction of this job, this charts is not configurable/instalable with ArgoCD/Flux as the reconcile loop
+          will empty the secret that the job has filled.
+
+          We need the config to be splitable somehow or leave another orphan object on the cluster.
+
+          This comment (and the mechanisim added in the PR when we left this comment) block the automatic upgrade feature.
+
+          See: charts/super-agent/charts/super-agent-deployment/templates/preinstall-job-register-system-identity.yaml */ -}}
         checksum/agent-config: {{ include (print $.Template.BasePath "/configmap-superagent-config.yaml") . | sha256sum }}
         checksum/subagent-config: {{ include (print $.Template.BasePath "/configmap-subagent-configs.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
@@ -55,15 +64,24 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
 
           env:
-          {{- if .Values.config.auth }}
-          {{- if .Values.config.auth.enabled }}
+          {{- if ((.Values.config).opamp).enabled }}
             - name: NR_SA_OPAMP__AUTH_CONFIG__CLIENT_ID
               valueFrom:
                 secretKeyRef:
                   name: {{ include "newrelic-super-agent.auth.secret.name" . }}
-                  key: CLIENT_ID
+                  key: {{ include "newrelic-super-agent.auth.secret.clientId.key" . }}
+            - name: NR_SA_OPAMP__HEADERS__API-KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
           {{- end }}
+          {{- if include "newrelic.common.verboseLog" . }}
+            - name: NR_SA_LOG__LEVEL
+              value: debug
           {{- end }}
+
+          {{- /* ----- Variables used to send data downstream to subagents */}}
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
@@ -71,13 +89,14 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
             - name: NR_CLUSTER_NAME
               value: {{ include "newrelic.common.cluster" . }}
-          {{- if .Values.config.superAgent.content.opamp }}
-            - name: NR_SA_OPAMP__HEADERS__API-KEY
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "newrelic.common.license.secretName" . }}
-                  key: {{ include "newrelic.common.license.secretKeyName" . }}
-          {{- end }}
+            - name: NR_STAGING
+              value: {{ include "newrelic.common.nrStaging.value" . | quote }}
+            - name: NR_VERBOSE
+              value: {{ include "newrelic.common.verboseLog.valueAsBoolean" . | quote }}
+            - name: NR_REGION
+              value: {{ include "newrelic.common.region" . }}
+          {{- /* ----- Variables used to send data downstream to subagents */}}
+
           {{- with .Values.extraEnv }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -85,21 +104,22 @@ spec:
           envFrom:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          # TODO: Add probes
+
+          # TODO: Probe the status server.
 
           volumeMounts:
             - name: super-agent-config
               mountPath: /etc/newrelic-super-agent
               readOnly: true
-            # TODO: when releasing we should check if this is still needed and if we need to persist the data.
+            # TODO: when releasing we should check if this is still needed and/or if we need to persist the data.
             - mountPath: /var/lib/newrelic-super-agent
               name: var-lib-newrelic-super-agent
               readOnly: false
-            {{- if .Values.config.auth }}
-            {{- if .Values.config.auth.enabled }}
+            {{- if ((.Values.config).opamp).enabled }}
             - name: auth-secret-private-key
-              mountPath: "/etc/newrelic-super-agent/keys"
-            {{- end }}
+              mountPath: "/etc/newrelic-super-agent/keys/from-secret.key"
+              subPath: {{ include "newrelic-super-agent.auth.secret.privateKey.key" . }}
+              readOnly: true
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -116,16 +136,11 @@ spec:
                 path: config.yaml
         - name: var-lib-newrelic-super-agent
           emptyDir: {}
-        {{- if .Values.config.auth }}
-        {{- if .Values.config.auth.enabled }}
+        {{- if ((.Values.config).opamp).enabled }}
         - name: auth-secret-private-key
           secret:
             secretName: {{ include "newrelic-super-agent.auth.secret.name" . }}
-            items:
-              - key: private_key
-                path: from-secret.key
         {{- end }}
-        {{- end }}          
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
