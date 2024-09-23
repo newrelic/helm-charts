@@ -101,7 +101,7 @@ spec:
 
               ERROR_MESSAGE=$(jq -r '.errors[0].message // "NOERROR"' "$TEMPORAL_FOLDER/response.json")
               if [ "$ERROR_MESSAGE" != "NOERROR" ]; then
-                echo "Error creating an identity: $ERROR_MESSAGE"
+                echo "Failed to create a New Relic System Identity for OpAMP communication authentication. Please verify that your User Key is valid and that your Account Organization has the necessary permissions to create a System Identity: $ERROR_MESSAGE"
                 exit 1
               fi
 
