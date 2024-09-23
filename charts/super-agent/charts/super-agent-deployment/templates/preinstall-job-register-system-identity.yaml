@@ -1,11 +1,33 @@
-{{- if .Values.config.auth -}}
-{{- if and .Values.config.auth.enabled .Values.config.auth.secret.create -}}
+{{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . -}}
+{{- /*
+User key secret is used only in the step that create the system identity.
+The secret that is created by the common-library does not allow to add annotations so the secret is removed
+once the installation hook is finished, so I have to add it as a hook.
+*/ -}}
+{{- if not (include "newrelic.common.userKey._customSecretName" .) }}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1010"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
+  namespace: {{ .Release.Namespace }}
+data:
+  {{ include "newrelic.common.userKey.secretKeyName" . }}: {{ include "newrelic.common.userKey._userKey" . | b64enc }}
+{{- end }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
   annotations:
-    helm.sh/hook: pre-install # TODO we cannot enable auth after installation, we should add pre-upgrade and check if the secret exists
+    helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1005"
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "system-identity-installer" ) }}
   namespace: {{ .Release.Namespace }}
 spec:
@@ -13,18 +35,35 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+      serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
       containers:
         - name: register-system-identity
           image: alpine 
+          env:
+            - name: USER_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- if include "newrelic.common.userKey._customSecretName" . }}
+                  name: {{ include "newrelic.common.userKey.secretName" . }}
+                  {{- else }}
+                  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
+                  {{- end }}
+                  key: {{ include "newrelic.common.userKey.secretKeyName" . }}
           command:
             - ash
           args:
             - -c
             - |
-              set -uo pipefail
+              set -euo pipefail
               apk update
-              apk add curl kubectl jq openssl
+              apk add kubectl
+
+              if kubectl get secret {{ include "newrelic-super-agent.auth.secret.name" . }}; then
+                echo System identity already exists. Exiting gracefully...
+                exit 0
+              fi
+
+              apk add curl jq openssl
               TEMPORAL_FOLDER=gen-folder
               mkdir $TEMPORAL_FOLDER
               openssl genrsa -out "$TEMPORAL_FOLDER/key" 4096
@@ -46,7 +85,7 @@ spec:
                   curl \
                     -s -w "%{http_code}" \
                     -H "Content-Type: application/json" \
-                    -H "API-Key: {{ .Values.config.auth.userApiKey }}" \
+                    -H "API-Key: $USER_KEY" \
                     -o "$TEMPORAL_FOLDER/response.json" \
                     --data @- \
                     "{{ include "newrelic-super-agent.config.endpoints.systemIdentityRegistration" . }}"
@@ -62,7 +101,7 @@ spec:
 
               ERROR_MESSAGE=$(jq -r '.errors[0].message // "NOERROR"' "$TEMPORAL_FOLDER/response.json")
               if [ "$ERROR_MESSAGE" != "NOERROR" ]; then
-                echo "Error creating an identity: $ERROR_MESSAGE"
+                echo "Failed to create a New Relic System Identity for OpAMP communication authentication. Please verify that your User Key is valid and that your Account Organization has the necessary permissions to create a System Identity: $ERROR_MESSAGE"
                 exit 1
               fi
 
@@ -80,6 +119,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1010"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
@@ -99,6 +139,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1009"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
@@ -109,11 +150,11 @@ roleRef:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "auth") }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
   namespace: {{ .Release.Namespace }}
-{{- end -}}
+{{- end }}
 
-{{ if include "newrelic.common.serviceAccount.create" . }}
+{{- if include "newrelic.common.serviceAccount.create" . }}
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -121,13 +162,13 @@ metadata:
   annotations:
     helm.sh/hook: pre-install
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-1010"
   {{- if include "newrelic.common.serviceAccount.annotations" . }}
     {{- include "newrelic.common.serviceAccount.annotations" . | nindent 4 }}
   {{- end }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.serviceAccount.name" . }}-auth
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
   namespace: {{ .Release.Namespace }}
-{{- end -}}
 {{- end -}}
 {{- end -}}

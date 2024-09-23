@@ -49,17 +49,25 @@ As of the creation of the chart, it has no particularities and this section can 
 | nameOverride | string | `""` | Override the name of the chart |
 | super-agent-deployment | object | See `values.yaml` | Values related to the super agent's Helm chart release. |
 | super-agent-deployment.affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| super-agent-deployment.authSecret | object | `{"create":false}` | Settings controlling authentication secret creation. If `create` is true, a Kubernetes secret will be created containing a key named `auth_key`. This secret will be mounted in the deployment pod at the path `/etc/newrelic-super-agent/auth_key` for authentication purposes. |
-| super-agent-deployment.cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled. |
-| super-agent-deployment.cluster | string | `""` | TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
+| super-agent-deployment.cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and/or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled. |
+| super-agent-deployment.cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
+| super-agent-deployment.config.opamp.auth.organization_id | string | `""` | Organization ID where fleets will live. |
+| super-agent-deployment.config.opamp.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64. This options is mutually exclusive with `plain`. |
+| super-agent-deployment.config.opamp.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text. This options is mutually exclusive with `base64`. |
+| super-agent-deployment.config.opamp.auth.secret.client_id.secret_key | string | `client_id` | Key inside the secret containing the client ID. |
+| super-agent-deployment.config.opamp.auth.secret.name | string | release name suffixed with "-auth" | Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret will have. |
+| super-agent-deployment.config.opamp.auth.secret.private_key.base64_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64. This options is mutually exclusive with `plain_pem`. |
+| super-agent-deployment.config.opamp.auth.secret.private_key.plain_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text. This options is mutually exclusive with `base64_pem`. |
+| super-agent-deployment.config.opamp.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
+| super-agent-deployment.config.opamp.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
+| super-agent-deployment.config.subAgents | string | `newrelic/io.opentelemetry.collector` (See `values.yaml`) | Values that the fleet is going to have in the deployment. If empty, chart will automatically add `newrelic/io.opentelemetry.collector` subagent. On the other hand, if populated the list of agent created is the one specified overwriting the default. |
 | super-agent-deployment.config.superAgent | object | See `values.yaml` | Configuration for the Super Agent. |
-| super-agent-deployment.config.superAgent.content | object | See `values.yaml` for examples | Here you can set New Relic' Super Agent configuration. |
-| super-agent-deployment.config.superAgent.content.server | object | `{"enabled":true}` | And query it as `$ curl localhost:51200/status` |
+| super-agent-deployment.config.superAgent.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
 | super-agent-deployment.config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
 | super-agent-deployment.containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | super-agent-deployment.customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
-| super-agent-deployment.customSecretLicenseKey | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
-| super-agent-deployment.customSecretName | string | `""` | TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
+| super-agent-deployment.customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
+| super-agent-deployment.customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | super-agent-deployment.dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | super-agent-deployment.enabled | bool | `true` | Enable the installation of the Super Agent. This an advanced/debug flag. It should be always be true unless you know what you are going. |
 | super-agent-deployment.extraEnv | list | `[]` | Add user environment variables to the agent |
@@ -71,9 +79,9 @@ As of the creation of the chart, it has no particularities and this section can 
 | super-agent-deployment.image | object | See `values.yaml` | Image for the New Relic Super Agent |
 | super-agent-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | super-agent-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
-| super-agent-deployment.licenseKey | string | `""` | TODO: This set this license key to use. Can be configured also with `global.licenseKey` |
+| super-agent-deployment.licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | super-agent-deployment.nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
-| super-agent-deployment.nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` When enabled, in case `authSecret.create` is set to `true`, OpAMP `endpoint` and auth `token_url` need to be updated. |
+| super-agent-deployment.nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | super-agent-deployment.podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
 | super-agent-deployment.podLabels | object | `{}` | Additional labels for chart pods. Can be configured also with `global.podLabels` |
 | super-agent-deployment.podSecurityContext | object | `{}` | Sets security context (at pod level). Can be configured also with `global.podSecurityContext` |
@@ -83,14 +91,14 @@ As of the creation of the chart, it has no particularities and this section can 
 | super-agent-deployment.resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
 | super-agent-deployment.serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | super-agent-deployment.serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
-| super-agent-deployment.subAgents | object | See `values.yaml` for examples | Values that the fleet is going to have in the deployment. |
 | super-agent-deployment.tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
-| super-agent-deployment.verboseLog | bool | `false` | TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
+| super-agent-deployment.verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 
 ## Maintainers
 
-* [sigilioso](https://github.com/sigilioso)
+* [alvarocabanas](https://github.com/alvarocabanas)
+* [DavSanchez](https://github.com/DavSanchez)
 * [gsanchezgavier](https://github.com/gsanchezgavier)
-* [kang-makes](https://github.com/kang-makes)
-* [marcsanmi](https://github.com/marcsanmi)
 * [paologallinaharbur](https://github.com/paologallinaharbur)
+* [rubenruizdegauna](https://github.com/rubenruizdegauna)
+* [sigilioso](https://github.com/sigilioso)
