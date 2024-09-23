@@ -1,4 +1,4 @@
-{{- range $subAgentName, $subAgentConfig := .Values.config.subAgents -}}
+{{- range $subAgentName, $subAgentConfig := (include "newrelic-super-agent.config.agents.yaml" . | fromYaml) -}}
 {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" "local-data" "suffix" $subAgentName) }}
 ---
 kind: ConfigMap
@@ -10,6 +10,10 @@ metadata:
 subagent: {{ $subAgentName }}
 apiVersion: v1
 data:
+{{- if not $subAgentConfig.content }}
+  local_config: ""
+{{- else }}
   local_config: |
 {{- $subAgentConfig.content | toYaml | nindent 4 }}
+{{- end }}
 {{- end }}
