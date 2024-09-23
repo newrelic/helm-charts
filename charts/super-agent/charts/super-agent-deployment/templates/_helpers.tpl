@@ -175,9 +175,9 @@ Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
 {{- define "newrelic-super-agent.auth.organizationId" -}}
 {{- if (((.Values.config).opamp).auth).organizationId -}}
-  {{- .Values.config.auth.organizationId -}}
+  {{- .Values.config.opamp.auth.organizationId -}}
 {{- else -}}
-  {{- fail ".config.auth.organizationId is required." -}}
+  {{- fail ".config.opamp.auth.organizationId is required" -}}
 {{- end -}}
 {{- end -}}
 

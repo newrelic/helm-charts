@@ -18,6 +18,13 @@ metadata:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
   namespace: {{ .Release.Namespace }}
 data:
+  {{- /*
+    This secret is needed duplicating the userKey because it is in a helm hook and has a hook lifetime.
+    Internal helpers to get the userKey do not fail in case it is empty so I need to test here if it is empty.
+   */}}
+  {{- if not (include "newrelic.common.userKey._userKey" .) }}
+    {{- fail "You must specify a userKey or a customUserKeySecretName containing it" -}}
+  {{- end }}
   {{ include "newrelic.common.userKey.secretKeyName" . }}: {{ include "newrelic.common.userKey._userKey" . | b64enc }}
 {{- end }}
 ---
