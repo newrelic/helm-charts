@@ -134,6 +134,10 @@ spec:
             items:
               - key: local_config
                 path: config.yaml
+            {{- with (.Values.development).dynamicAgentType }}
+              - key: dynamic_agent_type
+                path: dynamic-agent-type.yaml
+            {{- end }}
         - name: var-lib-newrelic-super-agent
           emptyDir: {}
         {{- if ((.Values.config).opamp).enabled }}
