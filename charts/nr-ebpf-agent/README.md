@@ -91,7 +91,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. |
+| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. Requires a valid staging license key. Can also be configured with global.nrStaging. |
 | otelCollector.collector.serviceAccount.annotations | object | `{}` | Annotations for the OTel collector service account. |
 | otelCollector.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always. |
 | otelCollector.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/nr-ebpf-otel-collector"` | OpenTelemetry collector image to be deployed. |
