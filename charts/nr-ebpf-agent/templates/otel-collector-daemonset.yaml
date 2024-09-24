@@ -60,6 +60,12 @@ spec:
             mountPath: /etc/otel/config.yaml
             subPath: config.yaml
             readOnly: true
+          - name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+          - name: varlogpods
+            mountPath: /var/log/pods
+            readOnly: true
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       serviceAccountName: {{ include "nr-ebpf-agent.fullname" . }}-collector
