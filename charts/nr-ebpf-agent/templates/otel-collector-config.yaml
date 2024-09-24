@@ -12,11 +12,8 @@ data:
             grpc:
               endpoint: $RECEIVER_ENDPOINT:4317
         hostmetrics:
-          # TODO (chris): this is a linux specific configuration
-          {{- if include "newrelic.common.privileged" . }}
           root_path: /hostfs
-          {{- end }}
-          collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
+          collection_interval: 60s
           scrapers:
             cpu:
               metrics:
@@ -64,15 +61,10 @@ data:
             #   mute_process_io_error: true
             #   mute_process_user_error: true
         kubeletstats:
-          collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-          {{- if include "newrelic.common.privileged" . }}
+          collection_interval: 60s
           endpoint: "${KUBE_NODE_NAME}:10250"
           auth_type: "serviceAccount"
           insecure_skip_verify: true
-          {{- else }}
-          endpoint: "${KUBE_NODE_NAME}:10255"
-          auth_type: "none"
-          {{- end }}
           metrics:
             k8s.container.cpu_limit_utilization:
               enabled: true 
@@ -389,7 +381,7 @@ data:
             # TODO (chris): Upsert only when cluster name not found (resource detection override: true)
             - key: k8s.cluster.name
               action: upsert
-              value: {{ include "newrelic.common.cluster" . }}
+              value: $CLUSTER_NAME
             - key: newrelicOnly
               action: upsert
               value: 'true'
