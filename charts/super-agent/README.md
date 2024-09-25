@@ -51,7 +51,7 @@ As of the creation of the chart, it has no particularities and this section can 
 | super-agent-deployment.affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
 | super-agent-deployment.cleanupManagedResources | bool | `true` | Enable the cleanup of super-agent managed resources when the chart is uninstalled. If disabled, agents and/or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled. |
 | super-agent-deployment.cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| super-agent-deployment.config.opamp.auth.organization_id | string | `""` | Organization ID where fleets will live. |
+| super-agent-deployment.config.opamp.auth.organizationId | string | `""` | Organization ID where fleets will live. |
 | super-agent-deployment.config.opamp.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64. This options is mutually exclusive with `plain`. |
 | super-agent-deployment.config.opamp.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text. This options is mutually exclusive with `base64`. |
 | super-agent-deployment.config.opamp.auth.secret.client_id.secret_key | string | `client_id` | Key inside the secret containing the client ID. |
