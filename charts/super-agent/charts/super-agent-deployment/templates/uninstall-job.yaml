@@ -45,14 +45,9 @@ spec:
 kubectl -n {{ $.Release.Namespace }} delete {{ $cr }} -l {{ $saResourcesLabelSelector }}
   fi
   {{ end }}
-{{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . }}
-- name: delete-system-identity
-  image: bitnami/kubectl  # TODO: Pin version to the latest that we support.
-  command:
-- bash
-  args:
-- -c
-- |
+  
+  {{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . }}
+  # Delete the secrets created in the cluster
   kubectl -n {{ $.Release.Namespace }} delete secret {{ include "newrelic-super-agent.auth.secret.name" . }}
-{{- end }}
+  {{- end }}
 {{- end -}}

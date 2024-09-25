@@ -29,9 +29,9 @@ chart_values:
   global:
 licenseKey: ${nr-env:NR_LICENSE_KEY}
 cluster: ${nr-env:NR_CLUSTER_NAME}
-nrStaging: ${nr-env:NR_STAGING}
-verboseLog: ${nr-env:NR_VERBOSE}
-region: ${nr-env:NR_REGION}
+  {{- if include "newrelic.common.nrStaging" . }}
+nrStaging: true
+  {{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -175,9 +175,9 @@ Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
 {{- define "newrelic-super-agent.auth.organizationId" -}}
 {{- if (((.Values.config).opamp).auth).organizationId -}}
-  {{- .Values.config.auth.organizationId -}}
+  {{- .Values.config.opamp.auth.organizationId -}}
 {{- else -}}
-  {{- fail ".config.auth.organizationId is required." -}}
+  {{- fail ".config.opamp.auth.organizationId is required" -}}
 {{- end -}}
 {{- end -}}
 

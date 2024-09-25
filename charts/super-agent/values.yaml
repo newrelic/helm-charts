@@ -24,7 +24,7 @@ super-agent-deployment:
   image:
 registry:
 repository: newrelic/newrelic-super-agent
-tag: 0.22.0
+tag: 0.23.0
 imagePullPolicy: IfNotPresent
 # -- The secrets that are needed to pull images from a custom registry.
 pullSecrets: []
@@ -133,9 +133,6 @@ subAgents:
 #   global:
 # licenseKey: ${nr-env:NR_LICENSE_KEY}
 # cluster: ${nr-env:NR_CLUSTER_NAME}
-# nrStaging: ${nr-env:NR_STAGING}
-# verboseLog: ${nr-env:NR_VERBOSE}
-# region: ${nr-env:NR_REGION}
 # # you can set here modifications to the open telemetry chart
 
 opamp:
@@ -145,7 +142,7 @@ opamp:
 
   auth:
 # -- Organization ID where fleets will live.
-organization_id: ""
+organizationId: ""
 secret:
   create: true
   # -- Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret
