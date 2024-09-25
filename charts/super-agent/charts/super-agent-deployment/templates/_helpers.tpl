@@ -29,9 +29,9 @@ open-telemetry:
       global:
         licenseKey: ${nr-env:NR_LICENSE_KEY}
         cluster: ${nr-env:NR_CLUSTER_NAME}
-        nrStaging: ${nr-env:NR_STAGING}
-        verboseLog: ${nr-env:NR_VERBOSE}
-        region: ${nr-env:NR_REGION}
+      {{- if include "newrelic.common.nrStaging" . }}
+        nrStaging: true
+      {{- end -}}
 {{- end -}}
 {{- end -}}
 

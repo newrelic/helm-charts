@@ -89,12 +89,6 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
             - name: NR_CLUSTER_NAME
               value: {{ include "newrelic.common.cluster" . }}
-            - name: NR_STAGING
-              value: {{ include "newrelic.common.nrStaging.value" . | quote }}
-            - name: NR_VERBOSE
-              value: {{ include "newrelic.common.verboseLog.valueAsBoolean" . | quote }}
-            - name: NR_REGION
-              value: {{ include "newrelic.common.region" . }}
           {{- /* ----- Variables used to send data downstream to subagents */}}
 
           {{- with .Values.extraEnv }}
@@ -117,8 +111,7 @@ spec:
               readOnly: false
             {{- if ((.Values.config).opamp).enabled }}
             - name: auth-secret-private-key
-              mountPath: "/etc/newrelic-super-agent/keys/from-secret.key"
-              subPath: {{ include "newrelic-super-agent.auth.secret.privateKey.key" . }}
+              mountPath: "/etc/newrelic-super-agent/keys"
               readOnly: true
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
@@ -140,6 +133,9 @@ spec:
         - name: auth-secret-private-key
           secret:
             secretName: {{ include "newrelic-super-agent.auth.secret.name" . }}
+            items:
+              - key: {{ include "newrelic-super-agent.auth.secret.privateKey.key" . }}
+                path: from-secret.key
         {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
