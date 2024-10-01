@@ -2,8 +2,10 @@
 cluster: ""
 # -- The license key to use. Can be configured with `global.licenseKey`
 licenseKey: ""
-# -- Endpoint to export data to. If enabled, sends data to the staging backend. Requires a valid staging license key. Can also be configured with global.nrStaging
+# -- Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. Requires a valid staging license key. Can also be configured with global.nrStaging.
 nrStaging: false
+# -- Configures the agent to send all data through the proxy specified via the otel collector.
+proxy: ""
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
 # -- The source connectors (and data export scripts) to enable.

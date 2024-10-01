@@ -1,4 +1,4 @@
-suite: test super agent deployment's securityContext
+suite: test super agent deployment's env vars are injected
 templates:
   - templates/deployment-superagent.yaml
   - templates/configmap-superagent-config.yaml
@@ -12,9 +12,9 @@ tests:
       cluster: test
       licenseKey: fake-license
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[0]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -27,10 +27,11 @@ tests:
       cluster: test
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
+      region: us  # With a custom secret we cannot know the region so we have to ask for it.
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[0]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -48,9 +49,9 @@ tests:
             opamp:
               endpoint: test
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[2]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_SA_OPAMP__HEADERS__API-KEY
             valueFrom:
               secretKeyRef:
@@ -63,15 +64,16 @@ tests:
       cluster: test
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
+      region: us  # With a custom secret we cannot know the region so we have to ask for it.
       config:
         superAgent:
           content: 
             opamp:
               endpoint: test
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[2]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_SA_OPAMP__HEADERS__API-KEY
             valueFrom:
               secretKeyRef:
@@ -82,9 +84,9 @@ tests:
     set:
       cluster: test
     asserts:
-      - equal:
-          path: spec.template.spec.containers[0].env[1]
-          value:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
             name: NR_CLUSTER_NAME
             value: test
         template: templates/deployment-superagent.yaml

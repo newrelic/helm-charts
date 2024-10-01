@@ -41,7 +41,9 @@ spec:
                 key: NR_LICENSE_KEY
                 name: nr-ebpf-agent-secrets
           - name: NR_OTLP_ENDPOINT
-            {{- if .Values.nrStaging }}
+            {{- if .Values.proxy }}
+            value: "{{- .Values.proxy }}"
+            {{- else if .Values.nrStaging }}
             value: "staging-otlp.nr-data.net:4317"
             {{- else }}
             value: "otlp.nr-data.net:4317"

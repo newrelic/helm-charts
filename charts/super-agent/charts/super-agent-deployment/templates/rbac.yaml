@@ -11,7 +11,7 @@ rules:
   - apiGroups:
       - source.toolkit.fluxcd.io
       - helm.toolkit.fluxcd.io
-    resources: ["*"]
+    resources: [ "*" ]
     verbs:
       - get
       - list
@@ -31,7 +31,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: [ "" ]
-    resources: ["configmaps"]
+    resources: [ "configmaps" ]
     verbs:
       - get
       - list
@@ -41,7 +41,7 @@ rules:
       - patch
       - update
   - apiGroups: [ "" ]
-    resources: ["namespaces"]
+    resources: [ "namespaces" ]
     verbs:
       - get
   - apiGroups: [ "apps" ]
@@ -61,6 +61,13 @@ rules:
       - get
       - patch
       - update
+  - apiGroups: [ "" ]
+    resources: ["secrets"]
+    verbs:
+      - delete
+    resourceNames:
+    - {{ include "newrelic-super-agent.auth.secret.name" . }}
+
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
