@@ -37,6 +37,7 @@ spec:
       initContainers:
       - name: cluster-registration-wait
         image: {{ .Values.clusterRegistrationWait.image.repository }}:{{ .Values.clusterRegistrationWait.image.tag }}
+        imagePullPolicy: "{{ .Values.clusterRegistrationWait.image.pullPolicy }}"
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
           until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
