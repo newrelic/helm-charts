@@ -103,6 +103,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | podLabels | object | `{}` | Additional labels for chart pods |
 | protocols | object | `{"amqp":true,"cass":true,"dns":true,"http":true,"kafka":true,"mongodb":true,"mysql":true,"pgsql":true,"redis":true}` | The protocols (and data export scripts) to enable for tracing in the socket_tracer. |
 | proxy | string | `""` | Configures the agent to send all data through the proxy specified via the otel collector. |
+| pushPeriod | string | `"15"` | The periodicity in seconds at which the eBPF client pushes data to the OTel collector for export to NR. The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data. The algorithm only looks for similar request paths within data of the same push period.  To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60. |
 | stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
 | tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |
