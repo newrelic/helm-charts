@@ -36,7 +36,7 @@ spec:
       restartPolicy: Never
       initContainers:
       - name: cluster-registration-wait
-        image: {{ .Values.clusterRegistrationWait.image.repository }}:{{ .Values.clusterRegistrationWait.image.tag }}
+        image: "{{ .Values.clusterRegistrationWait.image.repository }}:{{ .Values.clusterRegistrationWait.image.tag }}"
         imagePullPolicy: "{{ .Values.clusterRegistrationWait.image.pullPolicy }}"
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
