@@ -46,7 +46,7 @@ spec:
             {{- toYaml .Values.daemonset.resources | nindent 12 }}
           {{- with .Values.daemonset.envsFrom }}
           envFrom:
-          {{- . | toYaml | nindent 12 }}
+            {{- . | toYaml | nindent 12 }}
           {{- end }}
           env:
             - name: HOST_IP

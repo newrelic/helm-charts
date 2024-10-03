@@ -48,7 +48,7 @@ spec:
             {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- with .Values.deployment.envsFrom }}
           envFrom:
-          {{- . | toYaml | nindent 12 }}
+            {{- . | toYaml | nindent 12 }}
           {{- end }}
           env:
             - name: KUBE_NODE_NAME
