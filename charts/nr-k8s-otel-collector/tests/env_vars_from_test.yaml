@@ -1,0 +1,51 @@
+suite: envVarsFrom
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Test adding additional env sources from Values file using 'nr-otel-for-k8s-license' secret
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        envsFrom:
+        - secretRef:
+            name: test-secret
+        - configMapRef:
+            name: test-configmap
+      daemonset:
+        envsFrom:
+        - secretRef:
+            name: test-secret
+        - configMapRef:
+            name: test-configmap
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef: 
+              name: test-secret
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-configmap
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef: 
+              name: test-secret
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-configmap
+        template: templates/daemonset.yaml

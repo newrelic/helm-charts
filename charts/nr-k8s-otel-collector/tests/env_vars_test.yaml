@@ -1,0 +1,29 @@
+suite: envVars
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets pod environment variables from values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        envs:
+        - name: "TEST_ENV_VAR"
+          value: "my-test-value"
+      daemonset:
+        envs:
+        - name: "TEST_ENV_VAR"
+          value: "my-test-value"
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "TEST_ENV_VAR"
+            value: "my-test-value"
+        template: templates/deployment.yaml
