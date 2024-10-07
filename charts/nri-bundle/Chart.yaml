@@ -17,13 +17,13 @@ sources:
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 5.0.93
+version: 5.0.94
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.34.5
+    version: 3.34.6
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -33,17 +33,17 @@ dependencies:
   - name: newrelic-prometheus-agent
     repository: https://newrelic.github.io/newrelic-prometheus-configurator
     condition: newrelic-prometheus-agent.enabled
-    version: 1.14.3
+    version: 1.14.4
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.21.1
+    version: 4.21.2
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
     condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
-    version: 1.11.3
+    version: 1.11.4
 
   - name: kube-state-metrics
     version: 5.12.1
@@ -53,7 +53,7 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 3.10.7
+    version: 3.10.8
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
@@ -68,7 +68,7 @@ dependencies:
   - name: k8s-agents-operator
     repository: https://newrelic.github.io/k8s-agents-operator
     condition: k8s-agents-operator.enabled
-    version: 0.12.0
+    version: 0.13.0
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
   # olm_crd.yaml and px.dev_viziers.yaml in
@@ -82,7 +82,7 @@ dependencies:
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 2.11.3
+    version: 2.11.4
 
 maintainers:
   - name: juanjjaramillo
