@@ -23,6 +23,11 @@ protocols:
   cass: true
   dns: true
   pgsql: true
+# -- The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR.
+# The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data.
+# The algorithm only looks for similar request paths within data of the same push period.
+# To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60.
+pushPeriod: "15"
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
