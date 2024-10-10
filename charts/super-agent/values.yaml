@@ -11,9 +11,9 @@ super-agent-deployment:
   enabled: true
 
   # -- Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
-  cluster: ""
+  cluster: "sa-operator-tests"
   # -- This set this license key to use. Can be configured also with `global.licenseKey`
-  licenseKey: ""
+  licenseKey: "abcd-123451235"
   # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
   customSecretName: ""
   # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
@@ -116,12 +116,18 @@ super-agent-deployment:
       # -- Overrides the configuration that has been created automatically by the chart.
       # This configuration here will be **MERGED** with the configuration specified above.
       # If you need to have you own configuration, disabled the creation of this configMap and create your own.
-      content: {}
+      content:
+        log:
+          level: debug
 
     # -- Values that the fleet is going to have in the deployment. If empty, chart will automatically add `newrelic/io.opentelemetry.collector` subagent.
     # On the other hand, if populated the list of agent created is the one specified overwriting the default.
     # @default -- `newrelic/io.opentelemetry.collector` (See `values.yaml`)
     subAgents:
+      test-agent:
+        type: newrelic/com.newrelic.k8s_agent_operator:0.1.0
+        content:
+          chart_values: {}
     # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
     # find the configuration needed for the subagent.
     #
@@ -138,7 +144,7 @@ super-agent-deployment:
     opamp:
       # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
       # in stand alone mode where only the agents specified on `.config.subAgents` will be launched.
-      enabled: true
+      enabled: false
 
       auth:
         # -- Organization ID where fleets will live.
@@ -170,7 +176,6 @@ super-agent-deployment:
             # This options is mutually exclusive with `base64`.
             plain:
 
-
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
 flux2:
@@ -192,7 +197,7 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+      prometheus.io/scrape: "false" # TODO: Should we create a FluxCD entity to monitor flux itself.
 
   # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
   # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
@@ -208,7 +213,7 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+      prometheus.io/scrape: "false" # TODO: Should we create a FluxCD entity to monitor flux itself.
 
   # This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
   # Kustomize instead of using templating systems like Helm.
