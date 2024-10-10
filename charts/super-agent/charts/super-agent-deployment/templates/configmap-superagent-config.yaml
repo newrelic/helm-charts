@@ -10,4 +10,73 @@ apiVersion: v1
 data:
   local_config: |
     {{- include "newrelic-super-agent.config.content" . | nindent 4 }}
+  dynamic_agent_type: |
+    namespace: newrelic
+    name: com.newrelic.k8s_agent_operator
+    version: 0.1.0
+    variables:
+      k8s:
+        chart_values:
+          description: "New Relic Agents K8s Operator chart values"
+          type: yaml
+          required: true
+        chart_version:
+          description: "New Relic Agents K8s Operator chart version"
+          type: string
+          required: true
+          default: "0.13.0"
+    deployment:
+      k8s:
+        health:
+          interval: 30s
+        objects:
+          repository:
+            apiVersion: source.toolkit.fluxcd.io/v1
+            kind: HelmRepository
+            metadata:
+              name: ${nr-sub:agent_id}
+            spec:
+              # Increasing the interval to 30 minutes because the HelmRepository is not as prone to frequent changes
+              # as HelmRelease objects might be. Given repositories typically have fewer updates than the resources
+              # they trigger, a longer interval helps in reducing unnecessary load on the cluster without significantly
+              # delaying the application of important updates.
+              interval: 30m
+              provider: generic
+              url: https://newrelic.github.io/k8s-agents-operator
+          release:
+            apiVersion: helm.toolkit.fluxcd.io/v2
+            kind: HelmRelease
+            metadata:
+              name: ${nr-sub:agent_id}
+            spec:
+              interval: 3m
+              chart:
+                spec:
+                  chart: k8s-agents-operator
+                  version: ${nr-var:chart_version}
+                  reconcileStrategy: ChartVersion
+                  sourceRef:
+                    kind: HelmRepository
+                    name: ${nr-sub:agent_id}
+                  interval: 3m
+              install:
+                # Wait are disabled to avoid blocking the modifications/deletions of this CR while in reconciling state.
+                disableWait: true
+                disableWaitForJobs: true
+                remediation:
+                  retries: 3
+                replace: true
+              upgrade:
+                disableWait: true
+                disableWaitForJobs: true
+                cleanupOnFail: true
+                force: true
+                remediation:
+                  retries: 3
+                  strategy: rollback
+              rollback:
+                disableWait: true
+                disableWaitForJobs: true
+              values: ${nr-var:chart_values}
+
 {{- end }}
