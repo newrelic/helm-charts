@@ -87,6 +87,8 @@ privileged: false
 | daemonset.configMap | object | See `values.yaml` | Settings for daemonset configmap |
 | daemonset.configMap.config | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
 | daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
+| daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -96,6 +98,8 @@ privileged: false
 | deployment.configMap | object | See `values.yaml` | Settings for deployment configmap |
 | deployment.configMap.config | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
 | deployment.containerSecurityContext | object | `{}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
+| deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -163,6 +167,5 @@ Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": 
 
 ## Maintainers
 
-* [juanjjaramillo](https://github.com/juanjjaramillo)
 * [csongnr](https://github.com/csongnr)
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
