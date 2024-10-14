@@ -36,7 +36,8 @@ spec:
   restartPolicy: Never
   initContainers:
   - name: cluster-registration-wait
-image: gcr.io/pixie-oss/pixie-dev-public/curl:1.0
+image: "{{ (.Values.clusterRegistrationWaitImage).repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
+imagePullPolicy: "{{ (.Values.clusterRegistrationWaitImage).pullPolicy | default "IfNotPresent" }}"
 command: ['sh', '-c', 'set -x;
   URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
   until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
