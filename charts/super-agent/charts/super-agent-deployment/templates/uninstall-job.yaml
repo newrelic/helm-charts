@@ -1,5 +1,5 @@
 {{- if .Values.cleanupManagedResources -}}
-{{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "deployment-uninstall-job" ) -}}
+{{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "deployment-uninstall" ) -}}
 {{- /*
 The resources managed by the super-agent and the label selector are hardcoded on the super-agent.
 */ -}}
@@ -25,7 +25,7 @@ spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       containers:
         - name: delete-managed-resources
-          image: bitnami/kubectl
+          image: bitnami/kubectl  # TODO: Pin version to the latest that we support.
           command:
             - bash
           args:
@@ -42,8 +42,12 @@ spec:
               # Delete the CRs managed by the super-agent if the corresponding CRDs exist
               {{ range $i, $cr := $saCRList }}
               if kubectl api-resources -o name |grep {{ $cr }}; then
-                kubectl delete {{ $cr }} -n {{ $.Release.Namespace }} -l {{ $saResourcesLabelSelector }}
+                kubectl -n {{ $.Release.Namespace }} delete {{ $cr }} -l {{ $saResourcesLabelSelector }}
               fi
-              {{ end -}}
-
+              {{ end }}
+      
+              {{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . }}
+              # Delete the secrets created in the cluster
+              kubectl -n {{ $.Release.Namespace }} delete secret {{ include "newrelic-super-agent.auth.secret.name" . }}
+              {{- end }}
 {{- end -}}

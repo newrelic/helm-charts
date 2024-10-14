@@ -1,0 +1,82 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector
+  labels:
+    app: opentelemetry
+    component: otel-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: opentelemetry
+      component: otel-collector
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: opentelemetry
+        component: otel-collector
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+    spec:
+      containers:
+      - name: otel-collector
+        image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+        resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
+        env:
+          - name: KUBE_NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          - name: RECEIVER_ENDPOINT
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: NR_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                key: NR_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+          - name: NR_OTLP_ENDPOINT
+            {{- if .Values.proxy }}
+            value: "{{- .Values.proxy }}"
+            {{- else if .Values.nrStaging }}
+            value: "staging-otlp.nr-data.net:4317"
+            {{- else }}
+            value: "otlp.nr-data.net:4317"
+            {{- end }}
+          - name: CLUSTER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "nr-ebpf-agent.fullname" . }}-config
+                key: clusterName
+        ports:
+        - containerPort: 4317
+        volumeMounts:
+          - name: data
+            mountPath: /etc/otel/config.yaml
+            subPath: config.yaml
+            readOnly: true
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      serviceAccountName: {{ include "nr-ebpf-agent.fullname" . }}-collector
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        configMap:
+          name: {{ include "nr-ebpf-agent.fullname" . }}-config
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- with include "newrelic.common.affinity" . }}
+      affinity:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- with include "newrelic.common.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 -}}
+      {{- end }}

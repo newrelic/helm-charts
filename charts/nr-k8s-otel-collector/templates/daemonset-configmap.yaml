@@ -1,12 +1,15 @@
 apiVersion: v1 
 kind: ConfigMap
 metadata:
-  name: {{ include "nrKubernetesOtel.daemonset.configmap.fullname" . }}
+  name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   daemonset-config.yaml: |
+    {{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
+    {{- . | nindent 4 }}
+    {{- else }}
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
@@ -48,17 +51,18 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
-          processes:
-          process:
-            metrics:
-              process.cpu.utilization:
-                enabled: true
-              process.cpu.time:
-                enabled: false
-            mute_process_name_error: true
-            mute_process_exe_error: true
-            mute_process_io_error: true
-            mute_process_user_error: true
+          # Uncomment to enable process metrics, which can be noisy but valuable.
+          # processes:
+          # process:
+          #   metrics:
+          #     process.cpu.utilization:
+          #       enabled: true
+          #     process.cpu.time:
+          #       enabled: false
+          #   mute_process_name_error: true
+          #   mute_process_exe_error: true
+          #   mute_process_io_error: true
+          #   mute_process_user_error: true
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
@@ -532,6 +536,8 @@ data:
          limit_percentage: 80
          spike_limit_percentage: 25
 
+      cumulativetodelta:
+
       batch:
         send_batch_max_size: 1000
         timeout: 30s
@@ -598,6 +604,7 @@ data:
             - k8sattributes
             - attributes/self
             - memory_limiter
+            - cumulativetodelta
             - batch
           exporters:
             - otlphttp/newrelic
@@ -614,3 +621,4 @@ data:
           exporters:
             - otlphttp/newrelic
         {{- end }}
+    {{- end }}
