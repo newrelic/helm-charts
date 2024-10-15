@@ -101,7 +101,7 @@ spec:
               value: {{ .Values.fluentBit.db | quote }}
             {{- else if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
             - name: FB_DB
-              value: "/db/$(NODE_NAME)-fb.db"
+              value: "/db/${NODE_NAME}-fb.db"
             {{- else }}
             - name: FB_DB
               value: ""
