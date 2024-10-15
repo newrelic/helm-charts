@@ -1,0 +1,66 @@
+suite: test user key helpers
+templates:
+  - templates/example-cm-userkey.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: creates secret names for local user key
+    set:
+      userKey: local
+    asserts:
+      - equal:
+          path: data.userkey-secret-name
+          value: my-release-CHART-TEMPLATE-userkey
+      - equal:
+          path: data.userkey-secret-key-name
+          value: userKey
+  - it: creates secret names for global user key
+    set:
+      global:
+        userKey: local
+    asserts:
+      - equal:
+          path: data.userkey-secret-name
+          value: my-release-CHART-TEMPLATE-userkey
+      - equal:
+          path: data.userkey-secret-key-name
+          value: userKey
+
+  - it: returns local custom secret names
+    set:
+      customUserKeySecretName: local
+      customUserKeySecretKey: localkey
+    asserts:
+      - equal:
+          path: data.userkey-secret-name
+          value: local
+      - equal:
+          path: data.userkey-secret-key-name
+          value: localkey
+  - it: returns global custom secret names
+    set:
+      global:
+        customUserKeySecretName: global
+        customUserKeySecretKey: globalkey
+    asserts:
+      - equal:
+          path: data.userkey-secret-name
+          value: global
+      - equal:
+          path: data.userkey-secret-key-name
+          value: globalkey
+  - it: local secret names override global secret names
+    set:
+      customUserKeySecretName: local
+      customUserKeySecretKey: localkey
+      global:
+        customUserKeySecretName: global
+        customUserKeySecretKey: globalkey
+    asserts:
+      - equal:
+          path: data.userkey-secret-name
+          value: local
+      - equal:
+          path: data.userkey-secret-key-name
+          value: localkey

@@ -47,6 +47,9 @@ spec:
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- if .Values.hostNetwork }}
+      hostNetwork: {{ .Values.hostNetwork }}
+      {{- end }}
       initContainers:
       {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
         - name: init

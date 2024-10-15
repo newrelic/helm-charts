@@ -9,7 +9,7 @@ metadata:
       {{ toYaml . | nindent 4 }}
     {{- end }}
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: 1
   selector:
     matchLabels:
       {{- include "synthetics-job-manager.selectorLabels" . | nindent 6 }}

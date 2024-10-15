@@ -1,0 +1,69 @@
+suite: pre-install job template
+templates:
+  - templates/preinstall-job-register-system-identity.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  cluster: test
+  licenseKey: test
+tests:
+  - it: by default it fails with missing values
+    asserts:
+      - failedTemplate: 
+          errorMessage: You must specify a userKey or a customUserKeySecretName containing it
+
+  - it: if userKey is set, it should fail with missing organization id
+    set:
+      userKey: test
+    asserts:
+      - failedTemplate:
+          errorMessage: .config.opamp.auth.organizationId is required
+
+  - it: if organizationId is set, it should fail with missing userKey
+    set:
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey or a customUserKeySecretName containing it
+
+  - it: with everything set, the job should template correctly.
+    set:
+      userKey: test
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 5  # Secret, job, and 3 RBAC manifests
+      - documentIndex: 1
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+
+  - it: with a custom secret for userKey, the secret should not be created.
+    set:
+      customUserKeySecretName: test-secret
+      customUserKeySecretKey: test-key
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 4  # With everything rendered it should be 5
+      - documentIndex: 0
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 0
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: USER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: test-secret
+                key: test-key

@@ -445,6 +445,12 @@ data:
             action: upsert
             value: 'true'
 
+      transform/events:
+        log_statements:
+          - context: log
+            statements:
+              - set(attributes["event.source.host"], resource.attributes["k8s.node.name"])
+
       transform/low_data_mode_inator:
         metric_statements:
           - context: metric
@@ -460,6 +466,8 @@ data:
             action: delete
           - key: net.host.port
             action: delete
+
+      cumulativetodelta:
 
       k8sattributes:
         auth_type: "serviceAccount"
@@ -561,6 +569,7 @@ data:
             - k8sattributes
             - attributes/self
             - memory_limiter
+            - cumulativetodelta
             - batch
           exporters:
             - otlphttp/newrelic
@@ -576,6 +585,7 @@ data:
           receivers:
             - k8s_events
           processors:
+            - transform/events
             - resource/events
             - batch
           exporters:

@@ -23,6 +23,14 @@ spec:
             value: "/host"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
+          {{- if .Values.protocols }}
+          {{- range $protocol, $enabled := .Values.protocols }}
+          {{- if (eq $enabled false) }}
+          - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
+            value: "0"
+          {{- end }}
+          {{- end }}
+          {{- end }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
           - name: PL_TABLE_STORE_DATA_LIMIT_MB
@@ -43,6 +51,8 @@ spec:
         env:
           - name: DEPLOYMENT_NAME
             value: {{ .Values.cluster }}
+          - name: PERIOD
+            value: "{{ .Values.pushPeriod }}"
           - name: HOST_IP
             valueFrom:
               fieldRef:
@@ -51,6 +61,14 @@ spec:
             value: "$(HOST_IP):4317"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
+          {{- if .Values.protocols }}
+          {{- range $protocol, $enabled := .Values.protocols }}
+          {{- if (eq $enabled false) }}
+          - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
+            value: "0"
+          {{- end }}
+          {{- end }}
+          {{- end }}
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
             value: "True"

@@ -1,0 +1,46 @@
+suite: test hostNetwork options in fluent-bit pods
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: daemonsets does not contain hostNetwork block when not provided
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset.yaml
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset-windows.yaml
+  - it: daemonsets does not contain hostNetwork block when provided as false
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      hostNetwork: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset.yaml
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset-windows.yaml
+  - it: daemonsets does contain hostNetwork=true when provided as true
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset-windows.yaml

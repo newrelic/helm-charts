@@ -54,3 +54,15 @@ This helper is for internal use.
   {{- end -}}
 {{- end -}}
 {{- end -}}
+
+
+
+{{/*
+Return empty string (falsehood) or "true" if the user set a custom secret for the license.
+This helper is for internal use.
+*/}}
+{{- define "newrelic.common.license._usesCustomSecret" -}}
+{{- if or (include "newrelic.common.license._customSecretName" .) (include "newrelic.common.license._customSecretKey" .) -}}
+true
+{{- end -}}
+{{- end -}}

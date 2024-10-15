@@ -1,0 +1,8 @@
+# This is a dummy CM to test that region is templated and how to use it
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-region
+  namespace: {{ .Release.Namespace }}
+data:
+  region: {{ include "newrelic.common.region" . }}
