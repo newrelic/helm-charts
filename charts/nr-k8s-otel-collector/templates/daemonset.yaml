@@ -79,27 +79,25 @@ secretKeyRef:
 {{- . | toYaml | nindent 12 }}
 {{- end }}
   volumeMounts:
-# TODO (chris): this is a linux specific configuration
-{{- if include "newrelic.common.privileged" . }}
+{{- if not .Values.gkeAutopilot }}
 - name: host-fs
   mountPath: /hostfs
   readOnly: true
+{{- end }}
 - name: varlogpods
   mountPath: /var/log/pods
   readOnly: true
-{{- end }}
 - name: daemonset-config
   mountPath: /config
   volumes:
-# TODO (chris): this is a linux specific configuration
-{{- if include "newrelic.common.privileged" . }}
+{{- if not .Values.gkeAutopilot }}
 - name: host-fs
   hostPath:
 path: /
+{{- end }}
 - name: varlogpods
   hostPath:
 path: /var/log/pods
-{{- end }}
 - name: daemonset-config
   configMap:
 name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}

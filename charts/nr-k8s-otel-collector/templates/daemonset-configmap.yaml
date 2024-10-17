@@ -13,7 +13,7 @@ data:
 receivers:
   hostmetrics:
 # TODO (chris): this is a linux specific configuration
-{{- if include "newrelic.common.privileged" . }}
+{{- if not .Values.gkeAutopilot }}
 root_path: /hostfs
 {{- end }}
 collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -66,7 +66,7 @@ enabled: false
 
   kubeletstats:
 collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-{{- if include "newrelic.common.privileged" . }}
+{{- if not .Values.gkeAutopilot }}
 endpoint: "${KUBE_NODE_NAME}:10250"
 auth_type: "serviceAccount"
 insecure_skip_verify: true
@@ -564,13 +564,13 @@ logs:
 {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
 metrics:
   receivers:
-{{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
+{{- if .Values.receivers.hostmetrics.enabled }}
 - hostmetrics
 {{- end }}
 {{- if .Values.receivers.kubeletstats.enabled }}
 - kubeletstats
 {{- end }}
-{{- if and .Values.receivers.prometheus.enabled (include "newrelic.common.privileged" .) }}
+{{- if .Values.receivers.prometheus.enabled }}
 - prometheus
 {{- end }}
   processors:

@@ -106,6 +106,7 @@ privileged: false
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| gkeAutopilot | bool | `false` | If deploying to a GKE autopilot cluster, set to true |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | image.repository | string | `"newrelic/nr-otel-collector"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"0.7.1"` | Overrides the image tag whose default is the chart appVersion. |
@@ -119,7 +120,6 @@ privileged: false
 | podLabels | object | `{}` | Additional labels for chart pods |
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
-| privileged | bool | `true` | Run the integration with full access to the host filesystem and network. Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
