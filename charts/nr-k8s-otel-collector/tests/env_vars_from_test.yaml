@@ -1,0 +1,114 @@
+suite: envVarsFrom
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not set envFrom by default
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+        template: templates/deployment.yaml
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+        template: templates/daemonset.yaml
+  - it: adds additional deployment env sources from Values file using 'nr-otel-for-k8s-license' secret
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        envsFrom:
+        - secretRef:
+            name: test-secret-dep
+        - configMapRef:
+            name: test-configmap-dep
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef: 
+              name: test-secret-dep
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-configmap-dep
+        template: templates/deployment.yaml
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+        template: templates/daemonset.yaml
+  - it: adds additional daemonset env sources from Values file using 'nr-otel-for-k8s-license' secret
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        envsFrom:
+          - secretRef:
+              name: test-secret-dae
+          - configMapRef:
+              name: test-configmap-dae
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: test-secret-dae
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-configmap-dae
+        template: templates/daemonset.yaml
+      - notExists:
+          path: spec.template.spec.containers[0].envFrom
+        template: templates/deployment.yaml
+  - it: adds additional deployment and daemonset env sources from Values file using 'nr-otel-for-k8s-license' secret
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        envsFrom:
+          - secretRef:
+              name: test-secret-dep
+          - configMapRef:
+              name: test-configmap-dep
+      daemonset:
+        envsFrom:
+          - secretRef:
+              name: test-secret-dae
+          - configMapRef:
+              name: test-configmap-dae
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: test-secret-dep
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-configmap-dep
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: test-secret-dae
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            configMapRef:
+              name: test-configmap-dae
+        template: templates/daemonset.yaml
