@@ -1,14 +1,14 @@
-suite: super agent's config
+suite: agent control's config
 templates:
-  - templates/configmap-superagent-config.yaml
+  - templates/configmap-agentcontrol-config.yaml
 release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: super agent's config can be disabled
+  - it: agent control's config can be disabled
     set:
       config:
-        superAgent:
+        agentControl:
           create: false
     asserts:
       - hasDocuments:
@@ -33,11 +33,11 @@ tests:
             server:
               enabled: true
 
-  - it: super agent's config always include cluster_name, namespace and defaults
+  - it: agent control's config always include cluster_name, namespace and defaults
     set:
       cluster: my-cluster
       config:
-        superAgent: {}
+        agentControl: {}
     asserts:
       - equal:
           path: data["local_config"]
@@ -50,18 +50,18 @@ tests:
               namespace: my-namespace
             opamp:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.newrelic.com/v1/opamp
             server:
               enabled: true
 
-  - it: super agent's config templates
+  - it: agent control's config templates
     set:
       cluster: my-cluster
       config:
-        superAgent:
+        agentControl:
           content:
             test: value
             test2: value2
@@ -77,7 +77,7 @@ tests:
               namespace: my-namespace
             opamp:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.newrelic.com/v1/opamp
@@ -90,7 +90,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        superAgent:
+        agentControl:
           content:
             test: value
             test2: value2
@@ -109,7 +109,7 @@ tests:
               namespace: config-namespace
             opamp:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.newrelic.com/v1/opamp
@@ -118,7 +118,7 @@ tests:
             test: value
             test2: value2
 
-  - it: super agent's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
+  - it: agent control's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
     set:
       cluster: my-cluster
       region: eu
@@ -134,15 +134,15 @@ tests:
               namespace: my-namespace
             opamp:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
             server:
               enabled: true
 
-  - it: default config for super agent can be overridden
-    template: templates/configmap-superagent-config.yaml
+  - it: default config for agent control can be overridden
+    template: templates/configmap-agentcontrol-config.yaml
     set:
       cluster: my-cluster
       region: eu

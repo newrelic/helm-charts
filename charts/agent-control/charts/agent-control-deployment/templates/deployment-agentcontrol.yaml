@@ -20,8 +20,8 @@ spec:
 
           This comment (and the mechanisim added in the PR when we left this comment) block the automatic upgrade feature.
 
-          See: charts/super-agent/charts/super-agent-deployment/templates/preinstall-job-register-system-identity.yaml */ -}}
-        checksum/agent-config: {{ include (print $.Template.BasePath "/configmap-superagent-config.yaml") . | sha256sum }}
+          See: charts/agent-control/charts/agent-control-deployment/templates/preinstall-job-register-system-identity.yaml */ -}}
+        checksum/agent-config: {{ include (print $.Template.BasePath "/configmap-agentcontrol-config.yaml") . | sha256sum }}
         checksum/subagent-config: {{ include (print $.Template.BasePath "/configmap-subagent-configs.yaml") . | sha256sum }}
         {{- with .Values.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -56,7 +56,7 @@ spec:
 
       containers:
         - name: {{ .Chart.Name }}
-          {{- with include "newrelic-super-agent.securityContext.container" . | fromYaml }}
+          {{- with include "newrelic-agent-control.securityContext.container" . | fromYaml }}
           securityContext:
             {{- toYaml . | nindent 12 }}
           {{- end }}
@@ -68,8 +68,8 @@ spec:
             - name: NR_SA_OPAMP__AUTH_CONFIG__CLIENT_ID
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "newrelic-super-agent.auth.secret.name" . }}
-                  key: {{ include "newrelic-super-agent.auth.secret.clientId.key" . }}
+                  name: {{ include "newrelic-agent-control.auth.secret.name" . }}
+                  key: {{ include "newrelic-agent-control.auth.secret.clientId.key" . }}
             - name: NR_SA_OPAMP__HEADERS__API-KEY
               valueFrom:
                 secretKeyRef:
@@ -102,16 +102,16 @@ spec:
           # TODO: Probe the status server.
 
           volumeMounts:
-            - name: super-agent-config
-              mountPath: /etc/newrelic-super-agent
+            - name: agent-control-config
+              mountPath: /etc/newrelic-agent-control
               readOnly: true
             # TODO: when releasing we should check if this is still needed and/or if we need to persist the data.
-            - mountPath: /var/lib/newrelic-super-agent
-              name: var-lib-newrelic-super-agent
+            - mountPath: /var/lib/newrelic-agent-control
+              name: var-lib-newrelic-agent-control
               readOnly: false
             {{- if ((.Values.config).opamp).enabled }}
             - name: auth-secret-private-key
-              mountPath: "/etc/newrelic-super-agent/keys"
+              mountPath: "/etc/newrelic-agent-control/keys"
               readOnly: true
             {{- end }}
             {{- with .Values.extraVolumeMounts }}
@@ -121,20 +121,20 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
       volumes:
-        - name: super-agent-config
+        - name: agent-control-config
           configMap:
-            name: local-data-super-agent
+            name: local-data-agent-control
             items:
               - key: local_config
                 path: config.yaml
-        - name: var-lib-newrelic-super-agent
+        - name: var-lib-newrelic-agent-control
           emptyDir: {}
         {{- if ((.Values.config).opamp).enabled }}
         - name: auth-secret-private-key
           secret:
-            secretName: {{ include "newrelic-super-agent.auth.secret.name" . }}
+            secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}
             items:
-              - key: {{ include "newrelic-super-agent.auth.secret.privateKey.key" . }}
+              - key: {{ include "newrelic-agent-control.auth.secret.privateKey.key" . }}
                 path: from-secret.key
         {{- end }}
         {{- with .Values.extraVolumes }}

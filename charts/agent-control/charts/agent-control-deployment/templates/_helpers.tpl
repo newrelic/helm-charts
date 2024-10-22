@@ -1,8 +1,8 @@
 {{- /*
-Return the name of the configMap holding the Super Agent's config. Defaults to release's fill name suffiexed with "-config"
+Return the name of the configMap holding the Agent Control's config. Defaults to release's fill name suffiexed with "-config"
 */ -}}
-{{- define "newrelic-super-agent.config.name" -}}
-{{- include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "local-data" "suffix" "superagent-config" ) -}}
+{{- define "newrelic-agent-control.config.name" -}}
+{{- include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "local-data" "suffix" "agentcontrol-config" ) -}}
 {{- end -}}
 
 
@@ -10,7 +10,7 @@ Return the name of the configMap holding the Super Agent's config. Defaults to r
 {{- /*
 Test that the value of `.Values.config.subAgents` exists and its valid. If empty, returns the default.
 */ -}}
-{{- define "newrelic-super-agent.config.agents.yaml" -}}
+{{- define "newrelic-agent-control.config.agents.yaml" -}}
 {{- if (.Values.config).subAgents -}}
 {{- $agents := dict -}}
 {{- range $subAgentName, $subAgentConfig := (.Values.config).subAgents -}}
@@ -38,9 +38,9 @@ open-telemetry:
 
 
 {{- /*
-Return to which endpoint should the super agent connect to get opamp data
+Return to which endpoint should the agent control connect to get opamp data
 */ -}}
-{{- define "newrelic-super-agent.config.endpoints.opamp" -}}
+{{- define "newrelic-agent-control.config.endpoints.opamp" -}}
 {{- $region := include "newrelic.common.region" . -}}
 
 {{- if eq $region "Staging" -}}
@@ -60,9 +60,9 @@ Return to which endpoint should the super agent connect to get opamp data
 
 
 {{- /*
-Return to which endpoint should the super agent ask to renew its token
+Return to which endpoint should the agent control ask to renew its token
 */ -}}
-{{- define "newrelic-super-agent.config.endpoints.tokenRenewal" -}}
+{{- define "newrelic-agent-control.config.endpoints.tokenRenewal" -}}
 {{- $region := include "newrelic.common.region" . -}}
 
 {{- if eq $region "Staging" -}}
@@ -82,9 +82,9 @@ Return to which endpoint should the super agent ask to renew its token
 
 
 {{- /*
-Return to which endpoint should the super agent register its system identity
+Return to which endpoint should the agent control register its system identity
 */ -}}
-{{- define "newrelic-super-agent.config.endpoints.systemIdentityRegistration" -}}
+{{- define "newrelic-agent-control.config.endpoints.systemIdentityRegistration" -}}
 {{- $region := include "newrelic.common.region" . -}}
 
 {{- if eq $region "Staging" -}}
@@ -107,7 +107,7 @@ Return to which endpoint should the super agent register its system identity
 Builds the configuration from config on the values and add more config options like
 cluster name, licenses, and custom attributes
 */ -}}
-{{- define "newrelic-super-agent.config.content" -}}
+{{- define "newrelic-agent-control.config.content" -}}
 {{- /*
 TODO: There are a lot of TODOs to be made in this chart yet and some of them are going to impact the YAML that holds
 the config.
@@ -124,9 +124,9 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 
 {{- /* Add opamp if enabled */ -}}
 {{- if ((.Values.config).opamp).enabled -}}
-  {{- $opamp := (dict "endpoint" (include "newrelic-super-agent.config.endpoints.opamp" .)) -}}
+  {{- $opamp := (dict "endpoint" (include "newrelic-agent-control.config.endpoints.opamp" .)) -}}
 
-  {{- $auth_config := dict "token_url" (include "newrelic-super-agent.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-super-agent/keys/from-secret.key" -}}
+  {{- $auth_config := dict "token_url" (include "newrelic-agent-control.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-agent-control/keys/from-secret.key" -}}
   {{- $opamp = mustMerge $opamp (dict "auth_config" $auth_config) -}}
 
   {{- $config = mustMerge $config (dict "opamp" $opamp) -}}
@@ -134,20 +134,20 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 
 {{- /* Add subagents to the config */ -}}
 {{- $agents := dict -}}
-{{- range $subagent, $object := (include "newrelic-super-agent.config.agents.yaml" . | fromYaml) -}}
+{{- range $subagent, $object := (include "newrelic-agent-control.config.agents.yaml" . | fromYaml) -}}
   {{- $agents = mustMerge $agents (dict $subagent (dict "agent_type" $object.type)) -}}
 {{- end -}}
 {{- $config = mustMerge $config (dict "agents" $agents) -}}
 
-{{- /* Overwrite $config with everything in `config.superAgent.content` if present */ -}}
-{{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).superAgent).content | default dict)) -}}
+{{- /* Overwrite $config with everything in `config.agentControl.content` if present */ -}}
+{{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).agentControl).content | default dict)) -}}
 {{- $config | toYaml -}}
 {{- end -}}
 
 
 
 {{- /* These are the defaults that are used for all the containers in this chart */ -}}
-{{- define "newrelic-super-agent.securityContext.containerDefaults" -}}
+{{- define "newrelic-agent-control.securityContext.containerDefaults" -}}
 runAsUser: 1000
 runAsGroup: 2000
 allowPrivilegeEscalation: false
@@ -157,8 +157,8 @@ readOnlyRootFilesystem: true
 
 
 {{- /* Allow to change pod defaults dynamically */ -}}
-{{- define "newrelic-super-agent.securityContext.container" -}}
-{{- $defaults := fromYaml ( include "newrelic-super-agent.securityContext.containerDefaults" . ) -}}
+{{- define "newrelic-agent-control.securityContext.container" -}}
+{{- $defaults := fromYaml ( include "newrelic-agent-control.securityContext.containerDefaults" . ) -}}
 {{- $commonLibrary := include "newrelic.common.securityContext.container" . | fromYaml -}}
 
 {{- if $commonLibrary -}}
@@ -173,7 +173,7 @@ readOnlyRootFilesystem: true
 {{- /*
 Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
-{{- define "newrelic-super-agent.auth.organizationId" -}}
+{{- define "newrelic-agent-control.auth.organizationId" -}}
 {{- if (((.Values.config).opamp).auth).organizationId -}}
   {{- .Values.config.opamp.auth.organizationId -}}
 {{- else -}}
@@ -187,7 +187,7 @@ Return .Values.config.auth.organizationId and fails if it does not exists
 Check if .Values.config.auth.secret.name exists and use it to name auth' secret. If it does not exist, fallback to the name
 of the releases with "-auth" suffix.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.name" -}}
+{{- define "newrelic-agent-control.auth.secret.name" -}}
 {{- $secretName := (((((.Values.config).opamp).auth).secret).name) -}}
 {{- if $secretName -}}
   {{- $secretName -}}
@@ -201,9 +201,9 @@ of the releases with "-auth" suffix.
 {{- /*
 Helper to toggle the creation of the job that creates and registers the system identity.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.shouldRunJob" -}}
-{{- $privateKey := include "newrelic-super-agent.auth.secret.privateKey.data" . -}}
-{{- $clientId := include "newrelic-super-agent.auth.secret.clientId.data" . -}}
+{{- define "newrelic-agent-control.auth.secret.shouldRunJob" -}}
+{{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
+{{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
 
 {{- if and ((.Values.config).opamp).enabled ((((.Values.config).opamp).auth).secret).create (not $privateKey) (not $clientId) -}}
   true
@@ -215,10 +215,10 @@ Helper to toggle the creation of the job that creates and registers the system i
 {{- /*
 Helper to toggle the creation of the secret that has the system identity as values.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.shouldTemplate" -}}
+{{- define "newrelic-agent-control.auth.secret.shouldTemplate" -}}
 {{- if and ((.Values.config).opamp).enabled ((((.Values.config).opamp).auth).secret).create -}}
-  {{- $privateKey := include "newrelic-super-agent.auth.secret.privateKey.data" . -}}
-  {{- $clientId := include "newrelic-super-agent.auth.secret.clientId.data" . -}}
+  {{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
+  {{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
 
   {{- if and $privateKey $clientId -}}
     true
@@ -234,7 +234,7 @@ Helper to toggle the creation of the secret that has the system identity as valu
 Check if .Values.config.auth.secret.private_key.secret_key exists and use it for the key in the secret containing the private
 key needed for the system identity. Fallbacks to `private_key`.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.privateKey.key" -}}
+{{- define "newrelic-agent-control.auth.secret.privateKey.key" -}}
 {{- $key := ((((((.Values.config).opamp).auth).secret).private_key).secret_key) -}}
 {{- if $key -}}
   {{- $key -}}
@@ -249,7 +249,7 @@ key needed for the system identity. Fallbacks to `private_key`.
 Check if .Values.config.auth.secret.private_key.(plain_pem or base64_pem) exists and use it for as the private certificate for
 auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.privateKey.data" -}}
+{{- define "newrelic-agent-control.auth.secret.privateKey.data" -}}
 {{- $plain_pem := ((((((.Values.config).opamp).auth).secret).private_key).plain_pem) -}}
 {{- $base64_pem := ((((((.Values.config).opamp).auth).secret).private_key).base64_pem) -}}
 {{- if and $plain_pem $base64_pem -}}
@@ -269,7 +269,7 @@ auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this 
 Check if .Values.config.auth.secret.client_id.secret_key exists and use it for the key in the secret containing the client id
 needed for the system identity. Fallbacks to `client_id`.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.clientId.key" -}}
+{{- define "newrelic-agent-control.auth.secret.clientId.key" -}}
 {{- $key := ((((((.Values.config).opamp).auth).secret).client_id).secret_key) -}}
 {{- if $key -}}
   {{- $key -}}
@@ -284,7 +284,7 @@ needed for the system identity. Fallbacks to `client_id`.
 Check if .Values.config.auth.secret.client_id.(plain or base64) exists and use it for as the client id for auth. If no
 value is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
 */ -}}
-{{- define "newrelic-super-agent.auth.secret.clientId.data" -}}
+{{- define "newrelic-agent-control.auth.secret.clientId.data" -}}
 {{- $plain := ((((((.Values.config).opamp).auth).secret).client_id).plain) -}}
 {{- $base64 := ((((((.Values.config).opamp).auth).secret).client_id).base64) -}}
 {{- if and $plain $base64 -}}
