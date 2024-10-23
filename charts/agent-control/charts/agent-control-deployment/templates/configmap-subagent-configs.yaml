@@ -1,4 +1,4 @@
-{{- range $subAgentName, $subAgentConfig := (include "newrelic-super-agent.config.agents.yaml" . | fromYaml) -}}
+{{- range $subAgentName, $subAgentConfig := (include "newrelic-agent-control.config.agents.yaml" . | fromYaml) -}}
 {{- $name := include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" "local-data" "suffix" $subAgentName) }}
 ---
 kind: ConfigMap

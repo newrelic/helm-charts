@@ -1,7 +1,7 @@
-suite: test super agent deployment's subagent configurations
+suite: test agent control deployment's subagent configurations
 templates:
-  - templates/deployment-superagent.yaml
-  - templates/configmap-superagent-config.yaml
+  - templates/deployment-agentcontrol.yaml
+  - templates/configmap-agentcontrol-config.yaml
   - templates/configmap-subagent-configs.yaml
 release:
   name: my-release
@@ -29,34 +29,34 @@ tests:
               aYAML:
                 canI: HaveSomeYAML
     asserts:
-      - template: templates/deployment-superagent.yaml
+      - template: templates/deployment-agentcontrol.yaml
         equal:
           path: spec.template.spec.containers[0].volumeMounts
           value:
-            - name: super-agent-config
-              mountPath: /etc/newrelic-super-agent
+            - name: agent-control-config
+              mountPath: /etc/newrelic-agent-control
               readOnly: true
-            - mountPath: /var/lib/newrelic-super-agent
-              name: var-lib-newrelic-super-agent
+            - mountPath: /var/lib/newrelic-agent-control
+              name: var-lib-newrelic-agent-control
               readOnly: false
-            - mountPath: /etc/newrelic-super-agent/keys
+            - mountPath: /etc/newrelic-agent-control/keys
               name: auth-secret-private-key
               readOnly: true
-      - template: templates/deployment-superagent.yaml
+      - template: templates/deployment-agentcontrol.yaml
         equal:
           path: spec.template.spec.volumes
           value:
-            - name: super-agent-config
+            - name: agent-control-config
               configMap:
-                name: local-data-super-agent
+                name: local-data-agent-control
                 items:
                   - key: local_config
                     path: config.yaml
-            - name: var-lib-newrelic-super-agent
+            - name: var-lib-newrelic-agent-control
               emptyDir: {}
             - name: auth-secret-private-key
               secret:
-                secretName: my-release-super-agent-deployment-auth
+                secretName: my-release-agent-control-deployment-auth
                 items:
                   - key: private_key
                     path: from-secret.key

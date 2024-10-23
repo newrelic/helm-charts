@@ -1,4 +1,4 @@
-{{- if include "newrelic-super-agent.auth.secret.shouldRunJob" . -}}
+{{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . -}}
 {{- /*
 User key secret is used only in the step that create the system identity.
 The secret that is created by the common-library does not allow to add annotations so the secret is removed
@@ -65,8 +65,8 @@ spec:
               apk update
               apk add kubectl
 
-              echo Checking if the secret '{{ include "newrelic-super-agent.auth.secret.name" . }}' is already present in the cluster
-              if kubectl get secret {{ include "newrelic-super-agent.auth.secret.name" . }}; then
+              echo Checking if the secret '{{ include "newrelic-agent-control.auth.secret.name" . }}' is already present in the cluster
+              if kubectl get secret {{ include "newrelic-agent-control.auth.secret.name" . }}; then
                 echo System identity already exists. Exiting gracefully...
                 exit 0
               fi
@@ -84,7 +84,7 @@ spec:
                     "mutation {
                       systemIdentityCreate(
                         name: \"System Identity for Kubernetes cluster '{{ include "newrelic.common.cluster" . }}'\",
-                        organizationId: \"{{ include "newrelic-super-agent.auth.organizationId" . }}\",
+                        organizationId: \"{{ include "newrelic-agent-control.auth.organizationId" . }}\",
                         publicKey: \"'$(openssl enc -base64 -A -in "$TEMPORAL_FOLDER/pub")'\"
                       ) {
                         clientId,
@@ -98,7 +98,7 @@ spec:
                     -H "API-Key: $USER_KEY" \
                     -o "$TEMPORAL_FOLDER/response.json" \
                     --data @- \
-                    "{{ include "newrelic-super-agent.config.endpoints.systemIdentityRegistration" . }}"
+                    "{{ include "newrelic-agent-control.config.endpoints.systemIdentityRegistration" . }}"
                 )
                 if [ $HTTP_CODE -eq 200 ]; then
                   break
@@ -114,9 +114,9 @@ spec:
                 exit 1
               fi
 
-              echo Creating the secret '{{ include "newrelic-super-agent.auth.secret.name" . }}'...
+              echo Creating the secret '{{ include "newrelic-agent-control.auth.secret.name" . }}'...
               kubectl create secret generic --dry-run=client -o json \
-                {{ include "newrelic-super-agent.auth.secret.name" . }} \
+                {{ include "newrelic-agent-control.auth.secret.name" . }} \
                 --from-literal=CLIENT_ID=$(jq -r '.data.systemIdentityCreate.clientId' "$TEMPORAL_FOLDER/response.json") \
                 --from-file="private_key=$TEMPORAL_FOLDER/key" | \
               jq '.metadata.labels |= {{ include "newrelic.common.labels" . | fromYaml | toJson }}' | \
