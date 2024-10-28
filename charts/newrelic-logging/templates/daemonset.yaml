@@ -96,6 +96,11 @@ secretKeyRef:
   {{- else }}
   value: "docker,cri"
   {{- end }}
+# NODE_NAME needs to be defined before FB_DB, because FB_DB references NODE_NAME in its value when using persistentVolume
+- name: NODE_NAME
+  valueFrom:
+fieldRef:
+  fieldPath: spec.nodeName
 {{- if or (not .Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "hostPath") }}
 - name: FB_DB
   value: {{ .Values.fluentBit.db | quote }}
@@ -116,10 +121,6 @@ secretKeyRef:
   value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
 - name: RETRY_LIMIT
   value: {{ .Values.fluentBit.retryLimit | quote }}
-- name: NODE_NAME
-  valueFrom:
-fieldRef:
-  fieldPath: spec.nodeName
 - name: HOSTNAME
   valueFrom:
 fieldRef:
