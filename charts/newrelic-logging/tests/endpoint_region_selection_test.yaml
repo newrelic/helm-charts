@@ -126,3 +126,88 @@ tests:
             name: ENDPOINT
             value: "custom"
         template: templates/daemonset-windows.yaml
+  - it: selects user defined endpoint
+    set:
+      licenseKey: nr_license_key
+      nrStaging: false
+      enableWindows: true
+      metricsEndpoint: "https://user-defined-api.newrelic.com"
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "https://user-defined-api.newrelic.com"
+        template: templates/daemonset.yaml
+     
+  - it: selects user-defined metrics endpoint even with EU license key
+    set:
+      licenseKey: euaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      enableWindows: true
+      metricsEndpoint: "https://user-defined-eu-metric-api.newrelic.com"
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "https://user-defined-eu-metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "https://user-defined-eu-metric-api.newrelic.com"
+        template: templates/daemonset-windows.yaml
+
+  - it: selects default US metrics endpoint when metricsEndpoint is not provided and license key is not EU
+    set:
+      licenseKey: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.newrelic.com"
+            template: templates/daemonset-windows.yaml  
