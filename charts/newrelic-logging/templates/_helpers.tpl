@@ -184,6 +184,8 @@ Returns metricsHost
 {{- define "newrelic-logging.metricsHost" -}}
 {{- if (include "newrelic.nrStaging" .) -}}
 staging-metric-api.newrelic.com
+{{- else if .Values.metricsEndpoint -}}
+{{ .Values.metricsEndpoint -}}
 {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "eu" -}}
 metric-api.eu.newrelic.com
 {{- else -}}
