@@ -38,8 +38,13 @@ fieldPath: status.podIP
   - name: NR_LICENSE_KEY
 valueFrom:
   secretKeyRef:
+{{- if (include "nr-ebpf-agent.licenseKey" .) }}
 key: NR_LICENSE_KEY
 name: nr-ebpf-agent-secrets
+{{- else }}
+name: {{ include "nr-ebpf-agent.customSecretName" . }}
+key: {{ include "nr-ebpf-agent.customSecretLicenseKey" . }}
+{{- end }}
   - name: NR_OTLP_ENDPOINT
 {{- if .Values.proxy }}
 value: "{{- .Values.proxy }}"
