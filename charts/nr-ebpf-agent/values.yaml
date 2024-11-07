@@ -2,8 +2,10 @@
 cluster: ""
 # -- The license key to use. Can be configured with `global.licenseKey`
 licenseKey: ""
-# -- Endpoint to export data to. If enabled, sends data to the staging backend. Requires a valid staging license key. Can also be configured with global.nrStaging
+# -- Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. Requires a valid staging license key. Can also be configured with global.nrStaging.
 nrStaging: false
+# -- Configures the agent to send all data through the proxy specified via the otel collector.
+proxy: ""
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
 # -- The source connectors (and data export scripts) to enable.
@@ -21,6 +23,11 @@ protocols:
   cass: true
   dns: true
   pgsql: true
+# -- The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR.
+# The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data.
+# The algorithm only looks for similar request paths within data of the same push period.
+# To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60.
+pushPeriod: "15"
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
@@ -30,7 +37,7 @@ ebpfAgent:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF agent image to be deployed.
-    tag: 0.0.3
+    tag: 0.0.4
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -49,7 +56,7 @@ ebpfClient:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF client image to be deployed.
-    tag: 0.0.4
+    tag: 0.0.6
   resources:
     limits:
       # -- Max memory allocated to the container.

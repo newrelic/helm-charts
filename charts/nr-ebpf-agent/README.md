@@ -40,7 +40,7 @@ kubectl logs <ebpf-pod-name> -c nr-ebpf-client -n newrelic
 kubectl logs <ebpf-pod-name> -c nr-ebpf-agent -n newrelic
 ```
 
-### Check the logs of the OpenteTemetry collector pod:
+### Check the logs of the OpenTelemetry collector pod:
 ```
 kubectl logs <otel-pod-name> -n newrelic
 ```
@@ -78,20 +78,20 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
 | ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | ebpfAgent.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-agent"` | eBPF agent image to be deployed. |
-| ebpfAgent.image.tag | string | `"0.0.3"` | The tag of the eBPF agent image to be deployed. |
+| ebpfAgent.image.tag | string | `"0.0.4"` | The tag of the eBPF agent image to be deployed. |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocated to the container. |
 | ebpfAgent.resources.requests.cpu | string | `"100m"` | Min CPU allocated to the container. |
 | ebpfAgent.resources.requests.memory | string | `"250Mi"` | Min memory allocated to the container. |
 | ebpfClient.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always. |
 | ebpfClient.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/ebpf-client"` | eBPF client image to be deployed. |
-| ebpfClient.image.tag | string | `"0.0.4"` | The tag of the eBPF client image to be deployed. |
+| ebpfClient.image.tag | string | `"0.0.6"` | The tag of the eBPF client image to be deployed. |
 | ebpfClient.resources.limits.memory | string | `"100Mi"` | Max memory allocated to the container. |
 | ebpfClient.resources.requests.cpu | string | `"50m"` | Min CPU allocated to the container. |
 | ebpfClient.resources.requests.memory | string | `"50Mi"` | Min memory allocated to the container. |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | Endpoint to export data to. If enabled, sends data to the staging backend. Requires a valid staging license key. Can also be configured with global.nrStaging |
+| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. Requires a valid staging license key. Can also be configured with global.nrStaging. |
 | otelCollector.collector.serviceAccount.annotations | object | `{}` | Annotations for the OTel collector service account. |
 | otelCollector.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always. |
 | otelCollector.image.repository | string | `"us-west1-docker.pkg.dev/pl-dev-infra/nr-ebpf-agent-lp/nr-ebpf-otel-collector"` | OpenTelemetry collector image to be deployed. |
@@ -102,6 +102,8 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | otelCollector.resources.requests.memory | string | `"200Mi"` | Min memory allocated to the container. |
 | podLabels | object | `{}` | Additional labels for chart pods |
 | protocols | object | `{"amqp":true,"cass":true,"dns":true,"http":true,"kafka":true,"mongodb":true,"mysql":true,"pgsql":true,"redis":true}` | The protocols (and data export scripts) to enable for tracing in the socket_tracer. |
+| proxy | string | `""` | Configures the agent to send all data through the proxy specified via the otel collector. |
+| pushPeriod | string | `"15"` | The periodicity in seconds at which the eBPF client pushes data to the OTel collector for export to NR. The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data. The algorithm only looks for similar request paths within data of the same push period.  To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60. |
 | stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
 | tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |

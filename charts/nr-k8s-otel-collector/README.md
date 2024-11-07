@@ -65,13 +65,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 If using GKE Autopilot, please set the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
 
 ```
-privileged: false
-receivers:
-  filelog:
-    enabled: false
-daemonset:
-  containerSecurityContext:
-    privileged: false
+gkeAutopilot: false
 ```
 
 ## Values
@@ -87,6 +81,8 @@ daemonset:
 | daemonset.configMap | object | See `values.yaml` | Settings for daemonset configmap |
 | daemonset.configMap.config | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
 | daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
+| daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -96,12 +92,15 @@ daemonset:
 | deployment.configMap | object | See `values.yaml` | Settings for deployment configmap |
 | deployment.configMap.config | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
 | deployment.containerSecurityContext | object | `{}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
+| deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| gkeAutopilot | bool | `false` | If deploying to a GKE autopilot cluster, set to true |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | image.repository | string | `"newrelic/nr-otel-collector"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"0.7.1"` | Overrides the image tag whose default is the chart appVersion. |
@@ -115,7 +114,6 @@ daemonset:
 | podLabels | object | `{}` | Additional labels for chart pods |
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
-| privileged | bool | `true` | Run the integration with full access to the host filesystem and network. Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
@@ -163,6 +161,5 @@ Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": 
 
 ## Maintainers
 
-* [juanjjaramillo](https://github.com/juanjjaramillo)
 * [csongnr](https://github.com/csongnr)
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)

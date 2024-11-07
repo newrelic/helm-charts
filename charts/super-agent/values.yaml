@@ -10,13 +10,13 @@ super-agent-deployment:
   # you know what you are going.
   enabled: true
 
-  # -- TODO: Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
+  # -- Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
   cluster: ""
-  # -- TODO: This set this license key to use. Can be configured also with `global.licenseKey`
+  # -- This set this license key to use. Can be configured also with `global.licenseKey`
   licenseKey: ""
-  # -- TODO: In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
+  # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
   customSecretName: ""
-  # -- TODO: In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
+  # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
   customSecretLicenseKey: ""
 
   # -- Image for the New Relic Super Agent
@@ -24,7 +24,7 @@ super-agent-deployment:
   image:
     registry:
     repository: newrelic/newrelic-super-agent
-    tag: 0.22.0
+    tag: 0.24.1
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -94,71 +94,81 @@ super-agent-deployment:
   # @default -- `false`
   nrStaging:
 
-  # -- (bool) Changes default endpoint to point to EU backend.
-  # @default -- `false`
-  euEndpoints:
-
   fedramp:
     # -- (bool) TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled`
     # @default -- `false`
     enabled:
 
-  # -- (bool) TODO: Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+  # -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
   # @default -- `false`
   verboseLog:
 
   # -- Enable the cleanup of super-agent managed resources when the chart is uninstalled.
-  # If disabled, agents and / or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled.
+  # If disabled, agents and/or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled.
   cleanupManagedResources: true
 
   config:
-    auth:
-      enabled: false
-      organizationId:
-      userApiKey:
-      secret:
-        create: true
-
     # -- Configuration for the Super Agent.
     # @default -- See `values.yaml`
     superAgent:
       # -- Set if the configMap is going to be created by this chart or the user will provide its own.
       create: true
-      # -- Here you can set New Relic' Super Agent configuration.
-      # @default -- See `values.yaml` for examples
-      content:
-        agents:
-          open-telemetry:
-            agent_type: newrelic/io.opentelemetry.collector:0.2.0
+      # -- Overrides the configuration that has been created automatically by the chart.
+      # This configuration here will be **MERGED** with the configuration specified above.
+      # If you need to have you own configuration, disabled the creation of this configMap and create your own.
+      content: {}
 
-        # opamp:
-        #   # TODO The endpoint should be set automatically based on the licenseKey and on the nrStaging option if opamp.enable=true
-        #   endpoint: https://opamp.service.newrelic.com/v1/opamp
-        #   endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
-
-        # -- This option enables a status server that can be useful for troubleshooting.
-        # -- Port-forward it `$ kubectl port-forward pod/{pod-name} 51200:51200`
-        # -- And query it as `$ curl localhost:51200/status`
-        server:
-          enabled: true
-        #   port: 51200
-
-
-    # -- Values that the fleet is going to have in the deployment.
-    # @default -- See `values.yaml` for examples
+    # -- Values that the fleet is going to have in the deployment. If empty, chart will automatically add `newrelic/io.opentelemetry.collector` subagent.
+    # On the other hand, if populated the list of agent created is the one specified overwriting the default.
+    # @default -- `newrelic/io.opentelemetry.collector` (See `values.yaml`)
     subAgents:
-      # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
-      # find the configuration needed for the subagent.
-      #
-      open-telemetry:
-        content:
-          # chart_version: "0.4.0"
-          chart_values:
-            licenseKey: ${nr-env:NR_LICENSE_KEY}
-            cluster: ${nr-env:NR_CLUSTER_NAME}
-            # TODO the following values are set twice in the config, we have to add some logic to improve UX either in the chart or in the agentType
-            # customSecretName: ""
-            # customSecretLicenseKey: ""
+    # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
+    # find the configuration needed for the subagent.
+    #
+    # The example below, open-telemetry, is enabled by default if no subagent is set up.
+    # open-telemetry:
+    #   type: newrelic/io.opentelemetry.collector:0.2.0
+    #   content:
+    #     chart_values:
+    #       global:
+    #         licenseKey: ${nr-env:NR_LICENSE_KEY}
+    #         cluster: ${nr-env:NR_CLUSTER_NAME}
+    #         # you can set here modifications to the open telemetry chart
+
+    opamp:
+      # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
+      # in stand alone mode where only the agents specified on `.config.subAgents` will be launched.
+      enabled: true
+
+      auth:
+        # -- Organization ID where fleets will live.
+        organizationId: ""
+        secret:
+          create: true
+          # -- Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret
+          # will have.
+          # @default -- release name suffixed with "-auth"
+          name:
+          private_key:
+            # -- Key inside the secret containing the private key.
+            # @default -- `private_key`
+            secret_key:
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64.
+            # This options is mutually exclusive with `plain_pem`.
+            base64_pem:
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text.
+            # This options is mutually exclusive with `base64_pem`.
+            plain_pem:
+          client_id:
+            # -- Key inside the secret containing the client ID.
+            # @default -- `client_id`
+            secret_key:
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64.
+            # This options is mutually exclusive with `plain`.
+            base64:
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text.
+            # This options is mutually exclusive with `base64`.
+            plain:
 
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml

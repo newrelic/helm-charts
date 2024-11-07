@@ -13,7 +13,7 @@ data:
     receivers:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if include "newrelic.common.privileged" . }}
+        {{- if not .Values.gkeAutopilot }}
         root_path: /hostfs
         {{- end }}
         collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -51,21 +51,22 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
-          processes:
-          process:
-            metrics:
-              process.cpu.utilization:
-                enabled: true
-              process.cpu.time:
-                enabled: false
-            mute_process_name_error: true
-            mute_process_exe_error: true
-            mute_process_io_error: true
-            mute_process_user_error: true
+          # Uncomment to enable process metrics, which can be noisy but valuable.
+          # processes:
+          # process:
+          #   metrics:
+          #     process.cpu.utilization:
+          #       enabled: true
+          #     process.cpu.time:
+          #       enabled: false
+          #   mute_process_name_error: true
+          #   mute_process_exe_error: true
+          #   mute_process_io_error: true
+          #   mute_process_user_error: true
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-        {{- if include "newrelic.common.privileged" . }}
+        {{- if not .Values.gkeAutopilot }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
@@ -535,6 +536,8 @@ data:
          limit_percentage: 80
          spike_limit_percentage: 25
 
+      cumulativetodelta:
+
       batch:
         send_batch_max_size: 1000
         timeout: 30s
@@ -561,13 +564,13 @@ data:
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
-            {{- if and .Values.receivers.hostmetrics.enabled (include "newrelic.common.privileged" .) }}
+            {{- if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
             - kubeletstats
             {{- end }}
-            {{- if and .Values.receivers.prometheus.enabled (include "newrelic.common.privileged" .) }}
+            {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
             {{- end }}
           processors:
@@ -601,6 +604,7 @@ data:
             - k8sattributes
             - attributes/self
             - memory_limiter
+            - cumulativetodelta
             - batch
           exporters:
             - otlphttp/newrelic
