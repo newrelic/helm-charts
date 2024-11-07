@@ -126,3 +126,116 @@ tests:
             name: ENDPOINT
             value: "custom"
         template: templates/daemonset-windows.yaml
+  - it: selects custom metrics endpoint if provided
+    set:
+      licenseKey: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      metricsEndpoint: custom-metric-endpoint
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "custom-metric-endpoint"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "custom-metric-endpoint"
+        template: templates/daemonset-windows.yaml
+
+  - it: selects default endpoints when no conditions match
+    set:
+      licenseKey: default
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.newrelic.com"
+        template: templates/daemonset-windows.yaml
+
+  - it: fails with invalid license key
+    set:
+      licenseKey: invalid
+      enableWindows: true
+    asserts:
+      # Linux
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+        template: templates/daemonset.yaml
+      # Windows
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+        template: templates/daemonset-windows.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+        template: templates/daemonset-windows.yaml
+
+  - it: selects endpoints with mixed EU key and custom endpoint 
+    set:
+      licenseKey: euaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      metricsEndpoint: custom-metric-endpoint
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "custom-metric-endpoint"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "custom-metric-endpoint"
+        template: templates/daemonset-windows.yaml
