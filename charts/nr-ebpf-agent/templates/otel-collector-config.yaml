@@ -1,3 +1,4 @@
+{{- $globalClusterName := include "nr-ebpf-agent.clusterName" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -111,7 +112,7 @@ otlp:
   service:
 pipelines:
   traces:
-receivers: 
+receivers:
   - otlp
 processors:
   - resource/setup_for_local_k8s_md
@@ -122,7 +123,7 @@ processors:
 exporters:
   - otlp
   metrics:
-receivers: 
+receivers:
   - otlp
 processors:
   - resource/setup_for_local_k8s_md
@@ -132,4 +133,8 @@ processors:
   - resource/setup_for_export
 exporters:
   - otlp
+  {{- if $globalClusterName}}
+  clusterName: {{ $globalClusterName }}
+  {{ else }}
   clusterName: {{ required "Please set the Kubernetes cluster name" .Values.cluster | quote }}
+  {{ end }}

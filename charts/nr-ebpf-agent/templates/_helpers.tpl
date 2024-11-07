@@ -42,6 +42,17 @@ Create the name of the service account to use
 {{- end }}
 
 {{/*
+Return the cluster name
+*/}}
+{{- define "nr-ebpf-agent.clusterName" -}}
+{{- if .Values.global }}
+   {{- .Values.global.cluster | default "" -}}
+{{- else -}}
+{{- "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the licenseKey
 */}}
 {{- define "nr-ebpf-agent.licenseKey" -}}
