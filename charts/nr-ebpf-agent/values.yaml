@@ -6,13 +6,13 @@ licenseKey: ""
 nrStaging: false
 # -- Configures the agent to send all data through the proxy specified via the otel collector.
 proxy: ""
-# Drop data where to service names maps to an IP address
+# -- Drop data when service names map to an IP address.
 dropDataIpServiceNames: true
-# Drop data from to the kube-system namespace
+# -- Drop data from the kube-system namespace.
 dropDataKubeSystem: true
-# Drop data from the newrelic namespace
+# -- Drop data from the newrelic namespace.
 dropDataNewRelic: true
-# Define a regex to mach service names to drop. Example "kube-dns|otel-collector|\\bblah\\b" see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
+# -- Define a regex to mach service names to drop. Example "kube-dns|otel-collector|\\bblah\\b" see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
 dropDataServiceNameRegex: "gmp-.*"
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
@@ -20,11 +20,11 @@ tableStoreDataLimitMB: "250"
 # Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
 # while tcp_stats tracks TCP metrics.
 stirlingSources: "socket_tracer,tcp_stats"
-# The protocols to enable for tracing in the socket_tracer.
+# -- The protocols to enable for tracing in the socket_tracer.
 # samplingLatency represents the sampling latency threshold for the spans to export.
 # Options: p1, p10, p50, p90, p99.
 protocols:
-  http: 
+  http:
     enabled: true
     samplingLatency: ""
   kafka:
@@ -58,7 +58,7 @@ protocols:
 # To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60.
 pushPeriod: "15"
 
-# Configuration to apply on the eBPF agent daemonset.
+# -- Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
   image:
     # -- eBPF agent image to be deployed.
@@ -77,7 +77,7 @@ ebpfAgent:
       # -- Min memory allocated to the container.
       memory: 250Mi
 
-# Configuration to apply on the eBPF client daemonset.
+# -- Configuration to apply on the eBPF client daemonset.
 ebpfClient:
   image:
     # -- eBPF client image to be deployed.
@@ -96,7 +96,7 @@ ebpfClient:
       # -- Min memory allocated to the container.
       memory: 50Mi
 
-# Configuration to apply on the OpenTelemetry collector daemonset.
+# -- Configuration to apply on the OpenTelemetry collector daemonset.
 otelCollector:
   image:
     # -- OpenTelemetry collector image to be deployed.
