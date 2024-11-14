@@ -73,6 +73,53 @@ resource/setup_for_remote_k8s_md:
   from_attribute: remote_addr
   action: upsert
 
+filter/nill_service_names: # Drop Data that will be mapped to an empty service name.
+  error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+  traces:
+span:
+  - 'resource.attributes["k8s.service.name"] == "-" or resource.attributes["k8s.service.name"] == ""'
+  - 'resource.attributes["k8s.service.name"] == nil and (resource.attributes["service.name"] == "-" or resource.attributes["service.name"] == "")'
+  metrics:
+metric:
+  - 'resource.attributes["k8s.service.name"] == "-" or resource.attributes["k8s.service.name"] == ""'
+  - 'resource.attributes["k8s.service.name"] == nil and (resource.attributes["service.name"] == "-" or resource.attributes["service.name"] == "")'
+
+filter/kube_system: # Drop data from the kube-service namespace
+  error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+  traces:
+span:
+  - 'resource.attributes["k8s.namespace.name"] == "kube-system"'
+  metrics:
+metric:
+  - 'resource.attributes["k8s.namespace.name"] == "kube-system"'
+
+filter/new_relic: # Drop data from the NewRelic namespace
+  error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+  traces:
+span:
+  - 'resource.attributes["k8s.namespace.name"] == "newrelic"'
+  metrics:
+metric:
+  - 'resource.attributes["k8s.namespace.name"] == "newrelic"'
+
+filter/ip_named_services: # Drop data where the service name maps to an IP address
+  error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+  traces:
+span:
+  - 'resource.attributes["k8s.service.name"] == nil'
+  metrics:
+metric:
+  - 'resource.attributes["k8s.service.name"] == nil'
+
+filter/drop_specific_service_names: # Drop data from namespaces that match the provided regex
+  error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+  traces:
+span:
+  - 'IsMatch(resource.attributes["k8s.service.name"], "${DROP_SERVICE_NAME_REGEX}")'
+  metrics:
+metric:
+  - 'IsMatch(resource.attributes["k8s.service.name"], "${DROP_SERVICE_NAME_REGEX}")'
+
 resource/setup_for_export:
   # Setup the resource attr. to export to the endpoint.
   attributes:
@@ -80,6 +127,7 @@ resource/setup_for_export:
 - key: peer.service
   from_attribute: k8s.service.name
   action: upsert
+# TODO(kpattaswamy): Figure out how to set this only when trace_role=server to cause only the client->server direction to render instead of both directions.
 # From the perspective of entity platform, we build the source guid from `parent.service.name` and the target from `service.name`. Hence server-side spans will show the client->server direction.
 - key: parent.service.name
   from_attribute: peer.service
@@ -95,10 +143,6 @@ resource/setup_for_export:
   action: insert
   value: $CLUSTER_NAME
 # Remove the addr/ports.
-- key: local_addr
-  action: delete
-- key: local_port
-  action: delete
 - key: remote_addr
   action: delete
 - key: remote_port
@@ -117,6 +161,19 @@ receivers:
 processors:
   - resource/setup_for_local_k8s_md
   - k8sattributes/local_k8s_md
+  - filter/nill_service_names
+  {{- if .Values.dropDataKubeSystem}}
+  - filter/kube_system
+  {{- end}}
+  {{- if .Values.dropDataNewRelic}}
+  - filter/new_relic
+  {{- end}}
+  {{- if .Values.dropDataIpServiceNames}}
+  - filter/ip_named_services
+  {{- end}}
+  {{- if .Values.dropDataServiceNameRegex }}
+  - filter/drop_specific_service_names
+  {{- end}}
   - resource/setup_for_remote_k8s_md
   - k8sattributes/remote_k8s_md
   - resource/setup_for_export
@@ -128,6 +185,19 @@ receivers:
 processors:
   - resource/setup_for_local_k8s_md
   - k8sattributes/local_k8s_md
+  - filter/nill_service_names
+  {{- if .Values.dropDataKubeSystem}}
+  - filter/kube_system
+  {{- end}}
+  {{- if .Values.dropDataNewRelic}}
+  - filter/new_relic
+  {{- end}}
+  {{- if .Values.dropDataIpServiceNames}}
+  - filter/ip_named_services
+  {{- end}}
+  {{- if .Values.dropDataServiceNameRegex }}
+  - filter/drop_specific_service_names
+  {{- end}}
   - resource/setup_for_remote_k8s_md
   - k8sattributes/remote_k8s_md
   - resource/setup_for_export

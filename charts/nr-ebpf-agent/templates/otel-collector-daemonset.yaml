@@ -58,6 +58,8 @@ valueFrom:
   configMapKeyRef:
 name: {{ include "nr-ebpf-agent.fullname" . }}-config
 key: clusterName
+  - name: DROP_SERVICE_NAME_REGEX
+value: "{{- .Values.dropDataServiceNameRegex }}"
 ports:
 - containerPort: 4317
 volumeMounts:
