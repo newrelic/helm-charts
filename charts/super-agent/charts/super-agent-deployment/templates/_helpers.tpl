@@ -25,11 +25,9 @@ Test that the value of `.Values.config.subAgents` exists and its valid. If empty
 open-telemetry:
   type: newrelic/io.opentelemetry.collector:0.2.0
   content:
+    {{- if include "newrelic.common.nrStaging" . }}
     chart_values:
       global:
-        licenseKey: ${nr-env:NR_LICENSE_KEY}
-        cluster: ${nr-env:NR_CLUSTER_NAME}
-      {{- if include "newrelic.common.nrStaging" . }}
         nrStaging: true
       {{- end -}}
 {{- end -}}
