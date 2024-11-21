@@ -27,6 +27,10 @@ data:
               - k8s.node.name
               # This is a custom attribute to get the k8s service name corresponding to the k8s pod ip.
               - k8s.service.name
+            labels:
+              - tag_name: apm.pod.label
+                key: newrelic-k8s-agents-operator-version
+                from: pod
           pod_association: # Rules to associate the incoming OTel data with a pod. Order matters.
             - sources:
               - from: resource_attribute
@@ -72,6 +76,15 @@ data:
             - key: k8s.pod.ip
               from_attribute: remote_addr
               action: upsert
+
+        filter/apm_instrumented_pods: # Drop data from pods where an APM agent is installed
+          error_mode: ignore
+          traces:
+            span:
+              - 'resource.attributes["apm.pod.label"] != nil'
+          metrics:
+            metric:
+              - 'resource.attributes["apm.pod.label"] != nil'
 
         filter/nill_service_names: # Drop Data that will be mapped to an empty service name.
           error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
@@ -147,6 +160,8 @@ data:
               action: delete
             - key: remote_port
               action: delete
+            - key: apm.pod.label
+              action: delete
 
       exporters:
         otlp:
@@ -162,6 +177,7 @@ data:
               - resource/setup_for_local_k8s_md
               - k8sattributes/local_k8s_md
               - filter/nill_service_names
+              - filter/apm_instrumented_pods
               {{- if .Values.dropDataKubeSystem}}
               - filter/kube_system
               {{- end}}
@@ -186,6 +202,7 @@ data:
               - resource/setup_for_local_k8s_md
               - k8sattributes/local_k8s_md
               - filter/nill_service_names
+              - filter/apm_instrumented_pods
               {{- if .Values.dropDataKubeSystem}}
               - filter/kube_system
               {{- end}}
