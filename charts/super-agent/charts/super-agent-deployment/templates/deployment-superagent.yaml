@@ -103,8 +103,9 @@ spec:
 
           volumeMounts:
             - name: super-agent-config
-              mountPath: /etc/newrelic-super-agent
+              mountPath: /etc/newrelic-super-agent/config.yaml
               readOnly: true
+              subPath: config.yaml
             # TODO: when releasing we should check if this is still needed and/or if we need to persist the data.
             - mountPath: /var/lib/newrelic-super-agent
               name: var-lib-newrelic-super-agent
