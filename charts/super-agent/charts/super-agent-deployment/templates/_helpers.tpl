@@ -11,7 +11,6 @@ Return the name of the configMap holding the Super Agent's config. Defaults to r
 Test that the value of `.Values.config.subAgents` exists and its valid. If empty, returns the default.
 */ -}}
 {{- define "newrelic-super-agent.config.agents.yaml" -}}
-{{- if (.Values.config).subAgents -}}
 {{- $agents := dict -}}
 {{- range $subAgentName, $subAgentConfig := (.Values.config).subAgents -}}
   {{- if not ($subAgentConfig).type -}}
@@ -20,19 +19,6 @@ Test that the value of `.Values.config.subAgents` exists and its valid. If empty
   {{- $agents = mustMerge $agents (dict $subAgentName $subAgentConfig) -}}
 {{- end -}}
 {{- $agents | toYaml -}}
-{{- else -}}
-{{- /* Default agents for Kubernetes */ -}}
-open-telemetry:
-  type: newrelic/io.opentelemetry.collector:0.2.0
-  content:
-    chart_values:
-      global:
-        licenseKey: ${nr-env:NR_LICENSE_KEY}
-        cluster: ${nr-env:NR_CLUSTER_NAME}
-      {{- if include "newrelic.common.nrStaging" . }}
-        nrStaging: true
-      {{- end -}}
-{{- end -}}
 {{- end -}}
 
 
