@@ -24,7 +24,7 @@ super-agent-deployment:
   image:
 registry:
 repository: newrelic/newrelic-super-agent
-tag: 0.24.1
+tag: "0.25.0-rc"
 imagePullPolicy: IfNotPresent
 # -- The secrets that are needed to pull images from a custom registry.
 pullSecrets: []
@@ -118,22 +118,24 @@ superAgent:
   # If you need to have you own configuration, disabled the creation of this configMap and create your own.
   content: {}
 
-# -- Values that the fleet is going to have in the deployment. If empty, chart will automatically add `newrelic/io.opentelemetry.collector` subagent.
-# On the other hand, if populated the list of agent created is the one specified overwriting the default.
-# @default -- `newrelic/io.opentelemetry.collector` (See `values.yaml`)
+# -- List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration.
+# @default -- `{}` (See `values.yaml`)
 subAgents:
-# The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
-# find the configuration needed for the subagent.
-#
-# The example below, open-telemetry, is enabled by default if no subagent is set up.
+# In the example below, open-telemetry is a managed agent that will be deployed.
 # open-telemetry:
+#   # -- Agent type <namespace>/<name>:<version>
 #   type: newrelic/io.opentelemetry.collector:0.2.0
+#   # -- Agent configuration content.
 #   content:
+# # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
+# chart_version: "0.8.0"
+# # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
+# # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
+# # so it is not necessary to set them here.
 # chart_values:
-#   global:
-# licenseKey: ${nr-env:NR_LICENSE_KEY}
-# cluster: ${nr-env:NR_CLUSTER_NAME}
-# # you can set here modifications to the open telemetry chart
+#   nr-k8s-otel-collector: {}
+#   global: {}
+
 
 opamp:
   # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
