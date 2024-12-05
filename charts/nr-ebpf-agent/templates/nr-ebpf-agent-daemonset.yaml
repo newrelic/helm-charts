@@ -1,16 +1,23 @@
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nr-ebpf-agent
   labels:
+    app: nr-ebpf-agent
+    component: agent
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
+      app: nr-ebpf-agent
+      component: agent
       {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
+        app: nr-ebpf-agent
+        component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
     spec:
       containers:
@@ -35,6 +42,16 @@ spec:
             value: "cluster.local"
           - name: PL_TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
+          - name: PX_DISABLE_TLS
+          {{- if eq .Values.tls.enabled true }}
+            value: "0"
+          {{- else }}
+            value: "1"
+          {{- end }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: CERT_PATH
+            value: "{{ .Values.tls.autoGenerateCert.certPath }}"
+          {{- end }}
         securityContext:
           privileged: true
         volumeMounts:
@@ -44,6 +61,11 @@ spec:
           - name: sys-volume
             mountPath: /sys
             readOnly: true
+          {{- if eq .Values.tls.enabled true }}
+          - name: cert
+            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            readOnly: true
+          {{- end }}
       - name: nr-ebpf-client
         image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
@@ -58,7 +80,7 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: ENDPOINT
-            value: "$(HOST_IP):4317"
+            value: {{ include "nr-otel-collector-receiver.endpoint" .}}
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
           {{- if .Values.protocols }}
@@ -76,8 +98,24 @@ spec:
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
             value: "True"
+          - name: PX_DISABLE_TLS
+          {{- if eq .Values.tls.enabled true }}
+            value: "0"
+          {{- else }}
+            value: "1"
+          {{- end }}
           - name: KUBERNETES_CLUSTER_DOMAIN
-            value: "cluster.local"
+            value: "{{ .Values.kubernetesClusterDomain }}"
+        {{- if eq .Values.tls.enabled true }}
+          - name: CERT_PATH
+            value: "{{ .Values.tls.autoGenerateCert.certPath }}"
+          - name: NAMESPACE
+            value: {{ .Release.Namespace }}
+        volumeMounts:
+          - name: cert
+            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            readOnly: true
+        {{- end }}
         envFrom:
         - secretRef:
             name: nr-ebpf-agent-secrets
@@ -105,4 +143,10 @@ spec:
       {{- with include "newrelic.common.tolerations" . }}
       tolerations:
         {{- . | nindent 8 -}}
+      {{- end }}
+      {{- if eq .Values.tls.enabled true }}
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
       {{- end }}

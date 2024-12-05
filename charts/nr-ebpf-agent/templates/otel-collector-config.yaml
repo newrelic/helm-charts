@@ -12,6 +12,11 @@ data:
           protocols:
             grpc:
               endpoint: $RECEIVER_ENDPOINT:4317
+              {{- if eq .Values.tls.enabled true }}
+              tls:
+                cert_file: "{{ .Values.tls.autoGenerateCert.certPath }}tls.crt"
+                key_file: "{{ .Values.tls.autoGenerateCert.certPath }}tls.key"
+              {{- end}}
       processors:
         k8sattributes/local_k8s_md:
           auth_type: 'serviceAccount'

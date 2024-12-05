@@ -131,3 +131,33 @@ nodeSelector: {}
 tolerations: []
 # -- Sets all pods' affinities. Can be configured also with `global.affinity`
 affinity: {}
+# --  Kubernetes cluster domain
+kubernetesClusterDomain: cluster.local
+
+# -- tls make sure only requests with correctly formatted rules will get into the Operator
+tls:
+  enabled: true
+
+  ## TLS Certificate Option 1: Use Helm to automatically generate self-signed certificate.
+  ## autoGenerateCert must be enabled.
+  autoGenerateCert:
+    # -- If true, Helm will automatically create a self-signed cert and secret for you.
+    enabled: true
+    # -- If set to true, new key/certificate is generated on helm upgrade.
+    recreate: true
+    # -- Cert validity period time in days.
+    certPeriodDays: 365
+    # -- Certificates path
+    certPath: "/tmp/ebpf/certs/"
+
+  ## TLS Certificate Option 2: Use your own self-signed certificate.
+  ## autoGenerateCert must be disabled and certFile, keyFile, and caFile must be set.
+  ## The chart reads the contents of the file paths with the helm .Files.Get function.
+  ## Refer to this doc https://helm.sh/docs/chart_template_guide/accessing_files/ to understand
+  ## limitations of file paths accessible to the chart.
+  # -- Path to your own PEM-encoded certificate.
+  certFile: ""
+  # -- Path to your own PEM-encoded private key.
+  keyFile: ""
+  # -- Path to the CA cert.
+  caFile: ""

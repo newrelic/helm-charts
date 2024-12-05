@@ -1,3 +1,4 @@
+---
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -67,6 +68,11 @@ spec:
             mountPath: /etc/otel/config.yaml
             subPath: config.yaml
             readOnly: true
+          {{- if eq .Values.tls.enabled true }}
+          - name: cert
+            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            readOnly: true
+          {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       serviceAccountName: {{ include "nr-ebpf-agent.fullname" . }}-collector
@@ -86,4 +92,10 @@ spec:
       {{- with include "newrelic.common.tolerations" . }}
       tolerations:
         {{- . | nindent 8 -}}
+      {{- end }}
+      {{- if eq .Values.tls.enabled true }}
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
       {{- end }}
