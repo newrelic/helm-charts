@@ -90,3 +90,10 @@ Return the customSecretLicenseKey
     {{- "" -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Create otel collector receiver endpoint
+*/}}
+{{- define "nr-otel-collector-receiver.endpoint" -}}
+{{- printf "dns:///%s.%s.svc.%s:4317" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain }}
+{{- end }}
