@@ -130,6 +130,10 @@ spec:
             - name: METRICS_HOST
               value: {{ include "newrelic-logging.metricsHost" . | quote }}
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }}    
+            - name: HELM_RELEASE_NAME
+              value: {{ .Release.Name }}
           command:
             - /fluent-bit/bin/fluent-bit
             - -c
