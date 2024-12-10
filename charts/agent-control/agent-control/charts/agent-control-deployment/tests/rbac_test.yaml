@@ -1,0 +1,21 @@
+suite: RBAC values are honored
+templates:
+  - templates/rbac.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: RBAC templates
+    set:
+      rbac:
+        create: true
+    asserts:
+      - hasDocuments:
+          count: 4
+  - it: RBAC does not template
+    set:
+      rbac:
+        create: false
+    asserts:
+      - hasDocuments:
+          count: 0
