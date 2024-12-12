@@ -1,0 +1,160 @@
+suite: agent control's config
+templates:
+  - templates/configmap-agentcontrol-config.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: agent control's config can be disabled
+    set:
+      config:
+        agentControl:
+          create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: opamp can be disabled
+    set:
+      cluster: my-cluster
+      config:
+        opamp:
+          enabled: false
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+
+  - it: agent control's config always include cluster_name, namespace and defaults
+    set:
+      cluster: my-cluster
+      config:
+        agentControl: {}
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            opamp:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            server:
+              enabled: true
+
+  - it: agent control's config templates
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            test: value
+            test2: value2
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            opamp:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            server:
+              enabled: true
+            test: value
+            test2: value2
+
+  - it: cluster_name and namespace from config have precedence
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            test: value
+            test2: value2
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
+            opamp:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            server:
+              enabled: true
+            test: value
+            test2: value2
+
+  - it: agent control's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
+    set:
+      cluster: my-cluster
+      region: eu
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            opamp:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
+            server:
+              enabled: true
+
+  - it: default config for agent control can be overridden
+    template: templates/configmap-agentcontrol-config.yaml
+    set:
+      cluster: my-cluster
+      region: eu
+      config:
+        subAgents:
+          test-0:
+            type: org.newrelic/test:0.0.0
+            content:
+              a: test
+              value: 0
+          test-1:
+            type: org.newrelic/test:0.0.1
+            content:
+              a: test
+              value: 1
+          test-2:
+            type: org.newrelic/test:0.0.2
+            content:
+              a: test
+              aYAML:
+                canI: HaveSomeYAML
+    asserts:
+      - matchRegex:
+          path: data["local_config"]
+          pattern: "agents:\n  test-0:\n    agent_type: org.newrelic/test:0.0.0\n  test-1:\n    agent_type: org.newrelic/test:0.0.1\n  test-2:\n    agent_type: org.newrelic/test:0.0.2"
