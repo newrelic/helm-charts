@@ -295,8 +295,6 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 {{- define "newrelic-super-agent.auth.l1IdentityClientId" -}}
 {{- if .Values.l1IdentityClientId -}}
   {{- .Values.l1IdentityClientId -}}
-{{- else if .Values.global.l1IdentityClientId -}}
-  {{- .Values.global.l1IdentityClientId -}}
 {{- end -}}
 {{- end -}}
 
@@ -304,8 +302,6 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 {{- define "newrelic-super-agent.auth.l1IdentityClientSecret" -}}
 {{- if .Values.l1IdentityClientSecret -}}
   {{- .Values.l1IdentityClientSecret -}}
-{{- else if .Values.global.l1IdentityClientSecret -}}
-  {{- .Values.global.l1IdentityClientSecret -}}
 {{- end -}}
 {{- end -}}
 
@@ -349,10 +345,6 @@ Return the name of the secret holding the clientdId and ClientSecret
 {{- define "newrelic-super-agent.auth.customl1IdentitySecretName" -}}
 {{- if .Values.customL1IdentitySecretName -}}
   {{- .Values.customL1IdentitySecretName -}}
-{{- else if .Values.global -}}
-  {{- if .Values.global.customL1IdentitySecretName -}}
-    {{- .Values.global.customL1IdentitySecretName -}}
-  {{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -362,10 +354,6 @@ Return the name key for the ClientID inside the secret.
 {{- define "newrelic-super-agent.auth.identityCredentialsL1._customClientIdKey" -}}
 {{- if .Values.customL1IdentityClientIdSecretKey -}}
   {{- .Values.customL1IdentityClientIdSecretKey -}}
-{{- else if .Values.global -}}
-  {{- if .Values.global.customL1IdentityClientIdSecretKey }}
-    {{- .Values.global.customL1IdentityClientIdSecretKey -}}
-  {{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -375,10 +363,6 @@ Return the name key for the ClientSecret inside the secret.
 {{- define "newrelic-super-agent.auth.identityCredentialsL1._customClientSecretKey" -}}
 {{- if .Values.customL1IdentityClientSecretSecretKey -}}
   {{- .Values.customL1IdentityClientSecretSecretKey -}}
-{{- else if .Values.global -}}
-  {{- if .Values.global.customL1IdentityClientSecretSecretKey }}
-    {{- .Values.global.customL1IdentityClientSecretSecretKey -}}
-  {{- end -}}
 {{- end -}}
 {{- end -}}
 
