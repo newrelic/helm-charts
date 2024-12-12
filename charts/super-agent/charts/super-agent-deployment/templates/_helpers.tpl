@@ -366,10 +366,6 @@ Return the name key for the ClientSecret inside the secret.
 {{- end -}}
 {{- end -}}
 
-{{- define "newrelic-super-agent.auth.generatedIdentityCredentialsSecretName" -}}
-{{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-client-credentials" ) }}
-{{- end -}}
-
 {{/* Return the generated secret name for the CliendId and ClientSecret*/}}
 {{- define "newrelic.common.userKey.generatedSecretName" -}}
 {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
@@ -379,4 +375,8 @@ Return the name key for the ClientSecret inside the secret.
 {{- define "newrelic-super-agent.auth.identityCredentialsSecretName" -}}
 {{- $default := include "newrelic-super-agent.auth.generatedIdentityCredentialsSecretName" . -}}
 {{- include "newrelic-super-agent.auth.customl1IdentitySecretName" . | default $default -}}
+{{- end -}}
+
+{{- define "newrelic-super-agent.auth.generatedIdentityCredentialsSecretName" -}}
+{{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-client-credentials" ) }}
 {{- end -}}
