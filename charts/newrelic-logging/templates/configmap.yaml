@@ -31,6 +31,8 @@ data:
     {{- end }}
     {{- if and (.Values.fluentBit.sendMetrics) (.Values.fluentBit.config.metricInstrumentation) }}
       {{- .Values.fluentBit.config.metricInstrumentation | nindent 4}}
+    {{ printf "add_label            namespace %s" .Release.Namespace | nindent 8}}
+    {{ printf "add_label            helm_release_name %s" .Release.Name | nindent 8}}
     {{- end }}
   parsers.conf: |
   {{- if .Values.fluentBit.config.parsers }}
