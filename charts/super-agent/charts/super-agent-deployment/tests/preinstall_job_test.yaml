@@ -10,8 +10,8 @@ set:
 tests:
   - it: by default it fails with missing values
     asserts:
-      - failedTemplate: 
-          errorMessage: You must specify a userKey or a customUserKeySecretName containing it
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
 
   - it: if userKey is set, it should fail with missing organization id
     set:
@@ -19,6 +19,31 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: .config.opamp.auth.organizationId is required
+
+  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+    set:
+      identityCredentialsL1: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+
+  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+    set:
+      identityCredentialsL1:
+        clientId: test
+        clientSecret: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+
+  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+    set:
+      identityCredentialsL1:
+        clientId: ""
+        clientSecret: "test"
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
 
   - it: if organizationId is set, it should fail with missing userKey
     set:
@@ -28,9 +53,9 @@ tests:
             organizationId: test
     asserts:
       - failedTemplate:
-          errorMessage: You must specify a userKey or a customUserKeySecretName containing it
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
 
-  - it: with everything set, the job should template correctly.
+  - it: with legacy userKey set, the job should template correctly.
     set:
       userKey: test
       config:
@@ -43,6 +68,110 @@ tests:
       - documentIndex: 1
         isNotNullOrEmpty:
           path: spec.template.spec.containers[0].args
+      - documentIndex: 1
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: USER_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: userKey
+                  name: my-release-super-agent-deployment-preinstall-user-key
+
+  - it: with identityCredentialsL1 set, the job should template correctly.
+    set:
+      l1IdentityClientId: test
+      l1IdentityClientSecret: test
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 5  # Secret, job, and 3 RBAC manifests
+      - documentIndex: 1
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 1
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: clientIdKey
+                  name: my-release-super-agent-deployment-preinstall-client-credentials
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: clientSecretKey
+                  name: my-release-super-agent-deployment-preinstall-client-credentials
+
+  - it: with global identityCredentialsL1 set, the job should template correctly.
+    set:
+      global:
+        l1IdentityClientId: test
+        l1IdentityClientSecret: test
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 5  # Secret, job, and 3 RBAC manifests
+      - documentIndex: 1
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 1
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: clientIdKey
+                  name: my-release-super-agent-deployment-preinstall-client-credentials
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: clientSecretKey
+                  name: my-release-super-agent-deployment-preinstall-client-credentials
+
+  - it: with global identityCredentialsL1 and userKey set, the job should template correctly.
+    set:
+      global:
+        userKey: test
+        l1IdentityClientId: test
+        l1IdentityClientSecret: test
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 6  # 2 Secret, job, and 3 RBAC manifests
+      - documentIndex: 1
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 2
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: USER_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: userKey
+                  name: my-release-super-agent-deployment-preinstall-user-key
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: clientIdKey
+                  name: my-release-super-agent-deployment-preinstall-client-credentials
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: clientSecretKey
+                  name: my-release-super-agent-deployment-preinstall-client-credentials
 
   - it: with a custom secret for userKey, the secret should not be created.
     set:
@@ -67,3 +196,72 @@ tests:
               secretKeyRef:
                 name: test-secret
                 key: test-key
+
+  - it: with a custom secret for clientId and clientSecret, the secret should not be created.
+    set:
+      customL1IdentitySecretName: test-client-name
+      customL1IdentityClientIdSecretKey: test-client-id-key
+      customL1IdentityClientSecretSecretKey: test-client-secret-key
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 4  # With everything rendered it should be 5
+      - documentIndex: 0
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 0
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-id-key
+                  name: test-client-name
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-secret-key
+                  name: test-client-name
+
+  - it: with a custom secret for userKey and clientId and clientSecret, the secret should not be created.
+    set:
+      customUserKeySecretName: test-secret
+      customUserKeySecretKey: test-key
+      customL1IdentitySecretName: test-client-name
+      customL1IdentityClientIdSecretKey: test-client-id-key
+      customL1IdentityClientSecretSecretKey: test-client-secret-key
+      config:
+        opamp:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 4  # With everything rendered it should be 5
+      - documentIndex: 0
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 0
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: USER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: test-secret
+                  key: test-key
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-id-key
+                  name: test-client-name
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-secret-key
+                  name: test-client-name
+
+
