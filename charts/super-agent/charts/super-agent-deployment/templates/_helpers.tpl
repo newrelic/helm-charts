@@ -291,14 +291,14 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 {{- end -}}
 {{- end -}}
 
-{{/* return L1 ClientID with global fallback */}}
+{{/* return L1 ClientID */}}
 {{- define "newrelic-super-agent.auth.l1IdentityClientId" -}}
 {{- if .Values.l1IdentityClientId -}}
   {{- .Values.l1IdentityClientId -}}
 {{- end -}}
 {{- end -}}
 
-{{/* return L1 ClientSecret with global fallback */}}
+{{/* return L1 ClientSecret */}}
 {{- define "newrelic-super-agent.auth.l1IdentityClientSecret" -}}
 {{- if .Values.l1IdentityClientSecret -}}
   {{- .Values.l1IdentityClientSecret -}}
