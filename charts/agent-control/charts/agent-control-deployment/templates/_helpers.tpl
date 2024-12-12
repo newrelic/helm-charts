@@ -283,3 +283,100 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
   {{- /* Empty string */ -}}
 {{- end -}}
 {{- end -}}
+
+{{/* check if both L1 ClientID and ClientSecret are provided */}}
+{{- define "newrelic-agent-control.auth.l1Identity" -}}
+{{- if and (include "newrelic-agent-control.auth.l1IdentityClientId" .) (include "newrelic-agent-control.auth.l1IdentityClientSecret" .) -}}
+    true
+{{- end -}}
+{{- end -}}
+
+{{/* return L1 ClientID */}}
+{{- define "newrelic-agent-control.auth.l1IdentityClientId" -}}
+{{- if .Values.l1IdentityClientId -}}
+  {{- .Values.l1IdentityClientId -}}
+{{- end -}}
+{{- end -}}
+
+{{/* return L1 ClientSecret */}}
+{{- define "newrelic-agent-control.auth.l1IdentityClientSecret" -}}
+{{- if .Values.l1IdentityClientSecret -}}
+  {{- .Values.l1IdentityClientSecret -}}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+Return to which endpoint should the agent control register its system identity
+*/ -}}
+{{- define "newrelic-agent-control.config.endpoints.systemIdentityCreation" -}}
+{{- $region := include "newrelic.common.region" . -}}
+
+{{- if eq $region "Staging" -}}
+  https://ng-iam-service.staging-service.nr-ops.net/system-identity/graphql
+{{- else if eq $region "EU" -}}
+  https://ng-iam-service.service.eu.nr-ops.net/system-identity/graphql
+{{- else if eq $region "US" -}}
+  https://ng-iam-service.service.nr-ops.net/system-identity/graphql
+{{- else if eq $region "Local" -}}
+  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
+  {{ .Values.development.backend.systemIdentityCreation }}
+{{- else -}}
+  {{- fail "Unknown/unsupported region set for this chart" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the name key for the ClientId Key inside the secret.
+*/}}
+{{- define "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientIdKeyName" -}}
+{{- include "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" . | default "clientIdKey" -}}
+{{- end -}}
+
+{{/*
+Return the name key for the ClientSecret Key inside the secret.
+*/}}
+{{- define "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientSecretKeyName" -}}
+{{- include "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" . | default "clientSecretKey" -}}
+{{- end -}}
+
+{{/*
+Return the name of the secret holding the clientdId and ClientSecret
+*/}}
+{{- define "newrelic-agent-control.auth.customl1IdentitySecretName" -}}
+{{- if .Values.customL1IdentitySecretName -}}
+  {{- .Values.customL1IdentitySecretName -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the name key for the ClientID inside the secret.
+*/}}
+{{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" -}}
+{{- if .Values.customL1IdentityClientIdSecretKey -}}
+  {{- .Values.customL1IdentityClientIdSecretKey -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the name key for the ClientSecret inside the secret.
+*/}}
+{{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" -}}
+{{- if .Values.customL1IdentityClientSecretSecretKey -}}
+  {{- .Values.customL1IdentityClientSecretSecretKey -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Return the generated secret name for the CliendId and ClientSecret*/}}
+{{- define "newrelic.common.userKey.generatedSecretName" -}}
+{{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
+{{- end -}}
+
+{{/* Return the custom secret name for the CliendId and ClientSecret with fallback to the generated one */}}
+{{- define "newrelic-agent-control.auth.identityCredentialsSecretName" -}}
+{{- $default := include "newrelic-agent-control.auth.generatedIdentityCredentialsSecretName" . -}}
+{{- include "newrelic-agent-control.auth.customl1IdentitySecretName" . | default $default -}}
+{{- end -}}
+
+{{- define "newrelic-agent-control.auth.generatedIdentityCredentialsSecretName" -}}
+{{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-client-credentials" ) }}
+{{- end -}}
