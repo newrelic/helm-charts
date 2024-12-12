@@ -31,6 +31,33 @@ means that it honors a wide range of defaults and globals common to most New Rel
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
 [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
 
+## Test custom agentTypes
+
+In order to test custom agentTypes is possible to leverage `extraVolumeMounts` and `extraVolumes` once you have created the configMap in the namespace.
+
+You can run the following commands to create in the newrelic namespace a configMap containing a dynamic agentType:
+```bash
+$ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/values-dynamic-agent-type.yaml -n default
+```
+
+Then you can mount such agentType leveraging extra volumes in the values.yaml
+```yaml
+super-agent-deployment:
+# [...]
+  extraVolumeMounts:
+    - name: dynamic
+      mountPath: /etc/newrelic-super-agent/dynamic-agent-type.yaml
+      subPath: dynamic-agent-type.yaml
+      readOnly: true
+  extraVolumes:
+    - name: dynamic
+      configMap:
+        name: dynamic-agent
+        items:
+          - key: dynamic-agent-type
+            path: dynamic-agent-type.yaml
+```
+
 ## Chart particularities
 
 > **TODO:** Here is where you should add particularities for this chart like what does the chart do with the privileged and

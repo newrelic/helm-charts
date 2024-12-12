@@ -60,7 +60,6 @@ low data modes or any other quirk that it could have.
 
 As of the creation of the chart, it has no particularities and this section can be removed safely.
 
-
 ## Values
 
 | Key | Type | Default | Description |
@@ -94,6 +93,7 @@ As of the creation of the chart, it has no particularities and this section can 
 | super-agent-deployment.config.superAgent.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
 | super-agent-deployment.containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | super-agent-deployment.customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
+| super-agent-deployment.customL1IdentitySecretName | string | `""` | In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there. |
 | super-agent-deployment.customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | super-agent-deployment.customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | super-agent-deployment.dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
@@ -106,6 +106,8 @@ As of the creation of the chart, it has no particularities and this section can 
 | super-agent-deployment.hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
 | super-agent-deployment.image | object | See `values.yaml` | Image for the New Relic Super Agent |
 | super-agent-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| super-agent-deployment.l1IdentityClientId | string | `""` | L1 identity client_id to use. |
+| super-agent-deployment.l1IdentityClientSecret | string | `""` | L1 identity client_secret to use. |
 | super-agent-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
 | super-agent-deployment.licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | super-agent-deployment.nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
