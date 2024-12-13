@@ -18,6 +18,10 @@ This will render the labels that should be used in all the manifests used by the
 
 {{- $labels = mustMergeOverwrite $labels $globalUserLabels $localUserLabels -}}
 
+{{- range $k, $v := $labels -}}
+  {{- $_ := set $labels $k (include "newrelic.common.naming.truncateToDNS" $v ) -}}
+{{- end -}}
+
 {{- toYaml $labels -}}
 {{- end -}}
 
