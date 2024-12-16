@@ -24,9 +24,9 @@ Test that the value of `.Values.config.subAgents` exists and its valid. If empty
 
 
 {{- /*
-Return to which endpoint should the agent control connect to get opamp data
+Return to which endpoint should the agent control connect to get fleet_control data
 */ -}}
-{{- define "newrelic-agent-control.config.endpoints.opamp" -}}
+{{- define "newrelic-agent-control.config.endpoints.fleet_control" -}}
 {{- $region := include "newrelic.common.region" . -}}
 
 {{- if eq $region "Staging" -}}
@@ -37,7 +37,7 @@ Return to which endpoint should the agent control connect to get opamp data
   https://opamp.service.newrelic.com/v1/opamp
 {{- else if eq $region "Local" -}}
   {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.opamp }}
+  {{ .Values.development.backend.fleet_control }}
 {{- else -}}
   {{- fail "Unknown/unsupported region set for this chart" -}}
 {{- end -}}
@@ -108,14 +108,14 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
-{{- /* Add opamp if enabled */ -}}
-{{- if ((.Values.config).opamp).enabled -}}
-  {{- $opamp := (dict "endpoint" (include "newrelic-agent-control.config.endpoints.opamp" .)) -}}
+{{- /* Add fleet_control if enabled */ -}}
+{{- if ((.Values.config).fleet_control).enabled -}}
+  {{- $fleet_control := (dict "endpoint" (include "newrelic-agent-control.config.endpoints.fleet_control" .)) -}}
 
   {{- $auth_config := dict "token_url" (include "newrelic-agent-control.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-agent-control/keys/from-secret.key" -}}
-  {{- $opamp = mustMerge $opamp (dict "auth_config" $auth_config) -}}
+  {{- $fleet_control = mustMerge $fleet_control (dict "auth_config" $auth_config) -}}
 
-  {{- $config = mustMerge $config (dict "opamp" $opamp) -}}
+  {{- $config = mustMerge $config (dict "fleet_control" $fleet_control) -}}
 {{- end -}}
 
 {{- /* Add subagents to the config */ -}}
@@ -160,10 +160,10 @@ readOnlyRootFilesystem: true
 Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
 {{- define "newrelic-agent-control.auth.organizationId" -}}
-{{- if (((.Values.config).opamp).auth).organizationId -}}
-  {{- .Values.config.opamp.auth.organizationId -}}
+{{- if (((.Values.config).fleet_control).auth).organizationId -}}
+  {{- .Values.config.fleet_control.auth.organizationId -}}
 {{- else -}}
-  {{- fail ".config.opamp.auth.organizationId is required" -}}
+  {{- fail ".config.fleet_control.auth.organizationId is required" -}}
 {{- end -}}
 {{- end -}}
 
@@ -174,7 +174,7 @@ Check if .Values.config.auth.secret.name exists and use it to name auth' secret.
 of the releases with "-auth" suffix.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.name" -}}
-{{- $secretName := (((((.Values.config).opamp).auth).secret).name) -}}
+{{- $secretName := (((((.Values.config).fleet_control).auth).secret).name) -}}
 {{- if $secretName -}}
   {{- $secretName -}}
 {{- else -}}
@@ -191,7 +191,7 @@ Helper to toggle the creation of the job that creates and registers the system i
 {{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
 {{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
 
-{{- if and ((.Values.config).opamp).enabled ((((.Values.config).opamp).auth).secret).create (not $privateKey) (not $clientId) -}}
+{{- if and ((.Values.config).fleet_control).enabled ((((.Values.config).fleet_control).auth).secret).create (not $privateKey) (not $clientId) -}}
   true
 {{- end -}}
 {{- end -}}
@@ -202,7 +202,7 @@ Helper to toggle the creation of the job that creates and registers the system i
 Helper to toggle the creation of the secret that has the system identity as values.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.shouldTemplate" -}}
-{{- if and ((.Values.config).opamp).enabled ((((.Values.config).opamp).auth).secret).create -}}
+{{- if and ((.Values.config).fleet_control).enabled ((((.Values.config).fleet_control).auth).secret).create -}}
   {{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
   {{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
 
@@ -221,7 +221,7 @@ Check if .Values.config.auth.secret.private_key.secret_key exists and use it for
 key needed for the system identity. Fallbacks to `private_key`.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.privateKey.key" -}}
-{{- $key := ((((((.Values.config).opamp).auth).secret).private_key).secret_key) -}}
+{{- $key := ((((((.Values.config).fleet_control).auth).secret).private_key).secret_key) -}}
 {{- if $key -}}
   {{- $key -}}
 {{- else -}}
@@ -236,8 +236,8 @@ Check if .Values.config.auth.secret.private_key.(plain_pem or base64_pem) exists
 auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.privateKey.data" -}}
-{{- $plain_pem := ((((((.Values.config).opamp).auth).secret).private_key).plain_pem) -}}
-{{- $base64_pem := ((((((.Values.config).opamp).auth).secret).private_key).base64_pem) -}}
+{{- $plain_pem := ((((((.Values.config).fleet_control).auth).secret).private_key).plain_pem) -}}
+{{- $base64_pem := ((((((.Values.config).fleet_control).auth).secret).private_key).base64_pem) -}}
 {{- if and $plain_pem $base64_pem -}}
   {{- fail "Only one of base64_pem or plain_pem should be provided it you want to provide your own certificate." -}}
 {{- else if $base64_pem -}}
@@ -256,7 +256,7 @@ Check if .Values.config.auth.secret.client_id.secret_key exists and use it for t
 needed for the system identity. Fallbacks to `client_id`.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.clientId.key" -}}
-{{- $key := ((((((.Values.config).opamp).auth).secret).client_id).secret_key) -}}
+{{- $key := ((((((.Values.config).fleet_control).auth).secret).client_id).secret_key) -}}
 {{- if $key -}}
   {{- $key -}}
 {{- else -}}
@@ -271,8 +271,8 @@ Check if .Values.config.auth.secret.client_id.(plain or base64) exists and use i
 value is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.clientId.data" -}}
-{{- $plain := ((((((.Values.config).opamp).auth).secret).client_id).plain) -}}
-{{- $base64 := ((((((.Values.config).opamp).auth).secret).client_id).base64) -}}
+{{- $plain := ((((((.Values.config).fleet_control).auth).secret).client_id).plain) -}}
+{{- $base64 := ((((((.Values.config).fleet_control).auth).secret).client_id).base64) -}}
 {{- if and $plain $base64 -}}
   {{- fail "Only one of base64 or plain should be provided it you want to provide your own client id." -}}
 {{- else if $base64 -}}
