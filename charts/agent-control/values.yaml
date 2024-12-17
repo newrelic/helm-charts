@@ -33,7 +33,7 @@ agent-control-deployment:
   image:
     registry:
     repository: newrelic/newrelic-agent-control
-    tag: "nightly"
+    tag: "0.26.3"
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -149,6 +149,8 @@ agent-control-deployment:
       # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
       # in stand alone mode where only the agents specified on `.config.subAgents` will be launched.
       enabled: true
+      # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
+      fleet_id: ""
 
       auth:
         # -- Organization ID where fleets will live.
