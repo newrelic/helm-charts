@@ -14,11 +14,11 @@ asserts:
   - hasDocuments:
   count: 0
 
-  - it: opamp can be disabled
+  - it: fleet_control can be disabled
 set:
   cluster: my-cluster
   config:
-opamp:
+fleet_control:
   enabled: false
 asserts:
   - equal:
@@ -41,15 +41,15 @@ asserts:
   path: data["local_config"]
   value: |
 agents: {}
-k8s:
-  cluster_name: my-cluster
-  namespace: my-namespace
-opamp:
+fleet_control:
   auth_config:
 private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
 provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
+k8s:
+  cluster_name: my-cluster
+  namespace: my-namespace
 server:
   enabled: true
 
@@ -66,15 +66,15 @@ asserts:
   path: data["local_config"]
   value: |
 agents: {}
-k8s:
-  cluster_name: my-cluster
-  namespace: my-namespace
-opamp:
+fleet_control:
   auth_config:
 private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
 provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
+k8s:
+  cluster_name: my-cluster
+  namespace: my-namespace
 server:
   enabled: true
 test: value
@@ -96,15 +96,15 @@ asserts:
   path: data["local_config"]
   value: |
 agents: {}
-k8s:
-  cluster_name: config-cluster
-  namespace: config-namespace
-opamp:
+fleet_control:
   auth_config:
 private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
 provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
+k8s:
+  cluster_name: config-cluster
+  namespace: config-namespace
 server:
   enabled: true
 test: value
@@ -119,15 +119,15 @@ asserts:
   path: data["local_config"]
   value: |
 agents: {}
-k8s:
-  cluster_name: my-cluster
-  namespace: my-namespace
-opamp:
+fleet_control:
   auth_config:
 private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
 provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
+k8s:
+  cluster_name: my-cluster
+  namespace: my-namespace
 server:
   enabled: true
 

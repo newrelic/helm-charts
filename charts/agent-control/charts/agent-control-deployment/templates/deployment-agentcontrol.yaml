@@ -64,13 +64,13 @@ spec:
   imagePullPolicy: {{ .Values.image.pullPolicy }}
 
   env:
-  {{- if ((.Values.config).opamp).enabled }}
-- name: NR_SA_OPAMP__AUTH_CONFIG__CLIENT_ID
+  {{- if ((.Values.config).fleet_control).enabled }}
+- name: NR_SA_FLEET_CONTROL__AUTH_CONFIG__CLIENT_ID
   valueFrom:
 secretKeyRef:
   name: {{ include "newrelic-agent-control.auth.secret.name" . }}
   key: {{ include "newrelic-agent-control.auth.secret.clientId.key" . }}
-- name: NR_SA_OPAMP__HEADERS__API-KEY
+- name: NR_SA_FLEET_CONTROL__HEADERS__API-KEY
   valueFrom:
 secretKeyRef:
   name: {{ include "newrelic.common.license.secretName" . }}
@@ -110,7 +110,7 @@ secretKeyRef:
 - mountPath: /var/lib/newrelic-agent-control
   name: var-lib-newrelic-agent-control
   readOnly: false
-{{- if ((.Values.config).opamp).enabled }}
+{{- if ((.Values.config).fleet_control).enabled }}
 - name: auth-secret-private-key
   mountPath: "/etc/newrelic-agent-control/keys"
   readOnly: true
@@ -130,7 +130,7 @@ items:
 path: config.yaml
 - name: var-lib-newrelic-agent-control
   emptyDir: {}
-{{- if ((.Values.config).opamp).enabled }}
+{{- if ((.Values.config).fleet_control).enabled }}
 - name: auth-secret-private-key
   secret:
 secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}

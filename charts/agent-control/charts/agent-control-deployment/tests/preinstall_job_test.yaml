@@ -18,7 +18,7 @@ set:
   userKey: test
 asserts:
   - failedTemplate:
-  errorMessage: .config.opamp.auth.organizationId is required
+  errorMessage: .config.fleet_control.auth.organizationId is required
 
   - it: if identityCredentialsL1 is set but any fields empty, it should fail
 set:
@@ -48,7 +48,7 @@ asserts:
   - it: if organizationId is set, it should fail with missing userKey
 set:
   config:
-opamp:
+fleet_control:
   auth:
 organizationId: test
 asserts:
@@ -59,12 +59,12 @@ asserts:
 set:
   userKey: test
   config:
-opamp:
+fleet_control:
   auth:
 organizationId: test
 asserts:
   - hasDocuments:
-  count: 5  # Secret, job, and 3 RBAC manifests
+  count: 5 # Secret, job, and 3 RBAC manifests
   - documentIndex: 1
 isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
@@ -83,12 +83,12 @@ set:
   l1IdentityClientId: test
   l1IdentityClientSecret: test
   config:
-opamp:
+fleet_control:
   auth:
 organizationId: test
 asserts:
   - hasDocuments:
-  count: 5  # Secret, job, and 3 RBAC manifests
+  count: 5 # Secret, job, and 3 RBAC manifests
   - documentIndex: 1
 isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
@@ -112,12 +112,12 @@ set:
   customUserKeySecretName: test-secret
   customUserKeySecretKey: test-key
   config:
-opamp:
+fleet_control:
   auth:
 organizationId: test
 asserts:
   - hasDocuments:
-  count: 4  # With everything rendered it should be 5
+  count: 4 # With everything rendered it should be 5
   - documentIndex: 0
 isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
@@ -137,12 +137,12 @@ set:
   customL1IdentityClientIdSecretKey: test-client-id-key
   customL1IdentityClientSecretSecretKey: test-client-secret-key
   config:
-opamp:
+fleet_control:
   auth:
 organizationId: test
 asserts:
   - hasDocuments:
-  count: 4  # With everything rendered it should be 5
+  count: 4 # With everything rendered it should be 5
   - documentIndex: 0
 isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
@@ -169,12 +169,12 @@ set:
   customL1IdentityClientIdSecretKey: test-client-id-key
   customL1IdentityClientSecretSecretKey: test-client-secret-key
   config:
-opamp:
+fleet_control:
   auth:
 organizationId: test
 asserts:
   - hasDocuments:
-  count: 4  # With everything rendered it should be 5
+  count: 4 # With everything rendered it should be 5
   - documentIndex: 0
 isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
@@ -197,5 +197,3 @@ secretKeyRef:
 secretKeyRef:
   key: test-client-secret-key
   name: test-client-name
-
-
