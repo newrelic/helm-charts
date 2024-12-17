@@ -112,6 +112,10 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 {{- if ((.Values.config).fleet_control).enabled -}}
   {{- $fleet_control := (dict "endpoint" (include "newrelic-agent-control.config.endpoints.fleet_control" .)) -}}
 
+  {{- if ((.Values.config).fleet_control).fleet_id -}}
+  {{- $fleet_control = mustMerge $fleet_control (dict "fleet_id" ((.Values.config).fleet_control).fleet_id) -}}
+  {{- end -}}
+
   {{- $auth_config := dict "token_url" (include "newrelic-agent-control.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-agent-control/keys/from-secret.key" -}}
   {{- $fleet_control = mustMerge $fleet_control (dict "auth_config" $auth_config) -}}
 
