@@ -180,11 +180,10 @@ https://log-api.newrelic.com/log/v1
 
 
 {{/*
-Create labels required for entity synthesis to be put as part of prometheus_remote_write configuration
+Creates labels required for entity synthesis to be put as part of prometheus_remote_write configuration
 */}}
 {{- define "newrelic-logging.entitySynthesis.labels" -}}
-{{- printf "add_label            namespace %s" .Release.Namespace | nindent 8 -}}
-{{- printf "add_label            helm_release_name %s" .Release.Name | nindent 8 -}}
+{{- printf "add_label            entity_id %s/%s" .Release.Namespace .Release.Name | nindent 8 -}}
 {{- end -}}
 
 {{/*
