@@ -4,7 +4,7 @@ templates:
   - templates/configmap-agentcontrol-config.yaml
   - templates/configmap-subagent-configs.yaml
 release:
-  name: my-release
+  name: agent-control
   namespace: my-namespace
 tests:
   - it: license key gets added as env var from secret
@@ -19,7 +19,7 @@ tests:
             valueFrom:
               secretKeyRef:
                 key: licenseKey
-                name: my-release-agent-control-deployment-license
+                name: agent-control-license
         template: templates/deployment-agentcontrol.yaml
 
   - it: license key gets added as env var from custom secret
@@ -56,7 +56,7 @@ tests:
             valueFrom:
               secretKeyRef:
                 key: licenseKey
-                name: my-release-agent-control-deployment-license
+                name: agent-control-license
         template: templates/deployment-agentcontrol.yaml
 
   - it: api-key config gets added as env var from custom secret
