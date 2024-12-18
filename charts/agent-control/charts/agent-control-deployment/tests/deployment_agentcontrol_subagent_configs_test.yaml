@@ -4,7 +4,7 @@ templates:
   - templates/configmap-agentcontrol-config.yaml
   - templates/configmap-subagent-configs.yaml
 release:
-  name: my-release
+  name: agent-control
   namespace: my-namespace
 tests:
   - it: there is no subagent configuration
@@ -57,7 +57,7 @@ path: config.yaml
   emptyDir: {}
 - name: auth-secret-private-key
   secret:
-secretName: my-release-agent-control-deployment-auth
+secretName: agent-control-auth
 items:
   - key: private_key
 path: from-secret.key

@@ -2,7 +2,7 @@ suite: pre-install job template
 templates:
   - templates/preinstall-job-register-system-identity.yaml
 release:
-  name: my-release
+  name: agent-control
   namespace: my-namespace
 set:
   cluster: test
@@ -76,7 +76,7 @@ equal:
   valueFrom:
 secretKeyRef:
   key: userKey
-  name: my-release-agent-control-deployment-preinstall-user-key
+  name: agent-control-preinstall-user-key
 
   - it: with identityCredentialsL1 set, the job should template correctly.
 set:
@@ -100,12 +100,12 @@ equal:
   valueFrom:
 secretKeyRef:
   key: clientIdKey
-  name: my-release-agent-control-deployme-preinstall-client-credentials
+  name: agent-control-preinstall-client-credentials
 - name: NEW_RELIC_AUTH_CLIENT_SECRET
   valueFrom:
 secretKeyRef:
   key: clientSecretKey
-  name: my-release-agent-control-deployme-preinstall-client-credentials
+  name: agent-control-preinstall-client-credentials
 
   - it: with a custom secret for userKey, the secret should not be created.
 set:
