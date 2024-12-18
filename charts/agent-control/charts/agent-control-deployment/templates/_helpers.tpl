@@ -105,7 +105,7 @@ If you need a list of TODOs, just `grep TODO` on the `values.yaml` and look for 
 {{- $config := dict "server" (dict "enabled" true) -}}
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
-{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
+{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace, "chart_version" .Chart.Version) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- /* Add fleet_control if enabled */ -}}
