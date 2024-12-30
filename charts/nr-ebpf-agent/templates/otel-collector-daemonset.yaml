@@ -47,13 +47,17 @@ spec:
                 key: {{ include "nr-ebpf-agent.customSecretLicenseKey" . }}
                 {{- end }}
           - name: NR_OTLP_ENDPOINT
-            {{- if .Values.proxy }}
-            value: "{{- .Values.proxy }}"
-            {{- else if .Values.nrStaging }}
+            {{- if .Values.nrStaging }}
             value: "staging-otlp.nr-data.net:4317"
             {{- else }}
             value: "otlp.nr-data.net:4317"
             {{- end }}
+          {{- if .Values.proxy }}
+          - name: http_proxy
+            value: "{{- .Values.proxy }}"
+          - name: https_proxy
+            value: "{{- .Values.proxy }}"
+          {{- end }}
           - name: CLUSTER_NAME
             valueFrom:
               configMapKeyRef:

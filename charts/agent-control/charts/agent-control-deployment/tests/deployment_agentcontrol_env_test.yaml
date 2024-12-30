@@ -1,10 +1,10 @@
-suite: test super agent deployment's env vars are injected
+suite: test agent control deployment's env vars are injected
 templates:
-  - templates/deployment-superagent.yaml
-  - templates/configmap-superagent-config.yaml
+  - templates/deployment-agentcontrol.yaml
+  - templates/configmap-agentcontrol-config.yaml
   - templates/configmap-subagent-configs.yaml
 release:
-  name: my-release
+  name: agent-control
   namespace: my-namespace
 tests:
   - it: license key gets added as env var from secret
@@ -19,15 +19,15 @@ tests:
             valueFrom:
               secretKeyRef:
                 key: licenseKey
-                name: my-release-super-agent-deployment-license
-        template: templates/deployment-superagent.yaml
-        
+                name: agent-control-license
+        template: templates/deployment-agentcontrol.yaml
+
   - it: license key gets added as env var from custom secret
     set:
       cluster: test
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
-      region: us  # With a custom secret we cannot know the region so we have to ask for it.
+      region: us # With a custom secret we cannot know the region so we have to ask for it.
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -37,49 +37,49 @@ tests:
               secretKeyRef:
                 key: custom-key
                 name: custom-secret
-        template: templates/deployment-superagent.yaml
- 
+        template: templates/deployment-agentcontrol.yaml
+
   - it: api-key config gets added as env var from secret
     set:
       cluster: test
       licenseKey: fake-license
       config:
-        superAgent:
-          content: 
-            opamp:
+        agentControl:
+          content:
+            fleet_control:
               endpoint: test
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: NR_SA_OPAMP__HEADERS__API-KEY
+            name: NR_AC_FLEET_CONTROL__HEADERS__API-KEY
             valueFrom:
               secretKeyRef:
                 key: licenseKey
-                name: my-release-super-agent-deployment-license
-        template: templates/deployment-superagent.yaml
+                name: agent-control-license
+        template: templates/deployment-agentcontrol.yaml
 
   - it: api-key config gets added as env var from custom secret
     set:
       cluster: test
       customSecretName: "custom-secret"
       customSecretLicenseKey: "custom-key"
-      region: us  # With a custom secret we cannot know the region so we have to ask for it.
+      region: us # With a custom secret we cannot know the region so we have to ask for it.
       config:
-        superAgent:
-          content: 
-            opamp:
+        agentControl:
+          content:
+            fleet_control:
               endpoint: test
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: NR_SA_OPAMP__HEADERS__API-KEY
+            name: NR_AC_FLEET_CONTROL__HEADERS__API-KEY
             valueFrom:
               secretKeyRef:
                 key: custom-key
                 name: custom-secret
-        template: templates/deployment-superagent.yaml
+        template: templates/deployment-agentcontrol.yaml
   - it: cluster name added as env var
     set:
       cluster: test
@@ -89,4 +89,4 @@ tests:
           content:
             name: NR_CLUSTER_NAME
             value: test
-        template: templates/deployment-superagent.yaml
+        template: templates/deployment-agentcontrol.yaml

@@ -1,24 +1,26 @@
-suite: super agent's config
+suite: agent control's config
 templates:
-  - templates/configmap-superagent-config.yaml
+  - templates/configmap-agentcontrol-config.yaml
 release:
   name: my-release
   namespace: my-namespace
+chart:
+  version: 1.2.3-beta
 tests:
-  - it: super agent's config can be disabled
+  - it: agent control's config can be disabled
     set:
       config:
-        superAgent:
+        agentControl:
           create: false
     asserts:
       - hasDocuments:
           count: 0
 
-  - it: opamp can be disabled
+  - it: fleet_control can be disabled
     set:
       cluster: my-cluster
       config:
-        opamp:
+        fleet_control:
           enabled: false
     asserts:
       - equal:
@@ -26,38 +28,65 @@ tests:
           value: |
             agents: {}
             k8s:
+              chart_version: 1.2.3-beta
               cluster_name: my-cluster
               namespace: my-namespace
             server:
               enabled: true
 
-  - it: super agent's config always include cluster_name, namespace and defaults
+  - it: you can setup a specific fleet_id
     set:
       cluster: my-cluster
       config:
-        superAgent: {}
+        fleet_control:
+          fleet_id: abcefg
     asserts:
       - equal:
           path: data["local_config"]
           value: |
             agents: {}
-            k8s:
-              cluster_name: my-cluster
-              namespace: my-namespace
-            opamp:
+            fleet_control:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.newrelic.com/v1/opamp
+              fleet_id: abcefg
+            k8s:
+              chart_version: 1.2.3-beta
+              cluster_name: my-cluster
+              namespace: my-namespace
             server:
               enabled: true
 
-  - it: super agent's config templates
+  - it: agent control's config always include cluster_name, namespace and defaults
     set:
       cluster: my-cluster
       config:
-        superAgent:
+        agentControl: {}
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              chart_version: 1.2.3-beta
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+
+  - it: agent control's config templates
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
           content:
             test: value
             test2: value2
@@ -66,15 +95,16 @@ tests:
           path: data["local_config"]
           value: |
             agents: {}
-            k8s:
-              cluster_name: my-cluster
-              namespace: my-namespace
-            opamp:
+            fleet_control:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              chart_version: 1.2.3-beta
+              cluster_name: my-cluster
+              namespace: my-namespace
             server:
               enabled: true
             test: value
@@ -84,7 +114,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        superAgent:
+        agentControl:
           content:
             test: value
             test2: value2
@@ -96,21 +126,22 @@ tests:
           path: data["local_config"]
           value: |
             agents: {}
-            k8s:
-              cluster_name: config-cluster
-              namespace: config-namespace
-            opamp:
+            fleet_control:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              chart_version: 1.2.3-beta
+              cluster_name: config-cluster
+              namespace: config-namespace
             server:
               enabled: true
             test: value
             test2: value2
 
-  - it: super agent's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
+  - it: agent control's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
     set:
       cluster: my-cluster
       region: eu
@@ -119,20 +150,21 @@ tests:
           path: data["local_config"]
           value: |
             agents: {}
-            k8s:
-              cluster_name: my-cluster
-              namespace: my-namespace
-            opamp:
+            fleet_control:
               auth_config:
-                private_key_path: /etc/newrelic-super-agent/keys/from-secret.key
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
                 provider: local
                 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
               endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
+            k8s:
+              chart_version: 1.2.3-beta
+              cluster_name: my-cluster
+              namespace: my-namespace
             server:
               enabled: true
 
-  - it: default config for super agent can be overridden
-    template: templates/configmap-superagent-config.yaml
+  - it: default config for agent control can be overridden
+    template: templates/configmap-agentcontrol-config.yaml
     set:
       cluster: my-cluster
       region: eu
