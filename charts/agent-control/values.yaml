@@ -10,6 +10,8 @@ agent-control-deployment:
   # you know what you are going.
   enabled: true
 
+  # -- Override the name of the chart used to template resource names.
+  nameOverride: "agent-control"
   # -- Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
   cluster: ""
   # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -33,7 +35,7 @@ agent-control-deployment:
   image:
     registry:
     repository: newrelic/newrelic-agent-control
-    tag: "nightly"
+    tag: "0.27.0"
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -145,11 +147,12 @@ agent-control-deployment:
     #       nr-k8s-otel-collector: {}
     #       global: {}
 
-
-    opamp:
+    fleet_control:
       # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
       # in stand alone mode where only the agents specified on `.config.subAgents` will be launched.
       enabled: true
+      # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
+      fleet_id: ""
 
       auth:
         # -- Organization ID where fleets will live.
@@ -181,7 +184,6 @@ agent-control-deployment:
             # This options is mutually exclusive with `base64`.
             plain:
 
-
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
 flux2:
@@ -203,14 +205,15 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+      # TODO: Should we create a FluxCD entity to monitor flux itself.
+      prometheus.io/scrape: "false"
 
   # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
   # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
   # named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.
   #
   # New Relic' Agent Control will use this controller by creating `HelmRelease` CRs based in the configuration stored on
-  # OpAmp. This is the only controller that the Agent Control need for now, the other controllers are disabled by default.
+  # Fleet Control. This is the only controller that the Agent Control need for now, the other controllers are disabled by default.
   #
   # On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the
   # `values.yaml` to see how to enable other controllers.
@@ -219,7 +222,8 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+      # TODO: Should we create a FluxCD entity to monitor flux itself.
+      prometheus.io/scrape: "false"
 
   # This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
   # Kustomize instead of using templating systems like Helm.
