@@ -1,0 +1,63 @@
+suite: test fluent-bit entity synthesis labels include
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: "additional labels for entity synthesis are included when sendMetrics is set to true"
+    templates:
+      - templates/configmap.yaml
+    set:
+      fluentBit:
+        sendMetrics: true
+        config:
+          metricInstrumentation: |
+            [OUTPUT]
+                Name                 prometheus_remote_write
+                Match                fb_metrics
+                Alias                fb-metrics-forwarder
+                Host                 ${METRICS_HOST}
+                Port                 443
+                Uri                  /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
+                Header               Authorization Bearer ${LICENSE_KEY}
+                Tls                  On
+                # Windows pods using prometheus_remote_write currently have issues if TLS verify is On
+                Tls.verify           Off
+                # User-defined labels
+                add_label            app fluent-bit
+                add_label            pod_name ${HOSTNAME}
+                add_label            node_name ${NODE_NAME}
+                add_label            source kubernetes   
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: (?s)add_label\s+cluster_name \n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
+  - it: "additional labels for entity synthesis are not included when sendMetrics is set to false"
+    templates:
+      - templates/configmap.yaml
+    set:
+      fluentBit:
+        sendMetrics: false
+        config:
+          metricInstrumentation: |
+            [OUTPUT]
+                Name                 prometheus_remote_write
+                Match                fb_metrics
+                Alias                fb-metrics-forwarder
+                Host                 ${METRICS_HOST}
+                Port                 443
+                Uri                  /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
+                Header               Authorization Bearer ${LICENSE_KEY}
+                Tls                  On
+                # Windows pods using prometheus_remote_write currently have issues if TLS verify is On
+                Tls.verify           Off
+                # User-defined labels
+                add_label            app fluent-bit
+                add_label            pod_name ${HOSTNAME}
+                add_label            node_name ${NODE_NAME}
+                add_label            source kubernetes   
+    asserts:
+      - notMatchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: (?s)add_label\s+cluster_name \n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
