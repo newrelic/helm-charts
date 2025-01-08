@@ -11,7 +11,7 @@ tests:
   - it: by default it fails with missing values
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
 
   - it: if userKey is set, it should fail with missing organization id
 set:
@@ -25,7 +25,7 @@ set:
   identityCredentialsL1: {}
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
 
   - it: if identityCredentialsL1 is set but any fields empty, it should fail
 set:
@@ -34,7 +34,7 @@ clientId: test
 clientSecret: ""
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
 
   - it: if identityCredentialsL1 is set but any fields empty, it should fail
 set:
@@ -43,7 +43,7 @@ clientId: ""
 clientSecret: "test"
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
 
   - it: if organizationId is set, it should fail with missing userKey
 set:
@@ -53,7 +53,7 @@ fleet_control:
 organizationId: test
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName
+  errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
 
   - it: with legacy userKey set, the job should template correctly.
 set:
@@ -80,8 +80,8 @@ secretKeyRef:
 
   - it: with identityCredentialsL1 set, the job should template correctly.
 set:
-  l1IdentityClientId: test
-  l1IdentityClientSecret: test
+  identityClientId: test
+  identityClientSecret: test
   config:
 fleet_control:
   auth:
@@ -133,9 +133,9 @@ key: test-key
 
   - it: with a custom secret for clientId and clientSecret, the secret should not be created.
 set:
-  customL1IdentitySecretName: test-client-name
-  customL1IdentityClientIdSecretKey: test-client-id-key
-  customL1IdentityClientSecretSecretKey: test-client-secret-key
+  customIdentitySecretName: test-client-name
+  customIdentityClientIdSecretKey: test-client-id-key
+  customIdentityClientSecretSecretKey: test-client-secret-key
   config:
 fleet_control:
   auth:
@@ -165,9 +165,9 @@ secretKeyRef:
 set:
   customUserKeySecretName: test-secret
   customUserKeySecretKey: test-key
-  customL1IdentitySecretName: test-client-name
-  customL1IdentityClientIdSecretKey: test-client-id-key
-  customL1IdentityClientSecretSecretKey: test-client-secret-key
+  customIdentitySecretName: test-client-name
+  customIdentityClientIdSecretKey: test-client-id-key
+  customIdentityClientSecretSecretKey: test-client-secret-key
   config:
 fleet_control:
   auth:
