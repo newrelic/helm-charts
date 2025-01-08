@@ -97,8 +97,8 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
 | agent-control-deployment.image | object | See `values.yaml` | Image for the New Relic Agent Control |
 | agent-control-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
-| agent-control-deployment.identityClientId | string | `""` | L1 identity client_id to use. |
-| agent-control-deployment.identityClientSecret | string | `""` | L1 identity client_secret to use. |
+| agent-control-deployment.identityClientId | string | `""` | identity client_id to use. |
+| agent-control-deployment.identityClientSecret | string | `""` | identity client_secret to use. |
 | agent-control-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
 | agent-control-deployment.licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | agent-control-deployment.nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
