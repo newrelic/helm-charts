@@ -40,3 +40,53 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the cluster name
+*/}}
+{{- define "nr-ebpf-agent.clusterName" -}}
+{{- if .Values.global }}
+   {{- .Values.global.cluster | default "" -}}
+{{- else -}}
+    {{- "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the licenseKey
+*/}}
+{{- define "nr-ebpf-agent.licenseKey" -}}
+{{- if .Values.global }}
+  {{- if .Values.global.licenseKey }}
+    {{- .Values.global.licenseKey -}}
+  {{ else if .Values.global.insightsKey }}
+    {{- .Values.global.insightsKey -}}
+  {{ else }}
+    {{- .Values.licenseKey | default "" -}}
+  {{ end }}
+{{- else -}}
+    {{- .Values.licenseKey | default "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the customSecretName
+*/}}
+{{- define "nr-ebpf-agent.customSecretName" -}}
+{{- if .Values.global }}
+    {{- .Values.global.customSecretName | default "" -}}
+{{- else -}}
+    {{- "" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the customSecretLicenseKey
+*/}}
+{{- define "nr-ebpf-agent.customSecretKey" -}}
+{{- if .Values.global }}
+    {{- .Values.customSecretLicenseKey | default "" -}}
+{{- else -}}
+    {{- "" -}}
+{{- end -}}
+{{- end -}}

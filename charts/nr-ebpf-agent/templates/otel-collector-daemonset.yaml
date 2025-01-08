@@ -38,21 +38,32 @@ spec:
           - name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
+                {{- if (include "nr-ebpf-agent.licenseKey" .) }}
                 key: NR_LICENSE_KEY
                 name: nr-ebpf-agent-secrets
+                {{- else }}
+                name: {{ include "nr-ebpf-agent.customSecretName" . }}
+                key: {{ include "nr-ebpf-agent.customSecretLicenseKey" . }}
+                {{- end }}
           - name: NR_OTLP_ENDPOINT
-            {{- if .Values.proxy }}
-            value: "{{- .Values.proxy }}"
-            {{- else if .Values.nrStaging }}
+            {{- if .Values.nrStaging }}
             value: "staging-otlp.nr-data.net:4317"
             {{- else }}
             value: "otlp.nr-data.net:4317"
             {{- end }}
+          {{- if .Values.proxy }}
+          - name: http_proxy
+            value: "{{- .Values.proxy }}"
+          - name: https_proxy
+            value: "{{- .Values.proxy }}"
+          {{- end }}
           - name: CLUSTER_NAME
             valueFrom:
               configMapKeyRef:
                 name: {{ include "nr-ebpf-agent.fullname" . }}-config
                 key: clusterName
+          - name: DROP_SERVICE_NAME_REGEX
+            value: "{{- .Values.dropDataServiceNameRegex }}"
         ports:
         - containerPort: 4317
         volumeMounts:

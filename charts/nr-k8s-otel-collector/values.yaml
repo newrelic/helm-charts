@@ -17,7 +17,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "0.7.1"
+  tag: "0.8.3"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -39,10 +39,9 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
-# -- Run the integration with full access to the host filesystem and network.
-# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
-# @default -- `true`
-privileged: true
+# -- If deploying to a GKE autopilot cluster, set to true
+# @default -- `false`
+gkeAutopilot: false
 
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -60,6 +59,10 @@ daemonset:
     privileged: true
   # -- Sets resources for the daemonset.
   resources: {}
+  # -- Sets additional environment variables for the daemonset.
+  envs: []
+  # -- Sets additional environment variable sources for the daemonset.
+  envsFrom: []
   # -- Settings for daemonset configmap
   # @default -- See `values.yaml`
   configMap:
@@ -81,6 +84,10 @@ deployment:
   containerSecurityContext: {}
   # -- Sets resources for the deployment.
   resources: {}
+  # -- Sets additional environment variables for the deployment.
+  envs: []
+  # -- Sets additional environment variable sources for the deployment.
+  envsFrom: []
   # -- Settings for deployment configmap
   # @default -- See `values.yaml`
   configMap:

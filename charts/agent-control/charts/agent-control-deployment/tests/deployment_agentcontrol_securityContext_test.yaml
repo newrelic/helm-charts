@@ -1,7 +1,7 @@
-suite: test super agent deployment's securityContext
+suite: test agent control deployment's securityContext
 templates:
-  - templates/deployment-superagent.yaml
-  - templates/configmap-superagent-config.yaml
+  - templates/deployment-agentcontrol.yaml
+  - templates/configmap-agentcontrol-config.yaml
   - templates/configmap-subagent-configs.yaml
 tests:
   - it: securityContext.runAsUser is populated with defaults
@@ -11,7 +11,7 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsUser
           value: 1000
-        template: templates/deployment-superagent.yaml
+        template: templates/deployment-agentcontrol.yaml
 
   - it: securityContext from the common library is templated
     set:
@@ -26,7 +26,7 @@ tests:
           value:
             runAsUser: 200
             runAsGroup: 2000
-        template: templates/deployment-superagent.yaml
+        template: templates/deployment-agentcontrol.yaml
 
   - it: global securityContext is ignored if local value is present
     set:
@@ -46,4 +46,4 @@ tests:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             runAsUser: 300
-        template: templates/deployment-superagent.yaml
+        template: templates/deployment-agentcontrol.yaml

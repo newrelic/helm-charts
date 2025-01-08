@@ -3,13 +3,15 @@ nameOverride: ""
 # -- Override the full name of the release
 fullnameOverride: ""
 
-# -- Values related to the super agent's Helm chart release.
+# -- Values related to the agent control's Helm chart release.
 # @default -- See `values.yaml`
-super-agent-deployment:
-  # -- Enable the installation of the Super Agent. This an advanced/debug flag. It should be always be true unless
+agent-control-deployment:
+  # -- Enable the installation of the Agent Control. This an advanced/debug flag. It should be always be true unless
   # you know what you are going.
   enabled: true
 
+  # -- Override the name of the chart used to template resource names.
+  nameOverride: "agent-control"
   # -- Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
   cluster: ""
   # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -19,12 +21,21 @@ super-agent-deployment:
   # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
   customSecretLicenseKey: ""
 
-  # -- Image for the New Relic Super Agent
+  # -- Identity client_id to use.
+  identityClientId: ""
+  # -- Identity client_secret to use.
+  identityClientSecret: ""
+  # -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
+  customIdentitySecretName: ""
+  customIdentityClientIdSecretKey: ""
+  customIdentityClientSecretSecretKey: ""
+
+  # -- Image for the New Relic Agent Control
   # @default -- See `values.yaml`
   image:
     registry:
-    repository: newrelic/newrelic-super-agent
-    tag: 0.23.0
+    repository: newrelic/newrelic-agent-control
+    tag: "0.27.0"
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -103,14 +114,14 @@ super-agent-deployment:
   # @default -- `false`
   verboseLog:
 
-  # -- Enable the cleanup of super-agent managed resources when the chart is uninstalled.
-  # If disabled, agents and/or agent configurations managed by the super-agent will not be deleted when the chart is uninstalled.
+  # -- Enable the cleanup of agent-control managed resources when the chart is uninstalled.
+  # If disabled, agents and/or agent configurations managed by the agent-control will not be deleted when the chart is uninstalled.
   cleanupManagedResources: true
 
   config:
-    # -- Configuration for the Super Agent.
+    # -- Configuration for the Agent Control.
     # @default -- See `values.yaml`
-    superAgent:
+    agentControl:
       # -- Set if the configMap is going to be created by this chart or the user will provide its own.
       create: true
       # -- Overrides the configuration that has been created automatically by the chart.
@@ -118,27 +129,30 @@ super-agent-deployment:
       # If you need to have you own configuration, disabled the creation of this configMap and create your own.
       content: {}
 
-    # -- Values that the fleet is going to have in the deployment. If empty, chart will automatically add `newrelic/io.opentelemetry.collector` subagent.
-    # On the other hand, if populated the list of agent created is the one specified overwriting the default.
-    # @default -- `newrelic/io.opentelemetry.collector` (See `values.yaml`)
+    # -- List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration.
+    # @default -- `{}` (See `values.yaml`)
     subAgents:
-    # The values of the fleet depends on the deployment itself. Each subagent has a different set of variables so you have to go to the subagent documentation
-    # find the configuration needed for the subagent.
-    #
-    # The example below, open-telemetry, is enabled by default if no subagent is set up.
+    # In the example below, open-telemetry is a managed agent that will be deployed.
     # open-telemetry:
+    #   # -- Agent type <namespace>/<name>:<version>
     #   type: newrelic/io.opentelemetry.collector:0.2.0
+    #   # -- Agent configuration content.
     #   content:
+    #     # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
+    #     chart_version: "0.8.0"
+    #     # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
+    #     # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
+    #     # so it is not necessary to set them here.
     #     chart_values:
-    #       global:
-    #         licenseKey: ${nr-env:NR_LICENSE_KEY}
-    #         cluster: ${nr-env:NR_CLUSTER_NAME}
-    #         # you can set here modifications to the open telemetry chart
+    #       nr-k8s-otel-collector: {}
+    #       global: {}
 
-    opamp:
+    fleet_control:
       # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
       # in stand alone mode where only the agents specified on `.config.subAgents` will be launched.
       enabled: true
+      # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
+      fleet_id: ""
 
       auth:
         # -- Organization ID where fleets will live.
@@ -149,34 +163,34 @@ super-agent-deployment:
           # will have.
           # @default -- release name suffixed with "-auth"
           name:
+          ## If private_key and client_id values are specified, their creation is disabled and the `preinstall-user-key` job is not executed
           private_key:
             # -- Key inside the secret containing the private key.
             # @default -- `private_key`
             secret_key:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation.
             # This options is mutually exclusive with `plain_pem`.
             base64_pem:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text if you want to skip its creation.
             # This options is mutually exclusive with `base64_pem`.
             plain_pem:
           client_id:
             # -- Key inside the secret containing the client ID.
             # @default -- `client_id`
             secret_key:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation.
             # This options is mutually exclusive with `plain`.
             base64:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation.
             # This options is mutually exclusive with `base64`.
             plain:
-
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
 flux2:
-  # -- Enable or disable FluxCD installation. New Relic' Super Agent need Flux to work, but the user can use an already
+  # -- Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already
   # existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs
-  # to deploy the Super Agent.
+  # to deploy the Agent Control.
   enabled: true
 
   # -- The installation of the CRDs is managed by the chart itself.
@@ -192,14 +206,15 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+      # TODO: Should we create a FluxCD entity to monitor flux itself.
+      prometheus.io/scrape: "false"
 
   # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
   # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
   # named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.
   #
-  # New Relic' Super Agent will use this controller by creating `HelmRelease` CRs based in the configuration stored on
-  # OpAmp. This is the only controller that the Super Agent need for now, the other controllers are disabled by default.
+  # New Relic' Agent Control will use this controller by creating `HelmRelease` CRs based in the configuration stored on
+  # Fleet Control. This is the only controller that the Agent Control need for now, the other controllers are disabled by default.
   #
   # On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the
   # `values.yaml` to see how to enable other controllers.
@@ -208,7 +223,8 @@ flux2:
     create: true
     annotations:
       prometheus.io/port: "8080"
-      prometheus.io/scrape: "false"  # TODO: Should we create a FluxCD entity to monitor flux itself.
+      # TODO: Should we create a FluxCD entity to monitor flux itself.
+      prometheus.io/scrape: "false"
 
   # This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
   # Kustomize instead of using templating systems like Helm.
@@ -246,9 +262,9 @@ flux2:
     create: true
     createAggregation: true
 
-  # -- As we are using Flux as a tool from the super agent to release new workloads, we do not want Flux to listen to
+  # -- As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to
   # all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the
-  # super agent, this is the way to go so the cluster has deployed all operators needed by the super agent. But if the
-  # user want to use Flux for other purposes besides the super agent, this toggle can be used to allow Flux to work on
+  # agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the
+  # user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on
   # the whole cluster.
   watchAllNamespaces: false

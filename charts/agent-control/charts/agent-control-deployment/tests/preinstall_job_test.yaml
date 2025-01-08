@@ -1,0 +1,199 @@
+suite: pre-install job template
+templates:
+  - templates/preinstall-job-register-system-identity.yaml
+release:
+  name: agent-control
+  namespace: my-namespace
+set:
+  cluster: test
+  licenseKey: test
+tests:
+  - it: by default it fails with missing values
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+
+  - it: if userKey is set, it should fail with missing organization id
+    set:
+      userKey: test
+    asserts:
+      - failedTemplate:
+          errorMessage: .config.fleet_control.auth.organizationId is required
+
+  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+    set:
+      identityCredentialsL1: {}
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+
+  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+    set:
+      identityCredentialsL1:
+        clientId: test
+        clientSecret: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+
+  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+    set:
+      identityCredentialsL1:
+        clientId: ""
+        clientSecret: "test"
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+
+  - it: if organizationId is set, it should fail with missing userKey
+    set:
+      config:
+        fleet_control:
+          auth:
+            organizationId: test
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+
+  - it: with legacy userKey set, the job should template correctly.
+    set:
+      userKey: test
+      config:
+        fleet_control:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 5 # Secret, job, and 3 RBAC manifests
+      - documentIndex: 1
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 1
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: USER_KEY
+              valueFrom:
+                secretKeyRef:
+                  key: userKey
+                  name: agent-control-preinstall-user-key
+
+  - it: with identityCredentialsL1 set, the job should template correctly.
+    set:
+      identityClientId: test
+      identityClientSecret: test
+      config:
+        fleet_control:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 5 # Secret, job, and 3 RBAC manifests
+      - documentIndex: 1
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 1
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: clientIdKey
+                  name: agent-control-preinstall-client-credentials
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: clientSecretKey
+                  name: agent-control-preinstall-client-credentials
+
+  - it: with a custom secret for userKey, the secret should not be created.
+    set:
+      customUserKeySecretName: test-secret
+      customUserKeySecretKey: test-key
+      config:
+        fleet_control:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 4 # With everything rendered it should be 5
+      - documentIndex: 0
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 0
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: USER_KEY
+            valueFrom:
+              secretKeyRef:
+                name: test-secret
+                key: test-key
+
+  - it: with a custom secret for clientId and clientSecret, the secret should not be created.
+    set:
+      customIdentitySecretName: test-client-name
+      customIdentityClientIdSecretKey: test-client-id-key
+      customIdentityClientSecretSecretKey: test-client-secret-key
+      config:
+        fleet_control:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 4 # With everything rendered it should be 5
+      - documentIndex: 0
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 0
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-id-key
+                  name: test-client-name
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-secret-key
+                  name: test-client-name
+
+  - it: with a custom secret for userKey and clientId and clientSecret, the secret should not be created.
+    set:
+      customUserKeySecretName: test-secret
+      customUserKeySecretKey: test-key
+      customIdentitySecretName: test-client-name
+      customIdentityClientIdSecretKey: test-client-id-key
+      customIdentityClientSecretSecretKey: test-client-secret-key
+      config:
+        fleet_control:
+          auth:
+            organizationId: test
+    asserts:
+      - hasDocuments:
+          count: 4 # With everything rendered it should be 5
+      - documentIndex: 0
+        isNotNullOrEmpty:
+          path: spec.template.spec.containers[0].args
+      - documentIndex: 0
+        equal:
+          path: spec.template.spec.containers[0].env
+          value:
+            - name: USER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: test-secret
+                  key: test-key
+            - name: NEW_RELIC_AUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-id-key
+                  name: test-client-name
+            - name: NEW_RELIC_AUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  key: test-client-secret-key
+                  name: test-client-name
