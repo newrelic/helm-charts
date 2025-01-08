@@ -84,7 +84,7 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
 | agent-control-deployment.containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | agent-control-deployment.customAttributes | object | `{}` | TODO: Adds extra attributes to the cluster and all the metrics emitted to the backend. Can be configured also with `global.customAttributes` |
-| agent-control-deployment.customL1IdentitySecretName | string | `""` | In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there. |
+| agent-control-deployment.customIdentitySecretName | string | `""` | In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there. |
 | agent-control-deployment.customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | agent-control-deployment.customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | agent-control-deployment.dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
@@ -97,8 +97,8 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
 | agent-control-deployment.image | object | See `values.yaml` | Image for the New Relic Agent Control |
 | agent-control-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
-| agent-control-deployment.l1IdentityClientId | string | `""` | L1 identity client_id to use. |
-| agent-control-deployment.l1IdentityClientSecret | string | `""` | L1 identity client_secret to use. |
+| agent-control-deployment.identityClientId | string | `""` | L1 identity client_id to use. |
+| agent-control-deployment.identityClientSecret | string | `""` | L1 identity client_secret to use. |
 | agent-control-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
 | agent-control-deployment.licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | agent-control-deployment.nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |

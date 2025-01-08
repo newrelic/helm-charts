@@ -7,8 +7,8 @@ once the installation hook is finished, so I have to add it as a hook.
 
 As both ways co-exist, we'll add a check to ensure at least one exits
 */ -}}
-{{- if and (not (include "newrelic.common.userKey._customSecretName" .)) (not (include "newrelic.common.userKey._userKey" .)) (not (include "newrelic-agent-control.auth.customl1IdentitySecretName" .)) (not (include "newrelic-agent-control.auth.l1Identity" .)) -}}
-  {{- fail "You must specify a userKey/customUserKeySecretName or l1Identity/customl1IdentitySecretName" -}}
+{{- if and (not (include "newrelic.common.userKey._customSecretName" .)) (not (include "newrelic.common.userKey._userKey" .)) (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.l1Identity" .)) -}}
+  {{- fail "You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName" -}}
 {{- end -}}
 
 {{- if and (not (include "newrelic.common.userKey._customSecretName" .)) (include "newrelic.common.userKey._userKey" .) }}
@@ -29,7 +29,7 @@ data:
 {{- end }}
 
 {{/* L1/L2 Client Credentials */}}
-{{- if and (not (include "newrelic-agent-control.auth.customl1IdentitySecretName" .)) (include "newrelic-agent-control.auth.l1Identity" .) }}
+{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (include "newrelic-agent-control.auth.l1Identity" .) }}
 ---
 apiVersion: v1
 kind: Secret
@@ -43,8 +43,8 @@ metadata:
   name: {{ include "newrelic-agent-control.auth.generatedIdentityCredentialsSecretName" . }}
   namespace: {{ .Release.Namespace }}
 data:
-  {{ include "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientIdKeyName" . }}: {{ include "newrelic-agent-control.auth.l1IdentityClientId" . | b64enc }}
-  {{ include "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientSecretKeyName" . }}: {{ include "newrelic-agent-control.auth.l1IdentityClientSecret" . | b64enc }}
+  {{ include "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientIdKeyName" . }}: {{ include "newrelic-agent-control.auth.identityClientId" . | b64enc }}
+  {{ include "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientSecretKeyName" . }}: {{ include "newrelic-agent-control.auth.identityClientSecret" . | b64enc }}
 {{- end }}
 ---
 apiVersion: batch/v1
@@ -77,7 +77,7 @@ spec:
                   {{- end }}
                   key: {{ include "newrelic.common.userKey.secretKeyName" . }}
             {{- end }}
-            {{- if or (include "newrelic-agent-control.auth.customl1IdentitySecretName" .) (include "newrelic-agent-control.auth.l1Identity" .) }}
+            {{- if or (include "newrelic-agent-control.auth.customIdentitySecretName" .) (include "newrelic-agent-control.auth.l1Identity" .) }}
             - name: NEW_RELIC_AUTH_CLIENT_ID
               valueFrom:
                 secretKeyRef:
