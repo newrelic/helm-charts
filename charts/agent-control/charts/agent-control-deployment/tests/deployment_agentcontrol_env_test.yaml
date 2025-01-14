@@ -80,6 +80,7 @@ valueFrom:
 key: custom-key
 name: custom-secret
 template: templates/deployment-agentcontrol.yaml
+
   - it: cluster name added as env var
 set:
   cluster: test
@@ -89,4 +90,63 @@ asserts:
   content:
 name: NR_CLUSTER_NAME
 value: test
+template: templates/deployment-agentcontrol.yaml
+
+  - it: nrStaging added as env var
+set:
+  cluster: test
+  nrStaging: true
+asserts:
+  - contains:
+  path: spec.template.spec.containers[0].env
+  content:
+name: NR_STAGING
+value: "true"
+template: templates/deployment-agentcontrol.yaml
+
+  - it: lowDataMode added as env var
+set:
+  cluster: test
+  lowDataMode: true
+asserts:
+  - contains:
+  path: spec.template.spec.containers[0].env
+  content:
+name: NR_LOW_DATA_MODE
+value: "true"
+template: templates/deployment-agentcontrol.yaml
+
+  - it: verboseLog added as env var
+set:
+  cluster: test
+  verboseLog: true
+asserts:
+  - contains:
+  path: spec.template.spec.containers[0].env
+  content:
+name: NR_VERBOSE_LOG
+value: "true"
+template: templates/deployment-agentcontrol.yaml
+
+  - it: bool env vars as false when they are not set
+set:
+  cluster: test
+asserts:
+  - contains:
+  path: spec.template.spec.containers[0].env
+  content:
+name: NR_STAGING
+value: "false"
+template: templates/deployment-agentcontrol.yaml
+  - contains:
+  path: spec.template.spec.containers[0].env
+  content:
+name: NR_LOW_DATA_MODE
+value: "false"
+template: templates/deployment-agentcontrol.yaml
+  - contains:
+  path: spec.template.spec.containers[0].env
+  content:
+name: NR_VERBOSE_LOG
+value: "false"
 template: templates/deployment-agentcontrol.yaml
