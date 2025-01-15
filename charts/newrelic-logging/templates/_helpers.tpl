@@ -178,6 +178,16 @@ https://log-api.newrelic.com/log/v1
 {{- end -}}
 {{- end -}}
 
+
+{{/*
+Creates labels required for entity synthesis to be put as part of prometheus_remote_write configuration
+*/}}
+{{- define "newrelic-logging.entitySynthesis.labels" -}}
+{{- printf "add_label            cluster_name %s" (include "newrelic-logging.cluster" .) | nindent 8 -}}
+{{- printf "add_label            namespace %s" .Release.Namespace | nindent 8 -}}
+{{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 8 -}}
+{{- end -}}
+
 {{/*
 Returns metricsHost
 */}}
