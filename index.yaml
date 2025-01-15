@@ -7418,6 +7418,91 @@ entries:
     version: 0.1.0-beta
   nri-bundle:
   - apiVersion: v2
+    created: "2025-01-15T05:36:49.855825199Z"
+    dependencies:
+    - condition: infrastructure.enabled,newrelic-infrastructure.enabled
+      name: newrelic-infrastructure
+      repository: https://newrelic.github.io/nri-kubernetes
+      version: 3.37.4
+    - condition: prometheus.enabled,nri-prometheus.enabled
+      name: nri-prometheus
+      repository: https://newrelic.github.io/nri-prometheus
+      version: 2.1.19
+    - condition: newrelic-prometheus-agent.enabled
+      name: newrelic-prometheus-agent
+      repository: https://newrelic.github.io/newrelic-prometheus-configurator
+      version: 1.15.6
+    - condition: webhook.enabled,nri-metadata-injection.enabled
+      name: nri-metadata-injection
+      repository: https://newrelic.github.io/k8s-metadata-injection
+      version: 4.22.5
+    - condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
+      name: newrelic-k8s-metrics-adapter
+      repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
+      version: 1.13.4
+    - condition: ksm.enabled,kube-state-metrics.enabled
+      name: kube-state-metrics
+      repository: https://prometheus-community.github.io/helm-charts
+      version: 5.26.0
+    - condition: kubeEvents.enabled,nri-kube-events.enabled
+      name: nri-kube-events
+      repository: https://newrelic.github.io/nri-kube-events
+      version: 3.11.5
+    - condition: logging.enabled,newrelic-logging.enabled
+      name: newrelic-logging
+      repository: https://newrelic.github.io/helm-charts
+      version: 1.23.5
+    - condition: newrelic-pixie.enabled
+      name: newrelic-pixie
+      repository: https://newrelic.github.io/helm-charts
+      version: 2.1.6
+    - condition: k8s-agents-operator.enabled
+      name: k8s-agents-operator
+      repository: https://newrelic.github.io/k8s-agents-operator
+      version: 0.19.0
+    - alias: pixie-chart
+      condition: pixie-chart.enabled
+      name: pixie-operator-chart
+      repository: https://pixie-operator-charts.storage.googleapis.com
+      version: 0.1.7
+    - condition: newrelic-infra-operator.enabled
+      name: newrelic-infra-operator
+      repository: https://newrelic.github.io/newrelic-infra-operator
+      version: 2.13.4
+    description: Groups together the individual charts for the New Relic Kubernetes
+      solution for a more comfortable deployment.
+    digest: 1d8959d95f40704927b29660e1158da54c9a876fc0510493a099fc63ad436339
+    home: https://github.com/newrelic/helm-charts
+    icon: https://newrelic.com/assets/newrelic/source/NewRelic-logo-square.svg
+    keywords:
+    - infrastructure
+    - newrelic
+    - monitoring
+    maintainers:
+    - name: juanjjaramillo
+      url: https://github.com/juanjjaramillo
+    - name: csongnr
+      url: https://github.com/csongnr
+    - name: dbudziwojskiNR
+      url: https://github.com/dbudziwojskiNR
+    name: nri-bundle
+    sources:
+    - https://github.com/newrelic/nri-bundle/
+    - https://github.com/newrelic/nri-bundle/tree/master/charts/nri-bundle
+    - https://github.com/newrelic/nri-kubernetes/tree/master/charts/newrelic-infrastructure
+    - https://github.com/newrelic/nri-prometheus/tree/master/charts/nri-prometheus
+    - https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent
+    - https://github.com/newrelic/k8s-metadata-injection/tree/master/charts/nri-metadata-injection
+    - https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/master/charts/newrelic-k8s-metrics-adapter
+    - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
+    - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
+    - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
+    - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/nri-bundle-5.0.106/nri-bundle-5.0.106.tgz
+    version: 5.0.106
+  - apiVersion: v2
     created: "2024-12-31T12:02:26.361560463Z"
     dependencies:
     - condition: infrastructure.enabled,newrelic-infrastructure.enabled
@@ -30244,6 +30329,48 @@ entries:
   synthetics-job-manager:
   - apiVersion: v2
     appVersion: release-424
+    created: "2025-01-15T05:36:50.084638826Z"
+    dependencies:
+    - condition: ping-runtime.enabled
+      name: ping-runtime
+      repository: ""
+      version: 1.0.22
+    - condition: node-api-runtime.enabled
+      name: node-api-runtime
+      repository: ""
+      version: 1.0.38
+    - condition: node-browser-runtime.enabled
+      name: node-browser-runtime
+      repository: ""
+      version: 2.0.4
+    description: New Relic Synthetics Containerized Job Manager
+    digest: 47298cbe9e5cf96ffcf4edb5b06a4dfd9d5b1d1d78f9505d0d9da8d087c5336a
+    home: https://github.com/orgs/newrelic/teams/proactive-monitoring
+    keywords:
+    - synthetics
+    - synthetics-job-manager
+    - job-manager
+    - newrelic
+    maintainers:
+    - name: kaschaefer-nr
+    - name: sidnaiknewrelic
+    - name: Philip-R-Beckwith
+    - name: sshah-nr
+    - name: marcusperezNR
+    - name: sadafarshad
+    - name: kondracek-nr
+    - name: mfarhan-nr
+    - name: schakraborty-nr
+    - name: shashank-srirangam
+    - email: team_proactive-monitoring@newrelic.com
+      name: nr-mdadhich
+    name: synthetics-job-manager
+    type: application
+    urls:
+    - https://github.com/newrelic/helm-charts/releases/download/synthetics-job-manager-3.0.6/synthetics-job-manager-3.0.6.tgz
+    version: 3.0.6
+  - apiVersion: v2
+    appVersion: release-424
     created: "2024-12-19T06:44:06.369117018Z"
     dependencies:
     - condition: ping-runtime.enabled
@@ -34932,4 +35059,4 @@ entries:
     urls:
     - https://github.com/newrelic/helm-charts/releases/download/synthetics-minion-1.0.17/synthetics-minion-1.0.17.tgz
     version: 1.0.17
-generated: "2025-01-14T12:02:29.95732045Z"
+generated: "2025-01-15T05:36:50.08649181Z"
