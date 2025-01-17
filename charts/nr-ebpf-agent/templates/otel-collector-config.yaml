@@ -19,7 +19,7 @@ data:
       processors:
         k8sattributes/local_k8s_md:
           auth_type: 'serviceAccount'
-          filter: # Peform the lookup for pod association on only the Node the OTel collector is running on.
+          filter: # Perform the lookup for pod association on only the Node the OTel collector is running on.
             node_from_env_var: KUBE_NODE_NAME
           extract:
             metadata: #k8s metadata to annotate on top of the incoming OTel data.
@@ -42,7 +42,7 @@ data:
 
         k8sattributes/remote_k8s_md:
           auth_type: 'serviceAccount'
-          filter: # Peform the lookup for pod association on only the Node the OTel collector is running on.
+          filter: # Perform the lookup for pod association on only the Node the OTel collector is running on.
             node_from_env_var: KUBE_NODE_NAME
           extract:
             metadata: #k8s metadata to annotate on top of the incoming OTel data.
@@ -82,7 +82,7 @@ data:
               action: upsert
 
         filter/apm_instrumented_pods: # Drop data from pods where an APM agent is installed
-          error_mode: ignore 
+          error_mode: ignore
           traces:
             span:
               - 'resource.attributes["apm.pod.label"] != nil'
