@@ -290,22 +290,22 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 
 {{/* check if both L1 ClientID and ClientSecret are provided */}}
 {{- define "newrelic-agent-control.auth.l1Identity" -}}
-{{- if and (include "newrelic-agent-control.auth.l1IdentityClientId" .) (include "newrelic-agent-control.auth.l1IdentityClientSecret" .) -}}
+{{- if and (include "newrelic-agent-control.auth.identityClientId" .) (include "newrelic-agent-control.auth.identityClientSecret" .) -}}
     true
 {{- end -}}
 {{- end -}}
 
 {{/* return L1 ClientID */}}
-{{- define "newrelic-agent-control.auth.l1IdentityClientId" -}}
-{{- if .Values.l1IdentityClientId -}}
-  {{- .Values.l1IdentityClientId -}}
+{{- define "newrelic-agent-control.auth.identityClientId" -}}
+{{- if .Values.identityClientId -}}
+  {{- .Values.identityClientId -}}
 {{- end -}}
 {{- end -}}
 
 {{/* return L1 ClientSecret */}}
-{{- define "newrelic-agent-control.auth.l1IdentityClientSecret" -}}
-{{- if .Values.l1IdentityClientSecret -}}
-  {{- .Values.l1IdentityClientSecret -}}
+{{- define "newrelic-agent-control.auth.identityClientSecret" -}}
+{{- if .Values.identityClientSecret -}}
+  {{- .Values.identityClientSecret -}}
 {{- end -}}
 {{- end -}}
 
@@ -346,9 +346,9 @@ Return the name key for the ClientSecret Key inside the secret.
 {{/*
 Return the name of the secret holding the clientdId and ClientSecret
 */}}
-{{- define "newrelic-agent-control.auth.customl1IdentitySecretName" -}}
-{{- if .Values.customL1IdentitySecretName -}}
-  {{- .Values.customL1IdentitySecretName -}}
+{{- define "newrelic-agent-control.auth.customIdentitySecretName" -}}
+{{- if .Values.customIdentitySecretName -}}
+  {{- .Values.customIdentitySecretName -}}
 {{- end -}}
 {{- end -}}
 
@@ -356,8 +356,8 @@ Return the name of the secret holding the clientdId and ClientSecret
 Return the name key for the ClientID inside the secret.
 */}}
 {{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" -}}
-{{- if .Values.customL1IdentityClientIdSecretKey -}}
-  {{- .Values.customL1IdentityClientIdSecretKey -}}
+{{- if .Values.customIdentityClientIdSecretKey -}}
+  {{- .Values.customIdentityClientIdSecretKey -}}
 {{- end -}}
 {{- end -}}
 
@@ -365,8 +365,8 @@ Return the name key for the ClientID inside the secret.
 Return the name key for the ClientSecret inside the secret.
 */}}
 {{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" -}}
-{{- if .Values.customL1IdentityClientSecretSecretKey -}}
-  {{- .Values.customL1IdentityClientSecretSecretKey -}}
+{{- if .Values.customIdentityClientSecretSecretKey -}}
+  {{- .Values.customIdentityClientSecretSecretKey -}}
 {{- end -}}
 {{- end -}}
 
@@ -378,7 +378,7 @@ Return the name key for the ClientSecret inside the secret.
 {{/* Return the custom secret name for the CliendId and ClientSecret with fallback to the generated one */}}
 {{- define "newrelic-agent-control.auth.identityCredentialsSecretName" -}}
 {{- $default := include "newrelic-agent-control.auth.generatedIdentityCredentialsSecretName" . -}}
-{{- include "newrelic-agent-control.auth.customl1IdentitySecretName" . | default $default -}}
+{{- include "newrelic-agent-control.auth.customIdentitySecretName" . | default $default -}}
 {{- end -}}
 
 {{- define "newrelic-agent-control.auth.generatedIdentityCredentialsSecretName" -}}

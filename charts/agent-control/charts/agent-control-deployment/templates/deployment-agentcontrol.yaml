@@ -89,6 +89,12 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
             - name: NR_CLUSTER_NAME
               value: {{ include "newrelic.common.cluster" . }}
+            - name: NR_STAGING
+              value: "{{ include "newrelic.common.nrStaging" . | default false }}"
+            - name: NR_LOW_DATA_MODE
+              value: "{{ include "newrelic.common.lowDataMode" . | default false }}"
+            - name: NR_VERBOSE_LOG
+              value: "{{ include "newrelic.common.verboseLog" . | default false }}"
           {{- /* ----- Variables used to send data downstream to subagents */}}
 
           {{- with .Values.extraEnv }}

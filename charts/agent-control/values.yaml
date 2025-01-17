@@ -21,14 +21,14 @@ agent-control-deployment:
   # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
   customSecretLicenseKey: ""
 
-  # -- L1 identity client_id to use.
-  l1IdentityClientId: ""
-  # -- L1 identity client_secret to use.
-  l1IdentityClientSecret: ""
+  # -- Identity client_id to use.
+  identityClientId: ""
+  # -- Identity client_secret to use.
+  identityClientSecret: ""
   # -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
-  customL1IdentitySecretName: ""
-  customL1IdentityClientIdSecretKey: ""
-  customL1IdentityClientSecretSecretKey: ""
+  customIdentitySecretName: ""
+  customIdentityClientIdSecretKey: ""
+  customIdentityClientSecretSecretKey: ""
 
   # -- Image for the New Relic Agent Control
   # @default -- See `values.yaml`
@@ -163,24 +163,25 @@ agent-control-deployment:
           # will have.
           # @default -- release name suffixed with "-auth"
           name:
+          ## If private_key and client_id values are specified, their creation is disabled and the `preinstall-user-key` job is not executed
           private_key:
             # -- Key inside the secret containing the private key.
             # @default -- `private_key`
             secret_key:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation.
             # This options is mutually exclusive with `plain_pem`.
             base64_pem:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text if you want to skip its creation.
             # This options is mutually exclusive with `base64_pem`.
             plain_pem:
           client_id:
             # -- Key inside the secret containing the client ID.
             # @default -- `client_id`
             secret_key:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation.
             # This options is mutually exclusive with `plain`.
             base64:
-            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text.
+            # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation.
             # This options is mutually exclusive with `base64`.
             plain:
 
