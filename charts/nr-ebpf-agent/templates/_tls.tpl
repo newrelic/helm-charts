@@ -8,12 +8,13 @@ a cert is loaded from an existing secret or is provided via `.Values`
 {{- $clientCert := "" }}
 {{- $clientKey := "" }}
 {{- if .Values.tls.autoGenerateCert.enabled }}
-    {{- $prevSecret := (lookup "v1" "Secret" "" (include "nr-ebpf-agent-certificates.certificateSecret.name" . )) }}
-    {{- if and (not .Values.tls.autoGenerateCert.recreate) $prevSecret }}
-        {{- $clientCert = index $prevSecret "data" "tls.crt" }}
-        {{- $clientKey = index $prevSecret "data" "tls.key" }}
-        {{- $caCert = index $prevSecret "data" "ca.crt" }}
-    {{- else }}
+{{/*TODO Enable this section once the helm Chart repo supports the lookup function*/}}
+{{/*    {{- $prevSecret := (lookup "v1" "Secret" "" (include "nr-ebpf-agent-certificates.certificateSecret.name" . )) }}*/}}
+{{/*    {{- if and (not .Values.tls.autoGenerateCert.recreate) $prevSecret }}*/}}
+{{/*        {{- $clientCert = index $prevSecret "data" "tls.crt" }}*/}}
+{{/*        {{- $clientKey = index $prevSecret "data" "tls.key" }}*/}}
+{{/*        {{- $caCert = index $prevSecret "data" "ca.crt" }}*/}}
+{{/*    {{- else }}*/}}
         {{- $certValidity := int .Values.tls.autoGenerateCert.certPeriodDays | default 365 }}
         {{- $ca := genCA "nr-ebpf-agent-certificates-ca" $certValidity }}
         {{- $domain1 := printf "%s.%s.svc"  (include "nr-ebpf-agent.service.name" .) $.Release.Namespace }}
@@ -25,7 +26,7 @@ a cert is loaded from an existing secret or is provided via `.Values`
         {{- $clientCert = b64enc $cert.Cert }}
         {{- $clientKey = b64enc $cert.Key }}
         {{- $caCert = b64enc $ca.Cert }}
-    {{- end }}
+{{/*    {{- end }}*/}}
 {{- else }}
     {{- $clientCert = .Files.Get .Values.tls.certFile | b64enc }}
     {{- $clientKey = .Files.Get .Values.tls.keyFile | b64enc }}
