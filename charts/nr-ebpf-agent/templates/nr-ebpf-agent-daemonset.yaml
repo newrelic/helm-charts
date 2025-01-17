@@ -19,7 +19,23 @@ spec:
         app: nr-ebpf-agent
         component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: ""
+        {{- with .Values.ebpfAgent.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
     spec:
+      {{- with include "nrEbpfAgent.ebpfAgent.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
       containers:
       - name: nr-ebpf-agent
         image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
@@ -30,6 +46,7 @@ spec:
             value: "/host"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
+          {{- include "generateTracingEnvVars" . | indent 10 }}
           {{- if .Values.protocols }}
           {{- range $protocol, $config := .Values.protocols }}
           {{- if (eq $config.enabled false) }}
@@ -83,6 +100,12 @@ spec:
             value: {{ include "nr-otel-collector-receiver.endpoint" .}}
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
+          {{- include "generateClientScriptEnvVars" . | nindent 10 }}
+          {{- if .Values.protocols.http.spans.samplingErrorRate}}
+          {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
+          - name: SAMPLE_HTTP_ERROR_RATE
+            value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
+          {{- end }}
           {{- if .Values.protocols }}
           {{- range $protocol, $config := .Values.protocols }}
           {{- if (eq $config.enabled false) }}
@@ -136,17 +159,17 @@ spec:
       nodeSelector:
         {{- . | nindent 8 -}}
       {{- end }}
-      {{- with include "newrelic.common.affinity" . }}
-      affinity:
-        {{- . | nindent 8 -}}
-      {{- end }}
-      {{- with include "newrelic.common.tolerations" . }}
-      tolerations:
-        {{- . | nindent 8 -}}
-      {{- end }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
         secret:
           defaultMode: 420
           secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
       {{- end }}

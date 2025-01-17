@@ -52,48 +52,73 @@ Return the cluster name
 {{- end -}}
 {{- end -}}
 
-{{/*
-Return the licenseKey
-*/}}
-{{- define "nr-ebpf-agent.licenseKey" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.licenseKey }}
-    {{- .Values.global.licenseKey -}}
-  {{ else if .Values.global.insightsKey }}
-    {{- .Values.global.insightsKey -}}
-  {{ else }}
-    {{- .Values.licenseKey | default "" -}}
-  {{ end }}
-{{- else -}}
-    {{- .Values.licenseKey | default "" -}}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Return the customSecretName
-*/}}
-{{- define "nr-ebpf-agent.customSecretName" -}}
-{{- if .Values.global }}
-    {{- .Values.global.customSecretName | default "" -}}
-{{- else -}}
-    {{- "" -}}
-{{- end -}}
-{{- end -}}
 
-{{/*
-Return the customSecretLicenseKey
-*/}}
-{{- define "nr-ebpf-agent.customSecretKey" -}}
-{{- if .Values.global }}
-    {{- .Values.customSecretLicenseKey | default "" -}}
-{{- else -}}
-    {{- "" -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Create otel collector receiver endpoint
 */}}
 {{- define "nr-otel-collector-receiver.endpoint" -}}
 {{- printf "dns:///%s.%s.svc.%s:4317" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain }}
+{{- end }}
+
+{{/*
+Validate the user inputted quantile when sampling by latency.
+*/}}
+{{- define "validate.samplingLatency" -}}
+{{- $validOptions := list "" "p1" "p10" "p50" "p90" "p99" -}}
+{{- $protocol := .protocol -}}
+{{- $latency := .latency -}}
+{{- if not (has $latency $validOptions) -}}
+{{- fail (printf "Invalid samplingLatency '%s' for protocol '%s'. Valid options are: %v" $latency $protocol $validOptions) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate the user inputted value when sampling by error rate.
+*/}}
+{{- define "validate.samplingErrorRate" -}}
+{{- $protocol := .protocol -}}
+{{- $errorRateString := .errorRate -}}
+{{- $errorRate := .errorRate | int -}}
+{{- if or (lt $errorRate 1) (gt $errorRate 100) -}}
+{{- fail (printf "Invalid samplingErrorRate '%s' for protocol '%s'. Valid range is between 1 and 100" $errorRateString $protocol) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Pass environment variables to the agent container if tracing a specific protocol is to be disabled.
+*/}}
+{{- define "generateTracingEnvVars" -}}
+{{- range $protocol, $config := .Values.protocols }}
+  {{- $metricsEnabled := and (hasKey $config "metrics") (eq $config.metrics.enabled true) }}
+  {{- $spansEnabled := and (hasKey $config "spans") (eq $config.spans.enabled true) }}
+  {{- if or (and (not $metricsEnabled) (not $spansEnabled)) (and (not (hasKey $config "metrics")) (not $spansEnabled)) }}
+- name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
+  value: "0"
+  {{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Generate environment variables for disabling protocols and setting sampling latency.
+*/}}
+{{- define "generateClientScriptEnvVars" -}}
+{{- if .Values.protocols }}
+{{- range $protocol, $config := .Values.protocols }}
+  {{- if and (hasKey $config "metrics") (eq $config.metrics.enabled false) }}
+- name: NR_EBPF_ENABLE_{{ upper $protocol }}_METRICS
+  value: "0"
+  {{- end }}
+  {{- if (eq $config.spans.enabled false) }}
+- name: NR_EBPF_ENABLE_{{ upper $protocol }}_SPANS
+  value: "0"
+  {{- end }}
+  {{- if (eq $config.spans.enabled true) }}
+  {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
+- name: SAMPLE_{{ upper $protocol }}_LATENCY
+  value: "{{ $config.spans.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.spans.samplingLatency "" }}"
+  {{- end }}
+{{- end }}
+{{- end }}
 {{- end }}
