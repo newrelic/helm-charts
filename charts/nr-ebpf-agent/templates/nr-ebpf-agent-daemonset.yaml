@@ -47,14 +47,6 @@ spec:
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
-          {{- if .Values.protocols }}
-          {{- range $protocol, $config := .Values.protocols }}
-          {{- if (eq $config.enabled false) }}
-          - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
-            value: "0"
-          {{- end }}
-          {{- end }}
-          {{- end }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
           - name: PL_TABLE_STORE_DATA_LIMIT_MB
@@ -105,18 +97,6 @@ spec:
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
           - name: SAMPLE_HTTP_ERROR_RATE
             value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
-          {{- end }}
-          {{- if .Values.protocols }}
-          {{- range $protocol, $config := .Values.protocols }}
-          {{- if (eq $config.enabled false) }}
-          - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
-            value: "0"
-          {{- end }}
-          {{- if (eq $config.enabled true) }}
-          - name: SAMPLE_{{ upper $protocol }}_LATENCY
-            value: {{ $config.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.samplingLatency "p1" }}
-          {{- end }}
-          {{- end }}
           {{- end }}
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
