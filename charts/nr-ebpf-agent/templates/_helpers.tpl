@@ -91,8 +91,8 @@ Pass environment variables to the agent container if tracing a specific protocol
 */}}
 {{- define "generateTracingEnvVars" -}}
 {{- range $protocol, $config := .Values.protocols }}
-  {{- $metricsEnabled := and (hasKey $config "metrics") (eq $config.metrics.enabled true) }}
-  {{- $spansEnabled := and (hasKey $config "spans") (eq $config.spans.enabled true) }}
+  {{- $metricsEnabled := and (hasKey $config "metrics") (hasKey $config.metrics "enabled") (eq $config.metrics.enabled true) }}
+  {{- $spansEnabled := and (hasKey $config "spans") (hasKey $config.spans "enabled") (eq $config.spans.enabled true) }}
   {{- if or (and (not $metricsEnabled) (not $spansEnabled)) (and (not (hasKey $config "metrics")) (not $spansEnabled)) }}
 - name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
   value: "0"
