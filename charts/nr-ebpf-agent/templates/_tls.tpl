@@ -8,7 +8,7 @@ a cert is loaded from an existing secret or is provided via `.Values`
 {{- $clientCert := "" }}
 {{- $clientKey := "" }}
 {{- $enabletls := .Values.tls.autoGenerateCert.enabled | default true}}
-{{- if .$enabletls }}
+{{- if $enabletls }}
     {{- $prevSecret := (lookup "v1" "Secret" .Release.Namespace  (include "nr-ebpf-agent-certificates.certificateSecret.name" . )) }}
     {{- if and (not .Values.tls.autoGenerateCert.recreate) $prevSecret }}
         {{- $clientCert = index $prevSecret "data" "tls.crt" }}
