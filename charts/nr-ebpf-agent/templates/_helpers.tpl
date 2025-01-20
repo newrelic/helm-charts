@@ -111,9 +111,11 @@ Generate environment variables for disabling protocols and setting sampling late
 {{- define "generateClientScriptEnvVars" -}}
 {{- if .Values.protocols }}
 {{- range $protocol, $config := .Values.protocols }}
-  {{- if and (hasKey $config "metrics") (eq $config.metrics.enabled false) }}
+  {{-  if (hasKey $config "metrics") }}
+    {{- if and (hasKey $config "metrics") (eq $config.metrics.enabled false) }}
 - name: NR_EBPF_ENABLE_{{ upper $protocol }}_METRICS
   value: "0"
+    {{- end }}
   {{- end }}
   {{- if (eq $config.spans.enabled false) }}
 - name: NR_EBPF_ENABLE_{{ upper $protocol }}_SPANS
