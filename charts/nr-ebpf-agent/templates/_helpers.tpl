@@ -91,6 +91,7 @@ Pass environment variables to the agent container if tracing a specific protocol
 */}}
 {{- define "generateTracingEnvVars" -}}
 {{- range $protocol, $config := .Values.protocols }}
+  {{- $metricsEnabled := false }}
   {{- if (hasKey $config "metrics") }}
     {{- $metricsEnabled := and (hasKey $config "metrics") (eq $config.metrics.enabled true) }}
   {{- else }}
