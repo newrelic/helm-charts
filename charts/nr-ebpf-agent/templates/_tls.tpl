@@ -7,33 +7,30 @@ a cert is loaded from an existing secret or is provided via `.Values`
 {{- $caCert := "" }}
 {{- $clientCert := "" }}
 {{- $clientKey := "" }}
-{{- $config := .Values }} 
-{{-  if (hasKey $config "tls") }}    
-    {{- if .Values.tls.autoGenerateCert.enabled }}
-        {{- $prevSecret := (lookup "v1" "Secret" .Release.Namespace  (include "nr-ebpf-agent-certificates.certificateSecret.name" . )) }}
-        {{- if and (not .Values.tls.autoGenerateCert.recreate) $prevSecret }}
-            {{- $clientCert = index $prevSecret "data" "tls.crt" }}
-            {{- $clientKey = index $prevSecret "data" "tls.key" }}
-            {{- $caCert = index $prevSecret "data" "ca.crt" }}
-        {{- else }}
-            {{- $certValidity := int .Values.tls.autoGenerateCert.certPeriodDays | default 365 }}
-            {{- $ca := genCA "nr-ebpf-agent-certificates-ca" $certValidity }}
-            {{- $domain1 := printf "%s.%s.svc"  (include "nr-ebpf-agent.service.name" .) $.Release.Namespace }}
-            {{- $domain2 := printf "%s.%s.svc.%s" (include "nr-ebpf-agent.service.name" .) $.Release.Namespace $.Values.kubernetesClusterDomain }}
-            {{- $domain3 := printf "%s.%s.svc"  (include "otel-collector.service.name" .) $.Release.Namespace }}
-            {{- $domain4 := printf "%s.%s.svc.%s" (include "otel-collector.service.name" .) $.Release.Namespace $.Values.kubernetesClusterDomain }}
-            {{- $domains := list $domain1 $domain2 $domain3 $domain4 }}
-            {{- $cert := genSignedCert (include "newrelic.common.naming.fullname" .) nil $domains $certValidity $ca }}
-            {{- $clientCert = b64enc $cert.Cert }}
-            {{- $clientKey = b64enc $cert.Key }}
-            {{- $caCert = b64enc $ca.Cert }}
-        {{- end }}
+{{- if .Values.tls.autoGenerateCert.enabled }}
+    {{- $prevSecret := (lookup "v1" "Secret" .Release.Namespace  (include "nr-ebpf-agent-certificates.certificateSecret.name" . )) }}
+    {{- if and (not .Values.tls.autoGenerateCert.recreate) $prevSecret }}
+        {{- $clientCert = index $prevSecret "data" "tls.crt" }}
+        {{- $clientKey = index $prevSecret "data" "tls.key" }}
+        {{- $caCert = index $prevSecret "data" "ca.crt" }}
     {{- else }}
-        {{- $clientCert = .Files.Get .Values.tls.certFile | b64enc }}
-        {{- $clientKey = .Files.Get .Values.tls.keyFile | b64enc }}
-        {{- $caCert = .Files.Get .Values.tls.caFile | b64enc }}
+        {{- $certValidity := int .Values.tls.autoGenerateCert.certPeriodDays | default 365 }}
+        {{- $ca := genCA "nr-ebpf-agent-certificates-ca" $certValidity }}
+        {{- $domain1 := printf "%s.%s.svc"  (include "nr-ebpf-agent.service.name" .) $.Release.Namespace }}
+        {{- $domain2 := printf "%s.%s.svc.%s" (include "nr-ebpf-agent.service.name" .) $.Release.Namespace $.Values.kubernetesClusterDomain }}
+        {{- $domain3 := printf "%s.%s.svc"  (include "otel-collector.service.name" .) $.Release.Namespace }}
+        {{- $domain4 := printf "%s.%s.svc.%s" (include "otel-collector.service.name" .) $.Release.Namespace $.Values.kubernetesClusterDomain }}
+        {{- $domains := list $domain1 $domain2 $domain3 $domain4 }}
+        {{- $cert := genSignedCert (include "newrelic.common.naming.fullname" .) nil $domains $certValidity $ca }}
+        {{- $clientCert = b64enc $cert.Cert }}
+        {{- $clientKey = b64enc $cert.Key }}
+        {{- $caCert = b64enc $ca.Cert }}
     {{- end }}
-{{- end }}   
+{{- else }}
+    {{- $clientCert = .Files.Get .Values.tls.certFile | b64enc }}
+    {{- $clientKey = .Files.Get .Values.tls.keyFile | b64enc }}
+    {{- $caCert = .Files.Get .Values.tls.caFile | b64enc }}
+{{- end }}
 {{- $result := dict "clientCert" $clientCert "clientKey" $clientKey "caCert" $caCert }}
 {{- $result | toYaml }}
 {{- end }}
