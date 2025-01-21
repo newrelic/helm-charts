@@ -93,9 +93,7 @@ Pass environment variables to the agent container if tracing a specific protocol
 {{- range $protocol, $config := .Values.protocols }}
   {{- $metricsEnabled := false }}
   {{- if (hasKey $config "metrics") }}
-    {{- $metricsEnabled := and (hasKey $config "metrics") (eq $config.metrics.enabled true) }}
-  {{- else }}
-    {{- $metricsEnabled := false }}
+    {{- $metricsEnabled := eq $config.metrics.enabled true }}
   {{- end }}  
   {{- $spansEnabled := and (hasKey $config "spans") (eq $config.spans.enabled true) }}
   {{- if or (and (not $metricsEnabled) (not $spansEnabled)) (and (not (hasKey $config "metrics")) (not $spansEnabled)) }}
@@ -112,7 +110,7 @@ Generate environment variables for disabling protocols and setting sampling late
 {{- if .Values.protocols }}
 {{- range $protocol, $config := .Values.protocols }}
   {{-  if (hasKey $config "metrics") }}
-    {{- if and (hasKey $config "metrics") (eq $config.metrics.enabled false) }}
+    {{- if eq $config.metrics.enabled false }}
 - name: NR_EBPF_ENABLE_{{ upper $protocol }}_METRICS
   value: "0"
     {{- end }}

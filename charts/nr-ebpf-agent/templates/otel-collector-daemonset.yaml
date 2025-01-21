@@ -94,10 +94,12 @@ spec:
             mountPath: /etc/otel/config.yaml
             subPath: config.yaml
             readOnly: true
+          {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
             mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
             readOnly: true
+          {{- end }}
           {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
@@ -111,11 +113,13 @@ spec:
       nodeSelector:
         {{- . | nindent 8 -}}
       {{- end }}
+      {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
         secret:
           defaultMode: 420
           secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
+      {{- end }}
       {{- end }}
       {{- with include "nrEbpfAgent.otelCollector.affinity" . }}
       affinity:
