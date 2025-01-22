@@ -85,6 +85,10 @@ newrelic-infra-operator | newrelic-k8s-metrics-adapter | nri-metadata-injection)
 repository=$(cat ${folderName}/values.yaml| yq '.image.repository')
 appVersion=$(cat ${folderName}/Chart.yaml| yq '.appVersion')
 ;;
+k8s-agents-operator)
+repository=$(cat ${folderName}/values.yaml| yq '.controllerManager.manager.image.repository')
+appVersion=$(cat ${folderName}/Chart.yaml| yq '.appVersion')
+;;
 *)
 echo "Unknown chart $folderName"
 ;;
