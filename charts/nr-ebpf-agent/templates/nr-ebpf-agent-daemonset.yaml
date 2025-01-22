@@ -101,10 +101,12 @@ spec:
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources }}"
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
+          {{-  if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
           - name: SAMPLE_HTTP_ERROR_RATE
             value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
+          {{- end }}
           {{- end }}
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
