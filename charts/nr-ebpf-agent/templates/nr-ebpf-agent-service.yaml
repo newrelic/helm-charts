@@ -4,8 +4,10 @@ kind: Service
 metadata:
   name: {{ include "nr-ebpf-agent.service.name" . }}
   labels:
+    {{- if gt .Chart.Version "0.1.13"}}
     app: nr-ebpf-agent
     component: agent
+    {{- end }}
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
   # The Agent pod will use a service containing a clusterIP and port 12345 to interface via.
