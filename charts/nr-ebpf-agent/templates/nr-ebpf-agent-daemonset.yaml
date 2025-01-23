@@ -4,26 +4,20 @@ kind: DaemonSet
 metadata:
   name: nr-ebpf-agent
   labels:
-    {{- if gt .Chart.Version "0.1.14"}}
     app: nr-ebpf-agent
     component: agent
-    {{- end }}
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
   selector:
     matchLabels:
-      {{- if gt .Chart.Version "0.1.14"}}
       app: nr-ebpf-agent
       component: agent
-      {{- end }}
       {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- if gt .Chart.Version "0.1.14"}}
         app: nr-ebpf-agent
         component: agent
-        {{- end }}
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: ""
