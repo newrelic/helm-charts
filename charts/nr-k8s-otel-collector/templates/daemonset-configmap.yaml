@@ -1,8 +1,8 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: { { include "nrKubernetesOtel.daemonset.configMap.fullname" . } }
-  namespace: { { .Release.Namespace } }
+  name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+  namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
