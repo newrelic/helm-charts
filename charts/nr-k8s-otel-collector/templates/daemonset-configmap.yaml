@@ -1,10 +1,9 @@
-apiVersion: v1 
+apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
-  namespace: {{ .Release.Namespace }}
-  labels:
-    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: { { include "nrKubernetesOtel.daemonset.configMap.fullname" . } }
+  namespace: { { .Release.Namespace } }
+  labels: { { - include "newrelic.common.labels" . | nindent 4 } }
 data:
   daemonset-config.yaml: |
     {{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
@@ -537,6 +536,11 @@ data:
          spike_limit_percentage: 25
 
       cumulativetodelta:
+          include:
+            metrics:
+              - container_cpu_usage_seconds_total
+            match_type: strict
+          
 
       batch:
         send_batch_max_size: 1000
