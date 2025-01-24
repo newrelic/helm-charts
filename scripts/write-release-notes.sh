@@ -85,6 +85,10 @@ function write_chart_release_notes() {
         repository=$(cat ${folderName}/values.yaml| yq '.image.repository')
         appVersion=$(cat ${folderName}/Chart.yaml| yq '.appVersion')
         ;;
+        k8s-agents-operator)
+        repository=$(cat ${folderName}/values.yaml| yq '.controllerManager.manager.image.repository')
+        appVersion=$(cat ${folderName}/Chart.yaml| yq '.appVersion')
+        ;;
         *)
         echo "Unknown chart $folderName"
         ;;
