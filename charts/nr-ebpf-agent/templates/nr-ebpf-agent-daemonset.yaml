@@ -10,8 +10,6 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: nr-ebpf-agent
-      component: agent
       {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
     metadata:
@@ -51,7 +49,7 @@ spec:
             value: "cluster.local"
           - name: PL_TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
-          - name: PX_DISABLE_TLS 
+          - name: PX_DISABLE_TLS
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
             value: "0"
@@ -117,7 +115,7 @@ spec:
             value: "0"
             {{- else }}
             value: "1"
-            {{- end }}         
+            {{- end }}
         {{- if eq .Values.tls.enabled true }}
           - name: CERT_PATH
             value: "{{ .Values.tls.autoGenerateCert.certPath }}"
