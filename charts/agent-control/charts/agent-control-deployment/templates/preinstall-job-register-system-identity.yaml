@@ -65,7 +65,7 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
       containers:
         - name: register-system-identity
-          image: newrelic/agent-control-system-identity-registration:latest
+          image: "{{ (.Values.systemIdentityRegistration.image).repository | default "newrelic/agent-control-system-identity-registration" }}:{{ (.Values.systemIdentityRegistration.image).tag | default "latest" }}"
           env:
             {{- if or  (include "newrelic.common.userKey._customSecretName" .) (include "newrelic.common.userKey._userKey" .) }}
             - name: USER_KEY
