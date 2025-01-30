@@ -82,8 +82,8 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | dropAPMEnabledPods | bool | `true` | Drop data from pods that are monitored by New Relic APM via auto attach. |
-| dropDataIpServiceNames | bool | `true` | Drop data where to service names map to an IP address. |
-| dropDataKubeSystem | bool | `true` | Drop data from to the kube-system namespace. |
+| dropDataIpServiceNames | bool | `true` | Drop data when service names map to an IP address. |
+| dropDataKubeSystem | bool | `true` | Drop data from the kube-system namespace. |
 | dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace. |
 | dropDataServiceNameRegex | string | `""` | Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b" see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax |
 | ebpfAgent.affinity | object | `{}` | Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity` |
