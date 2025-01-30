@@ -1,9 +1,9 @@
 # IMPORTANT: Specify your New Relic API key here.
-# licenseKey:
+licenseKey: 01640bb37ac3184642f28e40776b4b66FFFFNRAL
 #
 # Optionally, specify a cluster name and log records can
 # be filtered by cluster.
-# cluster:
+cluster: fluentbit-beta-chart-test
 #
 # or Specify secret which contains New Relic API key
 # customSecretName: secret_name
@@ -36,7 +36,6 @@ fluentBit:
   k8sBufferSize: "32k"
   k8sLoggingExclude: "false"
   retryLimit: 5
-  sendMetrics: false
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY
@@ -174,7 +173,7 @@ fluentBit:
           licenseKey     ${LICENSE_KEY}
           endpoint       ${ENDPOINT}
           lowDataMode    ${LOW_DATA_MODE}
-          sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
+          sendMetrics    true
           Retry_Limit    ${RETRY_LIMIT}
 
 #    extraOutputs: |
@@ -292,7 +291,7 @@ updateStrategy: RollingUpdate
 
 # Sends data to staging, can be set as a global.
 # global.nrStaging
-nrStaging: false
+nrStaging: true
 
 daemonSet:
   # Annotations to add to the DaemonSet.
