@@ -49,7 +49,7 @@ spec:
             value: "cluster.local"
           - name: PL_TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
-          - name: PX_DISABLE_TLS 
+          - name: PX_DISABLE_TLS
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
             value: "0"
@@ -106,6 +106,8 @@ spec:
             value: "{{ .Values.kubernetesClusterDomain }}"
           - name: NAMESPACE
             value: {{ .Release.Namespace }}
+          - name: AGENT_SERVICE_NAME
+            value: {{ include "nr-ebpf-agent.service.name" . }}
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
             value: "True"
@@ -115,7 +117,7 @@ spec:
             value: "0"
             {{- else }}
             value: "1"
-            {{- end }}         
+            {{- end }}
         {{- if eq .Values.tls.enabled true }}
           - name: CERT_PATH
             value: "{{ .Values.tls.autoGenerateCert.certPath }}"
