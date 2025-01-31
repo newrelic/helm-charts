@@ -112,6 +112,7 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
 | agent-control-deployment.serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | agent-control-deployment.serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
+| agent-control-deployment.systemIdentityRegistration | object | See `values.yaml` | Image for the system identity registration process |
 | agent-control-deployment.tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
 | agent-control-deployment.verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 | flux2 | object | See `values.yaml` | Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml |
