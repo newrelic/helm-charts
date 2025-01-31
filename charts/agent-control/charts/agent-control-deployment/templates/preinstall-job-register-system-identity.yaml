@@ -65,7 +65,7 @@ spec:
   serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
   containers:
 - name: register-system-identity
-  image: alpine
+  image: "{{ (.Values.systemIdentityRegistration.image).repository | default "newrelic/agent-control-system-identity-registration" }}:{{ (.Values.systemIdentityRegistration.image).tag | default "latest" }}"
   env:
 {{- if or  (include "newrelic.common.userKey._customSecretName" .) (include "newrelic.common.userKey._userKey" .) }}
 - name: USER_KEY
@@ -96,8 +96,6 @@ secretKeyRef:
 - -c
 - |
   set -euo pipefail
-  apk update
-  apk add kubectl
 
   echo Checking if the secret '{{ include "newrelic-agent-control.auth.secret.name" . }}' is already present in the cluster
   if kubectl get secret {{ include "newrelic-agent-control.auth.secret.name" . }}; then
@@ -106,7 +104,6 @@ exit 0
   fi
 
   echo Generating the Keys...
-  apk add curl jq openssl
   TEMPORAL_FOLDER=gen-folder
   mkdir $TEMPORAL_FOLDER
   openssl genrsa -out "$TEMPORAL_FOLDER/key" 4096
