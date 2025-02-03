@@ -35,7 +35,7 @@ agent-control-deployment:
   image:
     registry:
     repository: newrelic/newrelic-agent-control
-    tag: "0.29.0"
+    tag: "0.30.0"
     imagePullPolicy: IfNotPresent
     # -- The secrets that are needed to pull images from a custom registry.
     pullSecrets: []
@@ -135,7 +135,7 @@ agent-control-deployment:
     # In the example below, open-telemetry is a managed agent that will be deployed.
     # open-telemetry:
     #   # -- Agent type <namespace>/<name>:<version>
-    #   type: newrelic/io.opentelemetry.collector:0.2.0
+    #   type: newrelic/io.opentelemetry.collector:0.1.0
     #   # -- Agent configuration content.
     #   content:
     #     # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
@@ -184,6 +184,14 @@ agent-control-deployment:
             # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation.
             # This options is mutually exclusive with `base64`.
             plain:
+
+  # -- Image for the system identity registration process
+  # @default -- See `values.yaml`
+  systemIdentityRegistration:
+    image:
+      repository: newrelic/agent-control-system-identity-registration
+      tag: latest
+      imagePullPolicy: IfNotPresent
 
 # -- Values for the Flux chat. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
