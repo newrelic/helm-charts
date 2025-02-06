@@ -45,6 +45,22 @@ securityContext:
 image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag | default .Chart.AppVersion }}
 imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
 resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
+ports:
+  - name: otlp
+containerPort: 4317
+protocol: TCP
+volumeMounts:
+  - name: data
+mountPath: /etc/otel/config.yaml
+subPath: config.yaml
+readOnly: true
+  {{- if (hasKey .Values "tls") }}
+  {{- if eq .Values.tls.enabled true }}
+  - name: cert
+mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+readOnly: true
+  {{- end }}
+  {{- end }}
 env:
   - name: KUBE_NODE_NAME
 valueFrom:
@@ -87,22 +103,9 @@ key: clusterName
 value: "{{- .Values.dropDataServiceNameRegex }}"
   - name: ALLOW_SERVICE_NAME_REGEX
 value: "{{- .Values.allowServiceNameRegex }}"
-ports:
-- containerPort: 4317
-volumeMounts:
-  - name: data
-mountPath: /etc/otel/config.yaml
-subPath: config.yaml
-readOnly: true
-  {{- if (hasKey .Values "tls") }}
-  {{- if eq .Values.tls.enabled true }}
-  - name: cert
-mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
-readOnly: true
-  {{- end }}
-  {{- end }}
-  dnsPolicy: ClusterFirstWithHostNet
-  hostNetwork: true
+
+  dnsPolicy: Default
+  hostNetwork: false
   serviceAccountName: {{ include "nr-ebpf-agent.collector.name" . }}
   terminationGracePeriodSeconds: 30
   volumes:
