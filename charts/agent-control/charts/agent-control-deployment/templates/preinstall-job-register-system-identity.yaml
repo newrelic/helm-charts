@@ -164,7 +164,7 @@ spec:
                 for RETRY in 1 2 3; do
                   HTTP_CODE=$(echo '{ "query":
                       "mutation {
-                        create(
+                        systemIdentityCreate(
                           name: \"'$NAME'\",
                           organizationId: \"{{ include "newrelic-agent-control.auth.organizationId" . }}\",
                           publicKey: \"'$(openssl enc -base64 -A -in "$TEMPORAL_FOLDER/pub")'\"

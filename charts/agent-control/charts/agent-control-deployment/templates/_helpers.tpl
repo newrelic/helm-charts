@@ -316,11 +316,11 @@ Return to which endpoint should the agent control register its system identity
 {{- $region := include "newrelic.common.region" . -}}
 
 {{- if eq $region "Staging" -}}
-  https://ng-iam-service.staging-service.nr-ops.net/system-identity/graphql
+  https://staging-api.newrelic.com/graphql
 {{- else if eq $region "EU" -}}
-  https://ng-iam-service.service.eu.nr-ops.net/system-identity/graphql
+  https://api.newrelic.com/graphql
 {{- else if eq $region "US" -}}
-  https://ng-iam-service.service.nr-ops.net/system-identity/graphql
+  https://api.eu.newrelic.com/graphql
 {{- else if eq $region "Local" -}}
   {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
   {{ .Values.development.backend.systemIdentityCreation }}
