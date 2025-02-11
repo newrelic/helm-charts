@@ -126,6 +126,10 @@ As of the creation of the chart, it has no particularities and this section can 
 | fullnameOverride | string | `""` | Override the full name of the release |
 | nameOverride | string | `""` | Override the name of the chart |
 
+## License
+
+Software installed by this helm chart is licensed under the [New Relic Pre-release Software Notice](https://github.com/newrelic/newrelic-agent-control/blob/main/LICENSE.md).
+
 ## Maintainers
 
 * [alvarocabanas](https://github.com/alvarocabanas)
