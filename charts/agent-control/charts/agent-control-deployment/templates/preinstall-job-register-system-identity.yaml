@@ -193,7 +193,7 @@ spec:
                   else
                     if jq empty "$TEMPORAL_FOLDER/response_token.json" > /dev/null 2>&1; then
                       ERROR_MESSAGE=$(jq '.errors[0].message // "invalid_request"' < "$TEMPORAL_FOLDER/response_token.json" | tr -d '"')
-                      echo "Error creating L2 system identity. The API endpoint returned $HTTP_CODE. Retrying ($RETRY/3)..."
+                      echo "Error creating L2 system identity. The API endpoint returned $HTTP_CODE: $ERROR_MESSAGE. Retrying ($RETRY/3)..."
                       sleep 2
                     else
                       echo -n "Error creating L2 system identity. The API endpoint returned $HTTP_CODE: " && cat "$TEMPORAL_FOLDER/response_token.json" | tr -d '\n' && echo " Retrying ($RETRY/3)..."
@@ -255,7 +255,7 @@ spec:
                   else
                     if jq empty "$TEMPORAL_FOLDER/response_token.json" > /dev/null 2>&1; then
                       ERROR_MESSAGE=$(jq '.errors[0].message // "invalid_request"' < "$TEMPORAL_FOLDER/response_token.json" | tr -d '"')
-                      echo "Error creating the new legacy system identity. The API endpoint returned $HTTP_CODE. Retrying ($RETRY/3)..."
+                      echo "Error creating the new legacy system identity. The API endpoint returned $HTTP_CODE: $ERROR_MESSAGE. Retrying ($RETRY/3)..."
                       sleep 2
                     else
                       echo -n "Error creating the new legacy system identity. The API endpoint returned $HTTP_CODE: " && cat "$TEMPORAL_FOLDER/response_token.json" | tr -d '\n' && echo " Retrying ($RETRY/3)..."
