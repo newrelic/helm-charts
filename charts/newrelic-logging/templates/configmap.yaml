@@ -29,8 +29,8 @@ data:
     {{- if .Values.fluentBit.config.extraOutputs }}
       {{- .Values.fluentBit.config.extraOutputs | nindent 4}}
     {{- end }}
-    {{- if and (.Values.fluentBit.sendMetrics) (.Values.fluentBit.config.metricInstrumentation) }}
-      {{- .Values.fluentBit.config.metricInstrumentation | nindent 4}}
+    {{- if .Values.fluentBit.sendMetrics }}
+      {{- (include "newrelic-logging.fluentBit.monitoring.config" .) | nindent 4}}
     {{- end }}
   parsers.conf: |
   {{- if .Values.fluentBit.config.parsers }}
