@@ -12,6 +12,7 @@ tests:
     set:
       licenseKey: nr_license_key
       enableWindows: true
+      fluentBit.sendMetrics: true
     asserts:
       # Linux
       - contains:
@@ -29,6 +30,12 @@ tests:
             valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SEND_OUTPUT_PLUGIN_METRICS
+            value: "true"
         template: templates/daemonset.yaml
       - contains:
           path: spec.template.spec.containers[0].env
@@ -52,6 +59,12 @@ tests:
             valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: SEND_OUTPUT_PLUGIN_METRICS
+            value: "true"
         template: templates/daemonset-windows.yaml
       - contains:
           path: spec.template.spec.containers[0].env

@@ -125,6 +125,8 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: SEND_OUTPUT_PLUGIN_METRICS
+              value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
             - name: METRICS_HOST
               value: {{ include "newrelic-logging.metricsHost" . | quote }}
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}

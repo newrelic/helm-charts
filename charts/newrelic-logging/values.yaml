@@ -36,6 +36,7 @@ fluentBit:
   k8sBufferSize: "32k"
   k8sLoggingExclude: "false"
   retryLimit: 5
+  sendMetrics: false
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY
@@ -175,7 +176,7 @@ fluentBit:
           licenseKey     ${LICENSE_KEY}
           endpoint       ${ENDPOINT}
           lowDataMode    ${LOW_DATA_MODE}
-          sendMetrics    true
+          sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
           Retry_Limit    ${RETRY_LIMIT}
 
 #    extraOutputs: |
