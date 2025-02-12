@@ -179,6 +179,38 @@ https://log-api.newrelic.com/log/v1
 {{- end -}}
 
 {{/*
+Returns fluentbit config to collect and forward its metrics to New Relic
+*/}}
+{{- define "newrelic-logging.fluentBit.monitoring.config" -}}
+[INPUT]
+name prometheus_scrape
+Alias fb-metrics-collector
+host 127.0.0.1
+port 2020
+tag fb_metrics
+metrics_path /api/v2/metrics/prometheus
+scrape_interval 10s
+
+[OUTPUT]
+Name prometheus_remote_write
+Matchfb_metrics
+Aliasfb-metrics-forwarder
+Host ${METRICS_HOST}
+Port 443
+Uri  /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
+Header   Authorization Bearer ${LICENSE_KEY}
+Tls  On
+Tls.verify   Off
+add_labelapp fluent-bit
+add_labelsource kubernetes
+add_labelpod_name ${HOSTNAME}
+add_labelnode_name ${NODE_NAME}
+{{- printf "add_labelcluster_name %s" (include "newrelic-logging.cluster" .) | nindent 4 -}}
+{{- printf "add_labelnamespace %s" .Release.Namespace | nindent 4 -}}
+{{- printf "add_labeldaemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
+{{- end -}}
+
+{{/*
 Returns metricsHost
 */}}
 {{- define "newrelic-logging.metricsHost" -}}

@@ -189,33 +189,6 @@ outputs: |
 #  Time_Key time
 #  Time_Format  %Y-%m-%dT%H:%M:%S.%L
 #  Time_KeepOn
-metricInstrumentation: |
-  [INPUT]
-  name prometheus_scrape
-  Alias fb-metrics-collector
-  host 127.0.0.1
-  port 2020
-  tag fb_metrics
-  metrics_path /api/v2/metrics/prometheus
-  scrape_interval 10s
-
-  [OUTPUT]
-  Name prometheus_remote_write
-  Matchfb_metrics
-  Aliasfb-metrics-forwarder
-  Host ${METRICS_HOST}
-  Port 443
-  Uri  /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
-  Header   Authorization Bearer ${LICENSE_KEY}
-  Tls  On
-  # Windows pods using prometheus_remote_write currently have issues if TLS verify is On
-  Tls.verify   Off
-  # User-defined labels
-  add_labelapp fluent-bit
-  add_labelcluster_name "${CLUSTER_NAME}"
-  add_labelpod_name ${HOSTNAME}
-  add_labelnode_name ${NODE_NAME}
-  add_labelsource kubernetes
 
 image:
   repository: newrelic/newrelic-fluentbit-output
