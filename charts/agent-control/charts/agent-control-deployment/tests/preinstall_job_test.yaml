@@ -263,3 +263,20 @@ asserts:
 equal:
   path: spec.template.spec.containers[0].image
   value: some_namespace/test-image:1.0.0
+
+  - it: setting specific pullPolicy for system identity registration image should use the provided data
+set:
+  customUserKeySecretName: test-secret
+  customUserKeySecretKey: test-key
+  config:
+fleet_control:
+  auth:
+organizationId: test
+  systemIdentityRegistration:
+image:
+  pullPolicy: Always
+asserts:
+  - documentIndex: 0
+equal:
+  path: spec.template.spec.containers[0].imagePullPolicy
+  value: Always

@@ -66,6 +66,7 @@ spec:
   containers:
 - name: register-system-identity
   image: "{{ (.Values.systemIdentityRegistration.image).repository | default "newrelic/agent-control-system-identity-registration" }}:{{ (.Values.systemIdentityRegistration.image).tag | default "latest" }}"
+  imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
   env:
 {{- if or  (include "newrelic.common.userKey._customSecretName" .) (include "newrelic.common.userKey._userKey" .) }}
 - name: USER_KEY
