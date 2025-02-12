@@ -140,7 +140,7 @@ helm init
 
 ## <a name='License'></a>License
 
-The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0).  The individual charts within this project are also released under the Apache 2.0 license, unless there is a separate LICENSE file in the chart directory. These charts are used to install software, some of which is proprietary, pre-release, or otherwise restricted. Please check the project and dependency repositories for more information. 
+The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0). The individual charts within this project are also released under the Apache 2.0 license, unless there is a separate LICENSE file in the chart directory. These charts are used to install software, some of which is proprietary, pre-release, or otherwise restricted. Please check the project and dependency repositories for more information.
 
 [Artifact Hub]: https://artifacthub.io/packages/search?repo=newrelic
 [helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts
