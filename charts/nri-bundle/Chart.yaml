@@ -18,18 +18,18 @@ sources:
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 5.0.111
+version: 5.0.112
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.38.1
+    version: 3.38.2
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled,nri-prometheus.enabled
-    version: 2.1.19
+    version: 2.1.20
 
   - name: newrelic-prometheus-agent
     repository: https://newrelic.github.io/newrelic-prometheus-configurator
@@ -59,7 +59,7 @@ dependencies:
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.23.6
+    version: 1.23.7
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
@@ -67,7 +67,7 @@ dependencies:
     version: 2.1.6
 
   - name: nr-ebpf-agent
-    version: 0.1.19
+    version: 0.1.20
     condition: newrelic-eapm-agent.enabled
     repository: https://newrelic.github.io/helm-charts
 
