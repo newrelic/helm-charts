@@ -28,6 +28,11 @@ data:
                   regex: kube-state-metrics
                   source_labels:
                     - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                # this is using our ksm deployment not the one deployed by openshift in namespace openshift-monitoring
+                - action: keep
+                  source_labels:
+                  - __address__
+                  regex: .*:8080$
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
@@ -41,15 +46,15 @@ data:
                 - role: endpoints
                   namespaces:
                     names:
-                      - default
+                      - openshift-kube-apiserver
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: false
+                insecure_skip_verify: true
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
-                regex: default;kubernetes;https
+                regex: openshift-kube-apiserver;apiserver;https
                 source_labels:
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
@@ -70,14 +75,17 @@ data:
               metrics_path: /metrics
               kubernetes_sd_configs:
                 - role: endpoints
+                  namespaces:
+                    names:
+                      - openshift-kube-controller-manager
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: false
+                insecure_skip_verify: true
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
-                regex: default;kubernetes;https
+                regex: openshift-kube-controller-manager;kube-controller-manager;https
                 source_labels:
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
@@ -101,6 +109,9 @@ data:
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
                 - role: endpoints
+                  namespaces:
+                      names:
+                        - openshift-kube-scheduler
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -108,7 +119,7 @@ data:
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
-                regex: default;kubernetes;https
+                regex: openshift-kube-scheduler;scheduler;https
                 source_labels:
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
@@ -399,7 +410,13 @@ data:
           hostname_sources: ["os"]
           resource_attributes:
             host.id:
-              enabled: true
+            # TODO host.id does not work, is it required, does it work on containerized environments?
+            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
+              enabled: false
+
+      resourcedetection/openshift:
+        detectors: ["openshift"]
+        override: true
 
       resourcedetection/cloudproviders:
         detectors: [gcp, eks, azure, aks, ec2, ecs]
@@ -513,10 +530,15 @@ data:
         send_batch_size : 800
 
     exporters:
-      otlphttp/newrelic:
-        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+      otlp/newr:
+        endpoint: https://otlp.nr-data.net:4318
         headers:
           api-key: ${env:NR_LICENSE_KEY}
+
+    #  otlphttp/newrelic:
+    #    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+    #    headers:
+    #      api-key: ${env:NR_LICENSE_KEY}
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -544,12 +566,16 @@ data:
             {{- end }}
             - resource/metrics
             - resourcedetection/env
-            - resourcedetection/cloudproviders
+            - resourcedetection/openshift
+            # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
+            # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
+            #- resourcedetection/cloudproviders
             - batch
             - groupbyattrs
             - transform/ksm
           exporters:
-            - otlphttp/newrelic
+          #  - otlphttp/newrelic
+            - otlp/newr
         {{- end }}
         {{- if .Values.receivers.prometheus.enabled }}
         metrics:
@@ -572,7 +598,8 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            #- otlphttp/newrelic
+             - otlp/newr
         {{- end }}
         # TODO(chris): revisit using the gateway collector
         # logs:
@@ -589,6 +616,7 @@ data:
             - resource/events
             - batch
           exporters:
-            - otlphttp/newrelic
+           # - otlphttp/newrelic
+            - otlp/newr
         {{- end }}
     {{- end }}
