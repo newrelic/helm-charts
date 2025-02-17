@@ -164,7 +164,7 @@ NAME="System Identity for $(hostname) - $DATE"
 for RETRY in 1 2 3; do
   HTTP_CODE=$(echo '{ "query":
   "mutation {
-create(
+systemIdentityCreate(
   name: \"'$NAME'\",
   organizationId: \"{{ include "newrelic-agent-control.auth.organizationId" . }}\",
   publicKey: \"'$(openssl enc -base64 -A -in "$TEMPORAL_FOLDER/pub")'\"
@@ -217,7 +217,7 @@ exit 100
   fi
 fi
 
-CLIENT_ID=$(jq  '.data.create.clientId' < "$TEMPORAL_FOLDER/response.json" | tr -d '"' )
+CLIENT_ID=$(jq  '.data.systemIdentityCreate.clientId' < "$TEMPORAL_FOLDER/response.json" | tr -d '"' )
   else
 echo Starting with Legacy UserApiKey System Identity...
 ############################################################
