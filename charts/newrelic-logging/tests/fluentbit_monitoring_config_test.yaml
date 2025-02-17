@@ -24,4 +24,4 @@ tests:
     asserts:
       - notMatchRegex:
           path: data["fluent-bit.conf"]
-          pattern: (?s)add_label\s+cluster_name \n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
+          pattern: (?s)add_label\s+app fluent-bit\n\s*add_label\s+source kubernetes\n\s*add_label\s+pod_name \${HOSTNAME}\n\s*add_label\s+node_name \${NODE_NAME}\n\s*add_label\s+cluster_name\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
