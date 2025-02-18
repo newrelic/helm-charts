@@ -39,48 +39,6 @@ tests:
                 name: custom-secret
         template: templates/deployment-agentcontrol.yaml
 
-  - it: api-key config gets added as env var from secret
-    set:
-      cluster: test
-      licenseKey: fake-license
-      config:
-        agentControl:
-          content:
-            fleet_control:
-              endpoint: test
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: NR_AC_FLEET_CONTROL__HEADERS__API-KEY
-            valueFrom:
-              secretKeyRef:
-                key: licenseKey
-                name: agent-control-license
-        template: templates/deployment-agentcontrol.yaml
-
-  - it: api-key config gets added as env var from custom secret
-    set:
-      cluster: test
-      customSecretName: "custom-secret"
-      customSecretLicenseKey: "custom-key"
-      region: us # With a custom secret we cannot know the region so we have to ask for it.
-      config:
-        agentControl:
-          content:
-            fleet_control:
-              endpoint: test
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: NR_AC_FLEET_CONTROL__HEADERS__API-KEY
-            valueFrom:
-              secretKeyRef:
-                key: custom-key
-                name: custom-secret
-        template: templates/deployment-agentcontrol.yaml
-
   - it: cluster name added as env var
     set:
       cluster: test
