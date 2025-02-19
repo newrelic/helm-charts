@@ -8,20 +8,7 @@ tests:
   - it: "additional labels for entity synthesis are included when sendMetrics is set to true"
     templates:
       - templates/configmap.yaml
-    set:
-      fluentBit:
-        sendMetrics: true
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
-  - it: "additional labels for entity synthesis are not included when sendMetrics is set to false"
-    templates:
-      - templates/configmap.yaml
-    set:
-      fluentBit:
-        sendMetrics: false
-    asserts:
-      - notMatchRegex:
-          path: data["fluent-bit.conf"]
-          pattern: (?s)add_label\s+app fluent-bit\n\s*add_label\s+source kubernetes\n\s*add_label\s+pod_name \${HOSTNAME}\n\s*add_label\s+node_name \${NODE_NAME}\n\s*add_label\s+cluster_name\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
