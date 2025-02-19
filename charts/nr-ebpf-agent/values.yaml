@@ -33,58 +33,57 @@ tableStoreDataLimitMB: "250"
 # Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
 # while tcp_stats tracks TCP metrics.
 stirlingSources: "socket_tracer,tcp_stats"
-# The protocols to enable for tracing in the socket_tracer.
+# The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
+# Each protocol has the flexibility to selectively enable the type of OTLP data to export.
+# Metrics are sent by default when a protocol is enabled and it supports metrics. Note: AMQP, Kafka, DNS do not report metrics.
 # samplingLatency represents the sampling latency threshold for the spans to export.
 # Options: p1, p10, p50, p90, p99.
 protocols:
   http:
-metrics:
-  enabled: true
+enabled: true
 spans:
   enabled: true
-  samplingLatency: ""
+  samplingLatency: "p50"
   # -- samplingErrorRate represents the error rate threshold for an HTTP route where surpassing it would mean the corresponds spans of the route are exported.
   # Options: 1-100
   samplingErrorRate: ""
   mysql:
-metrics:
-  enabled: true
+enabled: true
 spans:
   enabled: false
   samplingLatency: ""
   pgsql:
-metrics:
-  enabled: true
+enabled: true
 spans:
   enabled: false
   samplingLatency: ""
   cass:
-metrics:
-  enabled: true
+enabled: true
 spans:
   enabled: false
   samplingLatency: ""
   redis:
-metrics:
-  enabled: true
+enabled: true
 spans:
   enabled: false
   samplingLatency: ""
   mongodb:
-metrics:
-  enabled: true
+enabled: true
 spans:
   enabled: false
   samplingLatency: ""
   kafka:
+enabled: false
 spans:
   enabled: false
   samplingLatency: ""
   amqp:
+enabled: false
 spans:
   enabled: false
   samplingLatency: ""
   dns:
+enabled: false
 spans:
   enabled: false
   samplingLatency: ""
