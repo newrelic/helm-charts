@@ -24,7 +24,6 @@ helm repo update newrelic
 
 ## Configuration
 
-
 ### How to configure the chart
 The `newrelic-logging` chart can be installed either alone or as part of the [`nri-bundle`](https://github.com/newrelic/helm-charts/tree/master/charts/nri-bundle) chart (recommended). The chart default settings should be suitable for most users. Nevertheless, you may be interested in overriding the defaults, either by passing them through a `values-newrelic.yaml` file or via the command line when installing the chart. Depending on how you installed it, you'll need to specify the `newrelic-logging`-specific configuration values using the chart name (`newrelic-logging`) as a prefix. In the table below, you can find a quick reference of how to configure the chart in these scenarios. The example depicts how you'd specify the mandatory `licenseKey` and `cluster` settings and how you'd override the `fluentBit.retryLimit` setting to `10`.
 
