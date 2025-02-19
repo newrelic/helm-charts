@@ -40,7 +40,7 @@ kubectl logs <ebpf-pod-name> -c nr-ebpf-client -n newrelic
 kubectl logs <ebpf-pod-name> -c nr-ebpf-agent -n newrelic
 ```
 
-### Check the logs of the OpenteTelemetry collector pod:
+### Check the logs of the OpenTelemetry collector pod:
 ```
 kubectl logs <otel-pod-name> -n newrelic
 ```
