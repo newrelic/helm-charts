@@ -13,8 +13,6 @@ tests:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
   - it: "additional labels for entity synthesis are included by default with cluster name null"
-    set:
-      cluster: 
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
