@@ -205,7 +205,12 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     add_label            source kubernetes
     add_label            pod_name ${HOSTNAME}
     add_label            node_name ${NODE_NAME}
-    {{- printf "add_label            cluster_name %s" (include "newrelic-logging.cluster" .) | nindent 4 -}}
+    {{- $clusterName := (include "newrelic-logging.cluster" .) -}}
+    {{- if $clusterName -}}
+    {{- printf "add_label            cluster_name %s" $clusterName | nindent 4 -}}
+    {{- else -}}
+    {{- printf "add_label            cluster_name \"%s\"" $clusterName | nindent 4 -}}
+    {{- end -}}
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
 {{- end -}}
