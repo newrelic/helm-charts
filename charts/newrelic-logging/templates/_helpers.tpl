@@ -205,7 +205,12 @@ add_labelapp fluent-bit
 add_labelsource kubernetes
 add_labelpod_name ${HOSTNAME}
 add_labelnode_name ${NODE_NAME}
-{{- printf "add_labelcluster_name %s" (include "newrelic-logging.cluster" .) | nindent 4 -}}
+{{- $clusterName := (include "newrelic-logging.cluster" .) -}}
+{{- if $clusterName -}}
+{{- printf "add_labelcluster_name %s" $clusterName | nindent 4 -}}
+{{- else -}}
+{{- printf "add_labelcluster_name \"%s\"" $clusterName | nindent 4 -}}
+{{- end -}}
 {{- printf "add_labelnamespace %s" .Release.Namespace | nindent 4 -}}
 {{- printf "add_labeldaemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
 {{- end -}}
