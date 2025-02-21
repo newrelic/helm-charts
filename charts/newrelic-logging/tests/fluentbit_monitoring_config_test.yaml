@@ -5,19 +5,21 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: "additional labels for entity synthesis are included by default with cluster name empty"
+  - it: "includes additional labels with cluster name empty"
     set:
       cluster: ""
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
-  - it: "additional labels for entity synthesis are included by default with cluster name null"
+
+  - it: "includes additional labels with cluster name null"
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
-  - it: "additional labels for entity synthesis are included by default with cluster name  setting null"
+
+  - it: "includes additional labels with cluster name setting null"
     set:
       cluster: 
     asserts:
@@ -25,7 +27,7 @@ tests:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
 
-  - it: "additional labels for entity synthesis are included by default when cluster name is set"
+  - it: "includes additional labels when cluster name is set"
     set:
       cluster: my-cluster
     asserts:
