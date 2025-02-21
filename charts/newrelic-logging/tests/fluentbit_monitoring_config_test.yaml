@@ -12,13 +12,18 @@ tests:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
-
+  - it: "includes additional labels with cluster name empty with single quote"
+    set:
+      cluster: ''
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
   - it: "includes additional labels with cluster name null"
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
-
   - it: "includes additional labels with cluster name setting null"
     set:
       cluster: 
@@ -40,3 +45,10 @@ tests:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name my-cluster\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
+  - it: "includes additional labels when cluster name is set with double quotes"
+    set:
+      cluster: "my-cluster"
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: (?s)add_label\s+cluster_name my-cluster\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging          
