@@ -27,6 +27,13 @@ spec:
       containers:
         - name: delete-managed-resources
           image: bitnami/kubectl  # TODO: Pin version to the latest that we support.
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
           command:
             - bash
           args:
