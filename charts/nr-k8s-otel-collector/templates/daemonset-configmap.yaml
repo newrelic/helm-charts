@@ -121,6 +121,9 @@ data:
                 - action: replace
                   target_label: job_label
                   replacement: kubelet
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: ${KUBE_NODE_NAME}
+                  action: keep
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
