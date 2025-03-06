@@ -20,7 +20,8 @@ a cert is loaded from an existing secret or is provided via `.Values`
 {{- $domain2 := printf "%s.%s.svc.%s" (include "nr-ebpf-agent.service.name" .) $.Release.Namespace $.Values.kubernetesClusterDomain }}
 {{- $domain3 := printf "%s.%s.svc"  (include "otel-collector.service.name" .) $.Release.Namespace }}
 {{- $domain4 := printf "%s.%s.svc.%s" (include "otel-collector.service.name" .) $.Release.Namespace $.Values.kubernetesClusterDomain }}
-{{- $domains := list $domain1 $domain2 $domain3 $domain4 }}
+{{- $domain5 := "localhost" }}
+{{- $domains := list $domain1 $domain2 $domain3 $domain4 $domain5 }}
 {{- $cert := genSignedCert (include "newrelic.common.naming.fullname" .) nil $domains $certValidity $ca }}
 {{- $clientCert = b64enc $cert.Cert }}
 {{- $clientKey = b64enc $cert.Key }}
