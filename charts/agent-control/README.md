@@ -26,6 +26,20 @@ means that it honors a wide range of defaults and globals common to most New Rel
 Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
 [user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
 
+## Flux Integration
+
+Agent Control leverages [Flux](https://github.com/fluxcd/flux2) custom resources to automate the deployment of New Relic agents. This chart includes Flux as a dependency by default, eliminating the need for separate installation.
+
+### Using an Existing Flux Installation
+
+To use an existing Flux setup, disable the default installation by setting `flux2.enabled` to `false` in your values. Ensure your existing Flux installation meets the following requirements:
+
+- Agent control is compatible with **Flux Versions**: 2.3.x, 2.4.x, or 2.5.x.
+- **CRDs Required**:
+  - `source.toolkit.fluxcd.io/v1` for HelmRepository
+  - `helm.toolkit.fluxcd.io/v2` for HelmRelease
+- **Namespace Access**: Must be configured to watch resources in the `newrelic` namespace, or the namespace where Agent Control is deployed.
+
 ## Test custom agentTypes
 
 In order to test custom agentTypes is possible to leverage `extraVolumeMounts` and `extraVolumes` once you have created the configMap in the namespace.
@@ -72,12 +86,12 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.config.agentControl.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
 | agent-control-deployment.config.agentControl.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
 | agent-control-deployment.config.fleet_control.auth.organizationId | string | `""` | Organization ID where fleets will live. |
-| agent-control-deployment.config.fleet_control.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64. This options is mutually exclusive with `plain`. |
-| agent-control-deployment.config.fleet_control.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text. This options is mutually exclusive with `base64`. |
+| agent-control-deployment.config.fleet_control.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation. This options is mutually exclusive with `plain`. |
+| agent-control-deployment.config.fleet_control.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation. This options is mutually exclusive with `base64`. |
 | agent-control-deployment.config.fleet_control.auth.secret.client_id.secret_key | string | `client_id` | Key inside the secret containing the client ID. |
 | agent-control-deployment.config.fleet_control.auth.secret.name | string | release name suffixed with "-auth" | Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret will have. |
-| agent-control-deployment.config.fleet_control.auth.secret.private_key.base64_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64. This options is mutually exclusive with `plain_pem`. |
-| agent-control-deployment.config.fleet_control.auth.secret.private_key.plain_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text. This options is mutually exclusive with `base64_pem`. |
+| agent-control-deployment.config.fleet_control.auth.secret.private_key.base64_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation. This options is mutually exclusive with `plain_pem`. |
+| agent-control-deployment.config.fleet_control.auth.secret.private_key.plain_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text if you want to skip its creation. This options is mutually exclusive with `base64_pem`. |
 | agent-control-deployment.config.fleet_control.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
 | agent-control-deployment.config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | agent-control-deployment.config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
@@ -95,12 +109,13 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.extraVolumes | list | `[]` | Volumes to mount in the containers |
 | agent-control-deployment.fedramp.enabled | bool | `false` | TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
 | agent-control-deployment.hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
+| agent-control-deployment.identityClientId | string | `""` | Identity client_id to use. |
+| agent-control-deployment.identityClientSecret | string | `""` | Identity client_secret to use. |
 | agent-control-deployment.image | object | See `values.yaml` | Image for the New Relic Agent Control |
 | agent-control-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
-| agent-control-deployment.identityClientId | string | `""` | identity client_id to use. |
-| agent-control-deployment.identityClientSecret | string | `""` | identity client_secret to use. |
 | agent-control-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
 | agent-control-deployment.licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
+| agent-control-deployment.nameOverride | string | `"agent-control"` | Override the name of the chart used to template resource names. |
 | agent-control-deployment.nodeSelector | object | `{}` | Sets pod's node selector. Can be configured also with `global.nodeSelector` |
 | agent-control-deployment.nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | agent-control-deployment.podAnnotations | object | `{}` | Annotations to be added to all pods created by the integration. |
