@@ -109,8 +109,8 @@ As of the creation of the chart, it has no particularities and this section can 
 | agent-control-deployment.extraVolumes | list | `[]` | Volumes to mount in the containers |
 | agent-control-deployment.fedramp.enabled | bool | `false` | TODO: Enables FedRAMP. Can be configured also with `global.fedramp.enabled` |
 | agent-control-deployment.hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
-| agent-control-deployment.identityClientId | string | `""` | Identity client_id to use. |
-| agent-control-deployment.identityClientSecret | string | `""` | Identity client_secret to use. |
+| agent-control-deployment.identityClientId | string | `""` | Identity client_id to use. This identity has a TTL of 12h. |
+| agent-control-deployment.identityClientSecret | string | `""` | Identity client_secret to use. This identity has a TTL of 12h. |
 | agent-control-deployment.image | object | See `values.yaml` | Image for the New Relic Agent Control |
 | agent-control-deployment.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | agent-control-deployment.labels | object | `{}` | Additional labels for chart objects. Can be configured also with `global.labels` |
