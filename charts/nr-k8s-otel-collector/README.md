@@ -68,6 +68,14 @@ If using GKE Autopilot, please set the following configuration in your values.ya
 gkeAutopilot: false
 ```
 
+## Openshift
+
+If using Openshift, please set the following configuration in your values.yaml file in order for the agent to work with Openshift.
+
+```
+openshift: true
+```
+
 ## Values
 
 | Key | Type | Default | Description |
