@@ -130,7 +130,9 @@ data:
         exclude:
           # Exclude logs from opentelemetry containers
           # filelog paths for containerd and CRI-O
+          {{- if .Values.openshift.enabled }}
           - /var/log/pods/*/openshift*/*.log
+          {{- end }}
           - /var/log/pods/*/otel-collector-daemonset/*.log
           - /var/log/pods/*/otel-collector-deployment/*.log
           - /var/log/pods/*/containers/*-exec.log
@@ -393,14 +395,18 @@ data:
           hostname_sources: ["os"]
           resource_attributes:
             host.id: 
+            {{- if .Values.openshift.enabled }}
             # TODO host.id does not work, is it required, does it work on containerized environments?
             # https://github.com/open-telemetry/opentelemetry-go/pull/4317
               enabled: false
-
+            {{- else }}
+              enabled: true
+            {{- end }}
+    {{- if .Values.openshift.enabled }}
       resourcedetection/openshift:
         detectors: ["openshift"]
         override: true              
-
+    {{- end }}
 
       resourcedetection/cloudproviders:
         detectors: [gcp, eks, azure, aks, ec2, ecs]
@@ -490,8 +496,8 @@ data:
         send_batch_size : 800
 
     exporters:
-      otlp/newr:
-        endpoint: https://otlp.nr-data.net:4318
+      otlphttp/newrelic:
+        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
       # TODO(chris): revisit using the gateway collector
@@ -541,10 +547,14 @@ data:
             - filter/exclude_network
             - attributes/exclude_system_paging
             - resourcedetection/env
+          {{- if .Values.openshift.enabled }}
             - resourcedetection/openshift
            # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
            # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
            #- resourcedetection/cloudproviders
+            {{- else  }}
+            - resourcedetection/cloudproviders
+            {{- end }}
             - resource
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - transform/low_data_mode_inator
@@ -556,8 +566,7 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            #- otlphttp/newrelic
-            - otlp/newr
+            - otlphttp/newrelic
         {{- end }}
         {{- if .Values.receivers.filelog.enabled }}
         logs:
@@ -569,7 +578,6 @@ data:
             - k8sattributes
             - batch
           exporters:
-            #- otlphttp/newrelic
-             - otlp/newr
+            - otlphttp/newrelic
         {{- end }}
     {{- end }}

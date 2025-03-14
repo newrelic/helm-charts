@@ -6,10 +6,12 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 rules: 
+{{- if .Values.openshift.enabled }}
   # required for openshift resource detection
   - apiGroups: ["config.openshift.io"]
     resources: ["infrastructures", "infrastructures/status"]
     verbs: ["get", "watch", "list"]
+{{- end }}
   - apiGroups:
     - ""
     resources:
@@ -37,8 +39,10 @@ rules:
     - nodes/proxy
     # following required for filelog receiver
     - pods/logs
+  {{- if .Values.openshift.enabled }}
     # following required for resourcedetection
     - configmaps
+  {{- end }}
     verbs:
     - get
   # following required for prometheus receiver
