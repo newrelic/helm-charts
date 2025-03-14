@@ -109,6 +109,7 @@ openshift: true
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | gkeAutopilot | bool | `false` | If deploying to a GKE autopilot cluster, set to true |
+| openshift | bool | `false` | If deploying to Openshift cluster, set to true |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | image.repository | string | `"newrelic/nr-otel-collector"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"0.7.1"` | Overrides the image tag whose default is the chart appVersion. |
