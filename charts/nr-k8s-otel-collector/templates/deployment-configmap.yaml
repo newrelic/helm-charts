@@ -45,7 +45,7 @@ data:
             - job_name: apiserver
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
-                - role: endpoints
+                - role: pod
                   namespaces:
                     names:
                     {{- if .Values.openshift }}
