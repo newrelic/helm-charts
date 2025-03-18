@@ -45,22 +45,39 @@ data:
             - job_name: apiserver
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
+              {{- if .Values.openshift }}
+                - role: pod
+                  namespaces:
+                    names:
+                      - openshift-kube-apiserver
+              {{- else }}
                 - role: endpoints
                   namespaces:
                     names:
                       - default
+              {{- end }}
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if .Values.openshift }}
+                insecure_skip_verify: true
+                {{- else }}
                 insecure_skip_verify: false
+                {{- end }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
                 source_labels:
+              {{- if .Values.openshift }}
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*apiserver.*;.*:6443$
+              {{- else }}
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
                 - __meta_kubernetes_endpoint_port_name
                 regex: default;kubernetes;https
+              {{- end }}
               - action: replace
                 source_labels:
                 - __meta_kubernetes_namespace
