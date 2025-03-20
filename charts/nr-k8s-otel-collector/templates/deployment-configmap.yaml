@@ -127,6 +127,24 @@ data:
               - set(attributes["k8s.hpa.name"], attributes["horizontalpodautoscaler"])
               - set(attributes["k8s.resourcequota.name"], attributes["resourcequota"])
               - set(attributes["k8s.volume.name"], attributes["volumename"])
+              - set(attributes["k8s.volume.name"], attributes["persistentvolume"])
+              - set(attributes["k8s.pvc.name"], attributes["persistentvolumeclaim"])
+              - delete_key(attributes, "node")
+              - delete_key(attributes, "namespace")
+              - delete_key(attributes, "pod")
+              - delete_key(attributes, "container")
+              - delete_key(attributes, "replicaset")
+              - delete_key(attributes, "deployment")
+              - delete_key(attributes, "statefulset")
+              - delete_key(attributes, "daemonset")
+              - delete_key(attributes, "job_name")
+              - delete_key(attributes, "cronjob")
+              - delete_key(attributes, "replicationcontroller")
+              - delete_key(attributes, "horizontalpodautoscaler")
+              - delete_key(attributes, "resourcequota")
+              - delete_key(attributes, "volumename")
+              - delete_key(attributes, "persistentvolume")
+              - delete_key(attributes, "persistentvolumeclaim")
 
       metricstransform/k8s_cluster_info:
         transforms:
@@ -348,11 +366,6 @@ data:
           datapoint:
             - metric.name == "kube_pod_container_status" and value_double == 0.0
 
-      resourcedetection/cloudproviders:
-        detectors: [gcp, eks, ec2, aks, azure]
-        timeout: 2s
-        override: false
-
       resource/metrics:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
@@ -405,37 +418,6 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
-            action: delete
-
-      resource/remove_duplicate_attributes:
-        attributes:
-          - key: node
-            action: delete
-          - key: namespace
-            action: delete
-          - key: pod
-            action: delete
-          - key: container
-            action: delete
-          - key: replicaset
-            action: delete
-          - key: deployment
-            action: delete
-          - key: statefulset
-            action: delete
-          - key: daemonset
-            action: delete
-          - key: job_name
-            action: delete
-          - key: cronjob
-            action: delete
-          - key: replicationcontroller
-            action: delete
-          - key: horizontalpodautoscaler
-            action: delete
-          - key: resourcequota
-            action: delete
-          - key: volumename
             action: delete
 
       cumulativetodelta:
@@ -503,6 +485,44 @@ data:
           - key: k8s.volume.name
             action: upsert
             from_attribute: volumename
+          - key: k8s.volume.name
+            action: upsert
+            from_attribute: persistentvolume
+          - key: k8s.pvc.name
+            action: upsert
+            from_attribute: persistentvolumeclaim
+          - key: node
+            action: delete
+          - key: namespace
+            action: delete
+          - key: pod
+            action: delete
+          - key: container
+            action: delete
+          - key: replicaset
+            action: delete
+          - key: deployment
+            action: delete
+          - key: statefulset
+            action: delete
+          - key: daemonset
+            action: delete
+          - key: job_name
+            action: delete
+          - key: cronjob
+            action: delete
+          - key: replicationcontroller
+            action: delete
+          - key: horizontalpodautoscaler
+            action: delete
+          - key: resourcequota
+            action: delete
+          - key: volumename
+            action: delete
+          - key: persistentvolume
+            action: delete
+          - key: persistentvolumeclaim
+            action: delete
 
       memory_limiter:
          check_interval: 1s
@@ -519,6 +539,10 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -544,13 +568,13 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-    #        - resourcedetection/cloudproviders
             - resource/metrics
             - groupbyattrs
             - transform/ksm
-            - resource/remove_duplicate_attributes
+            - attributes/self
             - batch
           exporters:
+            - debug
             - otlphttp/newrelic
         {{- end }}
         {{- if .Values.receivers.prometheus.enabled }}
@@ -570,7 +594,6 @@ data:
             - resource/metrics
             - attributes/self
             - k8sattributes
-            - resource/remove_duplicate_attributes
             - memory_limiter
             - cumulativetodelta
             - batch

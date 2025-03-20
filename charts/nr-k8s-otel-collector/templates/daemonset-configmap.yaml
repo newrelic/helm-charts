@@ -488,37 +488,6 @@ data:
           - key: net.host.port
             action: delete
 
-      resource/remove_duplicate_attributes:
-        attributes:
-          - key: node
-            action: delete
-          - key: namespace
-            action: delete
-          - key: pod
-            action: delete
-          - key: container
-            action: delete
-          - key: replicaset
-            action: delete
-          - key: deployment
-            action: delete
-          - key: statefulset
-            action: delete
-          - key: daemonset
-            action: delete
-          - key: job_name
-            action: delete
-          - key: cronjob
-            action: delete
-          - key: replicationcontroller
-            action: delete
-          - key: horizontalpodautoscaler
-            action: delete
-          - key: resourcequota
-            action: delete
-          - key: volumename
-            action: delete
-
       attributes/self:
         actions:
           - key: k8s.node.name
@@ -563,6 +532,44 @@ data:
           - key: k8s.volume.name
             action: upsert
             from_attribute: volumename
+          - key: k8s.volume.name
+            action: upsert
+            from_attribute: persistentvolume
+          - key: k8s.pvc.name
+            action: upsert
+            from_attribute: persistentvolumeclaim
+          - key: node
+            action: delete
+          - key: namespace
+            action: delete
+          - key: pod
+            action: delete
+          - key: container
+            action: delete
+          - key: replicaset
+            action: delete
+          - key: deployment
+            action: delete
+          - key: statefulset
+            action: delete
+          - key: daemonset
+            action: delete
+          - key: job_name
+            action: delete
+          - key: cronjob
+            action: delete
+          - key: replicationcontroller
+            action: delete
+          - key: horizontalpodautoscaler
+            action: delete
+          - key: resourcequota
+            action: delete
+          - key: volumename
+            action: delete
+          - key: persistentvolume
+            action: delete
+          - key: persistentvolumeclaim
+            action: delete
 
       k8sattributes:
         auth_type: "serviceAccount"
@@ -600,11 +607,10 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      # TODO(chris): revisit using the gateway collector
-      # otlphttp:
-      #   endpoint: "nr-k8s-otel-collector-gateway"
-      #   tls:
-      #     insecure: true
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -654,11 +660,11 @@ data:
             {{- end }}
             - attributes/self
             - k8sattributes
-            - resource/remove_duplicate_attributes
             - memory_limiter
             - cumulativetodelta
             - batch
           exporters:
+            - debug
             - otlphttp/newrelic
         {{- end }}
         {{- if .Values.receivers.filelog.enabled }}
