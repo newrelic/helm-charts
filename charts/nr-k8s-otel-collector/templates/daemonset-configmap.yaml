@@ -478,6 +478,11 @@ data:
             statements:
               - set(description, "")
               - set(unit, "")
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "id")
+              - delete_key(attributes, "name")
+              - delete_key(attributes, "interface")
 
       resource/low_data_mode_inator:
         attributes:
@@ -664,7 +669,6 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - debug
             - otlphttp/newrelic
         {{- end }}
         {{- if .Values.receivers.filelog.enabled }}

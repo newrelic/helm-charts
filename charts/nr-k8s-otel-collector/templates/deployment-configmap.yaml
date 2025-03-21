@@ -238,7 +238,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_job_(complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
+          - include: kube_job_(owner|complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
             action: update
             match_type: regexp
             operations:
@@ -283,7 +283,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
+          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
             action: update
             match_type: regexp
             operations:
@@ -310,6 +310,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: kube_(replicaset_owner|lease_owner)
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
       
       metricstransform/apiserver:
         transforms:
@@ -543,6 +552,7 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -574,7 +584,6 @@ data:
             - attributes/self
             - batch
           exporters:
-            - debug
             - otlphttp/newrelic
         {{- end }}
         {{- if .Values.receivers.prometheus.enabled }}
@@ -600,12 +609,6 @@ data:
           exporters:
             - otlphttp/newrelic
         {{- end }}
-        # TODO(chris): revisit using the gateway collector
-        # logs:
-        #   receivers: [otlp]
-        #   processors: [batch]
-        #   exporters:
-        #     - otlphttp/newrelic
         {{- if .Values.receivers.k8sEvents.enabled }}
         logs/events:
           receivers:
