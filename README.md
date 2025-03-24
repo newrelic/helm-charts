@@ -4,7 +4,7 @@
 
 This is the official Helm charts repository for New Relic. It is indexed at [Helm Hub][helm-hub], where you can find the list of available charts and their documentation.
 
-<!-- vscode-markdown-toc -->
+<!--  vscode-markdown-toc  -->
 * [Prerequisites](#Prerequisites)
 * [Install](#Installthecharts)
 * [Development](#Development)
