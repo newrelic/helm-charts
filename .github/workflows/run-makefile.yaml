@@ -18,7 +18,13 @@ jobs:
         with:
           version: v3.12.0
 
-      - name: Run Makefile target 'check-examples'
+      - name: Add Helm repositories
+        run: |
+          helm repo add newrelic https://helm-charts.newrelic.com
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+
+      - name: Run Makefile target 'generate-examples'
         run: |
           make generate-examples
 
