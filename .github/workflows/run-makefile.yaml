@@ -3,7 +3,7 @@ name: Run Makefile
 on:
   push:
     branches:
-      - '**'
+      - 'charts/**'
 
 jobs:
   run-makefile:
@@ -22,6 +22,19 @@ jobs:
         run: |
           helm repo add newrelic https://helm-charts.newrelic.com
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add https://prometheus-community.github.io/helm-charts
+          helm repo add https://newrelic.github.io/newrelic-infra-operator
+          helm repo add https://newrelic.github.io/nri-prometheus
+          helm repo add https://helm-charts.newrelic.com
+          helm repo add https://newrelic.github.io/nri-kubernetes
+          helm repo add https://fluxcd-community.github.io/helm-charts
+          helm repo add https://newrelic.github.io/k8s-metadata-injection
+          helm repo add https://newrelic.github.io/newrelic-k8s-metrics-adapter
+          helm repo add https://newrelic.github.io/helm-charts
+          helm repo add https://pixie-operator-charts.storage.googleapis.com
+          helm repo add https://newrelic.github.io/nri-kube-events
+          helm repo add https://newrelic.github.io/k8s-agents-operator
+          helm repo add https://newrelic.github.io/newrelic-prometheus-configurator
           helm repo update
 
       - name: Run Makefile target 'generate-examples'
