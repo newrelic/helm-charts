@@ -1,0 +1,18 @@
+{{ if .Values.receivers.prometheus.jobs.scheduler.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: scheduler
+  namespace: kube-system
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
+    component: kube-scheduler
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: {{ .Values.receivers.prometheus.jobs.scheduler.port }}
+      targetPort: {{ .Values.receivers.prometheus.jobs.scheduler.port }}
+  type: ClusterIP
