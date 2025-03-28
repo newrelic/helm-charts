@@ -28,7 +28,7 @@ receivers:
     logfilter:
       enabled: false
       flush_interval: 5s
-      pattern: ".*#.*#.*#.*"   
+      pattern: ".*#.*#.*#.*"
       buffer_size: 262144
     enableDefaultHost: false
     enableRuntimeMetrics: true
@@ -39,14 +39,14 @@ processors:
     check_interval: 1s
     limit_mib: 100
   nrprocessor:
-      queries:
-        - query:
-            name: foobar
-            value: "DELETE FROM Log WHERE pod_name = 'foo'"
-            category: DROP_DATA
-      queue:
-        enabled: true
-        queue_size: 100
+    queries:
+      - query:
+          name: foobar
+          value: "DELETE FROM Log WHERE pod_name = 'foo'"
+          category: DROP_DATA
+    queue:
+      enabled: true
+      queue_size: 100
 
 nrcollectorexporter:
   retry_on_failure:
