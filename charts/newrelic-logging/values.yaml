@@ -3,8 +3,9 @@
 #
 # Optionally, specify a cluster name and log records can
 # be filtered by cluster.
-# cluster:
+# Cluster name is required to be set in order to create relationship with Daemonset entity in NR platform.
 #
+# cluster:
 # or Specify secret which contains New Relic API key
 # customSecretName: secret_name
 # customSecretLicenseKey: secret_key
@@ -36,6 +37,10 @@ fluentBit:
   k8sBufferSize: "32k"
   k8sLoggingExclude: "false"
   retryLimit: 5
+  # Configuration for sending custom metrics of New relic Fluent Bit output plugin.
+  # Note: Fluent Bit's internal metrics are sent automatically and are not affected by this setting from newrelic-logging chart version 1.24.0.
+  # For more information on Fluent Bit monitoring, visit:
+  # https://docs.fluentbit.io/manual/administration/monitoring
   sendMetrics: false
   extraEnv: []
   # extraEnv:

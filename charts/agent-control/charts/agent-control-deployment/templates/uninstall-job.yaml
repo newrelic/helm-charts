@@ -19,6 +19,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   ttlSecondsAfterFinished: 120
+  backoffLimit: 3
   template:
     spec:
       restartPolicy: Never
@@ -26,6 +27,13 @@ spec:
       containers:
         - name: delete-managed-resources
           image: bitnami/kubectl  # TODO: Pin version to the latest that we support.
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
           command:
             - bash
           args:
@@ -49,6 +57,6 @@ spec:
       
               {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . }}
               # Delete the secrets created in the cluster
-              kubectl -n {{ $.Release.Namespace }} delete secret {{ include "newrelic-agent-control.auth.secret.name" . }}
+              kubectl delete secrets -n {{ .Release.Namespace }} -l "nr-generic-secret=true"
               {{- end }}
 {{- end -}}

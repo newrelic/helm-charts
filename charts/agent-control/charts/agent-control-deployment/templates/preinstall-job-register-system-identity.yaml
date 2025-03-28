@@ -67,6 +67,13 @@ spec:
         - name: register-system-identity
           image: "{{ (.Values.systemIdentityRegistration.image).repository | default "newrelic/agent-control-system-identity-registration" }}:{{ (.Values.systemIdentityRegistration.image).tag | default "latest" }}"
           imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
           env:
             {{- if or  (include "newrelic.common.userKey._customSecretName" .) (include "newrelic.common.userKey._userKey" .) }}
             - name: USER_KEY
@@ -164,7 +171,7 @@ spec:
                 for RETRY in 1 2 3; do
                   HTTP_CODE=$(echo '{ "query":
                       "mutation {
-                        create(
+                        systemIdentityCreate(
                           name: \"'$NAME'\",
                           organizationId: \"{{ include "newrelic-agent-control.auth.organizationId" . }}\",
                           publicKey: \"'$(openssl enc -base64 -A -in "$TEMPORAL_FOLDER/pub")'\"
@@ -217,7 +224,7 @@ spec:
                   fi
                 fi
 
-                CLIENT_ID=$(jq  '.data.create.clientId' < "$TEMPORAL_FOLDER/response.json" | tr -d '"' )
+                CLIENT_ID=$(jq  '.data.systemIdentityCreate.clientId' < "$TEMPORAL_FOLDER/response.json" | tr -d '"' )
               else
                 echo Starting with Legacy UserApiKey System Identity...
                 ############################################################
@@ -283,7 +290,7 @@ spec:
                 {{ include "newrelic-agent-control.auth.secret.name" . }} \
                 --from-literal=CLIENT_ID=$CLIENT_ID \
                 --from-file="private_key=$TEMPORAL_FOLDER/key" | \
-              jq '.metadata.labels |= {{ include "newrelic.common.labels" . | fromYaml | toJson }}' | \
+              jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"nr-generic-secret": "true"})' | \
               kubectl apply -n "{{ .Release.Namespace }}" -f -
 ---
 {{ if .Values.rbac.create }}
