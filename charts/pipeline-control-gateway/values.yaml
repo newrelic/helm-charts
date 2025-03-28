@@ -1,0 +1,160 @@
+## Default values for pipeline-control-gateway
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+fullnameOverride: "pipeline-control-gateway"
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+
+ports:
+  nrHttp: 80
+  otlpHttp: 4318
+  otlpGrpc: 4317
+  healthHttp: 13133
+  prometheus: 8888
+
+prometheus:
+  ip: 0.0.0.0
+  scrape_interval: 15s
+  usage:
+scrape_interval: 60s
+
+receivers:
+  nrproprietaryreceiver:
+logging:
+  enable: false
+logfilter:
+  enabled: false
+  flush_interval: 5s
+  pattern: ".*#.*#.*#.*"
+  buffer_size: 262144
+enableDefaultHost: false
+enableRuntimeMetrics: true
+proxy: false
+
+processors:
+  memory_limiter:
+check_interval: 1s
+limit_mib: 100
+  nrprocessor:
+queries:
+  - query:
+  name: foobar
+  value: "DELETE FROM Log WHERE pod_name = 'foo'"
+  category: DROP_DATA
+queue:
+  enabled: true
+  queue_size: 100
+
+nrcollectorexporter:
+  retry_on_failure:
+enabled: true
+initial_interval: 100ms
+max_interval: 500ms
+max_elapsed_time: 5s
+  timeout: 10s
+  sending_queue:
+enabled: false
+  compression: gzip
+  encoding: json
+
+image:
+  # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
+  repository: newrelic/pipeline-control-gateway
+  # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+  pullPolicy: IfNotPresent
+  # --  Overrides the image tag whose default is the chart appVersion.
+  tag: "0.9.0"
+
+# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
+cluster: ""
+# -- This set this license key to use. Can be configured also with `global.licenseKey`
+licenseKey: ""
+# -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
+customSecretName: ""
+# -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
+customSecretLicenseKey: ""
+
+# -- Additional labels for chart pods
+podLabels: {}
+# -- Additional labels for chart objects
+labels: {}
+
+# -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
+priorityClassName: ""
+
+# -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
+dnsConfig: {}
+
+# -- Run the integration with full access to the host filesystem and network.
+# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
+# @default -- `true`
+privileged: true
+
+
+deployment:
+  # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
+  nodeSelector: {}
+  # -- Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets deployment pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Annotations to be added to the deployment.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
+  containerSecurityContext: {}
+  # -- Sets resources for the deployment.
+  resources:
+requests:
+  memory: "2048Mi"
+  cpu: "1000m"
+limits:
+  memory: "2048Mi"
+  cpu: "1000m"
+  # -- Settings for deployment configmap
+  # @default -- See `values.yaml`
+  configMap:
+# -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
+config: {}
+
+# -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
+nodeSelector: {}
+# -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
+tolerations: []
+# -- Sets all pods' affinities. Can be configured also with `global.affinity`
+affinity: {}
+# -- Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod`
+podSecurityContext: {}
+# -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
+containerSecurityContext: {}
+
+rbac:
+  # -- Specifies whether RBAC resources should be created
+  create: true
+
+# -- Settings controlling ServiceAccount creation
+# @default -- See `values.yaml`
+serviceAccount:
+  # serviceAccount.create -- (bool) Specifies whether a ServiceAccount should be created
+  # @default -- `true`
+  create:
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+  # Specify any annotations to add to the ServiceAccount
+  annotations:
+
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+# @default -- `false`
+verboseLog:
+
+# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+# @default -- `false`
+nrStaging:
+
+# -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
+# @default -- `false`
+lowDataMode:
