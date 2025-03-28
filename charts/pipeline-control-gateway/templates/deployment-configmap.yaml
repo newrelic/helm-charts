@@ -53,49 +53,25 @@ data:
           endpoint: ${env:MY_POD_IP}:{{ .Values.ports.nrHttp }}
         client:
           compression: gzip
+          timeout: {{ .Values.nrcollectorexporter.timeout }}
       otlp:
         protocols:
           http:
             endpoint: ${env:MY_POD_IP}:{{ .Values.ports.otlpHttp }}
           grpc:
             endpoint: ${env:MY_POD_IP}:{{ .Values.ports.otlpGrpc }}
-      prometheus:
-        config:
-          scrape_configs:
-            - job_name: 'pipeline-control-gateway'
-              scrape_interval:  {{ .Values.prometheus.scrape_interval }}
-              static_configs:
-                - targets: [ '${env:MY_POD_IP}:{{ .Values.ports.prometheus }}' ]
-                  labels:
-                    version: {{ .Chart.Version }}
-                    podName: '${env:MY_POD_NAME}'
-                    clusterName: {{ .Values.global.cluster }}
-      prometheus/ui:
-        config:
-           scrape_configs:
-            - job_name: 'pipeline-gateway-ui-metrics'
-              scrape_interval:  {{ .Values.prometheus.scrape_interval }}
-              static_configs:
-                - targets: [ '${env:MY_POD_IP}:{{ .Values.ports.prometheus }}' ]
-                  labels:
-                    version: {{ .Chart.Version }}
-                    podName: '${env:MY_POD_NAME}'
-                    clusterName: {{ .Values.global.cluster }}
-              metric_relabel_configs:
-                - source_labels: [ __name__ ]
-                  regex: '.*bytes_(sent|received).*'
-                  action: keep
       prometheus/usage:
         config:
           scrape_configs:
             - job_name: 'pipeline-gateway-usage'
               scrape_interval: {{ .Values.prometheus.usage.scrape_interval }}
               static_configs:
-                - targets: [ '${env:MY_POD_IP}:{{ .Values.ports.prometheus }}' ]
+                - targets: [ '{{ .Values.prometheus.ip }}:{{ .Values.ports.prometheus }}' ]
                   labels:
                     version: {{ .Chart.Version }}
                     podName: '${env:MY_POD_NAME}'
                     clusterName: {{ .Values.global.cluster }}
+                    serviceName: '{{ include "nrKubernetesOtel.service.fullname" .}}'
               metric_relabel_configs:
                 - source_labels: [ __name__ ]
                   regex: '.*bytes_received.*'
@@ -106,15 +82,18 @@ data:
             - job_name: 'pipeline-gateway-monitoring'
               scrape_interval:  {{ .Values.prometheus.scrape_interval }}
               static_configs:
-                - targets: [ '${env:MY_POD_IP}:{{ .Values.ports.prometheus }}' ]
+                - targets: [ '{{ .Values.prometheus.ip }}:{{ .Values.ports.prometheus }}' ]
                   labels:
                     version: {{ .Chart.Version }}
                     podName: '${env:MY_POD_NAME}'
                     clusterName: {{ .Values.global.cluster }}
+                    serviceName: '{{ include "nrKubernetesOtel.deployment.fullname" .}}'
               metric_relabel_configs:
+                - action: labeldrop
+                  regex: 'service_version|service_name|service_instance_id'
                 - source_labels: [ __name__ ]
-                  regex: '.*bytes_(sent|received).*'
-                  action: drop
+                  regex: 'godebug_.*'
+                  action: drop                    
 
     processors:
       memory_limiter:
@@ -148,6 +127,9 @@ data:
         endpoint: {{ include "nrKubernetesOtel.log.endpoint" . }}
         retry_on_failure:
           enabled: {{ .Values.nrcollectorexporter.retry_on_failure.enabled }}
+          initial_interval: {{ .Values.nrcollectorexporter.retry_on_failure.initial_interval }}
+          max_interval: {{ .Values.nrcollectorexporter.retry_on_failure.max_interval }}
+          max_elapsed_time: {{ .Values.nrcollectorexporter.retry_on_failure.max_elapsed_time }}
         timeout: {{ .Values.nrcollectorexporter.timeout }}
         sending_queue:
           enabled: {{ .Values.nrcollectorexporter.sending_queue.enabled }}
@@ -187,10 +169,6 @@ data:
           receivers: [ nrproprietaryreceiver ]
           processors: [ nrprocessor ]
           exporters: [ nrcollectorexporter ]
-        metrics/ui:
-          receivers: [prometheus/ui]
-          processors: []
-          exporters: [otlphttp]
         metrics/usage:
           receivers: [prometheus/usage]
           processors: [cumulativetodelta]

@@ -2,6 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+fullnameOverride: "pipeline-control-gateway"
 autoscaling:
   minReplicas: 2
   maxReplicas: 10
@@ -15,6 +16,7 @@ ports:
   prometheus: 8888
 
 prometheus:
+  ip: 0.0.0.0
   scrape_interval: 15s
   usage:
     scrape_interval: 60s
@@ -48,7 +50,10 @@ processors:
 
 nrcollectorexporter:
   retry_on_failure:
-    enabled: false
+    enabled: true
+    initial_interval: 100ms
+    max_interval: 500ms
+    max_elapsed_time: 5s
   timeout: 10s
   sending_queue:
     enabled: false
@@ -57,11 +62,11 @@ nrcollectorexporter:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: rnoothi890/foobar
+  repository: newrelic/pipeline-control-gateway
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "0.2.11"
+  tag: "1.0.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""

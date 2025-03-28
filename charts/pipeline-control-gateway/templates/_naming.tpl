@@ -1,6 +1,6 @@
 {{- /* Naming helpers*/ -}}
 {{- define "nrKubernetesOtel.deployment.fullname" -}}
-{{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "deployment") -}}
+{{- include "newrelic.common.naming.fullname" . }}
 {{- end -}}
 
 {{- define "nrKubernetesOtel.daemonset.fullname" -}}
@@ -16,6 +16,5 @@
 {{- end -}}
 
 {{- define "nrKubernetesOtel.service.fullname" -}}
-{{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "service") -}}
+{{- include "newrelic.common.naming.fullname" . }}
 {{- end -}}
-
