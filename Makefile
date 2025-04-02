@@ -4,6 +4,7 @@ CHARTS ?= nr-k8s-otel-collector
 .PHONY: generate-examples
 generate-examples:
 	for chart_name in $(CHARTS); do \
+  		make install-helm-dependencies -C charts/$${chart_name}; \
 		helm dependency build charts/$${chart_name}; \
 		EXAMPLES_DIR=charts/$${chart_name}/examples; \
 		EXAMPLES=$$(find $${EXAMPLES_DIR} -maxdepth 1 -mindepth 1 -type d -exec basename \{\} \;); \
@@ -36,6 +37,7 @@ check-examples:
 			echo "Checking example: $${example}"; \
 			VALUES=$$(find $${EXAMPLES_DIR}/$${example} -name *values.yaml); \
 			for value in $${VALUES}; do \
+			  	make install-helm-dependencies -C charts/$${chart_name}; \
 				helm dependency build charts/$${chart_name}; \
 				helm template example charts/$${chart_name} --namespace default --values $${value} --output-dir "${TMP_DIRECTORY}/$${example}"; \
 				SUBCHARTS_DIR=${TMP_DIRECTORY}/$${example}/$${chart_name}/charts; \
