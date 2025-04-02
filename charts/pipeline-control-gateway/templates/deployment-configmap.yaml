@@ -1,0 +1,191 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nrKubernetesOtel.deployment.configMap.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  gateway-config.yaml: |
+    reserved_melt_attributes:
+      Metric:
+        - interval.ms
+        - metricName
+  deployment-config.yaml: |
+    {{- with include "nrKubernetesOtel.deployment.configMap.config" . }}
+    {{- . | nindent 4 }}
+    {{- else }}
+    extensions:
+      zpages:
+      healthcheckv2:
+        use_v2: true
+        component_health:
+          include_permanent_errors: false
+          include_recoverable_errors: true
+          recovery_duration: 5m
+        http:
+          endpoint: ${env:MY_POD_IP}:{{ .Values.ports.healthHttp }}
+          status:
+            enabled: true
+            path: "/health/status"
+          config:
+            enabled: true
+            path: "/health/config"
+
+    receivers:
+      nrproprietaryreceiver:
+        nr_host: {{ include "nrKubernetesOtel.NrHost.endpoint" . }}
+        logging:
+          enable:  {{ .Values.receivers.nrproprietaryreceiver.logging.enable }}
+        logfilter:
+          enabled:  {{ .Values.receivers.nrproprietaryreceiver.logfilter.enabled }}
+          flush_interval:  {{ .Values.receivers.nrproprietaryreceiver.logfilter.flush_interval }}
+          pattern:  {{ .Values.receivers.nrproprietaryreceiver.logfilter.pattern }}
+          buffer_size:  {{ .Values.receivers.nrproprietaryreceiver.logfilter.buffer_size }}  
+        enable_default_host:  {{ .Values.receivers.nrproprietaryreceiver.enableDefaultHost }}
+        enable_runtime_metrics:  {{ .Values.receivers.nrproprietaryreceiver.enableRuntimeMetrics }}
+        proxy:  {{ .Values.receivers.nrproprietaryreceiver.proxy }}
+        endpoints:
+          event_api_endpoint: {{ include "nrKubernetesOtel.event.endpoint" . }}
+          infra_event_api_endpoint: {{ include "nrKubernetesOtel.infra-event.endpoint" . }}
+          log_api_endpoint: {{ include "nrKubernetesOtel.log.endpoint" . }}
+          metrics_endpoint: {{ include "nrKubernetesOtel.metrics.endpoint" . }}
+          traces_endpoint: {{ include  "nrKubernetesOtel.traces.endpoint" . }}
+        server:
+          endpoint: ${env:MY_POD_IP}:{{ .Values.ports.nrHttp }}
+        client:
+          compression: gzip
+          timeout: {{ .Values.nrcollectorexporter.timeout }}
+      otlp:
+        protocols:
+          http:
+            endpoint: ${env:MY_POD_IP}:{{ .Values.ports.otlpHttp }}
+          grpc:
+            endpoint: ${env:MY_POD_IP}:{{ .Values.ports.otlpGrpc }}
+      prometheus/usage:
+        config:
+          scrape_configs:
+            - job_name: 'pipeline-gateway-usage'
+              scrape_interval: {{ .Values.prometheus.usage.scrape_interval }}
+              static_configs:
+                - targets: [ '{{ .Values.prometheus.ip }}:{{ .Values.ports.prometheus }}' ]
+                  labels:
+                    version: {{ .Chart.Version }}
+                    podName: '${env:MY_POD_NAME}'
+                    clusterName: {{ .Values.global.cluster }}
+                    serviceName: '{{ include "nrKubernetesOtel.service.fullname" .}}'
+              metric_relabel_configs:
+                - source_labels: [ __name__ ]
+                  regex: '.*bytes_received.*'
+                  action: keep
+      prometheus/monitoring:
+        config:
+          scrape_configs:
+            - job_name: 'pipeline-gateway-monitoring'
+              scrape_interval:  {{ .Values.prometheus.scrape_interval }}
+              static_configs:
+                - targets: [ '{{ .Values.prometheus.ip }}:{{ .Values.ports.prometheus }}' ]
+                  labels:
+                    version: {{ .Chart.Version }}
+                    podName: '${env:MY_POD_NAME}'
+                    clusterName: {{ .Values.global.cluster }}
+                    serviceName: '{{ include "nrKubernetesOtel.deployment.fullname" .}}'
+              metric_relabel_configs:
+                - action: labeldrop
+                  regex: 'service_version|service_name|service_instance_id'
+                - source_labels: [ __name__ ]
+                  regex: 'godebug_.*'
+                  action: drop                    
+
+    processors:
+      memory_limiter:
+        check_interval: {{ .Values.processors.memory_limiter.check_interval }}
+        limit_mib:  {{ .Values.processors.memory_limiter.limit_mib }}
+      nrprocessor:
+        queue:
+         enabled: {{ .Values.processors.nrprocessor.queue.enabled }}
+         queue_size: {{ .Values.processors.nrprocessor.queue.queue_size }}
+        queries:
+          {{- range $value := .Values.processors.nrprocessor.queries }}
+          - query:
+              name: {{ $value.query.name | quote }}
+              value: {{ $value.query.value | quote }}
+              category: {{ $value.query.category | quote }}
+          {{- end }}
+      cumulativetodelta:
+
+    exporters:
+      otlp:
+        endpoint: {{ include "nrKubernetesOtel.grpc.endpoint" . }}
+        headers:
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+      otlphttp:
+        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+        headers:
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+      nrcollectorexporter:
+        endpoint: {{ include "nrKubernetesOtel.log.endpoint" . }}
+        retry_on_failure:
+          enabled: {{ .Values.nrcollectorexporter.retry_on_failure.enabled }}
+          initial_interval: {{ .Values.nrcollectorexporter.retry_on_failure.initial_interval }}
+          max_interval: {{ .Values.nrcollectorexporter.retry_on_failure.max_interval }}
+          max_elapsed_time: {{ .Values.nrcollectorexporter.retry_on_failure.max_elapsed_time }}
+        timeout: {{ .Values.nrcollectorexporter.timeout }}
+        sending_queue:
+          enabled: {{ .Values.nrcollectorexporter.sending_queue.enabled }}
+        compression: {{ .Values.nrcollectorexporter.compression }}
+        encoding: {{ .Values.nrcollectorexporter.encoding }}
+        nr_license_key: ${env:NEW_RELIC_LICENSE_KEY}
+      usageexporter:
+        endpoint: {{ include "nrCollector.endpoint" . }}/external-usage
+        headers:
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+
+    service:
+      extensions: [ healthcheckv2 ]
+
+      pipelines:
+        logs/nr:
+          receivers: [nrproprietaryreceiver]
+          processors: [nrprocessor]
+          exporters: [nrcollectorexporter]
+        logs/otlp:
+          receivers: [ otlp ]
+          processors: [ nrprocessor ]
+          exporters: [ otlp ]
+        metrics/nr:
+          receivers: [nrproprietaryreceiver]
+          processors: [nrprocessor]
+          exporters: [nrcollectorexporter]
+        metrics/otlp:
+          receivers: [otlp]
+          processors: [ nrprocessor]
+          exporters: [otlp]
+        traces/otlp:
+          receivers: [otlp]
+          processors: [nrprocessor]
+          exporters: [ otlp ]
+        traces/nr:
+          receivers: [ nrproprietaryreceiver ]
+          processors: [ nrprocessor ]
+          exporters: [ nrcollectorexporter ]
+        metrics/usage:
+          receivers: [prometheus/usage]
+          processors: [cumulativetodelta]
+          exporters: [usageexporter]
+        metrics/monitoring:
+          receivers: [prometheus/monitoring]
+          processors: []
+          exporters: [otlphttp]
+
+      telemetry:
+        {{- if include "newrelic.common.verboseLog" . }}
+        logs:
+          level: "debug"
+        {{- end }}
+        {{- if include "nrKubernetesOtel.lowDataMode" . }}
+        metrics:
+          level: detailed
+        {{- else}}
+        metrics:
+          level: detailed
+        {{- end }}
+    {{- end }}
