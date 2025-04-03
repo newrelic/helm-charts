@@ -8,6 +8,7 @@ Notice that instrumentations needs to go first since it depends on a chart insta
 */ -}}
 {{- $acCRList := (list "instrumentations.newrelic.com" "helmreleases.helm.toolkit.fluxcd.io" "helmrepositories.source.toolkit.fluxcd.io") -}}
 {{- $acResourcesLabelSelector := "app.kubernetes.io/managed-by=newrelic-agent-control" -}}
+{{- $authJobResourcesLabelSelector := "app.kubernetes.io/created-by=ac-auth-job" -}}
 
 apiVersion: batch/v1
 kind: Job
@@ -58,7 +59,7 @@ spec:
       
               {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . }}
               # Delete the secrets created in the cluster
-              kubectl delete secrets -n {{ .Release.Namespace }} -l {{ $acResourcesLabelSelector }}
+              kubectl delete secrets -n {{ .Release.Namespace }} -l {{ $authJobResourcesLabelSelector }}
               {{- end }}
 
 {{ if .Values.rbac.create }}
