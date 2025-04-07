@@ -363,7 +363,7 @@ data:
           - key: newrelicOnly
             action: upsert
             value: 'true'
-          - key: nr.chart.version
+          - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
           - key: service.name
@@ -388,7 +388,7 @@ data:
           - key: newrelicOnly
             action: upsert
             value: 'true'
-          - key: nr.chart.version
+          - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
 
@@ -520,6 +520,7 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
+            - debug
         {{- end }}
         # TODO(chris): revisit using the gateway collector
         # logs:
