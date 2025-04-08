@@ -16,7 +16,6 @@
 | `image.pullPolicy`    | The pull policy.                                                                                                       | `IfNotPresent`                         |
 | `appArmorProfileName` | Name of an AppArmor profile to load.                                                                                   |                                        |
 | `resources`           | Resource requests and limits.                                                                                          |                                        |
-| `podAnnotations`      | Annotations to be added to the node-api-runtime pod                                                                    |                                        |
 | `podSecurityContext`  | Custom security context for the node-api-runtime pod                                                                   |                                        |
 | `securityContext`     | Custom security context for the node-api-runtime containers                                                            |                                        |
 | `labels`              | labels to be added to all node-api-runtime resources                                                                   |                                        |
