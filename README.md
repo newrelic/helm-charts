@@ -25,7 +25,7 @@ This is the official Helm charts repository for New Relic. It is indexed at [Hel
 * New Relic account
 
 ## <a name='Installthecharts'></a>Install
-You can have all the information about the installation in the [New Relic Documentation page for installaing the Kubernetes integration
+You can have all the information about the installation in the [New Relic Documentation page for installing the Kubernetes integration
 using Helm](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/installation/install-kubernetes-integration-using-helm/)
 
 Just as a glance of the process of installation and configuration the process involves to create a `values.yaml` that will look like this:

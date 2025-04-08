@@ -189,7 +189,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     port 2020
     tag fb_metrics
     metrics_path /api/v2/metrics/prometheus
-    scrape_interval 10s
+    scrape_interval 60s
 
 [OUTPUT]
     Name                 prometheus_remote_write

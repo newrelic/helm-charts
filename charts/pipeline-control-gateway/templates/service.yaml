@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nrKubernetesOtel.service.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: nr-http
+      port: {{ .Values.ports.nrHttp }}
+      protocol: TCP
+      targetPort: {{ .Values.ports.nrHttp }}
+    - name: otlp-http
+      port: {{ .Values.ports.otlpHttp }}
+      protocol: TCP
+      targetPort: {{ .Values.ports.otlpHttp }}
+    - name: otlp-grpc
+      port: {{ .Values.ports.otlpGrpc }}
+      protocol: TCP
+      targetPort: {{ .Values.ports.otlpGrpc }}
+  selector:
+    {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
+    component: deployment
+  internalTrafficPolicy: Cluster
