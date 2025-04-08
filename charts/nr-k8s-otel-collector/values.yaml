@@ -13,11 +13,11 @@ kube-state-metrics:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nrdot-collector-k8s
+  repository: otel/opentelemetry-collector-contrib
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.0.2"
+  tag: "0.123.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -157,7 +157,7 @@ receivers:
   filelog:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
-    enabled: true
+    enabled: false
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
