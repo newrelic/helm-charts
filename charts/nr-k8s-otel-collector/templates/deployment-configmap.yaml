@@ -403,6 +403,9 @@ data:
           - key: newrelicOnly
             action: upsert
             value: 'true'
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: {{ .Chart.Version }}
           - key: service.name
             action: delete
           - key: service_name
@@ -425,6 +428,9 @@ data:
           - key: newrelicOnly
             action: upsert
             value: 'true'
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: {{ .Chart.Version }}
 
       transform/events:
         log_statements:

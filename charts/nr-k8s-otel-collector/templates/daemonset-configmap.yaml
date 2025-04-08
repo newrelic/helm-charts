@@ -76,7 +76,7 @@ data:
         {{- end }}
         metrics:
           k8s.container.cpu_limit_utilization:
-            enabled: true 
+            enabled: true
 
       prometheus:
         config:
@@ -270,7 +270,7 @@ data:
 
       metricstransform/kubeletstats:
         transforms:
-          - include: container\.(cpu\.utilization|cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
+          - include: container\.(cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
             action: update
             match_type: regexp
             operations:
@@ -279,7 +279,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: k8s\.node\.(cpu\.(time|utilization|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
+          - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
             action: update
             match_type: regexp
             operations:
@@ -288,7 +288,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.(working_set))
+          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
             action: update
             match_type: regexp
             operations:
@@ -510,6 +510,9 @@ data:
           - key: newrelicOnly
             action: upsert
             value: 'true'
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: {{ .Chart.Version }}
           - key: service.name
             action: delete
           - key: service_name
