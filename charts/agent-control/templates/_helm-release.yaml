@@ -26,10 +26,6 @@ spec:
     {{- with (get .Values "agent-control-deployment") }}
       {{- . | toYaml | nindent 4 }}
     {{- end }}
-  valuesFrom:
-    - kind: ConfigMap
-      name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-manifests" ) }}
-      valuesKey: ac-values.yaml
 
   {{- with .Values.helm.release.install }}
   install:

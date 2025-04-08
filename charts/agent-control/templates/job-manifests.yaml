@@ -31,8 +31,4 @@ To delete them, there is a pre-delete hook that removes them.
     {{- include "newrelic-agent-control.helm.release" . | nindent 4 }}
   helm-repository.yaml: |
     {{- include "newrelic-agent-control.helm.repository" . | nindent 4 }}
-  {{- with (get .Values "agent-control-deployment") }}
-  ac-values.yaml: |
-    {{- . | toYaml | nindent 4 }}
-  {{- end }}
 {{- end }}
