@@ -24,12 +24,12 @@ spec:
   values:
     fullnameOverride: agent-control
     {{- with (get .Values "agent-control-deployment") }}
-    {{- . | toYaml | nindent 4 }}
+      {{- . | toYaml | nindent 4 }}
     {{- end }}
-  {{- with .Values.helm.release.valuesFrom }}
   valuesFrom:
-    {{- . | toYaml | nindent 4 }}
-  {{- end }}
+    - kind: ConfigMap
+      name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "job-manifests" ) }}
+      valuesKey: ac-values.yaml
 
   {{- with .Values.helm.release.install }}
   install:
