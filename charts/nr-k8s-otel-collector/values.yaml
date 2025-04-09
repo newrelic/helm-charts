@@ -136,6 +136,26 @@ receivers:
     # -- Sets the scrape interval for the `prometheus` receiver
     # @default -- `1m`
     scrapeInterval: 1m
+
+    jobs:
+      apiserver:
+        # -- (bool) Specifies whether the `apiserver` job is enabled
+        # @default -- `true`
+        enabled: true
+        scrapeInterval: 1m
+      scheduler: 
+        # -- (bool) Specifies whether the `scheduler` job is enabled
+        # @default -- `false`
+        enabled: true
+        port: 10259
+        scrapeInterval: 1m
+      controller-manager:
+        # -- (bool) Specifies whether the `controller-manager` job is enabled
+        # @default -- `true`
+        enabled: true
+        port: 10257
+        scrapeInterval: 1m
+
   k8sEvents:
     # -- (bool) Specifies whether the `k8s_events` receiver is enabled
     # @default -- `true`

@@ -31,12 +31,14 @@ data:
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
-
+      
+      {{ .Values.receivers.prometheus.enabled }}
       prometheus:
         config:
           scrape_configs:
+            {{ .Values.receivers.prometheus.jobs.apiserver.enabled }}
             - job_name: apiserver
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: {{ .Values.receivers.prometheus.jobs.apiserver.scrapeInterval }}
               kubernetes_sd_configs:
                 - role: endpoints
                   namespaces:
@@ -65,6 +67,71 @@ data:
               - action: replace
                 target_label: job_label
                 replacement: apiserver
+            {{ .Values.receivers.prometheus.jobs.controller-manager.enabled }}
+            - job_name: controller-manager
+              scrape_interval: {{ .Values.receivers.prometheus.jobs.controller-manager.scrapeInterval }}
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names:
+                      - kube-system
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                regex: kube-system;controller-manager;https-metrics
+                source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: controller-manager
+            {{ end }}
+            {{ .Values.receivers.prometheus.jobs.scheduler.enabled }}
+            - job_name: scheduler
+              scrape_interval: {{ .Values.receivers.prometheus.jobs.scheduler.scrapeInterval }}
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names:
+                      - kube-system
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                regex: kube-system;scheduler;https-metrics
+                source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: scheduler             
+            {{ end }}
+            {{ end }}
 
     processors:
       groupbyattrs:

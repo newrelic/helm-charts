@@ -1,0 +1,19 @@
+{{ if .Values.receivers.prometheus.jobs.controller-manager.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: controller-manager
+  namespace: kube-system
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
+    component: kube-controller-manager
+  ports:
+    - name: metrics
+      protocol: TCP
+      port: {{ .Values.receivers.prometheus.jobs.controller-manager.port }}
+      targetPort: {{ .Values.receivers.prometheus.jobs.controller-manager.port }}
+  type: ClusterIP
+{{ end }} 
