@@ -16,7 +16,6 @@
 | `image.pullPolicy`    | The pull policy.                                                                                                           | `IfNotPresent`                             |
 | `appArmorProfileName` | Name of an AppArmor profile to load.                                                                                       |                                            |
 | `resources`           | Resource requests and limits.                                                                                              |                                            |
-| `podAnnotations`      | Annotations to be added to the node-browser-runtime pod                                                                    |                                            |
 | `podSecurityContext`  | Custom security context for the node-browser-runtime pod                                                                   |                                            |
 | `securityContext`     | Custom security context for the node-browser-runtime containers                                                            |                                            |
 | `labels`              | labels to be added to all node-browser-runtime resources                                                                   |                                            |
