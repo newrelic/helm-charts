@@ -30,19 +30,6 @@ rules:
       - get
       - list
       - watch
-  - apiGroups: [ "apps" ]
-    resources:
-      - deployments/scale
-    verbs:
-      - get
-      - patch
-      - update
-  - apiGroups: [ "" ]
-    resources: ["secrets"]
-    verbs:
-      - delete
-    resourceNames:
-    - {{ include "newrelic-agent-control.auth.secret.name" . }}
   ###
   # AC is capable of manage following resources defined as part of an Agent Type.
   - apiGroups:
