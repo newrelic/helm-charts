@@ -58,7 +58,6 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_status_condition              | Gauge   | Status conditions of the HorizontalPodAutoscaler.                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_status_current_replicas       | Gauge   | Current number of replicas for the HorizontalPodAutoscaler.       |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_status_desired_replicas       | Gauge   | Desired number of replicas for the HorizontalPodAutoscaler.       |
-| KubeStateMetrics   | Prometheus Receiver   | kube_lease_owner                                           | Gauge   | Owner information of the Lease.                                   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_complete                                          | Gauge   | Whether the Job is complete (1) or not (0).                       |
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_created                                           | Gauge   | Creation timestamp of the Job.                                    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_failed                                            | Gauge   | Whether the Job has failed (1) or not (0).                        |
