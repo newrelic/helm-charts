@@ -317,7 +317,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_(replicaset_owner|lease_owner)
+          - include: kube_(replicaset_owner)
             action: update
             match_type: regexp
             operations:
@@ -326,7 +326,7 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
-      
+
       metricstransform/apiserver:
         transforms:
           - include: apiserver_storage_objects
