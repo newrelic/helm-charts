@@ -18,7 +18,7 @@ data:
       k8s_events:
       prometheus/ksm:
         config:
-          scrape_configs: 
+          scrape_configs:
             - job_name: kube-state-metrics
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
@@ -157,18 +157,18 @@ data:
         transforms:
           - include: kubernetes_build_info
             action: update
-            new_name: k8s.cluster.info 
+            new_name: k8s.cluster.info
 
       metricstransform/kube_pod_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
-            match_type: strict 
+            match_type: strict
             action: update
             new_name: 'kube_pod_container_status_phase'
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: waiting 
+              new_value: waiting
           - include: 'kube_pod_container_status_running'
             match_type: strict
             action: update
@@ -176,7 +176,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: running 
+              new_value: running
           - include: 'kube_pod_container_status_terminated'
             match_type: strict
             action: update
@@ -184,7 +184,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: terminated 
+              new_value: terminated
 
       metricstransform/ldm:
         transforms:
@@ -195,12 +195,12 @@ data:
             - action: add_label
               new_label: low.data.mode
               new_value: 'false'
-      
+
       metricstransform/k8s_cluster_info_ldm:
         transforms:
           - include: k8s.cluster.info
             action: update
-            operations: 
+            operations:
             - action: update_label
               label: low.data.mode
               value_actions:
@@ -290,7 +290,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
+          - include: kube_pod_(owner|created|info|status_(phase|ready|scheduled))
             action: update
             match_type: regexp
             operations:
@@ -299,15 +299,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+{{/*          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)*/}}
+{{/*            action: update*/}}
+{{/*            match_type: regexp*/}}
+{{/*            operations:*/}}
+{{/*            - action: update_label*/}}
+{{/*              label: low.data.mode*/}}
+{{/*              value_actions:*/}}
+{{/*              - value: 'false'*/}}
+{{/*                new_value: 'true'*/}}
           - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
             action: update
             match_type: regexp
@@ -329,15 +329,15 @@ data:
 
       metricstransform/apiserver:
         transforms:
-          - include: apiserver_storage_objects
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+{{/*          - include: apiserver_storage_objects*/}}
+{{/*            action: update*/}}
+{{/*            match_type: regexp*/}}
+{{/*            operations:*/}}
+{{/*            - action: update_label*/}}
+{{/*              label: low.data.mode*/}}
+{{/*              value_actions:*/}}
+{{/*              - value: 'false'*/}}
+{{/*                new_value: 'true'*/}}
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
@@ -356,7 +356,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-    
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -398,7 +398,7 @@ data:
             action: delete
           - key: service_name
             action: delete
-      
+
       resource/events:
         attributes:
           - key: "event.name"
@@ -461,7 +461,7 @@ data:
             - k8s.node.name
             - k8s.pod.start_time
         pod_association:
-          - sources: 
+          - sources:
             - from: resource_attribute
               name: k8s.pod.uid
 
@@ -567,6 +567,10 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+      file:
+        path: ./newrelic/debug/output.txt
+      file/ksm:
+        path: ./newrelic/debug/ksm-output.txt
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -587,7 +591,6 @@ data:
             - filter/exclude_zero_value_kube_pod_container_status
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
-            - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
             - filter/exclude_metrics_low_data_mode
             - transform/low_data_mode_inator
@@ -602,6 +605,7 @@ data:
           exporters:
             - otlphttp/newrelic
             - debug
+            - file/ksm
         {{- end }}
         {{- if .Values.receivers.prometheus.enabled }}
         metrics:
@@ -626,6 +630,7 @@ data:
             - groupbyattrs
           exporters:
             - otlphttp/newrelic
+            - file
         {{- end }}
         {{- if .Values.receivers.k8sEvents.enabled }}
         logs/events:
