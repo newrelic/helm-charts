@@ -90,7 +90,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | ebpfAgent.containerSecurityContext | object | `{}` | Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |
 | ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | ebpfAgent.image.repository | string | `"docker.io/newrelic/newrelic-ebpf-agent"` | eBPF agent image to be deployed. |
-| ebpfAgent.image.tag | string | `"agent-nr-ebpf-agent_0.0.8"` | The tag of the eBPF agent image to be deployed. |
+| ebpfAgent.image.tag | string | `"agent-nr-ebpf-agent_0.0.9"` | The tag of the eBPF agent image to be deployed. |
 | ebpfAgent.podAnnotations | object | `{}` | Sets ebpfAgent pod Annotations. Overrides `podAnnotations` and `global.podAnnotations` |
 | ebpfAgent.podSecurityContext | object | `{}` | Sets ebpfAgent pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod` |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocated to the container. |
