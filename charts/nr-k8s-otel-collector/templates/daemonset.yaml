@@ -34,12 +34,6 @@ spec:
         {{- . | nindent 8 }}
       {{- end }}
       containers:
-        - name: nr-debug
-          image: "alpine"
-          command: ['sh', '-c', 'echo The Bench Container 1 is Running ; sleep 3600']
-          volumeMounts:
-            - name: newrelic-debug
-              mountPath: /newrelic/debug
         - name: otel-collector-daemonset
           {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
           securityContext:
@@ -95,8 +89,6 @@ spec:
               readOnly: true
             - name: daemonset-config
               mountPath: /config
-            - name: newrelic-debug
-              mountPath: /newrelic/debug
       volumes:
         {{- if not .Values.gkeAutopilot }}
         - name: host-fs
@@ -109,8 +101,6 @@ spec:
         - name: daemonset-config
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
-        - name: newrelic-debug
-          emptyDir: { }
       {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}

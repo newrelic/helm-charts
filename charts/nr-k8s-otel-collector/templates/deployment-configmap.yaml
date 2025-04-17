@@ -299,15 +299,6 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-{{/*          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)*/}}
-{{/*            action: update*/}}
-{{/*            match_type: regexp*/}}
-{{/*            operations:*/}}
-{{/*            - action: update_label*/}}
-{{/*              label: low.data.mode*/}}
-{{/*              value_actions:*/}}
-{{/*              - value: 'false'*/}}
-{{/*                new_value: 'true'*/}}
           - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
             action: update
             match_type: regexp
@@ -329,15 +320,6 @@ data:
 
       metricstransform/apiserver:
         transforms:
-{{/*          - include: apiserver_storage_objects*/}}
-{{/*            action: update*/}}
-{{/*            match_type: regexp*/}}
-{{/*            operations:*/}}
-{{/*            - action: update_label*/}}
-{{/*              label: low.data.mode*/}}
-{{/*              value_actions:*/}}
-{{/*              - value: 'false'*/}}
-{{/*                new_value: 'true'*/}}
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
@@ -554,9 +536,6 @@ data:
          spike_limit_percentage: 25
 
       batch:
-    #    send_batch_max_size: 1000
-    #    timeout: 30s
-    #    send_batch_size : 800
 
     exporters:
       otlphttp/newrelic:
@@ -567,10 +546,6 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
-      file:
-        path: ./newrelic/debug/output.txt
-      file/ksm:
-        path: ./newrelic/debug/ksm-output.txt
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -604,8 +579,6 @@ data:
             - groupbyattrs
           exporters:
             - otlphttp/newrelic
-            - debug
-            - file/ksm
         {{- end }}
         {{- if .Values.receivers.prometheus.enabled }}
         metrics:
@@ -630,7 +603,6 @@ data:
             - groupbyattrs
           exporters:
             - otlphttp/newrelic
-            - file
         {{- end }}
         {{- if .Values.receivers.k8sEvents.enabled }}
         logs/events:

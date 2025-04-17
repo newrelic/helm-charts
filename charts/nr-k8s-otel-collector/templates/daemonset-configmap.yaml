@@ -129,30 +129,6 @@ data:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
-{{/*            - job_name: resource*/}}
-{{/*              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}*/}}
-{{/*              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token*/}}
-{{/*              kubernetes_sd_configs:*/}}
-{{/*                - role: node*/}}
-{{/*              relabel_configs:*/}}
-{{/*                - replacement: kubernetes.default.svc.cluster.local:443*/}}
-{{/*                  target_label: __address__*/}}
-{{/*                - regex: (.+)*/}}
-{{/*                  replacement: /api/v1/nodes/$${1}/proxy/metrics/resource*/}}
-{{/*                  source_labels:*/}}
-{{/*                    - __meta_kubernetes_node_name*/}}
-{{/*                  target_label: __metrics_path__*/}}
-{{/*                - action: replace*/}}
-{{/*                  target_label: job_label*/}}
-{{/*                  replacement: resource*/}}
-{{/*                - source_labels: [__meta_kubernetes_node_name]*/}}
-{{/*                  regex: ${KUBE_NODE_NAME}*/}}
-{{/*                  action: keep*/}}
-{{/*              scheme: https*/}}
-{{/*              tls_config:*/}}
-{{/*                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt*/}}
-{{/*                insecure_skip_verify: false*/}}
-{{/*                server_name: kubernetes*/}}
 
       filelog:
         include:
@@ -642,9 +618,6 @@ data:
       cumulativetodelta:
 
       batch:
-    #    send_batch_max_size: 1000
-    #    timeout: 30s
-    #    send_batch_size : 800
 
     exporters:
       otlphttp/newrelic:
@@ -655,8 +628,6 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
-      file:
-        path: ./newrelic/debug/output.txt
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -712,8 +683,6 @@ data:
             - groupbyattrs
           exporters:
             - otlphttp/newrelic
-            - file
-            - debug
         {{- end }}
         {{- if .Values.receivers.filelog.enabled }}
         logs:
