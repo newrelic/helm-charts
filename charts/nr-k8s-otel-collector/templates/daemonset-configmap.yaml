@@ -64,8 +64,8 @@ data:
           #   mute_process_io_error: true
           #   mute_process_user_error: true
 
-      kubeletstats:
-        collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
+      kubeletstats/freq_metrics:
+        collection_interval: {{ .Values.receivers.kubeletstats.scrapeIntervalFreq }}
         {{- if not .Values.gkeAutopilot }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
@@ -74,15 +74,31 @@ data:
         endpoint: "${KUBE_NODE_NAME}:10255"
         auth_type: "none"
         {{- end }}
+        metric_groups:
+          - container
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
+
+      kubeletstats/nonfreq_metrics:
+        collection_interval: {{ .Values.receivers.kubeletstats.scrapeIntervalNonFreq }}
+        {{- if not .Values.gkeAutopilot }}
+        endpoint: "${KUBE_NODE_NAME}:10250"
+        auth_type: "serviceAccount"
+        insecure_skip_verify: true
+        {{- else }}
+        endpoint: "${KUBE_NODE_NAME}:10255"
+        auth_type: "none"
+        {{- end }}
+        metric_groups:
+          - pod
+          - node
 
       prometheus:
         config:
           scrape_configs:
             - job_name: cadvisor
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeIntervalNonFreq }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -106,7 +122,7 @@ data:
                 insecure_skip_verify: false
                 server_name: kubernetes
             - job_name: kubelet
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeIntervalNonFreq }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -634,7 +650,8 @@ data:
             - hostmetrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
-            - kubeletstats
+            - kubeletstats/freq_metrics
+            - kubeletstats/nonfreq_metrics
             {{- end }}
             {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
