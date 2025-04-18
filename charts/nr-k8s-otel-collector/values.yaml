@@ -133,9 +133,13 @@ receivers:
     # -- (bool) Specifies whether the `prometheus` receiver is enabled
     # @default -- `true`
     enabled: true
-    # -- Sets the scrape interval for the `prometheus` receiver
+    # -- Sets the frequent scrape interval for the `prometheus` receiver
     # @default -- `1m`
-    scrapeInterval: 1m
+    scrapeIntervalFreq: 1m
+    # -- Sets the nonfrequent scrape interval for the `prometheus` receiver
+    # @default -- `2m`
+    scrapeIntervalNonFreq: 2m
+
   k8sEvents:
     # -- (bool) Specifies whether the `k8s_events` receiver is enabled
     # @default -- `true`
@@ -146,14 +150,17 @@ receivers:
     enabled: true
     # -- Sets the scrape interval for the `hostmetrics` receiver
     # @default -- `1m`
-    scrapeInterval: 1m
+    scrapeInterval: 2m
   kubeletstats:
     # -- (bool) Specifies whether the `kubeletstats` receiver is enabled
     # @default -- `true`
     enabled: true
-    # -- Sets the scrape interval for the `kubeletstats` receiver
+    # -- Sets the frequent scrape interval for the `kubeletstats` receiver
     # @default -- `1m`
-    scrapeInterval: 1m
+    scrapeIntervalFreq: 1m
+    # -- Sets the nonfrequent scrape interval for the `kubeletstats` receiver
+    # @default -- `2m`
+    scrapeIntervalNonFreq: 2m
   filelog:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
