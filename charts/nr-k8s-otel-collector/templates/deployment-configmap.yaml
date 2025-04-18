@@ -290,7 +290,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(owner|created|info|status_(phase|ready|scheduled))
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled))$$
             action: update
             match_type: regexp
             operations:
@@ -536,6 +536,7 @@ data:
          spike_limit_percentage: 25
 
       batch:
+        timeout: 30s
 
     exporters:
       otlphttp/newrelic:
@@ -572,7 +573,6 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
-    #        - groupbyattrs/ksm
             - transform/ksm
             - attributes/self
             - batch
