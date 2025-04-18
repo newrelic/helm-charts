@@ -72,7 +72,56 @@ data:
                   regex: ^kube_cronjob.*
                   source_labels:
                     - __name__
-
+                # Drop metrics with prefix kube_configmap
+                - action: drop
+                  regex: ^kube_configmap.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_endpoint
+                - action: drop
+                  regex: ^kube_endpoint.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_lease
+                - action: drop
+                  regex: ^kube_lease.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_mutatingwebhook
+                - action: drop
+                  regex: ^kube_mutatingwebhook.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_replicaset
+                - action: drop
+                  regex: ^kube_replicaset.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_resourcequota
+                - action: drop
+                  regex: ^kube_resourcequota.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_secret
+                - action: drop
+                  regex: ^kube_secret.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_storage
+                - action: drop
+                  regex: ^kube_storage.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_validating
+                - action: drop
+                  regex: ^kube_validating.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix scrape_
+                - action: drop
+                  regex: ^scrape_.*
+                  source_labels:
+                    - __name__
       prometheus/ksm_nonfreq_metrics:
         config:
           scrape_configs: 
