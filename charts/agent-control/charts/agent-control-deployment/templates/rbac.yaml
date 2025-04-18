@@ -76,7 +76,20 @@ subjects:
 - kind: ServiceAccount
   name: {{ include "newrelic.common.serviceAccount.name" . }}
   namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
+  namespace: newrelic_agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
+subjects:
 - kind: ServiceAccount
   name: {{ include "newrelic.common.serviceAccount.name" . }}
-  namespace: "newrelic_agents"
+  namespace: {{ .Release.Namespace }}
 {{- end }}
