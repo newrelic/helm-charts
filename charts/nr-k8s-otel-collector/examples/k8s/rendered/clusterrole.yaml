@@ -1,0 +1,83 @@
+---
+# Source: nr-k8s-otel-collector/templates/clusterrole.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: example-nr-k8s-otel-collector
+  labels:
+app.kubernetes.io/instance: example
+app.kubernetes.io/managed-by: Helm
+app.kubernetes.io/name: nr-k8s-otel-collector
+app.kubernetes.io/version: 0.8.0
+helm.sh/chart: nr-k8s-otel-collector-0.8.5
+rules: 
+  - apiGroups:
+- ""
+resources:
+# following required for k8s_events, k8s_cluster receiver
+- events
+# following required for k8s_cluster receiver
+- namespaces
+# following required for prometheus, k8s_cluster receiver
+- nodes
+- nodes/metrics
+- pods
+- pods/status
+- services
+- endpoints
+verbs:
+- get
+- list
+- watch
+  - apiGroups:
+- ""
+resources:
+# following required for hostmetrics, prometheus receiver
+- nodes/spec
+- nodes/stats
+- nodes/proxy
+# following required for filelog receiver
+- pods/logs
+verbs:
+- get
+  # following required for prometheus receiver
+  - apiGroups:
+- ""
+resources:
+- replicationcontrollers
+- resourcequotas
+verbs:
+- list
+- watch
+  # following required for prometheus receiver
+  - apiGroups:
+- apps
+resources:
+- daemonsets
+- deployments
+- replicasets
+- statefulsets
+verbs:
+- get
+- list
+- watch
+  # following required for prometheus receiver
+  - apiGroups:
+- batch
+resources:
+- jobs
+- cronjobs
+verbs:
+- list
+- watch
+  # following required for prometheus receiver
+  - apiGroups:
+- autoscaling
+resources:
+- horizontalpodautoscalers
+verbs:
+- list
+- watch
+  # following required for prometheus receiver
+  - nonResourceURLs: ["/metrics"]
+verbs: ["get"]
