@@ -215,6 +215,13 @@ data:
             to: resource["k8s.pod.uid"]
 
     processors:
+      groupbyattrs:
+        keys:
+          - k8s.namespace.name
+          - k8s.node.name
+          - low.data.mode
+          - job_label
+
       metricstransform/ldm:
         transforms:
           - include: .*
@@ -486,6 +493,7 @@ data:
               - delete_key(attributes, "id")
               - delete_key(attributes, "name")
               - delete_key(attributes, "interface")
+              - delete_key(attributes, "cpu")
 
       resource/low_data_mode_inator:
         attributes:
@@ -494,6 +502,10 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
             action: delete
 
       attributes/self:
@@ -606,9 +618,7 @@ data:
       cumulativetodelta:
 
       batch:
-        send_batch_max_size: 1000
         timeout: 30s
-        send_batch_size : 800
 
     exporters:
       otlphttp/newrelic:
@@ -671,6 +681,7 @@ data:
             - memory_limiter
             - cumulativetodelta
             - batch
+            - groupbyattrs
           exporters:
             - otlphttp/newrelic
         {{- end }}
