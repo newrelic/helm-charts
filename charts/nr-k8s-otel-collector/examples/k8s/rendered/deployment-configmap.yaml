@@ -9,8 +9,8 @@ metadata:
 app.kubernetes.io/instance: example
 app.kubernetes.io/managed-by: Helm
 app.kubernetes.io/name: nr-k8s-otel-collector
-app.kubernetes.io/version: 0.8.0
-helm.sh/chart: nr-k8s-otel-collector-0.8.5
+app.kubernetes.io/version: 1.0.3
+helm.sh/chart: nr-k8s-otel-collector-0.8.9
 data:
   deployment-config.yaml: |
 receivers:
@@ -35,7 +35,7 @@ config:
   target_label: job_label
   replacement: kube-state-metrics
 
-  prometheus:
+  prometheus/controlplane:
 config:
   scrape_configs:
 - job_name: apiserver
@@ -100,21 +100,54 @@ keys:
 metric_statements:
   - context: resource
 statements:
-  - delete_key(attributes, "k8s.pod.name")
-  - delete_key(attributes, "k8s.pod.uid")
-  - delete_key(attributes, "k8s.container.name")
-  - delete_key(attributes, "k8s.namespace.name")
   - delete_key(attributes, "k8s.node.name")
+  - delete_key(attributes, "k8s.namespace.name")
+  - delete_key(attributes, "k8s.pod.uid")
+  - delete_key(attributes, "k8s.pod.name")
+  - delete_key(attributes, "k8s.container.name")
   - delete_key(attributes, "k8s.replicaset.name")
-  - set(attributes["k8s.pod.name"], attributes["pod"])
-  - set(attributes["k8s.daemonset.name"], attributes["daemonset"])
-  - set(attributes["k8s.replicaset.name"], attributes["replicaset"])
-  - set(attributes["k8s.statefulset.name"], attributes["statefulset"])
-  - set(attributes["k8s.deployment.name"], attributes["deployment"])
+  - delete_key(attributes, "k8s.deployment.name")
+  - delete_key(attributes, "k8s.statefulset.name")
+  - delete_key(attributes, "k8s.daemonset.name")
+  - delete_key(attributes, "k8s.job.name")
+  - delete_key(attributes, "k8s.cronjob.name")
+  - delete_key(attributes, "k8s.replicationcontroller.name")
+  - delete_key(attributes, "k8s.hpa.name")
+  - delete_key(attributes, "k8s.resourcequota.name")
+  - delete_key(attributes, "k8s.volume.name")
+  - set(attributes["k8s.uid.uid"], attributes["uid"])
   - set(attributes["k8s.node.name"], attributes["node"])
   - set(attributes["k8s.namespace.name"], attributes["namespace"])
+  - set(attributes["k8s.pod.name"], attributes["pod"])
   - set(attributes["k8s.container.name"], attributes["container"])
-  - set(attributes["k8s.uid.uid"], attributes["uid"])
+  - set(attributes["k8s.replicaset.name"], attributes["replicaset"])
+  - set(attributes["k8s.deployment.name"], attributes["deployment"])
+  - set(attributes["k8s.statefulset.name"], attributes["statefulset"])
+  - set(attributes["k8s.daemonset.name"], attributes["daemonset"])
+  - set(attributes["k8s.job.name"], attributes["job_name"])
+  - set(attributes["k8s.cronjob.name"], attributes["cronjob"])
+  - set(attributes["k8s.replicationcontroller.name"], attributes["replicationcontroller"])
+  - set(attributes["k8s.hpa.name"], attributes["horizontalpodautoscaler"])
+  - set(attributes["k8s.resourcequota.name"], attributes["resourcequota"])
+  - set(attributes["k8s.volume.name"], attributes["volumename"])
+  - set(attributes["k8s.volume.name"], attributes["persistentvolume"])
+  - set(attributes["k8s.pvc.name"], attributes["persistentvolumeclaim"])
+  - delete_key(attributes, "node")
+  - delete_key(attributes, "namespace")
+  - delete_key(attributes, "pod")
+  - delete_key(attributes, "container")
+  - delete_key(attributes, "replicaset")
+  - delete_key(attributes, "deployment")
+  - delete_key(attributes, "statefulset")
+  - delete_key(attributes, "daemonset")
+  - delete_key(attributes, "job_name")
+  - delete_key(attributes, "cronjob")
+  - delete_key(attributes, "replicationcontroller")
+  - delete_key(attributes, "horizontalpodautoscaler")
+  - delete_key(attributes, "resourcequota")
+  - delete_key(attributes, "volumename")
+  - delete_key(attributes, "persistentvolume")
+  - delete_key(attributes, "persistentvolumeclaim")
 
   metricstransform/k8s_cluster_info:
 transforms:
@@ -208,7 +241,7 @@ operations:
   value_actions:
   - value: 'false'
 new_value: 'true'
-  - include: kube_job_(complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
+  - include: kube_job_(owner|complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
 action: update
 match_type: regexp
 operations:
@@ -244,7 +277,7 @@ operations:
   value_actions:
   - value: 'false'
 new_value: 'true'
-  - include: kube_pod_container_(resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason))
+  - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason))
 action: update
 match_type: regexp
 operations:
@@ -253,7 +286,7 @@ operations:
   value_actions:
   - value: 'false'
 new_value: 'true'
-  - include: kube_pod_(created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
+  - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
 action: update
 match_type: regexp
 operations:
@@ -278,6 +311,15 @@ operations:
 - action: update_label
   label: low.data.mode
   value_actions:
+  - value: 'false'
+new_value: 'true'
+  - include: kube_(replicaset_owner)
+action: update
+match_type: regexp
+operations:
+  - action: update_label
+label: low.data.mode
+value_actions:
   - value: 'false'
 new_value: 'true'
   
@@ -336,36 +378,18 @@ metrics:
   datapoint:
 - metric.name == "kube_pod_container_status" and value_double == 0.0
 
-  resourcedetection/env:
-detectors: ["env", "system"]
-override: false
-system:
-  hostname_sources: ["os"]
-  resource_attributes:
-host.id:
-  enabled: true
-
-  resourcedetection/cloudproviders:
-detectors: [gcp, eks, azure, aks, ec2, ecs]
-timeout: 2s
-override: false
-ec2:
-  resource_attributes:
-host.name:
-  enabled: false
-
   resource/metrics:
 attributes:
-  - key: host.id
-from_attribute: host.name
-action: upsert
-  # TODO (chris): Upsert only when cluster name not found (resource detection override: true)
+  # We set the cluster name to what the customer specified in the helm chart
   - key: k8s.cluster.name
 action: upsert
 value: DEMO_CLUSTER
   - key: newrelicOnly
 action: upsert
 value: 'true'
+  - key: "newrelic.chart.version"
+action: upsert
+value: 0.8.9
   - key: service.name
 action: delete
   - key: service_name
@@ -388,6 +412,9 @@ value: DEMO_CLUSTER
   - key: newrelicOnly
 action: upsert
 value: 'true'
+  - key: "newrelic.chart.version"
+action: upsert
+value: 0.8.9
 
   transform/events:
 log_statements:
@@ -423,6 +450,7 @@ extract:
 - k8s.pod.name
 - k8s.pod.uid
 - k8s.deployment.name
+- k8s.daemonset.name
 - k8s.namespace.name
 - k8s.node.name
 - k8s.pod.start_time
@@ -433,18 +461,86 @@ pod_association:
 
   attributes/self:
 actions:
-  - key: k8s.pod.name
-action: upsert
-from_attribute: pod
-  - key: k8s.deployment.name
-action: upsert
-from_attribute: deployment
   - key: k8s.node.name
 action: upsert
 from_attribute: node
   - key: k8s.namespace.name
 action: upsert
 from_attribute: namespace
+  - key: k8s.pod.name
+action: upsert
+from_attribute: pod
+  - key: k8s.container.name
+action: upsert
+from_attribute: container
+  - key: k8s.replicaset.name
+action: upsert
+from_attribute: replicaset
+  - key: k8s.deployment.name
+action: upsert
+from_attribute: deployment
+  - key: k8s.statefulset.name
+action: upsert
+from_attribute: statefulset
+  - key: k8s.daemonset.name
+action: upsert
+from_attribute: daemonset
+  - key: k8s.job.name
+action: upsert
+from_attribute: job_name
+  - key: k8s.cronjob.name
+action: upsert
+from_attribute: cronjob
+  - key: k8s.replicationcontroller.name
+action: upsert
+from_attribute: replicationcontroller
+  - key: k8s.hpa.name
+action: upsert
+from_attribute: horizontalpodautoscaler
+  - key: k8s.resourcequota.name
+action: upsert
+from_attribute: resourcequota
+  - key: k8s.volume.name
+action: upsert
+from_attribute: volumename
+  - key: k8s.volume.name
+action: upsert
+from_attribute: persistentvolume
+  - key: k8s.pvc.name
+action: upsert
+from_attribute: persistentvolumeclaim
+  - key: node
+action: delete
+  - key: namespace
+action: delete
+  - key: pod
+action: delete
+  - key: container
+action: delete
+  - key: replicaset
+action: delete
+  - key: deployment
+action: delete
+  - key: statefulset
+action: delete
+  - key: daemonset
+action: delete
+  - key: job_name
+action: delete
+  - key: cronjob
+action: delete
+  - key: replicationcontroller
+action: delete
+  - key: horizontalpodautoscaler
+action: delete
+  - key: resourcequota
+action: delete
+  - key: volumename
+action: delete
+  - key: persistentvolume
+action: delete
+  - key: persistentvolumeclaim
+action: delete
 
   memory_limiter:
  check_interval: 1s
@@ -461,6 +557,11 @@ exporters:
 endpoint: "https://otlp.nr-data.net"
 headers:
   api-key: ${env:NR_LICENSE_KEY}
+  debug:
+verbosity: detailed
+sampling_initial: 5
+sampling_thereafter: 200
+
 service:
   pipelines:
 metrics/ksm:
@@ -479,16 +580,15 @@ metrics/ksm:
 - transform/low_data_mode_inator
 - resource/low_data_mode_inator
 - resource/metrics
-- resourcedetection/env
-- resourcedetection/cloudproviders
-- batch
 - groupbyattrs
 - transform/ksm
+- attributes/self
+- batch
   exporters:
 - otlphttp/newrelic
 metrics:
   receivers:
-- prometheus
+- prometheus/controlplane
   processors:
 - metricstransform/k8s_cluster_info
 - metricstransform/ldm
@@ -498,19 +598,13 @@ metrics:
 - transform/low_data_mode_inator
 - resource/low_data_mode_inator
 - resource/metrics
-- k8sattributes
 - attributes/self
+- k8sattributes
 - memory_limiter
 - cumulativetodelta
 - batch
   exporters:
 - otlphttp/newrelic
-# TODO(chris): revisit using the gateway collector
-# logs:
-#   receivers: [otlp]
-#   processors: [batch]
-#   exporters:
-# - otlphttp/newrelic
 logs/events:
   receivers:
 - k8s_events
