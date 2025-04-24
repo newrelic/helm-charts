@@ -1,0 +1,118 @@
+<a href="https://opensource.newrelic.com/oss-category/#community-plus"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/dark/Community_Plus.png"><source media="(prefers-color-scheme: light)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png"><img alt="New Relic Open Source community plus project banner." src="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png"></picture></a>
+
+{{ template "chart.header" . }}
+{{ template "chart.deprecationWarning" . }}
+
+{{ template "chart.description" . }}
+
+# Helm installation
+
+Download and Update config [here](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/values.yaml#L20-L24) to add a cluster name, and New Relic Ingest - License key
+
+Example: 
+```
+licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
+cluster: "SampleApp" 
+```
+
+You can install this chart using directly this Helm repository:
+
+```shell
+helm repo add newrelic https://helm-charts.newrelic.com
+helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
+```
+
+{{ template "chart.sourcesSection" . }}
+
+## Confirm installation
+### Watch pods spin up:
+
+```
+kubectl get pods -n newrelic --watch 
+```
+
+### Check logs of opentelemetry pod that spins up: 
+```
+kubectl logs <otel-pod-name> -n newrelic
+```
+
+### Confirm data coming through in New Relic 
+You should see data reporting into New Relic within a couple of seconds to the `InfrastructureEvent` table, `Metric` table, and `Log` tables.
+```
+FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+```
+```
+FROM InfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+```
+```
+FROM Log SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+```
+## Uninstall
+
+Run the following command.
+
+```
+helm uninstall nr-k8s-otel-collector -n newrelic
+```
+
+## Values managed globally
+
+This chart implements the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
+means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
+
+Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations` and others. The full list can be found at
+[user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
+
+## GKE Autopilot
+
+If using GKE Autopilot, please set the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
+
+```
+gkeAutopilot: false
+```
+
+{{ template "chart.valuesSection" . }}
+
+**Note:** If all receivers are disabled in the deployment or in the daemonset, the agent will not start.
+
+## Metrics
+
+* [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
+* [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
+
+## Common Errors
+
+### Exporting Errors
+
+Timeout errors while starting up the collector are expected as the collector attempts to establish a connection with NR. 
+These timeout errors can also pop up over time as the collector is running but are transient and expected to self-resolve. Further improvements are underway to mitigate the amount of timeout errors we're seeing from the NR1 endpoint.
+
+```
+info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlphttp/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
+```
+
+### No such file or directory 
+
+Sometimes we see failed to open file errors on the `filelog` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, sleep) and the pod or process was terminated before the collector could read the file. 
+
+`filelog` error: 
+```
+Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
+``` 
+`hostmetrics` error:
+```
+Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
+```
+
+{{ if .Maintainers }}
+## Maintainers
+{{ range .Maintainers }}
+{{- if .Name }}
+{{- if .Url }}
+* [{{ .Name }}]({{ .Url }})
+{{- else }}
+* {{ .Name }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

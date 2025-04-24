@@ -3,8 +3,9 @@
 #
 # Optionally, specify a cluster name and log records can
 # be filtered by cluster.
-# cluster:
+# Cluster name is required to be set in order to create relationship with Daemonset entity in NR platform.
 #
+# cluster:
 # or Specify secret which contains New Relic API key
 # customSecretName: secret_name
 # customSecretLicenseKey: secret_key
@@ -23,17 +24,24 @@
 # whether your account is for the EU region or not.
 #
 # endpoint: https://log-api.newrelic.com/log/v1
+# metricsEndpoint: metric-api.newrelic.com
 
 fluentBit:
   logLevel: "info"
   path: "/var/log/containers/*.log"
+  linuxMountPath: /var
   windowsPath: "C:\\var\\log\\containers\\*.log"
   db: "/var/log/flb_kube.db"
   windowsDb: "C:\\var\\log\\flb_kube.db"
   criEnabled: true
   k8sBufferSize: "32k"
-  k8sLoggingExclude: "Off"
+  k8sLoggingExclude: "false"
   retryLimit: 5
+  # Configuration for sending custom metrics of New relic Fluent Bit output plugin.
+  # Note: Fluent Bit's internal metrics are sent automatically and are not affected by this setting from newrelic-logging chart version 1.24.0.
+  # For more information on Fluent Bit monitoring, visit:
+  # https://docs.fluentbit.io/manual/administration/monitoring
+  sendMetrics: false
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY
@@ -43,10 +51,44 @@ fluentBit:
   #     fieldRef:
   #       fieldPath: metadata.name
 
+  # Indicates how fluent-bit database is persisted
+  persistence:
+    # Define the persistent mode for fluent-bit db, allowed options are `hostPath` (default), `none`, `persistentVolume`.
+    # - `hostPath` will use hostPath to store the db file on the node disk.
+    # - `none` will disable the fluent-bit db file, this could cause log duplication or data loss in case fluent-bit gets restarted.
+    # - `persistentVolume` will use a ReadWriteMany persistent volume to store the db file. This will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead.
+    mode: "hostPath"
+
+    # In case persistence.mode is set to persistentVolume this will be needed
+    persistentVolume:
+      # The storage class should allow ReadWriteMany mode
+      storageClass:
+      # Volume and claim size.
+      size: 10Gi
+      # If dynamicProvisioning is enabled the chart will create only the PersistentVolumeClaim
+      dynamicProvisioning: true
+      # If an existingVolume is provided, we'll use it instead creating a new one
+      existingVolume:
+      # If an existingVolumeClaim is provided, we'll use it instead creating a new one
+      existingVolumeClaim:
+      # In case you need to add annotations to the created volume or claim
+      annotations:
+        volume: {}
+        claim: {}
+      # In case you need to specify any other option to your volume or claim
+      extra:
+        volume:
+        #  nfs:
+        #    path: /tmp/
+        #    server: 1.1.1.1
+        claim: {}
+
+
   # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
   # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
   # send all attributes.  If custom configuration is required, update these variables.
   config:
+    # Note that Prometheus metric collection needs the HTTP server to be online at port 2020 (see fluentBit.config.metricInstrumentation)
     service: |
       [SERVICE]
           Flush         1
@@ -60,6 +102,7 @@ fluentBit:
     inputs: |
       [INPUT]
           Name              tail
+          Alias             pod-logs-tailer
           Tag               kube.*
           Path              ${PATH}
           multiline.parser  ${LOG_PARSER}
@@ -76,6 +119,7 @@ fluentBit:
     filters: |
       [FILTER]
           Name                kubernetes
+          Alias               kubernetes-enricher
           Match               kube.*
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
@@ -85,8 +129,9 @@ fluentBit:
 
       [FILTER]
           Name           record_modifier
+          Alias          node-attributes-enricher
           Match          *
-          Record         cluster_name ${CLUSTER_NAME}
+          Record         cluster_name "${CLUSTER_NAME}"
 
 #    extraFilters: |
 #      [FILTER]
@@ -98,6 +143,7 @@ fluentBit:
       [FILTER]
           Name           kubernetes
           Match          kube.*
+          Alias          kubernetes-enricher
           # We need the full DNS suffix as Windows only supports resolving names with this suffix
           # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
           Kube_URL       https://kubernetes.default.svc.cluster.local:443
@@ -109,13 +155,15 @@ fluentBit:
       [FILTER]
           Name           nest
           Match          *
+          Alias          kubernetes-attribute-lifter
           Operation      lift
           Nested_under   kubernetes
 
       [FILTER]
           Name           record_modifier
           Match          *
-          Record         cluster_name ${CLUSTER_NAME}
+          Alias          node-attributes-enricher-filter
+          Record         cluster_name "${CLUSTER_NAME}"
           Allowlist_key  container_name
           Allowlist_key  namespace_name
           Allowlist_key  pod_name
@@ -127,9 +175,11 @@ fluentBit:
       [OUTPUT]
           Name           newrelic
           Match          *
+          Alias          newrelic-logs-forwarder
           licenseKey     ${LICENSE_KEY}
           endpoint       ${ENDPOINT}
           lowDataMode    ${LOW_DATA_MODE}
+          sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
           Retry_Limit    ${RETRY_LIMIT}
 
 #    extraOutputs: |
@@ -255,6 +305,10 @@ daemonSet:
 
 # Annotations to add to the resulting Pods of the DaemonSet.
 podAnnotations: {}
+
+# If host network should be enabled for fluentbit pods.
+# There are some inputs like UDP which will require this setting to be true as they need to bind to the host network.
+hostNetwork:
 
 # When low data mode is enabled only minimal attributes are added to the logs. Kubernetes labels and
 # annotations are not included. The plugin.type, plugin.version and plugin.source attributes are minified

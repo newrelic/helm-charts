@@ -22,7 +22,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Helm
-        uses: azure/setup-helm@v3
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'                   # default is latest (stable)
+          token: ${{ secrets.GITHUB_TOKEN }}  # only needed if version is 'latest'
 
       - name: Add Helm repositories
         run: |
@@ -38,6 +41,7 @@ jobs:
           helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
           helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
           helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
+          helm repo add k8s-agents-operator https://newrelic.github.io/k8s-agents-operator
 
       - name: Create release notes
         env:
@@ -63,10 +67,10 @@ jobs:
     needs: release-notes
     steps:
       - name: Notify release via Slack
-        uses: archive/github-actions-slack@v2.8.0
+        uses: archive/github-actions-slack@v2.9.0
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
-          slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
+          slack-channel: ${{ secrets.HELP_K8S_AGENTS_SLACK_CHANNEL }}
           slack-text: "${{ needs.release-notes.outputs.announcement }}"
 
   update-public-docs:
@@ -126,15 +130,17 @@ jobs:
           git config user.name "NewRelic-K8s-Agents-Bot"
           git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
 
-      - name: Create PR
+      - name: Create branch in forked repo
         env:
-          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_FORKS }}
         run: |
           cd ${{ env.K8S_FOLDER }}
           appVersionModified=$(echo ${appVersion} | sed 's/\./-/g' )
           branchName=add_kubernetes_release_notes-$( date "+%Y-%m-%d_%H_%M" )
           releaseFile=kubernetes-integration-${appVersionModified}.mdx
           summary="Add release notes for Kubernetes integration v${appVersion}"
+          echo "releaseFile=${releaseFile}" >> "$GITHUB_ENV"
+          echo "summary=${summary}" >> "$GITHUB_ENV"
 
           if [[ -e "${releaseFile}" ]]; then
             echo "File '${releaseFile}' already exists. Nothing to do"
@@ -147,6 +153,15 @@ jobs:
             git commit --message="feat: ${summary}"
             git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/docs-website.git
             git push --set-upstream upstream ${branchName}
+          fi
+
+      - name: Create PR in original repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+        run: |
+          if [[ -e "${releaseFile}" ]]; then
+            echo "File '${releaseFile}' already exists. Nothing to do"
+          else
             gh pr create \
               --repo newrelic/docs-website \
               --title "feat: ${summary}" \
@@ -176,11 +191,18 @@ jobs:
         with:
           repository: 'aws-samples/eks-anywhere-addons'
           # Token used to run authenticated git commands
-          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
           sparse-checkout: |
             eks-anywhere-baremetal/Addons/Partner/newrelic/newrelic.yaml
+            eks-anywhere-baremetal/Addons/Partner/newrelic/namespace.yaml
             eks-anywhere-snow/Addons/Partner/newrelic/newrelic.yaml
+            eks-anywhere-snow/Addons/Partner/newrelic/namespace.yaml
             eks-anywhere-vsphere/Addons/Partner/newrelic/newrelic.yaml
+            eks-anywhere-vsphere/Addons/Partner/newrelic/namespace.yaml
+            eks-hybrid-nodes/Addons/Partner/newrelic/newrelic.yaml
+            eks-hybrid-nodes/Addons/Partner/newrelic/namespace.yaml
+            eks-cloud/Partner/newrelic/newrelic.yaml
+            eks-cloud/Partner/newrelic/namespace.yaml
           sparse-checkout-cone-mode: false
 
       - name: Configure Git
@@ -188,33 +210,44 @@ jobs:
           git config user.name "NewRelic-K8s-Agents-Bot"
           git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
 
-      - name: Create PR
+      - name: Create branch in forked repo
         env:
-          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
         run: |
           branchName=update-nri-bundle-$( date "+%Y-%m-%d_%H_%M" )
           summary="Update nri-bundle to version ${version}"
+          echo "summary=${summary}" >> "$GITHUB_ENV"
 
           git checkout -b ${branchName}
           folders=(
             'eks-anywhere-baremetal/Addons/Partner/newrelic'
             'eks-anywhere-snow/Addons/Partner/newrelic'
             'eks-anywhere-vsphere/Addons/Partner/newrelic'
+            'eks-hybrid-nodes/Addons/Partner/newrelic'
+            'eks-cloud/Partner/newrelic'
           )
           for directory in "${folders[@]}"; do
             file_name="${directory}/newrelic.yaml"
-            yq eval --inplace ".version=\"${version}\"" "${file_name}"
+            yq eval --inplace ".spec.chart.spec.version=\"${version}\"" "${file_name}"
+            git add ${file_name}
+
+            file_name="${directory}/namespace.yaml"
+            yq eval --inplace '.metadata.labels."aws.conformance.vendor-solution-version"=env(version)' "${file_name}"
             git add ${file_name}
           done
 
           git commit --message="feat: ${summary}"
           git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/eks-anywhere-addons.git
           git push --set-upstream upstream ${branchName}
+
+      - name: Create PR in original repo
+        env:
+          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
+        run: |
           gh pr create \
             --repo aws-samples/eks-anywhere-addons \
             --title "feat: ${summary}" \
-            --body "${summary}" \
-            --reviewer elamaran11
+            --body "${summary}"
 
   notify-failure:
     if: ${{ always() && failure() }}
@@ -222,7 +255,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify failure via Slack
-        uses: archive/github-actions-slack@v2.8.0
+        uses: archive/github-actions-slack@v2.9.0
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}

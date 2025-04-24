@@ -8,13 +8,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - uses: codespell-project/actions-codespell@master
         with:
           check_filenames: true
           check_hidden: true
           skip: ./.git
-          ignore_words_list: enver
+          ignore_words_list: enver,NotIn,aks
 
   lint-test:
     name: Lint and test charts
@@ -24,15 +24,15 @@ jobs:
       bundle-changed: ${{ steps.changed.outputs.bundle }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
-      - uses: helm/chart-testing-action@v2.1.0
-      - uses: azure/setup-helm@v3
+      - uses: actions/setup-python@v5
+      - uses: helm/chart-testing-action@v2.6.1
+      - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Set up helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
@@ -68,31 +68,37 @@ jobs:
     needs: [ lint-test ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v2
-      - uses: helm/chart-testing-action@v2.1.0
-      - uses: azure/setup-helm@v3
+      - uses: actions/setup-python@v5
+      - uses: helm/chart-testing-action@v2.6.1
+      - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Install Minikube
-        uses: manusa/actions-setup-minikube@v2.9.0
+        uses: manusa/actions-setup-minikube@v2.13.1
         with:
-          minikube version: v1.31.2
-          kubernetes version: v1.27.7
+          minikube version: v1.35.0
+          kubernetes version: v1.30.0
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
-      - name: Create test ns
-        run: kubectl create ns ct
+
+      - name: Create certificate manager
+        run: |
+          helm repo add jetstack https://charts.jetstack.io
+          kubectl create ns cert-manager
+          helm install cert-manager jetstack/cert-manager \
+            --namespace cert-manager \
+            --set crds.enabled=true
 
       - name: Test install charts
-        run: ct install --namespace ct --config .github/ct-install.yaml
+        run: ct install --config .github/ct-install.yaml
       - name: Test upgrade charts
-        run: ct install --namespace ct --config .github/ct-install.yaml --upgrade
+        run: ct install --config .github/ct-install.yaml --upgrade
 
   bundle-integrity:
     name: Test nri-bundle dependencies has the same version of the common-library
@@ -100,10 +106,10 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: azure/setup-helm@v3
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Add helm repositories
         run: |
@@ -132,7 +138,7 @@ jobs:
           (
             echo CHART NAME: common-library VERSION
             find charts/nri-bundle -name Chart.yaml | \
-              xargs yq eval-all '{ .name: (.dependencies | map(select(contains({"name": "common-library"}))) | .[].version ) }' | \
+              xargs yq eval-all --no-doc '{ .name: (.dependencies | map(select(contains({"name": "common-library"}))) | .[].version ) }' | \
               tee versions.txt;
           ) | column -t -s:
 
@@ -148,10 +154,10 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v2
-      - uses: azure/setup-helm@v3
+      - uses: actions/checkout@v4
+      - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Add helm repositories
         run: |

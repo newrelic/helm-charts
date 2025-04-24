@@ -4,15 +4,30 @@ kind: Job
 metadata:
   name: {{ template "newrelic-pixie.fullname" . }}
   namespace: {{ template "newrelic-pixie.namespace" . }}
-  labels:
-    {{- include "newrelic-pixie.labels" . | nindent 4 }}
+  labels: 
+  {{- include "newrelic-pixie.labels" . | trim | nindent 4}}
+  {{- if ((.Values.job).labels) }}
+    {{- toYaml .Values.job.labels | nindent 4 }}
+  {{- end }}
+  {{- if ((.Values.job).annotations) }}
+  annotations:
+    {{ toYaml .Values.job.annotations | nindent 4 | trim }}
+  {{- end }}
 spec:
   backoffLimit: 4
+  ttlSecondsAfterFinished: 600
   template:
     metadata:
       labels:
         app.kubernetes.io/name: {{ template "newrelic-pixie.name" . }}
         release: {{.Release.Name }}
+        {{- if .Values.podLabels }}
+          {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- end }}
+      {{- if .Values.podAnnotations }}
+      annotations:
+          {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- end }}
     spec:
       {{- if .Values.image.pullSecrets }}
       imagePullSecrets:
@@ -21,7 +36,8 @@ spec:
       restartPolicy: Never
       initContainers:
       - name: cluster-registration-wait
-        image: gcr.io/pixie-oss/pixie-dev-public/curl:1.0
+        image: "{{ (.Values.clusterRegistrationWaitImage).repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
+        imagePullPolicy: "{{ (.Values.clusterRegistrationWaitImage).pullPolicy | default "IfNotPresent" }}"
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
           until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do

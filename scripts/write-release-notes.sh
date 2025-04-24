@@ -85,6 +85,15 @@ function write_chart_release_notes() {
         repository=$(cat ${folderName}/values.yaml| yq '.image.repository')
         appVersion=$(cat ${folderName}/Chart.yaml| yq '.appVersion')
         ;;
+        k8s-agents-operator)
+        repository=$(cat ${folderName}/values.yaml| yq '.controllerManager.manager.image.repository')
+        appVersion=$(cat ${folderName}/Chart.yaml| yq '.appVersion')
+        ;;
+        nr-ebpf-agent)
+        # Do nothing since this agent is a corner case
+        repository=""
+        appVersion=""
+        ;;
         *)
         echo "Unknown chart $folderName"
         ;;
@@ -93,16 +102,31 @@ function write_chart_release_notes() {
       chartUrl="https://github.com/${repository}/releases/tag/${tagname}"
       appUrl="https://github.com/${repository}/releases/tag/v${appVersion}"
 
+      if [[ "$folderName" = "nr-ebpf-agent" ]]; then
+          echo "Handling eBPF"
+          chartUrl="https://github.com/newrelic/helm-charts/releases/tag/${tagname}"
+          appUrl=""
+      fi
+      echo "${chartUrl}"
+
       # Write release notes
       echo "## ${tagname}" >> ../$release_file
-      echo "- [Chart ${tagname} release notes](${chartUrl})" >> ../$release_file
-      echo "- [App ${repository} v${appVersion} release notes](${appUrl})" >> ../$release_file
+      if [ "$chartUrl" != "" ];then
+         echo "- [Chart ${tagname} release notes](${chartUrl})" >> ../$release_file
+      fi
+      if [ "$appUrl" != "" ];then
+         echo "- [App ${repository} v${appVersion} release notes](${appUrl})" >> ../$release_file
+      fi
       echo "" >> ../$release_file
 
       # Write Slack announcement
       echo "✅ ${tagname}" >> ../$slack_file
-      echo "<${chartUrl}|Chart ${tagname} release notes>" >> ../$slack_file
-      echo "<${appUrl}|App ${repository} v${appVersion} release notes>" >> ../$slack_file
+      if [ "$chartUrl" != "" ];then
+        echo "<${chartUrl}|Chart ${tagname} release notes>" >> ../$slack_file
+      fi
+      if [ "$appUrl" != "" ];then
+        echo "<${appUrl}|App ${repository} v${appVersion} release notes>" >> ../$slack_file
+      fi
       echo "" >> ../$slack_file
 
       rm -rf $folderName

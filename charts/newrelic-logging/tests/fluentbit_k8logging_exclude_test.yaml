@@ -1,0 +1,45 @@
+suite: test fluent-bit exclude logging
+templates:
+  - templates/daemonset.yaml
+  - templates/configmap.yaml
+  - templates/persistentvolume.yaml   
+release:
+  name: my-release
+  namespace: my-namespace
+tests:  
+  - it: K8S_LOGGING_EXCLUDE set true
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        k8sLoggingExclude: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name=="K8S_LOGGING_EXCLUDE")].value
+          value: "true"
+        template: templates/daemonset.yaml
+  - it: K8S_LOGGING_EXCLUDE set false
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        k8sLoggingExclude: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name=="K8S_LOGGING_EXCLUDE")].value
+          value: "false"
+        template: templates/daemonset.yaml        
+  - it: K8S_LOGGING_EXCLUDE set value xyz and expect it to be set
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        k8sLoggingExclude: xyz
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name=="K8S_LOGGING_EXCLUDE")].value
+          value: "xyz"
+        template: templates/daemonset.yaml

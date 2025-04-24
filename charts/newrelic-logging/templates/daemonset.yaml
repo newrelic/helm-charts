@@ -29,11 +29,10 @@ spec:
         kubernetes.io/os: linux
         app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
         {{- if .Values.podLabels}}
-        {{ toYaml .Values.podLabels }}
+{{ toYaml .Values.podLabels | indent 8 }}
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
-      hostNetwork: true # This option is a requirement for the Infrastructure Agent to report the proper hostname in New Relic.
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
@@ -48,8 +47,20 @@ spec:
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- if .Values.initContainers }}
+      {{- if .Values.hostNetwork }}
+      hostNetwork: {{ .Values.hostNetwork }}
+      {{- end }}
       initContainers:
+      {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
+        - name: init
+          image: busybox:1.36
+          command: ["/bin/sh", "-c"]
+          args: ["/bin/find /db -type f -mtime +1 -delete"] # Delete all db files not updated in the last 24h
+          volumeMounts:
+            - name: fb-db-pvc
+              mountPath: /db
+      {{- end }}
+      {{- if .Values.initContainers }}
 {{ toYaml .Values.initContainers | indent 8 }}
       {{- end }}
       containers:
@@ -62,15 +73,7 @@ spec:
           imagePullPolicy: "{{ .Values.image.pullPolicy }}"
           env:
             - name: ENDPOINT
-              {{- if (include "newrelic.nrStaging" .) }}
-              value: "https://staging-log-api.newrelic.com/log/v1"
-              {{- else if .Values.endpoint }}
-              value: {{ .Values.endpoint }}
-              {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "eu" }}
-              value: "https://log-api.eu.newrelic.com/log/v1"
-              {{- else }}
-              value: "https://log-api.newrelic.com/log/v1"
-              {{- end }}
+              value: {{ include "newrelic-logging.logsEndpoint" . | quote }}
             - name: SOURCE
               value: {{ if (include "newrelic-logging.lowDataMode" .) }} "k8s" {{- else }} "kubernetes" {{- end }}
             - name: LICENSE_KEY
@@ -93,14 +96,27 @@ spec:
               {{- else }}
               value: "docker,cri"
               {{- end }}
+            # NODE_NAME needs to be defined before FB_DB, because FB_DB references NODE_NAME in its value when using persistentVolume
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            {{- if or (not .Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "hostPath") }}
             - name: FB_DB
               value: {{ .Values.fluentBit.db | quote }}
+            {{- else if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
+            - name: FB_DB
+              value: "/db/$(NODE_NAME)-fb.db"
+            {{- else }}
+            - name: FB_DB
+              value: ""
+            {{- end }}
             - name: PATH
               value: {{ .Values.fluentBit.path | quote }}
             - name: K8S_BUFFER_SIZE
               value: {{ .Values.fluentBit.k8sBufferSize | quote }}
             - name: K8S_LOGGING_EXCLUDE
-              value: {{ .Values.fluentBit.k8sLoggingExclude | quote }}
+              value: {{ .Values.fluentBit.k8sLoggingExclude | default "false" | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" . | default "false" | quote }}
             - name: RETRY_LIMIT
@@ -109,6 +125,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            - name: SEND_OUTPUT_PLUGIN_METRICS
+              value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
+            - name: METRICS_HOST
+              value: {{ include "newrelic-logging.metricsHost" . | quote }}
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
           command:
             {{- if .Values.command }}
@@ -123,13 +143,21 @@ spec:
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
-            - name: var
-              mountPath: /var
-          {{- if .Values.exposedPorts }}
-          ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
-          {{- end }}
+            - name: logs
+              # We mount /var by default because container logs could be on /var/log or /var/lib/docker/containers (symlinked to /var/log)
+              mountPath: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
+              {{- if and (.Values.fluentBit.persistence) (ne .Values.fluentBit.persistence.mode "hostPath") }}
+              readOnly: true
+              {{- end }}
+            {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
+            - name: fb-db-pvc
+              mountPath: /db
+            {{- end }}
           {{- if .Values.extraVolumeMounts }}
               {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
+          {{- end }}
+          {{- if .Values.exposedPorts }}
+          ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
           resources:
@@ -139,9 +167,18 @@ spec:
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
-        - name: var
+        - name: logs
           hostPath:
-            path: /var
+            path: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
+        {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
+        - name: fb-db-pvc
+          persistentVolumeClaim:
+            {{- if .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim }}
+            claimName: {{ .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim }}
+            {{- else }}
+            claimName: {{ template "newrelic-logging.fullname" . }}-pvc
+            {{- end }}
+        {{- end }}
       {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
       {{- end }}

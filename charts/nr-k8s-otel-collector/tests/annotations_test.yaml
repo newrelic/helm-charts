@@ -1,0 +1,56 @@
+suite: annotations
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets pod annotations to default when no values provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations.checksum/config
+        template: templates/deployment.yaml
+      - exists:
+          path: spec.template.metadata.annotations.checksum/config
+        template: templates/daemonset.yaml
+  - it: sets pod annotations from values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        podAnnotations:
+          deploymentKey1: "deploymentValue1"
+          deploymentKey2: "deploymentValue2"
+      daemonset:
+        podAnnotations:
+          daemonsetKey1: "daemonsetValue1"
+          daemonsetKey2: "daemonsetValue2"
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations.checksum/config
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.metadata.annotations.deploymentKey1
+          value: deploymentValue1
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.metadata.annotations.deploymentKey2
+          value: deploymentValue2
+        template: templates/deployment.yaml
+      - exists:
+          path: spec.template.metadata.annotations.checksum/config
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.metadata.annotations.daemonsetKey1
+          value: daemonsetValue1
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.metadata.annotations.daemonsetKey2
+          value: daemonsetValue2
+        template: templates/daemonset.yaml

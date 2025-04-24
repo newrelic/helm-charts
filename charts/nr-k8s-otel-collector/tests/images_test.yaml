@@ -1,0 +1,48 @@
+suite: images
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: has a default image tag
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ".*nil.*"
+        template: templates/deployment.yaml
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ".*nil.*"
+        template: templates/daemonset.yaml
+  - it: loads image and version
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image:
+        repository: nr/dot
+        pullPolicy: Always
+        tag: "1.1.1"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nr/dot:1.1.1
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nr/dot:1.1.1
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/daemonset.yaml

@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           ref: gh-pages
       - name: Download remote index file and check equality
@@ -38,7 +38,7 @@ jobs:
     needs: [ validate-gh-pages-index ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         # chart-releaser need all the history of the repo to see what changed in the file tree and evaluate which charts need to be released
         with:
           fetch-depth: 0
@@ -57,6 +57,8 @@ jobs:
           helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
           helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add flux2 https://fluxcd-community.github.io/helm-charts
+          helm repo add k8s-agents-operator https://newrelic.github.io/k8s-agents-operator
 
       - name: Configure Git
         run: |
@@ -91,19 +93,21 @@ jobs:
           rm ./library/CHART-TEMPLATE/Chart.yaml
 
       - name: Release library charts
-        uses: helm/chart-releaser-action@v1.3.0
+        uses: helm/chart-releaser-action@v1.6.0
         with:
           charts_dir: library
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CR_SKIP_EXISTING: true
 
       - name: Release workload charts
-        uses: helm/chart-releaser-action@v1.3.0
+        uses: helm/chart-releaser-action@v1.6.0
         env:
           # GITHUB_TOKEN does not allow to create a new workflow run,
           # so use alternative token to allow post-release workflow to run
           # Source: https://docs.github.com/en/actions/security-guides/automatic-token-authentication#using-the-github_token-in-a-workflow
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
+          CR_SKIP_EXISTING: true
 
   notify-failure:
     if: ${{ always() && failure() && (github.event_name == 'schedule') }}
@@ -111,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify failure via Slack
-        uses: archive/github-actions-slack@v2.8.0
+        uses: archive/github-actions-slack@v2.9.0
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}

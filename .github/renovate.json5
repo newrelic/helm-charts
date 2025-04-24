@@ -1,17 +1,16 @@
 {
   "extends": [
-    "config:recommended",
-    // Disable the creation of this issue that renovate updates with the pending issue we follow with Zenhub:
-    // https://github.com/newrelic/helm-charts/issues/484
-    ":disableDependencyDashboard"
+    "github>newrelic/k8s-agents-automation:renovate-base.json5"
   ],
   "bumpVersion": "patch",
-  "enabledManagers": [
-    "helm-values",
-    "helmv3",
-    "helm-requirements"
-  ],
   "packageRules": [
+    // This is a shared repository where it is not clear that generic rules apply
+    // Making rules per folders or properties runs the risk that future 
+    // projects get accidentally automerged because they are not covered in old presets
+    {
+      "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest"],
+      "automerge": false
+    },
     {
       // Group all nri-bundle dependencies together in a single PR.
       "matchFileNames": [
@@ -48,14 +47,23 @@
         "patch"
       ],
       "enabled": true
+    },
+    {
+      // Disable Flux for now.
+      "matchPackageNames": [
+        "flux",
+        "flux2",
+      ],
+      "enabled": false
     }
   ],
-  "regexManagers": [
+  "customManagers": [
     {
       // Update Super Agent chart
-      "fileMatch": [ "^charts/super-agent-deployment/Chart.yaml$" ],
+      "customType": "regex",
+      "fileMatch": [ "^charts/agent-control/Chart.yaml$" ],
       "datasourceTemplate": "docker",
-      "depNameTemplate": "newrelic/newrelic-super-agent",
+      "depNameTemplate": "newrelic/newrelic-agent-control",
       "matchStrings": [
         "appVersion: (?<currentValue>.*)  # .*"
       ]
