@@ -640,6 +640,7 @@ metrics:
 - prometheus
 {{- end }}
   processors:
+- memory_limiter
 {{- if include "nrKubernetesOtel.lowDataMode" . }}
 - metricstransform/ldm
 - metricstransform/kubeletstats
@@ -668,7 +669,6 @@ metrics:
 {{- end }}
 - attributes/self
 - k8sattributes
-- memory_limiter
 - cumulativetodelta
 - batch
   exporters:
@@ -679,6 +679,7 @@ logs:
   receivers:
 - filelog
   processors:
+- memory_limiter
 - transform/truncate
 - resource
 - k8sattributes

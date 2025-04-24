@@ -571,6 +571,7 @@ metrics/ksm:
   receivers:
 - prometheus/ksm
   processors:
+- memory_limiter
 - metricstransform/kube_pod_status_phase
 - filter/exclude_zero_value_kube_node_status_condition
 - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
@@ -597,6 +598,7 @@ metrics:
   receivers:
 - prometheus/controlplane
   processors:
+- memory_limiter
 - metricstransform/k8s_cluster_info
 {{- if include "nrKubernetesOtel.lowDataMode" . }}
 - metricstransform/ldm
@@ -609,7 +611,6 @@ metrics:
 - resource/metrics
 - attributes/self
 - k8sattributes
-- memory_limiter
 - cumulativetodelta
 - batch
   exporters:
@@ -620,6 +621,7 @@ logs/events:
   receivers:
 - k8s_events
   processors:
+- memory_limiter
 - transform/events
 - resource/events
 - batch
