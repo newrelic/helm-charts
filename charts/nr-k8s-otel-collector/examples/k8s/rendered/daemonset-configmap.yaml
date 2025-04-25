@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.9
+    helm.sh/chart: nr-k8s-otel-collector-0.8.10
 data:
   daemonset-config.yaml: |
     receivers:
@@ -465,7 +465,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.9
+            value: 0.8.10
           - key: service.name
             action: delete
           - key: service_name
@@ -624,6 +624,7 @@ data:
             - kubeletstats
             - prometheus
           processors:
+            - memory_limiter
             - metricstransform/ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
@@ -648,7 +649,6 @@ data:
             - resource/low_data_mode_inator
             - attributes/self
             - k8sattributes
-            - memory_limiter
             - cumulativetodelta
             - batch
           exporters:
@@ -657,6 +657,7 @@ data:
           receivers:
             - filelog
           processors:
+            - memory_limiter
             - transform/truncate
             - resource
             - k8sattributes
