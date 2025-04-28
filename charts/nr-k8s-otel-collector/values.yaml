@@ -632,15 +632,15 @@ deployment:
           timeout: 30s
           send_batch_size : 800
       
-      # connectors:           
-      #   routing:
-      #     default_pipelines: [metrics/default]
-      #     error_mode: propagate
-      #     table:
-      #       - statement: route() where attributes["job_label"] == "kube-state-metrics"
-      #         pipelines: [metrics/nr_ksm]
-      #       - statement: route() where attributes["job_label"] == "apiserver"
-      #         pipelines: [metrics/nr_controlplane]
+      connectors:           
+        routing:
+          default_pipelines: [metrics/default]
+          error_mode: propagate
+          table:
+            - statement: route() where attributes["job_label"] == "kube-state-metrics"
+              pipelines: [metrics/nr_ksm]
+            - statement: route() where attributes["job_label"] == "apiserver"
+              pipelines: [metrics/nr_controlplane]
       
       exporters:
         otlphttp/newrelic:
@@ -657,10 +657,17 @@ deployment:
           logs:
             level: "debug"
         pipelines:
+          metrics/prometheus:
+            receivers:
+              - prometheus/ksm
+              - prometheus/controlplane
+            processors: []
+            exporters:
+              - routing
           # If NR prometheus receivers are enabled
           metrics/nr_ksm:
             receivers:
-              - prometheus/ksm
+              - routing
             processors:
               - metricstransform/kube_pod_status_phase
               - filter/exclude_zero_value_kube_node_status_condition
@@ -685,7 +692,7 @@ deployment:
           # If NR prometheus receivers are enabled
           metrics/nr_controlplane:
             receivers:
-              - prometheus/controlplane
+              - routing
             processors:
               - metricstransform/k8s_cluster_info
               # If low data mode is disabled, the below processors not executed
@@ -705,14 +712,15 @@ deployment:
             exporters:
               - otlphttp/newrelic
         
-          # metrics/default:
-          #   receivers:
-          #     - routing
-          #   processors:
-          #     - cumulativetodelta
-          #     - batch
-          #   exporters:
-          #     - otlphttp/newrelic
+          metrics/default:
+            receivers:
+              - routing
+            processors:
+              - cumulativetodelta
+              - batch
+            exporters:
+              - otlphttp/newrelic
+
           # If NR k8s events receiver is enabled
           logs/events:
             receivers:
