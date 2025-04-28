@@ -1,4 +1,4 @@
-suite: securityContext
+suite: gkeAutopilot
 templates:
   - templates/daemonset.yaml
   - templates/daemonset-configmap.yaml
@@ -13,7 +13,7 @@ tests:
       gkeAutopilot: true
     asserts:
       - equal:
-          path: spec.template.spec.securityContext.privileged
+          path: spec.template.spec.containers[0].securityContext.privileged
           value: false
         template: templates/daemonset.yaml
       - notMatchRegex:
@@ -26,7 +26,7 @@ tests:
       licenseKey: us-whatever
     asserts:
       - equal:
-          path: spec.template.spec.securityContext.privileged
+          path: spec.template.spec.containers[0].securityContext.privileged
           value: true
         template: templates/daemonset.yaml
       - matchRegex:
