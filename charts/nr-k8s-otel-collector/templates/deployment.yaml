@@ -70,6 +70,8 @@ spec:
               value: {{ include "newrelic.common.cluster" . }}
             - name: NR_OTEL_ENDPOINT
               value: {{ include "nrKubernetesOtel.endpoint" . }}
+            - name: NR_CHART_VERSION
+              value: {{ .Chart.Version }}
             {{- with .Values.deployment.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
