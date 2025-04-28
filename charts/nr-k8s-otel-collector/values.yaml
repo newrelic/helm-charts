@@ -103,7 +103,7 @@ deployment:
           config:
             scrape_configs: 
               - job_name: kube-state-metrics
-                scrape_interval:
+                scrape_interval: 1m
                 kubernetes_sd_configs:
                   - role: pod
                 relabel_configs:
@@ -119,7 +119,7 @@ deployment:
           config:
             scrape_configs:
               - job_name: apiserver
-                scrape_interval:
+                scrape_interval: 1m
                 kubernetes_sd_configs:
                   - role: endpoints
                     namespaces:
@@ -634,12 +634,13 @@ deployment:
       
       connectors:           
         routing:
-          default_pipelines: [metrics/default]
           error_mode: propagate
           table:
-            - statement: route() where attributes["job_label"] == "kube-state-metrics"
+            - context: datapoint
+              condition: attributes["job_label"] == "kube-state-metrics"
               pipelines: [metrics/nr_ksm]
-            - statement: route() where attributes["job_label"] == "apiserver"
+            - context: datapoint
+              condition: attributes["job_label"] == "apiserver"
               pipelines: [metrics/nr_controlplane]
       
       exporters:
@@ -661,9 +662,9 @@ deployment:
             receivers:
               - prometheus/ksm
               - prometheus/controlplane
-            processors: []
             exporters:
               - routing
+              
           # If NR prometheus receivers are enabled
           metrics/nr_ksm:
             receivers:
@@ -689,6 +690,7 @@ deployment:
               - batch
             exporters:
             - otlphttp/newrelic
+
           # If NR prometheus receivers are enabled
           metrics/nr_controlplane:
             receivers:
@@ -707,15 +709,6 @@ deployment:
               - attributes/self
               - k8sattributes
               - memory_limiter
-              - cumulativetodelta
-              - batch
-            exporters:
-              - otlphttp/newrelic
-        
-          metrics/default:
-            receivers:
-              - routing
-            processors:
               - cumulativetodelta
               - batch
             exporters:
