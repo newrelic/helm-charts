@@ -65,7 +65,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 If using GKE Autopilot, please set the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
 
 ```
-gkeAutopilot: false
+gkeAutopilot: true
 ```
 
 ## Values
