@@ -1,0 +1,48 @@
+suite: licenseKey tests
+templates:
+  - templates/secret.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: licenseKey is required
+    set:
+      cluster: test
+      licenseKey: null
+    asserts:
+      - failedTemplate:
+          errorMessage: You must specify a licenseKey or a customSecretName containing it
+# generated secret
+  - it: licenseKey generates the secret
+    set:
+      cluster: test
+      licenseKey: test
+    asserts:
+      - hasDocuments:
+          count: 1
+  - it: global licenseKey generates the secret
+    set:
+      cluster: test
+      global: 
+        licenseKey: test
+    asserts:
+      - hasDocuments:
+          count: 1
+# custom secret
+  - it: licenseKey secret is not generated when custom is used
+    set:
+      cluster: test
+      customSecretName: "custom-secret"
+      customSecretLicenseKey: "custom-key"
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: licenseKey secret is not generated when global custom is used
+    set:
+      cluster: test
+      global:
+        customSecretName: "custom-secret"
+        customSecretLicenseKey: "custom-key"
+    asserts:
+      - hasDocuments:
+          count: 0
