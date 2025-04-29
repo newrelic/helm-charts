@@ -412,6 +412,14 @@ data:
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
+
+      attributes/infra-events:
+        include:
+          match_type: strict
+          attributes:
+            - key: "event.name"
+              value: "InfrastructureEvent"
+        actions:
           - key: "newrelic.event.type"
             action: upsert
             value: "OtlpInfrastructureEvent"
@@ -627,6 +635,7 @@ data:
             - memory_limiter
             - transform/events
             - resource/events
+            - attributes/infra-events
             - batch
           exporters:
             - otlphttp/newrelic
