@@ -13,11 +13,11 @@ kube-state-metrics:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nrdot-collector-k8s
+  repository: otel/opentelemetry-collector-contrib
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.0.3"
+  tag: "0.123.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -97,6 +97,1131 @@ deployment:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
 
+otel:
+  receivers:
+    deployment:
+      otlp:
+        protocols:
+          http:
+            endpoint: ${env:MY_POD_IP}:4318
+      k8s_events:
+      prometheus/ksm:
+        config:
+          scrape_configs: 
+            - job_name: kube-state-metrics
+              scrape_interval: 1m
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - action: keep
+                  regex: kube-state-metrics
+                  source_labels:
+                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                - action: replace
+                  target_label: job_label
+                  replacement: kube-state-metrics
+
+      prometheus/controlplane:
+        config:
+          scrape_configs:
+            - job_name: apiserver
+              scrape_interval: 1m
+              kubernetes_sd_configs:
+                - role: endpoints
+                  namespaces:
+                    names:
+                      - default
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                regex: default;kubernetes;https
+                source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: apiserver
+    daemonset:
+      hostmetrics:
+        # TODO (chris): this is a linux specific configuration
+        # {{- if not .Values.gkeAutopilot }}
+        # root_path: /hostfs
+        # {{- end }}
+        collection_interval: 1m
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.time:
+                enabled: false
+              system.cpu.utilization:
+                enabled: true
+          load:
+          memory:
+            metrics:
+              system.memory.utilization:
+                enabled: true
+          paging:
+            metrics:
+              system.paging.utilization:
+                enabled: false
+              system.paging.faults:
+                enabled: false
+          filesystem:
+            metrics:
+              system.filesystem.utilization:
+                enabled: true
+          disk:
+            metrics:
+              system.disk.merged:
+                enabled: false
+              system.disk.pending_operations:
+                enabled: false
+              system.disk.weighted_io_time:
+                enabled: false
+          network:
+            metrics:
+              system.network.connections:
+                enabled: false
+          # Uncomment to enable process metrics, which can be noisy but valuable.
+          # processes:
+          # process:
+          #   metrics:
+          #     process.cpu.utilization:
+          #       enabled: true
+          #     process.cpu.time:
+          #       enabled: false
+          #   mute_process_name_error: true
+          #   mute_process_exe_error: true
+          #   mute_process_io_error: true
+          #   mute_process_user_error: true
+
+      kubeletstats:
+        collection_interval: 1m
+        # {{- if not .Values.gkeAutopilot }}
+        # endpoint: "${KUBE_NODE_NAME}:10250"
+        # auth_type: "serviceAccount"
+        # insecure_skip_verify: true
+        # {{- else }}
+        # endpoint: "${KUBE_NODE_NAME}:10255"
+
+        # auth_type: "none"
+        # {{- end }}
+        metrics:
+          k8s.container.cpu_limit_utilization:
+            enabled: true
+
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: cadvisor
+              scrape_interval: 1m
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - replacement: kubernetes.default.svc.cluster.local:443
+                  target_label: __address__
+                - regex: (.+)
+                  replacement: /api/v1/nodes/$${1}/proxy/metrics/cadvisor
+                  source_labels:
+                    - __meta_kubernetes_node_name
+                  target_label: __metrics_path__
+                - action: replace
+                  target_label: job_label
+                  replacement: cadvisor
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: ${KUBE_NODE_NAME}
+                  action: keep
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+                server_name: kubernetes
+            - job_name: kubelet
+              scrape_interval: 1m
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - replacement: kubernetes.default.svc.cluster.local:443
+                  target_label: __address__
+                - regex: (.+)
+                  replacement: /api/v1/nodes/$${1}/proxy/metrics
+                  source_labels:
+                    - __meta_kubernetes_node_name
+                  target_label: __metrics_path__
+                - action: replace
+                  target_label: job_label
+                  replacement: kubelet
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: ${KUBE_NODE_NAME}
+                  action: keep
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+                server_name: kubernetes
+
+      filelog:
+        include:
+          - /var/log/pods/*/*/*.log
+        exclude:
+          # Exclude logs from opentelemetry containers
+          # filelog paths for containerd and CRI-O
+          - /var/log/pods/*/otel-collector-daemonset/*.log
+          - /var/log/pods/*/otel-collector-deployment/*.log
+          - /var/log/pods/*/containers/*-exec.log
+          # konnectivity-agent is GKE specific (gke uses containerd as default)
+          - /var/log/pods/*/konnectivity-agent/*.log
+          # filelog paths for docker CRI
+          - /var/log/container/otel-collector-daemonset/*.log
+          - /var/log/container/otel-collector-deployment/*.log
+          - /var/log/containers/*-exec.log
+        start_at: beginning
+        include_file_path: true
+        include_file_name: true
+        operators:
+          - type: router
+            id: get-format
+            routes:
+              - output: parser-docker
+                expr: 'body matches "^\\{"'
+              - output: parser-crio
+                expr: 'body matches "^[^ Z]+ "'
+              - output: parser-containerd
+                expr: 'body matches "^[^ Z]+Z"'
+          # CRI-O format
+          - type: regex_parser
+            id: parser-crio
+            regex:
+              '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            output: extract_metadata_from_filepath
+            timestamp:
+              parse_from: attributes.time
+              layout_type: gotime
+              layout: '2006-01-02T15:04:05.999999999Z07:00'
+          # Parse CRI-Containerd format
+          - type: regex_parser
+            id: parser-containerd
+            regex:
+              '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
+            output: extract_metadata_from_filepath
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          # Parse Docker format
+          - type: json_parser
+            id: parser-docker
+            output: extract_metadata_from_filepath
+            timestamp:
+              parse_from: attributes.time
+              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
+          - type: move
+            from: attributes.log
+            to: body
+          # Extract metadata from file path
+          - type: regex_parser
+            id: extract_metadata_from_filepath
+            regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]{36})\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
+            parse_from: attributes["log.file.path"]
+            cache:
+              size: 128
+          # Rename attributes
+          - type: move
+            from: attributes.stream
+            to: attributes["log.iostream"]
+          - type: move
+            from: attributes.container_name
+            to: resource["k8s.container.name"]
+          - type: move
+            from: attributes.namespace
+            to: resource["k8s.namespace.name"]
+          - type: move
+            from: attributes.pod_name
+            to: resource["k8s.pod.name"]
+          - type: move
+            from: attributes.restart_count
+            to: resource["k8s.container.restart_count"]
+          - type: move
+            from: attributes.uid
+            to: resource["k8s.pod.uid"]
+  
+  processors:
+    deployment:
+      groupbyattrs:
+        keys:
+          - pod
+          - container
+          - daemonset
+          - replicaset
+          - statefulset
+          - deployment
+          - cronjob
+          - configmap
+          - job
+          - job_name
+          - horizontalpodautoscaler
+          - persistentvolume
+          - persistentvolumeclaim
+          - endpoint
+          - mutatingwebhookconfiguration
+          - validatingwebhookconfiguration
+          - lease
+          - storageclass
+          - secret
+          - service
+          - resourcequota
+          - node
+          - namespace
+
+      transform/ksm:
+        metric_statements:
+          - context: resource
+            statements:
+              - delete_key(attributes, "k8s.node.name")
+              - delete_key(attributes, "k8s.namespace.name")
+              - delete_key(attributes, "k8s.pod.uid")
+              - delete_key(attributes, "k8s.pod.name")
+              - delete_key(attributes, "k8s.container.name")
+              - delete_key(attributes, "k8s.replicaset.name")
+              - delete_key(attributes, "k8s.deployment.name")
+              - delete_key(attributes, "k8s.statefulset.name")
+              - delete_key(attributes, "k8s.daemonset.name")
+              - delete_key(attributes, "k8s.job.name")
+              - delete_key(attributes, "k8s.cronjob.name")
+              - delete_key(attributes, "k8s.replicationcontroller.name")
+              - delete_key(attributes, "k8s.hpa.name")
+              - delete_key(attributes, "k8s.resourcequota.name")
+              - delete_key(attributes, "k8s.volume.name")
+              - set(attributes["k8s.uid.uid"], attributes["uid"])
+              - set(attributes["k8s.node.name"], attributes["node"])
+              - set(attributes["k8s.namespace.name"], attributes["namespace"])
+              - set(attributes["k8s.pod.name"], attributes["pod"])
+              - set(attributes["k8s.container.name"], attributes["container"])
+              - set(attributes["k8s.replicaset.name"], attributes["replicaset"])
+              - set(attributes["k8s.deployment.name"], attributes["deployment"])
+              - set(attributes["k8s.statefulset.name"], attributes["statefulset"])
+              - set(attributes["k8s.daemonset.name"], attributes["daemonset"])
+              - set(attributes["k8s.job.name"], attributes["job_name"])
+              - set(attributes["k8s.cronjob.name"], attributes["cronjob"])
+              - set(attributes["k8s.replicationcontroller.name"], attributes["replicationcontroller"])
+              - set(attributes["k8s.hpa.name"], attributes["horizontalpodautoscaler"])
+              - set(attributes["k8s.resourcequota.name"], attributes["resourcequota"])
+              - set(attributes["k8s.volume.name"], attributes["volumename"])
+              - set(attributes["k8s.volume.name"], attributes["persistentvolume"])
+              - set(attributes["k8s.pvc.name"], attributes["persistentvolumeclaim"])
+              - delete_key(attributes, "node")
+              - delete_key(attributes, "namespace")
+              - delete_key(attributes, "pod")
+              - delete_key(attributes, "container")
+              - delete_key(attributes, "replicaset")
+              - delete_key(attributes, "deployment")
+              - delete_key(attributes, "statefulset")
+              - delete_key(attributes, "daemonset")
+              - delete_key(attributes, "job_name")
+              - delete_key(attributes, "cronjob")
+              - delete_key(attributes, "replicationcontroller")
+              - delete_key(attributes, "horizontalpodautoscaler")
+              - delete_key(attributes, "resourcequota")
+              - delete_key(attributes, "volumename")
+              - delete_key(attributes, "persistentvolume")
+              - delete_key(attributes, "persistentvolumeclaim")
+
+      metricstransform/k8s_cluster_info:
+        transforms:
+          - include: kubernetes_build_info
+            action: update
+            new_name: k8s.cluster.info 
+
+      metricstransform/kube_pod_status_phase:
+        transforms:
+          - include: 'kube_pod_container_status_waiting'
+            match_type: strict 
+            action: update
+            new_name: 'kube_pod_container_status_phase'
+            operations:
+            - action: add_label
+              new_label: container_phase
+              new_value: waiting 
+          - include: 'kube_pod_container_status_running'
+            match_type: strict
+            action: update
+            new_name: 'kube_pod_container_status_phase'
+            operations:
+            - action: add_label
+              new_label: container_phase
+              new_value: running 
+          - include: 'kube_pod_container_status_terminated'
+            match_type: strict
+            action: update
+            new_name: 'kube_pod_container_status_phase'
+            operations:
+            - action: add_label
+              new_label: container_phase
+              new_value: terminated 
+
+      metricstransform/ldm:
+        transforms:
+          - include: .*
+            match_type: regexp
+            action: update
+            operations:
+            - action: add_label
+              new_label: low.data.mode
+              new_value: 'false'
+      
+      metricstransform/k8s_cluster_info_ldm:
+        transforms:
+          - include: k8s.cluster.info
+            action: update
+            operations: 
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/ksm:
+        transforms:
+          - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_daemonset_(created|status_(current_number_scheduled|desired_number_scheduled|updated_number_scheduled)|status_number_(available|misscheduled|ready|unavailable))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_horizontalpodautoscaler_(spec_(max_replicas|min_replicas)|status_(condition|current_replicas|desired_replicas))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_job_(owner|complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_node_status_(allocatable|condition)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_persistentvolume_(capacity_bytes|created|info|status_phase)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: kube_(replicaset_owner)
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+      
+      metricstransform/apiserver:
+        transforms:
+          - include: apiserver_storage_objects
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: go_(goroutines|threads)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: process_resident_memory_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+    
+      filter/exclude_metrics_low_data_mode:
+        metrics:
+          metric:
+            - 'HasAttrOnDatapoint("low.data.mode", "false")'
+
+      filter/exclude_zero_value_kube_node_status_condition:
+        metrics:
+          datapoint:
+            - metric.name == "kube_node_status_condition" and value_double == 0.0
+
+      filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase:
+        metrics:
+          datapoint:
+            - metric.name == "kube_persistentvolumeclaim_status_phase" and value_double == 0.0
+
+      filter/exclude_zero_value_kube_pod_status_phase:
+        metrics:
+          datapoint:
+            - metric.name == "kube_pod_status_phase" and value_double == 0.0
+
+      filter/exclude_zero_value_kube_pod_container_status:
+        metrics:
+          datapoint:
+            - metric.name == "kube_pod_container_status" and value_double == 0.0
+
+      #resource/metrics
+      
+      resource/events:
+        attributes:
+          - key: "event.name"
+            action: upsert
+            value: "InfrastructureEvent"
+          - key: "event.domain"
+            action: upsert
+            value: "newrelic-otel-event"
+          - key: "category"
+            action: upsert
+            value: "kubernetes"
+          - key: k8s.cluster.name
+            action: upsert
+            value: ${env:NR_CLUSTER_NAME}
+          - key: newrelicOnly
+            action: upsert
+            value: 'true'
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: ${env:NR_CHART_VERSION}
+
+      transform/events:
+        log_statements:
+          - context: log
+            statements:
+              - set(attributes["event.source.host"], resource.attributes["k8s.node.name"])
+
+      transform/low_data_mode_inator:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(description, "")
+              - set(unit, "")
+
+      # resource/low_data_mode_inator
+
+      # cumulativetodelta
+
+      # k8sattributes
+
+      # attributes/self
+
+      # memory_limiter
+
+      # batch
+
+    daemonset:
+      metricstransform/ldm:
+        transforms:
+          - include: .*
+            match_type: regexp
+            action: update
+            operations:
+            - action: add_label
+              new_label: low.data.mode
+              new_value: 'false'
+
+      metricstransform/kubeletstats:
+        transforms:
+          - include: container\.(cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/cadvisor:
+        transforms:
+          - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_memory_working_set_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_network_(working_set_bytes|receive_(bytes_total|errors_total)|transmit_(bytes_total|errors_total))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_spec_memory_limit_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/kubelet:
+        transforms:
+          - include: go_(goroutines|threads)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: process_resident_memory_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      metricstransform/hostmetrics:
+        transforms:
+          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.disk\.(io_time|operation_time|operations)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.(filesystem|memory)\.(usage|utilization)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.network\.(errors|io|packets)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      filter/exclude_metrics_low_data_mode:
+        metrics:
+          metric:
+            - 'HasAttrOnDatapoint("low.data.mode", "false")'
+
+      transform/truncate:
+        log_statements:
+          - context: log
+            statements:
+              - truncate_all(attributes, 4095)
+              - truncate_all(resource.attributes, 4095)
+
+      # group system.cpu metrics by cpu
+      metricstransform/hostmetrics_cpu:
+        transforms:
+          - include: system.cpu.utilization
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ state ]
+                aggregation_type: mean
+          - include: system.paging.operations
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ direction ]
+                aggregation_type: sum
+
+      # following system.% metrics reduce metrics reported by hostmetrics receiver
+      filter/exclude_cpu_utilization:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "interrupt"'
+            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "nice"'
+            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "softirq"'
+      filter/exclude_memory_utilization:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_unreclaimable"'
+            - 'metric.name == "system.memory.utilization" and attributes["state"] == "inactive"'
+            - 'metric.name == "system.memory.utilization" and attributes["state"] == "cached"'
+            - 'metric.name == "system.memory.utilization" and attributes["state"] == "buffered"'
+            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_reclaimable"'
+      filter/exclude_memory_usage:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.memory.usage" and attributes["state"] == "slab_unreclaimable"'
+            - 'metric.name == "system.memory.usage" and attributes["state"] == "inactive"'
+      filter/exclude_filesystem_utilization:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.filesystem.utilization" and attributes["type"] == "squashfs"'
+      filter/exclude_filesystem_usage:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.filesystem.usage" and attributes["type"] == "squashfs"'
+            - 'metric.name == "system.filesystem.usage" and attributes["state"] == "reserved"'
+      filter/exclude_filesystem_inodes_usage:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.filesystem.inodes.usage" and attributes["type"] == "squashfs"'
+            - 'metric.name == "system.filesystem.inodes.usage" and attributes["state"] == "reserved"'
+      filter/exclude_system_disk:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.disk.operations" and IsMatch(attributes["device"], "^loop.*") == true'
+            - 'metric.name == "system.disk.merged" and IsMatch(attributes["device"], "^loop.*") == true'
+            - 'metric.name == "system.disk.io" and IsMatch(attributes["device"], "^loop.*") == true'
+            - 'metric.name == "system.disk.io_time" and IsMatch(attributes["device"], "^loop.*") == true'
+            - 'metric.name == "system.disk.operation_time" and IsMatch(attributes["device"], "^loop.*") == true'
+      filter/exclude_system_paging:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.paging.usage" and attributes["state"] == "cached"'
+            - 'metric.name == "system.paging.operations" and attributes["type"] == "cached"'
+      filter/exclude_network:
+        metrics:
+          datapoint:
+            - 'IsMatch(metric.name, "^system.network.*") == true and attributes["device"] == "lo"'
+
+      attributes/exclude_system_paging:
+        include:
+          match_type: strict
+          metric_names:
+            - system.paging.operations
+        actions:
+          - key: type
+            action: delete
+
+      resourcedetection/cloudproviders:
+        detectors: [gcp, eks, ec2, aks, azure]
+        timeout: 2s
+        override: false
+
+      resource:
+        attributes:
+          # We set the cluster name to what the customer specified in the helm chart
+          - key: k8s.cluster.name
+            action: upsert
+            value: ${env:NR_CLUSTER_NAME}
+          - key: newrelicOnly
+            action: upsert
+            value: 'true'
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: ${env:NR_CHART_VERSION}
+          - key: service.name
+            action: delete
+          - key: service_name
+            action: delete
+
+      transform/low_data_mode_inator:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(description, "")
+              - set(unit, "")
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "id")
+              - delete_key(attributes, "name")
+              - delete_key(attributes, "interface")
+
+    shared:
+      resource/metrics:
+        attributes:
+          # We set the cluster name to what the customer specified in the helm chart
+          - key: k8s.cluster.name
+            action: upsert
+            value: ${env:NR_CLUSTER_NAME}
+          - key: newrelicOnly
+            action: upsert
+            value: 'true'
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: ${env:NR_CHART_VERSION}
+          - key: service.name
+            action: delete
+          - key: service_name
+            action: delete
+      resource/low_data_mode_inator:
+        attributes:
+          - key: http.scheme
+            action: delete
+          - key: net.host.name
+            action: delete
+          - key: net.host.port
+            action: delete
+
+      attributes/self:
+        actions:
+          - key: k8s.node.name
+            action: upsert
+            from_attribute: node
+          - key: k8s.namespace.name
+            action: upsert
+            from_attribute: namespace
+          - key: k8s.pod.name
+            action: upsert
+            from_attribute: pod
+          - key: k8s.container.name
+            action: upsert
+            from_attribute: container
+          - key: k8s.replicaset.name
+            action: upsert
+            from_attribute: replicaset
+          - key: k8s.deployment.name
+            action: upsert
+            from_attribute: deployment
+          - key: k8s.statefulset.name
+            action: upsert
+            from_attribute: statefulset
+          - key: k8s.daemonset.name
+            action: upsert
+            from_attribute: daemonset
+          - key: k8s.job.name
+            action: upsert
+            from_attribute: job_name
+          - key: k8s.cronjob.name
+            action: upsert
+            from_attribute: cronjob
+          - key: k8s.replicationcontroller.name
+            action: upsert
+            from_attribute: replicationcontroller
+          - key: k8s.hpa.name
+            action: upsert
+            from_attribute: horizontalpodautoscaler
+          - key: k8s.resourcequota.name
+            action: upsert
+            from_attribute: resourcequota
+          - key: k8s.volume.name
+            action: upsert
+            from_attribute: volumename
+          - key: k8s.volume.name
+            action: upsert
+            from_attribute: persistentvolume
+          - key: k8s.pvc.name
+            action: upsert
+            from_attribute: persistentvolumeclaim
+          - key: node
+            action: delete
+          - key: namespace
+            action: delete
+          - key: pod
+            action: delete
+          - key: container
+            action: delete
+          - key: replicaset
+            action: delete
+          - key: deployment
+            action: delete
+          - key: statefulset
+            action: delete
+          - key: daemonset
+            action: delete
+          - key: job_name
+            action: delete
+          - key: cronjob
+            action: delete
+          - key: replicationcontroller
+            action: delete
+          - key: horizontalpodautoscaler
+            action: delete
+          - key: resourcequota
+            action: delete
+          - key: volumename
+            action: delete
+          - key: persistentvolume
+            action: delete
+          - key: persistentvolumeclaim
+            action: delete
+
+      k8sattributes:
+        auth_type: "serviceAccount"
+        passthrough: false
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+        extract:
+          metadata:
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.deployment.name
+            - k8s.daemonset.name
+            - k8s.namespace.name
+            - k8s.node.name
+            - k8s.pod.start_time
+        pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.uid
+
+      memory_limiter:
+         check_interval: 1s
+         limit_percentage: 80
+         spike_limit_percentage: 25
+
+      cumulativetodelta:
+
+      batch:
+        send_batch_max_size: 1000
+        timeout: 30s
+        send_batch_size : 800
+  
+  
+  exporters:
+    deployment:
+    daemonset:
+    shared:
+      otlphttp/newrelic:
+        endpoint: ${env:NR_OTEL_ENDPOINT}
+        headers:
+          api-key: ${env:NR_LICENSE_KEY}
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+  
+  connectors:
+    deployment:
+      routing:
+        error_mode: propagate
+        table:
+          - context: datapoint
+            condition: attributes["job_label"] == "kube-state-metrics"
+            pipelines: [metrics/nr_ksm]
+          - context: datapoint
+            condition: attributes["job_label"] == "apiserver"
+            pipelines: [metrics/nr_controlplane]
+    daemonset:
+  
+  pipelines:
+    deployment:
+        metrics/nr_prometheus:
+          receivers:
+            - prometheus/ksm
+            - prometheus/controlplane
+          exporters:
+            - routing
+        metrics/nr_ksm:
+          receivers:
+            - routing
+          processors:
+            - memory_limiter
+            - metricstransform/kube_pod_status_phase
+            - filter/exclude_zero_value_kube_node_status_condition
+            - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
+            - filter/exclude_zero_value_kube_pod_status_phase
+            - filter/exclude_zero_value_kube_pod_container_status
+            # If low data mode is enabled the below processors will execute.
+            - metricstransform/ldm
+            - metricstransform/k8s_cluster_info_ldm
+            - metricstransform/ksm
+            - filter/exclude_metrics_low_data_mode
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            # If low data mode is enabled the above processors will execute.
+            - resource/metrics
+            - groupbyattrs
+            - transform/ksm
+            - attributes/self
+            - batch
+          exporters:
+            - otlphttp/newrelic
+        metrics/nr_controlplane:
+          receivers:
+            - routing
+          processors:
+            - memory_limiter
+            - metricstransform/k8s_cluster_info
+            # If low data mode is enabled the below processors will execute.
+            - metricstransform/ldm
+            - metricstransform/k8s_cluster_info_ldm
+            - metricstransform/apiserver
+            - filter/exclude_metrics_low_data_mode
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            # If low data mode is enabled the above processors will execute.
+            - resource/metrics
+            - attributes/self
+            - k8sattributes
+            - cumulativetodelta
+            - batch
+          exporters:
+            - otlphttp/newrelic
+        logs/events:
+          receivers:
+            - k8s_events
+          processors:
+            - memory_limiter
+            - transform/events
+            - resource/events
+            - batch
+          exporters:
+            - otlphttp/newrelic
+    daemonset:
+
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
 # -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
@@ -164,4 +1289,4 @@ receivers:
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
-lowDataMode:
+lowDataMode: false
