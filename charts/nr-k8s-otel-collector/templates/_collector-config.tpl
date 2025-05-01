@@ -58,6 +58,8 @@
 {{- .Values.otel.connectors.deployment | toYaml }}
 {{- end }}
 
+
+
 {{- define "daemonset-receivers" }}
 {{- $receiver_config := deepCopy .Values.otel.receivers.daemonset }}
 
