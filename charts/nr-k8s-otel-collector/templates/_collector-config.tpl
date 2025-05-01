@@ -14,17 +14,8 @@
     {{- $nr_ksm := get $pipelines "metrics/nr_ksm" | default dict -}}
     {{- $ksmProcessors := get $nr_ksm "processors" | default list -}}
     {{- $ksmFiltered := list -}}
-
     {{- range $ksmProcessors }}
-      {{- if not (or
-        (eq . "metricstransform/ldm")
-        (eq . "metricstransform/k8s_cluster_info_ldm")
-        (eq . "metricstransform/ksm")
-        (eq . "filter/exclude_metrics_low_data_mode")
-        (eq . "transform/low_data_mode_inator")
-        (eq . "resource/low_data_mode_inator")) -}}
-        {{- $ksmFiltered = append $ksmFiltered . -}}
-      {{- end }}
+      {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/k8s_cluster_info_ldm") (eq . "metricstransform/ksm") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $ksmFiltered = append $ksmFiltered . }}{{- end }}
     {{- end }}
     {{- $_ := set $nr_ksm "processors" $ksmFiltered -}}
     {{- $_ := set $pipelines "metrics/nr_ksm" $nr_ksm -}}
@@ -36,15 +27,7 @@
     {{- $cpProcessors := get $nr_cp "processors" | default list -}}
     {{- $cpFiltered := list -}}
     {{- range $cpProcessors }}
-      {{- if not (or
-        (eq . "metricstransform/ldm")
-        (eq . "metricstransform/k8s_cluster_info_ldm")
-        (eq . "metricstransform/apiserver")
-        (eq . "filter/exclude_metrics_low_data_mode")
-        (eq . "transform/low_data_mode_inator")
-        (eq . "resource/low_data_mode_inator")) -}}
-        {{- $cpFiltered = append $cpFiltered . -}}
-      {{- end }}
+      {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/k8s_cluster_info_ldm") (eq . "metricstransform/apiserver") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $cpFiltered = append $cpFiltered . }}{{- end }}
     {{- end }}
     {{- $_ := set $nr_cp "processors" $cpFiltered -}}
     {{- $_ := set $pipelines "metrics/nr_controlplane" $nr_cp -}}
