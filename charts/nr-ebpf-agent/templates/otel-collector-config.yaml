@@ -1,7 +1,8 @@
+{{- $globalClusterName := include "nr-ebpf-agent.clusterName" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "nr-ebpf-agent.fullname" . }}-config
+  name: {{ include "nr-ebpf-agent.otelconfig.name" . }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
@@ -11,6 +12,13 @@ data:
           protocols:
             grpc:
               endpoint: $RECEIVER_ENDPOINT:4317
+              {{- if (hasKey .Values "tls") }}
+              {{- if eq .Values.tls.enabled true }}
+              tls:
+                cert_file: "{{ .Values.tls.autoGenerateCert.certPath }}tls.crt"
+                key_file: "{{ .Values.tls.autoGenerateCert.certPath }}tls.key"
+              {{- end }}
+              {{- end }}
       processors:
         k8sattributes/local_k8s_md:
           auth_type: 'serviceAccount'
@@ -26,6 +34,10 @@ data:
               - k8s.node.name
               # This is a custom attribute to get the k8s service name corresponding to the k8s pod ip.
               - k8s.service.name
+            labels:
+              - tag_name: apm.pod.label
+                key: newrelic-k8s-agents-operator-version
+                from: pod
           pod_association: # Rules to associate the incoming OTel data with a pod. Order matters.
             - sources:
               - from: resource_attribute
@@ -72,6 +84,70 @@ data:
               from_attribute: remote_addr
               action: upsert
 
+        filter/apm_instrumented_pods: # Drop data from pods where an APM agent is installed
+          error_mode: ignore
+          traces:
+            span:
+              - 'resource.attributes["apm.pod.label"] != nil'
+          metrics:
+            metric:
+              - 'resource.attributes["apm.pod.label"] != nil'
+
+        filter/nill_service_names: # Drop Data that will be mapped to an empty service name.
+          error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+          traces:
+            span:
+              - 'resource.attributes["k8s.service.name"] == "-" or resource.attributes["k8s.service.name"] == ""'
+              - 'resource.attributes["k8s.service.name"] == nil and (resource.attributes["service.name"] == "-" or resource.attributes["service.name"] == "")'
+          metrics:
+            metric:
+              - 'resource.attributes["k8s.service.name"] == "-" or resource.attributes["k8s.service.name"] == ""'
+              - 'resource.attributes["k8s.service.name"] == nil and (resource.attributes["service.name"] == "-" or resource.attributes["service.name"] == "")'
+
+        filter/kube_system: # Drop data from the kube-service namespace
+          error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+          traces:
+            span:
+              - 'resource.attributes["k8s.namespace.name"] == "kube-system"'
+          metrics:
+            metric:
+              - 'resource.attributes["k8s.namespace.name"] == "kube-system"'
+
+        filter/new_relic: # Drop data from the NewRelic namespace
+          error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+          traces:
+            span:
+              - 'resource.attributes["k8s.namespace.name"] == "newrelic"'
+          metrics:
+            metric:
+              - 'resource.attributes["k8s.namespace.name"] == "newrelic"'
+
+        filter/ip_named_services: # Drop data where the service name maps to an IP address
+          error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+          traces:
+            span:
+              - 'resource.attributes["k8s.service.name"] == nil'
+          metrics:
+            metric:
+              - 'resource.attributes["k8s.service.name"] == nil'
+
+        filter/drop_specific_service_names: # Drop data from namespaces that match the provided regex
+          error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
+          traces:
+            span:
+              {{- if .Values.allowServiceNameRegex }}
+              - 'not IsMatch(resource.attributes["k8s.service.name"], "${ALLOW_SERVICE_NAME_REGEX}") and IsMatch(resource.attributes["k8s.service.name"], "${DROP_SERVICE_NAME_REGEX}")'
+              {{- else }}
+              - 'IsMatch(resource.attributes["k8s.service.name"], "${DROP_SERVICE_NAME_REGEX}")'
+              {{- end }}
+          metrics:
+            metric:
+              {{- if .Values.allowServiceNameRegex }}
+              - 'not IsMatch(resource.attributes["k8s.service.name"], "${ALLOW_SERVICE_NAME_REGEX}") and IsMatch(resource.attributes["k8s.service.name"], "${DROP_SERVICE_NAME_REGEX}")'
+              {{- else }}
+              - 'IsMatch(resource.attributes["k8s.service.name"], "${DROP_SERVICE_NAME_REGEX}")'
+              {{- end }}
+
         resource/setup_for_export:
           # Setup the resource attr. to export to the endpoint.
           attributes:
@@ -79,6 +155,7 @@ data:
             - key: peer.service
               from_attribute: k8s.service.name
               action: upsert
+            # TODO(kpattaswamy): Figure out how to set this only when trace_role=server to cause only the client->server direction to render instead of both directions.
             # From the perspective of entity platform, we build the source guid from `parent.service.name` and the target from `service.name`. Hence server-side spans will show the client->server direction.
             - key: parent.service.name
               from_attribute: peer.service
@@ -94,13 +171,11 @@ data:
               action: insert
               value: $CLUSTER_NAME
             # Remove the addr/ports.
-            - key: local_addr
-              action: delete
-            - key: local_port
-              action: delete
             - key: remote_addr
               action: delete
             - key: remote_port
+              action: delete
+            - key: apm.pod.label
               action: delete
 
       exporters:
@@ -109,27 +184,68 @@ data:
           headers:
             "api-key": "$NR_LICENSE_KEY"
       service:
+        {{- if include "newrelic.common.verboseLog" . }}
+        telemetry:
+          logs:
+            level: "debug"
+        {{- end }}
         pipelines:
           traces:
-            receivers: 
+            receivers:
               - otlp
             processors:
               - resource/setup_for_local_k8s_md
               - k8sattributes/local_k8s_md
+              - filter/nill_service_names
+              {{- if .Values.dropAPMEnabledPods}}
+              - filter/apm_instrumented_pods
+              {{- end}}
+              {{- if .Values.dropDataKubeSystem}}
+              - filter/kube_system
+              {{- end}}
+              {{- if .Values.dropDataNewRelic}}
+              - filter/new_relic
+              {{- end}}
+              {{- if .Values.dropDataIpServiceNames}}
+              - filter/ip_named_services
+              {{- end}}
+              {{- if .Values.dropDataServiceNameRegex }}
+              - filter/drop_specific_service_names
+              {{- end}}
               - resource/setup_for_remote_k8s_md
               - k8sattributes/remote_k8s_md
               - resource/setup_for_export
             exporters:
               - otlp
           metrics:
-            receivers: 
+            receivers:
               - otlp
             processors:
               - resource/setup_for_local_k8s_md
               - k8sattributes/local_k8s_md
+              - filter/nill_service_names
+              {{- if .Values.dropAPMEnabledPods}}
+              - filter/apm_instrumented_pods
+              {{- end}}
+              {{- if .Values.dropDataKubeSystem}}
+              - filter/kube_system
+              {{- end}}
+              {{- if .Values.dropDataNewRelic}}
+              - filter/new_relic
+              {{- end}}
+              {{- if .Values.dropDataIpServiceNames}}
+              - filter/ip_named_services
+              {{- end}}
+              {{- if .Values.dropDataServiceNameRegex }}
+              - filter/drop_specific_service_names
+              {{- end}}
               - resource/setup_for_remote_k8s_md
               - k8sattributes/remote_k8s_md
               - resource/setup_for_export
             exporters:
               - otlp
+  {{- if $globalClusterName}}
+  clusterName: {{ $globalClusterName }}
+  {{ else }}
   clusterName: {{ required "Please set the Kubernetes cluster name" .Values.cluster | quote }}
+  {{ end }}

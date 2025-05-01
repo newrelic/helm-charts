@@ -54,3 +54,24 @@ tests:
             helm.sh/chart: fixed
             one: overwriting
             two: second
+
+  - it: truncates long labels
+    set:
+      serviceAccount:
+        create: true
+      labels:
+        a-label-that-should-fail: a-really-long-label-that-should-break-labels-because-it-has-68-chars-with-final-dash
+        a-label-that-should-fail-2: a-really-long-label-that-should-break-labels-but-this-time-without-final-dash
+        helm.sh/chart: fixed
+    asserts:
+      - equal:
+          path: metadata.labels
+          value:
+          # a-label-that-should-fail: a-really-long-label-that-should-break-labels-because-it-has-68- but the final dash should be removed.
+            a-label-that-should-fail: a-really-long-label-that-should-break-labels-because-it-has-68
+            a-label-that-should-fail-2: a-really-long-label-that-should-break-labels-but-this-time-with
+            app.kubernetes.io/instance: my-release
+            app.kubernetes.io/managed-by: Helm
+            app.kubernetes.io/name: CHART-TEMPLATE
+            app.kubernetes.io/version: 1.16.0
+            helm.sh/chart: fixed

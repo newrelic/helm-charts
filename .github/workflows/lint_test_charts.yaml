@@ -32,7 +32,7 @@ jobs:
       - uses: helm/chart-testing-action@v2.6.1
       - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Set up helm-unittest
         run: helm plugin install https://github.com/helm-unittest/helm-unittest
@@ -76,13 +76,13 @@ jobs:
       - uses: helm/chart-testing-action@v2.6.1
       - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Install Minikube
-        uses: manusa/actions-setup-minikube@v2.11.0
+        uses: manusa/actions-setup-minikube@v2.13.1
         with:
-          minikube version: v1.33.1
-          kubernetes version: v1.28.11
+          minikube version: v1.35.0
+          kubernetes version: v1.30.0
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
@@ -109,7 +109,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Add helm repositories
         run: |
@@ -157,7 +157,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v4
         with:
-          version: 'v3.0.0'
+          version: 'v3.2.0'
 
       - name: Add helm repositories
         run: |

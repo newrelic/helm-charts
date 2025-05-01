@@ -65,13 +65,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 If using GKE Autopilot, please set the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
 
 ```
-privileged: false
-receivers:
-  filelog:
-    enabled: false
-daemonset:
-  containerSecurityContext:
-    privileged: false
+gkeAutopilot: true
 ```
 
 ## Values
@@ -106,20 +100,20 @@ daemonset:
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| gkeAutopilot | bool | `false` | If deploying to a GKE autopilot cluster, set to true |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| image.repository | string | `"newrelic/nr-otel-collector"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
-| image.tag | string | `"0.7.1"` | Overrides the image tag whose default is the chart appVersion. |
+| image.repository | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
+| image.tag | string | `"1.0.3"` | Overrides the image tag whose default is the chart appVersion. |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
-| lowDataMode | bool | `false` | Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false |
+| lowDataMode | bool | `true` | Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podLabels | object | `{}` | Additional labels for chart pods |
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
-| privileged | bool | `true` | Run the integration with full access to the host filesystem and network. Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
@@ -167,5 +161,6 @@ Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": 
 
 ## Maintainers
 
-* [csongnr](https://github.com/csongnr)
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
+* [kpattaswamy](https://github.com/kpattaswamy)
+* [Philip-R-Beckwith](https://github.com/Philip-R-Beckwith)

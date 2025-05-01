@@ -13,11 +13,11 @@ kube-state-metrics:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nr-otel-collector
+  repository: newrelic/nrdot-collector-k8s
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "0.7.1"
+  tag: "1.0.3"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -39,10 +39,9 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
-# -- Run the integration with full access to the host filesystem and network.
-# Running in this mode allows reporting fine-grained cpu, memory, process and network metrics for your nodes.
-# @default -- `true`
-privileged: true
+# -- If deploying to a GKE autopilot cluster, set to true
+# @default -- `false`
+gkeAutopilot: false
 
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -160,6 +159,6 @@ receivers:
     # @default -- `true`
     enabled: true
 
-# -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
-# @default -- `false`
-lowDataMode: true
+# -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
+# @default -- `true`
+lowDataMode:
