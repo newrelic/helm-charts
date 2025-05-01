@@ -86,6 +86,10 @@
 
 {{- define "daemonset-pipelines" }}
 {{- $pipelines := deepCopy .Values.otel.pipelines.daemonset }}
+{{- /* Remove logs pipelines if GKE Autopilot is enabled */}}
+{{- if .Values.gkeAutopilot | default false }}
+  {{- $_ := unset $pipelines "logs" }}
+{{- end }}
 {{- if include "nrKubernetesOtel.lowDataMode" . | default "false" | eq "false" }}
   {{- /* Process metrics/nr pipeline */}}
   {{- if hasKey $pipelines "metrics/nr" }}
