@@ -22,8 +22,8 @@
         (eq . "metricstransform/ksm")
         (eq . "filter/exclude_metrics_low_data_mode")
         (eq . "transform/low_data_mode_inator")
-        (eq . "resource/low_data_mode_inator")) }}
-        {{- $ksmFiltered = append $ksmFiltered . }}
+        (eq . "resource/low_data_mode_inator")) -}}
+        {{- $ksmFiltered = append $ksmFiltered . -}}
       {{- end }}
     {{- end }}
     {{- $_ := set $nr_ksm "processors" $ksmFiltered -}}
@@ -33,8 +33,7 @@
   {{- /* Process metrics/nr_controlplane pipeline */}}
   {{- if hasKey $pipelines "metrics/nr_controlplane" }}
     {{- $nr_cp := get $pipelines "metrics/nr_controlplane" | default dict -}}
-    {{- $cpProcessors := get $nr_cp
-         "processors" | default list -}}
+    {{- $cpProcessors := get $nr_cp "processors" | default list -}}
     {{- $cpFiltered := list -}}
     {{- range $cpProcessors }}
       {{- if not (or
@@ -43,8 +42,8 @@
         (eq . "metricstransform/apiserver")
         (eq . "filter/exclude_metrics_low_data_mode")
         (eq . "transform/low_data_mode_inator")
-        (eq . "resource/low_data_mode_inator")) }}
-        {{- $cpFiltered = append $cpFiltered . }}
+        (eq . "resource/low_data_mode_inator")) -}}
+        {{- $cpFiltered = append $cpFiltered . -}}
       {{- end }}
     {{- end }}
     {{- $_ := set $nr_cp "processors" $cpFiltered -}}
