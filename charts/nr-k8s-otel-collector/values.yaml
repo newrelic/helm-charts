@@ -1201,11 +1201,8 @@ otel:
     daemonset:
       metrics/nr:
         receivers:
-          #{{- if .Values.receivers.hostmetrics.enabled }}
           - hostmetrics
-          #{{- if .Values.receivers.kubeletstats.enabled }}
           - kubeletstats
-          #{{- if .Values.receivers.prometheus.enabled }}
           - prometheus
         processors:
           - memory_limiter
@@ -1241,7 +1238,7 @@ otel:
           - batch
         exporters:
           - otlphttp/newrelic
-      #{{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
+      # The logs receiver will be enabled if gkeAutopilor is False
       logs:
         receivers:
           - filelog
@@ -1286,37 +1283,6 @@ verboseLog:
 # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
 # @default -- `false`
 nrStaging:
-
-receivers:
-  prometheus:
-    # -- (bool) Specifies whether the `prometheus` receiver is enabled
-    # @default -- `true`
-    enabled: true
-    # -- Sets the scrape interval for the `prometheus` receiver
-    # @default -- `1m`
-    scrapeInterval: 1m
-  k8sEvents:
-    # -- (bool) Specifies whether the `k8s_events` receiver is enabled
-    # @default -- `true`
-    enabled: true
-  hostmetrics:
-    # -- (bool) Specifies whether the `hostmetrics` receiver is enabled
-    # @default -- `true`
-    enabled: true
-    # -- Sets the scrape interval for the `hostmetrics` receiver
-    # @default -- `1m`
-    scrapeInterval: 1m
-  kubeletstats:
-    # -- (bool) Specifies whether the `kubeletstats` receiver is enabled
-    # @default -- `true`
-    enabled: true
-    # -- Sets the scrape interval for the `kubeletstats` receiver
-    # @default -- `1m`
-    scrapeInterval: 1m
-  filelog:
-    # -- (bool) Specifies whether the `filelog` receiver is enabled
-    # @default -- `true`
-    enabled: true
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
