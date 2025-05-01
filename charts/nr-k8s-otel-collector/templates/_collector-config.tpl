@@ -80,17 +80,7 @@
     {{- $filteredProcessors := list -}}
 
     {{- range $processors }}
-    {{- if not (or
-        (eq . "metricstransform/ldm")
-        (eq . "metricstransform/kubeletstats")
-        (eq . "metricstransform/cadvisor")
-        (eq . "metricstransform/kubelet")
-        (eq . "metricstransform/hostmetrics")
-        (eq . "filter/exclude_metrics_low_data_mode")
-        (eq . "transform/low_data_mode_inator")
-        (eq . "resource/low_data_mode_inator")) }}
-        {{- $filteredProcessors = append $filteredProcessors . }}
-      {{- end }}
+      {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/kubeletstats") (eq . "metricstransform/cadvisor") (eq . "metricstransform/kubelet") (eq . "metricstransform/hostmetrics") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $filteredProcessors = append $filteredProcessors . }}{{- end }}
     {{- end }}
     {{- $_ := set $nr_metrics "processors" $filteredProcessors -}}
     {{- $_ := set $pipelines "metrics/nr" $nr_metrics -}}
