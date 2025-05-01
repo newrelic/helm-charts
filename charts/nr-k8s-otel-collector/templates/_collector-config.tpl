@@ -58,10 +58,24 @@
 {{- .Values.otel.connectors.deployment | toYaml }}
 {{- end }}
 
-
-
 {{- define "daemonset-receivers" }}
-{{- .Values.otel.receivers.daemonset | toYaml }}
+{{- $receiver_config := deepCopy .Values.otel.receivers.daemonset }}
+
+{{- if .Values.gkeAutopilot | default false | eq false }}
+  {{- /* Non-GKE Autopilot: set root_path if present, set kubeletstats for serviceAccount */}}
+  {{- if $receiver_config.hostmetrics.root_path }}
+    {{- $_ := set $receiver_config.hostmetrics "root_path" $receiver_config.hostmetrics.root_path }}
+  {{- end }}
+  {{- $_ := set $receiver_config.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10250" }}
+  {{- $_ := set $receiver_config.kubeletstats "auth_type" "serviceAccount" }}
+  {{- $_ := set $receiver_config.kubeletstats "insecure_skip_verify" true }}
+{{- else }}
+  {{- /* GKE Autopilot: remove root_path, set kubeletstats for no auth */}}
+  {{- $_ := unset $receiver_config.hostmetrics "root_path" }}
+  {{- $_ := set $receiver_config.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10255" }}
+  {{- $_ := set $receiver_config.kubeletstats "auth_type" "none" }}
+{{- end }}
+{{- $receiver_config | toYaml }}
 {{- end }}
 
 {{- define "daemonset-processors" }}
@@ -69,7 +83,32 @@
 {{- end }}
 
 {{- define "daemonset-pipelines" }}
-{{- .Values.otel.pipelines.daemonset | toYaml }}
+{{- $pipelines := deepCopy .Values.otel.pipelines.daemonset }}
+{{- if include "nrKubernetesOtel.lowDataMode" . | default "false" | eq "false" }}
+  {{- /* Process metrics/nr pipeline */}}
+  {{- if hasKey $pipelines "metrics/nr" }}
+    {{- $nr_metrics := get $pipelines "metrics/nr" | default dict -}}
+    {{- $processors := get $nr_metrics "processors" | default list -}}
+    {{- $filteredProcessors := list -}}
+
+    {{- range $processors }}
+    {{- if not (or
+        (eq . "metricstransform/ldm")
+        (eq . "metricstransform/kubeletstats")
+        (eq . "metricstransform/cadvisor")
+        (eq . "metricstransform/kubelet")
+        (eq . "metricstransform/hostmetrics")
+        (eq . "filter/exclude_metrics_low_data_mode")
+        (eq . "transform/low_data_mode_inator")
+        (eq . "resource/low_data_mode_inator")) }}
+        {{- $filteredProcessors = append $filteredProcessors . }}
+      {{- end }}
+    {{- end }}
+    {{- $_ := set $nr_metrics "processors" $filteredProcessors -}}
+    {{- $_ := set $pipelines "metrics/nr" $nr_metrics -}}
+  {{- end }}
+{{- end }}
+{{- $pipelines | toYaml }}
 {{- end }}
 
 {{- define "daemonset-connector" }}

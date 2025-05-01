@@ -157,9 +157,8 @@ otel:
     daemonset:
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        # {{- if not .Values.gkeAutopilot }}
-        # root_path: /hostfs
-        # {{- end }}
+        # The root_path is templated by _config.tpl
+        root_path: /hostfs
         collection_interval: 1m
         scrapers:
           cpu:
@@ -210,15 +209,7 @@ otel:
 
       kubeletstats:
         collection_interval: 1m
-        # {{- if not .Values.gkeAutopilot }}
-        # endpoint: "${KUBE_NODE_NAME}:10250"
-        # auth_type: "serviceAccount"
-        # insecure_skip_verify: true
-        # {{- else }}
-        # endpoint: "${KUBE_NODE_NAME}:10255"
-
-        # auth_type: "none"
-        # {{- end }}
+        # The endpoint, auth_type and insecurity is templated by _config.tpl
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
@@ -669,7 +660,6 @@ otel:
           datapoint:
             - metric.name == "kube_pod_container_status" and value_double == 0.0
 
-      #resource/metrics
       
       resource/events:
         attributes:
@@ -704,19 +694,7 @@ otel:
             statements:
               - set(description, "")
               - set(unit, "")
-
-      # resource/low_data_mode_inator
-
-      # cumulativetodelta
-
-      # k8sattributes
-
-      # attributes/self
-
-      # memory_limiter
-
-      # batch
-
+              
     daemonset:
       metricstransform/ldm:
         transforms:
@@ -1221,7 +1199,60 @@ otel:
           exporters:
             - otlphttp/newrelic
     daemonset:
-
+      metrics/nr:
+        receivers:
+          #{{- if .Values.receivers.hostmetrics.enabled }}
+          - hostmetrics
+          #{{- if .Values.receivers.kubeletstats.enabled }}
+          - kubeletstats
+          #{{- if .Values.receivers.prometheus.enabled }}
+          - prometheus
+        processors:
+          - memory_limiter
+          # If low data mode is enabled the below processors will execute.
+          - metricstransform/ldm
+          - metricstransform/kubeletstats
+          - metricstransform/cadvisor
+          - metricstransform/kubelet
+          - metricstransform/hostmetrics
+          - filter/exclude_metrics_low_data_mode
+          # If low data mode is enabled the above processors will execute.
+          - metricstransform/hostmetrics_cpu
+          - transform/truncate
+          - filter/exclude_cpu_utilization
+          - filter/exclude_memory_utilization
+          - filter/exclude_memory_usage
+          - filter/exclude_filesystem_utilization
+          - filter/exclude_filesystem_usage
+          - filter/exclude_filesystem_inodes_usage
+          - filter/exclude_system_disk
+          - filter/exclude_system_paging
+          - filter/exclude_network
+          - attributes/exclude_system_paging
+          - resourcedetection/cloudproviders
+          - resource
+          # If low data mode is enabled the below processors will execute.
+          - transform/low_data_mode_inator
+          - resource/low_data_mode_inator
+          # If low data mode is enabled the above processors will execute.
+          - attributes/self
+          - k8sattributes
+          - cumulativetodelta
+          - batch
+        exporters:
+          - otlphttp/newrelic
+      #{{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
+      logs:
+        receivers:
+          - filelog
+        processors:
+          - memory_limiter
+          - transform/truncate
+          - resource
+          - k8sattributes
+          - batch
+        exporters:
+          - otlphttp/newrelic
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
 # -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
