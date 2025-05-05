@@ -16,11 +16,11 @@ data:
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
-      prometheus/ksm:
+      prometheus/ksm_freq_metrics:
         config:
           scrape_configs: 
             - job_name: kube-state-metrics
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeIntervalFreq }}
               kubernetes_sd_configs:
                 - role: pod
               relabel_configs:
@@ -31,12 +31,129 @@ data:
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
+              metric_relabel_configs:
+                # Drop metrics with prefix kube_deployment
+                - action: drop
+                  regex: ^kube_deployment.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_daemonset
+                - action: drop
+                  regex: ^kube_daemonset.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_service
+                - action: drop
+                  regex: ^kube_service.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_horizontalpodautoscaler
+                - action: drop
+                  regex: ^kube_horizontalpodautoscaler.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_persistentvolume
+                - action: drop
+                  regex: ^kube_persistentvolume.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_job
+                - action: drop
+                  regex: ^kube_job.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_statefulset
+                - action: drop
+                  regex: ^kube_statefulset.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_cronjob
+                - action: drop
+                  regex: ^kube_cronjob.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_configmap
+                - action: drop
+                  regex: ^kube_configmap.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_endpoint
+                - action: drop
+                  regex: ^kube_endpoint.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_lease
+                - action: drop
+                  regex: ^kube_lease.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_mutatingwebhook
+                - action: drop
+                  regex: ^kube_mutatingwebhook.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_replicaset
+                - action: drop
+                  regex: ^kube_replicaset.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_resourcequota
+                - action: drop
+                  regex: ^kube_resourcequota.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_secret
+                - action: drop
+                  regex: ^kube_secret.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_storage
+                - action: drop
+                  regex: ^kube_storage.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix kube_validating
+                - action: drop
+                  regex: ^kube_validating.*
+                  source_labels:
+                    - __name__
+                # Drop metrics with prefix scrape_
+                - action: drop
+                  regex: ^scrape_.*
+                  source_labels:
+                    - __name__
+      prometheus/ksm_nonfreq_metrics:
+        config:
+          scrape_configs: 
+            - job_name: kube-state-metrics
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeIntervalNonFreq }}
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                - action: keep
+                  regex: kube-state-metrics
+                  source_labels:
+                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                - action: replace
+                  target_label: job_label
+                  replacement: kube-state-metrics
+              metric_relabel_configs:
+                # Drop metrics with prefix kube_pod
+                - action: drop
+                  regex: ^kube_pod.*
+                  source_labels: 
+                    - __name__
+                # Drop metrics with prefix kube_node
+                - action: drop
+                  regex: ^kube_node.*
+                  source_labels: 
+                    - __name__
 
       prometheus/controlplane:
         config:
           scrape_configs:
             - job_name: apiserver
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeIntervalNonFreq }}
               kubernetes_sd_configs:
                 - role: endpoints
                   namespaces:
@@ -544,7 +661,8 @@ data:
         {{- if .Values.receivers.prometheus.enabled }}
         metrics/ksm:
           receivers:
-            - prometheus/ksm
+            - prometheus/ksm_freq_metrics
+            - prometheus/ksm_nonfreq_metrics
           processors:
             - memory_limiter
             - metricstransform/kube_pod_status_phase
