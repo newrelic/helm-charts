@@ -186,6 +186,12 @@ data:
     processors:
       groupbyattrs:
         keys:
+          - k8s.namespace.name
+          - k8s.node.name
+          - low.data.mode
+          - job_label
+      groupbyattrs/ksm:
+        keys:
           - pod
           - container
           - daemonset
@@ -679,10 +685,10 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
-            - groupbyattrs
             - transform/ksm
             - attributes/self
             - batch
+            - groupbyattrs
           exporters:
             - otlphttp/newrelic
         {{- end }}
@@ -706,6 +712,7 @@ data:
             - k8sattributes
             - cumulativetodelta
             - batch
+            - groupbyattrs
           exporters:
             - otlphttp/newrelic
         {{- end }}

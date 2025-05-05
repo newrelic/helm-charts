@@ -233,6 +233,12 @@ data:
             to: resource["k8s.pod.uid"]
 
     processors:
+      groupbyattrs:
+        keys:
+          - k8s.namespace.name
+          - k8s.node.name
+          - low.data.mode
+          - job_label
       metricstransform/ldm:
         transforms:
           - include: .*
@@ -696,6 +702,7 @@ data:
             - k8sattributes
             - cumulativetodelta
             - batch
+            - groupbyattrs
           exporters:
             - otlphttp/newrelic
         {{- end }}
