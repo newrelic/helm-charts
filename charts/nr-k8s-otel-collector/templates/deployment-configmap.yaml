@@ -250,24 +250,6 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
-          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
           - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
             action: update
             match_type: regexp
@@ -280,15 +262,6 @@ data:
       
       metricstransform/apiserver:
         transforms:
-          - include: apiserver_storage_objects
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
