@@ -70,8 +70,6 @@ data:
       groupbyattrs:
         keys:
           - k8s.namespace.name
-          - k8s.node.name
-          - low.data.mode
           - job_label
 
       transform/ksm:
@@ -132,6 +130,10 @@ data:
           - include: kubernetes_build_info
             action: update
             new_name: k8s.cluster.info
+            operations:
+              - action: add_label
+                new_label: newrelic.datamode
+                new_value: {{ if include "nrKubernetesOtel.lowDataMode" . }}low{{ else }}default{{ end }}
 
       metricstransform/kube_pod_status_phase:
         transforms:
@@ -384,8 +386,13 @@ data:
 
       transform/low_data_mode_inator:
         metric_statements:
-          - set(metric.description, "")
-          - set(metric.unit, "")
+          - context: metric
+            statements:
+              - set(description, "")
+              - set(unit, "")
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "low.data.mode")
 
       resource/low_data_mode_inator:
         attributes:
