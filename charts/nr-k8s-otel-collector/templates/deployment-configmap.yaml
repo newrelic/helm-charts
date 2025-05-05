@@ -394,10 +394,8 @@ data:
 
       transform/low_data_mode_inator:
         metric_statements:
-          - context: metric
-            statements:
-              - set(description, "")
-              - set(unit, "")
+          - set(metric.description, "")
+          - set(metric.unit, "")
 
       resource/low_data_mode_inator:
         attributes:
@@ -406,6 +404,10 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
             action: delete
 
       cumulativetodelta:
