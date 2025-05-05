@@ -138,18 +138,15 @@ cadvisor should be scraped by Opentelemetry deployed as a daemonset
         - role: node
         relabel_configs:
         - replacement: kubernetes.default.svc.cluster.local:443
-          target_label: __address__
+            target_label: __address__
         - regex: (.+)
-          replacement: /api/v1/nodes/$${1}/proxy/metrics/cadvisor
-          source_labels:
+            replacement: /api/v1/nodes/$${1}/proxy/metrics/cadvisor
+            source_labels:
             - __meta_kubernetes_node_name
-          target_label: __metrics_path__
+            target_label: __metrics_path__
         - action: replace
-          target_label: job_label
-          replacement: cadvisor
-        - source_labels: [__meta_kubernetes_node_name]
-          regex: ${KUBE_NODE_NAME}
-          action: keep
+            target_label: job_label
+            replacement: cadvisor
         scheme: https
         tls_config:
         ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -167,18 +164,15 @@ kubelet should be scraped by Opentelemetry deployed as a daemonset
         - role: node
         relabel_configs:
         - replacement: kubernetes.default.svc.cluster.local:443
-          target_label: __address__
+            target_label: __address__
         - regex: (.+)
-          replacement: /api/v1/nodes/$${1}/proxy/metrics
-          source_labels:
+            replacement: /api/v1/nodes/$${1}/proxy/metrics
+            source_labels:
             - __meta_kubernetes_node_name
-          target_label: __metrics_path__
+            target_label: __metrics_path__
         - action: replace
-          target_label: job_label
-          replacement: kubelet
-        - source_labels: [__meta_kubernetes_node_name]
-          regex: ${KUBE_NODE_NAME}
-          action: keep
+            target_label: job_label
+            replacement: kubelet
         scheme: https
         tls_config:
         ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -333,18 +327,34 @@ We aggregate the attributes in the following metrics (system.cpu.utilization and
                 aggregation_type: sum
 ``` 
 
-Resource detection is an important part of lighting up the host entities in the NR platform, and helps decorate the host metrics with the correct attributes so that we can query for them in various charts across the platform. Daemonset only.
+Resource detection is an important part of lighting up the host entities in the NR platform, and helps decorate the host metrics with the correct attributes so that we can query for them in various charts across the platform. 
 ```
+    resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+              enabled: true
+
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, ec2, aks, azure]
+        detectors: [gcp, eks, azure, aks, ec2, ecs]
         timeout: 2s
         override: false
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
 ```
 
 We upsert various attributes to every metric reported by otel to support various NR platform functionality. This processor is subject to change. 
 ```
     resource:
         attributes:
+          - key: host.id
+            from_attribute: host.name
+            action: upsert
           - key: k8s.cluster.name
             action: upsert
             value: <cluster-name>
@@ -369,7 +379,6 @@ The k8s attribute processor is probably already used if you are using openteleme
             - k8s.pod.name
             - k8s.pod.uid
             - k8s.deployment.name
-            - k8s.daemonset.name
             - k8s.namespace.name
             - k8s.node.name
             - k8s.pod.start_time

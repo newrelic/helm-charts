@@ -227,7 +227,7 @@ data:
 
       metricstransform/kubeletstats:
         transforms:
-          - include: container\.(cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
+          - include: container\.(cpu\.utilization|cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
             action: update
             match_type: regexp
             operations:
@@ -236,7 +236,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
+          - include: k8s\.node\.(cpu\.(time|utilization|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
             action: update
             match_type: regexp
             operations:
@@ -245,7 +245,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
+          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.(working_set))
             action: update
             match_type: regexp
             operations:
@@ -460,7 +460,7 @@ data:
 
       resource:
         attributes:
-          # We set the cluster name to what the customer specified in the helm chart
+          # TODO (chris): Upsert only when cluster name not found (resource detection override: true)
           - key: k8s.cluster.name
             action: upsert
             value: {{ include "newrelic.common.cluster" . }}
@@ -481,11 +481,6 @@ data:
             statements:
               - set(description, "")
               - set(unit, "")
-          - context: datapoint
-            statements:
-              - delete_key(attributes, "id")
-              - delete_key(attributes, "name")
-              - delete_key(attributes, "interface")
 
       resource/low_data_mode_inator:
         attributes:
@@ -494,89 +489,6 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
-            action: delete
-
-      attributes/self:
-        actions:
-          - key: k8s.node.name
-            action: upsert
-            from_attribute: node
-          - key: k8s.namespace.name
-            action: upsert
-            from_attribute: namespace
-          - key: k8s.pod.name
-            action: upsert
-            from_attribute: pod
-          - key: k8s.container.name
-            action: upsert
-            from_attribute: container
-          - key: k8s.replicaset.name
-            action: upsert
-            from_attribute: replicaset
-          - key: k8s.deployment.name
-            action: upsert
-            from_attribute: deployment
-          - key: k8s.statefulset.name
-            action: upsert
-            from_attribute: statefulset
-          - key: k8s.daemonset.name
-            action: upsert
-            from_attribute: daemonset
-          - key: k8s.job.name
-            action: upsert
-            from_attribute: job_name
-          - key: k8s.cronjob.name
-            action: upsert
-            from_attribute: cronjob
-          - key: k8s.replicationcontroller.name
-            action: upsert
-            from_attribute: replicationcontroller
-          - key: k8s.hpa.name
-            action: upsert
-            from_attribute: horizontalpodautoscaler
-          - key: k8s.resourcequota.name
-            action: upsert
-            from_attribute: resourcequota
-          - key: k8s.volume.name
-            action: upsert
-            from_attribute: volumename
-          - key: k8s.volume.name
-            action: upsert
-            from_attribute: persistentvolume
-          - key: k8s.pvc.name
-            action: upsert
-            from_attribute: persistentvolumeclaim
-          - key: node
-            action: delete
-          - key: namespace
-            action: delete
-          - key: pod
-            action: delete
-          - key: container
-            action: delete
-          - key: replicaset
-            action: delete
-          - key: deployment
-            action: delete
-          - key: statefulset
-            action: delete
-          - key: daemonset
-            action: delete
-          - key: job_name
-            action: delete
-          - key: cronjob
-            action: delete
-          - key: replicationcontroller
-            action: delete
-          - key: horizontalpodautoscaler
-            action: delete
-          - key: resourcequota
-            action: delete
-          - key: volumename
-            action: delete
-          - key: persistentvolume
-            action: delete
-          - key: persistentvolumeclaim
             action: delete
 
       k8sattributes:
@@ -598,6 +510,24 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
 
+      attributes/self:
+        actions:
+          - key: k8s.pod.name
+            action: upsert
+            from_attribute: pod
+          - key: k8s.deployment.name
+            action: update
+            from_attribute: deployment
+          - key: k8s.daemonset.name
+            action: update
+            from_attribute: daemonset
+          - key: k8s.node.name
+            action: update
+            from_attribute: node
+          - key: k8s.namespace.name
+            action: upsert
+            from_attribute: namespace
+
       memory_limiter:
          check_interval: 1s
          limit_percentage: 80
@@ -615,10 +545,11 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
+      # TODO(chris): revisit using the gateway collector
+      # otlphttp:
+      #   endpoint: "nr-k8s-otel-collector-gateway"
+      #   tls:
+      #     insecure: true
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
