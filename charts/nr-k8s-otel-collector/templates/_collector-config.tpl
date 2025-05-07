@@ -1,9 +1,9 @@
 {{- define "deployment-receivers" }}
-{{- .Values.otel.receivers.deployment | toYaml }}
+{{- .Values.otel.receivers.deployment | default (dict) | toYaml }}
 {{- end }}
 
 {{- define "deployment-processors" }}
-{{- .Values.otel.processors.deployment | toYaml }}
+{{- .Values.otel.processors.deployment | default (dict) | toYaml }}
 {{- end }}
 
 {{- define "deployment-pipelines" }}
