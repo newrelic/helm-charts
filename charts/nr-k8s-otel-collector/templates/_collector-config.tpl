@@ -19,33 +19,37 @@
 {{- end }}
 
 {{- define "deployment-pipelines" }}
-{{- $pipelines := deepCopy .Values.otel.pipelines.deployment }}
-{{- if include "nrKubernetesOtel.lowDataMode" . | default "false" | eq "false" }}
-  {{- /* Process metrics/nr_ksm pipeline */}}
-  {{- if hasKey $pipelines "metrics/nr_ksm" }}
-    {{- $nr_ksm := get $pipelines "metrics/nr_ksm" | default dict -}}
-    {{- $ksmProcessors := get $nr_ksm "processors" | default list -}}
-    {{- $ksmFiltered := list -}}
-    {{- range $ksmProcessors }}
-      {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/k8s_cluster_info_ldm") (eq . "metricstransform/ksm") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $ksmFiltered = append $ksmFiltered . }}{{- end }}
-    {{- end }}
-    {{- $_ := set $nr_ksm "processors" $ksmFiltered -}}
-    {{- $_ := set $pipelines "metrics/nr_ksm" $nr_ksm -}}
-  {{- end }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.pipelines }}
+    {{- $pipelines := deepCopy (.Values.otel.pipelines.deployment | default (dict)) }}
+    {{- if include "nrKubernetesOtel.lowDataMode" . | default "false" | eq "false" }}
+      {{- /* Process metrics/nr_ksm pipeline */}}
+      {{- if hasKey $pipelines "metrics/nr_ksm" }}
+        {{- $nr_ksm := get $pipelines "metrics/nr_ksm" | default dict -}}
+        {{- $ksmProcessors := get $nr_ksm "processors" | default list -}}
+        {{- $ksmFiltered := list -}}
+        {{- range $ksmProcessors }}
+          {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/k8s_cluster_info_ldm") (eq . "metricstransform/ksm") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $ksmFiltered = append $ksmFiltered . }}{{- end }}
+        {{- end }}
+        {{- $_ := set $nr_ksm "processors" $ksmFiltered -}}
+        {{- $_ := set $pipelines "metrics/nr_ksm" $nr_ksm -}}
+      {{- end }}
 
-  {{- /* Process metrics/nr_controlplane pipeline */}}
-  {{- if hasKey $pipelines "metrics/nr_controlplane" }}
-    {{- $nr_cp := get $pipelines "metrics/nr_controlplane" | default dict -}}
-    {{- $cpProcessors := get $nr_cp "processors" | default list -}}
-    {{- $cpFiltered := list -}}
-    {{- range $cpProcessors }}
-      {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/k8s_cluster_info_ldm") (eq . "metricstransform/apiserver") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $cpFiltered = append $cpFiltered . }}{{- end }}
+      {{- /* Process metrics/nr_controlplane pipeline */}}
+      {{- if hasKey $pipelines "metrics/nr_controlplane" }}
+        {{- $nr_cp := get $pipelines "metrics/nr_controlplane" | default dict -}}
+        {{- $cpProcessors := get $nr_cp "processors" | default list -}}
+        {{- $cpFiltered := list -}}
+        {{- range $cpProcessors }}
+          {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/k8s_cluster_info_ldm") (eq . "metricstransform/apiserver") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $cpFiltered = append $cpFiltered . }}{{- end }}
+        {{- end }}
+        {{- $_ := set $nr_cp "processors" $cpFiltered -}}
+        {{- $_ := set $pipelines "metrics/nr_controlplane" $nr_cp -}}
+      {{- end }}
     {{- end }}
-    {{- $_ := set $nr_cp "processors" $cpFiltered -}}
-    {{- $_ := set $pipelines "metrics/nr_controlplane" $nr_cp -}}
-  {{- end }}
-{{- end }}
-{{- $pipelines | toYaml }}
+    {{- $pipelines | toYaml }}
+  {{- end -}}
+{{- end -}}
 {{- end }}
 
 {{- define "deployment-connector" }}
@@ -90,26 +94,30 @@
 {{- end }}
 
 {{- define "daemonset-pipelines" }}
-{{- $pipelines := deepCopy .Values.otel.pipelines.daemonset }}
-{{- /* Remove logs pipelines if GKE Autopilot is enabled */}}
-{{- if .Values.gkeAutopilot | default false }}
-  {{- $_ := unset $pipelines "logs" }}
-{{- end }}
-{{- if include "nrKubernetesOtel.lowDataMode" . | default "false" | eq "false" }}
-  {{- /* Process metrics/nr pipeline */}}
-  {{- if hasKey $pipelines "metrics/nr" }}
-    {{- $nr_metrics := get $pipelines "metrics/nr" | default dict -}}
-    {{- $processors := get $nr_metrics "processors" | default list -}}
-    {{- $filteredProcessors := list -}}
-
-    {{- range $processors }}
-      {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/kubeletstats") (eq . "metricstransform/cadvisor") (eq . "metricstransform/kubelet") (eq . "metricstransform/hostmetrics") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $filteredProcessors = append $filteredProcessors . }}{{- end }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.pipelines }}
+    {{- $pipelines := deepCopy (.Values.otel.pipelines.daemonset | default (dict)) }}
+    {{- /* Remove logs pipelines if GKE Autopilot is enabled */}}
+    {{- if .Values.gkeAutopilot | default false }}
+      {{- $_ := unset $pipelines "logs" }}
     {{- end }}
-    {{- $_ := set $nr_metrics "processors" $filteredProcessors -}}
-    {{- $_ := set $pipelines "metrics/nr" $nr_metrics -}}
-  {{- end }}
-{{- end }}
-{{- $pipelines | toYaml }}
+    {{- if include "nrKubernetesOtel.lowDataMode" . | default "false" | eq "false" }}
+      {{- /* Process metrics/nr pipeline */}}
+      {{- if hasKey $pipelines "metrics/nr" }}
+        {{- $nr_metrics := get $pipelines "metrics/nr" | default dict -}}
+        {{- $processors := get $nr_metrics "processors" | default list -}}
+        {{- $filteredProcessors := list -}}
+
+        {{- range $processors }}
+          {{- if not (or (eq . "metricstransform/ldm") (eq . "metricstransform/kubeletstats") (eq . "metricstransform/cadvisor") (eq . "metricstransform/kubelet") (eq . "metricstransform/hostmetrics") (eq . "filter/exclude_metrics_low_data_mode") (eq . "transform/low_data_mode_inator") (eq . "resource/low_data_mode_inator")) }}{{- $filteredProcessors = append $filteredProcessors . }}{{- end }}
+        {{- end }}
+        {{- $_ := set $nr_metrics "processors" $filteredProcessors -}}
+        {{- $_ := set $pipelines "metrics/nr" $nr_metrics -}}
+      {{- end }}
+    {{- end }}
+    {{- $pipelines | toYaml }}
+  {{- end -}}
+{{- end -}}
 {{- end }}
 
 {{- define "daemonset-connector" }}
