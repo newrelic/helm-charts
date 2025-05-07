@@ -1,6 +1,8 @@
 {{- define "deployment-receivers" }}
-{{- if get .Values.otel.receivers "deployment" | kindIs "map" -}}
-  {{- .Values.otel.receivers.deployment | toYaml }}
+{{- with .Values.otel.receivers | default (dict) }}
+  {{- if get . "deployment" | kindIs "map" -}}
+    {{- .deployment | toYaml }}
+  {{- end -}}
 {{- end -}}
 {{- end }}
 
