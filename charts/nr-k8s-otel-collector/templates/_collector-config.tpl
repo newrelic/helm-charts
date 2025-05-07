@@ -1,9 +1,13 @@
 {{- define "deployment-receivers" }}
-{{- .Values.otel.receivers.deployment | default (dict) | toYaml }}
+{{- if get .Values.otel.receivers "deployment" | kindIs "map" -}}
+  {{- .Values.otel.receivers.deployment | toYaml }}
+{{- end -}}
 {{- end }}
 
 {{- define "deployment-processors" }}
-{{- .Values.otel.processors.deployment | default (dict) | toYaml }}
+{{- if get .Values.otel.processors "deployment" | kindIs "map" -}}
+  {{- .Values.otel.processors.deployment | toYaml }}
+{{- end -}}
 {{- end }}
 
 {{- define "deployment-pipelines" }}
