@@ -9,8 +9,12 @@
 {{- end }}
 
 {{- define "deployment-processors" }}
-{{- if get .Values.otel.processors "deployment" | kindIs "map" -}}
-  {{- .Values.otel.processors.deployment | toYaml }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.processors }}
+    {{- if get .Values.otel.processors "deployment" | kindIs "map" -}}
+      {{- .Values.otel.processors.deployment | toYaml }}
+    {{- end -}}
+  {{- end -}}
 {{- end -}}
 {{- end }}
 
@@ -45,10 +49,14 @@
 {{- end }}
 
 {{- define "deployment-connector" }}
-{{- .Values.otel.connectors.deployment | toYaml }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.connectors }}
+    {{- if get .Values.otel.connectors "deployment" | kindIs "map" -}}
+      {{- .Values.otel.connectors.deployment | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}
-
-
 
 {{- define "daemonset-receivers" }}
 {{- $receiver_config := deepCopy .Values.otel.receivers.daemonset }}
@@ -70,8 +78,15 @@
 {{- $receiver_config | toYaml }}
 {{- end }}
 
+
 {{- define "daemonset-processors" }}
-{{- .Values.otel.processors.daemonset | toYaml }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.processors }}
+    {{- if get .Values.otel.processors "daemonset" | kindIs "map" -}}
+      {{- .Values.otel.processors.daemonset | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}
 
 {{- define "daemonset-pipelines" }}
@@ -98,15 +113,32 @@
 {{- end }}
 
 {{- define "daemonset-connector" }}
-{{- .Values.otel.connectors.daemonset | toYaml }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.connectors }}
+    {{- if get .Values.otel.connectors "daemonset" | kindIs "map" -}}
+      {{- .Values.otel.connectors.daemonset | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}
-
 
 
 {{- define "shared-processors" }}
-{{- .Values.otel.processors.shared | toYaml }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.processors }}
+    {{- if get .Values.otel.processors "shared" | kindIs "map" -}}
+      {{- .Values.otel.processors.shared | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}
 
 {{- define "shared-exporters" }}
-{{- .Values.otel.exporters.shared | toYaml }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.exporters }}
+    {{- if get .Values.otel.exporters "shared" | kindIs "map" -}}
+      {{- .Values.otel.exporters.shared | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
 {{- end }}
