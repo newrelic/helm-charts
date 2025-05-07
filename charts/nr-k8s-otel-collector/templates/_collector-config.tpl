@@ -63,23 +63,27 @@
 {{- end }}
 
 {{- define "daemonset-receivers" }}
-{{- $receiver_config := deepCopy .Values.otel.receivers.daemonset }}
+{{- if .Values.otel }}
+  {{- if .Values.otel.receivers }}
+    {{- $daemonsetReceivers := .Values.otel.receivers.daemonset | default (dict) | deepCopy }}
 
-{{- if .Values.gkeAutopilot | default false | eq false }}
-  {{- /* Non-GKE Autopilot: set root_path if present, set kubeletstats for serviceAccount */}}
-  {{- if $receiver_config.hostmetrics.root_path }}
-    {{- $_ := set $receiver_config.hostmetrics "root_path" $receiver_config.hostmetrics.root_path }}
-  {{- end }}
-  {{- $_ := set $receiver_config.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10250" }}
-  {{- $_ := set $receiver_config.kubeletstats "auth_type" "serviceAccount" }}
-  {{- $_ := set $receiver_config.kubeletstats "insecure_skip_verify" true }}
-{{- else }}
-  {{- /* GKE Autopilot: remove root_path, set kubeletstats for no auth */}}
-  {{- $_ := unset $receiver_config.hostmetrics "root_path" }}
-  {{- $_ := set $receiver_config.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10255" }}
-  {{- $_ := set $receiver_config.kubeletstats "auth_type" "none" }}
-{{- end }}
-{{- $receiver_config | toYaml }}
+    {{- if .Values.gkeAutopilot | default false | eq false }}
+      {{- /* Non-GKE Autopilot: set root_path if present, set kubeletstats for serviceAccount */}}
+      {{- if get $daemonsetReceivers.hostmetrics "root_path" }}
+        {{- $_ := set $daemonsetReceivers.hostmetrics "root_path" (get $daemonsetReceivers.hostmetrics "root_path") }}
+      {{- end }}
+      {{- $_ := set $daemonsetReceivers.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10250" }}
+      {{- $_ := set $daemonsetReceivers.kubeletstats "auth_type" "serviceAccount" }}
+      {{- $_ := set $daemonsetReceivers.kubeletstats "insecure_skip_verify" true }}
+    {{- else }}
+      {{- /* GKE Autopilot: remove root_path, set kubeletstats for no auth */}}
+      {{- $_ := unset $daemonsetReceivers.hostmetrics "root_path" }}
+      {{- $_ := set $daemonsetReceivers.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10255" }}
+      {{- $_ := set $daemonsetReceivers.kubeletstats "auth_type" "none" }}
+    {{- end }}
+    {{- $daemonsetReceivers | toYaml }}
+  {{- end -}}
+{{- end -}}
 {{- end }}
 
 
