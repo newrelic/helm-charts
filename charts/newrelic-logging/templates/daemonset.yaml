@@ -139,6 +139,8 @@ spec:
           volumeMounts:
             - name: fluent-bit-config
               mountPath: /fluent-bit/etc
+            - name: fluent-bit-buffer
+              mountPath: /fluent-bit/buffer
             - name: logs
               # We mount /var by default because container logs could be on /var/log or /var/lib/docker/containers (symlinked to /var/log)
               mountPath: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
@@ -160,6 +162,15 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
       volumes:
+      {{- if eq .Values.fluentBit.buffering.mode "persistentVolume" }}
+        - name: fluent-bit-buffer
+          persistentVolumeClaim:
+            claimName: {{ template "newrelic-logging.fullname" . }}-buffer-pvc
+        {{- else if eq .Values.fluentBit.buffering.mode "hostPath" }}
+        - name: fluent-bit-buffer
+          hostPath:
+            path: {{ .Values.fluentBit.buffering.hostPath.path }}
+        {{- end }}
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}

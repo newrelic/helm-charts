@@ -1,5 +1,5 @@
 # IMPORTANT: Specify your New Relic API key here.
-# licenseKey:
+licenseKey: ankd
 #
 # Optionally, specify a cluster name and log records can
 # be filtered by cluster.
@@ -51,7 +51,23 @@ fluentBit:
   #     fieldRef:
   #       fieldPath: metadata.name
 
-  # Indicates how fluent-bit database is persisted
+  # Indicates how fluent-bit database is persisted, use ReadWriteMany persistent volume to store
+  buffering:
+    mode: "persistentVolume"  # Options: "persistentVolume" or "hostPath" or "none"
+    persistentVolume:
+      storageClass: "standard-rwx"  # Storage class for external storage
+      size: "10Gi"                 # Size of the PersistentVolume
+      dynamicProvisioning: true    # Enable dynamic provisioning
+      existingVolume: ""           # Use an existing volume if specified
+      existingVolumeClaim: ""      # Use an existing volume claim if specified
+      annotations:
+        volume: {}
+        claim: {}
+      extra:
+        volume: {}
+        claim: {}
+  hostPath:
+    path: "/var/log/fluentbit-buffer"  # Path on the node for local storage
   persistence:
     # Define the persistent mode for fluent-bit db, allowed options are `hostPath` (default), `none`, `persistentVolume`.
     # - `hostPath` will use hostPath to store the db file on the node disk.
