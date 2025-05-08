@@ -7,8 +7,28 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   deployment-config.yaml: |
-    {{- with include "nrKubernetesOtel.deployment.configMap.config" . }}
-    {{- . | nindent 4 }}
+    {{- if .Values.otel }}
+    receivers:
+      {{- include "deployment-receivers" . | nindent 6 }}
+
+    processors:
+      {{- include "deployment-processors" . | nindent 6 }}
+      {{- include "shared-processors" . | nindent 6 }}
+
+    exporters:
+      {{- include "shared-exporters" . | nindent 6 }}
+
+    connectors:
+      {{- include "deployment-connector" . | nindent 6 }}
+
+    service:
+      {{- if include "newrelic.common.verboseLog" . }}
+      telemetry:
+        logs:
+          level: "debug"
+      {{- end }}
+      pipelines:
+        {{- include "deployment-pipelines" . | nindent 8 }}
     {{- else }}
     receivers:
       otlp:
@@ -20,7 +40,7 @@ data:
         config:
           scrape_configs: 
             - job_name: kube-state-metrics
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: 1m
               kubernetes_sd_configs:
                 - role: pod
               relabel_configs:
@@ -36,7 +56,7 @@ data:
         config:
           scrape_configs:
             - job_name: apiserver
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: 1m
               kubernetes_sd_configs:
                 - role: endpoints
                   namespaces:
@@ -566,7 +586,6 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
-        {{- if .Values.receivers.prometheus.enabled }}
         metrics/ksm:
           receivers:
             - prometheus/ksm
@@ -592,8 +611,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- end }}
-        {{- if .Values.receivers.prometheus.enabled }}
         metrics:
           receivers:
             - prometheus/controlplane
@@ -615,8 +632,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- end }}
-        {{- if .Values.receivers.k8sEvents.enabled }}
         logs/events:
           receivers:
             - k8s_events
@@ -627,5 +642,4 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- end }}
     {{- end }}

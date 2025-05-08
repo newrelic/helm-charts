@@ -81,6 +81,12 @@ spec:
             - name: https_proxy
               value: "{{- include "newrelic.common.proxy" . }}"
           {{- end }}
+            - name: NR_CLUSTER_NAME
+              value: {{ include "newrelic.common.cluster" . }}
+            - name: NR_OTEL_ENDPOINT
+              value: {{ include "nrKubernetesOtel.endpoint" . }}
+            - name: NR_CHART_VERSION
+              value: {{ .Chart.Version }}
             {{- with .Values.daemonset.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
