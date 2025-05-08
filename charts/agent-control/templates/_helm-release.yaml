@@ -23,9 +23,11 @@ spec:
       interval: {{ .Values.helm.repository.updateInterval }}
   values:
     fullnameOverride: agent-control
-    {{- with (get .Values "agent-control-deployment") }}
-      {{- . | toYaml | nindent 4 }}
-    {{- end }}
+  valuesFrom:
+    - kind: Secret
+      name: agent-control-deployment-secret
+      valuesKey: agent-control-deployment.yaml
+      optional: true
 
   {{- with .Values.helm.release.install }}
   install:
