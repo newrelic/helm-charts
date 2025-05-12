@@ -58,7 +58,7 @@ spec:
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
-            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            mountPath: "{{ .Values.tls.cert_path }}"
             readOnly: true
           {{- end }}
           {{- end }}
@@ -73,11 +73,11 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.podIP
-          - name: NR_LICENSE_KEY
+          - name: NEW_RELIC_LICENSE_KEY
             valueFrom:
               secretKeyRef:
                 {{- if (include "newrelic.common.license._licenseKey" .) }}
-                key: NR_LICENSE_KEY
+                key: NEW_RELIC_LICENSE_KEY
                 name: nr-ebpf-agent-secrets
                 {{- else }}
                 name: {{ include "newrelic.common.license._customSecretName" . }}

@@ -46,7 +46,7 @@ Return the cluster name
 */}}
 {{- define "nr-ebpf-agent.clusterName" -}}
 {{- if .Values.global }}
-   {{- .Values.global.cluster | default "" -}}
+   {{- .Values.global.deployment_name | default "" -}}
 {{- else -}}
     {{- "" -}}
 {{- end -}}

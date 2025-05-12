@@ -6,12 +6,12 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 # Helm installation
 
-1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `cluster` field with the name of the cluster to monitor.
+1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `license_key` field with a valid New Relic Ingest key and the `deployment_name` field with the name of the cluster to monitor.
 
 Example:
 ```
-licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
-cluster: "name-of-cluster-to-monitor"
+license_key: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
+deployment_name: "name-of-cluster-to-monitor"
 ```
 
 2. Install the helm chart, passing the configuration file created above.
@@ -48,9 +48,9 @@ kubectl logs <otel-pod-name> -n newrelic
 ### Confirm data ingest to New Relic
 You should see data reporting into New Relic within a couple of seconds to the `Metric` and `Span` tables.
 ```
-FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+FROM Metric SELECT * WHERE k8s.cluster.name='<DEPLOYMENT_NAME>'
 
-FROM Span SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+FROM Span SELECT * WHERE k8s.cluster.name='<DEPLOYMENT_NAME>'
 ```
 The entities view should show OTel services and an "APM-lite" rendition of the data for each entity when clicked on.
 
@@ -76,7 +76,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | allowServiceNameRegex | string | `""` | This config acts as a bypass for the dropDataServiceNameRegex config. Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex. If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent. |
-| cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
+| deployment_name | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.deployment_name` |
 | containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
@@ -105,7 +105,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | ebpfClient.resources.requests.memory | string | `"50Mi"` | Min memory allocated to the container. |
 | kubernetesClusterDomain | string | `"cluster.local"` | Kubernetes cluster domain. |
 | labels | object | `{}` | Additional labels for chart objects. |
-| licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
+| license_key | string | `""` | The license key to use. Can be configured with `global.license_key` |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. |
 | otelCollector.affinity | object | `{}` | Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity` |
@@ -153,10 +153,10 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | protocols.redis.spans.enabled | bool | `false` |  |
 | protocols.redis.spans.samplingLatency | string | `""` |  |
 | proxy | string | `""` | Configures the agent to send all data through the proxy specified via the otel collector. |
-| pushPeriod | string | `"15"` | - The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR. The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data. The algorithm only looks for similar request paths within data of the same push period. To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60. |
+| ingest.pushPeriod | string | `"15"` | - The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR. The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data. The algorithm only looks for similar request paths within data of the same push period. To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60. |
 | stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
 | tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
-| tls.autoGenerateCert.certPath | string | `"/tmp/ebpf/certs/"` | Certificates path. |
+| tls.cert_path | string | `"/tmp/ebpf/certs/"` | Certificates path. |
 | tls.autoGenerateCert.certPeriodDays | int | `365` | Cert validity period time in days. |
 | tls.autoGenerateCert.enabled | bool | `true` | If true, Helm will automatically create a self-signed cert and secret for you. |
 | tls.autoGenerateCert.recreate | bool | `true` | If set to true, a new key/certificate is generated on helm upgrade. |
