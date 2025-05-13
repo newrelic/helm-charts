@@ -7,19 +7,22 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   daemonset-config.yaml: |
-    {{- if .Values.otel }}
+    {{- if and .Values.receivers .Values.exporters .Values.pipelines }}
     receivers:
       {{- include "daemonset-receivers" . | nindent 6 }}
+      {{- include "shared-receivers" . | nindent 6 }}
 
     processors:
       {{- include "daemonset-processors" . | nindent 6 }}
       {{- include "shared-processors" . | nindent 6 }}
 
     exporters:
+      {{- include "daemonset-exporters" . | nindent 6 }}
       {{- include "shared-exporters" . | nindent 6 }}
 
     connectors:
       {{- include "daemonset-connector" . | nindent 6 }}
+      {{- include "shared-connector" . | nindent 6 }}
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -27,6 +30,8 @@ data:
         logs:
           level: "debug"
       {{- end }}
+      extensions:
+        {{- include "daemonset-extensions" . | nindent 8 }}
       pipelines:
         {{- include "daemonset-pipelines" . | nindent 8 }}
     {{- else }}

@@ -14,6 +14,22 @@
   {{- end -}}
 {{- end }}
 
+{{- define "deployment-exporters" }}
+  {{- if .Values.exporters }}
+    {{- if get .Values.exporters "deployment" | kindIs "map" -}}
+      {{- .Values.exporters.deployment | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
+{{- define "deployment-extensions" }}
+  {{- if .Values.extensions }}
+    {{- if get .Values.extensions "deployment" | kindIs "map" -}}
+      {{- .Values.extensions.deployment | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
 {{- define "deployment-pipelines" }}
   {{- if .Values.pipelines }}
     {{- $pipelines := deepCopy (.Values.pipelines.deployment | default (dict)) }}
@@ -54,6 +70,7 @@
   {{- end -}}
 {{- end }}
 
+
 {{- define "daemonset-receivers" }}
   {{- if .Values.receivers }}
     {{- $daemonsetReceivers := .Values.receivers.daemonset | default (dict) | deepCopy }}
@@ -76,11 +93,26 @@
   {{- end -}}
 {{- end }}
 
-
 {{- define "daemonset-processors" }}
   {{- if .Values.processors }}
     {{- if get .Values.processors "daemonset" | kindIs "map" -}}
       {{- .Values.processors.daemonset | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
+{{- define "daemonset-exporters" }}
+  {{- if .Values.exporters }}
+    {{- if get .Values.exporters "daemonset" | kindIs "map" -}}
+      {{- .Values.exporters.daemonset | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
+{{- define "daemonset-extensions" }}
+  {{- if .Values.extensions }}
+    {{- if get .Values.extensions "daemonset" | kindIs "map" -}}
+      {{- .Values.extensions.daemonset | toYaml }}
     {{- end -}}
   {{- end -}}
 {{- end }}
@@ -119,10 +151,26 @@
 {{- end }}
 
 
+{{- define "shared-receivers" }}
+  {{- if .Values.receivers }}
+    {{- if get .Values.receivers "shared" | kindIs "map" -}}
+      {{- .Values.receivers.shared | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
 {{- define "shared-processors" }}
   {{- if .Values.processors }}
     {{- if get .Values.processors "shared" | kindIs "map" -}}
       {{- .Values.processors.shared | toYaml }}
+    {{- end -}}
+  {{- end -}}
+{{- end }}
+
+{{- define "shared-connector" }}
+  {{- if .Values.connector }}
+    {{- if get .Values.connector "shared" | kindIs "map" -}}
+      {{- .Values.connector.shared | toYaml }}
     {{- end -}}
   {{- end -}}
 {{- end }}

@@ -539,7 +539,7 @@ processors:
             value_actions:
             - value: 'false'
               new_value: 'true'
-        - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase|access_mode))
+        - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase|access_mode)
           action: update
           match_type: regexp
           operations:
@@ -1096,7 +1096,6 @@ processors:
       timeout: 30s
       send_batch_size: 800
 
-
 exporters:
   deployment:
   daemonset:
@@ -1109,6 +1108,10 @@ exporters:
       verbosity: detailed
       sampling_initial: 5
       sampling_thereafter: 200
+
+extensions:
+  deployment:
+  daemonset:
 
 connectors:
   deployment:

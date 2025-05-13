@@ -7,19 +7,22 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   deployment-config.yaml: |
-    {{- if .Values.otel }}
+    {{- if and .Values.receivers .Values.exporters .Values.pipelines }}
     receivers:
       {{- include "deployment-receivers" . | nindent 6 }}
+      {{- include "shared-receivers" . | nindent 6 }}
 
     processors:
       {{- include "deployment-processors" . | nindent 6 }}
       {{- include "shared-processors" . | nindent 6 }}
 
     exporters:
+      {{- include "deployment-exporters" . | nindent 6 }}
       {{- include "shared-exporters" . | nindent 6 }}
 
     connectors:
       {{- include "deployment-connector" . | nindent 6 }}
+      {{- include "shared-connector" . | nindent 6 }}
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -27,6 +30,8 @@ data:
         logs:
           level: "debug"
       {{- end }}
+      extensions:
+        {{- include "deployment-extensions" . | nindent 8 }}
       pipelines:
         {{- include "deployment-pipelines" . | nindent 8 }}
     {{- else }}
@@ -285,7 +290,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase)
+          - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase|access_mode)
             action: update
             match_type: regexp
             operations:
@@ -303,7 +308,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time))
+          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time)|start_time)
             action: update
             match_type: regexp
             operations:
