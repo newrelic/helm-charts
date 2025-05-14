@@ -58,7 +58,7 @@ spec:
           {{- end }}
           {{- if eq .Values.tls.enabled true }}
           - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.cert_path }}"
+            value: "{{ .Values.tls.certPath }}"
           {{- end }}
           {{- end }}
         securityContext:
@@ -83,7 +83,7 @@ spec:
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
         env:
           - name: DEPLOYMENT_NAME
-            value: {{ .Values.deployment_name }}
+            value: {{ .Values.deploymentName }}
           - name: PERIOD
             value: "{{ .Values.ingest.pushPeriod }}"
           - name: HOST_IP
@@ -120,10 +120,10 @@ spec:
             {{- end }}
         {{- if eq .Values.tls.enabled true }}
           - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.cert_path }}"
+            value: "{{ .Values.tls.certPath }}"
         volumeMounts:
           - name: cert
-            mountPath: "{{ .Values.tls.cert_path }}"
+            mountPath: "{{ .Values.tls.certPath }}"
             readOnly: true
         {{- end }}
           {{- end }}

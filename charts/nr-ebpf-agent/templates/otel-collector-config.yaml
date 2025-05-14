@@ -15,8 +15,8 @@ data:
               {{- if (hasKey .Values "tls") }}
               {{- if eq .Values.tls.enabled true }}
               tls:
-                cert_file: "{{ .Values.tls.cert_path }}tls.crt"
-                key_file: "{{ .Values.tls.cert_path }}tls.key"
+                cert_file: "{{ .Values.tls.certPath }}tls.crt"
+                key_file: "{{ .Values.tls.certPath }}tls.key"
               {{- end }}
               {{- end }}
       processors:
@@ -247,5 +247,5 @@ data:
   {{- if $globalClusterName}}
   clusterName: {{ $globalClusterName }}
   {{ else }}
-  clusterName: {{ required "Please set the Kubernetes cluster name" .Values.deployment_name | quote }}
+  clusterName: {{ required "Please set the Kubernetes cluster name" .Values.deploymentName | quote }}
   {{ end }}
