@@ -96,7 +96,7 @@ spec:
           {{-  if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
-          - name: SAMPLE_HTTP_ERROR_RATE
+          - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
             value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
           {{- end }}
           {{- end }}
