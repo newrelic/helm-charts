@@ -197,6 +197,9 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 
 ## Maintainers
 
-* [juanjjaramillo](https://github.com/juanjjaramillo)
-* [csongnr](https://github.com/csongnr)
+* [Philip-R-Beckwith](https://github.com/Philip-R-Beckwith)
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
+* [TmNguyen12](https://github.com/TmNguyen12)
+* [kondracek-nr](https://github.com/kondracek-nr)
+* [kpattaswamy](https://github.com/kpattaswamy)
+* [danielstokes](https://github.com/danielstokes)
