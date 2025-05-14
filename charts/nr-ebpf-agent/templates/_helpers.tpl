@@ -96,7 +96,7 @@ Pass environment variables to the agent container if tracing a specific protocol
     {{- $protocolEnabled = eq $config.enabled true }}
   {{- end }}
   {{- if eq $protocolEnabled false }}
-- name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
+- name: NR_EBPF_ENABLE_{{ upper $protocol }}_TRACING
   value: "0"
   {{- end }}
 {{- end }}
@@ -110,7 +110,7 @@ Generate environment variables for disabling protocols and setting sampling late
 {{- range $protocol, $config := .Values.protocols }}
   {{- if (hasKey $config "enabled") }}
     {{- if eq $config.enabled false }}
-- name: NR_EBPF_ENABLE_{{ upper $protocol }}_METRICS
+- name: NR_EBPF_ENABLE_{{ upper $protocol }}_TRACING
   value: "0"
 - name: NR_EBPF_ENABLE_{{ upper $protocol }}_SPANS
   value: "0"
