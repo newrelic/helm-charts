@@ -73,23 +73,25 @@
 
 {{- define "daemonset-receivers" }}
   {{- if .Values.receivers }}
-    {{- $daemonsetReceivers := .Values.receivers.daemonset | default (dict) | deepCopy }}
+    {{- if get .Values.receivers "daemonset" | kindIs "map" -}}
+      {{- $daemonsetReceivers := .Values.receivers.daemonset | default (dict) | deepCopy }}
 
-    {{- if .Values.gkeAutopilot | default false | eq false }}
-      {{- /* Non-GKE Autopilot: set root_path if present, set kubeletstats for serviceAccount */}}
-      {{- if get $daemonsetReceivers.hostmetrics "root_path" }}
-        {{- $_ := set $daemonsetReceivers.hostmetrics "root_path" (get $daemonsetReceivers.hostmetrics "root_path") }}
+      {{- if .Values.gkeAutopilot | default false | eq false }}
+        {{- /* Non-GKE Autopilot: set root_path if present, set kubeletstats for serviceAccount */}}
+        {{- if get $daemonsetReceivers.hostmetrics "root_path" }}
+          {{- $_ := set $daemonsetReceivers.hostmetrics "root_path" (get $daemonsetReceivers.hostmetrics "root_path") }}
+        {{- end }}
+        {{- $_ := set $daemonsetReceivers.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10250" }}
+        {{- $_ := set $daemonsetReceivers.kubeletstats "auth_type" "serviceAccount" }}
+        {{- $_ := set $daemonsetReceivers.kubeletstats "insecure_skip_verify" true }}
+      {{- else }}
+        {{- /* GKE Autopilot: remove root_path, set kubeletstats for no auth */}}
+        {{- $_ := unset $daemonsetReceivers.hostmetrics "root_path" }}
+        {{- $_ := set $daemonsetReceivers.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10255" }}
+        {{- $_ := set $daemonsetReceivers.kubeletstats "auth_type" "none" }}
       {{- end }}
-      {{- $_ := set $daemonsetReceivers.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10250" }}
-      {{- $_ := set $daemonsetReceivers.kubeletstats "auth_type" "serviceAccount" }}
-      {{- $_ := set $daemonsetReceivers.kubeletstats "insecure_skip_verify" true }}
-    {{- else }}
-      {{- /* GKE Autopilot: remove root_path, set kubeletstats for no auth */}}
-      {{- $_ := unset $daemonsetReceivers.hostmetrics "root_path" }}
-      {{- $_ := set $daemonsetReceivers.kubeletstats "endpoint" "${KUBE_NODE_NAME}:10255" }}
-      {{- $_ := set $daemonsetReceivers.kubeletstats "auth_type" "none" }}
-    {{- end }}
-    {{- $daemonsetReceivers | toYaml }}
+      {{- $daemonsetReceivers | toYaml }}
+    {{- end -}}
   {{- end -}}
 {{- end }}
 

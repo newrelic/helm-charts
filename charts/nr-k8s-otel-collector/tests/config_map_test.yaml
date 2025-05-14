@@ -1,0 +1,21 @@
+suite: configMap
+templates:
+  - templates/deployment-configmap.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets configMap for deployment/daemonsets to defaults when no values are provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*$
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*$
+        template: templates/daemonset-configmap.yaml

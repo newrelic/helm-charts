@@ -7,7 +7,7 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   deployment-config.yaml: |
-    {{- if and .Values.receivers .Values.exporters .Values.pipelines }}
+    {{- if and (or .Values.receivers.deployment .Values.receivers.shared) (or .Values.exporters.deployment .Values.exporters.shared) .Values.pipelines.deployment  }}
     receivers:
       {{- include "deployment-receivers" . | nindent 6 }}
       {{- include "shared-receivers" . | nindent 6 }}
