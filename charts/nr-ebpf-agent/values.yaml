@@ -1,5 +1,5 @@
 ---
-# -- Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.deployment_name`
+# -- Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.deploymentName`
 deploymentName: ""
 # -- The license key to use. Can be configured with `global.licenseKey`
 licenseKey: ""
@@ -9,10 +9,13 @@ customSecretName: ""
 customSecretLicenseKey: ""
 # -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
 region: ""
-# -- Enable to export data to NR's Staging otel endpoint (staging-otlp.nr-data.net:4317).
-nrStaging:
 # -- Configures the agent to send all data through the proxy specified via the otel collector.
 proxy: ""
+# -- To configure the log level in increasing order of verboseness.
+# -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
+logLevel: "INFO"
+# -- To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout.
+logFilePath: ""
 # -- Drop data when service names map to an IP address.
 dropDataIpServiceNames: true
 # -- Drop data from the kube-system namespace.
@@ -28,6 +31,8 @@ dropDataServiceNameRegex: ""
 # Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex.
 # If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent.
 allowServiceNameRegex: ""
+# -- Comma(,) separated string of entity to ignore the process monitoring based on NEW_RELIC_APP_NAME
+dropDataForEntity: []
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
 # -- The source connectors (and data export scripts) to enable.

@@ -47,6 +47,10 @@ spec:
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
+          - name: NEW_RELIC_LOG_LEVEL
+            value: "{{ .Values.logLevel }}"            
+          - name: NEW_RELIC_LOG_FILE_PATH
+            value: "{{ .Values.logFilePath }}"  
           - name: PL_TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
           - name: TLS_ENABLED
@@ -109,6 +113,10 @@ spec:
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
             value: "True"
+          - name: NEW_RELIC_LOG_LEVEL
+            value: "{{ .Values.logLevel }}"            
+          - name: NEW_RELIC_LOG_FILE_PATH
+            value: "{{ .Values.logFilePath }}"            
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
             {{- if eq .Values.tls.enabled true }}
