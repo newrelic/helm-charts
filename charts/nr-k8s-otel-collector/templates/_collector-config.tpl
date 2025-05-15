@@ -16,7 +16,7 @@
 
 {{- define "deployment-exporters" }}
   {{- if .Values.exporters }}
-    {{- if get .Values.exporters "deployment" | kindIs "map" -}}
+    {{- if and (hasKey .Values.exporters "deployment") (get .Values.exporters "deployment" | kindIs "map") -}}
       {{- .Values.exporters.deployment | toYaml }}
     {{- end -}}
   {{- end -}}
@@ -105,7 +105,7 @@
 
 {{- define "daemonset-exporters" }}
   {{- if .Values.exporters }}
-    {{- if get .Values.exporters "daemonset" | kindIs "map" -}}
+    {{- if and (hasKey .Values.exporters "daemonset") (get .Values.exporters "daemonset" | kindIs "map") -}}
       {{- .Values.exporters.daemonset | toYaml }}
     {{- end -}}
   {{- end -}}
