@@ -16,8 +16,10 @@
 
 {{- define "deployment-exporters" }}
   {{- if .Values.exporters }}
-    {{- if and (hasKey .Values.exporters "deployment") (not (empty (get .Values.exporters "deployment"))) (get .Values.exporters "deployment" | kindIs "map") -}}
-      {{- .Values.exporters.deployment | toYaml }}
+    {{- if (get .Values.exporters "deployment" | kindIs "map") -}}
+      {{- if .Values.exporters.deployment -}}
+        {{- .Values.exporters.deployment | toYaml }}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end }}
@@ -25,7 +27,9 @@
 {{- define "deployment-extensions" }}
   {{- if .Values.extensions }}
     {{- if get .Values.extensions "deployment" | kindIs "map" -}}
-      {{- .Values.extensions.deployment | toYaml }}
+      {{- if .Values.extensions.deployment -}}
+        {{- .Values.extensions.deployment | toYaml }}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end }}
@@ -105,8 +109,10 @@
 
 {{- define "daemonset-exporters" }}
   {{- if .Values.exporters }}
-    {{- if and (hasKey .Values.exporters "daemonset") (not (empty (get .Values.exporters "daemonset"))) (get .Values.exporters "daemonset" | kindIs "map") -}}
-      {{- .Values.exporters.daemonset | toYaml }}
+    {{- if (get .Values.exporters "daemonset" | kindIs "map") -}}
+      {{- if .Values.exporters.daemonset -}}
+        {{- .Values.exporters.daemonset | toYaml }}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end }}
@@ -114,7 +120,9 @@
 {{- define "daemonset-extensions" }}
   {{- if .Values.extensions }}
     {{- if get .Values.extensions "daemonset" | kindIs "map" -}}
-      {{- .Values.extensions.daemonset | toYaml }}
+      {{- if .Values.extensions.daemonset -}}
+        {{- .Values.extensions.daemonset | toYaml }}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end }}
