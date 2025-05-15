@@ -1,5 +1,5 @@
 # IMPORTANT: Specify your New Relic API key here.
-# licenseKey:
+licenseKey: oihojk
 #
 # Optionally, specify a cluster name and log records can
 # be filtered by cluster.
@@ -42,6 +42,14 @@ fluentBit:
   # For more information on Fluent Bit monitoring, visit:
   # https://docs.fluentbit.io/manual/administration/monitoring
   sendMetrics: false
+  # Configuration for sending metrics of Fluentbit to NewRelic
+  # Allowed values are: `none`, `essential` , `balanced`, `advanced`
+  # none: No metrics are sent
+  # essential: Only the build info metric is sent
+  # balanced: All the metrics are sent to New Relic at 5 minute scrape interval
+  # advanced: All the metrics are sent to New Relic at 1 minute scrape interval
+  # Note: By default, the `advanced` option is used.
+  fluentBitMetrics: "advanced"
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY

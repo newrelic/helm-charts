@@ -182,6 +182,7 @@ https://log-api.newrelic.com/log/v1
 Returns fluentbit config to collect and forward its metrics to New Relic
 */}}
 {{- define "newrelic-logging.fluentBit.monitoring.config" -}}
+{{- if or (eq .Values.fluentBit.fluentBitMetrics "balanced") (eq .Values.fluentBit.fluentBitMetrics "advanced") }}
 [INPUT]
     name prometheus_scrape
     Alias fb-metrics-collector
@@ -189,7 +190,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     port 2020
     tag fb_metrics
     metrics_path /api/v2/metrics/prometheus
-    scrape_interval 60s
+    scrape_interval {{ if eq .Values.fluentBit.fluentBitMetrics "balanced" }}300s{{ else if eq .Values.fluentBit.fluentBitMetrics "advanced" }}60s{{ end }}
 
 [OUTPUT]
     Name                 prometheus_remote_write
@@ -213,6 +214,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     {{- end -}}
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
