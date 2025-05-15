@@ -83,7 +83,7 @@ spec:
                 name: {{ include "newrelic.common.license._customSecretName" . }}
                 key: {{ include "newrelic.common.license._customSecretKey" . }}
                 {{- end }}
-          - name: NR_OTLP_ENDPOINT
+          - name: OTLP_ENDPOINT
             {{- if eq $region "Staging" }}
             value: "staging-otlp.nr-data.net:4317"
             {{- else if eq $region "EU" }}
