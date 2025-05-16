@@ -34,7 +34,7 @@ spec:
             - --chart-version
             - "*"
             - --secrets
-            - "ac-deployment-secret=agent-control-deployment.yaml,ac-deployment-secret=global.yaml"
+            - "{{ .Release.Name }}-deployment=agent-control-deployment.yaml,{{ .Release.Name }}-deployment-secret=global.yaml"
             - --namespace
             - "{{ .Release.Namespace }}"
 {{- end -}}
