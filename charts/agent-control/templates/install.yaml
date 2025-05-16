@@ -1,0 +1,40 @@
+{{- if (not (index .Values "agent-control-deployment").disableRemoteUpdate) -}}
+{{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "10010"
+  name: {{ $installJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  ttlSecondsAfterFinished: 120
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: helm-controller  # Hardcoded on flux2 chart.
+      containers:
+        - name: install-ac-deployment
+          image: newrelic/newrelic-agent-control-cli:nightly
+          imagePullPolicy: IfNotPresent
+          resources:
+            limits:
+              cpu: 1000m
+              memory: 512Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          command:
+            - newrelic-agent-control-cli
+            - install-agent-control
+            - --release-name
+            - "{{ .Release.Name }}"
+            - --chart-version
+            - "*"
+            - --secrets
+            - "ac-deployment-secret=agent-control-deployment.yaml,ac-deployment-secret=global.yaml"
+            - --namespace
+            - "{{ .Release.Namespace }}"
+{{- end -}}
