@@ -6,23 +6,22 @@ metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-    helm.sh/hook-weight: "10010"
   name: {{ $installJobName }}
   namespace: {{ .Release.Namespace }}
 spec:
-  ttlSecondsAfterFinished: 120
   template:
     spec:
       restartPolicy: Never
       serviceAccountName: helm-controller  # Hardcoded on flux2 chart.
       containers:
-        - name: install-ac-deployment
-          image: newrelic/newrelic-agent-control-cli:nightly
+        - name: install-agent-control-deployment
+          # TODO: Pin a version to avoid problems with breaking changes.
+          image: newrelic/newrelic-agent-control-cli
           imagePullPolicy: IfNotPresent
           resources:
             limits:
-              cpu: 1000m
-              memory: 512Mi
+              cpu: 100m
+              memory: 128Mi
             requests:
               cpu: 50m
               memory: 64Mi
