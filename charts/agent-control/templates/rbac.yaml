@@ -1,0 +1,44 @@
+{{- if (index .Values "agent-control-deployment").enabled -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job-resources") }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  - apiGroups: [ "" ]
+    resources: [ "namespaces" ]
+    verbs:
+      - get
+  - apiGroups: [ "apps" ]
+    resources: [ "deployments", "daemonsets", "statefulsets" ]
+    verbs:
+      - list
+      - watch
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+    resources: [ "helmrepositories", "helmreleases" ]
+    verbs:
+      - get
+      - create
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job-resources") }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job-resources") }}
+subjects:
+- kind: ServiceAccount
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
+  namespace: {{ .Release.Namespace }}
+{{- end }}
