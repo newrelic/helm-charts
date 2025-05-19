@@ -56,11 +56,6 @@ spec:
               fi
               {{ end }}
       
-              {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . }}
-              # Delete the secrets created in the cluster
-              kubectl delete secrets -n {{ .Release.Namespace }} -l {{ $acResourcesLabelSelector }}
-              {{- end }}
-
 {{ if .Values.rbac.create }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
