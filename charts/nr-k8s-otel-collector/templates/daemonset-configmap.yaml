@@ -644,6 +644,36 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+    
+    connectors:
+      routing:
+        default_pipelines: [metrics/default]
+        error_mode: propagate
+        table:
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/loadscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
+            pipelines: [metrics/nr]
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -652,11 +682,16 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
-        metrics:
+        metrics/all_receivers:
           receivers:
             - hostmetrics
             - kubeletstats
             - prometheus
+          exporters:
+            - routing
+        metrics/nr:
+          receivers:
+            - routing
           processors:
             - memory_limiter
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -688,6 +723,14 @@ data:
             - attributes/self
             - k8sattributes
             - cumulativetodelta
+            - batch
+          exporters:
+            - otlphttp/newrelic
+        metrics/default:
+          receivers:
+            - routing
+          processors:
+            - memory_limiter
             - batch
           exporters:
             - otlphttp/newrelic

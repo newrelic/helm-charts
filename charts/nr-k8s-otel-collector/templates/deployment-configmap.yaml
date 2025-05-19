@@ -584,6 +584,18 @@ data:
         sampling_initial: 5
         sampling_thereafter: 200
 
+    connectors:
+      routing:
+        default_pipelines: [metrics/default]
+        error_mode: propagate
+        table:
+          - context: datapoint
+            condition: attributes["job_label"] == "kube-state-metrics"
+            pipelines: [metrics/nr_ksm]
+          - context: datapoint
+            condition: attributes["job_label"] == "apiserver"
+            pipelines: [metrics/nr_controlplane]
+
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -591,9 +603,15 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
-        metrics/ksm:
+        metrics/all_receivers:
           receivers:
             - prometheus/ksm
+            - prometheus/controlplane
+          exporters:
+            - routing
+        metrics/nr_ksm:
+          receivers:
+            - routing
           processors:
             - memory_limiter
             - metricstransform/kube_pod_status_phase
@@ -616,9 +634,9 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        metrics:
+        metrics/nr_controlplane:
           receivers:
-            - prometheus/controlplane
+            - routing
           processors:
             - memory_limiter
             - metricstransform/k8s_cluster_info
@@ -634,6 +652,14 @@ data:
             - attributes/self
             - k8sattributes
             - cumulativetodelta
+            - batch
+          exporters:
+            - otlphttp/newrelic
+        metrics/default:
+          receivers:
+            - routing
+          processors:
+            - memory_limiter
             - batch
           exporters:
             - otlphttp/newrelic

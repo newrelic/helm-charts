@@ -1115,6 +1115,7 @@ extensions:
 connectors:
   deployment:
     routing:
+      default_pipelines: [metrics/default]
       error_mode: propagate
       table:
         - context: datapoint
@@ -1125,6 +1126,7 @@ connectors:
           pipelines: [metrics/nr_controlplane]
   daemonset:
     routing:
+      default_pipelines: [metrics/default]
       error_mode: propagate
       table:
         - context: metric
@@ -1154,7 +1156,7 @@ connectors:
 
 pipelines:
   deployment:
-    metrics/nr_receivers:
+    metrics/all_receivers:
       receivers:
         - prometheus/ksm
         - prometheus/controlplane
@@ -1206,6 +1208,14 @@ pipelines:
         - batch
       exporters:
         - otlphttp/newrelic
+    metrics/default:
+      receivers:
+        - routing
+      processors:
+        - memory_limiter
+        - batch
+      exporters:
+        - otlphttp/newrelic
     logs/events:
       receivers:
         - k8s_events
@@ -1217,7 +1227,7 @@ pipelines:
       exporters:
         - otlphttp/newrelic
   daemonset:
-    metrics/nr_receivers:
+    metrics/all_receivers:
       receivers:
         - hostmetrics
         - kubeletstats
@@ -1258,6 +1268,14 @@ pipelines:
         - attributes/self
         - k8sattributes
         - cumulativetodelta
+        - batch
+      exporters:
+        - otlphttp/newrelic
+    metrics/default:
+      receivers:
+        - routing
+      processors:
+        - memory_limiter
         - batch
       exporters:
         - otlphttp/newrelic
