@@ -13,7 +13,7 @@ generate-examples:
 			VALUES=$$(find $${EXAMPLES_DIR}/$${example} -name *values.yaml); \
 			rm -rf "$${EXAMPLES_DIR}/$${example}/rendered"; \
 			for value in $${VALUES}; do \
-				helm template example charts/$${chart_name} --namespace newrelic --values $${value} --set licenseKey='<NR_licenseKey>' --set cluster='<cluser_name>' --output-dir "$${EXAMPLES_DIR}/$${example}/rendered"; \
+				helm template example charts/$${chart_name} --namespace newrelic --set licenseKey='<NR_licenseKey>' --set cluster='<cluser_name>' --values $${value} --output-dir "$${EXAMPLES_DIR}/$${example}/rendered"; \
 				mv $${EXAMPLES_DIR}/$${example}/rendered/$${chart_name}/templates/* "$${EXAMPLES_DIR}/$${example}/rendered"; \
 				SUBCHARTS_DIR=$${EXAMPLES_DIR}/$${example}/rendered/$${chart_name}/charts; \
 				if [ -d "$${SUBCHARTS_DIR}" ]; then \
@@ -39,7 +39,7 @@ check-examples:
 			for value in $${VALUES}; do \
 			  	make install-helm-dependencies -C charts/$${chart_name}; \
 				helm dependency build charts/$${chart_name}; \
-				helm template example charts/$${chart_name} --namespace newrelic --values $${value} --output-dir "${TMP_DIRECTORY}/$${example}"; \
+				helm template example charts/$${chart_name} --namespace newrelic --set licenseKey='<NR_licenseKey>' --set cluster='<cluser_name>' --values $${value} --output-dir "${TMP_DIRECTORY}/$${example}"; \
 				SUBCHARTS_DIR=${TMP_DIRECTORY}/$${example}/$${chart_name}/charts; \
 				SUBCHARTS=$$(find $${SUBCHARTS_DIR} -maxdepth 1 -mindepth 1 -type d -exec basename \{\} \;); \
 				for subchart in $${SUBCHARTS}; do \
