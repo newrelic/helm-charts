@@ -16,7 +16,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      - run: git checkout HEAD^
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
