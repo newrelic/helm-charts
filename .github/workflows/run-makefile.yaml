@@ -1,10 +1,11 @@
 name: Run Makefile
 
 on:
-  push:
-    branches-ignore:
-      - '**master'
-      - '**main'
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - 'charts/nr-k8s-otel-collector/**'
 
@@ -14,7 +15,8 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+      - run: git checkout HEAD^
 
       - name: Set up Helm
         uses: azure/setup-helm@v3
