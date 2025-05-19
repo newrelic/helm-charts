@@ -1,7 +1,11 @@
 name: Run Makefile
 
 on:
-  push:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
     paths:
       - 'charts/nr-k8s-otel-collector/**'
 
