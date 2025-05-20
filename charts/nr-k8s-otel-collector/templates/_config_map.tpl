@@ -13,8 +13,10 @@
 {{- define "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" -}}
 
 {{- if get .Values.deployment "configMap" | kindIs "map" -}}
-    {{- if .Values.deployment.configMap.extraConfig.receivers -}}
-        {{- toYaml .Values.deployment.configMap.extraConfig.receivers -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.receivers -}}
+            {{- toYaml .Values.deployment.configMap.extraConfig.receivers -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -23,8 +25,10 @@
 {{- define "nrKubernetesOtel.deployment.configMap.extraConfig.processors" -}}
 
 {{- if get .Values.deployment "configMap" | kindIs "map" -}}
-    {{- if .Values.deployment.configMap.extraConfig.processors -}}
-        {{- toYaml .Values.deployment.configMap.extraConfig.processors -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.processors -}}
+            {{- toYaml .Values.deployment.configMap.extraConfig.processors -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -33,8 +37,10 @@
 {{- define "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" -}}
 
 {{- if get .Values.deployment "configMap" | kindIs "map" -}}
-    {{- if .Values.deployment.configMap.extraConfig.exporters -}}
-        {{- toYaml .Values.deployment.configMap.extraConfig.exporters -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.exporters -}}
+            {{- toYaml .Values.deployment.configMap.extraConfig.exporters -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -43,8 +49,10 @@
 {{- define "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" -}}
 
 {{- if get .Values.deployment "configMap" | kindIs "map" -}}
-    {{- if .Values.deployment.configMap.extraConfig.connectors -}}
-        {{- toYaml .Values.deployment.configMap.extraConfig.connectors -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.connectors -}}
+            {{- toYaml .Values.deployment.configMap.extraConfig.connectors -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -53,8 +61,10 @@
 {{- define "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" -}}
 
 {{- if get .Values.deployment "configMap" | kindIs "map" -}}
-    {{- if .Values.deployment.configMap.extraConfig.pipelines -}}
-        {{- toYaml .Values.deployment.configMap.extraConfig.pipelines -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.pipelines -}}
+            {{- toYaml .Values.deployment.configMap.extraConfig.pipelines -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -75,8 +85,10 @@
 {{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" -}}
 
 {{- if get .Values.daemonset "configMap" | kindIs "map" -}}
-    {{- if .Values.daemonset.configMap.extraConfig.receivers -}}
-        {{- toYaml .Values.daemonset.configMap.extraConfig.receivers -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.receivers -}}
+            {{- toYaml .Values.daemonset.configMap.extraConfig.receivers -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -85,8 +97,10 @@
 {{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" -}}
 
 {{- if get .Values.daemonset "configMap" | kindIs "map" -}}
-    {{- if .Values.daemonset.configMap.extraConfig.processors -}}
-        {{- toYaml .Values.daemonset.configMap.extraConfig.processors -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.processors -}}
+            {{- toYaml .Values.daemonset.configMap.extraConfig.processors -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -95,8 +109,10 @@
 {{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" -}}
 
 {{- if get .Values.daemonset "configMap" | kindIs "map" -}}
-    {{- if .Values.daemonset.configMap.extraConfig.exporters -}}
-        {{- toYaml .Values.daemonset.configMap.extraConfig.exporters -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.exporters -}}
+            {{- toYaml .Values.daemonset.configMap.extraConfig.exporters -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -105,8 +121,10 @@
 {{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" -}}
 
 {{- if get .Values.daemonset "configMap" | kindIs "map" -}}
-    {{- if .Values.daemonset.configMap.extraConfig.connectors -}}
-        {{- toYaml .Values.daemonset.configMap.extraConfig.connectors -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.connectors -}}
+            {{- toYaml .Values.daemonset.configMap.extraConfig.connectors -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -115,8 +133,10 @@
 {{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" -}}
 
 {{- if get .Values.daemonset "configMap" | kindIs "map" -}}
-    {{- if .Values.daemonset.configMap.extraConfig.pipelines -}}
-        {{- toYaml .Values.daemonset.configMap.extraConfig.pipelines -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.pipelines -}}
+            {{- toYaml .Values.daemonset.configMap.extraConfig.pipelines -}}
+        {{- end -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
