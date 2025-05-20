@@ -97,7 +97,7 @@ Pass environment variables to the agent container if tracing a specific protocol
   {{- end }}
   {{- if eq $protocolEnabled false }}
 - name: PROTOCOLS_{{ upper $protocol }}_ENABLED
-  value: "0"
+  value: "false"
   {{- end }}
 {{- end }}
 {{- end -}}
@@ -111,14 +111,14 @@ Generate environment variables for disabling protocols and setting sampling late
   {{- if (hasKey $config "enabled") }}
     {{- if eq $config.enabled false }}
 - name: PROTOCOLS_{{ upper $protocol }}_ENABLED
-  value: "0"
+  value: "false"
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
-  value: "0"
+  value: "false"
     {{- else if eq $config.enabled true }}
       {{- if (hasKey $config "spans") }}
         {{- if (eq $config.spans.enabled false) }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
-  value: "0"
+  value: "false"
         {{- end }}  
       {{- if (eq $config.spans.enabled true) }}
       {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
