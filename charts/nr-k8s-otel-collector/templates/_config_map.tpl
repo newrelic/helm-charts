@@ -1,10 +1,10 @@
 {{- /* Defines if the deployment config map has to be created or not */ -}}
-{{- define "nrKubernetesOtel.deployment.configMap.config" -}}
+{{- define "nrKubernetesOtel.deployment.configMap.overrideConfig" -}}
 
 {{- /* Look for a local creation of a deployment config map */ -}}
 {{- if get .Values.deployment "configMap" | kindIs "map" -}}
-    {{- if .Values.deployment.configMap.config -}}
-        {{- toYaml .Values.deployment.configMap.config -}}
+    {{- if .Values.deployment.configMap.overrideConfig -}}
+        {{- toYaml .Values.deployment.configMap.overrideConfig -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -61,12 +61,12 @@
 
 
 {{- /* Defines if the daemonset config map has to be created or not */ -}}
-{{- define "nrKubernetesOtel.daemonset.configMap.config" -}}
+{{- define "nrKubernetesOtel.daemonset.configMap.overrideConfig" -}}
 
 {{- /* Look for a local creation of a daemonset config map */ -}}
 {{- if get .Values.daemonset "configMap" | kindIs "map" -}}
-    {{- if .Values.daemonset.configMap.config -}}
-        {{- toYaml .Values.daemonset.configMap.config -}}
+    {{- if .Values.daemonset.configMap.overrideConfig -}}
+        {{- toYaml .Values.daemonset.configMap.overrideConfig -}}
     {{- end -}}
 {{- end -}}
 {{- end -}}
