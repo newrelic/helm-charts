@@ -11,6 +11,7 @@ data:
     {{- . | nindent 4 }}
     {{- else }}
     receivers:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" . | nindent 6 }}
       otlp:
         protocols:
           http:
@@ -67,6 +68,8 @@ data:
                 replacement: apiserver
 
     processors:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 }}
+
       groupbyattrs:
         keys:
           - pod
@@ -565,6 +568,9 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+    
+    connectors:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -573,6 +579,8 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
+        {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
+
         {{- if .Values.receivers.prometheus.enabled }}
         metrics/ksm:
           receivers:

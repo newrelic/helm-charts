@@ -11,6 +11,7 @@ data:
     {{- . | nindent 4 }}
     {{- else }}
     receivers:
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
         {{- if not .Values.gkeAutopilot }}
@@ -215,6 +216,8 @@ data:
             to: resource["k8s.pod.uid"]
 
     processors:
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
+
       metricstransform/ldm:
         transforms:
           - include: .*
@@ -611,6 +614,8 @@ data:
         send_batch_size : 800
 
     exporters:
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
+
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
@@ -619,6 +624,9 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+    
+    connectors:
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -627,6 +635,8 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
+        {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
+
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
         metrics:
           receivers:
