@@ -560,6 +560,7 @@ data:
         send_batch_size : 800
 
     exporters:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 }}
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
