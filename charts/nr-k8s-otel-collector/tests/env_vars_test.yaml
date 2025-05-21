@@ -92,3 +92,41 @@ tests:
             name: "TEST_DAE_ENV_VAR"
             value: "my-dae-value"
         template: templates/daemonset.yaml
+  - it: sets proxy config
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      proxy: 'my-proxy'
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 5
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "http_proxy"
+            value: "my-proxy"
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "https_proxy"
+            value: "my-proxy"
+        template: templates/deployment.yaml
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 9
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "http_proxy"
+            value: "my-proxy"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "https_proxy"
+            value: "my-proxy"
+        template: templates/daemonset.yaml
