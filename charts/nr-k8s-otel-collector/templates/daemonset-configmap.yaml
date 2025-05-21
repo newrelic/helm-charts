@@ -100,6 +100,11 @@ data:
                 - source_labels: [__meta_kubernetes_node_name]
                   regex: ${KUBE_NODE_NAME}
                   action: keep
+              metric_relabel_configs:
+                # Drop cgroup metrics with no container.
+                - source_labels: [id, container]
+                  action: drop
+                  regex: '.+;'
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -486,6 +491,7 @@ data:
               - delete_key(attributes, "id")
               - delete_key(attributes, "name")
               - delete_key(attributes, "interface")
+              - delete_key(attributes, "cpu")
 
       resource/low_data_mode_inator:
         attributes:
@@ -494,6 +500,10 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
             action: delete
 
       attributes/self:
