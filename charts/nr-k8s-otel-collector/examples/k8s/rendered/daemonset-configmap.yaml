@@ -10,10 +10,11 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.12
+    helm.sh/chart: nr-k8s-otel-collector-0.8.15
 data:
   daemonset-config.yaml: |
     receivers:
+      
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
@@ -211,6 +212,8 @@ data:
             to: resource["k8s.pod.uid"]
 
     processors:
+      
+
       metricstransform/ldm:
         transforms:
           - include: .*
@@ -465,7 +468,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.12
+            value: 0.8.15
           - key: service.name
             action: delete
           - key: service_name
@@ -607,6 +610,8 @@ data:
         send_batch_size : 800
 
     exporters:
+      
+
       otlphttp/newrelic:
         endpoint: "https://otlp.nr-data.net"
         headers:
@@ -615,9 +620,13 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+    
+    connectors:
+      
 
     service:
       pipelines:
+        
         metrics:
           receivers:
             - hostmetrics
