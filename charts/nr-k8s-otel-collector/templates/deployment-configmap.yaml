@@ -18,7 +18,7 @@ data:
       k8s_events:
       prometheus/ksm:
         config:
-          scrape_configs: 
+          scrape_configs:
             - job_name: kube-state-metrics
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
@@ -150,18 +150,18 @@ data:
         transforms:
           - include: kubernetes_build_info
             action: update
-            new_name: k8s.cluster.info 
+            new_name: k8s.cluster.info
 
       metricstransform/kube_pod_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
-            match_type: strict 
+            match_type: strict
             action: update
             new_name: 'kube_pod_container_status_phase'
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: waiting 
+              new_value: waiting
           - include: 'kube_pod_container_status_running'
             match_type: strict
             action: update
@@ -169,7 +169,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: running 
+              new_value: running
           - include: 'kube_pod_container_status_terminated'
             match_type: strict
             action: update
@@ -177,7 +177,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: terminated 
+              new_value: terminated
 
       metricstransform/ldm:
         transforms:
@@ -188,12 +188,12 @@ data:
             - action: add_label
               new_label: low.data.mode
               new_value: 'false'
-      
+
       metricstransform/k8s_cluster_info_ldm:
         transforms:
           - include: k8s.cluster.info
             action: update
-            operations: 
+            operations:
             - action: update_label
               label: low.data.mode
               value_actions:
@@ -319,7 +319,7 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
-      
+
       metricstransform/apiserver:
         transforms:
           - include: apiserver_storage_objects
@@ -349,7 +349,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-    
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -391,7 +391,7 @@ data:
             action: delete
           - key: service_name
             action: delete
-      
+
       resource/events:
         attributes:
           - key: "event.name"
@@ -412,6 +412,9 @@ data:
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
+          - key: "newrelic.event.type"
+            action: upsert
+            value: "OtlpInfrastructureEvent"
 
       transform/events:
         log_statements:
@@ -452,7 +455,7 @@ data:
             - k8s.node.name
             - k8s.pod.start_time
         pod_association:
-          - sources: 
+          - sources:
             - from: resource_attribute
               name: k8s.pod.uid
 
