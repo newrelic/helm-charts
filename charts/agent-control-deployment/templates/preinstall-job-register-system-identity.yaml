@@ -290,7 +290,7 @@ spec:
                 {{ include "newrelic-agent-control.auth.secret.name" . }} \
                 --from-literal=CLIENT_ID=$CLIENT_ID \
                 --from-file="private_key=$TEMPORAL_FOLDER/key" | \
-              jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"app.kubernetes.io/created-by": "ac-auth-job"})' | \
+              jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"app.kubernetes.io/managed-by": "newrelic-agent-control"} + {"newrelic.io/agent-id": "agent-control"} )' | \
               kubectl apply -n "{{ .Release.Namespace }}" -f -
 ---
 {{ if .Values.rbac.create }}
