@@ -96,7 +96,9 @@ cluster name, licenses, and custom attributes
 {{- define "newrelic-agent-control.config.content" -}}
 
 {{- /* config set here so we can populate it as we enable and disable snippets. */ -}}
-{{- $config := dict "server" (dict "enabled" true) -}}
+{{- $statusServerPort := int (include "newrelic-agent-control.config.statusServer.port" .) -}}
+{{- $statusServerHost := "0.0.0.0" -}}
+{{- $config := dict "server" (dict "enabled" true "port" $statusServerPort "host" $statusServerHost) -}}
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "chart_version" .Chart.Version) -}}
@@ -125,10 +127,24 @@ cluster name, licenses, and custom attributes
 
 {{- /* Overwrite $config with everything in `config.agentControl.content` if present */ -}}
 {{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).agentControl).content | default dict)) -}}
+
+{{- /* Perform configuration validations */ -}}
+{{- if not $config.server.enabled -}}
+  {{- fail "The status server cannot be disabled as it is used in the Agent Control container probes" -}}
+{{- end -}}
+{{- if ne $config.server.host $statusServerHost -}}
+  {{- fail "The status server needs to listen on 0.0.0.0 to be used in container probes" -}}
+{{- end -}}
+{{- if ne (printf "%v" $config.server.port) (printf "%v" $statusServerPort) -}}
+  {{- fail "Setting up the status server port is `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
+{{- end -}}
+
 {{- $config | toYaml -}}
 {{- end -}}
 
-
+{{- define "newrelic-agent-control.config.statusServer.port" -}}
+{{ ((.Values.config).status_server).port | default 51200 }}
+{{- end -}}
 
 {{- /* These are the defaults that are used for all the containers in this chart */ -}}
 {{- define "newrelic-agent-control.securityContext.containerDefaults" -}}
