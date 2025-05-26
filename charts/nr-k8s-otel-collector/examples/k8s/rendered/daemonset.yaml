@@ -4,14 +4,14 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: example-nr-k8s-otel-collector-daemonset
-  namespace: default
+  namespace: newrelic
   labels:
     app.kubernetes.io/instance: example
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.9
-spec: 
+    helm.sh/chart: nr-k8s-otel-collector-0.8.12
+spec:
   selector:
     matchLabels:
       app.kubernetes.io/instance: example
@@ -24,31 +24,31 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: e8edfd79b4ef3661b44f3399f42c6b8374dbce6c016e11b36109b094cad39457
+        checksum/config: 8046db691ebcb15a77d39e8fb1898aedc4b122c7a1fb4d8c464202fae6ac12a7
     spec:
       serviceAccountName: example-nr-k8s-otel-collector
       containers:
         - name: otel-collector-daemonset
           securityContext:
             privileged: true
-          image: "newrelic/nr-otel-collector:0.8.3"
+          image: "newrelic/nrdot-collector-k8s:1.0.3"
           imagePullPolicy: IfNotPresent
           args: ["--config", "/config/daemonset-config.yaml", "--feature-gates","receiver.kubeletstats.enableCPUUsageMetrics"]
           resources:
             {}
           env:
             - name: HOST_IP
-              valueFrom: 
+              valueFrom:
                 fieldRef:
-                  fieldPath: status.hostIP 
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT 
+                  fieldPath: status.hostIP
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://$(HOST_IP):55680"
             - name: POD_NAME
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
             - name: POD_UID
-              valueFrom: 
+              valueFrom:
                 fieldRef:
                   fieldPath: metadata.uid
             - name: KUBE_NODE_NAME
