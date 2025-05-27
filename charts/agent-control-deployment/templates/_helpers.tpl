@@ -96,7 +96,7 @@ cluster name, licenses, and custom attributes
 {{- define "newrelic-agent-control.config.content" -}}
 
 {{- /* config set here so we can populate it as we enable and disable snippets. */ -}}
-{{- $statusServerPort := int (include "newrelic-agent-control.config.statusServer.port" .) -}}
+{{- $statusServerPort := ((.Values.config).status_server).port -}}
 {{- $statusServerHost := "0.0.0.0" -}}
 {{- $config := dict "server" (dict "enabled" true "port" $statusServerPort "host" $statusServerHost) -}}
 
@@ -140,10 +140,6 @@ cluster name, licenses, and custom attributes
 {{- end -}}
 
 {{- $config | toYaml -}}
-{{- end -}}
-
-{{- define "newrelic-agent-control.config.statusServer.port" -}}
-{{ ((.Values.config).status_server).port | default 51200 }}
 {{- end -}}
 
 {{- /* These are the defaults that are used for all the containers in this chart */ -}}

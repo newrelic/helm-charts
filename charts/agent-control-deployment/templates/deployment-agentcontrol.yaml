@@ -119,13 +119,13 @@ spec:
           livenessProbe:
             httpGet:
               path: /status
-              port: {{ include "newrelic-agent-control.config.statusServer.port" . }}
+              port: {{ .Values.config.status_server.port }}
             failureThreshold: 1
             periodSeconds: 10
           startupProbe:
             httpGet:
               path: /status
-              port: {{ include "newrelic-agent-control.config.statusServer.port" . }}
+              port: {{ .Values.config.status_server.port }}
             failureThreshold: 5
             periodSeconds: 5
             initialDelaySeconds: 5
