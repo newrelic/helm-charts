@@ -3,5 +3,5 @@
 {{- end -}}
 
 {{- define "agent-control.secret.name" -}}
-  {{- printf "%s-deployment" .Release.Name -}}
+  {{ include "agent-control.release.name" . }}
 {{- end -}}
