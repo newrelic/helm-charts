@@ -7,6 +7,7 @@ metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "20"
   name: {{ $installJobName }}
   namespace: {{ .Release.Namespace }}
 spec:
