@@ -61,6 +61,9 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: status.podIP
+            # The k8s.pod.ip is used to associate pods for k8sattributes
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "k8s.pod.ip=$(MY_POD_IP)"          
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:

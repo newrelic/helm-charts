@@ -13,6 +13,7 @@ rules:
     - events
     # following required for k8s_cluster receiver
     - namespaces
+    - namespaces/status
     # following required for prometheus, k8s_cluster receiver
     - nodes
     - nodes/metrics
@@ -73,6 +74,15 @@ rules:
     verbs:
     - list
     - watch
+  # following required for kube-state-metrics receiver
+  - apiGroups:
+    - extensions
+    resources:
+    - replicasets
+    verbs:
+    - list
+    - watch
+    - get
   # following required for prometheus receiver
   - nonResourceURLs: ["/metrics"]
     verbs: ["get"]
