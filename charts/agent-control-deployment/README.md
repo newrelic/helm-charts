@@ -37,6 +37,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | config.fleet_control.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
+| config.status_server.port | int | See `values.yaml` | Set the status server port |
 | config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customIdentityClientIdSecretKey | string | `""` |  |
