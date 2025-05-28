@@ -1,5 +1,5 @@
 {{- define "agent-control.release.name" -}}
-  {{- printf "%s-deployment" .Release.Name -}}
+  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "deployment") }}
 {{- end -}}
 
 {{- define "agent-control.secret.name" -}}
