@@ -1,4 +1,4 @@
-[![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
+<a href="https://opensource.newrelic.com/oss-category/#community-plus"><picture><source media="(prefers-color-scheme: dark)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/dark/Community_Plus.png"><source media="(prefers-color-scheme: light)" srcset="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png"><img alt="New Relic Open Source community plus project banner." src="https://github.com/newrelic/opensource-website/raw/main/src/images/categories/Community_Plus.png"></picture></a>
 
 # New Relic's Helm charts repository
 
@@ -25,7 +25,7 @@ This is the official Helm charts repository for New Relic. It is indexed at [Hel
 * New Relic account
 
 ## <a name='Installthecharts'></a>Install
-You can have all the information about the installation in the [New Relic Documentation page for installaing the Kubernetes integration
+You can have all the information about the installation in the [New Relic Documentation page for installing the Kubernetes integration
 using Helm](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/installation/install-kubernetes-integration-using-helm/)
 
 Just as a glance of the process of installation and configuration the process involves to create a `values.yaml` that will look like this:
@@ -33,15 +33,17 @@ Just as a glance of the process of installation and configuration the process in
 global:
   licenseKey: YOUR_LICENSE_KEY
   cluster: YOUR_CLUSTER_NAME
-kubeEvents:
+nri-kube-events:
   enabled: true
-webhook:
+nri-metadata-injection:
   enabled: true
-prometheus:
+nri-prometheus:
   enabled: true
-logging:
+newrelic-logging:
   enabled: true
-ksm:
+k8s-agents-operator:
+  enabled: true
+kube-state-metrics:
   enabled: true
 ```
 
@@ -67,6 +69,9 @@ The following example installs the `nri-bundle` chart, which groups multiple New
 - [New Relic's Prometheus OpenMetrics integration][newrelic-prometheus]
 - [Metadata injection webhook][newrelic-webhook]
 - [Kube state metrics][ksm]
+
+### <a name='Upgrading'></a>Upgrading to the new version of KSM
+You can find additional information on how to upgrade to the new version of KSM in the [New Relic Documentation page for Kubernetes Compatibility and Requirements](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/get-started/kubernetes-integration-compatibility-requirements/#upgrading-to-the-new-version-of-ksm)
 
 ## <a name='Development'></a>Development
 
@@ -115,7 +120,7 @@ If the issue has been confirmed as a bug or is a feature request, file a GitHub 
 **Support Channels**
 
 * [New Relic Documentation](https://docs.newrelic.com): Comprehensive guidance for using our platform
-* [New Relic Community](https://discuss.newrelic.com/c/support-products-agents/new-relic-infrastructure): The best place to engage in troubleshooting questions
+* [New Relic Community](https://forum.newrelic.com/c/support-products-agents/new-relic-infrastructure): The best place to engage in troubleshooting questions
 * [New Relic Developer](https://developer.newrelic.com/): Resources for building a custom observability applications
 * [New Relic University](https://learn.newrelic.com/): A range of online training for New Relic users of every level
 * [New Relic Technical Support](https://support.newrelic.com/) 24/7/365 ticketed support. Read more about our [Technical Support Offerings](https://docs.newrelic.com/docs/licenses/license-information/general-usage-licenses/support-plan).
@@ -135,7 +140,7 @@ helm init
 
 ## <a name='License'></a>License
 
-The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0).
+The project is released under version 2.0 of the [Apache license](http://www.apache.org/licenses/LICENSE-2.0). The individual charts within this project are also released under the Apache 2.0 license, unless there is a separate LICENSE file in the chart directory. These charts are used to install software, some of which is proprietary, pre-release, or otherwise restricted. Please check the project and dependency repositories for more information.
 
 [Artifact Hub]: https://artifacthub.io/packages/search?repo=newrelic
 [helm-search]: https://helm.sh/docs/intro/using_helm/#helm-search-finding-charts

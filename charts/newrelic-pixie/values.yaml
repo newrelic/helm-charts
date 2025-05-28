@@ -23,6 +23,11 @@
 # The key in the customSecretApiKeyName secret that contains the Pixie API key
 # customSecretApiKeyKey:
 
+clusterRegistrationWaitImage:
+  repository: gcr.io/pixie-oss/pixie-dev-public/curl
+  tag: "1.0"
+  pullPolicy: IfNotPresent
+
 image:
   repository: newrelic/newrelic-pixie-integration
   tag: ""
@@ -36,6 +41,17 @@ resources:
   requests:
     cpu: 100m
     memory: 250M
+
+# -- Annotations to add to the pod.
+podAnnotations: {}
+# -- Additional labels for chart pods
+podLabels: {}
+
+job:
+  # job.annotations -- Annotations to add to the Job.
+  annotations: {}
+  # job.labels -- Labels to add to the Job.
+  labels: {}
 
 proxy: {}
 
@@ -54,5 +70,6 @@ excludePodsRegex:
 
 # When low data mode is enabled the integration performs heavier sampling on the Pixie span data
 # and sets the collect interval to 15 seconds instead of 10 seconds.
-# Can be set as a global: global.lowDataMode
-lowDataMode: false
+# Can be set as a global: global.lowDataMode or locally as newrelic-pixie.lowDataMode
+# @default -- false
+lowDataMode:

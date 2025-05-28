@@ -17,3 +17,14 @@ To enable custom test values, create a directory named `ci` in the chart's direc
 For examples, take a look at the existing tests in this repository.
 
 >To use default test values, an empty `values` file must be present in the `ci` directory.
+
+## Running tests locally
+
+- Install Helm's 'chart-testing' utilities
+  - `brew install chart-testing`
+  - `brew install yamllint`
+  - `helm plugin install https://github.com/helm-unittest/helm-unittest`
+- Run linter and yaml validation
+  - `ct lint-and-install`
+- Run unit tests: 
+  - `helm unittest charts/newrelic-logging`

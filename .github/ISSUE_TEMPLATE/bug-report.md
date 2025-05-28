@@ -20,7 +20,7 @@ A clear and concise description of what the bug is.
 
 **Version of Helm and Kubernetes**
 
-The versino of Helm and Kubernetes where the problem occurs.
+The version of Helm and Kubernetes where the problem occurs.
 
 **Which chart?**
 

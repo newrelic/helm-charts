@@ -462,6 +462,133 @@ You just must have a template with these two lines:
 
 
 
+## _insights.tpl
+### `newrelic.common.insightsKey.secretName` and ### `newrelic.common.insightsKey.secretKeyName`
+Returns the secret and key inside the secret where to read the insights key.
+
+The common library will take care of using a user-provided custom secret or creating a secret that contains the insights key.
+
+To create the secret use `newrelic.common.insightsKey.secret`.
+
+Usage:
+```mustache
+apiVersion: v1
+kind: Pod
+metadata:
+  name: statsd
+spec:
+  containers:
+  - name: statsd
+    env:
+    - name: "INSIGHTS_KEY"
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "newrelic.common.insightsKey.secretName" . }}
+          key: {{ include "newrelic.common.insightsKey.secretKeyName" . }}
+```
+
+
+
+## _insights_secret.tpl
+### `newrelic.common.insightsKey.secret`
+This function templates the secret that is used by agents and integrations with the insights key provided by the user. It will
+template nothing (empty string) if the user provides a custom pair of secret name and key.
+
+This template also fails in case the user has not provided any insights key or custom secret so no safety checks have to be done
+by chart writers.
+
+You just must have a template with these two lines:
+```mustache
+{{- /* Common library will take care of creating the secret or not. */ -}}
+{{- include "newrelic.common.insightsKey.secret" . -}}
+```
+
+
+
+## _userkey.tpl
+### `newrelic.common.userKey.secretName` and ### `newrelic.common.userKey.secretKeyName`
+Returns the secret and key inside the secret where to read a user key.
+
+The common library will take care of using a user-provided custom secret or creating a secret that contains the insights key.
+
+To create the secret use `newrelic.common.userKey.secret`.
+
+Usage:
+```mustache
+apiVersion: v1
+kind: Pod
+metadata:
+  name: statsd
+spec:
+  containers:
+  - name: statsd
+    env:
+    - name: "API_KEY"
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "newrelic.common.userKey.secretName" . }}
+          key: {{ include "newrelic.common.userKey.secretKeyName" . }}
+```
+
+
+
+## _userkey_secret.tpl
+### `newrelic.common.userKey.secret`
+This function templates the secret that is used by agents and integrations with a user key provided by the user. It will
+template nothing (empty string) if the user provides a custom pair of secret name and key.
+
+This template also fails in case the user has not provided any API key or custom secret so no safety checks have to be done
+by chart writers.
+
+You just must have a template with these two lines:
+```mustache
+{{- /* Common library will take care of creating the secret or not. */ -}}
+{{- include "newrelic.common.userKey.secret" . -}}
+```
+
+
+
+## _region.tpl
+### `newrelic.common.region.validate`
+Given a string, return a normalized name for the region if valid.
+
+This function does not need the context of the chart, only the value to be validated. The region returned
+honors the region [definition of the newrelic-client-go implementation](https://github.com/newrelic/newrelic-client-go/blob/cbe3e4cf2b95fd37095bf2ffdc5d61cffaec17e2/pkg/region/region_constants.go#L8-L21)
+so (as of 2024/09/14) it returns the region as "US", "EU", "Staging", or "Local".
+
+In case the region provided does not match these 4, the helper calls `fail` and abort the templating.
+
+Usage:
+```mustache
+{{ include "newrelic.common.region.validate" "us" }}
+```
+
+### `newrelic.common.region`
+It reads global and local variables for `region`:
+```yaml
+global:
+  region:  # Note that this can be empty (nil) or "" (empty string)
+region:  # Note that this can be empty (nil) or "" (empty string)
+```
+
+Be careful: chart writers should NOT PUT ANY VALUE for this library to work properly. If in your
+values a `region` is defined, the global one is going to be always ignored.
+
+This function gives protection so it enforces users to give the license key as a value in their
+`values.yaml` or specify a global or local `region` value. To understand how the `region` value
+works, read the documentation of `newrelic.common.region.validate`.
+
+The function will change the region from US, EU or Staging based of the license key and the
+`nrStaging` toggle. Whichever region is computed from the license/toggle can be overridden by
+the `region` value.
+
+Usage:
+```mustache
+{{ include "newrelic.common.region" . }}
+```
+
+
+
 ## _low-data-mode.tpl
 ### `newrelic.common.lowDataMode`
 Like almost everything in this library, it reads global and local variables:

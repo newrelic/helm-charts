@@ -16,7 +16,7 @@ here is a list of components that this chart installs and where you can find mor
 |------------------------------|-----------------------|-------------|
 | [newrelic-infrastructure](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) | Yes | Sends metrics about nodes, cluster objects (e.g. Deployments, Pods), and the control plane to New Relic. |
 | [nri-metadata-injection](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) | Yes | Enriches New Relic-instrumented applications (APM) with Kubernetes information. |
-| [kube-state-metrics](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) | | Required for `newrelic-infrastructure` to gather cluster-level metrics. |
+| [kube-state-metrics](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) | | Required for `newrelic-infrastructure` to gather cluster-level metrics. |
 | [nri-kube-events](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) | | Reports Kubernetes events to New Relic. |
 | [newrelic-infra-operator](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) | | (Beta) Used with Fargate or serverless environments to inject `newrelic-infrastructure` as a sidecar instead of the usual DaemonSet. |
 | [newrelic-k8s-metrics-adapter](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) |  | (Beta) Provides a source of data for Horizontal Pod Autoscalers (HPA) based on a NRQL query from New Relic. |
@@ -25,6 +25,8 @@ here is a list of components that this chart installs and where you can find mor
 | [newrelic-prometheus-configurator](https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent) |  | Configures instances of Prometheus in Agent mode to send metrics to the New Relic Prometheus endpoint. |
 | [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |  | Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin allows you to export data from Pixie to New Relic for long-term data retention. |
 | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |  | Is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for manual instrumentation. |
+| [newrelic-eAPM-agent](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) | | Configures instances of the New Relic eAPM agent to automatically capture telemetry data without the need for manual instrumentation. |
+| [k8s-agents-operator](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) | | Streamlines full-stack observability for Kubernetes environments by automating APM instrumentation alongside Kubernetes agent deployment. |
 
 ## Configure components
 
@@ -96,9 +98,9 @@ newrelic-infrastructure:
 
 New Relic Kubernetes Integration requires an instance of kube-state-metrics (KSM) to be running in the cluster, which this chart pulls as a dependency. If you are already running or want to run your own KSM instance, you will need to make some small adjustments as described below.
 
-### Bring your own KSM v1.9.8
+### Bring your own KSM
 
-New Relic Kubernetes integration only supports KSM v1.9.8. If you already have one running, you can disable the KSM dependency of this chart, and point `nri-kubernetes` to your instance:
+If you already have one KSM instance running, you can point `nri-kubernetes` to your instance:
 
 ```yaml
 kube-state-metrics:
@@ -113,9 +115,9 @@ newrelic-infrastructure:
       #staticUrl: http://ksm.ksm.svc.cluster.local:8080/metrics
 ```
 
-### Run KSM v1.9.8 alongside a different version
+### <span id="ksm-different-version">Run KSM alongside a different version</span>
 
-If you need to run a different version of KSM in your cluster, you can still run a separate v1.9.8 instance for the Kubernetes Integration to work as intended:
+If you need to run a different instance of KSM in your cluster, you can still run a separate instance for the Kubernetes Integration to work as intended:
 
 ```yaml
 kube-state-metrics:
@@ -132,6 +134,8 @@ newrelic-infrastructure:
       selector: "newrelic.com/custom-ksm=true"
 ```
 
+For more information on supported KSM version visit the [requirements documentation](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/get-started/kubernetes-integration-compatibility-requirements#reqs)
+
 ## Values managed globally
 
 Some of the subchart implement the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
@@ -142,6 +146,8 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 At the time of writing this document, all the charts from `nri-bundle` except `newrelic-logging` and `synthetics-minion` implements this library and
 honors global options as described below.
+
+Note, the value table below is automatically generated from `values.yaml` by `helm-docs`. If you need to add new fields or update existing fields, please update the `values.yaml` and then run `helm-docs` to update this value table.
 
 ## Values
 
@@ -175,14 +181,15 @@ honors global options as described below.
 | global.serviceAccount.name | string | `nil` | Change the name of the service account. This is honored if you disable on this chart the creation of the service account so you can use your own |
 | global.tolerations | list | `[]` | Sets pod's tolerations to node taints |
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
-| kube-state-metrics.collectors | object | See [`values.yaml`](values.yaml) of the kube-state-metric chart | Collectors configuration of kube-state-metric |
-| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/kubernetes/kube-state-metrics/tree/master/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0 |
+| k8s-agents-operator.enabled | bool | `false` | Install the [`k8s-agents-operator` chart](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) |
+| kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
+| newrelic-eapm-agent.enabled | bool | `false` | Install the [`nr-eapm-agent`](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
 | newrelic-infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
 | newrelic-k8s-metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
 | newrelic-logging.enabled | bool | `false` | Install the [`newrelic-logging` chart](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging) |
 | newrelic-pixie.enabled | bool | `false` | Install the [`newrelic-pixie`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |
-| newrelic-prometheus-agent.enabled | bool | `false` | Install the [`newrelic-prometheus-agent` chart](https://github.com/newrelic/newrelic-prometheus-configurator/tree/main/charts/newrelic-prometheus-agent) (Public preview) |
+| newrelic-prometheus-agent.enabled | bool | `false` | Install the [`newrelic-prometheus-agent` chart](https://github.com/newrelic/newrelic-prometheus-configurator/tree/main/charts/newrelic-prometheus-agent) |
 | nri-kube-events.enabled | bool | `false` | Install the [`nri-kube-events` chart](https://github.com/newrelic/nri-kube-events/tree/main/charts/nri-kube-events) |
 | nri-metadata-injection.enabled | bool | `true` | Install the [`nri-metadata-injection` chart](https://github.com/newrelic/k8s-metadata-injection/tree/main/charts/nri-metadata-injection) |
 | nri-prometheus.enabled | bool | `false` | Install the [`nri-prometheus` chart](https://github.com/newrelic/nri-prometheus/tree/main/charts/nri-prometheus) |
@@ -190,11 +197,9 @@ honors global options as described below.
 
 ## Maintainers
 
-* [alvarocabanas](https://github.com/alvarocabanas)
-* [carlossscastro](https://github.com/carlossscastro)
-* [sigilioso](https://github.com/sigilioso)
-* [gsanchezgavier](https://github.com/gsanchezgavier)
-* [kang-makes](https://github.com/kang-makes)
-* [marcsanmi](https://github.com/marcsanmi)
-* [paologallinaharbur](https://github.com/paologallinaharbur)
-* [roobre](https://github.com/roobre)
+* [Philip-R-Beckwith](https://github.com/Philip-R-Beckwith)
+* [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
+* [TmNguyen12](https://github.com/TmNguyen12)
+* [kondracek-nr](https://github.com/kondracek-nr)
+* [kpattaswamy](https://github.com/kpattaswamy)
+* [danielstokes](https://github.com/danielstokes)

@@ -1,0 +1,230 @@
+---
+# -- Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster`
+cluster: ""
+# -- The license key to use. Can be configured with `global.licenseKey`
+licenseKey: ""
+# -- In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
+customSecretName: ""
+# -- In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
+customSecretLicenseKey: ""
+# -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
+region: ""
+# -- Enable to export data to NR's Staging otel endpoint (staging-otlp.nr-data.net:4317).
+nrStaging:
+# -- Configures the agent to send all data through the proxy specified via the otel collector.
+proxy: ""
+# -- Drop data when service names map to an IP address.
+dropDataIpServiceNames: true
+# -- Drop data from the kube-system namespace.
+dropDataKubeSystem: true
+# -- Drop data from the newrelic namespace.
+dropDataNewRelic: true
+# -- Drop data from pods that are monitored by New Relic APM via auto attach.
+dropAPMEnabledPods: true
+# -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
+# see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
+dropDataServiceNameRegex: ""
+# -- This config acts as a bypass for the dropDataServiceNameRegex config.
+# Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex.
+# If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent.
+allowServiceNameRegex: ""
+# -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
+tableStoreDataLimitMB: "250"
+# -- The source connectors (and data export scripts) to enable.
+# Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
+# while tcp_stats tracks TCP metrics.
+stirlingSources: "socket_tracer,tcp_stats"
+# The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
+# Each protocol has the flexibility to selectively enable the type of OTLP data to export.
+# Metrics are sent by default when a protocol is enabled and it supports metrics. Note: AMQP, Kafka, DNS do not report metrics.
+# samplingLatency represents the sampling latency threshold for the spans to export.
+# Options: p1, p10, p50, p90, p99.
+protocols:
+  http:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+      # -- samplingErrorRate represents the error rate threshold for an HTTP route where surpassing it would mean the corresponds spans of the route are exported.
+      # Options: 1-100
+      samplingErrorRate: ""
+  mysql:
+    enabled: true
+    spans:
+      enabled: false
+      samplingLatency: ""
+  pgsql:
+    enabled: true
+    spans:
+      enabled: false
+      samplingLatency: ""
+  cass:
+    enabled: true
+    spans:
+      enabled: false
+      samplingLatency: ""
+  redis:
+    enabled: true
+    spans:
+      enabled: false
+      samplingLatency: ""
+  mongodb:
+    enabled: true
+    spans:
+      enabled: false
+      samplingLatency: ""
+  kafka:
+    enabled: false
+    spans:
+      enabled: false
+      samplingLatency: ""
+  amqp:
+    enabled: false
+    spans:
+      enabled: false
+      samplingLatency: ""
+  dns:
+    enabled: false
+    spans:
+      enabled: false
+      samplingLatency: ""
+
+# --- The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR.
+# The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data.
+# The algorithm only looks for similar request paths within data of the same push period.
+# To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60.
+pushPeriod: "15"
+
+# Configuration to apply on the eBPF agent daemonset.
+ebpfAgent:
+  image:
+    # -- eBPF agent image to be deployed.
+    repository: docker.io/newrelic/newrelic-ebpf-agent
+    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+    # -- The tag of the eBPF agent image to be deployed.
+    tag: agent-nr-ebpf-agent_0.0.9
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 2Gi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 250Mi
+  # -- Sets ebpfAgent pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Sets ebpfAgent pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
+  podAnnotations: {}
+  # -- Sets ebpfAgent pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
+  podSecurityContext: {}
+  # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
+  containerSecurityContext: {}
+
+# Configuration to apply on the eBPF client daemonset.
+ebpfClient:
+  image:
+    # -- eBPF client image to be deployed.
+    repository: docker.io/newrelic/newrelic-ebpf-agent
+    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
+    pullPolicy: IfNotPresent
+    # -- The tag of the eBPF client image to be deployed.
+    tag: client-nr-ebpf-client_0.0.12
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 100Mi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 50m
+      # -- Min memory allocated to the container.
+      memory: 50Mi
+
+# Configuration to apply on the OpenTelemetry collector daemonset.
+otelCollector:
+  image:
+    # -- OpenTelemetry collector image to be deployed.
+    repository: docker.io/newrelic/newrelic-ebpf-agent
+    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
+    pullPolicy: IfNotPresent
+    # -- The tag of the OpenTelemetry collector image to be deployed.
+    tag: nr-ebpf-otel-collector_0.0.1
+  resources:
+    limits:
+      # -- Max CPU allocated to the container.
+      cpu: 100m
+      # -- Max memory allocated to the container.
+      memory: 200Mi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 200Mi
+  # -- Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
+  podAnnotations: {}
+  # -- Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
+  podSecurityContext: {}
+  # -- Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
+  containerSecurityContext: {}
+  collector:
+    serviceAccount:
+      # -- Annotations for the OTel collector service account.
+      annotations: {}
+
+# -- Additional labels for chart pods.
+podLabels: {}
+# -- Additional labels for chart objects.
+labels: {}
+# -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
+priorityClassName: ""
+# -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
+dnsConfig: {}
+# -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
+nodeSelector: {}
+# -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
+tolerations: []
+# -- Sets all pods' affinities. Can be configured also with `global.affinity`
+affinity: {}
+# -- Sets all pods' podSecurityContext. Can be configured also with `global.securityContext.pod`
+podSecurityContext: {}
+# -- Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container`
+containerSecurityContext: {}
+# --  Kubernetes cluster domain.
+kubernetesClusterDomain: cluster.local
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+# @default -- `false`
+verboseLog:
+# tls makes sure only requests with correctly formatted rules will get into the operator.
+tls:
+  # -- Enable TLS communication between the eBPF client and agent.
+  enabled: true
+  # TLS Certificate Option 1: Use Helm to automatically generate a self-signed certificate.
+  # autoGenerateCert must be enabled.
+  autoGenerateCert:
+    # -- If true, Helm will automatically create a self-signed cert and secret for you.
+    enabled: true
+    # -- If set to true, a new key/certificate is generated on helm upgrade.
+    recreate: true
+    # -- Cert validity period time in days.
+    certPeriodDays: 365
+    # -- Certificates path.
+    certPath: "/tmp/ebpf/certs/"
+
+  # TLS Certificate Option 2: Use your own self-signed certificate.
+  # autoGenerateCert must be disabled, and certFile, keyFile, and caFile must be set.
+  # The chart reads the contents of the file paths with the helm. Files.Get function.
+  # Refer to this doc https://helm.sh/docs/chart_template_guide/accessing_files/ to understand
+  # limitations of file paths accessible to the chart.
+  # -- Path to your own PEM-encoded certificate.
+  certFile: ""
+  # -- Path to your own PEM-encoded private key.
+  keyFile: ""
+  # -- Path to the CA cert.
+  caFile: ""

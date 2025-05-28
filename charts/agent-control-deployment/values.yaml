@@ -1,0 +1,177 @@
+# -- Override the name of the chart used to template resource names.
+# @default -- See `values.yaml`
+nameOverride: "agent-control"
+# -- Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
+cluster: ""
+# -- This set this license key to use. Can be configured also with `global.licenseKey`
+licenseKey: ""
+# -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
+customSecretName: ""
+# -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
+customSecretLicenseKey: ""
+
+# -- Identity client_id to use.
+identityClientId: ""
+# -- Identity client_secret to use.
+identityClientSecret: ""
+# -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
+customIdentitySecretName: ""
+customIdentityClientIdSecretKey: ""
+customIdentityClientSecretSecretKey: ""
+
+# -- Image for the New Relic Agent Control
+# @default -- See `values.yaml`
+image:
+  registry:
+  repository: newrelic/newrelic-agent-control
+  # @default It defaults to `appVersion` in `Chart.yaml`.
+  tag: ""
+  pullPolicy: IfNotPresent
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+
+# -- Add user environment variables to the agent
+extraEnv: []
+# -- Add user environment from configMaps or secrets as variables to the agent
+extraEnvFrom: []
+# -- Volumes to mount in the containers
+extraVolumes: []
+# -- Defines where to mount volumes specified with `extraVolumes`
+extraVolumeMounts: []
+
+# -- Settings controlling ServiceAccount creation.
+# @default -- See `values.yaml`
+serviceAccount:
+  # -- Whether the chart should automatically create the ServiceAccount objects required to run.
+  create: true
+  annotations: {}
+  # If not set and create is true, a name is generated using the full name template
+  name: ""
+
+# -- Additional labels for chart objects. Can be configured also with `global.labels`
+labels: {}
+# -- Annotations to be added to all pods created by the integration.
+podAnnotations: {}
+# -- Additional labels for chart pods. Can be configured also with `global.podLabels`
+podLabels: {}
+
+# -- Resource limits to be added to all pods created by the integration.
+# @default -- `{}`
+resources: {}
+
+# -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
+priorityClassName: ""
+# -- (bool) Sets pod's hostNetwork. Can be configured also with `global.hostNetwork`
+# @default -- `false`
+hostNetwork:
+# -- Sets security context (at pod level). Can be configured also with `global.podSecurityContext`
+podSecurityContext: {}
+# -- Sets security context (at container level). Can be configured also with `global.containerSecurityContext`
+containerSecurityContext: {}
+
+# -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
+dnsConfig: {}
+
+# Settings controlling RBAC objects creation.
+rbac:
+  # -- Whether the chart should automatically create the RBAC objects required to run.
+  create: true
+
+# -- Sets pod/node affinities. Can be configured also with `global.affinity`
+affinity: {}
+# -- Sets pod's node selector. Can be configured also with `global.nodeSelector`
+nodeSelector: {}
+# -- Sets pod's tolerations to node taints. Can be configured also with `global.tolerations`
+tolerations: []
+
+# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
+# @default -- `false`
+nrStaging:
+
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+# @default -- `false`
+verboseLog:
+
+# -- Enable the cleanup of agent-control managed resources when the chart is uninstalled.
+# If disabled, agents and/or agent configurations managed by the agent-control will not be deleted when the chart is uninstalled.
+cleanupManagedResources: true
+
+config:
+  # -- Configuration for the Agent Control.
+  # @default -- See `values.yaml`
+  agentControl:
+    # -- Set if the configMap is going to be created by this chart or the user will provide its own.
+    create: true
+    # -- Overrides the configuration that has been created automatically by the chart.
+    # This configuration here will be **MERGED** with the configuration specified above.
+    # If you need to have you own configuration, disabled the creation of this configMap and create your own.
+    content: {}
+  status_server:
+    # -- Set the status server port
+    # @default -- See `values.yaml`
+    port: 51200
+
+  # -- List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration.
+  # @default -- `{}` (See `values.yaml`)
+  subAgents:
+  # In the example below, open-telemetry is a managed agent that will be deployed.
+  # open-telemetry:
+  #   # -- Agent type <namespace>/<name>:<version>
+  #   type: newrelic/io.opentelemetry.collector:0.1.0
+  #   # -- Agent configuration content.
+  #   content:
+  #     # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
+  #     chart_version: "0.8.0"
+  #     # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
+  #     # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
+  #     # so it is not necessary to set them here.
+  #     chart_values:
+  #       nr-k8s-otel-collector: {}
+  #       global: {}
+
+  fleet_control:
+    # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
+    # in stand alone mode where only the agents specified on `.config.subAgents` will be launched.
+    enabled: true
+    # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
+    fleet_id: ""
+
+    auth:
+      # -- Organization ID where fleets will live.
+      organizationId: ""
+      secret:
+        create: true
+        # -- Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret
+        # will have.
+        # @default -- release name suffixed with "-auth"
+        name:
+        ## If private_key and client_id values are specified, their creation is disabled and the `preinstall-user-key` job is not executed
+        private_key:
+          # -- Key inside the secret containing the private key.
+          # @default -- `private_key`
+          secret_key:
+          # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation.
+          # This options is mutually exclusive with `plain_pem`.
+          base64_pem:
+          # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text if you want to skip its creation.
+          # This options is mutually exclusive with `base64_pem`.
+          plain_pem:
+        client_id:
+          # -- Key inside the secret containing the client ID.
+          # @default -- `client_id`
+          secret_key:
+          # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation.
+          # This options is mutually exclusive with `plain`.
+          base64:
+          # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation.
+          # This options is mutually exclusive with `base64`.
+          plain:
+
+# -- Image for the system identity registration process
+# @default -- See `values.yaml`
+systemIdentityRegistration:
+  image:
+    repository: newrelic/agent-control-system-identity-registration
+    tag: latest
+    pullPolicy: IfNotPresent

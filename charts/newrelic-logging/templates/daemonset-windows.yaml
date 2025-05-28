@@ -22,8 +22,9 @@ spec:
       kubernetes.io/os: windows
   template:
     metadata:
-    {{- if $.Values.podAnnotations }}
       annotations:
+        checksum/fluent-bit-config: {{ include (print $.Template.BasePath "/configmap.yaml") $ | sha256sum }}
+    {{- if $.Values.podAnnotations }}
 {{ toYaml $.Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
@@ -36,29 +37,33 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" $ }}
-      hostNetwork: false
+      {{- with include "newrelic.common.dnsConfig" $ }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
       dnsPolicy: ClusterFirst
       terminationGracePeriodSeconds: 10
-      {{- if $.Values.image.pullSecrets }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list $.Values.image.pullSecrets) "context" $) }}
       imagePullSecrets:
-{{ toYaml $.Values.image.pullSecrets | indent 8 }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- if $.Values.hostNetwork }}
+      hostNetwork: {{ $.Values.hostNetwork }}
+      {{- end }}
+      {{- if $.Values.windows.initContainers }}
+      initContainers:
+{{ toYaml $.Values.windows.initContainers | indent 8 }}
       {{- end }}
       containers:
         - name: {{ template "newrelic-logging.name" $ }}
-          image: "{{ $.Values.image.repository }}:{{ $.Values.image.tag | default $.Chart.AppVersion  }}-{{ .imageTagSuffix }}"
+          # We have to use 'replace' to remove the double-quotes that "newrelic.common.images.image" has, so that
+          # we can append the Windows image tag suffix (and then re-quote that value)
+          image: "{{ include "newrelic.common.images.image" ( dict "imageRoot" $.Values.image "context" $) | replace "\"" ""}}-{{ .imageTagSuffix }}"
           imagePullPolicy: "{{ $.Values.image.pullPolicy }}"
           securityContext: {}
           env:
             - name: ENDPOINT
-              {{- if (include "newrelic.nrStaging" $) }}
-              value: "https://staging-log-api.newrelic.com/log/v1"
-              {{- else if $.Values.endpoint }}
-              value: {{ $.Values.endpoint }}
-              {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" $)) "eu" }}
-              value: "https://log-api.eu.newrelic.com/log/v1"
-              {{- else }}
-              value: "https://log-api.newrelic.com/log/v1"
-              {{- end }}
+              value: {{ include "newrelic-logging.logsEndpoint" $ | quote }}
             - name: SOURCE
               value: {{ if (include "newrelic-logging.lowDataMode" $) }} "k8s" {{- else }} "kubernetes" {{- end }}
             - name: LICENSE_KEY
@@ -77,22 +82,39 @@ spec:
               value: {{ $.Values.fluentBit.logLevel | quote }}
             - name: LOG_PARSER
               {{- if $.Values.fluentBit.criEnabled }}
-              value: "cri"
+              value: "cri,docker"
               {{- else }}
-              value: "docker"
+              value: "docker,cri"
               {{- end }}
+            {{- if or (not $.Values.fluentBit.persistence) (eq $.Values.fluentBit.persistence.mode "hostPath") }}
             - name: FB_DB
               value: {{ $.Values.fluentBit.windowsDb | quote }}
+            {{- else }}
+            - name: FB_DB
+              value: ""
+            {{- end }}
             - name: PATH
               value: {{ $.Values.fluentBit.windowsPath | quote }}
             - name: K8S_BUFFER_SIZE
               value: {{ $.Values.fluentBit.k8sBufferSize | quote }}
             - name: K8S_LOGGING_EXCLUDE
-              value: {{ $.Values.fluentBit.k8sLoggingExclude | quote }}
+              value: {{ $.Values.fluentBit.k8sLoggingExclude | default "false" | quote }}
             - name: LOW_DATA_MODE
               value: {{ include "newrelic-logging.lowDataMode" $ | default "false" | quote }}
             - name: RETRY_LIMIT
               value: {{ $.Values.fluentBit.retryLimit | quote }}
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: HOSTNAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: SEND_OUTPUT_PLUGIN_METRICS
+              value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
+            - name: METRICS_HOST
+              value: {{ include "newrelic-logging.metricsHost" $ | quote }}
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
           command:
             - C:\fluent-bit\bin\fluent-bit.exe
@@ -100,15 +122,24 @@ spec:
             - c:\fluent-bit\etc\fluent-bit.conf
             - -e
             - C:\fluent-bit\bin\out_newrelic.dll
+          {{- if $.Values.exposedPorts }}
+          ports: {{ toYaml $.Values.exposedPorts | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - mountPath: C:\fluent-bit\etc
               name: fluent-bit-config
             - mountPath: C:\var\log
-              name: varlog
+              name: logs
+              {{- if and ($.Values.fluentBit.persistence) (ne $.Values.fluentBit.persistence.mode "hostPath") }}
+              readOnly: true
+              {{- end }}
               # We need to also mount this because the logs in C:\var\logs are actually symlinks to C:\ProgramData.
               # So, in order to be able to read these logs, the reading process needs to also have access to C:\ProgramData.
             - mountPath: C:\ProgramData
               name: progdata
+              {{- if and ($.Values.fluentBit.persistence) (ne $.Values.fluentBit.persistence.mode "hostPath") }}
+              readOnly: true
+              {{- end }}
           {{- if $.Values.resources }}
           resources:
 {{ toYaml $.Values.resources | indent 12 }}
@@ -117,7 +148,7 @@ spec:
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" $ }}
-        - name: varlog
+        - name: logs
           hostPath:
             path: C:\var\log
         - name: progdata
@@ -138,6 +169,6 @@ spec:
       tolerations:
 {{ toYaml $.Values.tolerations | indent 8 }}
       {{- end }}
-{{- end }}
 ---
+{{- end }}
 {{- end }}

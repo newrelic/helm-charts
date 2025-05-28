@@ -14,84 +14,95 @@ sources:
   - https://github.com/newrelic/nri-kube-events/tree/master/charts/nri-kube-events
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-logging
   - https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie
+  - https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
+  - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 4.9.0
+version: 5.0.124
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.8.11
+    version: 3.45.0
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled,nri-prometheus.enabled
-    version: 2.1.14
+    version: 2.1.20
 
   - name: newrelic-prometheus-agent
     repository: https://newrelic.github.io/newrelic-prometheus-configurator
-    condition: newrelic-prometheus-configurator.enabled
-    version: 0.0.6
+    condition: newrelic-prometheus-agent.enabled
+    version: 1.17.0
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 3.0.9
+    version: 4.26.0
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
     condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
-    version: 0.7.12
+    version: 1.15.0
 
   - name: kube-state-metrics
-    repository: https://kubernetes.github.io/kube-state-metrics
+    version: 5.30.1
     condition: ksm.enabled,kube-state-metrics.enabled
-    version: 2.13.3
+    repository: https://prometheus-community.github.io/helm-charts
 
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 2.2.10
+    version: 3.13.0
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.11.9
+    version: 1.27.0
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
     condition: newrelic-pixie.enabled
-    version: 2.0.1
+    version: 2.1.6
 
+  - name: nr-ebpf-agent
+    version: 0.1.25
+    condition: newrelic-eapm-agent.enabled
+    repository: https://newrelic.github.io/helm-charts
+
+  - name: k8s-agents-operator
+    repository: https://newrelic.github.io/k8s-agents-operator
+    condition: k8s-agents-operator.enabled
+    version: 0.27.0
+
+  # Keep the version of pixie-operator-chart in sync with the CRD versions for
+  # olm_crd.yaml and px.dev_viziers.yaml in
+  # https://github.com/newrelic/open-install-library/blob/main/recipes/newrelic/infrastructure/kubernetes.yml
   - name: pixie-operator-chart
     alias: pixie-chart
     repository: https://pixie-operator-charts.storage.googleapis.com
     condition: pixie-chart.enabled
-    version: 0.0.31
+    version: 0.1.7
 
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 1.0.10
+    version: 2.14.0
 
 maintainers:
-  - name: alvarocabanas
-    url: https://github.com/alvarocabanas
-  - name: carlossscastro
-    url: https://github.com/carlossscastro
-  - name: sigilioso
-    url: https://github.com/sigilioso
-  - name: gsanchezgavier
-    url: https://github.com/gsanchezgavier
-  - name: kang-makes
-    url: https://github.com/kang-makes
-  - name: marcsanmi
-    url: https://github.com/marcsanmi
-  - name: paologallinaharbur
-    url: https://github.com/paologallinaharbur
-  - name: roobre
-    url: https://github.com/roobre
+  - name: Philip-R-Beckwith
+    url: https://github.com/Philip-R-Beckwith
+  - name: dbudziwojskiNR
+    url: https://github.com/dbudziwojskiNR
+  - name: TmNguyen12
+    url: https://github.com/TmNguyen12
+  - name: kondracek-nr
+    url: https://github.com/kondracek-nr
+  - name: kpattaswamy
+    url: https://github.com/kpattaswamy
+  - name: danielstokes
+    url: https://github.com/danielstokes
 
 keywords:
   - infrastructure

@@ -74,6 +74,10 @@ spec:
             claimName: {{ .Values.persistence.claimName | quote }}
       {{ end }}
 
+      {{- if $.Values.priorityClassName }}
+      priorityClassName: {{ $.Values.priorityClassName }}
+      {{- end }}
+
       initContainers:
         - name: "update-mounted-subpath-permissions"
           image: "{{ .Values.image.repository }}:{{ include "synthetics-minion.appVersion" . }}"
@@ -205,8 +209,8 @@ spec:
 
             {{/* The initial delay takes into account the (average) time required to pull the runner image */}}
             initialDelaySeconds: 600
-            periodSeconds: 300
-            timeoutSeconds: 60
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

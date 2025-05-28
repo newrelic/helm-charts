@@ -1,0 +1,37 @@
+suite: test cri, docker parser options in daemonsets
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: cri enabled by default and docker as fallback
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_PARSER
+            value: "cri,docker"
+  - it: docker is set if enabled by and cri as fallback
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      fluentBit:
+        criEnabled: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_PARSER
+            value: "docker,cri"

@@ -1,0 +1,132 @@
+suite: envVars
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: does not set pod environment variables by default
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 3
+        template: templates/deployment.yaml
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 7
+        template: templates/daemonset.yaml
+  - it: sets deployment pod environment variables from values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        envs:
+          - name: "TEST_DEP_ENV_VAR"
+            value: "my-dep-value"
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 4
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "TEST_DEP_ENV_VAR"
+            value: "my-dep-value"
+        template: templates/deployment.yaml
+  - it: sets daemonset pod environment variables from values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        envs:
+          - name: "TEST_DAE_ENV_VAR"
+            value: "my-dae-value"
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 8
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "TEST_DAE_ENV_VAR"
+            value: "my-dae-value"
+        template: templates/daemonset.yaml
+  - it: sets deployment and daemonset pod environment variables from values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        envs:
+        - name: "TEST_DEP_ENV_VAR"
+          value: "my-dep-value"
+      daemonset:
+        envs:
+        - name: "TEST_DAE_ENV_VAR"
+          value: "my-dae-value"
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 4
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "TEST_DEP_ENV_VAR"
+            value: "my-dep-value"
+        template: templates/deployment.yaml
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 8
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "TEST_DAE_ENV_VAR"
+            value: "my-dae-value"
+        template: templates/daemonset.yaml
+  - it: sets proxy config
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      proxy: 'my-proxy'
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 5
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "http_proxy"
+            value: "my-proxy"
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "https_proxy"
+            value: "my-proxy"
+        template: templates/deployment.yaml
+      - lengthEqual:
+          path: spec.template.spec.containers[0].env
+          count: 9
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "http_proxy"
+            value: "my-proxy"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: "https_proxy"
+            value: "my-proxy"
+        template: templates/daemonset.yaml

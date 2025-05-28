@@ -1,0 +1,317 @@
+suite: test fluent-bit persistence options
+templates:
+  - templates/daemonset.yaml
+  - templates/configmap.yaml
+  - templates/persistentvolume.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: default persistence is hostPath, DB is set properly and logs volume is read/write
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: logs
+            mountPath: /var
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: fb-db-pvc
+            mountPath: /db
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: logs
+            hostPath:
+              path: /var
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: fb-db-pvc
+            persistentVolumeClaim:
+              claimName: my-release-newrelic-logging-pvc
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FB_DB
+            value: /var/log/flb_kube.db
+        template: templates/daemonset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence set to none should keep FB_DB env empty and mount logs volume as read-only
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: none
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FB_DB
+            value: ""
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: logs
+            mountPath: /var
+            readOnly: true
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: fb-db-pvc
+            mountPath: /db
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: fb-db-pvc
+            persistentVolumeClaim:
+              claimName: my-release-newrelic-logging-pvc
+        template: templates/daemonset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence set to persistentVolume should create volume, add it to daemonset, add an initContainer to cleanup and set the FB_DB. Dynamic provisioning is enabled by default.
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FB_DB
+            value: "/db/$(NODE_NAME)-fb.db"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: logs
+            mountPath: /var
+            readOnly: true
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: fb-db-pvc
+            mountPath: /db
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: fb-db-pvc
+            persistentVolumeClaim:
+              claimName: my-release-newrelic-logging-pvc
+        template: templates/daemonset.yaml
+      - isNotNullOrEmpty:
+          path: spec.template.spec.initContainers
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.initContainers[0].volumeMounts
+          content:
+            name: fb-db-pvc
+            mountPath: /db
+        template: templates/daemonset.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/persistentvolume.yaml
+      - isKind:
+          of: PersistentVolumeClaim
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.accessModes
+          value:
+            - ReadWriteMany
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence.persistentVolume with non dynamic provisioning should create the PV and PVC
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+            dynamicProvisioning: false
+    asserts:
+      - hasDocuments:
+          count: 2
+        template: templates/persistentvolume.yaml
+      - isKind:
+          of: PersistentVolume
+        documentIndex: 0
+        template: templates/persistentvolume.yaml
+      - isKind:
+          of: PersistentVolumeClaim
+        documentIndex: 1
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.accessModes
+          value:
+            - ReadWriteMany
+        documentIndex: 0
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.accessModes
+          value:
+            - ReadWriteMany
+        documentIndex: 1
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence storage class should be set properly on PV and PVC
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            dynamicProvisioning: false
+            storageClass: sample-storage-rwx
+    asserts:
+      - equal:
+          path: spec.storageClassName
+          value: sample-storage-rwx
+        documentIndex: 0
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.storageClassName
+          value: sample-storage-rwx
+        documentIndex: 1
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence.persistentVolume size should be set properly on PV and PVC
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+            dynamicProvisioning: false
+            size: 100Gi
+    asserts:
+      - equal:
+          path: spec.capacity.storage
+          value: 100Gi
+        documentIndex: 0
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.resources.requests.storage
+          value: 100Gi
+        documentIndex: 1
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence.persistentVolume not dynamic provisioned but volumeName provided should use the volumeName and do not create a PV
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+            dynamicProvisioning: false
+            existingVolume: existing-volume
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/persistentvolume.yaml
+      - isKind:
+          of: PersistentVolumeClaim
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.volumeName
+          value: existing-volume
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence.persistentVolume if a existing claim is provided it's used and PV/PVC are not created
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+            dynamicProvisioning: false
+            existingVolumeClaim: existing-claim
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/persistentvolume.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: fb-db-pvc
+            persistentVolumeClaim:
+              claimName: existing-claim
+        template: templates/daemonset.yaml
+  - it: fluentBit.persistence.persistentVolume annotations for PV and PVC are used
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+            annotations:
+              volume:
+                foo: bar
+              claim:
+                baz: qux
+            dynamicProvisioning: false
+    asserts:
+      - equal:
+          path: metadata.annotations.foo
+          value: bar
+        documentIndex: 0
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: metadata.annotations.baz
+          value: qux
+        documentIndex: 1
+        template: templates/persistentvolume.yaml
+  - it: fluentBit.persistence.persistentVolume extra for PV and PVC are used
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+            extra:
+              volume:
+                nfs:
+                  path: /tmp/
+                  server: 1.1.1.1
+              claim:
+                some: property
+            dynamicProvisioning: false
+    asserts:
+      - equal:
+          path: spec.nfs
+          value:
+            path: /tmp/
+            server: 1.1.1.1
+        documentIndex: 0
+        template: templates/persistentvolume.yaml
+      - equal:
+          path: spec.some
+          value: property
+        documentIndex: 1
+        template: templates/persistentvolume.yaml

@@ -1,0 +1,137 @@
+---
+{{- $region := include "newrelic.common.region" . -}}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-collector
+  labels:
+    app: opentelemetry
+    component: otel-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: opentelemetry
+      component: otel-collector
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: opentelemetry
+        component: otel-collector
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: ""
+        {{- with .Values.otelCollector.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "nrEbpfAgent.otelCollector.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: otel-collector
+        {{- with include "nrEbpfAgent.otelCollector.securityContext.container" . }}
+        securityContext:
+          {{- . | nindent 12 }}
+        {{- end }}
+        image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag | default .Chart.AppVersion }}
+        imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+        resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
+        ports:
+          - name: otlp
+            containerPort: 4317
+            protocol: TCP
+        volumeMounts:
+          - name: data
+            mountPath: /etc/otel/config.yaml
+            subPath: config.yaml
+            readOnly: true
+          {{- if (hasKey .Values "tls") }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: cert
+            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            readOnly: true
+          {{- end }}
+          {{- end }}
+        env:
+          - name: KUBE_NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+          - name: RECEIVER_ENDPOINT
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.podIP
+          - name: NR_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NR_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                {{- end }}
+          - name: NR_OTLP_ENDPOINT
+            {{- if eq $region "Staging" }}
+            value: "staging-otlp.nr-data.net:4317"
+            {{- else if eq $region "EU" }}
+            value: "otlp.eu01.nr-data.net:4317"
+            {{- else }}
+            value: "otlp.nr-data.net:4317"
+            {{- end }}
+          {{- if .Values.proxy }}
+          - name: http_proxy
+            value: "{{- .Values.proxy }}"
+          - name: https_proxy
+            value: "{{- .Values.proxy }}"
+          {{- end }}
+          - name: CLUSTER_NAME
+            valueFrom:
+              configMapKeyRef:
+                name: {{ include "nr-ebpf-agent.otelconfig.name" . }}
+                key: clusterName
+          - name: DROP_SERVICE_NAME_REGEX
+            value: "{{- .Values.dropDataServiceNameRegex }}"
+          - name: ALLOW_SERVICE_NAME_REGEX
+            value: "{{- .Values.allowServiceNameRegex }}"
+
+      dnsPolicy: Default
+      hostNetwork: false
+      serviceAccountName: {{ include "nr-ebpf-agent.collector.name" . }}
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: data
+        configMap:
+          name: {{ include "nr-ebpf-agent.otelconfig.name" . }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- if (hasKey .Values "tls") }}
+      {{- if eq .Values.tls.enabled true }}
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
+      {{- end }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.otelCollector.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.otelCollector.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}

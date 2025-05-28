@@ -1,0 +1,165 @@
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nr-ebpf-agent
+  labels:
+    app: nr-ebpf-agent
+    component: agent
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent
+        component: agent
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: ""
+        {{- with .Values.ebpfAgent.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "nrEbpfAgent.ebpfAgent.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: nr-ebpf-agent
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
+        env:
+          - name: PL_HOST_PATH
+            value: "/host"
+          - name: PL_STIRLING_SOURCES
+            value: "{{ .Values.stirlingSources }}"
+          {{- include "generateTracingEnvVars" . | indent 10 }}
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "cluster.local"
+          - name: PL_TABLE_STORE_DATA_LIMIT_MB
+            value: "{{ .Values.tableStoreDataLimitMB }}"
+          - name: PX_DISABLE_TLS
+          {{- if (hasKey .Values "tls") }}
+          {{- if eq .Values.tls.enabled true }}
+            value: "0"
+          {{- else }}
+            value: "1"
+          {{- end }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: CERT_PATH
+            value: "{{ .Values.tls.autoGenerateCert.certPath }}"
+          {{- end }}
+          {{- end }}
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: host-root-volume
+            mountPath: /host
+            readOnly: true
+          - name: sys-volume
+            mountPath: /sys
+            readOnly: true
+          {{- if (hasKey .Values "tls") }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: cert
+            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            readOnly: true
+          {{- end }}
+          {{- end }}
+      - name: nr-ebpf-client
+        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
+        resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
+        env:
+          - name: DEPLOYMENT_NAME
+            value: {{ .Values.cluster }}
+          - name: PERIOD
+            value: "{{ .Values.pushPeriod }}"
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: ENDPOINT
+            value: {{ include "nr-otel-collector-receiver.endpoint" .}}
+          - name: PL_STIRLING_SOURCES
+            value: "{{ .Values.stirlingSources }}"
+          {{- include "generateClientScriptEnvVars" . | nindent 10 }}
+          {{-  if (hasKey .Values.protocols.http "spans") }}
+          {{- if .Values.protocols.http.spans.samplingErrorRate}}
+          {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
+          - name: SAMPLE_HTTP_ERROR_RATE
+            value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
+          {{- end }}
+          {{- end }}
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "{{ .Values.kubernetesClusterDomain }}"
+          - name: NAMESPACE
+            value: {{ .Release.Namespace }}
+          - name: AGENT_SERVICE_NAME
+            value: {{ include "nr-ebpf-agent.service.name" . }}
+          # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
+          - name: IS_INSECURE
+            value: "True"
+          - name: PX_DISABLE_TLS
+          {{- if (hasKey .Values "tls") }}
+            {{- if eq .Values.tls.enabled true }}
+            value: "0"
+            {{- else }}
+            value: "1"
+            {{- end }}
+        {{- if eq .Values.tls.enabled true }}
+          - name: CERT_PATH
+            value: "{{ .Values.tls.autoGenerateCert.certPath }}"
+        volumeMounts:
+          - name: cert
+            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            readOnly: true
+        {{- end }}
+          {{- end }}
+        envFrom:
+        - secretRef:
+            name: nr-ebpf-agent-secrets
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      restartPolicy: Always
+      volumes:
+      - name: host-root-volume
+        hostPath:
+          path: /
+          type: Directory
+      - name: sys-volume
+        hostPath:
+          path: /sys
+          type: Directory
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- if (hasKey .Values "tls") }}
+      {{- if eq .Values.tls.enabled true }}
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
+      {{- end }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}

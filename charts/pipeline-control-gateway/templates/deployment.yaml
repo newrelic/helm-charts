@@ -1,0 +1,136 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nrKubernetesOtel.deployment.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+      component: deployment
+  template:
+    metadata:
+      labels:
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+        component: deployment
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/deployment-configmap.yaml") . | sha256sum }}
+        {{- with .Values.deployment.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: pipeline-control-gateway
+          {{- with include "nrKubernetesOtel.deployment.securityContext.container" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args: ["./pipeline-control-gateway", "--config", "/config/deployment-config.yaml"]
+          resources:
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
+          {{- with .Values.deployment.envsFrom }}
+          envFrom:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: GATEWAY_CONFIG_FILE_PATH
+              value: /config/gateway-config.yaml
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
+            {{- with .Values.deployment.envs }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: otlp-http
+              containerPort: {{ .Values.ports.otlpHttp }}
+              protocol: TCP
+            - name: otlp-grpc
+              containerPort: {{ .Values.ports.otlpGrpc }}
+              protocol: TCP
+            - name: nr-http
+              containerPort: {{ .Values.ports.nrHttp }}
+              protocol: TCP
+            - name: health-http
+              containerPort: {{ .Values.ports.healthHttp }}
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/status
+              port: {{ .Values.ports.healthHttp }}
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /health/status
+              port: {{ .Values.ports.healthHttp }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          volumeMounts:
+            - name: deployment-config
+              mountPath: /config
+      volumes:
+        - name: deployment-config
+          configMap:
+            name: {{ include "nrKubernetesOtel.deployment.configMap.fullname" . }}
+      {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.deployment.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.deployment.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
