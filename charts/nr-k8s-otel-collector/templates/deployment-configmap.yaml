@@ -113,26 +113,8 @@ data:
               - delete_key(attributes, "k8s.hpa.name")
               - delete_key(attributes, "k8s.resourcequota.name")
               - delete_key(attributes, "k8s.volume.name")
-              - set(attributes["k8s.pod.uid"], attributes["uid"])
-              - set(attributes["k8s.node.name"], attributes["node"])
-              - set(attributes["k8s.namespace.name"], attributes["namespace"])
-              - set(attributes["k8s.pod.name"], attributes["pod"])
-              - set(attributes["k8s.container.name"], attributes["container"])
-              - set(attributes["k8s.replicaset.name"], attributes["replicaset"])
-              - set(attributes["k8s.deployment.name"], attributes["deployment"])
-              - set(attributes["k8s.statefulset.name"], attributes["statefulset"])
-              - set(attributes["k8s.daemonset.name"], attributes["daemonset"])
-              - set(attributes["k8s.job.name"], attributes["job_name"])
-              - set(attributes["k8s.cronjob.name"], attributes["cronjob"])
-              - set(attributes["k8s.replicationcontroller.name"], attributes["replicationcontroller"])
-              - set(attributes["k8s.hpa.name"], attributes["horizontalpodautoscaler"])
-              - set(attributes["k8s.resourcequota.name"], attributes["resourcequota"])
-              - set(attributes["k8s.volume.name"], attributes["volumename"])
-              - set(attributes["k8s.volume.name"], attributes["persistentvolume"])
-              - set(attributes["k8s.pvc.name"], attributes["persistentvolumeclaim"])
               - delete_key(attributes, "node")
               - delete_key(attributes, "namespace")
-              - delete_key(attributes, "pod")
               - delete_key(attributes, "container")
               - delete_key(attributes, "replicaset")
               - delete_key(attributes, "deployment")
@@ -444,6 +426,9 @@ data:
           - key: k8s.pod.uid
             from_attribute: uid
             action: upsert
+          - key: k8s.pod.name
+            from_attribute: pod
+            action: upsert
 
       k8sattributes/ksm:
         auth_type: "serviceAccount"
@@ -460,6 +445,9 @@ data:
           - sources: 
             - from: resource_attribute
               name: k8s.pod.uid
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.name
 
       k8sattributes:
         auth_type: "serviceAccount"
@@ -612,7 +600,7 @@ data:
             - resource/metrics
             - groupbyattrs
             - transform/ksm
-            - attributes/self
+            #- attributes/self
             - resource/setup_for_ksm_md
             - k8sattributes/ksm
             - batch
