@@ -138,7 +138,7 @@ kubectl delete namespaces newrelic
 | gkeAutopilot  | bool | `false` | If deploying to a GKE autopilot cluster, set to true|
 | image.pullPolicy  | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.   |
 | image.repository  | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.   |
-| image.tag | string | `"1.0.3"` | Overrides the image tag whose default is the chart appVersion.  |
+| image.tag | string | `"1.1.0"` | Overrides the image tag whose default is the chart appVersion.  |
 | kube-state-metrics.enabled| bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
 | kube-state-metrics.prometheusScrape   | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data   |
 | labels| object | `{}` | Additional labels for chart objects |
