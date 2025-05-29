@@ -573,6 +573,17 @@ data:
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
+      routing/nr_pipelines:
+        default_pipelines: [metrics/default]
+        error_mode: propagate
+        table:
+          - context: datapoint
+            condition: attributes["job_label"] == "kube-state-metrics"
+            pipelines: [metrics/nr_ksm]
+          - context: datapoint
+            condition: attributes["job_label"] == "apiserver"
+            pipelines: [metrics/nr_controlplane]
+
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -583,9 +594,15 @@ data:
         {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
 
         {{- if .Values.receivers.prometheus.enabled }}
-        metrics/ksm:
+        metrics/all_receivers:
           receivers:
             - prometheus/ksm
+            - prometheus/controlplane
+          exporters:
+            - routing/nr_pipelines
+        metrics/nr_ksm:
+          receivers:
+            - routing/nr_pipelines
           processors:
             - memory_limiter
             - metricstransform/kube_pod_status_phase
@@ -608,11 +625,9 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- end }}
-        {{- if .Values.receivers.prometheus.enabled }}
-        metrics:
+        metrics/nr_controlplane:
           receivers:
-            - prometheus/controlplane
+            - routing/nr_pipelines
           processors:
             - memory_limiter
             - metricstransform/k8s_cluster_info
@@ -631,6 +646,14 @@ data:
           exporters:
             - otlphttp/newrelic
         {{- end }}
+        metrics/default:
+          receivers:
+            - routing/nr_pipelines
+          processors:
+            - memory_limiter
+            - batch
+          exporters:
+            - otlphttp/newrelic
         {{- if .Values.receivers.k8sEvents.enabled }}
         logs/events:
           receivers:
