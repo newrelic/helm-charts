@@ -102,6 +102,13 @@ kubectl apply -n newrelic -R -f rendered
 kubectl delete -R -f rendered
 kubectl delete namespaces newrelic
 ```
+### Adding custom pipelines
+The `Values.yaml` accepts configurations for additional receivers, processors, exporters, connectors and pipelines. Configuration added here will be
+propogated to the respective configmap.
+
+### Utilizing New Relic maintained pipelines
+The pipelines maintained by New Relic accept metrics through the `routing/nr_pipelines` connector. Additional pipelines added in `Values.yaml` can be configured
+to export data to this connector which can then be connected to the New Relic maintained pipelines.
 
 ## Values
 
