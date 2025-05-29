@@ -16,21 +16,7 @@ data:
           http:
             endpoint: ${env:MY_POD_IP}:4318
       k8s_events:
-      prometheus/ksm:
-        config:
-          scrape_configs: 
-            - job_name: kube-state-metrics
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
-              kubernetes_sd_configs:
-                - role: pod
-              relabel_configs:
-                - action: keep
-                  regex: kube-state-metrics
-                  source_labels:
-                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
-                - action: replace
-                  target_label: job_label
-                  replacement: kube-state-metrics
+
 
       prometheus/controlplane:
         config:
@@ -103,7 +89,6 @@ data:
               - delete_key(attributes, "k8s.pod.name")
               - delete_key(attributes, "k8s.container.name")
               - delete_key(attributes, "k8s.replicaset.name")
-              - delete_key(attributes, "k8s.deployment.name")
               - delete_key(attributes, "k8s.statefulset.name")
               - delete_key(attributes, "k8s.daemonset.name")
               - delete_key(attributes, "k8s.job.name")
@@ -134,7 +119,7 @@ data:
               - delete_key(attributes, "pod")
               - delete_key(attributes, "container")
               - delete_key(attributes, "replicaset")
-              - delete_key(attributes, "deployment")
+              
               - delete_key(attributes, "statefulset")
               - delete_key(attributes, "daemonset")
               - delete_key(attributes, "job_name")
@@ -391,6 +376,7 @@ data:
             action: delete
           - key: service_name
             action: delete
+
       
       resource/events:
         attributes:
@@ -440,21 +426,35 @@ data:
       k8sattributes:
         auth_type: "serviceAccount"
         passthrough: false
-        filter:
-          node_from_env_var: KUBE_NODE_NAME
+        pod_association:
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.ip
+          - sources:
+              - from: resource_attribute
+                name: k8s.pod.uid
+          - sources:
+              - from: connection
         extract:
           metadata:
-            - k8s.pod.name
-            - k8s.pod.uid
-            - k8s.deployment.name
-            - k8s.daemonset.name
-            - k8s.namespace.name
-            - k8s.node.name
-            - k8s.pod.start_time
-        pod_association:
-          - sources: 
-            - from: resource_attribute
-              name: k8s.pod.uid
+            - "k8s.namespace.name"
+            - "k8s.deployment.name"
+            - "k8s.statefulset.name"
+            - "k8s.daemonset.name"
+            - "k8s.cronjob.name"
+            - "k8s.job.name"
+            - "k8s.node.name"
+            - "k8s.pod.name"
+            - "k8s.pod.uid"
+            - "k8s.pod.start_time"
+          labels:
+            - tag_name: $$1
+              key_regex: (.*)
+              from: pod
+          annotations:
+            - tag_name: $$1
+              key_regex: (.*)
+              from: pod
 
       attributes/self:
         actions:
@@ -516,8 +516,6 @@ data:
             action: delete
           - key: replicaset
             action: delete
-          - key: deployment
-            action: delete
           - key: statefulset
             action: delete
           - key: daemonset
@@ -556,8 +554,7 @@ data:
           api-key: ${env:NR_LICENSE_KEY}
       debug:
         verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
+
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -566,33 +563,7 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
-        {{- if .Values.receivers.prometheus.enabled }}
-        metrics/ksm:
-          receivers:
-            - prometheus/ksm
-          processors:
-            - memory_limiter
-            - metricstransform/kube_pod_status_phase
-            - filter/exclude_zero_value_kube_node_status_condition
-            - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
-            - filter/exclude_zero_value_kube_pod_status_phase
-            - filter/exclude_zero_value_kube_pod_container_status
-            {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - metricstransform/ldm
-            - metricstransform/k8s_cluster_info_ldm
-            - metricstransform/ksm
-            - filter/exclude_metrics_low_data_mode
-            - transform/low_data_mode_inator
-            - resource/low_data_mode_inator
-            {{- end }}
-            - resource/metrics
-            - groupbyattrs
-            - transform/ksm
-            - attributes/self
-            - batch
-          exporters:
-            - otlphttp/newrelic
-        {{- end }}
+
         {{- if .Values.receivers.prometheus.enabled }}
         metrics:
           receivers:
