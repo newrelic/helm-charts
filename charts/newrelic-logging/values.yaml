@@ -1,5 +1,5 @@
 # IMPORTANT: Specify your New Relic API key here.
-licenseKey: oihojk
+# licenseKey: 
 #
 # Optionally, specify a cluster name and log records can
 # be filtered by cluster.
@@ -43,7 +43,7 @@ fluentBit:
   # https://docs.fluentbit.io/manual/administration/monitoring
   sendMetrics: false
   # Configuration for sending metrics of Fluentbit to NewRelic
-  # Allowed values are: `none`, `essential` , `balanced`, `advanced`
+  # Allowed values are: `none`, `essential`, `advanced`
   # none: No metrics are sent
   # essential: Only the build info metric is sent
   # balanced: All the metrics are sent to New Relic at 5 minute scrape interval
@@ -118,11 +118,11 @@ fluentBit:
           Mem_Buf_Limit     7MB
           Skip_Long_Lines   On
           Refresh_Interval  10
-
-#    extraInputs: |
-#      [INPUT]
-#          Name   dummy
-#          Tag    dummy.log
+      [INPUT]
+          Name   dummy
+          Tag    buildInfo
+          Dummy  {"message":"trigger"}
+          Interval_Sec 10
 
     filters: |
       [FILTER]
@@ -140,6 +140,12 @@ fluentBit:
           Alias          node-attributes-enricher
           Match          *
           Record         cluster_name "${CLUSTER_NAME}"
+      [FILTER]
+          Name    lua
+          Match   buildInfo
+          script  /fluent-bit/scripts/payload.lua
+          call    build_payload
+    
 
 #    extraFilters: |
 #      [FILTER]
@@ -189,6 +195,28 @@ fluentBit:
           lowDataMode    ${LOW_DATA_MODE}
           sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
           Retry_Limit    ${RETRY_LIMIT}
+      [OUTPUT]
+          Name    stdout
+          Match   buildInfo
+      [OUTPUT]
+          Name    http
+          Match   buildInfo
+          Host    metric-api.newrelic.com
+          Port    443
+          URI     /metric/v1
+          Format  json
+          tls     On
+          Header  Api-Key xyz
+          Header  Content-Type application/json
+      [OUTPUT]
+          Name    http
+          Match   buildInfo
+          Host    webhook.site
+          Port    443
+          URI     /1de1bf22-156e-48c1-9aed-ae9e1ba72411
+          Format  json
+          tls     On
+          Header  Content-Type application/json            
 
 #    extraOutputs: |
 #      [OUTPUT]

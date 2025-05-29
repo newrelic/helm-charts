@@ -158,10 +158,16 @@ spec:
           ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
+            - name: lua-scripts
+              mountPath: /fluent-bit/scripts
+              readOnly: true
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
       volumes:
+        - name: lua-scripts
+          configMap:
+            name: {{ include "newrelic-logging.fullname" . }}-lua
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
