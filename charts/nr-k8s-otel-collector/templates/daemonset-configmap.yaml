@@ -7,8 +7,33 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   daemonset-config.yaml: |
-    {{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
-    {{- . | nindent 4 }}
+    {{- if and .Values.receivers .Values.exporters .Values.pipelines }}
+    receivers:
+      {{- include "daemonset-receivers" . | nindent 6 }}
+      {{- include "shared-receivers" . | nindent 6 }}
+
+    processors:
+      {{- include "daemonset-processors" . | nindent 6 }}
+      {{- include "shared-processors" . | nindent 6 }}
+
+    exporters:
+      {{- include "daemonset-exporters" . | nindent 6 }}
+      {{- include "shared-exporters" . | nindent 6 }}
+
+    connectors:
+      {{- include "daemonset-connector" . | nindent 6 }}
+      {{- include "shared-connector" . | nindent 6 }}
+
+    service:
+      {{- if include "newrelic.common.verboseLog" . }}
+      telemetry:
+        logs:
+          level: "debug"
+      {{- end }}
+      extensions:
+        {{- include "daemonset-extensions" . | nindent 8 }}
+      pipelines:
+        {{- include "daemonset-pipelines" . | nindent 8 }}
     {{- else }}
     receivers:
       hostmetrics:
@@ -16,7 +41,7 @@ data:
         {{- if not .Values.gkeAutopilot }}
         root_path: /hostfs
         {{- end }}
-        collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
+        collection_interval: 1m
         scrapers:
           cpu:
             metrics:
@@ -65,7 +90,7 @@ data:
           #   mute_process_user_error: true
 
       kubeletstats:
-        collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
+        collection_interval: 1m
         {{- if not .Values.gkeAutopilot }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
@@ -82,7 +107,7 @@ data:
         config:
           scrape_configs:
             - job_name: cadvisor
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: 1m
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -106,7 +131,7 @@ data:
                 insecure_skip_verify: false
                 server_name: kubernetes
             - job_name: kubelet
-              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              scrape_interval: 1m
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
@@ -619,6 +644,36 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
+    
+    connectors:
+      routing:
+        default_pipelines: [metrics/default]
+        error_mode: propagate
+        table:
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/loadscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
+            pipelines: [metrics/nr]
 
     service:
       {{- if include "newrelic.common.verboseLog" . }}
@@ -627,18 +682,16 @@ data:
           level: "debug"
       {{- end }}
       pipelines:
-        {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
-        metrics:
+        metrics/all_receivers:
           receivers:
-            {{- if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics
-            {{- end }}
-            {{- if .Values.receivers.kubeletstats.enabled }}
             - kubeletstats
-            {{- end }}
-            {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
-            {{- end }}
+          exporters:
+            - routing
+        metrics/nr:
+          receivers:
+            - routing
           processors:
             - memory_limiter
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -673,8 +726,14 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- end }}
-        {{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
+        metrics/default:
+          receivers:
+            - routing
+          processors:
+            - memory_limiter
+            - batch
+          exporters:
+            - otlphttp/newrelic
         logs:
           receivers:
             - filelog
@@ -686,5 +745,4 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- end }}
     {{- end }}
