@@ -5,7 +5,7 @@ licenseKey: oihojk
 # be filtered by cluster.
 # Cluster name is required to be set in order to create relationship with Daemonset entity in NR platform.
 #
-# cluster:
+cluster: preethi-122
 # or Specify secret which contains New Relic API key
 # customSecretName: secret_name
 # customSecretLicenseKey: secret_key
@@ -43,13 +43,12 @@ fluentBit:
   # https://docs.fluentbit.io/manual/administration/monitoring
   sendMetrics: false
   # Configuration for sending metrics of Fluentbit to NewRelic
-  # Allowed values are: `none`, `essential` , `balanced`, `advanced`
+  # Allowed values are: `none`, `essential`, `advanced`
   # none: No metrics are sent
   # essential: Only the build info metric is sent
-  # balanced: All the metrics are sent to New Relic at 5 minute scrape interval
   # advanced: All the metrics are sent to New Relic at 1 minute scrape interval
   # Note: By default, the `advanced` option is used.
-  fluentBitMetrics: "advanced"
+  fluentBitMetrics: "essential"
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY

@@ -1,0 +1,55 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: send-fluentbit-metric
+spec:
+  schedule: "* * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: send-to-newrelic
+            image: curlimages/curl:latest
+            env: 
+              - name: CLUSTER_NAME
+                value: {{ include "newrelic-logging.cluster" . }}
+              - name: DAEMONSET_NAME
+                value: {{ include "newrelic-logging.fullname" . }}
+              - name: FLUENTBIT_VERSION
+                value: {{ include "newrelic-logging.fbVersion" . }}
+              - name: NAMESPACE
+                value: {{ .Release.Namespace }}  
+              - name: TIER
+                value: {{ .Values.fluentBit.tier}}  
+            command:
+              - sh
+              - -c
+              - |
+                PAYLOAD='[
+                  {
+                    "metrics": [
+                      {
+                        "name": "fluentbit_build_info",
+                        "type": "count",
+                        "value": 0,
+                        "timestamp": '$(date +%s)',
+                        "attributes": {
+                          "app": "fluent-bit",
+                          "source": "kubernetes",
+                          "version": "'$FLUENTBIT_VERSION'",
+                          "namespace": "'$NAMESPACE'",
+                          "cluster_name": "'$CLUSTER_NAME'",
+                          "daemonset_name": "'$DAEMONSET_NAME'",
+                          "tier": 
+                        },
+                        "interval.ms": 10000
+                      }
+                    ]
+                  }
+                ]'
+                curl --location 'https://metric-api.newrelic.com/metric/v1' \
+                  --header 'Api-Key: c3e87f3bf8f024121520d4208f05a437FFFFNRAL' \
+                  --header 'Content-Type: application/json' \
+                  --data "$PAYLOAD"
+          restartPolicy: OnFailure
