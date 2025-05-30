@@ -18,9 +18,8 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
       containers:
         - name: install-agent-control-deployment
-          # TODO: Pin a version to avoid problems with breaking changes.
-          image: newrelic/newrelic-agent-control-cli:nightly
-          imagePullPolicy: IfNotPresent
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-deployment").installerImage "context" .) }}
+          imagePullPolicy: {{ (index .Values "agent-control-deployment").installerImage.pullPolicy }}
           resources:
             limits:
               cpu: 100m
