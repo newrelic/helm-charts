@@ -113,13 +113,6 @@ data:
               - delete_key(attributes, "k8s.hpa.name")
               - delete_key(attributes, "k8s.resourcequota.name")
               - delete_key(attributes, "k8s.volume.name")
-              - delete_key(attributes, "node")
-              - delete_key(attributes, "namespace")
-              - delete_key(attributes, "container")
-              - delete_key(attributes, "replicaset")
-              - delete_key(attributes, "deployment")
-              - delete_key(attributes, "statefulset")
-              - delete_key(attributes, "daemonset")
               - delete_key(attributes, "job_name")
               - delete_key(attributes, "cronjob")
               - delete_key(attributes, "replicationcontroller")
@@ -422,7 +415,7 @@ data:
 
       resource/setup_for_ksm_md:
         attributes:
-          # We set the k8s.pod.uid attr. so that the k8sattributes processor can reference it when adding metadata.
+          # We set the k8s.pod.uid and k8s.pod.name attrs. so that the k8sattributes/ksm processor can reference it when adding metadata.
           - key: k8s.pod.uid
             from_attribute: uid
             action: upsert
@@ -433,8 +426,48 @@ data:
             action: delete
           - key: pod
             action: delete
+          - key: k8s.node.name
+            from_attribute: node
+            action: upsert
+          - key: node
+            action: delete
+          - key: k8s.namespace.name
+            from_attribute: namespace
+            action: upsert
+          - key: replicaset
+            action: delete 
+          - key: k8s.deployment.name
+            from_attribute: deployment
+            action: upsert
+          - key: deployment
+            action: delete
+          - key: k8s.daemonset.name
+            from_attribute: daemonset
+            action: upsert
+          - key: daemonset
+            action: delete 
+          - key: k8s.statefulset.name
+            from_attribute: statefulset
+            action: upsert
+          - key: statefulset
+            action: delete 
+          - key: k8s.container.name
+            from_attribute: container
+            action: upsert
+          - key: container
+            action: delete 
+          - key: k8s.replicaset.name
+            from_attribute: replicaset
+            action: upsert
+          - key: replicaset
+            action: delete 
+
 
       k8sattributes/ksm:
+        # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
+        # of metrics but there are cases of metrics such as kube_node* where a uid would not be present and thus metadata would
+        # not be attached. To address cases like these, metadata attributes must be annotated in a different manner
+        # such as by preserving some of the attributes presented by KSM.
         auth_type: "serviceAccount"
         passthrough: false
         extract:
@@ -453,8 +486,8 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
           - sources:
-              - from: resource_attribute
-                name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.pod.name
 
       attributes/self:
         actions:
