@@ -456,25 +456,6 @@ data:
               - from: resource_attribute
                 name: k8s.pod.name
 
-      k8sattributes:
-        auth_type: "serviceAccount"
-        passthrough: false
-        filter:
-          node_from_env_var: KUBE_NODE_NAME
-        extract:
-          metadata:
-            - k8s.pod.name
-            - k8s.pod.uid
-            - k8s.deployment.name
-            - k8s.daemonset.name
-            - k8s.namespace.name
-            - k8s.node.name
-            - k8s.pod.start_time
-        pod_association:
-          - sources: 
-            - from: resource_attribute
-              name: k8s.pod.uid
-
       attributes/self:
         actions:
           - key: k8s.node.name
@@ -630,7 +611,6 @@ data:
             {{- end }}
             - resource/metrics
             - attributes/self
-            - k8sattributes
             - cumulativetodelta
             - batch
           exporters:
