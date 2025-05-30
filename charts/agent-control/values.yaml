@@ -9,6 +9,15 @@ agent-control-deployment:
   # -- Enable the installation of the Agent Control.
   enabled: true
 
+  # -- The image used to install Agent Control.
+  installerImage:
+    registry:
+    repository: newrelic/newrelic-agent-control-cli
+    # @default It defaults to `appVersion` in `Chart.yaml`.
+    tag: nightly
+    pullPolicy: IfNotPresent
+    # -- The secrets that are needed to pull images from a custom registry.
+    pullSecrets: []
 
 # -- Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
