@@ -19,11 +19,11 @@
       true
     {{- end -}}
   {{- else -}}
-  {{/* "Throws and error" if they have set privider, and it is not a valid value */}}
-    {{- fail "privider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]" }}
+  {{/* "Throws and error" if they have set provider, and it is not a valid value */}}
+    {{- fail "provider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]" }}
   {{- end -}}
 {{- else -}}
-{{/* Backwards compatability for charts that have already have fargate: <bool>, etc... in their charts */}}
+{{/* Backwards compatibility for charts that have already have fargate: <bool>, etc... in their charts */}}
   {{- if .Values.gkeAutopilot -}}
     {{- define "newrelic.common.gkeAutopilot" -}}
       true
