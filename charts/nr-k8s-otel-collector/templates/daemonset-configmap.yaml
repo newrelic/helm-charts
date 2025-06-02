@@ -7,10 +7,11 @@ metadata:
 {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   daemonset-config.yaml: |
-{{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
+{{- with include "nrKubernetesOtel.daemonset.configMap.overrideConfig" . }}
 {{- . | nindent 4 }}
 {{- else }}
 receivers:
+  {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
   hostmetrics:
 # TODO (chris): this is a linux specific configuration
 {{- if not .Values.gkeAutopilot }}
@@ -215,6 +216,8 @@ from: attributes.uid
 to: resource["k8s.pod.uid"]
 
 processors:
+  {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
+
   metricstransform/ldm:
 transforms:
   - include: .*
@@ -611,6 +614,8 @@ timeout: 30s
 send_batch_size : 800
 
 exporters:
+  {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
+
   otlphttp/newrelic:
 endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
 headers:
@@ -620,6 +625,37 @@ verbosity: detailed
 sampling_initial: 5
 sampling_thereafter: 200
 
+connectors:
+  {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
+  routing/nr_pipelines:
+default_pipelines: [metrics/default]
+error_mode: propagate
+table:
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/loadscraper"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
+pipelines: [metrics/nr]
+  - context: metric
+condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
+pipelines: [metrics/nr]
+
 service:
   {{- if include "newrelic.common.verboseLog" . }}
   telemetry:
@@ -627,8 +663,10 @@ logs:
   level: "debug"
   {{- end }}
   pipelines:
+{{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
+
 {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
-metrics:
+metrics/all_receivers:
   receivers:
 {{- if .Values.receivers.hostmetrics.enabled }}
 - hostmetrics
@@ -639,6 +677,11 @@ metrics:
 {{- if .Values.receivers.prometheus.enabled }}
 - prometheus
 {{- end }}
+  exporters:
+- routing/nr_pipelines
+metrics/nr:
+  receivers:
+- routing/nr_pipelines
   processors:
 - memory_limiter
 {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -674,6 +717,14 @@ metrics:
   exporters:
 - otlphttp/newrelic
 {{- end }}
+metrics/default:
+  receivers:
+- routing/nr_pipelines
+  processors:
+- memory_limiter
+- batch
+  exporters:
+- otlphttp/newrelic
 {{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
 logs:
   receivers:
