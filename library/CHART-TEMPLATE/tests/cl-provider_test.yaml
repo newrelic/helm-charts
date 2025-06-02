@@ -1,0 +1,213 @@
+suite: test provider helper
+templates:
+  - templates/example-cm-provider.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+# Defaults
+  - it: No Provider set by default
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+# GKE Autopilot
+  - it: Provider GKE_AUTOPILOT sets gkeAutopilot
+    set:
+      global:
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "true"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+  - it: global Provider GKE_AUTOPILOT sets gkeAutopilot
+    set:
+      global:
+        provider: GKE_AUTOPILOT
+      provider:
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "true"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+  - it: gkeAutopilot should set newrelic.common.gkeAutopilot
+    set:
+      global:
+      provider:
+      gkeAutopilot: true
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "true"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+  #    OpenShift
+  - it: Provider OPEN_SHIFT sets gkeAutopilot
+    set:
+      global:
+      provider: OPEN_SHIFT
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "true"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+  - it: global Provider OPEN_SHIFT sets gkeAutopilot
+    set:
+      global:
+        provider: OPEN_SHIFT
+      provider:
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "true"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+  - it: openShift should set data.newrelic.common.openShift
+    set:
+      global:
+      provider:
+      openShift: true
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "true"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+# Fargate
+  - it: Provider FARGATE sets gkeAutopilot
+    set:
+      global:
+      provider: FARGATE
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "true"
+
+  - it: global Provider FARGATE sets gkeAutopilot
+    set:
+      global:
+        provider: FARGATE
+      provider:
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "true"
+  - it: fargate should set data.newrelic.common.fargate
+    set:
+      global:
+      provider:
+      fargate: true
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "true"
+
+# Combinations
+  - it: local .Values takes priority over global
+    set:
+      global:
+        provider: FARGATE
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "true"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "false"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+  - it: provider takes priority over local provider booleans
+    set:
+      global:
+        provider:
+      provider: OPEN_SHIFT
+      gkeAutopilot: true
+    asserts:
+      - equal:
+          path: data.newrelic.common.gkeAutopilot
+          value: "false"
+      - equal:
+          path: data.newrelic.common.openShift
+          value: "true"
+      - equal:
+          path: data.newrelic.common.fargate
+          value: "false"
+
+# Errors
+  - it: invalid provider throws error
+    set:
+      global:
+        provider:
+      provider: NO_PROVIDER
+    asserts:
+      - failedTemplate:
+          errorMessage: "privider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]"
+
+  - it: invalid global provider throws error
+    set:
+      global:
+        provider: NO_PROVIDER
+      provider:
+    asserts:
+      - failedTemplate:
+          errorMessage: "privider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]"
