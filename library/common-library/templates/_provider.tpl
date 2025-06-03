@@ -23,7 +23,7 @@
   {{- if and $provider (eq $provider "GKE_AUTOPILOT") -}}
     true
 
-  {{/* For backwards compatability only, that is why we do not check global here. */}}
+  {{/* For backwards compatibility only, that is why we do not check global here. */}}
   {{else if and (not $provider) .Values.gkeAutopilot}}
     true
   {{- end -}}
@@ -35,7 +35,7 @@
   {{- if and $provider (eq $provider "OPEN_SHIFT") -}}
     true
 
-  {{/* For backwards compatability only, that is why we do not check global here. */}}
+  {{/* For backwards compatibility only, that is why we do not check global here. */}}
   {{else if and (not $provider) .Values.openShift}}
     true
   {{- end -}}
@@ -47,7 +47,7 @@
   {{- if eq $provider "FARGATE" -}}
     true
 
-  {{/* For backwards compatability only, that is why we do not check global here. */}}
+  {{/* For backwards compatibility only, that is why we do not check global here. */}}
   {{else if and (not $provider) .Values.fargate}}
     true
   {{- end -}}

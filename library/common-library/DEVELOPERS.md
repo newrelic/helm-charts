@@ -677,10 +677,10 @@ This provides a convenient way to update the settings in your chart for specific
 {{ end }}
 ```
 
-#### Backwards compatability 
+#### Backwards compatibility 
 The following templates will check the local yaml for their matching bools if provider is not found.
 This is strictly for backwards compatibility as some charts already have these settings.
-We don't want to cause breaking changes when they migrate to provider making this backwards compatability necessary.
+We don't want to cause breaking changes when they migrate to provider making this backwards compatibility necessary.
 * `newrelic.common.gkeAutopilot`
 * `newrelic.common.openShift`
 * `newrelic.common.fargate`
