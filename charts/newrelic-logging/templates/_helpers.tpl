@@ -38,6 +38,18 @@ Create chart name and version as used by the chart label.
 
 
 {{/*
+Create fb Version Label.
+*/}}
+{{- define "newrelic-logging.fbVersion" -}}
+{{- if eq .Chart.Version "1.27.0" -}}
+3.2.10
+{{- end -}}
+{{- end -}}
+
+
+
+
+{{/*
 Create the name of the fluent bit config
 */}}
 {{- define "newrelic-logging.fluentBitConfig" -}}
@@ -182,6 +194,7 @@ https://log-api.newrelic.com/log/v1
 Returns fluentbit config to collect and forward its metrics to New Relic
 */}}
 {{- define "newrelic-logging.fluentBit.monitoring.config" -}}
+{{- if (eq .Values.fluentBit.fluentBitMetrics "advanced") }}
 [INPUT]
     name prometheus_scrape
     Alias fb-metrics-collector
@@ -213,6 +226,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     {{- end -}}
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
