@@ -9,29 +9,39 @@ tests:
   - it: No Provider set by default
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 # GKE Autopilot
+  - it: Provider GKE_AUTOPILOT gets set
+    set:
+      global:
+        provider: GKE_AUTOPILOT
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equal:
+          path: data.provider
+          value: GKE_AUTOPILOT
+
   - it: Provider GKE_AUTOPILOT sets gkeAutopilot
     set:
       global:
       provider: GKE_AUTOPILOT
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "true"
+          path: data.gkeAutopilot
+          value: true
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
   - it: global Provider GKE_AUTOPILOT sets gkeAutopilot
     set:
@@ -40,14 +50,14 @@ tests:
       provider:
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "true"
+          path: data.gkeAutopilot
+          value: true
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
   - it: gkeAutopilot should set newrelic.common.gkeAutopilot
     set:
@@ -56,14 +66,14 @@ tests:
       gkeAutopilot: true
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "true"
+          path: data.gkeAutopilot
+          value: true
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
   #    OpenShift
   - it: Provider OPEN_SHIFT sets gkeAutopilot
@@ -72,14 +82,14 @@ tests:
       provider: OPEN_SHIFT
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "true"
+          path: data.openShift
+          value: true
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
   - it: global Provider OPEN_SHIFT sets gkeAutopilot
     set:
@@ -88,30 +98,30 @@ tests:
       provider:
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "true"
+          path: data.openShift
+          value: true
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
-  - it: openShift should set data.newrelic.common.openShift
+  - it: openShift should set data.openShift
     set:
       global:
       provider:
       openShift: true
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "true"
+          path: data.openShift
+          value: true
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 # Fargate
   - it: Provider FARGATE sets gkeAutopilot
     set:
@@ -119,14 +129,14 @@ tests:
       provider: FARGATE
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "true"
+          path: data.fargate
+          value: true
 
   - it: global Provider FARGATE sets gkeAutopilot
     set:
@@ -135,29 +145,29 @@ tests:
       provider:
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "true"
-  - it: fargate should set data.newrelic.common.fargate
+          path: data.fargate
+          value: true
+  - it: fargate should set data.fargate
     set:
       global:
       provider:
       fargate: true
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "true"
+          path: data.fargate
+          value: true
 
 # Combinations
   - it: local .Values takes priority over global
@@ -167,14 +177,14 @@ tests:
       provider: GKE_AUTOPILOT
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "true"
+          path: data.gkeAutopilot
+          value: true
       - equal:
-          path: data.newrelic.common.openShift
-          value: "false"
+          path: data.openShift
+          value: false
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
   - it: provider takes priority over local provider booleans
     set:
@@ -184,14 +194,14 @@ tests:
       gkeAutopilot: true
     asserts:
       - equal:
-          path: data.newrelic.common.gkeAutopilot
-          value: "false"
+          path: data.gkeAutopilot
+          value: false
       - equal:
-          path: data.newrelic.common.openShift
-          value: "true"
+          path: data.openShift
+          value: true
       - equal:
-          path: data.newrelic.common.fargate
-          value: "false"
+          path: data.fargate
+          value: false
 
 # Errors
   - it: invalid provider throws error
@@ -211,3 +221,42 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "provider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]"
+
+  - it: should reject config if multiple provider booleans are set
+    set:
+      gkeAutopilot: true
+      fargate: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "Multiple Kubernetes providers enabled. Please only select one gkeAutopilot:<bool>, openShift:<bool>, fargate:<bool>."
+
+# Do not add features to deprecated setting paradigm
+  # Do not update. Users should set .values.provider or .values.global.provider
+  - it: Should not have global support for gkeAutopilot<bool>
+    set:
+      global:
+        gkeAutopilot: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+
+  # Do not update. Users should set .values.provider or .values.global.provider
+  - it: Should not have global support for openShift<bool>
+    set:
+      global:
+        openShift: true
+    asserts:
+      - equal:
+          path: data.openShift
+          value: false
+
+# Do not update. Users should set .values.provider or .values.global.provider
+  - it: Should not have global support for fargate<bool>
+    set:
+      global:
+        fargate: true
+    asserts:
+      - equal:
+          path: data.fargate
+          value: false
