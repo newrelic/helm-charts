@@ -32,10 +32,7 @@ data:
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
-              scheme: https
-              tls_config:
-                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: false
+
                 
 
       prometheus/controlplane:
@@ -381,7 +378,7 @@ data:
       filter/exclude_zero_value_kube_pod_container_status:
         metrics:
           datapoint:
-            - metric.name == "kube_pod_container_status_phase" and value_double == 0.0
+            - metric.name == "kube_pod_container_status_phase" and value_double < 1.0
 
       resource/metrics:
         attributes:
