@@ -1,3 +1,4 @@
+{{- if eq .Values.fluentBit.fluentBitMetrics "essential" }}
 apiVersion: batch/v1
 kind: CronJob
 metadata:
@@ -21,7 +22,17 @@ spec:
               - name: NAMESPACE
                 value: {{ .Release.Namespace }}  
               - name: TIER
-                value: {{ .Values.fluentBit.tier}}  
+                value: {{ .Values.fluentBit.fluentBitMetrics}}  
+              - name: LICENSE_KEY
+                valueFrom:
+                  secretKeyRef:
+                    {{- if (include "newrelic-logging.licenseKey" .) }}
+                    name: {{ template "newrelic-logging.fullname" . }}-config
+                    key: license
+                    {{- else }}
+                    name: {{ include "newrelic-logging.customSecretName" . }}
+                    key: {{ include "newrelic-logging.customSecretKey" . }}
+                    {{- end }}
             command:
               - sh
               - -c
@@ -41,7 +52,7 @@ spec:
                           "namespace": "'$NAMESPACE'",
                           "cluster_name": "'$CLUSTER_NAME'",
                           "daemonset_name": "'$DAEMONSET_NAME'",
-                          "tier": 
+                          "tier": "'$TIER'"
                         },
                         "interval.ms": 10000
                       }
@@ -49,7 +60,8 @@ spec:
                   }
                 ]'
                 curl --location 'https://metric-api.newrelic.com/metric/v1' \
-                  --header 'Api-Key: ' \
+                    --header "Api-Key: $LICENSE_KEY" \
                   --header 'Content-Type: application/json' \
                   --data "$PAYLOAD"
           restartPolicy: OnFailure
+{{- end }}          
