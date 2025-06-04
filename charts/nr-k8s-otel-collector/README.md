@@ -70,9 +70,9 @@ gkeAutopilot: true
 
 ## Helmless installation
 In the event that you cannot use helm to install this chart we have provided rendered files for you.
-The rendered files can be found under [examples/k8s/rendered](examples/k8s/rendered). 
+The rendered files can be found under [examples/k8s/rendered](examples/k8s/rendered).
 Copy the contents of [examples/k8s/rendered](examples/k8s/rendered) to your local workspace.
-There's a couple of values you'll need to plug in first, but after you make some quick edits you'll be able to deploy these K8s files as you normally would. 
+There's a couple of values you'll need to plug in first, but after you make some quick edits you'll be able to deploy these K8s files as you normally would.
 
 Update the license key in [secret.yaml](examples/k8s/rendered/secret.yaml).
 Ensure that you have encoded your license key in base64
@@ -207,5 +207,4 @@ Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": 
 ## Maintainers
 
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
-* [kpattaswamy](https://github.com/kpattaswamy)
 * [Philip-R-Beckwith](https://github.com/Philip-R-Beckwith)
