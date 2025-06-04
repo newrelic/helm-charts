@@ -132,6 +132,14 @@ spec:
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
             - name: FLUENTBIT_METRICS 
               value: {{ $.Values.fluentBit.fluentBitMetrics | default "advanced" | quote }}
+            - name: DAEMONSET_NAME
+              value: {{ template "newrelic-logging.fullname" . }}  
+            - name: FLUENTBIT_METRICS_TIER 
+              value: {{ $.Values.fluentBit.tier  | default "essential"  }}  
+            - name: NAMESPACE
+              value: {{ .Release.Namespace }} 
+            - name: FLUENTBIT_VERSION
+              value: {{ include "newrelic-logging.fbVersion" . }}
           command:
             - /fluent-bit/bin/fluent-bit
             - -c

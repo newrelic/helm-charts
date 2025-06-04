@@ -254,3 +254,13 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
   {{- end -}}
 {{- end -}}
 {{- end -}}
+
+
+{/*
+ Create fb Version Label.
+ */}
+ {{- define "newrelic-logging.fbVersion" -}}
+ {{- if eq .Chart.Version "1.27.0" -}}
+ 3.2.10
+ {{- end -}}
+ {{- end -}}

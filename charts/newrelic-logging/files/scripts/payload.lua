@@ -4,16 +4,15 @@ function build_payload(tag, timestamp, record)
             name = "fluentbit_build_info",
             type = "count",
             value = 0,
-            timestamp = 1748536028,
+            timestamp = os.time(),
             attributes = {
                 app = "fluent-bit",
-                arch = "amd642",
-                prometheus_server = "ip-172-31-35-254",
                 source = "kubernetes",
-                version = "3.1.9",
-                namespace = "newrelic",
-                cluster_name = "preethi-212",
-                daemonset_name = "newrelic-bundle-newrelic-logging-2"
+                version = os.getenv("FLUENTBIT_VERSION"),
+                namespace = os.getenv("NAMESPACE"),
+                cluster_name = os.getenv("CLUSTER_NAME"),
+                daemonset_name = os.getenv("DAEMONSET_NAME"),
+                tier= os.getenv("FLUENTBIT_METRICS_TIER")
             },
             ["interval.ms"] = 10000
         }}
