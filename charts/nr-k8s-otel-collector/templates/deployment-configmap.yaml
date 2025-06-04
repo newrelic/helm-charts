@@ -53,7 +53,7 @@ data:
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: {{ include "newrelic.common.openShift" . | ternary "true" "false" }}
+                insecure_skip_verify: {{- if include "newrelic.common.openShift" . -}}"true"{{- else -}}"false"{{- end -}}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
