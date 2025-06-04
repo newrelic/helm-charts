@@ -117,4 +117,3 @@ low data modes or any other quirk that it could have.
 * [juanjjaramillo](https://github.com/juanjjaramillo)
 * [csongnr](https://github.com/csongnr)
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
-* [kang-makes](https://github.com/kang-makes)
