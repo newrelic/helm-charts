@@ -12,7 +12,7 @@ data:
     {{- else }}
     receivers:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
-      hostmetrics:
+      hostmetrics/nr:
         # TODO (chris): this is a linux specific configuration
         {{- if not .Values.gkeAutopilot }}
         root_path: /hostfs
@@ -65,7 +65,7 @@ data:
           #   mute_process_io_error: true
           #   mute_process_user_error: true
 
-      kubeletstats:
+      kubeletstats/nr:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
         {{- if not .Values.gkeAutopilot }}
         endpoint: "${KUBE_NODE_NAME}:10250"
@@ -79,7 +79,7 @@ data:
           k8s.container.cpu_limit_utilization:
             enabled: true
 
-      prometheus:
+      prometheus/nr:
         config:
           scrape_configs:
             - job_name: cadvisor
@@ -131,7 +131,7 @@ data:
                 insecure_skip_verify: false
                 server_name: kubernetes
 
-      filelog:
+      filelog/nr:
         include:
           - /var/log/pods/*/*/*.log
         exclude:
@@ -218,7 +218,7 @@ data:
     processors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
 
-      metricstransform/ldm:
+      metricstransform/nr_ldm:
         transforms:
           - include: .*
             match_type: regexp
@@ -228,7 +228,7 @@ data:
               new_label: low.data.mode
               new_value: 'false'
 
-      metricstransform/kubeletstats:
+      metricstransform/nr_kubeletstats:
         transforms:
           - include: container\.(cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
             action: update
@@ -258,7 +258,7 @@ data:
               - value: 'false'
                 new_value: 'true'
 
-      metricstransform/cadvisor:
+      metricstransform/nr_cadvisor:
         transforms:
           - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
             action: update
@@ -297,7 +297,7 @@ data:
               - value: 'false'
                 new_value: 'true'
 
-      metricstransform/kubelet:
+      metricstransform/nr_kubelet:
         transforms:
           - include: go_(goroutines|threads)
             action: update
@@ -318,7 +318,7 @@ data:
               - value: 'false'
                 new_value: 'true'
 
-      metricstransform/hostmetrics:
+      metricstransform/nr_hostmetrics:
         transforms:
           - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
             action: update
@@ -367,12 +367,12 @@ data:
                 new_value: 'true'
 
 
-      filter/exclude_metrics_low_data_mode:
+      filter/nr_exclude_metrics_low_data_mode:
         metrics:
           metric:
             - 'HasAttrOnDatapoint("low.data.mode", "false")'
 
-      transform/truncate:
+      transform/nr_truncate:
         log_statements:
           - context: log
             statements:
@@ -380,7 +380,7 @@ data:
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
-      metricstransform/hostmetrics_cpu:
+      metricstransform/nr_hostmetrics_cpu:
         transforms:
           - include: system.cpu.utilization
             action: update
@@ -396,13 +396,13 @@ data:
                 aggregation_type: sum
 
       # following system.% metrics reduce metrics reported by hostmetrics receiver
-      filter/exclude_cpu_utilization:
+      filter/nr_exclude_cpu_utilization:
         metrics:
           datapoint:
             - 'metric.name == "system.cpu.utilization" and attributes["state"] == "interrupt"'
             - 'metric.name == "system.cpu.utilization" and attributes["state"] == "nice"'
             - 'metric.name == "system.cpu.utilization" and attributes["state"] == "softirq"'
-      filter/exclude_memory_utilization:
+      filter/nr_exclude_memory_utilization:
         metrics:
           datapoint:
             - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_unreclaimable"'
@@ -410,26 +410,26 @@ data:
             - 'metric.name == "system.memory.utilization" and attributes["state"] == "cached"'
             - 'metric.name == "system.memory.utilization" and attributes["state"] == "buffered"'
             - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_reclaimable"'
-      filter/exclude_memory_usage:
+      filter/nr_exclude_memory_usage:
         metrics:
           datapoint:
             - 'metric.name == "system.memory.usage" and attributes["state"] == "slab_unreclaimable"'
             - 'metric.name == "system.memory.usage" and attributes["state"] == "inactive"'
-      filter/exclude_filesystem_utilization:
+      filter/nr_exclude_filesystem_utilization:
         metrics:
           datapoint:
             - 'metric.name == "system.filesystem.utilization" and attributes["type"] == "squashfs"'
-      filter/exclude_filesystem_usage:
+      filter/nr_exclude_filesystem_usage:
         metrics:
           datapoint:
             - 'metric.name == "system.filesystem.usage" and attributes["type"] == "squashfs"'
             - 'metric.name == "system.filesystem.usage" and attributes["state"] == "reserved"'
-      filter/exclude_filesystem_inodes_usage:
+      filter/nr_exclude_filesystem_inodes_usage:
         metrics:
           datapoint:
             - 'metric.name == "system.filesystem.inodes.usage" and attributes["type"] == "squashfs"'
             - 'metric.name == "system.filesystem.inodes.usage" and attributes["state"] == "reserved"'
-      filter/exclude_system_disk:
+      filter/nr_exclude_system_disk:
         metrics:
           datapoint:
             - 'metric.name == "system.disk.operations" and IsMatch(attributes["device"], "^loop.*") == true'
@@ -437,17 +437,17 @@ data:
             - 'metric.name == "system.disk.io" and IsMatch(attributes["device"], "^loop.*") == true'
             - 'metric.name == "system.disk.io_time" and IsMatch(attributes["device"], "^loop.*") == true'
             - 'metric.name == "system.disk.operation_time" and IsMatch(attributes["device"], "^loop.*") == true'
-      filter/exclude_system_paging:
+      filter/nr_exclude_system_paging:
         metrics:
           datapoint:
             - 'metric.name == "system.paging.usage" and attributes["state"] == "cached"'
             - 'metric.name == "system.paging.operations" and attributes["type"] == "cached"'
-      filter/exclude_network:
+      filter/nr_exclude_network:
         metrics:
           datapoint:
             - 'IsMatch(metric.name, "^system.network.*") == true and attributes["device"] == "lo"'
 
-      attributes/exclude_system_paging:
+      attributes/nr_exclude_system_paging:
         include:
           match_type: strict
           metric_names:
@@ -456,12 +456,12 @@ data:
           - key: type
             action: delete
 
-      resourcedetection/cloudproviders:
+      resourcedetection/nr_cloudproviders:
         detectors: [gcp, eks, ec2, aks, azure]
         timeout: 2s
         override: false
 
-      resource:
+      resource/nr:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
@@ -478,7 +478,7 @@ data:
           - key: service_name
             action: delete
 
-      transform/low_data_mode_inator:
+      transform/nr_low_data_mode_inator:
         metric_statements:
           - context: metric
             statements:
@@ -490,7 +490,7 @@ data:
               - delete_key(attributes, "name")
               - delete_key(attributes, "interface")
 
-      resource/low_data_mode_inator:
+      resource/nr_low_data_mode_inator:
         attributes:
           - key: http.scheme
             action: delete
@@ -499,7 +499,7 @@ data:
           - key: net.host.port
             action: delete
 
-      attributes/self:
+      attributes/nr_self:
         actions:
           - key: k8s.node.name
             action: upsert
@@ -582,7 +582,7 @@ data:
           - key: persistentvolumeclaim
             action: delete
 
-      k8sattributes:
+      k8sattributes/nr:
         auth_type: "serviceAccount"
         passthrough: false
         filter:
@@ -601,14 +601,14 @@ data:
             - from: resource_attribute
               name: k8s.pod.uid
 
-      memory_limiter:
+      memory_limiter/nr:
          check_interval: 1s
          limit_percentage: 80
          spike_limit_percentage: 25
 
-      cumulativetodelta:
+      cumulativetodelta/nr:
 
-      batch:
+      batch/nr:
         send_batch_max_size: 1000
         timeout: 30s
         send_batch_size : 800
@@ -669,13 +669,13 @@ data:
         metrics/all_receivers:
           receivers:
             {{- if .Values.receivers.hostmetrics.enabled }}
-            - hostmetrics
+            - hostmetrics/nr
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
-            - kubeletstats
+            - kubeletstats/nr
             {{- end }}
             {{- if .Values.receivers.prometheus.enabled }}
-            - prometheus
+            - prometheus/nr
             {{- end }}
           exporters:
             - routing/nr_pipelines
@@ -683,37 +683,37 @@ data:
           receivers:
             - routing/nr_pipelines
           processors:
-            - memory_limiter
+            - memory_limiter/nr
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - metricstransform/ldm
-            - metricstransform/kubeletstats
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
-            - metricstransform/hostmetrics
-            - filter/exclude_metrics_low_data_mode
+            - metricstransform/nr_ldm
+            - metricstransform/nr_kubeletstats
+            - metricstransform/nr_cadvisor
+            - metricstransform/nr_kubelet
+            - metricstransform/nr_hostmetrics
+            - filter/nr_exclude_metrics_low_data_mode
             {{- end }}
-            - metricstransform/hostmetrics_cpu
-            - transform/truncate
-            - filter/exclude_cpu_utilization
-            - filter/exclude_memory_utilization
-            - filter/exclude_memory_usage
-            - filter/exclude_filesystem_utilization
-            - filter/exclude_filesystem_usage
-            - filter/exclude_filesystem_inodes_usage
-            - filter/exclude_system_disk
-            - filter/exclude_system_paging
-            - filter/exclude_network
-            - attributes/exclude_system_paging
-            - resourcedetection/cloudproviders
-            - resource
+            - metricstransform/nr_hostmetrics_cpu
+            - transform/nr_truncate
+            - filter/nr_exclude_cpu_utilization
+            - filter/nr_exclude_memory_utilization
+            - filter/nr_exclude_memory_usage
+            - filter/nr_exclude_filesystem_utilization
+            - filter/nr_exclude_filesystem_usage
+            - filter/nr_exclude_filesystem_inodes_usage
+            - filter/nr_exclude_system_disk
+            - filter/nr_exclude_system_paging
+            - filter/nr_exclude_network
+            - attributes/nr_exclude_system_paging
+            - resourcedetection/nr_cloudproviders
+            - resource/nr
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - transform/low_data_mode_inator
-            - resource/low_data_mode_inator
+            - transform/nr_low_data_mode_inator
+            - resource/nr_low_data_mode_inator
             {{- end }}
-            - attributes/self
-            - k8sattributes
-            - cumulativetodelta
-            - batch
+            - attributes/nr_self
+            - k8sattributes/nr
+            - cumulativetodelta/nr
+            - batch/nr
           exporters:
             - otlphttp/newrelic
         {{- end }}
@@ -721,20 +721,20 @@ data:
           receivers:
             - routing/nr_pipelines
           processors:
-            - memory_limiter
-            - batch
+            - memory_limiter/nr
+            - batch/nr
           exporters:
             - otlphttp/newrelic
         {{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
-        logs:
+        logs/nr:
           receivers:
-            - filelog
+            - filelog/nr
           processors:
-            - memory_limiter
-            - transform/truncate
-            - resource
-            - k8sattributes
-            - batch
+            - memory_limiter/nr
+            - transform/nr_truncate
+            - resource/nr
+            - k8sattributes/nr
+            - batch/nr
           exporters:
             - otlphttp/newrelic
         {{- end }}
