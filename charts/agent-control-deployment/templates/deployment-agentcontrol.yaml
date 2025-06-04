@@ -116,6 +116,20 @@ spec:
 
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: {{ .Values.config.status_server.port }}
+            failureThreshold: 1
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /status
+              port: {{ .Values.config.status_server.port }}
+            failureThreshold: 5
+            periodSeconds: 5
+            initialDelaySeconds: 5
+
       volumes:
         - name: agent-control-config
           configMap:

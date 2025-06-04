@@ -1,0 +1,262 @@
+suite: test provider helper
+templates:
+  - templates/example-cm-provider.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+# Defaults
+  - it: No Provider set by default
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: false
+# GKE Autopilot
+  - it: Provider GKE_AUTOPILOT gets set
+    set:
+      global:
+        provider: GKE_AUTOPILOT
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equal:
+          path: data.provider
+          value: GKE_AUTOPILOT
+
+  - it: Provider GKE_AUTOPILOT sets gkeAutopilot
+    set:
+      global:
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: true
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: false
+
+  - it: global Provider GKE_AUTOPILOT sets gkeAutopilot
+    set:
+      global:
+        provider: GKE_AUTOPILOT
+      provider:
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: true
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: false
+
+  - it: gkeAutopilot should set newrelic.common.gkeAutopilot
+    set:
+      global:
+      provider:
+      gkeAutopilot: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: true
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: false
+
+  #    OpenShift
+  - it: Provider OPEN_SHIFT sets gkeAutopilot
+    set:
+      global:
+      provider: OPEN_SHIFT
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: true
+      - equal:
+          path: data.fargate
+          value: false
+
+  - it: global Provider OPEN_SHIFT sets gkeAutopilot
+    set:
+      global:
+        provider: OPEN_SHIFT
+      provider:
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: true
+      - equal:
+          path: data.fargate
+          value: false
+
+  - it: openShift should set data.openShift
+    set:
+      global:
+      provider:
+      openShift: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: true
+      - equal:
+          path: data.fargate
+          value: false
+# Fargate
+  - it: Provider FARGATE sets gkeAutopilot
+    set:
+      global:
+      provider: FARGATE
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: true
+
+  - it: global Provider FARGATE sets gkeAutopilot
+    set:
+      global:
+        provider: FARGATE
+      provider:
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: true
+  - it: fargate should set data.fargate
+    set:
+      global:
+      provider:
+      fargate: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: true
+
+# Combinations
+  - it: local .Values takes priority over global
+    set:
+      global:
+        provider: FARGATE
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: true
+      - equal:
+          path: data.openShift
+          value: false
+      - equal:
+          path: data.fargate
+          value: false
+
+  - it: provider takes priority over local provider booleans
+    set:
+      global:
+        provider:
+      provider: OPEN_SHIFT
+      gkeAutopilot: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+      - equal:
+          path: data.openShift
+          value: true
+      - equal:
+          path: data.fargate
+          value: false
+
+# Errors
+  - it: invalid provider throws error
+    set:
+      global:
+        provider:
+      provider: NO_PROVIDER
+    asserts:
+      - failedTemplate:
+          errorMessage: "provider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]"
+
+  - it: invalid global provider throws error
+    set:
+      global:
+        provider: NO_PROVIDER
+      provider:
+    asserts:
+      - failedTemplate:
+          errorMessage: "provider must be one of: [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]"
+
+  - it: should reject config if multiple provider booleans are set
+    set:
+      gkeAutopilot: true
+      fargate: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "Multiple Kubernetes providers enabled. Please only select one gkeAutopilot:<bool>, openShift:<bool>, fargate:<bool>."
+
+# Do not add features to deprecated setting paradigm
+  # Do not update. Users should set .values.provider or .values.global.provider
+  - it: Should not have global support for gkeAutopilot<bool>
+    set:
+      global:
+        gkeAutopilot: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilot
+          value: false
+
+  # Do not update. Users should set .values.provider or .values.global.provider
+  - it: Should not have global support for openShift<bool>
+    set:
+      global:
+        openShift: true
+    asserts:
+      - equal:
+          path: data.openShift
+          value: false
+
+# Do not update. Users should set .values.provider or .values.global.provider
+  - it: Should not have global support for fargate<bool>
+    set:
+      global:
+        fargate: true
+    asserts:
+      - equal:
+          path: data.fargate
+          value: false

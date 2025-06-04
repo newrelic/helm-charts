@@ -17,7 +17,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "0.8.3"
+  tag: "1.1.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -27,6 +27,9 @@ licenseKey: ""
 customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
+
+# -- Configures the Otel collector(s) to send all data through the specified proxy.
+proxy: ""
 
 # -- Additional labels for chart pods
 podLabels: {}
@@ -71,7 +74,14 @@ daemonset:
   # @default -- See `values.yaml`
   configMap:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
-    config: {}
+    overrideConfig: {}
+    # -- Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
+    extraConfig:
+      receivers:
+      processors:
+      exporters:
+      connectors:
+      pipelines:
 
 deployment:
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -96,7 +106,14 @@ deployment:
   # @default -- See `values.yaml`
   configMap:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
-    config: {}
+    overrideConfig: {}
+    # -- Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
+    extraConfig:
+      receivers:
+      processors:
+      exporters:
+      connectors:
+      pipelines:
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
