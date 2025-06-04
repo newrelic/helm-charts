@@ -5,8 +5,8 @@ metadata:
   name: {{ include "newrelic.common.naming.fullname" . }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-rules: 
-{{- if .Values.openshift }}
+rules:
+{{- if include "newrelic.common.openShift" . }}
   # required for openshift resource detection
   - apiGroups: ["config.openshift.io"]
     resources: ["infrastructures", "infrastructures/status"]
@@ -39,7 +39,7 @@ rules:
     - nodes/proxy
     # following required for filelog receiver
     - pods/logs
-  {{- if .Values.openshift }}
+  {{- if include "newrelic.common.openShift" . }}
     # following required for resourcedetection
     - configmaps
   {{- end }}

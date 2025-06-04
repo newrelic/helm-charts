@@ -14,7 +14,7 @@ data:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if not .Values.gkeAutopilot }}
+        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         root_path: /hostfs
         {{- end }}
         collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -67,7 +67,7 @@ data:
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-        {{- if not .Values.gkeAutopilot }}
+        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
@@ -137,7 +137,7 @@ data:
         exclude:
           # Exclude logs from opentelemetry containers
           # filelog paths for containerd and CRI-O
-          {{- if .Values.openshift }}
+          {{- if include "newrelic.common.openShift" . }}
           - /var/log/pods/*/openshift*/*.log
           {{- end }}
           - /var/log/pods/*/otel-collector-daemonset/*.log
@@ -154,7 +154,7 @@ data:
         operators:
         - id: container-parser
           type: container
-      
+
 
     processors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
@@ -403,18 +403,18 @@ data:
         system:
           hostname_sources: ["os"]
           resource_attributes:
-            host.id: 
-            {{- if .Values.openshift }}
+            host.id:
+            {{- if include "newrelic.common.openShift" . }}
             # TODO host.id does not work, is it required, does it work on containerized environments?
             # https://github.com/open-telemetry/opentelemetry-go/pull/4317
               enabled: false
             {{- else }}
               enabled: true
             {{- end }}
-    {{- if .Values.openshift }}
+    {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
-        override: true              
+        override: true
     {{- end }}
       resourcedetection/cloudproviders:
         detectors: [gcp, eks, azure, aks, ec2]
@@ -587,7 +587,7 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
-    
+
     connectors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
       routing/nr_pipelines:
@@ -668,7 +668,7 @@ data:
             - filter/exclude_network
             - attributes/exclude_system_paging
             - resourcedetection/env
-          {{- if .Values.openshift }}
+          {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
            # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
            # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
@@ -696,7 +696,7 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-        {{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
+        {{- if and .Values.receivers.filelog.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
         logs:
           receivers:
             - filelog

@@ -68,7 +68,7 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-            {{- if .Values.openshift }}
+            {{- if include "newrelic.common.openShift" . }}
             # probably fixed on newer version hostmetrics receiver
             # Work around for open /mounts error: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/35990
             - name: HOST_PROC_MOUNTINFO
@@ -91,7 +91,7 @@ spec:
             {{- . | toYaml | nindent 12 }}
             {{- end }}
           volumeMounts:
-            {{- if not .Values.gkeAutopilot }}
+            {{- if not ( include "newrelic.common.gkeAutopilot" . ) }}
             - name: host-fs
               mountPath: /hostfs
               readOnly: true
@@ -102,7 +102,7 @@ spec:
             - name: daemonset-config
               mountPath: /config
       volumes:
-        {{- if not .Values.gkeAutopilot }}
+        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         - name: host-fs
           hostPath:
             path: /
