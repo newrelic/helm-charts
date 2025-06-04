@@ -74,7 +74,7 @@ data:
                 target_label: job_label
                 replacement: apiserver
             # if not running on openshift, this only works if controller-manager port 10257 is exposed in the pod
-            # we may want to create our own service instead to expose the enpoint and scrape it instead
+            # we may want to create our own service instead to expose the endpoint and scrape it instead
             - job_name: controller-manager
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               metrics_path: /metrics
@@ -118,7 +118,7 @@ data:
                 target_label: job_label
                 replacement: controller-manager
             # if not running on openshift, this only works if scheduler port 10259 is exposed in the pod
-            # we may want to create our own service instead to expose the enpoint and scrape it instead
+            # we may want to create our own service instead to expose the endpoint and scrape it instead
             - job_name: scheduler
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               metrics_path: /metrics
