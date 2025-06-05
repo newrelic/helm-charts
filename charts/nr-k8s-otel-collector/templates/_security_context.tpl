@@ -36,7 +36,7 @@ A helper to return the container security context to apply to the daemonset.
 */ -}}
 {{- define "nrKubernetesOtel.daemonset.securityContext.container" -}}
 {{- if .Values.daemonset.containerSecurityContext -}}
-  {{if .Values.gkeAutopilot}}
+  {{if include "newrelic.common.gkeAutopilot" .}}
   {{- toYaml .Values.daemonset.containerSecurityContext | replace "privileged: true" "privileged: false" -}}
   {{else}}
   {{- toYaml .Values.daemonset.containerSecurityContext -}}

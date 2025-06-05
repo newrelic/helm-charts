@@ -14,7 +14,7 @@ receivers:
   {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
   hostmetrics:
 # TODO (chris): this is a linux specific configuration
-{{- if not .Values.gkeAutopilot }}
+{{- if not (include "newrelic.common.gkeAutopilot" .) }}
 root_path: /hostfs
 {{- end }}
 collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -67,7 +67,7 @@ enabled: false
 
   kubeletstats:
 collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-{{- if not .Values.gkeAutopilot }}
+{{- if not (include "newrelic.common.gkeAutopilot" .) }}
 endpoint: "${KUBE_NODE_NAME}:10250"
 auth_type: "serviceAccount"
 insecure_skip_verify: true
@@ -137,6 +137,9 @@ include:
 exclude:
   # Exclude logs from opentelemetry containers
   # filelog paths for containerd and CRI-O
+  {{- if include "newrelic.common.openShift" . }}
+  - /var/log/pods/*/openshift*/*.log
+  {{- end }}
   - /var/log/pods/*/otel-collector-daemonset/*.log
   - /var/log/pods/*/otel-collector-deployment/*.log
   - /var/log/pods/*/containers/*-exec.log
@@ -146,74 +149,12 @@ exclude:
   - /var/log/container/otel-collector-daemonset/*.log
   - /var/log/container/otel-collector-deployment/*.log
   - /var/log/containers/*-exec.log
-start_at: beginning
 include_file_path: true
 include_file_name: true
 operators:
-  - type: router
-id: get-format
-routes:
-  - output: parser-docker
-expr: 'body matches "^\\{"'
-  - output: parser-crio
-expr: 'body matches "^[^ Z]+ "'
-  - output: parser-containerd
-expr: 'body matches "^[^ Z]+Z"'
-  # CRI-O format
-  - type: regex_parser
-id: parser-crio
-***REMOVED***
-  '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-output: extract_metadata_from_filepath
-timestamp:
-  parse_from: attributes.time
-  layout_type: gotime
-  layout: '2006-01-02T15:04:05.999999999Z07:00'
-  # Parse CRI-Containerd format
-  - type: regex_parser
-id: parser-containerd
-***REMOVED***
-  '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-output: extract_metadata_from_filepath
-timestamp:
-  parse_from: attributes.time
-  layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-  # Parse Docker format
-  - type: json_parser
-id: parser-docker
-output: extract_metadata_from_filepath
-timestamp:
-  parse_from: attributes.time
-  layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-  - type: move
-from: attributes.log
-to: body
-  # Extract metadata from file path
-  - type: regex_parser
-id: extract_metadata_from_filepath
-***REMOVED*** '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]{36})\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
-parse_from: attributes["log.file.path"]
-cache:
-  size: 128
-  # Rename attributes
-  - type: move
-from: attributes.stream
-to: attributes["log.iostream"]
-  - type: move
-from: attributes.container_name
-to: resource["k8s.container.name"]
-  - type: move
-from: attributes.namespace
-to: resource["k8s.namespace.name"]
-  - type: move
-from: attributes.pod_name
-to: resource["k8s.pod.name"]
-  - type: move
-from: attributes.restart_count
-to: resource["k8s.container.restart_count"]
-  - type: move
-from: attributes.uid
-to: resource["k8s.pod.uid"]
+- id: container-parser
+  type: container
+
 
 processors:
   {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
@@ -456,11 +397,33 @@ actions:
   - key: type
 action: delete
 
+  resourcedetection/env:
+detectors: ["env", "system"]
+override: false
+system:
+  hostname_sources: ["os"]
+  resource_attributes:
+host.id:
+{{- if include "newrelic.common.openShift" . }}
+# TODO host.id does not work, is it required, does it work on containerized environments?
+# https://github.com/open-telemetry/opentelemetry-go/pull/4317
+  enabled: false
+{{- else }}
+  enabled: true
+{{- end }}
+{{- if include "newrelic.common.openShift" . }}
+  resourcedetection/openshift:
+detectors: ["openshift"]
+override: true
+{{- end }}
   resourcedetection/cloudproviders:
-detectors: [gcp, eks, ec2, aks, azure]
+detectors: [gcp, eks, azure, aks, ec2]
 timeout: 2s
 override: false
-
+ec2:
+  resource_attributes:
+host.name:
+  enabled: false
   resource:
 attributes:
   # We set the cluster name to what the customer specified in the helm chart
@@ -704,7 +667,15 @@ metrics/nr:
 - filter/exclude_system_paging
 - filter/exclude_network
 - attributes/exclude_system_paging
+- resourcedetection/env
+  {{- if include "newrelic.common.openShift" . }}
+- resourcedetection/openshift
+   # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
+   # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
+   #- resourcedetection/cloudproviders
+{{- else  }}
 - resourcedetection/cloudproviders
+{{- end }}
 - resource
 {{- if include "nrKubernetesOtel.lowDataMode" . }}
 - transform/low_data_mode_inator
@@ -725,7 +696,7 @@ metrics/default:
 - batch
   exporters:
 - otlphttp/newrelic
-{{- if and .Values.receivers.filelog.enabled  (not .Values.gkeAutopilot) }}
+{{- if and .Values.receivers.filelog.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
 logs:
   receivers:
 - filelog

@@ -11,6 +11,11 @@ kube-state-metrics:
   # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
   prometheusScrape: false
 
+# This chart has support for OpenShift and gke Autopilot.
+# By setting this config, this chart will automatically apply known constraints for your provider.
+# Options: "OPEN_SHIFT", "GKE_AUTOPILOT"
+provider:
+
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
   repository: newrelic/nrdot-collector-k8s
@@ -41,10 +46,6 @@ priorityClassName: ""
 
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
-
-# -- If deploying to a GKE autopilot cluster, set to true
-# @default -- `false`
-gkeAutopilot: false
 
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`

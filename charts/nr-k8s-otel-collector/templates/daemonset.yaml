@@ -68,6 +68,12 @@ fieldRef:
 fieldRef:
   apiVersion: v1
   fieldPath: spec.nodeName
+{{- if include "newrelic.common.openShift" . }}
+# probably fixed on newer version hostmetrics receiver
+# Work around for open /mounts error: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/35990
+- name: HOST_PROC_MOUNTINFO
+  value: ""
+{{- end }}
 - name: OTEL_RESOURCE_ATTRIBUTES
   value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
 - name: NR_LICENSE_KEY
@@ -85,7 +91,7 @@ secretKeyRef:
 {{- . | toYaml | nindent 12 }}
 {{- end }}
   volumeMounts:
-{{- if not .Values.gkeAutopilot }}
+{{- if not ( include "newrelic.common.gkeAutopilot" . ) }}
 - name: host-fs
   mountPath: /hostfs
   readOnly: true
@@ -96,7 +102,7 @@ secretKeyRef:
 - name: daemonset-config
   mountPath: /config
   volumes:
-{{- if not .Values.gkeAutopilot }}
+{{- if not (include "newrelic.common.gkeAutopilot" .) }}
 - name: host-fs
   hostPath:
 path: /
