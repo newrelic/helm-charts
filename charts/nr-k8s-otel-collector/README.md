@@ -165,7 +165,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | podLabels | object | `{}` | Additional labels for chart pods |
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
-| provider | string | `""` | Sets the provider that you are deploying yourcluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"  |
+| provider | string | `""` | Sets the provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"  |
 | proxy | string | `""` | Configures the Otel collector(s) to send all data through the specified proxy. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
