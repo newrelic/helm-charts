@@ -21,7 +21,7 @@ helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
-## CCConfirm installation
+## Confirm installation
 ### Watch pods spin up:
 
 ```
