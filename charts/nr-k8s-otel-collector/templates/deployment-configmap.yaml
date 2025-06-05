@@ -19,7 +19,7 @@ data:
       k8s_events:
       prometheus/ksm:
         config:
-          scrape_configs: 
+          scrape_configs:
             - job_name: kube-state-metrics
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               kubernetes_sd_configs:
@@ -28,7 +28,14 @@ data:
                 - action: keep
                   regex: kube-state-metrics
                   source_labels:
-                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                  - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                {{- if include "newrelic.common.openShift" . }}
+                # this is targeting our ksm deployment label app_kubernetes_io_name=kube-state-metrics
+                - action: keep
+                  source_labels:
+                  - __address__
+                  regex: .*:8080$
+                {{- end }}
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
@@ -46,15 +53,15 @@ data:
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: false
+                insecure_skip_verify: {{if include "newrelic.common.openShift" . }}true{{ else }}false{{ end }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
-                regex: default;kubernetes;https
                 source_labels:
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
                 - __meta_kubernetes_endpoint_port_name
+                regex: default;kubernetes;https
               - action: replace
                 source_labels:
                 - __meta_kubernetes_namespace
@@ -66,6 +73,94 @@ data:
               - action: replace
                 target_label: job_label
                 replacement: apiserver
+            # if not running on openshift, this only works if controller-manager port 10257 is exposed in the pod
+            # we may want to create our own service instead to expose the endpoint and scrape it instead
+            - job_name: controller-manager
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                    {{- if include "newrelic.common.openShift" . }}
+                      - openshift-kube-controller-manager
+                    {{- else }}
+                      - kube-system
+                    {{- end }}
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if include "newrelic.common.openShift" . }}
+                insecure_skip_verify: true
+                {{- else }}
+                insecure_skip_verify: false
+                {{- end }}
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*controller-manager.*;.*:10257$
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: controller-manager
+            # if not running on openshift, this only works if scheduler port 10259 is exposed in the pod
+            # we may want to create our own service instead to expose the endpoint and scrape it instead
+            - job_name: scheduler
+              scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                    {{- if include "newrelic.common.openShift" . }}
+                      - openshift-kube-scheduler
+                    {{- else }}
+                      - kube-system
+                    {{- end }}
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if include "newrelic.common.openShift" . }}
+                insecure_skip_verify: true
+                {{- else }}
+                insecure_skip_verify: false
+                {{- end }}
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*scheduler.*;.*:10259$
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: scheduler
 
     processors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 }}
@@ -153,18 +248,18 @@ data:
         transforms:
           - include: kubernetes_build_info
             action: update
-            new_name: k8s.cluster.info 
+            new_name: k8s.cluster.info
 
       metricstransform/kube_pod_container_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
-            match_type: strict 
+            match_type: strict
             action: update
             new_name: 'kube_pod_container_status_phase'
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: waiting 
+              new_value: waiting
           - include: 'kube_pod_container_status_running'
             match_type: strict
             action: update
@@ -172,7 +267,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: running 
+              new_value: running
           - include: 'kube_pod_container_status_terminated'
             match_type: strict
             action: update
@@ -180,7 +275,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: terminated 
+              new_value: terminated
 
       metricstransform/ldm:
         transforms:
@@ -191,12 +286,12 @@ data:
             - action: add_label
               new_label: low.data.mode
               new_value: 'false'
-      
+
       metricstransform/k8s_cluster_info_ldm:
         transforms:
           - include: k8s.cluster.info
             action: update
-            operations: 
+            operations:
             - action: update_label
               label: low.data.mode
               value_actions:
@@ -322,7 +417,7 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
-      
+
       metricstransform/apiserver:
         transforms:
           - include: apiserver_storage_objects
@@ -352,7 +447,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-    
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -377,6 +472,36 @@ data:
             - metric.name == "kube_pod_status_ready" and value_double < 0.5
             - metric.name == "kube_deployment_status_condition" and value_double < 0.5
 
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+            {{- if include "newrelic.common.openShift" . }}
+            # TODO host.id does not work, is it required, does it work on containerized environments?
+            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
+              enabled: false
+            {{- else }}
+              enabled: true
+            {{- end }}
+
+    {{- if include "newrelic.common.openShift" . }}
+      resourcedetection/openshift:
+        detectors: ["openshift"]
+        override: true
+    {{- end }}
+
+      resourcedetection/cloudproviders:
+        detectors: [gcp, eks, azure, aks, ec2, ecs]
+        timeout: 2s
+        override: false
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
+
       resource/metrics:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
@@ -393,7 +518,7 @@ data:
             action: delete
           - key: service_name
             action: delete
-      
+
       resource/events:
         attributes:
           - key: "event.name"
@@ -458,7 +583,7 @@ data:
             - k8s.cronjob.name
             - k8s.job.name
         pod_association:
-          - sources: 
+          - sources:
             - from: resource_attribute
               name: k8s.pod.uid
           - sources:
@@ -568,7 +693,7 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
-    
+
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
@@ -617,6 +742,15 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
+            - resourcedetection/env
+            {{- if include "newrelic.common.openShift" . }}
+            - resourcedetection/openshift
+           # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
+           # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
+           #- resourcedetection/cloudproviders
+            {{- else  }}
+            - resourcedetection/cloudproviders
+            {{- end }}
             - groupbyattrs
             - transform/ksm
             - k8sattributes/ksm
