@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.18
+    helm.sh/chart: nr-k8s-otel-collector-0.8.19
 data:
   deployment-config.yaml: |
     receivers:
@@ -158,7 +158,7 @@ data:
             action: update
             new_name: k8s.cluster.info 
 
-      metricstransform/kube_pod_status_phase:
+      metricstransform/kube_pod_container_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
             match_type: strict 
@@ -371,15 +371,14 @@ data:
           datapoint:
             - metric.name == "kube_persistentvolumeclaim_status_phase" and value_double == 0.0
 
-      filter/exclude_zero_value_kube_pod_status_phase:
+      filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses:
         metrics:
           datapoint:
-            - metric.name == "kube_pod_status_phase" and value_double == 0.0
-
-      filter/exclude_zero_value_kube_pod_container_status:
-        metrics:
-          datapoint:
-            - metric.name == "kube_pod_container_status" and value_double == 0.0
+            - metric.name == "kube_pod_status_phase" and value_double < 0.5
+            - metric.name == "kube_pod_status_scheduled" and value_double < 0.5
+            - metric.name == "kube_pod_container_status_phase" and value_double < 0.5
+            - metric.name == "kube_pod_status_ready" and value_double < 0.5
+            - metric.name == "kube_deployment_status_condition" and value_double < 0.5
 
       resource/metrics:
         attributes:
@@ -392,7 +391,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.18
+            value: 0.8.19
           - key: service.name
             action: delete
           - key: service_name
@@ -417,7 +416,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.18
+            value: 0.8.19
 
       transform/events:
         log_statements:
@@ -601,11 +600,10 @@ data:
             - routing/nr_pipelines
           processors:
             - memory_limiter
-            - metricstransform/kube_pod_status_phase
+            - metricstransform/kube_pod_container_status_phase
             - filter/exclude_zero_value_kube_node_status_condition
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
-            - filter/exclude_zero_value_kube_pod_status_phase
-            - filter/exclude_zero_value_kube_pod_container_status
+            - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
