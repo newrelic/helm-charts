@@ -4,6 +4,9 @@ Groups together the individual charts for the New Relic Kubernetes solution for 
 
 **Homepage:** <https://github.com/newrelic/helm-charts>
 
+## v6 Release
+`v6` of the `nri-bundle`, bundles `v2` of the [newrelic-prometheus-configurator](https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent). This release contains breaking changes if you've created a custom configuration for the `newrelic-prometheus-configurator`. For migration details, please check the chart's [README](https://github.com/newrelic/newrelic-prometheus-configurator?tab=readme-ov-file#v2-release).
+
 ## Bundled charts
 
 This chart does not deploy anything by itself but has many charts as dependencies. This allows you to easily install and upgrade the New Relic
