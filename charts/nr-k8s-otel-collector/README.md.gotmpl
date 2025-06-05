@@ -71,6 +71,48 @@ If using GKE Autopilot, please set the following configuration in your values.ya
 gkeAutopilot: true
 ```
 
+## Helmless installation
+In the event that you cannot use helm to install this chart we have provided rendered files for you.
+The rendered files can be found under [examples/k8s/rendered](examples/k8s/rendered).
+Copy the contents of [examples/k8s/rendered](examples/k8s/rendered) to your local workspace.
+There's a couple of values you'll need to plug in first, but after you make some quick edits you'll be able to deploy these K8s files as you normally would.
+
+Update the license key in [secret.yaml](examples/k8s/rendered/secret.yaml).
+Ensure that you have encoded your license key in base64
+```yaml
+data:
+  licenseKey: <Your Base64 encoded License key>
+```
+
+You will also have to manually update your cluster name in [daemonset-configmap.yaml](examples/k8s/rendered/daemonset-configmap.yaml), and [deployment-configmap.yaml](examples/k8s/rendered/deployment-configmap.yaml).
+Look for uses of `k8s.cluster.name` and replace `<cluster_name>` with your cluster's name.
+```yaml
+- key: k8s.cluster.name
+  action: upsert
+  value: <cluster_name>
+```
+
+After these required fields are updated you can use the yamls to install this project onto your cluster with your preferred method.
+
+### Install the chart with kubectl
+```bash
+kubectl create namespace newrelic
+kubectl apply -n newrelic -R -f rendered
+```
+
+### Uninstall the chart with kubectl
+```bash
+kubectl delete -R -f rendered
+kubectl delete namespaces newrelic
+```
+### Adding custom pipelines
+The `Values.yaml` accepts configurations for additional receivers, processors, exporters, connectors and pipelines. Configuration added here will be
+propagated to the respective configmap.
+
+### Utilizing New Relic maintained pipelines
+The pipelines maintained by New Relic accept metrics through the `routing/nr_pipelines` connector. Additional pipelines added in `Values.yaml` can be configured
+to export data to this connector which can then be connected to the New Relic maintained pipelines.
+
 {{ template "chart.valuesSection" . }}
 
 **Note:** If all receivers are disabled in the deployment or in the daemonset, the agent will not start.
