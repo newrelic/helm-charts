@@ -46,23 +46,23 @@ spec:
             value: "{{ .Values.stirlingSources }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
-            value: "cluster.local"
+            value: "cluster.local" 
           - name: NEW_RELIC_LOG_LEVEL
             value: "{{ .Values.logLevel }}"            
           - name: NEW_RELIC_LOG_FILE_PATH
-            value: "{{ .Values.logFilePath }}"  
+            value: "{{ .Values.logFilePath }}"
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
-            value: true
+            value: "true"
           {{- else }}
-            value: false
+            value: "false"
           {{- end }}
           {{- if eq .Values.tls.enabled true }}
           - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.certPath }}"
+            value: "{{ .Values.tls.certPath }}/"
           {{- end }}
           {{- end }}
         securityContext:
@@ -77,7 +77,7 @@ spec:
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
-            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            mountPath: "{{ .Values.tls.certPath }}/"
             readOnly: true
           {{- end }}
           {{- end }}
@@ -120,16 +120,16 @@ spec:
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
             {{- if eq .Values.tls.enabled true }}
-            value: true
+            value: "true"
             {{- else }}
-            value: false
+            value: "false"
             {{- end }}
         {{- if eq .Values.tls.enabled true }}
           - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.certPath }}"
+            value: "{{ .Values.tls.certPath }}/"
         volumeMounts:
           - name: cert
-            mountPath: "{{ .Values.tls.certPath }}"
+            mountPath: "{{ .Values.tls.certPath }}/"
             readOnly: true
         {{- end }}
           {{- end }}

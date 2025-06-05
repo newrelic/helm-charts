@@ -58,7 +58,7 @@ spec:
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
-            mountPath: "{{ .Values.tls.certPath }}"
+            mountPath: "{{ .Values.tls.certPath }}/"
             readOnly: true
           {{- end }}
           {{- end }}
@@ -83,6 +83,8 @@ spec:
                 name: {{ include "newrelic.common.license._customSecretName" . }}
                 key: {{ include "newrelic.common.license._customSecretKey" . }}
                 {{- end }}
+          - name: FILTER_NAMESPACE_REGEX
+            value: '^({{ .Values.dropDataForNamespaces | join "|" }})$'
           - name: OTLP_ENDPOINT
             {{- if eq $region "Staging" }}
             value: "staging-otlp.nr-data.net:4317"

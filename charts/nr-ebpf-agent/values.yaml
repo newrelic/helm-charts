@@ -18,12 +18,12 @@ logLevel: "INFO"
 logFilePath: ""
 # -- Drop data when service names map to an IP address.
 dropDataIpServiceNames: true
-# -- Drop data from the kube-system namespace.
-dropDataKubeSystem: true
-# -- Drop data from the newrelic namespace.
+# -- Drop data from the newrelic namespace and newrelic-bundle services.
 dropDataNewRelic: true
 # -- Drop data from pods that are monitored by New Relic APM via auto attach.
 dropAPMEnabledPods: true
+# -- Drop data from the following namespaces.
+dropDataForNamespaces: ["kube-system"]
 # -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
 # see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
 dropDataServiceNameRegex: ""
