@@ -48,8 +48,8 @@ fluentBit:
   # essential: Only the build info metric is sent
   # balanced: All the metrics are sent to New Relic at 5 minute scrape interval
   # advanced: All the metrics are sent to New Relic at 1 minute scrape interval
-  # Note: By default, the `advanced` option is used.
-  fluentBitMetrics: "advanced"
+  # Note: By default, the `essential` option is used.
+  fluentBitMetrics: "essential"
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY
@@ -118,12 +118,6 @@ fluentBit:
           Mem_Buf_Limit     7MB
           Skip_Long_Lines   On
           Refresh_Interval  10
-      [INPUT]
-          Name   dummy
-          Tag    buildInfo
-          Dummy  {"message":"trigger"}
-          Interval_Sec 10
-
     filters: |
       [FILTER]
           Name                kubernetes
@@ -140,13 +134,7 @@ fluentBit:
           Alias          node-attributes-enricher
           Match          *
           Record         cluster_name "${CLUSTER_NAME}"
-      [FILTER]
-          Name    lua
-          Match   buildInfo
-          script  /fluent-bit/scripts/payload.lua
-          call    build_payload
-    
-
+ 
 #    extraFilters: |
 #      [FILTER]
 #          Name   grep
@@ -195,21 +183,6 @@ fluentBit:
           lowDataMode    ${LOW_DATA_MODE}
           sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
           Retry_Limit    ${RETRY_LIMIT}
-      [OUTPUT]
-          Name    stdout
-          Match   buildInfo
-      [OUTPUT]
-          Name    http
-          Match   buildInfo
-          Host    metric-api.newrelic.com
-          Port    443
-          URI     /metric/v1
-          Format  json
-          tls     On
-          Header  Api-Key xyz
-          Header  Content-Type application/json
-          json_date_key false       
-
 #    extraOutputs: |
 #      [OUTPUT]
 #          Name null

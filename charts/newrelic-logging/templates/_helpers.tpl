@@ -264,3 +264,35 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
  3.2.10
  {{- end -}}
  {{- end -}}
+
+
+{{/*
+Returns fluentbit config to collect essential metric and sent to NewRelic 
+*/}}
+{{- define "newrelic-logging.fluentBit.monitoring.essential.config" -}}
+{{- if (eq .Values.fluentBit.fluentBitMetrics "essential") }}
+[INPUT]
+    Name   dummy
+    Tag    buildInfo
+    Dummy  {"message":"trigger for essential metric at every 10 minutes scrape_interval"}
+    Interval_Sec 600
+[FILTER]
+    Name    lua
+    Match   buildInfo
+    script  /fluent-bit/scripts/payload.lua
+    call    build_payload
+[OUTPUT]
+    Name    http
+    Match   buildInfo
+    Host    ${METRICS_HOST}
+    Port    443
+    URI     /metric/v1
+    Format  json
+    tls     On
+    Header  Api-Key ${LICENSE_KEY}
+    Header  Content-Type application/json
+    json_date_key false    
+
+
+{{- end -}}
+{{- end -}}
