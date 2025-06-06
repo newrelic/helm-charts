@@ -12,7 +12,7 @@ function build_payload(tag, timestamp, record)
                 namespace = os.getenv("NAMESPACE"),
                 cluster_name = os.getenv("CLUSTER_NAME"),
                 daemonset_name = os.getenv("DAEMONSET_NAME"),
-                tier= os.getenv("FLUENTBIT_METRICS_TIER")
+                tier= os.getenv("FLUENTBIT_METRICS")
             },
             ["interval.ms"] = 10000
         }}
