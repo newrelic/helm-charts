@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.19
+    helm.sh/chart: nr-k8s-otel-collector-0.8.22
 data:
   daemonset-config.yaml: |
     receivers:
@@ -97,6 +97,11 @@ data:
                 - source_labels: [__meta_kubernetes_node_name]
                   regex: ${KUBE_NODE_NAME}
                   action: keep
+              metric_relabel_configs:
+                # Drop cgroup metrics with no container.
+                - source_labels: [id, container]
+                  action: drop
+                  regex: '.+;'
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -142,74 +147,12 @@ data:
           - /var/log/container/otel-collector-daemonset/*.log
           - /var/log/container/otel-collector-deployment/*.log
           - /var/log/containers/*-exec.log
-        start_at: beginning
         include_file_path: true
         include_file_name: true
         operators:
-          - type: router
-            id: get-format
-            routes:
-              - output: parser-docker
-                expr: 'body matches "^\\{"'
-              - output: parser-crio
-                expr: 'body matches "^[^ Z]+ "'
-              - output: parser-containerd
-                expr: 'body matches "^[^ Z]+Z"'
-          # CRI-O format
-          - type: regex_parser
-            id: parser-crio
-            regex:
-              '^(?P<time>[^ Z]+) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-            output: extract_metadata_from_filepath
-            timestamp:
-              parse_from: attributes.time
-              layout_type: gotime
-              layout: '2006-01-02T15:04:05.999999999Z07:00'
-          # Parse CRI-Containerd format
-          - type: regex_parser
-            id: parser-containerd
-            regex:
-              '^(?P<time>[^ ^Z]+Z) (?P<stream>stdout|stderr) (?P<logtag>[^ ]*) ?(?P<log>.*)$'
-            output: extract_metadata_from_filepath
-            timestamp:
-              parse_from: attributes.time
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-          # Parse Docker format
-          - type: json_parser
-            id: parser-docker
-            output: extract_metadata_from_filepath
-            timestamp:
-              parse_from: attributes.time
-              layout: '%Y-%m-%dT%H:%M:%S.%LZ'
-          - type: move
-            from: attributes.log
-            to: body
-          # Extract metadata from file path
-          - type: regex_parser
-            id: extract_metadata_from_filepath
-            regex: '^.*\/(?P<namespace>[^_]+)_(?P<pod_name>[^_]+)_(?P<uid>[a-f0-9\-]{36})\/(?P<container_name>[^\._]+)\/(?P<restart_count>\d+)\.log$'
-            parse_from: attributes["log.file.path"]
-            cache:
-              size: 128
-          # Rename attributes
-          - type: move
-            from: attributes.stream
-            to: attributes["log.iostream"]
-          - type: move
-            from: attributes.container_name
-            to: resource["k8s.container.name"]
-          - type: move
-            from: attributes.namespace
-            to: resource["k8s.namespace.name"]
-          - type: move
-            from: attributes.pod_name
-            to: resource["k8s.pod.name"]
-          - type: move
-            from: attributes.restart_count
-            to: resource["k8s.container.restart_count"]
-          - type: move
-            from: attributes.uid
-            to: resource["k8s.pod.uid"]
+        - id: container-parser
+          type: container
+
 
     processors:
       
@@ -452,11 +395,22 @@ data:
           - key: type
             action: delete
 
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+              enabled: true
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, ec2, aks, azure]
+        detectors: [gcp, eks, azure, aks, ec2]
         timeout: 2s
         override: false
-
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
       resource:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
@@ -468,7 +422,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.19
+            value: 0.8.22
           - key: service.name
             action: delete
           - key: service_name
@@ -485,6 +439,7 @@ data:
               - delete_key(attributes, "id")
               - delete_key(attributes, "name")
               - delete_key(attributes, "interface")
+              - delete_key(attributes, "cpu")
 
       resource/low_data_mode_inator:
         attributes:
@@ -493,6 +448,10 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
             action: delete
 
       attributes/self:
@@ -620,7 +579,7 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
-    
+
     connectors:
       
       routing/nr_pipelines:
@@ -685,6 +644,7 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
+            - resourcedetection/env
             - resourcedetection/cloudproviders
             - resource
             - transform/low_data_mode_inator
