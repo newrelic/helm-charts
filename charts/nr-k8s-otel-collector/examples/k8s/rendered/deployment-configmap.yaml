@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.19
+    helm.sh/chart: nr-k8s-otel-collector-0.8.22
 data:
   deployment-config.yaml: |
     receivers:
@@ -22,7 +22,7 @@ data:
       k8s_events:
       prometheus/ksm:
         config:
-          scrape_configs: 
+          scrape_configs:
             - job_name: kube-state-metrics
               scrape_interval: 1m
               kubernetes_sd_configs:
@@ -31,7 +31,7 @@ data:
                 - action: keep
                   regex: kube-state-metrics
                   source_labels:
-                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                  - __meta_kubernetes_pod_label_app_kubernetes_io_name
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
@@ -53,11 +53,11 @@ data:
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
-                regex: default;kubernetes;https
                 source_labels:
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
                 - __meta_kubernetes_endpoint_port_name
+                regex: default;kubernetes;https
               - action: replace
                 source_labels:
                 - __meta_kubernetes_namespace
@@ -69,6 +69,78 @@ data:
               - action: replace
                 target_label: job_label
                 replacement: apiserver
+            # if not running on openshift, this only works if controller-manager port 10257 is exposed in the pod
+            # TODO: we may want to create our own service instead to expose the endpoint and scrape it instead
+            - job_name: controller-manager
+              scrape_interval: 1m
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                      - kube-system
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*controller-manager.*;.*:10257$
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: controller-manager
+            # if not running on openshift, this only works if scheduler port 10259 is exposed in the pod
+            # we may want to create our own service instead to expose the endpoint and scrape it instead
+            - job_name: scheduler
+              scrape_interval: 1m
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                      - kube-system
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*scheduler.*;.*:10259$
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: scheduler
 
     processors:
       
@@ -156,18 +228,18 @@ data:
         transforms:
           - include: kubernetes_build_info
             action: update
-            new_name: k8s.cluster.info 
+            new_name: k8s.cluster.info
 
       metricstransform/kube_pod_container_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
-            match_type: strict 
+            match_type: strict
             action: update
             new_name: 'kube_pod_container_status_phase'
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: waiting 
+              new_value: waiting
           - include: 'kube_pod_container_status_running'
             match_type: strict
             action: update
@@ -175,7 +247,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: running 
+              new_value: running
           - include: 'kube_pod_container_status_terminated'
             match_type: strict
             action: update
@@ -183,7 +255,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: terminated 
+              new_value: terminated
 
       metricstransform/ldm:
         transforms:
@@ -194,12 +266,12 @@ data:
             - action: add_label
               new_label: low.data.mode
               new_value: 'false'
-      
+
       metricstransform/k8s_cluster_info_ldm:
         transforms:
           - include: k8s.cluster.info
             action: update
-            operations: 
+            operations:
             - action: update_label
               label: low.data.mode
               value_actions:
@@ -289,16 +361,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time)|start_time)
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
-          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time)$$
             action: update
             match_type: regexp
             operations:
@@ -325,18 +388,9 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
-      
+
       metricstransform/apiserver:
         transforms:
-          - include: apiserver_storage_objects
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
@@ -355,7 +409,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-    
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -380,6 +434,24 @@ data:
             - metric.name == "kube_pod_status_ready" and value_double < 0.5
             - metric.name == "kube_deployment_status_condition" and value_double < 0.5
 
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.id:
+              enabled: true
+
+      resourcedetection/cloudproviders:
+        detectors: [gcp, eks, azure, aks, ec2, ecs]
+        timeout: 2s
+        override: false
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
+
       resource/metrics:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
@@ -391,12 +463,12 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.19
+            value: 0.8.22
           - key: service.name
             action: delete
           - key: service_name
             action: delete
-      
+
       resource/events:
         attributes:
           - key: "event.name"
@@ -416,7 +488,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.19
+            value: 0.8.22
 
       transform/events:
         log_statements:
@@ -438,6 +510,10 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
             action: delete
 
       cumulativetodelta:
@@ -461,7 +537,7 @@ data:
             - k8s.cronjob.name
             - k8s.job.name
         pod_association:
-          - sources: 
+          - sources:
             - from: resource_attribute
               name: k8s.pod.uid
           - sources:
@@ -571,7 +647,7 @@ data:
         verbosity: detailed
         sampling_initial: 5
         sampling_thereafter: 200
-    
+
     connectors:
       
 
@@ -584,6 +660,12 @@ data:
             pipelines: [metrics/nr_ksm]
           - context: datapoint
             condition: attributes["job_label"] == "apiserver"
+            pipelines: [metrics/nr_controlplane]
+          - context: datapoint
+            condition: attributes["job_label"] == "controller-manager"
+            pipelines: [metrics/nr_controlplane]
+          - context: datapoint
+            condition: attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
     service:
@@ -611,6 +693,8 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             - resource/metrics
+            - resourcedetection/env
+            - resourcedetection/cloudproviders
             - groupbyattrs
             - transform/ksm
             - k8sattributes/ksm
