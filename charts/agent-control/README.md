@@ -72,7 +72,10 @@ agent-control-deployment:
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | agent-control-deployment | object | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
+| agent-control-deployment.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-deployment` chart will be installed. |
 | agent-control-deployment.enabled | bool | `true` | Enable the installation of the Agent Control. |
+| agent-control-deployment.installerImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"nightly"}` | The image used to install Agent Control. |
+| agent-control-deployment.installerImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | flux2 | object | See `values.yaml` | Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml |
 | flux2.clusterDomain | string | `"cluster.local"` | This is the domain name of the cluster. |
 | flux2.enabled | bool | `true` | Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Agent Control. |
