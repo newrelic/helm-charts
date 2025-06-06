@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.14
+    helm.sh/chart: nr-k8s-otel-collector-0.8.19
 spec:
   replicas: 1
   minReadySeconds: 5
@@ -26,12 +26,12 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: deployment
       annotations:
-        checksum/config: a7a5bc4bd6a38d47ee301d35294647550347fa09b4b13f8222a11133874a145c
+        checksum/config: 25973d4f8474f1c10a818d19940c5b389b3ebafaab637c005eed50a181ed072d
     spec:
       serviceAccountName: example-nr-k8s-otel-collector
       containers:
         - name: otel-collector-deployment
-          image: "newrelic/nrdot-collector-k8s:1.0.3"
+          image: "newrelic/nrdot-collector-k8s:1.1.0"
           imagePullPolicy: IfNotPresent
           args: ["--config", "/config/deployment-config.yaml"]
           resources:
