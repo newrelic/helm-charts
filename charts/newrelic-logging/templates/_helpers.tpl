@@ -182,6 +182,7 @@ https://log-api.newrelic.com/log/v1
 Returns fluentbit config to collect and forward its metrics to New Relic
 */}}
 {{- define "newrelic-logging.fluentBit.monitoring.config" -}}
+{{- if (eq .Values.fluentBit.fluentBitMetrics "advanced") }}
 [INPUT]
     name prometheus_scrape
     Alias fb-metrics-collector
@@ -213,6 +214,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     {{- end -}}
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -250,5 +252,47 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
   {{- else if .Values.fluentBit.extraEnv }}
     {{- toYaml .Values.fluentBit.extraEnv  -}}
   {{- end -}}
+{{- end -}}
+{{- end -}}
+
+
+{/*
+ Create fb Version Label.
+ */}
+ {{- define "newrelic-logging.fbVersion" -}}
+ {{- if eq .Chart.Version "1.27.0" -}}
+ 3.2.10
+ {{- end -}}
+ {{- end -}}
+
+
+{{/*
+Returns fluentbit config to collect essential metric and sent to NewRelic 
+*/}}
+{{- define "newrelic-logging.fluentBit.monitoring.essential.config" -}}
+{{- if (eq .Values.fluentBit.fluentBitMetrics "essential") }}
+[INPUT]
+    Name   dummy
+    Tag    buildInfo
+    Dummy  {"message":"trigger for essential metric at every 10 minutes scrape_interval"}
+    Interval_Sec 600
+[FILTER]
+    Name    lua
+    Match   buildInfo
+    script  /fluent-bit/scripts/payload.lua
+    call    build_payload
+[OUTPUT]
+    Name    http
+    Match   buildInfo
+    Host    ${METRICS_HOST}
+    Port    443
+    URI     /metric/v1
+    Format  json
+    tls     On
+    Header  Api-Key ${LICENSE_KEY}
+    Header  Content-Type application/json
+    json_date_key false    
+
+
 {{- end -}}
 {{- end -}}
