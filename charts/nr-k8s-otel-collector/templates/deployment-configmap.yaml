@@ -74,7 +74,7 @@ target_label: service
 target_label: job_label
 replacement: apiserver
 # if not running on openshift, this only works if controller-manager port 10257 is exposed in the pod
-# we may want to create our own service instead to expose the endpoint and scrape it instead
+# TODO: we may want to create our own service instead to expose the endpoint and scrape it instead
 - job_name: controller-manager
   scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
   metrics_path: /metrics
@@ -707,6 +707,12 @@ pipelines: [metrics/nr_ksm]
   - context: datapoint
 condition: attributes["job_label"] == "apiserver"
 pipelines: [metrics/nr_controlplane]
+  - context: datapoint
+condition: attributes["job_label"] == "controller-manager"
+pipelines: [metrics/nr_controlplane]
+  - context: datapoint
+condition: attributes["job_label"] == "scheduler"
+pipelines: [metrics/nr_controlplane]
 
 service:
   {{- if include "newrelic.common.verboseLog" . }}
@@ -747,7 +753,6 @@ metrics/nr_ksm:
 - resourcedetection/openshift
    # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
    # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
-   #- resourcedetection/cloudproviders
 {{- else  }}
 - resourcedetection/cloudproviders
 {{- end }}
