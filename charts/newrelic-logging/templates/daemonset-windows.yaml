@@ -149,10 +149,10 @@ spec:
             httpGet:
               path: /api/v1/health
               port: 2020
-            initialDelaySeconds: {{ $.Values.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ $.Values.livenessProbe.periodSeconds }}
-            timeoutSeconds: {{ $.Values.livenessProbe.timeoutSeconds }}
-            failureThreshold: {{ $.Values.livenessProbe.failureThreshold }}
+            initialDelaySeconds: {{ default 10 $.Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 30 $.Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ default 5 $.Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ default 3 $.Values.livenessProbe.failureThreshold }}
 {{- end }}      
       volumes:
         - name: fluent-bit-config
