@@ -119,11 +119,11 @@ spec:
               value: {{ $.Values.fluentBit.fluentBitMetrics | default "essential" | quote }}
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
             - name: DAEMONSET_NAME
-              value: {{ template "newrelic-logging.fullname" . }}  
+              value: {{ template "newrelic-logging.fullname" $ }}
             - name: NAMESPACE
-              value: {{ .Release.Namespace }} 
+              value: {{ $.Release.Namespace }}
             - name: FLUENTBIT_VERSION
-              value: {{ include "newrelic-logging.fbVersion" . }}
+              value: {{ include "newrelic-logging.fbVersion" $ }}
           command:
             - C:\fluent-bit\bin\fluent-bit.exe
             - -c
@@ -158,7 +158,7 @@ spec:
       volumes:
         - name: lua-scripts
           configMap:
-            name: {{ include "newrelic-logging.fullname" . }}-lua
+            name: {{ include "newrelic-logging.fullname" $ }}-lua
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" $ }}
