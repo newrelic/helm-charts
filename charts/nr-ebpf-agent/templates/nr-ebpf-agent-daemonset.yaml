@@ -43,7 +43,7 @@ spec:
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
-            value: "{{ .Values.stirlingSources }}"
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local" 
@@ -95,7 +95,7 @@ spec:
           - name: OTLP_ENDPOINT
             value: {{ include "nr-otel-collector-receiver.endpoint" .}}
           - name: PL_STIRLING_SOURCES
-            value: "{{ .Values.stirlingSources }}"
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{-  if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
