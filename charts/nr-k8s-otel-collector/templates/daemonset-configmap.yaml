@@ -542,89 +542,6 @@ data:
           - key: net.host.port
             action: delete
 
-      attributes/self:
-        actions:
-          - key: k8s.node.name
-            action: upsert
-            from_attribute: node
-          - key: k8s.namespace.name
-            action: upsert
-            from_attribute: namespace
-          - key: k8s.pod.name
-            action: upsert
-            from_attribute: pod
-          - key: k8s.container.name
-            action: upsert
-            from_attribute: container
-          - key: k8s.replicaset.name
-            action: upsert
-            from_attribute: replicaset
-          - key: k8s.deployment.name
-            action: upsert
-            from_attribute: deployment
-          - key: k8s.statefulset.name
-            action: upsert
-            from_attribute: statefulset
-          - key: k8s.daemonset.name
-            action: upsert
-            from_attribute: daemonset
-          - key: k8s.job.name
-            action: upsert
-            from_attribute: job_name
-          - key: k8s.cronjob.name
-            action: upsert
-            from_attribute: cronjob
-          - key: k8s.replicationcontroller.name
-            action: upsert
-            from_attribute: replicationcontroller
-          - key: k8s.hpa.name
-            action: upsert
-            from_attribute: horizontalpodautoscaler
-          - key: k8s.resourcequota.name
-            action: upsert
-            from_attribute: resourcequota
-          - key: k8s.volume.name
-            action: upsert
-            from_attribute: volumename
-          - key: k8s.volume.name
-            action: upsert
-            from_attribute: persistentvolume
-          - key: k8s.pvc.name
-            action: upsert
-            from_attribute: persistentvolumeclaim
-          - key: node
-            action: delete
-          - key: namespace
-            action: delete
-          - key: pod
-            action: delete
-          - key: container
-            action: delete
-          - key: replicaset
-            action: delete
-          - key: deployment
-            action: delete
-          - key: statefulset
-            action: delete
-          - key: daemonset
-            action: delete
-          - key: job_name
-            action: delete
-          - key: cronjob
-            action: delete
-          - key: replicationcontroller
-            action: delete
-          - key: horizontalpodautoscaler
-            action: delete
-          - key: resourcequota
-            action: delete
-          - key: volumename
-            action: delete
-          - key: persistentvolume
-            action: delete
-          - key: persistentvolumeclaim
-            action: delete
-
       memory_limiter:
          check_interval: 1s
          limit_percentage: 80
@@ -702,7 +619,7 @@ data:
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_prometheus_cadv_kubelet]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
@@ -756,11 +673,37 @@ data:
             - filter/exclude_network
             - attributes/exclude_system_paging
             - resourcedetection/env
-          {{- if include "newrelic.common.openShift" . }}
+            {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
-           # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
-           # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
-           #- resourcedetection/cloudproviders
+            {{- else  }}
+            - resourcedetection/cloudproviders
+            {{- end }}
+            - resource
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            {{- end }}
+            - k8sattributes/ksm
+            - cumulativetodelta
+            - batch
+          exporters:
+            - otlphttp/newrelic
+            - debug
+        metrics/nr_prometheus_cadv_kubelet:
+          receivers:
+            - routing/nr_pipelines
+          processors:
+            - memory_limiter
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
+            - metricstransform/ldm
+            - metricstransform/cadvisor
+            - metricstransform/kubelet
+            - filter/exclude_metrics_low_data_mode
+            {{- end }}
+            - transform/truncate
+            - resourcedetection/env
+            {{- if include "newrelic.common.openShift" . }}
+            - resourcedetection/openshift
             {{- else  }}
             - resourcedetection/cloudproviders
             {{- end }}
