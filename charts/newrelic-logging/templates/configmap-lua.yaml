@@ -1,3 +1,4 @@
+{{- if (eq .Values.fluentBit.fluentBitMetrics "essential") }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,3 +6,4 @@ metadata:
 data:
   payload.lua: |-
 {{ .Files.Get "files/scripts/payload.lua" | indent 4 }}
+{{- end }}

@@ -215,6 +215,29 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
 {{- end -}}
+{{- if (eq .Values.fluentBit.fluentBitMetrics "essential") }}
+[INPUT]
+    Name   dummy
+    Tag    buildInfo
+    Dummy  {"message":"trigger for essential metric at every 10 minutes scrape_interval"}
+    Interval_Sec 600
+[FILTER]
+    Name    lua
+    Match   buildInfo
+    script  /fluent-bit/scripts/payload.lua
+    call    build_payload
+[OUTPUT]
+    Name    http
+    Match   buildInfo
+    Host    ${METRICS_HOST}
+    Port    443
+    URI     /metric/v1
+    Format  json
+    tls     On
+    Header  Api-Key ${LICENSE_KEY}
+    Header  Content-Type application/json
+    json_date_key false    
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -256,43 +279,12 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 
 
-{/*
- Create fb Version Label.
- */}
- {{- define "newrelic-logging.fbVersion" -}}
- {{- if eq .Chart.Version "1.27.0" -}}
- 3.2.10
- {{- end -}}
- {{- end -}}
-
-
 {{/*
-Returns fluentbit config to collect essential metric and sent to NewRelic 
+Create fb Version Label.
 */}}
-{{- define "newrelic-logging.fluentBit.monitoring.essential.config" -}}
-{{- if (eq .Values.fluentBit.fluentBitMetrics "essential") }}
-[INPUT]
-    Name   dummy
-    Tag    buildInfo
-    Dummy  {"message":"trigger for essential metric at every 10 minutes scrape_interval"}
-    Interval_Sec 600
-[FILTER]
-    Name    lua
-    Match   buildInfo
-    script  /fluent-bit/scripts/payload.lua
-    call    build_payload
-[OUTPUT]
-    Name    http
-    Match   buildInfo
-    Host    ${METRICS_HOST}
-    Port    443
-    URI     /metric/v1
-    Format  json
-    tls     On
-    Header  Api-Key ${LICENSE_KEY}
-    Header  Content-Type application/json
-    json_date_key false    
-
-
+{{- define "newrelic-logging.fbVersion" -}}
+{{- if or (eq .Chart.Version "1.27.0") (eq .Chart.Version "1.28.0") -}}
+3.2.10
 {{- end -}}
 {{- end -}}
+
