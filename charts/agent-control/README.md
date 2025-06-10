@@ -86,6 +86,7 @@ agent-control-deployment:
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on the whole cluster. |
 | fullnameOverride | string | `""` | Override the full name of the release |
 | nameOverride | string | `""` | Override the name of the chart |
+| repositoryUrl | string | `""` | Override the url of the AC helm repository |
 
 ## Maintainers
 
