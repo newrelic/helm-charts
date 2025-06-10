@@ -182,7 +182,8 @@ https://log-api.newrelic.com/log/v1
 Returns fluentbit config to collect and forward its metrics to New Relic
 */}}
 {{- define "newrelic-logging.fluentBit.monitoring.config" -}}
-{{- if (eq .Values.fluentBit.fluentBitMetrics "advanced") }}
+{{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "essential" -}}
+{{- if eq $fluentBitMetrics "advanced" }}
 [INPUT]
     name prometheus_scrape
     Alias fb-metrics-collector
@@ -215,7 +216,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
 {{- end -}}
-{{- if (eq .Values.fluentBit.fluentBitMetrics "essential") }}
+{{- if eq $fluentBitMetrics "essential" }}
 [INPUT]
     Name   dummy
     Tag    buildInfo
