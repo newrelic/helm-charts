@@ -101,7 +101,7 @@ cluster name, licenses, and custom attributes
 {{- $config := dict "server" (dict "enabled" true "port" $statusServerPort "host" $statusServerHost) -}}
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
-{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "chart_version" .Chart.Version) -}}
+{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- /* Add fleet_control if enabled */ -}}
@@ -137,6 +137,9 @@ cluster name, licenses, and custom attributes
 {{- end -}}
 {{- if ne (printf "%v" $config.server.port) (printf "%v" $statusServerPort) -}}
   {{- fail "Setting up the status server port is `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
+{{- end -}}
+{{- if $config.k8s.chart_version -}}
+  {{- fail "The chart version is set automatically via environment variable and should not be set manually" -}}
 {{- end -}}
 
 {{- $config | toYaml -}}

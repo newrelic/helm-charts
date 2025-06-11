@@ -28,7 +28,6 @@ asserts:
   value: |
 agents: {}
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: my-cluster
   namespace: my-namespace
 server:
@@ -50,7 +49,6 @@ asserts:
   value: |
 agents: {}
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: my-cluster
   namespace: my-namespace
 server:
@@ -77,7 +75,6 @@ token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
   fleet_id: abcefg
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: my-cluster
   namespace: my-namespace
 server:
@@ -102,7 +99,6 @@ provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: my-cluster
   namespace: my-namespace
 server:
@@ -130,7 +126,6 @@ provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: my-cluster
   namespace: my-namespace
 server:
@@ -163,7 +158,6 @@ provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.newrelic.com/v1/opamp
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: config-cluster
   namespace: config-namespace
 server:
@@ -189,7 +183,6 @@ provider: local
 token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
   endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
 k8s:
-  chart_version: 1.2.3-beta
   cluster_name: my-cluster
   namespace: my-namespace
 server:
@@ -262,3 +255,17 @@ server:
 asserts:
   - failedTemplate:
   errorMessage: "Setting up the status server port is `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead"
+
+  - it: Fails is expected if chart_version is set manually
+set:
+  cluster: my-cluster
+  config:
+agentControl:
+  content:
+k8s:
+  chart_version: test
+asserts:
+  - failedTemplate:
+  errorMessage: "The chart version is set automatically via environment variable and should not be set manually"
+
+
