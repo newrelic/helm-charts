@@ -101,11 +101,6 @@ data:
                 - source_labels: [__meta_kubernetes_node_name]
                   regex: ${KUBE_NODE_NAME}
                   action: keep
-              metric_relabel_configs:
-                # Drop cgroup metrics with no container.
-                - source_labels: [id, container]
-                  action: drop
-                  regex: '.+;'
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
