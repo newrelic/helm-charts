@@ -10,7 +10,7 @@ app.kubernetes.io/instance: example
 app.kubernetes.io/managed-by: Helm
 app.kubernetes.io/name: nr-k8s-otel-collector
 app.kubernetes.io/version: 1.0.3
-helm.sh/chart: nr-k8s-otel-collector-0.8.22
+helm.sh/chart: nr-k8s-otel-collector-0.8.23
 data:
   daemonset-config.yaml: |
 receivers:
@@ -497,7 +497,7 @@ action: upsert
 value: 'true'
   - key: "newrelic.chart.version"
 action: upsert
-value: 0.8.22
+value: 0.8.23
   - key: service.name
 action: delete
   - key: service_name
@@ -514,6 +514,7 @@ statements:
   - delete_key(attributes, "id")
   - delete_key(attributes, "name")
   - delete_key(attributes, "interface")
+  - delete_key(attributes, "cpu")
 
   resource/low_data_mode_inator:
 attributes:
@@ -522,6 +523,10 @@ action: delete
   - key: net.host.name
 action: delete
   - key: net.host.port
+action: delete
+  - key: url.scheme
+action: delete
+  - key: server.address
 action: delete
 
   memory_limiter:
@@ -570,10 +575,6 @@ exporters:
 endpoint: "https://otlp.nr-data.net"
 headers:
   api-key: ${env:NR_LICENSE_KEY}
-  debug:
-verbosity: detailed
-sampling_initial: 5
-sampling_thereafter: 200
 
 connectors:
   
@@ -649,7 +650,6 @@ metrics/nr:
 - batch
   exporters:
 - otlphttp/newrelic
-- debug
 metrics/nr_prometheus_cadv_kubelet:
   receivers:
 - routing/nr_pipelines

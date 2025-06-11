@@ -10,7 +10,7 @@ app.kubernetes.io/instance: example
 app.kubernetes.io/managed-by: Helm
 app.kubernetes.io/name: nr-k8s-otel-collector
 app.kubernetes.io/version: 1.0.3
-helm.sh/chart: nr-k8s-otel-collector-0.8.22
+helm.sh/chart: nr-k8s-otel-collector-0.8.23
 data:
   deployment-config.yaml: |
 receivers:
@@ -361,16 +361,7 @@ operations:
   value_actions:
   - value: 'false'
 new_value: 'true'
-  - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time)|start_time)
-action: update
-match_type: regexp
-operations:
-- action: update_label
-  label: low.data.mode
-  value_actions:
-  - value: 'false'
-new_value: 'true'
-  - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
+  - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time)$$
 action: update
 match_type: regexp
 operations:
@@ -404,9 +395,9 @@ transforms:
 action: update
 match_type: regexp
 operations:
-- action: update_label
-  label: low.data.mode
-  value_actions:
+  - action: update_label
+label: low.data.mode
+value_actions:
   - value: 'false'
 new_value: 'true'
   - include: go_(goroutines|threads)
@@ -481,7 +472,7 @@ action: upsert
 value: 'true'
   - key: "newrelic.chart.version"
 action: upsert
-value: 0.8.22
+value: 0.8.23
   - key: service.name
 action: delete
   - key: service_name
@@ -506,7 +497,7 @@ action: upsert
 value: 'true'
   - key: "newrelic.chart.version"
 action: upsert
-value: 0.8.22
+value: 0.8.23
 
   transform/events:
 log_statements:
@@ -528,6 +519,10 @@ action: delete
   - key: net.host.name
 action: delete
   - key: net.host.port
+action: delete
+  - key: url.scheme
+action: delete
+  - key: server.address
 action: delete
 
   cumulativetodelta:
@@ -657,10 +652,6 @@ exporters:
 endpoint: "https://otlp.nr-data.net"
 headers:
   api-key: ${env:NR_LICENSE_KEY}
-  debug:
-verbosity: detailed
-sampling_initial: 5
-sampling_thereafter: 200
 
 connectors:
   
