@@ -361,16 +361,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time)|start_time)
-            action: update
-            match_type: regexp
-            operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
-          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time)$$
             action: update
             match_type: regexp
             operations:
@@ -404,11 +395,11 @@ data:
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
@@ -544,6 +535,10 @@ data:
             action: delete
           - key: net.host.port
             action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
+            action: delete
 
       cumulativetodelta:
 
@@ -672,10 +667,6 @@ data:
         endpoint: "https://otlp.nr-data.net"
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
 
     connectors:
       
