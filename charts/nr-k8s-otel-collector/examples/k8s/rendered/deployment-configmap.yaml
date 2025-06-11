@@ -391,6 +391,15 @@ data:
 
       metricstransform/apiserver:
         transforms:
+          - include: apiserver_storage_objects
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
