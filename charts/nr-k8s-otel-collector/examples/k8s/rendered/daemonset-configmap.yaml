@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.22
+    helm.sh/chart: nr-k8s-otel-collector-0.8.23
 data:
   daemonset-config.yaml: |
     receivers:
@@ -461,6 +461,15 @@ data:
           datapoint:
             - 'IsMatch(metric.name, "^system.network.*") == true and attributes["device"] == "lo"'
 
+      filter/nr_exclude_container_zero_values:
+        metrics:
+          datapoint:
+            - metric.name == "container_network_receive_errors_total" and value_double < 0.5
+            - metric.name == "container_network_transmit_errors_total" and value_double < 0.5
+            - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
+            - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
+
+
       attributes/exclude_system_paging:
         include:
           match_type: strict
@@ -497,7 +506,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.22
+            value: 0.8.23
           - key: service.name
             action: delete
           - key: service_name
