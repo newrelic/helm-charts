@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.22
+    helm.sh/chart: nr-k8s-otel-collector-0.8.23
 data:
   daemonset-config.yaml: |
     receivers:
@@ -97,11 +97,6 @@ data:
                 - source_labels: [__meta_kubernetes_node_name]
                   regex: ${KUBE_NODE_NAME}
                   action: keep
-              metric_relabel_configs:
-                # Drop cgroup metrics with no container.
-                - source_labels: [id, container]
-                  action: drop
-                  regex: '.+;'
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -502,7 +497,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.22
+            value: 0.8.23
           - key: service.name
             action: delete
           - key: service_name
@@ -580,10 +575,6 @@ data:
         endpoint: "https://otlp.nr-data.net"
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
 
     connectors:
       
@@ -659,7 +650,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-            - debug
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
             - routing/nr_pipelines

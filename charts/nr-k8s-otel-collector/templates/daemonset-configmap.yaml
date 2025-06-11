@@ -593,10 +593,6 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
 
     connectors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
@@ -693,7 +689,6 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
-            - debug
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
             - routing/nr_pipelines
