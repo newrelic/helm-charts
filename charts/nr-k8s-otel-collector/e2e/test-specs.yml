@@ -3,12 +3,13 @@ description: New Relic K8s OTEL E2E Test
 custom_test_key: cluster_name
 
 scenarios:
-  - description: Scrape test environment metrics
-    before: []
+  - description: This scenario will verify that metrics from a K8s OTEL Cluster are correctly collected
+    before:
 #      - cd ../../ && NR_PROM_LICENSE_KEY=${LICENSE_KEY} NR_PROM_CLUSTER=${SCENARIO_TAG} make tilt-ci
-    after: []
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../. --values e2e-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+    after:
 #      - kubectl logs -l app.kubernetes.io/name=newrelic-prometheus-agent --all-containers --prefix=true
-#      - kubectl get all -o wide
+      - kubectl get all -o wide
 #      - cd ../../ && tilt down
     tests:
       metrics:
