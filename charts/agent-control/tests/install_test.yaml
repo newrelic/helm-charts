@@ -2,8 +2,8 @@ suite: Validate AC Installation
 tests:
   - it: should allow custom repositoryUrl
     set:
-      repositoryUrl: "https://example.com/some/url"
       agent-control-deployment:
+        chartRepositoryUrl: "https://example.com/some/url"
         cluster: cluster
         licenseKey: some_license_key
         identityClientId: some_client_id
@@ -41,4 +41,4 @@ tests:
       - template: templates/install.yaml
         lengthEqual:
           path: spec.template.spec.containers[0].command
-          count: 8
+          count: 10
