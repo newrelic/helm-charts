@@ -81,7 +81,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
-| dropAPMEnabledPods | bool | `true` | Drop data from pods that are monitored by New Relic APM via auto attach. |
+| dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
 | dropDataIpServiceNames | bool | `true` | Drop data when service names map to an IP address. |
 | dropDataKubeSystem | bool | `true` | Drop data from the kube-system namespace. |
 | dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace. |
