@@ -24,12 +24,6 @@ jobs:
           # default driver doesn't support 'eval $$(minikube docker-env)'.
           driver: docker
           github token: ${{ secrets.GITHUB_TOKEN }}
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: 'go.mod'
-      - name: Install Tilt
-        run: |
-          curl -fsSL https://github.com/tilt-dev/tilt/releases/download/v0.34.5/tilt.0.34.5.linux.x86_64.tar.gz | tar -xzv tilt && sudo mv tilt /usr/local/bin/tilt
       - name: Run e2e-test
         env:
           SECRET_AVAILABLE: ${{ secrets.K8S_AGENTS_E2E_ACCOUNT_ID }}
