@@ -18,8 +18,13 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
       containers:
         - name: install-agent-control-deployment
+          {{- if (index .Values "agent-control-deployment").installerImage }}
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-deployment").installerImage "context" .) }}
           imagePullPolicy: {{ (index .Values "agent-control-deployment").installerImage.pullPolicy }}
+          {{- else }}
+          image: "newrelic/newrelic-agent-control-cli:nightly"
+          imagePullPolicy: "IfNotPresent"
+          {{- end }}
           resources:
             limits:
               cpu: 100m
@@ -36,6 +41,8 @@ spec:
             - "{{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml"
             - --namespace
             - "{{ .Release.Namespace }}"
+            {{- if (index .Values "agent-control-deployment").chartRepositoryUrl }}
             - --repository-url
-            - '{{ (index .Values "agent-control-deployment").chartRepositoryUrl }}'
+            - "{{ (index .Values "agent-control-deployment").chartRepositoryUrl }}"
+            {{- end -}}
 {{- end -}}
