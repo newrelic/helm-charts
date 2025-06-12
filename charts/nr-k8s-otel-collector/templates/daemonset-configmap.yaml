@@ -468,6 +468,15 @@ metrics:
   datapoint:
 - 'IsMatch(metric.name, "^system.network.*") == true and attributes["device"] == "lo"'
 
+  filter/nr_exclude_container_zero_values:
+metrics:
+  datapoint:
+- metric.name == "container_network_receive_errors_total" and value_double < 0.5
+- metric.name == "container_network_transmit_errors_total" and value_double < 0.5
+- metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
+- metric.name == "container_network_receive_bytes_total" and value_double < 0.5
+
+
   attributes/exclude_system_paging:
 include:
   match_type: strict
@@ -699,6 +708,7 @@ metrics/nr_prometheus_cadv_kubelet:
 - metricstransform/cadvisor
 - metricstransform/kubelet
 - filter/exclude_metrics_low_data_mode
+- filter/nr_exclude_container_zero_values
 {{- end }}
 - transform/truncate
 - resourcedetection/env
