@@ -41,8 +41,6 @@ spec:
             - "{{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml"
             - --namespace
             - "{{ .Release.Namespace }}"
-            {{- if .Values.repositoryUrl }}
             - --repository-url
-            - "{{ .Values.repositoryUrl }}"
-            {{- end }}
+            - '{{ (index .Values "agent-control-deployment").chartRepositoryUrl }}'
 {{- end -}}
