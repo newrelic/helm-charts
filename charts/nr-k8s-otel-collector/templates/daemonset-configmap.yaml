@@ -708,9 +708,9 @@ data:
             - metricstransform/cadvisor
             - metricstransform/kubelet
             - filter/exclude_metrics_low_data_mode
+            - filter/nr_exclude_container_zero_values
             {{- end }}
             - transform/truncate
-            - filter/nr_exclude_container_zero_values
             - resourcedetection/env
             {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
