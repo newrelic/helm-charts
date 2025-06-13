@@ -1,6 +1,6 @@
 description: New Relic K8s OTEL E2E Test
 
-custom_test_key: cluster_name
+custom_test_key: k8s.cluster.name
 
 permissions:
   contents: read
@@ -8,13 +8,16 @@ permissions:
 scenarios:
   - description: This scenario will verify that metrics from a K8s OTEL Cluster are correctly collected
     before:
-#      - cd ../../ && NR_PROM_LICENSE_KEY=${LICENSE_KEY} NR_PROM_CLUSTER=${SCENARIO_TAG} make tilt-ci
+      - helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
       - helm dependency update ../
-      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-cluster-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+      - helm upgrade --install app-${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace open-telemetry/opentelemetry-demo --version 0.28 --values e2e-app-values.yml --set opentelemetry-collector.config.exporters.otlphttp/newrelic.headers.api-key=${LICENSE_KEY} --set opentelemetry-collector.config.processors.resource.attributes[0].value=${SCENARIO_TAG}
     after:
-#      - kubectl logs -l app.kubernetes.io/name=newrelic-prometheus-agent --all-containers --prefix=true
+      - kubectl logs -l app.kubernetes.io/name=nr-k8s-otel-collector --all-containers --prefix=true
       - kubectl get all -o wide
-#      - cd ../../ && tilt down
+      - helm uninstall app-${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
+      - kubectl delete namespace nr-${SCENARIO_TAG}
     tests:
       metrics:
         - source: "metrics.yml"
