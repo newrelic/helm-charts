@@ -699,6 +699,11 @@ data:
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
