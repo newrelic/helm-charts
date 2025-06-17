@@ -345,7 +345,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_node_status_(allocatable|condition)
+          - include: kube_node_status_(allocatable|capacity|condition)
             action: update
             match_type: regexp
             operations:
@@ -526,12 +526,9 @@ data:
 
       resource/events:
         attributes:
-          - key: "event.name"
+          - key: "newrelic.event.type"
             action: upsert
-            value: "InfrastructureEvent"
-          - key: "event.domain"
-            action: upsert
-            value: "newrelic-otel-event"
+            value: "OtlpInfrastructureEvent"
           - key: "category"
             action: upsert
             value: "kubernetes"

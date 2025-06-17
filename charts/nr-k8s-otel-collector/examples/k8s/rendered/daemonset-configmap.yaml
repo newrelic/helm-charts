@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.24
+    helm.sh/chart: nr-k8s-otel-collector-0.8.26
 data:
   daemonset-config.yaml: |
     receivers:
@@ -244,7 +244,7 @@ data:
 
       metricstransform/kubeletstats:
         transforms:
-          - include: container\.(cpu\.usage|filesystem\.(capacity|usage)|memory\.usage)
+          - include: container\.(cpu\.usage|filesystem\.(available|capacity|usage)|memory\.usage)
             action: update
             match_type: regexp
             operations:
@@ -284,6 +284,15 @@ data:
               - value: 'false'
                 new_value: 'true'
           - include: container_memory_working_set_bytes
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: container_memory_mapped_file
             action: update
             match_type: regexp
             operations:
@@ -506,7 +515,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.24
+            value: 0.8.26
           - key: service.name
             action: delete
           - key: service_name
