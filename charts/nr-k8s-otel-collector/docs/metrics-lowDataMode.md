@@ -33,7 +33,7 @@
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.capacity                                | Gauge   | Total filesystem capacity for the pod.                            |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.usage                                   | Gauge   | Used filesystem space for the pod.                                |
 | Kubelet            | KubeletStats Receiver | k8s.pod.memory.working_set                                 | Gauge   | Working set size of the pod memory.                               |
-| Kubelet            | KubeletStats Receiver | [k8s.pod.network.io](http://k8s.pod.network.io/)           | Counter | Total network I/O for the pod.                                    |
+| Kubelet            | KubeletStats Receiver | k8s.pod.network.io                                         | Counter | Total network I/O for the pod.                                    |
 | Kubelet            | Prometheus Receiver   | process_resident_memory_bytes                              | Gauge   | Resident memory size in bytes.                                    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_cronjob_created                                       | Gauge   | Creation timestamp of the CronJob.                                |
 | KubeStateMetrics   | Prometheus Receiver   | kube_cronjob_spec_suspend                                  | Gauge   | Suspend flag of the CronJob.                                      |
@@ -120,14 +120,14 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_ready                     | Gauge   | Number of ready replicas for the StatefulSet.                     |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_updated                   | Gauge   | Number of updated replicas for the StatefulSet.                   |
 | Node               | HostMetric Receiver   | process.cpu.utilization                                    | Gauge   | CPU utilization of the process as a percentage.                   |
-| Node               | HostMetric Receiver   | [process.disk.io](http://process.disk.io)                  | Counter | Number of disk I/O operations performed by the process.           |
+| Node               | HostMetric Receiver   | process.disk.io                                            | Counter | Number of disk I/O operations performed by the process.           |
 | Node               | HostMetric Receiver   | process.memory.usage                                       | Gauge   | Memory usage of the process in bytes.                             |
 | Node               | HostMetric Receiver   | process.memory.virtual                                     | Gauge   | Virtual memory usage of the process in bytes.                     |
 | Node               | HostMetric Receiver   | system.cpu.load_average.15m                                | Gauge   | System load average over the last 15 minutes.                     |
 | Node               | HostMetric Receiver   | system.cpu.load_average.1m                                 | Gauge   | System load average over the last 1 minute.                       |
 | Node               | HostMetric Receiver   | system.cpu.load_average.5m                                 | Gauge   | System load average over the last 5 minutes.                      |
 | Node               | HostMetric Receiver   | system.cpu.utilization                                     | Gauge   | Total CPU utilization percentage.                                 |
-| Node               | HostMetric Receiver   | [system.disk.io](http://system.disk.io)                    | Counter | Number of disk I/O operations performed.                          |
+| Node               | HostMetric Receiver   | system.disk.io                                             | Counter | Number of disk I/O operations performed.                          |
 | Node               | HostMetric Receiver   | system.disk.io_time                                        | Counter | Time spent in disk I/O operations in seconds.                     |
 | Node               | HostMetric Receiver   | system.disk.operation_time                                 | Counter | Total time spent in disk operations in seconds.                   |
 | Node               | HostMetric Receiver   | system.disk.operations                                     | Counter | Number of disk operations performed.                              |
@@ -136,7 +136,7 @@
 | Node               | HostMetric Receiver   | system.memory.usage                                        | Gauge   | Total memory usage in bytes.                                      |
 | Node               | HostMetric Receiver   | system.memory.utilization                                  | Gauge   | Memory utilization as a percentage.                               |
 | Node               | HostMetric Receiver   | system.network.errors                                      | Counter | Number of network errors.                                         |
-| Node               | HostMetric Receiver   | [system.network.io](http://system.network.io)              | Counter | Number of network I/O operations.                                 |
+| Node               | HostMetric Receiver   | system.network.io                                          | Counter | Number of network I/O operations.                                 |
 | Node               | HostMetric Receiver   | system.network.packets                                     | Counter | Number of network packets transmitted and received.               |
 | Scheduler          | Prometheus Receiver   | go_goroutines                                              | Gauge   | Number of goroutines that currently exist.                        |
 | Scheduler          | Prometheus Receiver   | process_resident_memory_bytes                              | Gauge   | Resident memory size in bytes.                                    |
