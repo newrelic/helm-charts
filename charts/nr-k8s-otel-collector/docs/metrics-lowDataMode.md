@@ -7,6 +7,7 @@
 | cAdvisor   | Prometheus Receiver   | container_cpu_cfs_periods_total| Counter | Total number of elapsed enforcement period intervals. |
 | cAdvisor   | Prometheus Receiver   | container_cpu_cfs_throttled_periods_total  | Counter | Total number of throttled period intervals.   |
 | cAdvisor   | Prometheus Receiver   | container_cpu_usage_seconds_total  | Counter | Total CPU time consumed.  |
+| cAdvisor   | Prometheus Receiver   | container_memory_mapped_file   | Gauge   | Size of memory mapped files in bytes. |
 | cAdvisor   | Prometheus Receiver   | container_memory_working_set_bytes | Gauge   | Working set size of memory in bytes.  |
 | cAdvisor   | Prometheus Receiver   | container_network_receive_bytes_total  | Counter | Cumulative count of bytes received.   |
 | cAdvisor   | Prometheus Receiver   | container_network_receive_errors_total | Counter | Cumulative count of receive errors encountered.   |
@@ -16,6 +17,7 @@
 | Controller Manager | Prometheus Receiver   | go_goroutines  | Gauge   | Number of goroutines that currently exist.|
 | Controller Manager | Prometheus Receiver   | process_resident_memory_bytes  | Gauge   | Resident memory size in bytes.|
 | Kubelet| KubeletStats Receiver | container.cpu.usage| Gauge   | CPU utilization percentage of the container.  |
+| Kubelet| KubeletStats Receiver | container.filesystem.available | Gauge   | Available filesystem space for the container. |
 | Kubelet| KubeletStats Receiver | container.filesystem.capacity  | Gauge   | Total filesystem capacity for the container.  |
 | Kubelet| KubeletStats Receiver | container.filesystem.usage | Gauge   | Used filesystem space for the container.  |
 | Kubelet| KubeletStats Receiver | container.memory.usage | Gauge   | Total memory usage of the container.  |
@@ -31,14 +33,16 @@
 | Kubelet| KubeletStats Receiver | k8s.pod.filesystem.capacity| Gauge   | Total filesystem capacity for the pod.|
 | Kubelet| KubeletStats Receiver | k8s.pod.filesystem.usage   | Gauge   | Used filesystem space for the pod.|
 | Kubelet| KubeletStats Receiver | k8s.pod.memory.working_set | Gauge   | Working set size of the pod memory.   |
-| Kubelet| KubeletStats Receiver | [k8s.pod.network.io](http://k8s.pod.network.io/)   | Counter | Total network I/O for the pod.|
+| Kubelet| KubeletStats Receiver | k8s.pod.network.io | Counter | Total network I/O for the pod.|
 | Kubelet| Prometheus Receiver   | process_resident_memory_bytes  | Gauge   | Resident memory size in bytes.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_cronjob_created   | Gauge   | Creation timestamp of the CronJob.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_cronjob_spec_suspend  | Gauge   | Suspend flag of the CronJob.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_cronjob_status_active | Gauge   | Number of active CronJob instances.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_cronjob_status_last_schedule_time | Gauge   | Last schedule time of the CronJob.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_created | Gauge   | Creation timestamp of the DaemonSet.  |
+| KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_status_current_number_scheduled | Gauge   | Current number of scheduled DaemonSet instances.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_status_desired_number_scheduled | Gauge   | Desired number of scheduled DaemonSet instances.  |
+| KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_status_number_available | Gauge   | Number of available DaemonSet instances.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_status_number_misscheduled  | Gauge   | Number of misscheduled DaemonSet instances.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_status_number_ready | Gauge   | Number of ready DaemonSet instances.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_daemonset_status_number_unavailable   | Gauge   | Number of unavailable DaemonSet instances |
@@ -54,6 +58,7 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_deployment_status_replicas_ready  | Gauge   | Number of ready replicas for the Deployment.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_deployment_status_replicas_unavailable| Gauge   | Number of unavailable replicas for the Deployment.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_deployment_status_replicas_updated| Gauge   | Number of updated replicas for the Deployment.|
+| KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_spec_max_replicas | Gauge   | Maximum number of replicas for the HorizontalPodAutoscaler.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_spec_min_replicas | Gauge   | Minimum number of replicas for the HorizontalPodAutoscaler.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_status_condition  | Gauge   | Status conditions of the HorizontalPodAutoscaler. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_status_current_replicas   | Gauge   | Current number of replicas for the HorizontalPodAutoscaler.   |
@@ -71,11 +76,13 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_status_start_time | Gauge   | Start time of the Job.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_status_succeeded  | Gauge   | Number of succeeded pods for the Job. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_allocatable   | Gauge   | Allocatable resources of the Node.|
+| KubeStateMetrics   | Prometheus Receiver   | kube_node_status_capacity  | Gauge   | Capacity of the Node. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_condition | Gauge   | Condition of the Node's status.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolume_capacity_bytes   | Gauge   | Capacity of the PersistentVolume in bytes.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolume_created  | Gauge   | Creation timestamp of the PersistentVolume.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolume_info | Gauge   | Information about the PersistentVolume.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolume_status_phase | Gauge   | Phase of the PersistentVolume.|
+| KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolumeclaim_access_mode | Gauge   | Access mode of the PersistentVolumeClaim. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolumeclaim_created | Gauge   | Creation timestamp of the PersistentVolumeClaim.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolumeclaim_info| Gauge   | Information about the PersistentVolumeClaim.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_persistentvolumeclaim_resource_requests_storage_bytes | Gauge   | Storage resource requests of the PersistentVolumeClaim in bytes.  |
@@ -90,6 +97,7 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_created   | Gauge   | Creation timestamp of the Pod.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_info  | Gauge   | Information about the Pod.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_owner | Gauge   | Owner information of the Pod. |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_start_time| Gauge   | Start time of the Pod.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_phase  | Gauge   | Current phase of the Pod status.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_ready  | Gauge   | Whether the Pod is ready (1) or not (0).  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_ready_time | Gauge   | Time when the Pod status became ready.|
@@ -112,14 +120,14 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_ready | Gauge   | Number of ready replicas for the StatefulSet. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_updated   | Gauge   | Number of updated replicas for the StatefulSet.   |
 | Node   | HostMetric Receiver   | process.cpu.utilization| Gauge   | CPU utilization of the process as a percentage.   |
-| Node   | HostMetric Receiver   | [process.disk.io](http://process.disk.io)  | Counter | Number of disk I/O operations performed by the process.   |
+| Node   | HostMetric Receiver   | process.disk.io| Counter | Number of disk I/O operations performed by the process.   |
 | Node   | HostMetric Receiver   | process.memory.usage   | Gauge   | Memory usage of the process in bytes. |
 | Node   | HostMetric Receiver   | process.memory.virtual | Gauge   | Virtual memory usage of the process in bytes. |
 | Node   | HostMetric Receiver   | system.cpu.load_average.15m| Gauge   | System load average over the last 15 minutes. |
 | Node   | HostMetric Receiver   | system.cpu.load_average.1m | Gauge   | System load average over the last 1 minute.   |
 | Node   | HostMetric Receiver   | system.cpu.load_average.5m | Gauge   | System load average over the last 5 minutes.  |
 | Node   | HostMetric Receiver   | system.cpu.utilization | Gauge   | Total CPU utilization percentage. |
-| Node   | HostMetric Receiver   | [system.disk.io](http://system.disk.io)| Counter | Number of disk I/O operations performed.  |
+| Node   | HostMetric Receiver   | system.disk.io | Counter | Number of disk I/O operations performed.  |
 | Node   | HostMetric Receiver   | system.disk.io_time| Counter | Time spent in disk I/O operations in seconds. |
 | Node   | HostMetric Receiver   | system.disk.operation_time | Counter | Total time spent in disk operations in seconds.   |
 | Node   | HostMetric Receiver   | system.disk.operations | Counter | Number of disk operations performed.  |
@@ -128,7 +136,7 @@
 | Node   | HostMetric Receiver   | system.memory.usage| Gauge   | Total memory usage in bytes.  |
 | Node   | HostMetric Receiver   | system.memory.utilization  | Gauge   | Memory utilization as a percentage.   |
 | Node   | HostMetric Receiver   | system.network.errors  | Counter | Number of network errors. |
-| Node   | HostMetric Receiver   | [system.network.io](http://system.network.io)  | Counter | Number of network I/O operations. |
+| Node   | HostMetric Receiver   | system.network.io  | Counter | Number of network I/O operations. |
 | Node   | HostMetric Receiver   | system.network.packets | Counter | Number of network packets transmitted and received.   |
 | Scheduler  | Prometheus Receiver   | go_goroutines  | Gauge   | Number of goroutines that currently exist.|
 | Scheduler  | Prometheus Receiver   | process_resident_memory_bytes  | Gauge   | Resident memory size in bytes.|
