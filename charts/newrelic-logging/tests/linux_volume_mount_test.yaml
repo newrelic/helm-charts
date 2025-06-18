@@ -15,7 +15,7 @@ tests:
           value: /var
         template: templates/daemonset.yaml
       - equal:
-          path: spec.template.spec.volumes[1].hostPath.path
+          path: spec.template.spec.volumes[2].hostPath.path 
           value: /var
         template: templates/daemonset.yaml
         documentIndex: 0
@@ -31,7 +31,27 @@ tests:
           value: /var/log
         template: templates/daemonset.yaml
       - equal:
-          path: spec.template.spec.volumes[1].hostPath.path
+          path: spec.template.spec.volumes[2].hostPath.path 
           value: /var/log
         template: templates/daemonset.yaml
         documentIndex: 0
+  - it: includes lua-scripts mount
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[2].mountPath
+          value: /fluent-bit/scripts
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].volumeMounts[2].readOnly
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.volumes[0].name
+          value: lua-scripts
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.volumes[0].configMap.name
+          value: my-release-newrelic-logging-lua
+        template: templates/daemonset.yaml
