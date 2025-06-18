@@ -25,7 +25,6 @@
 #
 # endpoint: https://log-api.newrelic.com/log/v1
 # metricsEndpoint: metric-api.newrelic.com
-
 fluentBit:
   logLevel: "info"
   path: "/var/log/containers/*.log"
@@ -339,3 +338,11 @@ windows:
 
 # -- Sets pod dnsConfig. Can also be configured with `global.dnsConfig`
 dnsConfig: {}
+# Sets the pod liveness probe.
+# This is useful to ensure that the pod is restarted in case of issues.
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 30
+  timeoutSeconds: 5
+  failureThreshold: 3
