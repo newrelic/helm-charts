@@ -155,7 +155,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | proxy | string | `""` | Configures the agent to send all data through the proxy specified via the otel collector. |
 | stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
 | tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
-| tls.certPath | string | `"/tmp/ebpf/certs/"` | Certificates path. |
+| tls.certPath | string | `"/etc/newrelic-ebpf-agent/certs/"` | Certificates path. |
 | tls.autoGenerateCert.certPeriodDays | int | `365` | Cert validity period time in days. |
 | tls.autoGenerateCert.enabled | bool | `true` | If true, Helm will automatically create a self-signed cert and secret for you. |
 | tls.autoGenerateCert.recreate | bool | `true` | If set to true, a new key/certificate is generated on helm upgrade. |
