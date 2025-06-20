@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.26
+    helm.sh/chart: nr-k8s-otel-collector-0.8.27
 data:
   daemonset-config.yaml: |
     receivers:
@@ -515,7 +515,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.26
+            value: 0.8.27
           - key: service.name
             action: delete
           - key: service_name
@@ -596,7 +596,22 @@ data:
 
     connectors:
       
-      routing/nr_pipelines:
+
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/postprocessor]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/postprocessor]
+
+      routing/postProcessor:
+        default_pipelines: [metrics/postProcessor]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [metrics/postProcessor]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -628,16 +643,20 @@ data:
     service:
       pipelines:
         
-        metrics/all_receivers:
+        metrics/preProcessor:
           receivers:
             - hostmetrics
             - kubeletstats
             - prometheus
+          processors:
+            
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            
+
         metrics/nr:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/ldm
@@ -667,10 +686,10 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/postProcessor
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/ldm
@@ -690,23 +709,41 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/postProcessor
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - batch
           exporters:
+            - routing/postProcessor
+        metrics/postProcessor:
+          receivers:
+            - routing/postProcessor
+          processors:
+            
+          exporters:
             - otlphttp/newrelic
-        logs:
+            
+        logs/preprocessor:
           receivers:
             - filelog
+          processors:
+            
+          exporters:
+            - routing/nr_logs_pipelines
+            
+
+        logs/postprocessor:
+          receivers:
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/truncate
             - resource
             - k8sattributes/ksm
             - batch
+            
           exporters:
             - otlphttp/newrelic

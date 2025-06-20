@@ -140,3 +140,105 @@
     {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- /* Defines if custom otel processors will be added to the config */ -}}
+{{- define "nrKubernetesOtel.custom.processors" -}}
+    {{- if .Values.processors -}}
+            {{- toYaml .Values.processors -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines if custom otel exporters will be added to the config */ -}}
+{{- define "nrKubernetesOtel.custom.exporters" -}}
+    {{- if .Values.exporters -}}
+            {{- toYaml .Values.exporters -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what processors to include in the metrics preprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.metricsPipeline.preprocessing.processors" -}}
+    {{- if .Values.metricsPipeline -}}
+      {{- if .Values.metricsPipeline.preprocessing -}}
+        {{- if .Values.metricsPipeline.preprocessing.processors -}}
+            {{- toYaml .Values.metricsPipeline.preprocessing.processors -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what exporters to include in the metrics preprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.metricsPipeline.preprocessing.exporters" -}}
+    {{- if .Values.metricsPipeline -}}
+      {{- if .Values.metricsPipeline.preprocessing -}}
+        {{- if .Values.metricsPipeline.preprocessing.exporters -}}
+            {{- toYaml .Values.metricsPipeline.preprocessing.exporters -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what processors to include in the metrics postprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.metricsPipeline.postprocessing.processors" -}}
+    {{- if .Values.metricsPipeline -}}
+      {{- if .Values.metricsPipeline.postprocessing -}}
+        {{- if .Values.metricsPipeline.postprocessing.processors -}}
+            {{- toYaml .Values.metricsPipeline.postprocessing.processors -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what exporters to include in the metrics postprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.metricsPipeline.postprocessing.exporters" -}}
+    {{- if .Values.metricsPipeline -}}
+      {{- if .Values.metricsPipeline.postprocessing -}}
+        {{- if .Values.metricsPipeline.postprocessing.exporters -}}
+            {{- toYaml .Values.metricsPipeline.postprocessing.exporters -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what processors to include in the logs preprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.logsPipeline.preprocessing.processors" -}}
+    {{- if .Values.logsPipeline -}}
+      {{- if .Values.logsPipeline.preprocessing -}}
+        {{- if .Values.logsPipeline.preprocessing.processors -}}
+            {{- toYaml .Values.logsPipeline.preprocessing.processors -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what exporters to include in the logs preprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.logsPipeline.preprocessing.exporters" -}}
+    {{- if .Values.logsPipeline -}}
+      {{- if .Values.logsPipeline.preprocessing -}}
+        {{- if .Values.logsPipeline.preprocessing.exporters -}}
+            {{- toYaml .Values.logsPipeline.preprocessing.exporters -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what processors to include in the logs postprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.logsPipeline.postprocessing.processors" -}}
+    {{- if .Values.logsPipeline -}}
+      {{- if .Values.logsPipeline.postprocessing -}}
+        {{- if .Values.logsPipeline.postprocessing.processors -}}
+            {{- toYaml .Values.logsPipeline.postprocessing.processors -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- /* Defines what exporters to include in the logs postprocessor pipeline */ -}}
+{{- define "nrKubernetesOtel.logsPipeline.postprocessing.exporters" -}}
+    {{- if .Values.logsPipeline -}}
+      {{- if .Values.logsPipeline.postprocessing -}}
+        {{- if .Values.logsPipeline.postprocessing.exporters -}}
+            {{- toYaml .Values.logsPipeline.postprocessing.exporters -}}
+        {{- end -}}
+      {{- end -}}
+    {{- end -}}
+{{- end -}}

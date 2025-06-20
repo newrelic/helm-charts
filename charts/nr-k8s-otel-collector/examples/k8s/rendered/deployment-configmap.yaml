@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.26
+    helm.sh/chart: nr-k8s-otel-collector-0.8.27
 data:
   deployment-config.yaml: |
     receivers:
@@ -143,6 +143,7 @@ data:
                 replacement: scheduler
 
     processors:
+      
       
 
       groupbyattrs:
@@ -486,7 +487,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.26
+            value: 0.8.27
           - key: service.name
             action: delete
           - key: service_name
@@ -508,7 +509,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.26
+            value: 0.8.27
 
       transform/events:
         log_statements:
@@ -659,6 +660,7 @@ data:
 
     exporters:
       
+      
       otlphttp/newrelic:
         endpoint: "https://otlp.nr-data.net"
         headers:
@@ -667,7 +669,22 @@ data:
     connectors:
       
 
-      routing/nr_pipelines:
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/events]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/events]
+
+      routing/postProcessor:
+        default_pipelines: [metrics/postProcessor]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [metrics/postProcessor]
+
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -687,15 +704,19 @@ data:
     service:
       pipelines:
         
-        metrics/all_receivers:
+        metrics/preProcessor:
           receivers:
             - prometheus/ksm
             - prometheus/controlplane
+          processors:
+            
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            
+
         metrics/nr_ksm:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/kube_pod_container_status_phase
@@ -718,10 +739,10 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/postProcessor
         metrics/nr_controlplane:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/k8s_cluster_info
@@ -736,22 +757,39 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/postProcessor
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - batch
           exporters:
+            - routing/postProcessor
+        metrics/postProcessor:
+          receivers:
+            - routing/postProcessor
+          processors:
+            
+          exporters:
             - otlphttp/newrelic
+            
+        logs/preprocessor:
+          receivers:
+          - k8s_events
+          processors:
+            
+          exporters:
+            - routing/nr_logs_pipelines
+            
         logs/events:
           receivers:
-            - k8s_events
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/events
             - resource/events
             - batch
+            
           exporters:
             - otlphttp/newrelic

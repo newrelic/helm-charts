@@ -614,7 +614,22 @@ data:
 
     connectors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
-      routing/nr_pipelines:
+
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/postprocessor]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/postprocessor]
+
+      routing/postProcessor:
+        default_pipelines: [metrics/postProcessor]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [metrics/postProcessor]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -653,7 +668,7 @@ data:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
-        metrics/all_receivers:
+        metrics/preProcessor:
           receivers:
             {{- if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics
@@ -664,11 +679,15 @@ data:
             {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
             {{- end }}
+          processors:
+            {{- include "nrKubernetesOtel.metricsPipeline.preprocessing.processors" . | nindent 12 }}
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            {{- include "nrKubernetesOtel.metricsPipeline.preprocessing.exporters" . | nindent 12 }}
+
         metrics/nr:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -706,10 +725,10 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/postProcessor
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -737,27 +756,48 @@ data:
             - cumulativetodelta
             - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/postProcessor
         {{- end }}
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - batch
           exporters:
+            - routing/postProcessor
+        metrics/postProcessor:
+          receivers:
+            - routing/postProcessor
+          processors:
+            {{- include "nrKubernetesOtel.metricsPipeline.postprocessing.processors" . | nindent 12 }}
+          exporters:
             - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.metricsPipeline.postprocessing.exporters" . | nindent 12 }}
+
         {{- if and .Values.receivers.filelog.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
-        logs:
+        logs/preprocessor:
           receivers:
             - filelog
+          processors:
+            {{- include "nrKubernetesOtel.logsPipeline.preprocessing.processors" . | nindent 12 }}
+          exporters:
+            - routing/nr_logs_pipelines
+            {{- include "nrKubernetesOtel.logsPipeline.preprocessing.exporters" . | nindent 12 }}
+
+        logs/postprocessor:
+          receivers:
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/truncate
             - resource
             - k8sattributes/ksm
             - batch
+            {{- include "nrKubernetesOtel.logsPipeline.postprocessing.processors" . | nindent 12 }}
           exporters:
             - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.logsPipeline.postprocessing.exporters" . | nindent 12 }}
+
         {{- end }}
     {{- end }}
