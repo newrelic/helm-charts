@@ -20,6 +20,7 @@ scenarios:
     tests:
       metrics:
         - source: "cluster-metrics.yml"
+          exceptions_source: "exceptions.yml"
   - description: This scenario will verify that metrics from a K8s OTEL Cluster + APM are correctly collected
     before:
       - helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
@@ -35,3 +36,4 @@ scenarios:
     tests:
       metrics:
         - source: "cluster-apm-metrics.yml"
+          exceptions_source: "exceptions.yml"

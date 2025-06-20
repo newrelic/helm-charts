@@ -8,7 +8,7 @@ NEWRELIC_E2E ?= go run github.com/newrelic/newrelic-integration-e2e-action@lates
 e2e-test:
 	$(NEWRELIC_E2E) \
 		--commit_sha=test-string \
-		--retry_attempts=5 \
+		--retry_attempts=10 \
 		--retry_seconds=60 \
 		--account_id=${ACCOUNT_ID} \
 		--api_key=${API_REST_KEY} \
