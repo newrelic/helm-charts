@@ -1,0 +1,663 @@
+---
+# Source: e2e-resources/charts/kube-state-metrics/templates/serviceaccount.yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  labels:
+    helm.sh/chart: kube-state-metrics-5.12.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: e2e-resources
+    app.kubernetes.io/version: "2.10.0"
+  name: e2e-resources-kube-state-metrics
+  namespace: default
+imagePullSecrets:
+---
+# Source: e2e-resources/templates/storageClass.yml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: e2e-resources-pv-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+---
+# Source: e2e-resources/templates/persistentvolume.yml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: e2e-resources-pv-storage
+spec:
+  storageClassName: e2e-resources-pv-class
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 5Mi
+  volumeMode: Filesystem
+  hostPath:
+    path: /mnt/
+    type: DirectoryOrCreate
+---
+# Source: e2e-resources/templates/persistentvolumeclaim.yml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: e2e-resources-pv-claim
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  storageClassName: e2e-resources-pv-class
+  resources:
+    requests:
+      storage: 3Mi
+---
+# Source: e2e-resources/charts/kube-state-metrics/templates/role.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    helm.sh/chart: kube-state-metrics-5.12.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: e2e-resources
+    app.kubernetes.io/version: "2.10.0"
+  name: e2e-resources-kube-state-metrics
+rules:
+
+  - apiGroups: ["certificates.k8s.io"]
+    resources:
+      - certificatesigningrequests
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["batch"]
+    resources:
+      - cronjobs
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["extensions", "apps"]
+    resources:
+      - daemonsets
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["extensions", "apps"]
+    resources:
+      - deployments
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - endpoints
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["autoscaling"]
+    resources:
+      - horizontalpodautoscalers
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["extensions", "networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["coordination.k8s.io"]
+    resources:
+      - leases
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - limitranges
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources:
+      - mutatingwebhookconfigurations
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - namespaces
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - networkpolicies
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - nodes
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - persistentvolumeclaims
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - persistentvolumes
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["policy"]
+    resources:
+      - poddisruptionbudgets
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - pods
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["extensions", "apps"]
+    resources:
+      - replicasets
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - replicationcontrollers
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - resourcequotas
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - secrets
+    verbs: ["list", "watch"]
+
+  - apiGroups: [""]
+    resources:
+      - services
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["apps"]
+    resources:
+      - statefulsets
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources:
+      - validatingwebhookconfigurations
+    verbs: ["list", "watch"]
+
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - volumeattachments
+    verbs: ["list", "watch"]
+---
+# Source: e2e-resources/charts/kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:
+    helm.sh/chart: kube-state-metrics-5.12.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: e2e-resources
+    app.kubernetes.io/version: "2.10.0"
+  name: e2e-resources-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: e2e-resources-kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: e2e-resources-kube-state-metrics
+    namespace: default
+---
+# Source: e2e-resources/charts/kube-state-metrics/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-resources-kube-state-metrics
+  namespace: default
+  labels:
+    helm.sh/chart: kube-state-metrics-5.12.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: e2e-resources
+    app.kubernetes.io/version: "2.10.0"
+  annotations:
+    prometheus.io/scrape: 'true'
+spec:
+  type: "ClusterIP"
+  ports:
+    - name: "http"
+      protocol: TCP
+      port: 8080
+      targetPort: 8080
+  
+  selector:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: e2e-resources
+---
+# Source: e2e-resources/templates/hpa.yaml
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-resources-hpa
+  labels:
+    run: php-apache
+spec:
+  ports:
+    - port: 80
+  selector:
+    run: php-apache
+---
+# Source: e2e-resources/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-resources-lb
+spec:
+  type: LoadBalancer
+  ports:
+    - port: 80
+---
+# Source: e2e-resources/templates/statefulset.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: e2e-resources-statefulset
+  labels:
+    app: statefulset
+spec:
+  selector:
+    app: statefulset
+  ports:
+    - port: 8089
+---
+# Source: e2e-resources/templates/daemonset.yaml
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: e2e-resources-daemonset
+spec:
+  selector:
+    matchLabels:
+      app: daemonset
+  template:
+    metadata:
+      labels:
+        app: daemonset
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: compute-pi-digits
+          image: perl:5.34.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 40m
+              memory: 15Mi
+            limits:
+              cpu: 80m
+              memory: 30Mi
+          command:
+            - perl
+            - -Mbignum=bpi
+            - -wle
+            - 'while (1) { open(FH, ">", "/output/pi.txt") or die "Cannot open file - $!"; print FH bpi(100); close(FH); print bpi(2700) }'
+          volumeMounts:
+            - mountPath: /output
+              name: storage
+        - name: failing-container
+          image: docker.io/library/bash:5
+          command: ["bash"]
+          args:
+            - -c
+            - echo "Hello world! I'm going to exit with 42 to simulate a software bug." && sleep 300 && exit 42
+      volumes:
+        - name: storage
+          emptyDir:
+            sizeLimit: 30Mi
+---
+# Source: e2e-resources/templates/pods-pending.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: e2e-resources-container-creating
+  labels:
+    app: creating
+spec:
+  containers:
+    - name: alpine
+      image: alpine:latest
+      resources:
+        limits:
+          # Force a 'CreateContainerError':
+          # 'Error response from daemon: Minimum memory limit allowed is 6MB'
+          memory: 5M
+          cpu: 5m
+        requests:
+          memory: 5M
+          cpu: 5m
+---
+# Source: e2e-resources/templates/pods-pending.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: e2e-resources-container-pending
+  labels:
+    app: pending
+spec:
+  containers:
+    - name: alpine
+      image: alpine:latest
+  nodeSelector:
+    not-existing: not-existing
+---
+# Source: e2e-resources/charts/kube-state-metrics/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-resources-kube-state-metrics
+  namespace: default
+  labels:
+    helm.sh/chart: kube-state-metrics-5.12.1
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: e2e-resources
+    app.kubernetes.io/version: "2.10.0"
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+      app.kubernetes.io/instance: e2e-resources
+  replicas: 1
+  revisionHistoryLimit: 10
+  template:
+    metadata:
+      labels:
+        helm.sh/chart: kube-state-metrics-5.12.1
+        app.kubernetes.io/managed-by: Helm
+        app.kubernetes.io/component: metrics
+        app.kubernetes.io/part-of: kube-state-metrics
+        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/instance: e2e-resources
+        app.kubernetes.io/version: "2.10.0"
+    spec:
+      hostNetwork: false
+      serviceAccountName: e2e-resources-kube-state-metrics
+      securityContext:
+        fsGroup: 65534
+        runAsGroup: 65534
+        runAsNonRoot: true
+        runAsUser: 65534
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: kube-state-metrics
+          args:
+            - --port=8080
+            - --resources=certificatesigningrequests,configmaps,cronjobs,daemonsets,deployments,endpoints,horizontalpodautoscalers,ingresses,jobs,leases,limitranges,mutatingwebhookconfigurations,namespaces,networkpolicies,nodes,persistentvolumeclaims,persistentvolumes,poddisruptionbudgets,pods,replicasets,replicationcontrollers,resourcequotas,secrets,services,statefulsets,storageclasses,validatingwebhookconfigurations,volumeattachments
+          imagePullPolicy: IfNotPresent
+          image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.0
+          ports:
+            - containerPort: 8080
+              name: "http"
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+---
+# Source: e2e-resources/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-resources-deployment
+spec:
+  paused: false
+  minReadySeconds: 6
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: deployment
+  template:
+    metadata:
+      labels:
+        app: deployment
+    spec:
+      containers:
+        - name: compute-pi-digits
+          image: perl:5.34.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 40m
+              memory: 15Mi
+            limits:
+              cpu: 80m
+              memory: 30Mi
+          command:
+            - perl
+            - -Mbignum=bpi
+            - -wle
+            - 'while (1) { open(FH, ">", "/output/pi.txt") or die "Cannot open file - $!"; print FH bpi(100); close(FH); print bpi(2700) }'
+          volumeMounts:
+            - mountPath: /output
+              name: storage
+        - name: failing-container
+          image: docker.io/library/bash:5
+          command: ["bash"]
+          args:
+            - -c
+            - echo "Hello world! I'm going to exit with 42 to simulate a software bug." && sleep 300 && exit 42
+      volumes:
+        - name: storage
+          emptyDir:
+            sizeLimit: 30Mi
+---
+# Source: e2e-resources/templates/hpa.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: e2e-resources-hpa
+spec:
+  
+  selector:
+    matchLabels:
+      run: php-apache
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        run: php-apache
+        app: hpa
+    spec:
+      containers:
+        - name: php-apache
+          image: registry.k8s.io/hpa-example
+          ports:
+            - containerPort: 80
+          resources:
+            limits:
+              cpu: 500m
+            requests:
+              cpu: 200m
+---
+# Source: e2e-resources/templates/hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: e2e-resources-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: e2e-resources-hpa
+  minReplicas: 1
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 50
+---
+# Source: e2e-resources/templates/statefulset.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: e2e-resources-statefulset
+spec:
+  serviceName: statefulset
+  replicas: 2
+  selector:
+    matchLabels:
+      app: statefulset
+  template:
+    metadata:
+      labels:
+        app: statefulset
+    spec:
+      containers:
+        - name: compute-pi-digits
+          image: perl:5.34.0
+          imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 40m
+              memory: 15Mi
+            limits:
+              cpu: 80m
+              memory: 30Mi
+          command:
+            - perl
+            - -Mbignum=bpi
+            - -wle
+            - 'while (1) { open(FH, ">", "/output/pi.txt") or die "Cannot open file - $!"; print FH bpi(100); close(FH); print bpi(2700) }'
+          volumeMounts:
+            - mountPath: /output
+              name: storage
+        - name: failing-container
+          image: docker.io/library/bash:5
+          command: ["bash"]
+          args:
+            - -c
+            - echo "Hello world! I'm going to exit with 42 to simulate a software bug." && sleep 300 && exit 42
+      volumes:
+        - name: storage
+          persistentVolumeClaim:
+            claimName: e2e-resources-pv-claim
+---
+# Source: e2e-resources/templates/job-fails.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: e2e-resources-failjob
+spec:
+  activeDeadlineSeconds: 200
+  completions: 4
+  parallelism: 2
+  template:
+    metadata:
+      labels:
+        app: failjob
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: main
+          image: docker.io/library/bash:5
+          command: ["bash"]
+          args:
+            - -c
+            - echo "Hello world! I'm going to exit with 42 to simulate a software bug." && sleep 5 && exit 42
+  backoffLimit: 6
+---
+# Source: e2e-resources/templates/cronjob.yml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: e2e-resources-cronjob
+spec:
+  concurrencyPolicy: Allow
+  schedule: "*/5 * * * *"
+  suspend: false
+  startingDeadlineSeconds: 200
+  jobTemplate:
+    spec:
+      parallelism: 1
+      completions: 1
+      activeDeadlineSeconds: 540
+      backoffLimit: 6
+      template:
+        metadata:
+          labels:
+            app: cronjob
+        spec:
+          containers:
+            - name: compute-pi-digits
+              image: perl:5.34.0
+              imagePullPolicy: IfNotPresent
+              resources:
+                requests:
+                  cpu: 40m
+                  memory: 15Mi
+                limits:
+                  cpu: 80m
+                  memory: 30Mi
+              command:
+                - perl
+                - -Mbignum=bpi
+                - -wle
+                - open(FH, '>', '/output/pi.txt') or die "Cannot open file - $!"; print FH bpi(100); close(FH); print bpi(4000)
+              volumeMounts:
+                - mountPath: /output
+                  name: storage
+          restartPolicy: OnFailure
+          volumes:
+            - name: storage
+              emptyDir:
+                sizeLimit: 30Mi
