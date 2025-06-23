@@ -621,7 +621,7 @@
 | Kubelet| Prometheus Receiver   | authentication_token_cache_request_duration_seconds| Histogram | Duration of authentication token cache requests. |
 | Kubelet| Prometheus Receiver   | authentication_token_cache_request_total   | Counter   | Total count of authentication token cache requests.  |
 | Kubelet| KubeletStats Receiver | container.cpu.time | Gauge | Total CPU time used by the container.|
-| Kubelet| KubeletStats Receiver | container.cpu.utilization  | Gauge | CPU utilization percentage of the container. |
+| Kubelet| KubeletStats Receiver | container.cpu.usage| Gauge | Total CPU usage (sum of all cores per second) averaged over the sample window.   |
 | Kubelet| KubeletStats Receiver | container.filesystem.available | Gauge | Available filesystem space for the container.|
 | Kubelet| KubeletStats Receiver | container.filesystem.capacity  | Gauge | Total filesystem capacity for the container. |
 | Kubelet| KubeletStats Receiver | container.filesystem.usage | Gauge | Used filesystem space for the container. |
@@ -737,7 +737,7 @@
 | Kubelet| Prometheus Receiver   | hidden_metrics_total   | Counter   | Total number of hidden metrics.  |
 | Kubelet| KubeletStats Receiver | k8s.container.cpu_limit_utilization| Gauge | CPU utilization relative to the limit for the container. |
 | Kubelet| KubeletStats Receiver | k8s.node.cpu.time  | Gauge | Total CPU time used by the node. |
-| Kubelet| KubeletStats Receiver | k8s.node.cpu.utilization   | Gauge | CPU utilization percentage of the node.  |
+| Kubelet| KubeletStats Receiver | k8s.node.cpu.usage | Gauge | Total CPU usage (sum of all cores per second) averaged over the sample window.   |
 | Kubelet| KubeletStats Receiver | k8s.node.filesystem.available  | Gauge | Available filesystem space for the node. |
 | Kubelet| KubeletStats Receiver | k8s.node.filesystem.capacity   | Gauge | Total filesystem capacity for the node.  |
 | Kubelet| KubeletStats Receiver | k8s.node.filesystem.usage  | Gauge | Used filesystem space for the node.  |
