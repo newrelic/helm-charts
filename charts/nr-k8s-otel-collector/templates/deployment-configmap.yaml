@@ -408,6 +408,7 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
+      
 
       metricstransform/apiserver:
         transforms:
@@ -462,7 +463,6 @@ data:
             - metric.name == "kube_pod_status_scheduled" and value_double < 0.5
             - metric.name == "kube_pod_container_status_ready" and value_double < 0.5
             - metric.name == "kube_pod_container_status_phase" and value_double < 0.5
-            - metric.name == "kube_pod_container_status_restarts_total" and value_double < 0.5
             - metric.name == "kube_deployment_status_condition" and value_double < 0.5
             - metric.name == "kube_pod_container_status_waiting_reason" and value_double < 0.5
 
@@ -557,6 +557,14 @@ data:
             statements:
               - set(description, "")
               - set(unit, "")
+            
+      transform/transform/fix_temporality:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(metric.aggregation_temporality, "cumulative") where metric.aggregation_temporality == "unspecified"
+              
+              
 
       resource/low_data_mode_inator:
         attributes:
@@ -699,6 +707,11 @@ data:
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
@@ -753,6 +766,7 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
+            - transform/transform/fix_temporality
             - resource/metrics
             - resourcedetection/env
             {{- if include "newrelic.common.openShift" . }}
@@ -769,6 +783,7 @@ data:
             - batch
           exporters:
             - otlphttp/newrelic
+            
         metrics/nr_controlplane:
           receivers:
             - routing/nr_pipelines
