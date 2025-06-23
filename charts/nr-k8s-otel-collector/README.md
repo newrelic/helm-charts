@@ -34,12 +34,12 @@ kubectl logs <otel-pod-name> -n newrelic
 ```
 
 ### Confirm data coming through in New Relic
-You should see data reporting into New Relic within a couple of seconds to the `InfrastructureEvent` table, `Metric` table, and `Log` tables.
+You should see data reporting into New Relic within a couple of seconds to the `OtlpInfrastructureEvent` table, `Metric` table, and `Log` tables.
 ```
 FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 ```
-FROM InfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+FROM OtlpInfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 ```
 FROM Log SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
