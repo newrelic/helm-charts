@@ -106,10 +106,47 @@ deployment:
     # -- Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
     extraConfig:
       receivers:
+          prometheus/custom_ksm:
+            config:
+              scrape_configs:
+                - job_name: kube-state-metrics-custom
+                  scrape_interval: 1m
+                  kubernetes_sd_configs:
+                    - role: pod
+                  relabel_configs:
+                    - action: keep
+                      regex: kube-state-metrics
+                      source_labels:
+                        - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                    - action: replace
+                      target_label: job_label
+                      replacement: kube-state-metrics-custom
+                  metric_relabel_configs:
+                    - action: keep
+                      source_labels: [__name__]
+                      regex:  (kube_pod_ips|kube_pod_init_container_resource_limits|kube_pod_init_container_resource_requests|kube_pod_scheduler)
       processors:
       exporters:
       connectors:
+        routing/custom_pipelines:
+          error_mode: propagate
+          table:
+            - context: datapoint
+              condition: attributes["job_label"] == "kube-state-metrics-custom"
+              pipelines: [metrics/ksm_custom]
+
       pipelines:
+          metrics/custom_all_receivers:
+            receivers:
+            - prometheus/custom_ksm
+            exporters:
+            - routing/custom_pipelines
+          metrics/ksm_custom:
+            receivers:
+              - routing/custom_pipelines
+            exporters:
+              - otlphttp/newrelic
+
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
