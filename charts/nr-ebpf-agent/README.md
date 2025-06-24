@@ -8,7 +8,7 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `deploymentName` field with the name of the cluster to monitor.
 
-*From agent version X.Y.Z onwards, please use the latest [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml) provided with each Helm release. This ensures compatibility with new features and configuration options.*
+**NOTE: From chart version 0.2.x onwards, please use the latest [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml) bundled with each Helm release. This will ensure compatibility with new features and configuration options.**
 
 Example:
 ```
