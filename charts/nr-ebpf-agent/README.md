@@ -80,11 +80,14 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
+| logLevel | string | `INFO` | To configure the log level in increasing order of verboseness. OFF, FATAL, ERROR, WARNING, INFO, DEBUG |
+| logFilePath | string | `""` | To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout. |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
 | dropDataIpServiceNames | bool | `true` | Drop data when service names map to an IP address. |
-| dropDataKubeSystem | bool | `true` | Drop data from the kube-system namespace. |
-| dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace. |
+| dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace and newrelic-bundle services. |
+| dropDataForEntity | list | `[]` | list entity to ignore the process monitoring based on `NEW_RELIC_APP_NAME` |
+| dropDataForNamespaces | list | `[]` | List of Kubernetes namespaces for which all data should be dropped by the agent. |
 | dropDataServiceNameRegex | string | `""` | Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b" see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax |
 | ebpfAgent.affinity | object | `{}` | Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity` |
 | ebpfAgent.containerSecurityContext | object | `{}` | Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |

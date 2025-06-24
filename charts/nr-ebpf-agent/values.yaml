@@ -22,7 +22,7 @@ dropDataIpServiceNames: true
 dropDataNewRelic: true
 # -- Drop data from pods that are monitored by New Relic APM via auto attach.
 dropAPMEnabledPods: false
-# -- Drop data from the following namespaces.
+# -- List of Kubernetes namespaces for which all data should be dropped by the agent.
 dropDataForNamespaces: ["kube-system"]
 # -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
 # see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
@@ -31,7 +31,7 @@ dropDataServiceNameRegex: ""
 # Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex.
 # If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent.
 allowServiceNameRegex: ""
-# -- Comma(,) separated string of entity to ignore the process monitoring based on NEW_RELIC_APP_NAME
+# -- list entity to ignore the process monitoring based on NEW_RELIC_APP_NAME
 dropDataForEntity: []
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
