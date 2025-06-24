@@ -6,14 +6,14 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 # Helm installation
 
-1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `deploymentName` field with the name of the cluster to monitor.
+1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `cluster` field with the name of the cluster to monitor.
 
 **NOTE: From chart version 0.2.x onwards, please use the latest [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml) bundled with each Helm release. This will ensure compatibility with new features and configuration options.**
 
 Example:
 ```
 licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
-deploymentName: "name-of-cluster-to-monitor"
+cluster: "name-of-cluster-to-monitor"
 ```
 
 2. Install the helm chart, passing the configuration file created above.
@@ -78,7 +78,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | allowServiceNameRegex | string | `""` | This config acts as a bypass for the dropDataServiceNameRegex config. Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex. If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent. |
-| deploymentName | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.deploymentName` |
+| cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
 | containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
