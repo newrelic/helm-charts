@@ -701,20 +701,19 @@ data:
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
-      routing/nr_logs_pipelines:
-        default_pipelines: [logs/events]
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
         table:
           - context: datapoint
             condition: "true"
-            pipelines: [logs/events]
+            pipelines: [logs/egress]
 
-      routing/postProcessor:
-        default_pipelines: [metrics/postProcessor]
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
         table:
           - context: datapoint
             condition: "true"
-            pipelines: [metrics/postProcessor]
-
+            pipelines: [metrics/egress]
 
       routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
@@ -743,15 +742,15 @@ data:
         {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
 
         {{- if .Values.receivers.prometheus.enabled }}
-        metrics/preProcessor:
+        metrics/ingress:
           receivers:
             - prometheus/ksm
             - prometheus/controlplane
           processors:
-            {{- include "nrKubernetesOtel.metricsPipeline.preprocessing.processors" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collector_ingress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
-            {{- include "nrKubernetesOtel.metricsPipeline.preprocessing.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collector_ingress.exporters" . | nindent 12 }}
 
         metrics/nr_ksm:
           receivers:
@@ -784,9 +783,8 @@ data:
             - transform/ksm
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - routing/postProcessor
+            - routing/metrics_egress
         metrics/nr_controlplane:
           receivers:
             - routing/nr_metrics_pipelines
@@ -804,48 +802,47 @@ data:
             - resource/metrics
             - attributes/self
             - cumulativetodelta
-            - batch
           exporters:
-            - routing/postProcessor
+            - routing/metrics_egress
         {{- end }}
         metrics/default:
           receivers:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+          exporters:
+            - routing/metrics_egress
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            {{- include "nrKubernetesOtel.metricsPipeline.collector_egress.processors" . | nindent 12 }}
             - batch
           exporters:
-            - routing/postProcessor
-        metrics/postProcessor:
-          receivers:
-            - routing/postProcessor
-          processors:
-            {{- include "nrKubernetesOtel.metricsPipeline.postprocessing.processors" . | nindent 12 }}
-          exporters:
             - otlphttp/newrelic
-            {{- include "nrKubernetesOtel.metricsPipeline.postprocessing.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collector_egress.exporters" . | nindent 12 }}
 
 
         {{- if .Values.receivers.k8sEvents.enabled }}
-        logs/preprocessor:
+        logs/ingress:
           receivers:
           - k8s_events
           processors:
-            {{- include "nrKubernetesOtel.logsPipeline.preprocessing.processors" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.logsPipeline.collector_ingress.processors" . | nindent 12 }}
           exporters:
-            - routing/nr_logs_pipelines
-            {{- include "nrKubernetesOtel.logsPipeline.preprocessing.exporters" . | nindent 12 }}
-        logs/events:
+            - routing/logs_egress
+            {{- include "nrKubernetesOtel.logsPipeline.collector_ingress.exporters" . | nindent 12 }}
+        logs/egress:
           receivers:
-            - routing/nr_logs_pipelines
+            - routing/logs_egress
           processors:
             - memory_limiter
             - transform/events
             - resource/events
+            {{- include "nrKubernetesOtel.logsPipeline.collector_egress.processors" . | nindent 12 }}
             - batch
-            {{- include "nrKubernetesOtel.logsPipeline.postprocessing.processors" . | nindent 12 }}
           exporters:
             - otlphttp/newrelic
-            {{- include "nrKubernetesOtel.logsPipeline.postprocessing.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.logsPipeline.collector_egress.exporters" . | nindent 12 }}
         {{- end }}
     {{- end }}

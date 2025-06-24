@@ -156,88 +156,88 @@
 {{- end -}}
 
 {{- /* Defines what processors to include in the metrics preprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.metricsPipeline.preprocessing.processors" -}}
+{{- define "nrKubernetesOtel.metricsPipeline.collector_ingress.processors" -}}
     {{- if .Values.metricsPipeline -}}
-      {{- if .Values.metricsPipeline.preprocessing -}}
-        {{- if .Values.metricsPipeline.preprocessing.processors -}}
-            {{- toYaml .Values.metricsPipeline.preprocessing.processors -}}
+      {{- if .Values.metricsPipeline.collector_ingress -}}
+        {{- if .Values.metricsPipeline.collector_ingress.processors -}}
+            {{- toYaml .Values.metricsPipeline.collector_ingress.processors -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what exporters to include in the metrics preprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.metricsPipeline.preprocessing.exporters" -}}
+{{- define "nrKubernetesOtel.metricsPipeline.collector_ingress.exporters" -}}
     {{- if .Values.metricsPipeline -}}
-      {{- if .Values.metricsPipeline.preprocessing -}}
-        {{- if .Values.metricsPipeline.preprocessing.exporters -}}
-            {{- toYaml .Values.metricsPipeline.preprocessing.exporters -}}
+      {{- if .Values.metricsPipeline.collector_ingress -}}
+        {{- if .Values.metricsPipeline.collector_ingress.exporters -}}
+            {{- toYaml .Values.metricsPipeline.collector_ingress.exporters -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what processors to include in the metrics postprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.metricsPipeline.postprocessing.processors" -}}
+{{- define "nrKubernetesOtel.metricsPipeline.collector_egress.processors" -}}
     {{- if .Values.metricsPipeline -}}
-      {{- if .Values.metricsPipeline.postprocessing -}}
-        {{- if .Values.metricsPipeline.postprocessing.processors -}}
-            {{- toYaml .Values.metricsPipeline.postprocessing.processors -}}
+      {{- if .Values.metricsPipeline.collector_egress -}}
+        {{- if .Values.metricsPipeline.collector_egress.processors -}}
+            {{- toYaml .Values.metricsPipeline.collector_egress.processors -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what exporters to include in the metrics postprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.metricsPipeline.postprocessing.exporters" -}}
+{{- define "nrKubernetesOtel.metricsPipeline.collector_egress.exporters" -}}
     {{- if .Values.metricsPipeline -}}
-      {{- if .Values.metricsPipeline.postprocessing -}}
-        {{- if .Values.metricsPipeline.postprocessing.exporters -}}
-            {{- toYaml .Values.metricsPipeline.postprocessing.exporters -}}
+      {{- if .Values.metricsPipeline.collector_egress -}}
+        {{- if .Values.metricsPipeline.collector_egress.exporters -}}
+            {{- toYaml .Values.metricsPipeline.collector_egress.exporters -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what processors to include in the logs preprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.logsPipeline.preprocessing.processors" -}}
+{{- define "nrKubernetesOtel.logsPipeline.collector_ingress.processors" -}}
     {{- if .Values.logsPipeline -}}
-      {{- if .Values.logsPipeline.preprocessing -}}
-        {{- if .Values.logsPipeline.preprocessing.processors -}}
-            {{- toYaml .Values.logsPipeline.preprocessing.processors -}}
+      {{- if .Values.logsPipeline.collector_ingress -}}
+        {{- if .Values.logsPipeline.collector_ingress.processors -}}
+            {{- toYaml .Values.logsPipeline.collector_ingress.processors -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what exporters to include in the logs preprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.logsPipeline.preprocessing.exporters" -}}
+{{- define "nrKubernetesOtel.logsPipeline.collector_ingress.exporters" -}}
     {{- if .Values.logsPipeline -}}
-      {{- if .Values.logsPipeline.preprocessing -}}
-        {{- if .Values.logsPipeline.preprocessing.exporters -}}
-            {{- toYaml .Values.logsPipeline.preprocessing.exporters -}}
+      {{- if .Values.logsPipeline.collector_ingress -}}
+        {{- if .Values.logsPipeline.collector_ingress.exporters -}}
+            {{- toYaml .Values.logsPipeline.collector_ingress.exporters -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what processors to include in the logs postprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.logsPipeline.postprocessing.processors" -}}
+{{- define "nrKubernetesOtel.logsPipeline.collector_egress.processors" -}}
     {{- if .Values.logsPipeline -}}
-      {{- if .Values.logsPipeline.postprocessing -}}
-        {{- if .Values.logsPipeline.postprocessing.processors -}}
-            {{- toYaml .Values.logsPipeline.postprocessing.processors -}}
+      {{- if .Values.logsPipeline.collector_egress -}}
+        {{- if .Values.logsPipeline.collector_egress.processors -}}
+            {{- toYaml .Values.logsPipeline.collector_egress.processors -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
 {{- end -}}
 
 {{- /* Defines what exporters to include in the logs postprocessor pipeline */ -}}
-{{- define "nrKubernetesOtel.logsPipeline.postprocessing.exporters" -}}
+{{- define "nrKubernetesOtel.logsPipeline.collector_egress.exporters" -}}
     {{- if .Values.logsPipeline -}}
-      {{- if .Values.logsPipeline.postprocessing -}}
-        {{- if .Values.logsPipeline.postprocessing.exporters -}}
-            {{- toYaml .Values.logsPipeline.postprocessing.exporters -}}
+      {{- if .Values.logsPipeline.collector_egress -}}
+        {{- if .Values.logsPipeline.collector_egress.exporters -}}
+            {{- toYaml .Values.logsPipeline.collector_egress.exporters -}}
         {{- end -}}
       {{- end -}}
     {{- end -}}
