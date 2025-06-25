@@ -21,7 +21,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| cleanupManagedResources | bool | `true` | Enable the cleanup of agent-control managed resources when the chart is uninstalled. If disabled, agents and/or agent configurations managed by the agent-control will not be deleted when the chart is uninstalled. |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
 | config.agentControl | object | See `values.yaml` | Configuration for the Agent Control. |
 | config.agentControl.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
@@ -37,6 +36,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | config.fleet_control.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
+| config.status_server.port | int | See `values.yaml` | Set the status server port |
 | config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customIdentityClientIdSecretKey | string | `""` |  |

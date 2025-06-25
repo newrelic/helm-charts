@@ -640,7 +640,61 @@ Usage:
 {{ include "newrelic.common.privileged.value" . }}
 ```
 
+### `newrelic.common.provider`
+This reads global and local variables to find the provider that the user has set. 
+Valid options currently are one of [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]. 
+If a user supplys a value that is not allowed, this will fail the installation.
+This should be empty (nil) when not set.
 
+```yaml
+global:
+  provider:  [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]
+provider:  [GKE_AUTOPILOT, FARGATE, OPEN_SHIFT]
+```
+
+#### Usage:
+If for some reason you do just want the name of the provider, you can use newrelic.common.provider directly
+```mustache
+data:
+  provider: {{ include "newrelic.common.provider" . }}
+```
+```mustache
+{{- $provider := include "newrelic.common.provider" . -}}
+```
+
+However, instead of accessing `newrelic.common.provider` it's encouraged to use the helper templates.
+These return `true` if the matching provider is set, or `nil` if not.
+This provides a convenient way to update the settings in your chart for specific providers.
+* `newrelic.common.gkeAutopilot`
+* `newrelic.common.openShift`
+* `newrelic.common.fargate`
+
+```mustache
+{{ if include "newrelic.common.gkeAutopilot" . }}
+  {{/* Do Something. */}}
+{{ else }}
+  {{/* Do something else. */}}
+{{ end }}
+```
+
+#### Backwards compatibility 
+The following templates will check the local yaml for their matching bools if provider is not found.
+This is strictly for backwards compatibility as some charts already have these settings.
+We don't want to cause breaking changes when they migrate to provider making this backwards compatibility necessary.
+* `newrelic.common.gkeAutopilot`
+* `newrelic.common.openShift`
+* `newrelic.common.fargate`
+
+If values.provider && values.global.provider is not set, these templates will check...
+```yaml
+gkeAutopilot:  <boolean>
+openShift:  <boolean>
+fargate:  <boolean>
+```
+
+Notice that they do not check global, this is on purpose. 
+We do not want to encourage developers to add these booleans to their config options. 
+New development should rely on customers setting provider instead. 
 
 ## _proxy.tpl
 ### `newrelic.common.proxy`

@@ -1,0 +1,105 @@
+suite: test livenessProbe configuration
+templates:
+  - templates/daemonset.yaml
+  - templates/configmap.yaml 
+  - templates/daemonset-windows.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: should not render livenessProbe when disabled explicitly
+    set:
+      licenseKey: nr_license_key
+      livenessProbe:
+        enabled: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[0].livenessProbe
+        template: templates/daemonset.yaml
+
+  - it: should render livenessProbe with default values when enabled
+    set:
+      licenseKey: nr_license_key
+      livenessProbe:
+        enabled: true
+    asserts:
+      - isNotNull:
+          path: spec.template.spec.containers[0].livenessProbe
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.path
+          value: /api/v1/health
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.httpGet.port
+          value: 2020
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 10
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 30
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 5
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 3
+        template: templates/daemonset.yaml
+
+  - it: should render livenessProbe with all custom values
+    set:
+      licenseKey: nr_license_key
+      livenessProbe:
+        enabled: true
+        initialDelaySeconds: 15
+        periodSeconds: 45
+        timeoutSeconds: 10
+        failureThreshold: 5
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 15
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 45
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 10
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 5
+        template: templates/daemonset.yaml
+
+  - it: should render livenessProbe with partial custom values and fall back to defaults
+    set:
+      licenseKey: nr_license_key
+      livenessProbe:
+        enabled: true
+        initialDelaySeconds: 25 # Custom value
+        timeoutSeconds: 7      # Custom value
+        # periodSeconds and failureThreshold should use defaults
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.initialDelaySeconds
+          value: 25 # Asserting custom value
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 30 # Asserting default value
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.timeoutSeconds
+          value: 7 # Asserting custom value
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 3 # Asserting default value
+        template: templates/daemonset.yaml

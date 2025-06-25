@@ -3,12 +3,24 @@ nameOverride: ""
 # -- Override the full name of the release
 fullnameOverride: ""
 
+# -- The image that contains the necessary tools to install and uninstall Agent Control.
+toolkitImage:
+  registry:
+  repository: newrelic/newrelic-agent-control-cli
+  # @default It defaults to `appVersion` in `Chart.yaml`.
+  tag: nightly
+  pullPolicy: IfNotPresent
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+
 # -- Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
 # @default -- See `values.yaml`
 agent-control-deployment:
   # -- Enable the installation of the Agent Control.
   enabled: true
 
+  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+  chartRepositoryUrl: https://helm-charts.newrelic.com
 
 # -- Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`

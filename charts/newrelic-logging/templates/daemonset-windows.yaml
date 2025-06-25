@@ -144,6 +144,16 @@ spec:
           resources:
 {{ toYaml $.Values.resources | indent 12 }}
           {{- end }}
+{{- if $.Values.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 2020
+            initialDelaySeconds: {{ default 10 $.Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 30 $.Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ default 5 $.Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ default 3 $.Values.livenessProbe.failureThreshold }}
+{{- end }}      
       volumes:
         - name: fluent-bit-config
           configMap:
