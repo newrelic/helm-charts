@@ -479,7 +479,7 @@ data:
 
       resourcedetection/env:
         detectors: ["env", "system"]
-        override: false
+        override: true
         system:
           hostname_sources: ["os"]
           resource_attributes:
@@ -491,6 +491,11 @@ data:
             {{- else }}
               enabled: true
             {{- end }}
+            host.name:
+              enabled: false
+            os.type:
+              enabled: true
+
 
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
