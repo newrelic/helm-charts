@@ -13,7 +13,7 @@ generate-examples:
 			VALUES=$$(find $${EXAMPLES_DIR}/$${example} -name *values.yaml); \
 			rm -rf "$${EXAMPLES_DIR}/$${example}/rendered"; \
 			for value in $${VALUES}; do \
-				helm template example charts/$${chart_name} --namespace newrelic --set licenseKey='<NR_licenseKey>' --set cluster='<cluser_name>' --values $${value} --output-dir "$${EXAMPLES_DIR}/$${example}/rendered"; \
+				helm template newrelic charts/$${chart_name} --namespace newrelic --set licenseKey='<NR_licenseKey>' --set cluster='<cluser_name>' --set fullnameOverride="$${chart_name}" --values $${value} --output-dir "$${EXAMPLES_DIR}/$${example}/rendered"; \
 				mv $${EXAMPLES_DIR}/$${example}/rendered/$${chart_name}/templates/* "$${EXAMPLES_DIR}/$${example}/rendered"; \
 				SUBCHARTS_DIR=$${EXAMPLES_DIR}/$${example}/rendered/$${chart_name}/charts; \
 				if [ -d "$${SUBCHARTS_DIR}" ]; then \
