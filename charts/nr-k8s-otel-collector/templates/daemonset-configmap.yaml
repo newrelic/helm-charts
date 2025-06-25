@@ -501,19 +501,9 @@ data:
         system:
           hostname_sources: ["os"]
           resource_attributes:
-            host.id:
-            {{- if include "newrelic.common.openShift" . }}
-            # TODO host.id does not work, is it required, does it work on containerized environments?
-            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
-              enabled: false
-            {{- else }}
-              enabled: true
-            {{- end }}
             host.name:
               enabled: false
-            os.type:
-              enabled: true
-              
+
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
