@@ -50,9 +50,9 @@ kubectl logs <otel-pod-name> -n newrelic
 ### Confirm data ingest to New Relic
 You should see data reporting into New Relic within a couple of seconds to the `Metric` and `Span` tables.
 ```
-FROM Metric SELECT * WHERE k8s.cluster.name='<DEPLOYMENT_NAME>'
+FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 
-FROM Span SELECT * WHERE k8s.cluster.name='<DEPLOYMENT_NAME>'
+FROM Span SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 The entities view should show OTel services and an "APM-lite" rendition of the data for each entity when clicked on.
 
