@@ -6,7 +6,7 @@ metadata:
   name: nr-k8s-otel-collector-deployment
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: newrelic
+    app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
@@ -16,17 +16,17 @@ spec:
   minReadySeconds: 5
   selector:
     matchLabels:
-      app.kubernetes.io/instance: newrelic
+      app.kubernetes.io/instance: nr-k8s-otel-collector
       app.kubernetes.io/name: nr-k8s-otel-collector
       component: deployment
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: newrelic
+        app.kubernetes.io/instance: nr-k8s-otel-collector
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: deployment
       annotations:
-        checksum/config: e6131fc985318563b9ad4903df4e98bc17700d9efe3b7525bb29c0dd76ec0240
+        checksum/config: 3ed3810b14733d359fd831f21eaf4c57c799a3e833a873e73824cad857177469
     spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
