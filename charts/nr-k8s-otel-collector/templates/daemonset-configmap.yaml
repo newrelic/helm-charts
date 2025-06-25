@@ -676,7 +676,7 @@ data:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
-        metrics/ingres:
+        metrics/ingress:
           receivers:
             {{- if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics

@@ -327,12 +327,12 @@ tests:
       - matchRegex:
           path: data["deployment-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/preProcessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/deployment-configmap.yaml
       - matchRegex:
           path: data["daemonset-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/preProcessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/daemonset-configmap.yaml
 
   - it: Adds processors and Exporters to metric postprocessor pipelines for both the deployment and daemonset
@@ -347,12 +347,12 @@ tests:
       - matchRegex:
           path: data["deployment-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/postProcessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/deployment-configmap.yaml
       - matchRegex:
           path: data["daemonset-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/postProcessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/daemonset-configmap.yaml
 
   - it: Adds Processors and Exporters to logs preprocessor pipelines for both the deployment and daemonset
@@ -367,12 +367,12 @@ tests:
       - matchRegex:
           path: data["deployment-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/preprocessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/deployment-configmap.yaml
       - matchRegex:
           path: data["daemonset-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/preprocessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/daemonset-configmap.yaml
 
   - it: Adds processors and Exporters to logs postprocessor pipelines for both the deployment and daemonset
@@ -387,10 +387,10 @@ tests:
       - matchRegex:
           path: data["deployment-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/events:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/deployment-configmap.yaml
       - matchRegex:
           path: data["daemonset-config.yaml"]
           pattern: |
-            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/postprocessor:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/daemonset-configmap.yaml
