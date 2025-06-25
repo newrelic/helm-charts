@@ -669,20 +669,19 @@ data:
     connectors:
       
 
-      routing/nr_logs_pipelines:
-        default_pipelines: [logs/events]
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
         table:
           - context: datapoint
             condition: "true"
-            pipelines: [logs/events]
+            pipelines: [logs/egress]
 
-      routing/postProcessor:
-        default_pipelines: [metrics/postProcessor]
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
         table:
           - context: datapoint
             condition: "true"
-            pipelines: [metrics/postProcessor]
-
+            pipelines: [metrics/egress]
 
       routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
@@ -704,7 +703,7 @@ data:
     service:
       pipelines:
         
-        metrics/preProcessor:
+        metrics/ingress:
           receivers:
             - prometheus/ksm
             - prometheus/controlplane
@@ -737,9 +736,8 @@ data:
             - transform/ksm
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - routing/postProcessor
+            - routing/metrics_egress
         metrics/nr_controlplane:
           receivers:
             - routing/nr_metrics_pipelines
@@ -755,41 +753,40 @@ data:
             - resource/metrics
             - attributes/self
             - cumulativetodelta
-            - batch
           exporters:
-            - routing/postProcessor
+            - routing/metrics_egress
         metrics/default:
           receivers:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - batch
           exporters:
-            - routing/postProcessor
-        metrics/postProcessor:
+            - routing/metrics_egress
+        metrics/egress:
           receivers:
-            - routing/postProcessor
+            - routing/metrics_egress
           processors:
             
+            - batch
           exporters:
             - otlphttp/newrelic
             
-        logs/preprocessor:
+        logs/ingress:
           receivers:
           - k8s_events
           processors:
             
           exporters:
-            - routing/nr_logs_pipelines
+            - routing/logs_egress
             
-        logs/events:
+        logs/egress:
           receivers:
-            - routing/nr_logs_pipelines
+            - routing/logs_egress
           processors:
             - memory_limiter
             - transform/events
             - resource/events
-            - batch
             
+            - batch
           exporters:
             - otlphttp/newrelic

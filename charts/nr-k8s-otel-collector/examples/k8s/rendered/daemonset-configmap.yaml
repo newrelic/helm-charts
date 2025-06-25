@@ -600,18 +600,18 @@ data:
       
 
       routing/nr_logs_pipelines:
-        default_pipelines: [logs/postprocessor]
+        default_pipelines: [logs/egress]
         table:
           - context: datapoint
             condition: "true"
-            pipelines: [logs/postprocessor]
+            pipelines: [logs/egress]
 
-      routing/postProcessor:
-        default_pipelines: [metrics/postProcessor]
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
         table:
           - context: datapoint
             condition: "true"
-            pipelines: [metrics/postProcessor]
+            pipelines: [metrics/egress]
 
       routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
@@ -636,16 +636,16 @@ data:
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
             pipelines: [metrics/nr]
           - context: metric
-            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
-            pipelines: [metrics/nr_prometheus_cadv_kubelet]
-          - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
+            pipelines: [metrics/nr_prometheus_cadv_kubelet]
 
     service:
       pipelines:
         
-        metrics/preProcessor:
+        metrics/ingres:
           receivers:
             - hostmetrics
             - kubeletstats
@@ -686,9 +686,8 @@ data:
             - resource/low_data_mode_inator
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - routing/postProcessor
+            - routing/metrics_egress
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
             - routing/nr_metrics_pipelines
@@ -709,26 +708,25 @@ data:
             - transform/ksm
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - routing/postProcessor
+            - routing/metrics_egress
         metrics/default:
           receivers:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - batch
           exporters:
-            - routing/postProcessor
-        metrics/postProcessor:
+            - routing/metrics_egress
+        metrics/egress:
           receivers:
-            - routing/postProcessor
+            - routing/metrics_egress
           processors:
             
+            - batch
           exporters:
             - otlphttp/newrelic
             
-        logs/preprocessor:
+        logs/ingress:
           receivers:
             - filelog
           processors:
@@ -737,7 +735,7 @@ data:
             - routing/nr_logs_pipelines
             
 
-        logs/postprocessor:
+        logs/egress:
           receivers:
             - routing/nr_logs_pipelines
           processors:
@@ -745,7 +743,7 @@ data:
             - transform/truncate
             - resource
             - k8sattributes/ksm
-            - batch
             
+            - batch
           exporters:
             - otlphttp/newrelic
