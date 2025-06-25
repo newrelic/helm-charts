@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.28
+    helm.sh/chart: nr-k8s-otel-collector-0.8.29
 data:
   deployment-config.yaml: |
     receivers:
@@ -459,11 +459,15 @@ data:
 
       resourcedetection/env:
         detectors: ["env", "system"]
-        override: false
+        override: true
         system:
           hostname_sources: ["os"]
           resource_attributes:
             host.id:
+              enabled: true
+            host.name:
+              enabled: false
+            os.type:
               enabled: true
 
       resourcedetection/cloudproviders:
@@ -486,7 +490,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.28
+            value: 0.8.29
           - key: service.name
             action: delete
           - key: service_name
@@ -508,7 +512,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.28
+            value: 0.8.29
 
       transform/events:
         log_statements:
