@@ -58,7 +58,7 @@ readOnly: true
   {{- if (hasKey .Values "tls") }}
   {{- if eq .Values.tls.enabled true }}
   - name: cert
-mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+mountPath: "{{ .Values.tls.certPath }}/"
 readOnly: true
   {{- end }}
   {{- end }}
@@ -73,17 +73,19 @@ valueFrom:
   fieldRef:
 apiVersion: v1
 fieldPath: status.podIP
-  - name: NR_LICENSE_KEY
+  - name: NEW_RELIC_LICENSE_KEY
 valueFrom:
   secretKeyRef:
 {{- if (include "newrelic.common.license._licenseKey" .) }}
-key: NR_LICENSE_KEY
+key: NEW_RELIC_LICENSE_KEY
 name: nr-ebpf-agent-secrets
 {{- else }}
 name: {{ include "newrelic.common.license._customSecretName" . }}
 key: {{ include "newrelic.common.license._customSecretKey" . }}
 {{- end }}
-  - name: NR_OTLP_ENDPOINT
+  - name: FILTER_NAMESPACE_REGEX
+value: '^({{ .Values.dropDataForNamespaces | join "|" }})$'
+  - name: OTLP_ENDPOINT
 {{- if eq $region "Staging" }}
 value: "staging-otlp.nr-data.net:4317"
 {{- else if eq $region "EU" }}
