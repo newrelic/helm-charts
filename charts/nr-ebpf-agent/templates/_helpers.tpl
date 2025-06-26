@@ -96,8 +96,8 @@ Pass environment variables to the agent container if tracing a specific protocol
     {{- $protocolEnabled = eq $config.enabled true }}
   {{- end }}
   {{- if eq $protocolEnabled false }}
-- name: PX_STIRLING_ENABLE_{{ upper $protocol }}_TRACING
-  value: "0"
+- name: PROTOCOLS_{{ upper $protocol }}_ENABLED
+  value: "false"
   {{- end }}
 {{- end }}
 {{- end -}}
@@ -110,19 +110,19 @@ Generate environment variables for disabling protocols and setting sampling late
 {{- range $protocol, $config := .Values.protocols }}
   {{- if (hasKey $config "enabled") }}
     {{- if eq $config.enabled false }}
-- name: NR_EBPF_ENABLE_{{ upper $protocol }}_METRICS
-  value: "0"
-- name: NR_EBPF_ENABLE_{{ upper $protocol }}_SPANS
-  value: "0"
+- name: PROTOCOLS_{{ upper $protocol }}_ENABLED
+  value: "false"
+- name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
+  value: "false"
     {{- else if eq $config.enabled true }}
       {{- if (hasKey $config "spans") }}
         {{- if (eq $config.spans.enabled false) }}
-- name: NR_EBPF_ENABLE_{{ upper $protocol }}_SPANS
-  value: "0"
+- name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
+  value: "false"
         {{- end }}  
       {{- if (eq $config.spans.enabled true) }}
       {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
-- name: SAMPLE_{{ upper $protocol }}_LATENCY
+- name: PROTOCOLS_{{ upper $protocol }}_SPANS_SAMPLING_LATENCY
   value: "{{ $config.spans.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.spans.samplingLatency "" }}"
       {{- end }}
     {{- end }}
