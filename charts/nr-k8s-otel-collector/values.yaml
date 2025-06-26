@@ -55,13 +55,13 @@ exporters:
 
 # -- Edit how the NR Metrics pipeline handles your Metrics
 metricsPipeline:
-  collector_ingress:
+  collectorIngress:
     # -- List of processors to be applied to your RAW Metrics.
     # This is applied at the beginning of the pipeline
     processors:
     # -- List of exporters that you'd like to use to export RAW metrics.
     exporters:
-  collector_egress:
+  collectorEgress:
     # -- List of processors to be applied to your metrics after the NR processors have been applied.
     # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
     processors:
@@ -70,17 +70,18 @@ metricsPipeline:
 
 # -- Edit how the NR Logs pipeline handles your Logs
 logsPipeline:
-  collector_ingress:
+  collectorIngress:
     # -- List of processors to be applied to your RAW Metrics.
     # This is applied at the beginning of the pipeline
     processors:
     # -- List of exporters that you'd like to use to export RAW metrics.
     exporters:
-  collector_egress:
+  collectorEgress:
     # -- List of processors to be applied to your metrics after the NR processors have been applied.
     # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
     processors:
     # -- List of additional exports to export the processed metrics.
+    exporters:
 
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
