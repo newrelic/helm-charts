@@ -161,15 +161,15 @@ to export data to this connector which can then be connected to the New Relic ma
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
-| logsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed metrics. |
-| logsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your metrics after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
-| logsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW metrics. |
-| logsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Metrics. This is applied at the beginning of the pipeline |
+| logsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed Logs. |
+| logsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your Logs after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
+| logsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW Logs. |
+| logsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Logs. This is applied at the beginning of the pipeline |
 | lowDataMode | bool | `true` | Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI |
 | metricsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Metrics pipeline handles your Metrics |
-| metricsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed metrics. |
-| metricsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your metrics after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
-| metricsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW metrics. |
+| metricsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed Metrics. |
+| metricsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your Metrics after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
+| metricsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW Metrics. |
 | metricsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Metrics. This is applied at the beginning of the pipeline |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
