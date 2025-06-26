@@ -9,18 +9,21 @@ customSecretName: ""
 customSecretLicenseKey: ""
 # -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
 region: ""
-# -- Enable to export data to NR's Staging otel endpoint (staging-otlp.nr-data.net:4317).
-nrStaging:
 # -- Configures the agent to send all data through the proxy specified via the otel collector.
 proxy: ""
+# -- To configure the log level in increasing order of verboseness.
+# -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
+logLevel: "INFO"
+# -- To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout.
+logFilePath: ""
 # -- Drop data when service names map to an IP address.
 dropDataIpServiceNames: true
-# -- Drop data from the kube-system namespace.
-dropDataKubeSystem: true
-# -- Drop data from the newrelic namespace.
+# -- Drop data from the newrelic namespace and newrelic-bundle services.
 dropDataNewRelic: true
 # -- Drop data from pods that are monitored by New Relic APM via auto attach.
-dropAPMEnabledPods: true
+dropAPMEnabledPods: false
+# -- List of Kubernetes namespaces for which all data should be dropped by the agent.
+dropDataForNamespaces: ["kube-system"]
 # -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
 # see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
 dropDataServiceNameRegex: ""
@@ -28,12 +31,15 @@ dropDataServiceNameRegex: ""
 # Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex.
 # If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent.
 allowServiceNameRegex: ""
+# -- list entity to ignore the process monitoring based on NEW_RELIC_APP_NAME
+dropDataForEntity: []
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
 # -- The source connectors (and data export scripts) to enable.
 # Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
 # while tcp_stats tracks TCP metrics.
-stirlingSources: "socket_tracer,tcp_stats"
+# stirlingSources: "socket_tracer,tcp_stats"
+
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.
 # Metrics are sent by default when a protocol is enabled and it supports metrics. Note: AMQP, Kafka, DNS do not report metrics.
@@ -89,11 +95,6 @@ protocols:
       enabled: false
       samplingLatency: ""
 
-# --- The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR.
-# The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data.
-# The algorithm only looks for similar request paths within data of the same push period.
-# To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60.
-pushPeriod: "15"
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
@@ -103,7 +104,7 @@ ebpfAgent:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF agent image to be deployed.
-    tag: agent-nr-ebpf-agent_0.0.9
+    tag: agent-0.2.3
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -132,7 +133,7 @@ ebpfClient:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF client image to be deployed.
-    tag: client-nr-ebpf-client_0.0.12
+    tag: client-0.2.3
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -215,7 +216,7 @@ tls:
     # -- Cert validity period time in days.
     certPeriodDays: 365
     # -- Certificates path.
-    certPath: "/tmp/ebpf/certs/"
+  certPath: "/etc/newrelic-ebpf-agent/certs/"
 
   # TLS Certificate Option 2: Use your own self-signed certificate.
   # autoGenerateCert must be disabled, and certFile, keyFile, and caFile must be set.
