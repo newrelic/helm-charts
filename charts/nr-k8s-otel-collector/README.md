@@ -160,7 +160,8 @@ to export data to this connector which can then be connected to the New Relic ma
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
-| logsPipeline | object | `{"collectorEgress":{"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
+| logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
+| logsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed metrics. |
 | logsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your metrics after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
 | logsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW metrics. |
 | logsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Metrics. This is applied at the beginning of the pipeline |

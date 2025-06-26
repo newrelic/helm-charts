@@ -669,6 +669,13 @@ data:
     connectors:
       
 
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
       routing/logs_egress:
         default_pipelines: [logs/egress]
         table:
@@ -777,15 +784,21 @@ data:
           processors:
             
           exporters:
-            - routing/logs_egress
+            - routing/nr_logs_pipelines
             
-        logs/egress:
+        logs/pipeline:
           receivers:
-            - routing/logs_egress
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/events
             - resource/events
+          exporters:
+            - routing/logs_egress
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
             
             - batch
           exporters:
