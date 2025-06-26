@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.29
+    helm.sh/chart: nr-k8s-otel-collector-0.8.30
 data:
   daemonset-config.yaml: |
     receivers:
@@ -150,6 +150,7 @@ data:
 
 
     processors:
+      
       
 
       groupbyattrs:
@@ -513,7 +514,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.29
+            value: 0.8.30
           - key: service.name
             action: delete
           - key: service_name
@@ -586,6 +587,7 @@ data:
 
     exporters:
       
+      
 
       otlphttp/newrelic:
         endpoint: "https://otlp.nr-data.net"
@@ -594,7 +596,29 @@ data:
 
     connectors:
       
-      routing/nr_pipelines:
+
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/egress]
+
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
+        table:
+          - context: metric
+            condition: "true"
+            pipelines: [metrics/egress]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -629,16 +653,20 @@ data:
     service:
       pipelines:
         
-        metrics/all_receivers:
+        metrics/ingress:
           receivers:
             - hostmetrics
             - kubeletstats
             - prometheus
+          processors:
+            
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            
+
         metrics/nr:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/ldm
@@ -666,12 +694,11 @@ data:
             - resource/low_data_mode_inator
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/ldm
@@ -689,25 +716,49 @@ data:
             - transform/ksm
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+          exporters:
+            - routing/metrics_egress
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            
             - batch
           exporters:
             - otlphttp/newrelic
-        logs:
+            
+        logs/ingress:
           receivers:
             - filelog
+          processors:
+            
+          exporters:
+            - routing/nr_logs_pipelines
+            
+
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/truncate
             - resource/newrelic
             - k8sattributes/ksm
+          exporters:
+            - routing/logs_egress
+
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            
             - batch
           exporters:
             - otlphttp/newrelic
