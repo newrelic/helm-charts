@@ -152,6 +152,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
 | image.repository | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
 | image.tag | string | `"1.1.0"` | Overrides the image tag whose default is the chart appVersion. |
@@ -159,12 +160,23 @@ to export data to this connector which can then be connected to the New Relic ma
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
+| logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
+| logsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed Logs. |
+| logsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your Logs after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
+| logsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW Logs. |
+| logsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Logs. This is applied at the beginning of the pipeline |
 | lowDataMode | bool | `true` | Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI |
+| metricsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Metrics pipeline handles your Metrics |
+| metricsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed Metrics. |
+| metricsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your Metrics after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
+| metricsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW Metrics. |
+| metricsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Metrics. This is applied at the beginning of the pipeline |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podLabels | object | `{}` | Additional labels for chart pods |
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
+| processors | string | `nil` | Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors |
 | provider | string | `""` | The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT" |
 | proxy | string | `""` | Configures the Otel collector(s) to send all data through the specified proxy. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
