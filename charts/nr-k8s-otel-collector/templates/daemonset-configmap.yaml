@@ -158,6 +158,7 @@ operators:
 
 processors:
   {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
+  {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
 
   groupbyattrs:
 keys:
@@ -599,6 +600,7 @@ send_batch_size : 800
 
 exporters:
   {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
+  {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
   otlphttp/newrelic:
 endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
@@ -607,7 +609,29 @@ headers:
 
 connectors:
   {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
-  routing/nr_pipelines:
+
+  routing/nr_logs_pipelines:
+default_pipelines: [logs/pipeline]
+table:
+  - context: datapoint
+condition: "true"
+pipelines: [logs/pipeline]
+
+  routing/logs_egress:
+default_pipelines: [logs/egress]
+table:
+  - context: datapoint
+condition: "true"
+pipelines: [logs/egress]
+
+  routing/metrics_egress:
+default_pipelines: [metrics/egress]
+table:
+  - context: metric
+condition: "true"
+pipelines: [metrics/egress]
+
+  routing/nr_metrics_pipelines:
 default_pipelines: [metrics/default]
 error_mode: propagate
 table:
@@ -649,7 +673,7 @@ logs:
 {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
 {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
-metrics/all_receivers:
+metrics/ingress:
   receivers:
 {{- if .Values.receivers.hostmetrics.enabled }}
 - hostmetrics
@@ -660,11 +684,15 @@ metrics/all_receivers:
 {{- if .Values.receivers.prometheus.enabled }}
 - prometheus
 {{- end }}
+  processors:
+{{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
   exporters:
-- routing/nr_pipelines
+- routing/nr_metrics_pipelines
+{{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
 metrics/nr:
   receivers:
-- routing/nr_pipelines
+- routing/nr_metrics_pipelines
   processors:
 - memory_limiter
 {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -700,12 +728,11 @@ metrics/nr:
 {{- end }}
 - k8sattributes/ksm
 - cumulativetodelta
-- batch
   exporters:
-- otlphttp/newrelic
+- routing/metrics_egress
 metrics/nr_prometheus_cadv_kubelet:
   receivers:
-- routing/nr_pipelines
+- routing/nr_metrics_pipelines
   processors:
 - memory_limiter
 {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -731,29 +758,56 @@ metrics/nr_prometheus_cadv_kubelet:
 - transform/ksm
 - k8sattributes/ksm
 - cumulativetodelta
-- batch
   exporters:
-- otlphttp/newrelic
+- routing/metrics_egress
 {{- end }}
 metrics/default:
   receivers:
-- routing/nr_pipelines
+- routing/nr_metrics_pipelines
   processors:
 - memory_limiter
+  exporters:
+- routing/metrics_egress
+metrics/egress:
+  receivers:
+- routing/metrics_egress
+  processors:
+{{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
 - batch
   exporters:
 - otlphttp/newrelic
+{{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
+
 {{- if and .Values.receivers.filelog.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
-logs:
+logs/ingress:
   receivers:
 - filelog
+  processors:
+{{- include "nrKubernetesOtel.logsPipeline.collectorIngress.processors" . | nindent 12 }}
+  exporters:
+- routing/nr_logs_pipelines
+{{- include "nrKubernetesOtel.logsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
+logs/pipeline:
+  receivers:
+- routing/nr_logs_pipelines
   processors:
 - memory_limiter
 - transform/truncate
 - resource/newrelic
 - k8sattributes/ksm
+  exporters:
+- routing/logs_egress
+
+logs/egress:
+  receivers:
+- routing/logs_egress
+  processors:
+{{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . | nindent 12 }}
 - batch
   exporters:
 - otlphttp/newrelic
+{{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . | nindent 12 }}
+
 {{- end }}
 {{- end }}
