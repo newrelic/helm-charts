@@ -467,7 +467,6 @@ data:
             - metric.name == "kube_deployment_status_condition" and value_double < 0.5
             - metric.name == "kube_pod_container_status_waiting_reason" and value_double < 0.5
 
-
       filter/nr_exclude_zero_value_kube_jobs:
         metrics:
           datapoint:
@@ -477,36 +476,11 @@ data:
             - metric.name == "kube_job_status_active" and value_double < 0.5
             - metric.name == "kube_job_status_succeeded" and value_double < 0.5
 
-
-      resourcedetection/env:
-        detectors: ["env", "system"]
-        override: false
-        system:
-          hostname_sources: ["os"]
-          resource_attributes:
-            host.id:
-            {{- if include "newrelic.common.openShift" . }}
-            # TODO host.id does not work, is it required, does it work on containerized environments?
-            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
-              enabled: false
-            {{- else }}
-              enabled: true
-            {{- end }}
-
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
         override: true
     {{- end }}
-
-      resourcedetection/cloudproviders:
-        detectors: [gcp, eks, azure, aks, ec2, ecs]
-        timeout: 2s
-        override: false
-        ec2:
-          resource_attributes:
-            host.name:
-              enabled: false
 
       resource/metrics:
         attributes:
@@ -778,13 +752,10 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - resource/metrics
-            - resourcedetection/env
             {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
-           # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
-           # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
-            {{- else  }}
-            - resourcedetection/cloudproviders
+            # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
+            # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
             {{- end }}
             - groupbyattrs
             - transform/ksm
