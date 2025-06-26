@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.31
+    helm.sh/chart: nr-k8s-otel-collector-0.8.30
 data:
   deployment-config.yaml: |
     receivers:
@@ -143,6 +143,7 @@ data:
                 replacement: scheduler
 
     processors:
+      
       
 
       groupbyattrs:
@@ -466,7 +467,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.31
+            value: 0.8.30
           - key: service.name
             action: delete
           - key: service_name
@@ -488,7 +489,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.31
+            value: 0.8.30
 
       transform/events:
         log_statements:
@@ -639,6 +640,7 @@ data:
 
     exporters:
       
+      
       otlphttp/newrelic:
         endpoint: "https://otlp.nr-data.net"
         headers:
@@ -647,7 +649,28 @@ data:
     connectors:
       
 
-      routing/nr_pipelines:
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/egress]
+
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [metrics/egress]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -667,15 +690,19 @@ data:
     service:
       pipelines:
         
-        metrics/all_receivers:
+        metrics/ingress:
           receivers:
             - prometheus/ksm
             - prometheus/controlplane
+          processors:
+            
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            
+
         metrics/nr_ksm:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/kube_pod_container_status_phase
@@ -694,12 +721,11 @@ data:
             - transform/ksm
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/nr_controlplane:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/k8s_cluster_info
@@ -712,24 +738,46 @@ data:
             - resource/metrics
             - attributes/self
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+          exporters:
+            - routing/metrics_egress
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            
             - batch
           exporters:
             - otlphttp/newrelic
-        logs/events:
+            
+        logs/ingress:
           receivers:
             - k8s_events
+          processors:
+            
+          exporters:
+            - routing/nr_logs_pipelines
+            
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/events
             - resource/events
+          exporters:
+            - routing/logs_egress
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            
             - batch
           exporters:
             - otlphttp/newrelic
