@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.30
+
 data:
   daemonset-config.yaml: |
     receivers:
@@ -494,17 +494,15 @@ data:
         system:
           hostname_sources: ["os"]
           resource_attributes:
-            host.id:
-              enabled: true
-      resourcedetection/cloudproviders:
-        detectors: [gcp, eks, azure, aks, ec2]
-        timeout: 2s
-        override: false
-        ec2:
-          resource_attributes:
             host.name:
               enabled: false
-      resource:
+
+      resourcedetection/cloudproviders:
+        detectors: [gcp, eks, ec2, aks, azure]
+        timeout: 2s
+        override: false
+
+      resource/newrelic:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
@@ -515,7 +513,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.30
+
           - key: service.name
             action: delete
           - key: service_name
@@ -663,7 +661,7 @@ data:
             - attributes/exclude_system_paging
             - resourcedetection/env
             - resourcedetection/cloudproviders
-            - resource
+            - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             - k8sattributes/ksm
@@ -684,7 +682,7 @@ data:
             - transform/truncate
             - resourcedetection/env
             - resourcedetection/cloudproviders
-            - resource
+            - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             - groupbyattrs
@@ -708,7 +706,7 @@ data:
           processors:
             - memory_limiter
             - transform/truncate
-            - resource
+            - resource/newrelic
             - k8sattributes/ksm
             - batch
           exporters:
