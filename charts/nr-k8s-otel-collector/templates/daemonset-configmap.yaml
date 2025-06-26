@@ -502,28 +502,21 @@ data:
         system:
           hostname_sources: ["os"]
           resource_attributes:
-            host.id:
-            {{- if include "newrelic.common.openShift" . }}
-            # TODO host.id does not work, is it required, does it work on containerized environments?
-            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
+            host.name:
               enabled: false
-            {{- else }}
-              enabled: true
-            {{- end }}
+
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
         override: true
     {{- end }}
+
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, azure, aks, ec2]
+        detectors: [gcp, eks, ec2, aks, azure]
         timeout: 2s
         override: false
-        ec2:
-          resource_attributes:
-            host.name:
-              enabled: false
-      resource:
+
+      resource/newrelic:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
@@ -728,7 +721,7 @@ data:
             {{- else  }}
             - resourcedetection/cloudproviders
             {{- end }}
-            - resource
+            - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -756,7 +749,7 @@ data:
             {{- else  }}
             - resourcedetection/cloudproviders
             {{- end }}
-            - resource
+            - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -801,7 +794,7 @@ data:
           processors:
             - memory_limiter
             - transform/truncate
-            - resource
+            - resource/newrelic
             - k8sattributes/ksm
           exporters:
             - routing/logs_egress
