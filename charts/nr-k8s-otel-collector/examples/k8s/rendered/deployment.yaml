@@ -3,32 +3,32 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: example-nr-k8s-otel-collector-deployment
+  name: nr-k8s-otel-collector-deployment
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: example
+    app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.30
+    helm.sh/chart: nr-k8s-otel-collector-0.8.31
 spec:
   replicas: 1
   minReadySeconds: 5
   selector:
     matchLabels:
-      app.kubernetes.io/instance: example
+      app.kubernetes.io/instance: nr-k8s-otel-collector
       app.kubernetes.io/name: nr-k8s-otel-collector
       component: deployment
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: example
+        app.kubernetes.io/instance: nr-k8s-otel-collector
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: deployment
       annotations:
-        checksum/config: d9f435db4041a21c1ab4f12cedfaef5507311e9a66bcb977ce68351e8678b743
+        checksum/config: 98e530643a3076ebbf31fe0c68e61b3f2eaaaa88e01427b8b0ad2f8387e72901
     spec:
-      serviceAccountName: example-nr-k8s-otel-collector
+      serviceAccountName: nr-k8s-otel-collector
       containers:
         - name: otel-collector-deployment
           image: "newrelic/nrdot-collector-k8s:1.1.0"
@@ -50,7 +50,7 @@ spec:
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: example-nr-k8s-otel-collector-license
+                  name: nr-k8s-otel-collector-license
                   key: licenseKey
           ports:
             - name: http
@@ -62,4 +62,4 @@ spec:
       volumes:
         - name: deployment-config
           configMap:
-            name: example-nr-k8s-otel-collector-deployment-config
+            name: nr-k8s-otel-collector-deployment-config

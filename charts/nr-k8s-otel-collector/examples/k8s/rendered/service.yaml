@@ -6,11 +6,11 @@ metadata:
   name: nr-k8s-otel-collector-gateway
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: example
+    app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.30
+    helm.sh/chart: nr-k8s-otel-collector-0.8.31
 spec:
   type: ClusterIP
   ports:
@@ -19,7 +19,7 @@ spec:
       protocol: TCP
       targetPort: 4318
   selector:
-    app.kubernetes.io/instance: example
+    app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/name: nr-k8s-otel-collector
     component: deployment
   internalTrafficPolicy: Cluster
