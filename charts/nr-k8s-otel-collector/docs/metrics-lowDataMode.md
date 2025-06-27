@@ -104,10 +104,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled  | Gauge   | Whether the Pod is scheduled (1) or not (0).   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled_time | Gauge   | Time when the Pod became scheduled.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_replicaset_owner  | Gauge   | Owner information of the ReplicaSet.   |
-| KubeStateMetrics   | Prometheus Receiver   | kube_service_annotations   | Gauge   | Annotations applied to the Service.|
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_created   | Gauge   | Creation timestamp of the Service. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_info  | Gauge   | Information about the Service. |
-| KubeStateMetrics   | Prometheus Receiver   | kube_service_labels| Gauge   | Labels applied to the Service. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_spec_type | Gauge   | Type of the Service specification. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_status_load_balancer_ingress  | Gauge   | Status of the load balancer ingress for the Service.   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_created   | Gauge   | Creation timestamp of the StatefulSet. |
