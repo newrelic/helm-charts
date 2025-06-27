@@ -1,12 +1,10 @@
 name: Check Generated Files
 
 on:
-  push:
-    branches-ignore:
-      - '**master'
-      - '**main'
+  pull_request:
     paths:
       - 'charts/nr-k8s-otel-collector/**'
+      - '.github/workflows/nr-k8s-otel-e2e.yml'
 
 jobs:
   check-generated-files:
