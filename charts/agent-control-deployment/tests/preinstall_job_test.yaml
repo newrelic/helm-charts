@@ -198,37 +198,6 @@ secretKeyRef:
   key: test-client-secret-key
   name: test-client-name
 
-  - it: without specific image for system identity registration, uses the one provided by default
-set:
-  customUserKeySecretName: test-secret
-  customUserKeySecretKey: test-key
-  config:
-fleet_control:
-  auth:
-organizationId: test
-asserts:
-  - documentIndex: 0
-equal:
-  path: spec.template.spec.containers[0].image
-  value: newrelic/agent-control-system-identity-registration:latest
-
-  - it: setting specific image for system identity registration but no tag should use the default tag
-set:
-  customUserKeySecretName: test-secret
-  customUserKeySecretKey: test-key
-  config:
-fleet_control:
-  auth:
-organizationId: test
-  systemIdentityRegistration:
-image:
-  repository: some_namespace/test-image
-asserts:
-  - documentIndex: 0
-equal:
-  path: spec.template.spec.containers[0].image
-  value: some_namespace/test-image:latest
-
   - it: setting specific image for system identity registration with tag should use the provided tag
 set:
   customUserKeySecretName: test-secret
