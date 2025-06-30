@@ -36,9 +36,6 @@ rules:
   - apiGroups: [ "" ]
     resources: ["secrets"]
     verbs:
-      - get
-      - list
-      - watch
       - create
       - delete
       - deletecollection
@@ -70,6 +67,12 @@ metadata:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "watch") }}
   namespace: {{ .Release.Namespace }}
 rules:
+  - apiGroups: [ "" ]
+    resources: ["secrets"]
+    verbs:
+      - get
+      - list
+      - watch
   - apiGroups: [ "apps" ]
     resources:
       - deployments
