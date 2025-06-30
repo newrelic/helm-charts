@@ -28,17 +28,11 @@ rules:
       - helm.toolkit.fluxcd.io
     resources: [ "*" ]
     verbs:
-      - get
-      - list
-      - watch
       - create
       - delete
       - deletecollection
       - patch
       - update
-  - apiGroups: [ "newrelic.com" ]
-    resources: ["*"]
-    verbs: ["*"]
   - apiGroups: [ "" ]
     resources: ["secrets"]
     verbs:
@@ -85,6 +79,17 @@ rules:
       - get
       - list
       - watch
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+    resources: [ "*" ]
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups: [ "newrelic.com" ]
+    resources: ["*"]
+    verbs: ["*"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
