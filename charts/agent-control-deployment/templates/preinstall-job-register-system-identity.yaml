@@ -65,7 +65,7 @@ spec:
   serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
   containers:
 - name: register-system-identity
-  image: "{{ (.Values.systemIdentityRegistration.image).repository | default "newrelic/agent-control-system-identity-registration" }}:{{ (.Values.systemIdentityRegistration.image).tag | default "latest" }}"
+  image: "{{ (.Values.systemIdentityRegistration.image).repository }}:{{ (.Values.systemIdentityRegistration.image).tag }}"
   imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
   resources:
 limits:
