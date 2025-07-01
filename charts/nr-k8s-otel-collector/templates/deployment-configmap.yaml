@@ -193,57 +193,63 @@ data:
           - node
           - namespace
 
-      transform/ksm:
+      transform/ksm1:
         metric_statements:
-          - delete_key(resource.attributes, "k8s.node.name")
-          - delete_key(resource.attributes, "k8s.namespace.name")
-          - delete_key(resource.attributes, "k8s.pod.uid")
-          - delete_key(resource.attributes, "k8s.pod.name")
-          - delete_key(resource.attributes, "k8s.container.name")
-          - delete_key(resource.attributes, "k8s.replicaset.name")
-          - delete_key(resource.attributes, "k8s.deployment.name")
-          - delete_key(resource.attributes, "k8s.statefulset.name")
-          - delete_key(resource.attributes, "k8s.daemonset.name")
-          - delete_key(resource.attributes, "k8s.job.name")
-          - delete_key(resource.attributes, "k8s.cronjob.name")
-          - delete_key(resource.attributes, "k8s.replicationcontroller.name")
-          - delete_key(resource.attributes, "k8s.hpa.name")
-          - delete_key(resource.attributes, "k8s.resourcequota.name")
-          - delete_key(resource.attributes, "k8s.volume.name")
-          - set(resource.attributes["k8s.pod.uid"], resource.attributes["uid"])
-          - set(resource.attributes["k8s.node.name"], resource.attributes["node"])
-          - set(resource.attributes["k8s.namespace.name"], resource.attributes["namespace"])
-          - set(resource.attributes["k8s.pod.name"], resource.attributes["pod"])
-          - set(resource.attributes["k8s.container.name"], resource.attributes["container"])
-          - set(resource.attributes["k8s.replicaset.name"], resource.attributes["replicaset"])
-          - set(resource.attributes["k8s.deployment.name"], resource.attributes["deployment"])
-          - set(resource.attributes["k8s.statefulset.name"], resource.attributes["statefulset"])
-          - set(resource.attributes["k8s.daemonset.name"], resource.attributes["daemonset"])
-          - set(resource.attributes["k8s.job.name"], resource.attributes["job_name"])
-          - set(resource.attributes["k8s.cronjob.name"], resource.attributes["cronjob"])
-          - set(resource.attributes["k8s.replicationcontroller.name"], resource.attributes["replicationcontroller"])
-          - set(resource.attributes["k8s.hpa.name"], resource.attributes["horizontalpodautoscaler"])
-          - set(resource.attributes["k8s.resourcequota.name"], resource.attributes["resourcequota"])
-          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
-          - set(resource.attributes["k8s.volume.name"], resource.attributes["persistentvolume"])
-          - set(resource.attributes["k8s.pvc.name"], resource.attributes["persistentvolumeclaim"])
-          - delete_key(resource.attributes, "uid")
-          - delete_key(resource.attributes, "node")
-          - delete_key(resource.attributes, "namespace")
-          - delete_key(resource.attributes, "pod")
-          - delete_key(resource.attributes, "container")
-          - delete_key(resource.attributes, "replicaset")
-          - delete_key(resource.attributes, "deployment")
-          - delete_key(resource.attributes, "statefulset")
-          - delete_key(resource.attributes, "daemonset")
-          - delete_key(resource.attributes, "job_name")
-          - delete_key(resource.attributes, "cronjob")
-          - delete_key(resource.attributes, "replicationcontroller")
-          - delete_key(resource.attributes, "horizontalpodautoscaler")
-          - delete_key(resource.attributes, "resourcequota")
-          - delete_key(datapoint.attributes, "volumename")
-          - delete_key(resource.attributes, "persistentvolume")
-          - delete_key(resource.attributes, "persistentvolumeclaim")
+            - delete_key(resource.attributes, "k8s.node.name")
+            - delete_key(resource.attributes, "k8s.namespace.name")
+            - delete_key(resource.attributes, "k8s.pod.uid")
+            - delete_key(resource.attributes, "k8s.pod.name")
+            - delete_key(resource.attributes, "k8s.container.name")
+            - delete_key(resource.attributes, "k8s.replicaset.name")
+            - delete_key(resource.attributes, "k8s.deployment.name")
+            - delete_key(resource.attributes, "k8s.statefulset.name")
+            - delete_key(resource.attributes, "k8s.daemonset.name")
+            - delete_key(resource.attributes, "k8s.job.name")
+            - delete_key(resource.attributes, "k8s.cronjob.name")
+            - delete_key(resource.attributes, "k8s.replicationcontroller.name")
+            - delete_key(resource.attributes, "k8s.hpa.name")
+            - delete_key(resource.attributes, "k8s.resourcequota.name")
+            - delete_key(resource.attributes, "k8s.volume.name")
+
+      transform/ksm2:
+        metric_statements:
+            - set(resource.attributes["k8s.pod.uid"], resource.attributes["uid"])
+            - set(resource.attributes["k8s.node.name"], resource.attributes["node"])
+            - set(resource.attributes["k8s.namespace.name"], resource.attributes["namespace"])
+            - set(resource.attributes["k8s.pod.name"], resource.attributes["pod"])
+            - set(resource.attributes["k8s.container.name"], resource.attributes["container"])
+            - set(resource.attributes["k8s.replicaset.name"], resource.attributes["replicaset"])
+            - set(resource.attributes["k8s.deployment.name"], resource.attributes["deployment"])
+            - set(resource.attributes["k8s.statefulset.name"], resource.attributes["statefulset"])
+            - set(resource.attributes["k8s.daemonset.name"], resource.attributes["daemonset"])
+            - set(resource.attributes["k8s.job.name"], resource.attributes["job_name"])
+            - set(resource.attributes["k8s.cronjob.name"], resource.attributes["cronjob"])
+            - set(resource.attributes["k8s.replicationcontroller.name"], resource.attributes["replicationcontroller"])
+            - set(resource.attributes["k8s.hpa.name"], resource.attributes["horizontalpodautoscaler"])
+            - set(resource.attributes["k8s.resourcequota.name"], resource.attributes["resourcequota"])
+            - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
+            - set(resource.attributes["k8s.volume.name"], resource.attributes["persistentvolume"])
+            - set(resource.attributes["k8s.pvc.name"], resource.attributes["persistentvolumeclaim"])
+
+      transform/ksm3:
+        metric_statements:
+            - delete_key(resource.attributes, "uid")
+            - delete_key(resource.attributes, "node")
+            - delete_key(resource.attributes, "namespace")
+            - delete_key(resource.attributes, "pod")
+            - delete_key(resource.attributes, "container")
+            - delete_key(resource.attributes, "replicaset")
+            - delete_key(resource.attributes, "deployment")
+            - delete_key(resource.attributes, "statefulset")
+            - delete_key(resource.attributes, "daemonset")
+            - delete_key(resource.attributes, "job_name")
+            - delete_key(resource.attributes, "cronjob")
+            - delete_key(resource.attributes, "replicationcontroller")
+            - delete_key(resource.attributes, "horizontalpodautoscaler")
+            - delete_key(resource.attributes, "resourcequota")
+            - delete_key(datapoint.attributes, "volumename")
+            - delete_key(resource.attributes, "persistentvolume")
+            - delete_key(resource.attributes, "persistentvolumeclaim")
 
       metricstransform/k8s_cluster_info:
         transforms:
@@ -485,6 +491,7 @@ data:
             - metric.name == "kube_job_status_active" and value_double < 0.5
             - metric.name == "kube_job_status_succeeded" and value_double < 0.5
 
+
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
@@ -681,6 +688,11 @@ data:
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
@@ -767,11 +779,14 @@ data:
             # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
             {{- end }}
             - groupbyattrs
-            - transform/ksm
+            - transform/ksm1
+            - transform/ksm2
+            - transform/ksm3
             - k8sattributes/ksm
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
+            - debug
         metrics/nr_controlplane:
           receivers:
             - routing/nr_metrics_pipelines
