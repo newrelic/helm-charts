@@ -53,17 +53,17 @@ data:
               system.network.connections:
                 enabled: false
           # Uncomment to enable process metrics, which can be noisy but valuable.
-          # processes:
-          # process:
-          #   metrics:
-          #     process.cpu.utilization:
-          #       enabled: true
-          #     process.cpu.time:
-          #       enabled: false
-          #   mute_process_name_error: true
-          #   mute_process_exe_error: true
-          #   mute_process_io_error: true
-          #   mute_process_user_error: true
+          processes:
+          process:
+            metrics:
+              process.cpu.utilization:
+                 enabled: true
+              process.cpu.time:
+                 enabled: false
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
@@ -606,6 +606,11 @@ data:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
+           
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
 
     connectors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
@@ -768,6 +773,7 @@ data:
             - memory_limiter
           exporters:
             - routing/metrics_egress
+            - debug
         metrics/egress:
           receivers:
             - routing/metrics_egress
