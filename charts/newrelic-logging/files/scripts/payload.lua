@@ -8,7 +8,7 @@ function build_payload(tag, timestamp, record)
             attributes = {
                 app = "fluent-bit",
                 source = "kubernetes",
-                version = os.getenv("FLUENTBIT_VERSION"),
+                version = record["fluentBitVersion"],
                 namespace = os.getenv("NAMESPACE"),
                 cluster_name = os.getenv("CLUSTER_NAME"),
                 daemonset_name = os.getenv("DAEMONSET_NAME"),

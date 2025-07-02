@@ -136,8 +136,6 @@ spec:
               value: {{ template "newrelic-logging.fullname" . }}  
             - name: NAMESPACE
               value: {{ .Release.Namespace }} 
-            - name: FLUENTBIT_VERSION
-              value: {{ include "newrelic-logging.fbVersion" . }}
           command:
             - /fluent-bit/bin/fluent-bit
             - -c

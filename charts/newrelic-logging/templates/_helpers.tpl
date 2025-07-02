@@ -207,6 +207,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     add_label            source kubernetes
     add_label            pod_name ${HOSTNAME}
     add_label            node_name ${NODE_NAME}
+    add_label            tier  advanced
     {{- $clusterName := (include "newrelic-logging.cluster" .) -}}
     {{- if $clusterName -}}
     {{- printf "add_label            cluster_name %s" $clusterName | nindent 4 -}}
@@ -221,7 +222,11 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     Name   dummy
     Tag    buildInfo
     Dummy  {"message":"trigger for essential metric at every 10 minutes scrape_interval"}
-    Interval_Sec 600
+    Interval_Sec 6
+[FILTER]
+    Name    modify
+    Match   buildInfo
+    Add     fluentBitVersion  ${FBVERSION}
 [FILTER]
     Name    lua
     Match   buildInfo
@@ -279,13 +284,4 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 {{- end -}}
 
-
-{{/*
-Create fb Version Label.
-*/}}
-{{- define "newrelic-logging.fbVersion" -}}
-{{- if or (eq .Chart.Version "1.27.0") (eq .Chart.Version "1.28.0") -}}
-3.2.10
-{{- end -}}
-{{- end -}}
 
