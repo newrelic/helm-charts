@@ -87,6 +87,10 @@ agent-control-deployment:
 | toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"nightly"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 
+## License
+
+Software installed by this helm chart is licensed under the [New Relic Pre-release Software Notice](https://github.com/newrelic/newrelic-agent-control/blob/main/LICENSE.md).
+
 ## Maintainers
 
 * [ac](https://github.com/orgs/newrelic/teams/ac/members)
