@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.33
+    helm.sh/chart: nr-k8s-otel-collector-0.8.34
 data:
   deployment-config.yaml: |
     receivers:
@@ -204,7 +204,6 @@ data:
           - set(resource.attributes["k8s.replicationcontroller.name"], resource.attributes["replicationcontroller"])
           - set(resource.attributes["k8s.hpa.name"], resource.attributes["horizontalpodautoscaler"])
           - set(resource.attributes["k8s.resourcequota.name"], resource.attributes["resourcequota"])
-          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
           - set(resource.attributes["k8s.volume.name"], resource.attributes["persistentvolume"])
           - set(resource.attributes["k8s.pvc.name"], resource.attributes["persistentvolumeclaim"])
           - delete_key(resource.attributes, "uid")
@@ -221,9 +220,13 @@ data:
           - delete_key(resource.attributes, "replicationcontroller")
           - delete_key(resource.attributes, "horizontalpodautoscaler")
           - delete_key(resource.attributes, "resourcequota")
-          - delete_key(datapoint.attributes, "volumename")
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
+
+      transform/ksm_datapoints:
+        metric_statements:
+          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
+          - delete_key(datapoint.attributes, "volumename")
 
       metricstransform/k8s_cluster_info:
         transforms:
@@ -476,7 +479,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.33
+            value: 0.8.34
           - key: service.name
             action: delete
           - key: service_name
@@ -498,7 +501,7 @@ data:
             value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.33
+            value: 0.8.34
 
       transform/events:
         log_statements:
@@ -728,6 +731,7 @@ data:
             - resource/metrics
             - groupbyattrs
             - transform/ksm
+            - transform/ksm_datapoints
             - k8sattributes/ksm
             - cumulativetodelta
           exporters:

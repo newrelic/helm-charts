@@ -224,7 +224,6 @@ data:
           - set(resource.attributes["k8s.replicationcontroller.name"], resource.attributes["replicationcontroller"])
           - set(resource.attributes["k8s.hpa.name"], resource.attributes["horizontalpodautoscaler"])
           - set(resource.attributes["k8s.resourcequota.name"], resource.attributes["resourcequota"])
-          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
           - set(resource.attributes["k8s.volume.name"], resource.attributes["persistentvolume"])
           - set(resource.attributes["k8s.pvc.name"], resource.attributes["persistentvolumeclaim"])
           - delete_key(resource.attributes, "uid")
@@ -241,9 +240,13 @@ data:
           - delete_key(resource.attributes, "replicationcontroller")
           - delete_key(resource.attributes, "horizontalpodautoscaler")
           - delete_key(resource.attributes, "resourcequota")
-          - delete_key(datapoint.attributes, "volumename")
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
+
+      transform/ksm_datapoints:
+        metric_statements:
+          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
+          - delete_key(datapoint.attributes, "volumename")
 
       metricstransform/k8s_cluster_info:
         transforms:
@@ -768,6 +771,7 @@ data:
             {{- end }}
             - groupbyattrs
             - transform/ksm
+            - transform/ksm_datapoints
             - k8sattributes/ksm
             - cumulativetodelta
           exporters:
