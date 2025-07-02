@@ -10,7 +10,7 @@ app.kubernetes.io/instance: nr-k8s-otel-collector
 app.kubernetes.io/managed-by: Helm
 app.kubernetes.io/name: nr-k8s-otel-collector
 app.kubernetes.io/version: 1.0.3
-helm.sh/chart: nr-k8s-otel-collector-0.8.34
+helm.sh/chart: nr-k8s-otel-collector-0.8.35
 data:
   daemonset-config.yaml: |
 receivers:
@@ -509,12 +509,9 @@ attributes:
   - key: k8s.cluster.name
 action: upsert
 value: <cluser_name>
-  - key: newrelicOnly
-action: upsert
-value: 'true'
   - key: "newrelic.chart.version"
 action: upsert
-value: 0.8.34
+value: 0.8.35
   - key: service.name
 action: delete
   - key: service_name
