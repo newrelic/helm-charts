@@ -104,7 +104,7 @@ cluster name, licenses, and custom attributes
 {{- $k8s := (dict
   "cluster_name" (include "newrelic.common.cluster" .)
   "namespace" .Release.Namespace
-  "namespace_agents" ((.Values.config).subAgentsNamespace)
+  "namespace_agents" (default .Release.Namespace .Values.config.subAgentsNamespace)
 ) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
