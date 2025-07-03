@@ -67,6 +67,8 @@ spec:
         - name: register-system-identity
           image: "{{ (.Values.systemIdentityRegistration.image).repository }}:{{ (.Values.systemIdentityRegistration.image).tag }}"
           imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
+          securityContext:
+            allowPrivilegeEscalation: false
           resources:
             limits:
               cpu: 100m
