@@ -2,7 +2,7 @@ function build_payload(tag, timestamp, record)
     local payload = {{
         metrics = {{
             name = "fluentbit_build_info",
-            type = "gauge",
+            type = "counter",
             value = 0,
             timestamp = os.time(),
             attributes = {

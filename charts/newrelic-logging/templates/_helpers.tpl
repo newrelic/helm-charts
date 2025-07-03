@@ -222,7 +222,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     Name   dummy
     Tag    buildInfo
     Dummy  {"message":"trigger for basic metric at every 10 minutes scrape_interval"}
-    Interval_Sec 6
+    Interval_Sec 600
 [FILTER]
     Name    modify
     Match   buildInfo
