@@ -182,7 +182,7 @@ https://log-api.newrelic.com/log/v1
 Returns fluentbit config to collect and forward its metrics to New Relic
 */}}
 {{- define "newrelic-logging.fluentBit.monitoring.config" -}}
-{{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "essential" -}}
+{{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "basic" -}}
 {{- if eq $fluentBitMetrics "advanced" }}
 [INPUT]
     name prometheus_scrape
@@ -217,11 +217,11 @@ Returns fluentbit config to collect and forward its metrics to New Relic
     {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
     {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
 {{- end -}}
-{{- if eq $fluentBitMetrics "essential" }}
+{{- if eq $fluentBitMetrics "basic" }}
 [INPUT]
     Name   dummy
     Tag    buildInfo
-    Dummy  {"message":"trigger for essential metric at every 10 minutes scrape_interval"}
+    Dummy  {"message":"trigger for basic metric at every 10 minutes scrape_interval"}
     Interval_Sec 6
 [FILTER]
     Name    modify

@@ -115,8 +115,8 @@ spec:
               value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
             - name: METRICS_HOST
               value: {{ include "newrelic-logging.metricsHost" $ | quote }}
-            - name: FLUENTBIT_METRICS 
-              value: {{ $.Values.fluentBit.fluentBitMetrics | default "essential" | quote }}
+            - name: FLUENTBIT_METRICS_TIER 
+              value: {{ $.Values.fluentBit.fluentBitMetrics | default "basic" | quote }}
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
             - name: DAEMONSET_NAME
               value: {{ template "newrelic-logging.fullname" $ }}

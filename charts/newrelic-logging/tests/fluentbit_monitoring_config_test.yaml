@@ -67,39 +67,39 @@ tests:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)add_label\s+cluster_name my-cluster\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging          
-  - it: "includes additional labels with cluster name empty for essential"
+  - it: "includes additional labels with cluster name empty for basic"
     set:
       cluster: ""
       fluentBit:
-        fluentBitMetrics: "essential"
+        fluentBitMetrics: "basic"
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)Record\s+cluster_name "\$\{CLUSTER_NAME\}"
 
-  - it: "includes additional labels with cluster name set for essential"
+  - it: "includes additional labels with cluster name set for basic"
     set:
       cluster: my-cluster
       fluentBit:
-        fluentBitMetrics: "essential"
+        fluentBitMetrics: "basic"
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)Record\s+cluster_name "\$\{CLUSTER_NAME\}"
-  - it: "includes additional labels with cluster name empty for essential"
+  - it: "includes additional labels with cluster name empty for basic"
     set:
       cluster: ""
       fluentBit:
-        fluentBitMetrics: "essential"
+        fluentBitMetrics: "basic"
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
           pattern: (?s)\[INPUT\]\s+Name\s+dummy\s+Tag\s+buildInfo
-  - it: "includes additional labels with cluster name set for essential"
+  - it: "includes additional labels with cluster name set for basic"
     set:
       cluster: my-cluster
       fluentBit:
-        fluentBitMetrics: "essential"
+        fluentBitMetrics: "basic"
     asserts:
       - matchRegex:
           path: data["fluent-bit.conf"]
