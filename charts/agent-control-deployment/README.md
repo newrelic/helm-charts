@@ -21,7 +21,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| cleanupManagedResources | bool | `true` | Enable the cleanup of agent-control managed resources when the chart is uninstalled. If disabled, agents and/or agent configurations managed by the agent-control will not be deleted when the chart is uninstalled. |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
 | config.agentControl | object | See `values.yaml` | Configuration for the Agent Control. |
 | config.agentControl.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |

@@ -3,14 +3,14 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: example-nr-k8s-otel-collector-deployment-config
+  name: nr-k8s-otel-collector-deployment-config
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: example
+    app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.19
+    helm.sh/chart: nr-k8s-otel-collector-0.8.35
 data:
   deployment-config.yaml: |
     receivers:
@@ -22,7 +22,7 @@ data:
       k8s_events:
       prometheus/ksm:
         config:
-          scrape_configs: 
+          scrape_configs:
             - job_name: kube-state-metrics
               scrape_interval: 1m
               kubernetes_sd_configs:
@@ -31,7 +31,7 @@ data:
                 - action: keep
                   regex: kube-state-metrics
                   source_labels:
-                    - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                  - __meta_kubernetes_pod_label_app_kubernetes_io_name
                 - action: replace
                   target_label: job_label
                   replacement: kube-state-metrics
@@ -53,11 +53,11 @@ data:
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               relabel_configs:
               - action: keep
-                regex: default;kubernetes;https
                 source_labels:
                 - __meta_kubernetes_namespace
                 - __meta_kubernetes_service_name
                 - __meta_kubernetes_endpoint_port_name
+                regex: default;kubernetes;https
               - action: replace
                 source_labels:
                 - __meta_kubernetes_namespace
@@ -69,8 +69,81 @@ data:
               - action: replace
                 target_label: job_label
                 replacement: apiserver
+            # if not running on openshift, this only works if controller-manager port 10257 is exposed in the pod
+            # TODO: we may want to create our own service instead to expose the endpoint and scrape it instead
+            - job_name: controller-manager
+              scrape_interval: 1m
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                      - kube-system
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*controller-manager.*;.*:10257$
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: controller-manager
+            # if not running on openshift, this only works if scheduler port 10259 is exposed in the pod
+            # we may want to create our own service instead to expose the endpoint and scrape it instead
+            - job_name: scheduler
+              scrape_interval: 1m
+              metrics_path: /metrics
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names:
+                      - kube-system
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              relabel_configs:
+              - action: keep
+                source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+                regex: .*scheduler.*;.*:10259$
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_namespace
+                target_label: namespace
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_pod_name
+                target_label: pod
+              - action: replace
+                source_labels:
+                - __meta_kubernetes_service_name
+                target_label: service
+              - action: replace
+                target_label: job_label
+                replacement: scheduler
 
     processors:
+      
       
 
       groupbyattrs:
@@ -131,7 +204,6 @@ data:
           - set(resource.attributes["k8s.replicationcontroller.name"], resource.attributes["replicationcontroller"])
           - set(resource.attributes["k8s.hpa.name"], resource.attributes["horizontalpodautoscaler"])
           - set(resource.attributes["k8s.resourcequota.name"], resource.attributes["resourcequota"])
-          - set(resource.attributes["k8s.volume.name"], resource.attributes["volumename"])
           - set(resource.attributes["k8s.volume.name"], resource.attributes["persistentvolume"])
           - set(resource.attributes["k8s.pvc.name"], resource.attributes["persistentvolumeclaim"])
           - delete_key(resource.attributes, "uid")
@@ -148,26 +220,30 @@ data:
           - delete_key(resource.attributes, "replicationcontroller")
           - delete_key(resource.attributes, "horizontalpodautoscaler")
           - delete_key(resource.attributes, "resourcequota")
-          - delete_key(resource.attributes, "volumename")
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
+
+      transform/ksm_datapoints:
+        metric_statements:
+          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
+          - delete_key(datapoint.attributes, "volumename")
 
       metricstransform/k8s_cluster_info:
         transforms:
           - include: kubernetes_build_info
             action: update
-            new_name: k8s.cluster.info 
+            new_name: k8s.cluster.info
 
       metricstransform/kube_pod_container_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
-            match_type: strict 
+            match_type: strict
             action: update
             new_name: 'kube_pod_container_status_phase'
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: waiting 
+              new_value: waiting
           - include: 'kube_pod_container_status_running'
             match_type: strict
             action: update
@@ -175,7 +251,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: running 
+              new_value: running
           - include: 'kube_pod_container_status_terminated'
             match_type: strict
             action: update
@@ -183,7 +259,7 @@ data:
             operations:
             - action: add_label
               new_label: container_phase
-              new_value: terminated 
+              new_value: terminated
 
       metricstransform/ldm:
         transforms:
@@ -194,12 +270,12 @@ data:
             - action: add_label
               new_label: low.data.mode
               new_value: 'false'
-      
+
       metricstransform/k8s_cluster_info_ldm:
         transforms:
           - include: k8s.cluster.info
             action: update
-            operations: 
+            operations:
             - action: update_label
               label: low.data.mode
               value_actions:
@@ -253,7 +329,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_node_status_(allocatable|condition)
+          - include: kube_node_status_(allocatable|capacity|condition)
             action: update
             match_type: regexp
             operations:
@@ -289,7 +365,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_(owner|created|info|status_(phase|ready|ready_time|scheduled|scheduled_time)|start_time)
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time)$$
             action: update
             match_type: regexp
             operations:
@@ -298,15 +374,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)
+          - include: ^kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)$$
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
             action: update
             match_type: regexp
@@ -325,18 +401,18 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
-      
+
       metricstransform/apiserver:
         transforms:
           - include: apiserver_storage_objects
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
@@ -355,7 +431,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-    
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -375,10 +451,22 @@ data:
         metrics:
           datapoint:
             - metric.name == "kube_pod_status_phase" and value_double < 0.5
-            - metric.name == "kube_pod_status_scheduled" and value_double < 0.5
-            - metric.name == "kube_pod_container_status_phase" and value_double < 0.5
             - metric.name == "kube_pod_status_ready" and value_double < 0.5
+            - metric.name == "kube_pod_status_scheduled" and value_double < 0.5
+            - metric.name == "kube_pod_container_status_ready" and value_double < 0.5
+            - metric.name == "kube_pod_container_status_phase" and value_double < 0.5
+            - metric.name == "kube_pod_container_status_restarts_total" and value_double < 0.5
             - metric.name == "kube_deployment_status_condition" and value_double < 0.5
+            - metric.name == "kube_pod_container_status_waiting_reason" and value_double < 0.5
+
+      filter/nr_exclude_zero_value_kube_jobs:
+        metrics:
+          datapoint:
+            - metric.name == "kube_job_complete" and value_double < 0.5
+            - metric.name == "kube_job_spec_parallelism" and value_double < 0.5
+            - metric.name == "kube_job_status_failed" and value_double < 0.5
+            - metric.name == "kube_job_status_active" and value_double < 0.5
+            - metric.name == "kube_job_status_succeeded" and value_double < 0.5
 
       resource/metrics:
         attributes:
@@ -386,37 +474,28 @@ data:
           - key: k8s.cluster.name
             action: upsert
             value: <cluser_name>
-          - key: newrelicOnly
-            action: upsert
-            value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.19
+            value: 0.8.35
           - key: service.name
             action: delete
           - key: service_name
             action: delete
-      
+
       resource/events:
         attributes:
-          - key: "event.name"
+          - key: "newrelic.event.type"
             action: upsert
-            value: "InfrastructureEvent"
-          - key: "event.domain"
-            action: upsert
-            value: "newrelic-otel-event"
+            value: "OtlpInfrastructureEvent"
           - key: "category"
             action: upsert
             value: "kubernetes"
           - key: k8s.cluster.name
             action: upsert
             value: <cluser_name>
-          - key: newrelicOnly
-            action: upsert
-            value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.19
+            value: 0.8.35
 
       transform/events:
         log_statements:
@@ -438,6 +517,10 @@ data:
           - key: net.host.name
             action: delete
           - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
             action: delete
 
       cumulativetodelta:
@@ -461,7 +544,7 @@ data:
             - k8s.cronjob.name
             - k8s.job.name
         pod_association:
-          - sources: 
+          - sources:
             - from: resource_attribute
               name: k8s.pod.uid
           - sources:
@@ -563,19 +646,37 @@ data:
 
     exporters:
       
+      
       otlphttp/newrelic:
         endpoint: "https://otlp.nr-data.net"
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-      debug:
-        verbosity: detailed
-        sampling_initial: 5
-        sampling_thereafter: 200
-    
+
     connectors:
       
 
-      routing/nr_pipelines:
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/egress]
+
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [metrics/egress]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -585,19 +686,29 @@ data:
           - context: datapoint
             condition: attributes["job_label"] == "apiserver"
             pipelines: [metrics/nr_controlplane]
+          - context: datapoint
+            condition: attributes["job_label"] == "controller-manager"
+            pipelines: [metrics/nr_controlplane]
+          - context: datapoint
+            condition: attributes["job_label"] == "scheduler"
+            pipelines: [metrics/nr_controlplane]
 
     service:
       pipelines:
         
-        metrics/all_receivers:
+        metrics/ingress:
           receivers:
             - prometheus/ksm
             - prometheus/controlplane
+          processors:
+            
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            
+
         metrics/nr_ksm:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/kube_pod_container_status_phase
@@ -608,18 +719,20 @@ data:
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
             - filter/exclude_metrics_low_data_mode
+            - filter/nr_exclude_zero_value_kube_jobs
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             - resource/metrics
             - groupbyattrs
             - transform/ksm
+            - transform/ksm_datapoints
             - k8sattributes/ksm
-            - batch
+            - cumulativetodelta
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/nr_controlplane:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/k8s_cluster_info
@@ -632,24 +745,46 @@ data:
             - resource/metrics
             - attributes/self
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+          exporters:
+            - routing/metrics_egress
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            
             - batch
           exporters:
             - otlphttp/newrelic
-        logs/events:
+            
+        logs/ingress:
           receivers:
             - k8s_events
+          processors:
+            
+          exporters:
+            - routing/nr_logs_pipelines
+            
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/events
             - resource/events
+          exporters:
+            - routing/logs_egress
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            
             - batch
           exporters:
             - otlphttp/newrelic

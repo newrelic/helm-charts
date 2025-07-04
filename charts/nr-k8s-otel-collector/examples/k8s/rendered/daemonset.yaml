@@ -3,30 +3,30 @@
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: example-nr-k8s-otel-collector-daemonset
+  name: nr-k8s-otel-collector-daemonset
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: example
+    app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.0.3
-    helm.sh/chart: nr-k8s-otel-collector-0.8.19
+    helm.sh/chart: nr-k8s-otel-collector-0.8.35
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/instance: example
+      app.kubernetes.io/instance: nr-k8s-otel-collector
       app.kubernetes.io/name: nr-k8s-otel-collector
       component: daemonset
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: example
+        app.kubernetes.io/instance: nr-k8s-otel-collector
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: fe8517f1792e9613079e3fe84e2e4f3d393dfbd8a3d0e1d5829b24ca8d1112ee
+        checksum/config: e09f11400ebe17582c432f6042203f51ec25d771bf5a1bf319d0aa5d23f4a283
     spec:
-      serviceAccountName: example-nr-k8s-otel-collector
+      serviceAccountName: nr-k8s-otel-collector
       containers:
         - name: otel-collector-daemonset
           securityContext:
@@ -61,7 +61,7 @@ spec:
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: example-nr-k8s-otel-collector-license
+                  name: nr-k8s-otel-collector-license
                   key: licenseKey
           volumeMounts:
             - name: host-fs
@@ -81,4 +81,4 @@ spec:
             path: /var/log/pods
         - name: daemonset-config
           configMap:
-            name: example-nr-k8s-otel-collector-daemonset-config
+            name: nr-k8s-otel-collector-daemonset-config

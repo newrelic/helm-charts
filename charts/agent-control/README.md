@@ -72,6 +72,7 @@ agent-control-deployment:
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | agent-control-deployment | object | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
+| agent-control-deployment.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-deployment` chart will be installed. |
 | agent-control-deployment.enabled | bool | `true` | Enable the installation of the Agent Control. |
 | flux2 | object | See `values.yaml` | Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml |
 | flux2.clusterDomain | string | `"cluster.local"` | This is the domain name of the cluster. |
@@ -83,6 +84,8 @@ agent-control-deployment:
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on the whole cluster. |
 | fullnameOverride | string | `""` | Override the full name of the release |
 | nameOverride | string | `""` | Override the name of the chart |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"nightly"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
+| toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 
 ## Maintainers
 
