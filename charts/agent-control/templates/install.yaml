@@ -38,6 +38,8 @@ spec:
             - "{{ .Release.Namespace }}"
             - --repository-url
             - "{{ (index .Values "agent-control-deployment").chartRepositoryUrl }}"
+            {{- if (index .Values "agent-control-deployment").verboseInstall }}
             - --log-level
             - debug
+            {{- end }}
 {{- end -}}
