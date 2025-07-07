@@ -33,5 +33,5 @@ spec:
             - --namespace
             - "{{ .Release.Namespace }}"
             - --log-level
-            - "{{ default info .Values.uninstallationJob.logLevel }}"
+            - {{ default "info" .Values.uninstallationJob.logLevel }}
 {{- end -}}
