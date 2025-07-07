@@ -101,11 +101,7 @@ cluster name, licenses, and custom attributes
 {{- $config := dict "server" (dict "enabled" true "port" $statusServerPort "host" $statusServerHost) -}}
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
-{{- $k8s := (dict
-  "cluster_name" (include "newrelic.common.cluster" .)
-  "namespace" .Release.Namespace
-  "namespace_agents" (default "newrelic" .Values.config.subAgentsNamespace)
-) -}}
+{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "namespace_agents" (default "newrelic" .Values.config.subAgentsNamespace)) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- /* Add fleet_control if enabled */ -}}
