@@ -128,7 +128,7 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-agents") }}
-  namespace: {{ (index .Values "agent-control-deployment").config.subAgentsNamespace }}
+  namespace: {{ index .Values "agent-control-deployment" "subAgentsNamespace" }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
