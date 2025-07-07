@@ -83,9 +83,11 @@ agent-control-deployment:
 | flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on the whole cluster. |
 | fullnameOverride | string | `""` | Override the full name of the release |
+| installationJob.logLevel | string | info | Log level for the installation job. |
 | nameOverride | string | `""` | Override the name of the chart |
-| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"nightly"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.40.0"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| uninstallationJob.logLevel | string | info | Log level for the uninstallation job. |
 
 ## Maintainers
 
