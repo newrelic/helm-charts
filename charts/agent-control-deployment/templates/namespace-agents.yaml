@@ -1,9 +1,9 @@
-
-{{- if not (lookup "v1" "Namespace" "" .Values.config.subAgentsNamespace) -}}
+{{- $subAgentsNamespace := (include "newrelic-agent-control.config.content" .).k8s.namespace_agents -}}
+{{- if not (lookup "v1" "Namespace" "" $subAgentsNamespace) -}}
 apiVersion: v1
 kind: Namespace
 metadata:
   annotations:
     "helm.sh/resource-policy": keep
-  name: {{ .Values.config.subAgentsNamespace }}
+  name: {{ $subAgentsNamespace }}
 {{- end -}}

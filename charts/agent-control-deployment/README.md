@@ -38,7 +38,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
 | config.status_server.port | int | See `values.yaml` | Set the status server port |
 | config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
-| config.subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customIdentityClientIdSecretKey | string | `""` |  |
 | customIdentityClientSecretSecretKey | string | `""` |  |
