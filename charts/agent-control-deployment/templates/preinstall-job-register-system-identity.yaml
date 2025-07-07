@@ -67,8 +67,6 @@ spec:
         - name: register-system-identity
           image: "{{ (.Values.systemIdentityRegistration.image).repository }}:{{ (.Values.systemIdentityRegistration.image).tag }}"
           imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
-          securityContext:
-            allowPrivilegeEscalation: false
           resources:
             limits:
               cpu: 100m
@@ -143,7 +141,7 @@ spec:
               echo "Creating System Identity..."
 
               ORG_ID={{ include "newrelic-agent-control.auth.organizationId" . }}
-              TEMPORAL_FOLDER=/tmp/gen-folder
+              TEMPORAL_FOLDER=gen-folder
               mkdir $TEMPORAL_FOLDER
               CLIENT_ID=""
               DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
