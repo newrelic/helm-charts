@@ -1,4 +1,4 @@
-{{- $subAgentsNamespace := (include "newrelic-agent-control.config.content" .).k8s.namespace_agents -}}
+{{- $subAgentsNamespace := index (include "newrelic-agent-control.config.content" . | fromYaml) "k8s" "namespace_agents" -}}
 {{- if not (lookup "v1" "Namespace" "" $subAgentsNamespace) -}}
 apiVersion: v1
 kind: Namespace

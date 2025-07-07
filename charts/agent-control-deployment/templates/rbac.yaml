@@ -81,7 +81,7 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources-agents") }}
-  namespace: {{ (include "newrelic-agent-control.config.content" .).k8s.namespace_agents }}
+  namespace: {{ index (include "newrelic-agent-control.config.content" . | fromYaml) "k8s" "namespace_agents" }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
