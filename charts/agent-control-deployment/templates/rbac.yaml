@@ -5,7 +5,6 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
-  namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: [ "" ]
     resources: [ "configmaps" ]
@@ -33,6 +32,9 @@ rules:
       - deletecollection
       - patch
       - update
+      - get
+      - list
+      - watch
   - apiGroups: [ "" ]
     resources: ["secrets"]
     verbs:
@@ -41,35 +43,6 @@ rules:
       - deletecollection
       - patch
       - update
-  ###
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: RoleBinding
-metadata:
-  labels:
-    {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
-  namespace: {{ .Release.Namespace }}
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
-subjects:
-- kind: ServiceAccount
-  name: {{ include "newrelic.common.serviceAccount.name" . }}
-  namespace: {{ .Release.Namespace }}
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "watch") }}
-  namespace: {{ .Release.Namespace }}
-rules:
-  - apiGroups: [ "" ]
-    resources: ["secrets"]
-    verbs:
       - get
       - list
       - watch
@@ -78,14 +51,6 @@ rules:
       - deployments
       - daemonsets
       - statefulsets
-    verbs:
-      - get
-      - list
-      - watch
-  - apiGroups:
-      - source.toolkit.fluxcd.io
-      - helm.toolkit.fluxcd.io
-    resources: [ "*" ]
     verbs:
       - get
       - list
@@ -99,12 +64,12 @@ kind: RoleBinding
 metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "watch-agent-control") }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "watch") }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
 subjects:
 - kind: ServiceAccount
   name: {{ include "newrelic.common.serviceAccount.name" . }}
@@ -115,12 +80,12 @@ kind: RoleBinding
 metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "watch-sub-agents") }}
-  namespace: {{ default "newrelic" .Values.config.subAgentsNamespace }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources-agents") }}
+  namespace: {{ .Values.config.subAgentsNamespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "watch") }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
 subjects:
 - kind: ServiceAccount
   name: {{ include "newrelic.common.serviceAccount.name" . }}
