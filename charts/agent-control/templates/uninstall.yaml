@@ -32,8 +32,6 @@ spec:
             - uninstall-agent-control
             - --namespace
             - "{{ .Release.Namespace }}"
-            {{- if (index .Values "agent-control-deployment").verboseUninstall }}
             - --log-level
-            - debug
-            {{- end }}
+            - "{{ default info .Values.uninstallationJob.logLevel }}"
 {{- end -}}
