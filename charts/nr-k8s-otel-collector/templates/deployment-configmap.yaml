@@ -253,6 +253,10 @@ data:
           - include: kubernetes_build_info
             action: update
             new_name: k8s.cluster.info
+            operations:
+              - action: add_label
+                new_label: newrelic.datamode
+                new_value: {{ if include "nrKubernetesOtel.lowDataMode" . }}low{{ else }}default{{ end }}
 
       metricstransform/kube_pod_container_status_phase:
         transforms:
@@ -535,6 +539,9 @@ data:
             statements:
               - set(description, "")
               - set(unit, "")
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "low.data.mode")
 
       resource/low_data_mode_inator:
         attributes:
