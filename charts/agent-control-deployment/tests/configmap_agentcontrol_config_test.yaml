@@ -1,0 +1,271 @@
+suite: agent control's config
+templates:
+  - templates/configmap-agentcontrol-config.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+chart:
+  version: 1.2.3-beta
+tests:
+  - it: agent control's config can be disabled
+    set:
+      config:
+        agentControl:
+          create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: fleet_control can be disabled
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          enabled: false
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+
+  - it: the status server port can be changed
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          enabled: false
+        status_server:
+          port: 1234
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 1234
+
+  - it: you can setup a specific fleet_id
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          fleet_id: abcefg
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+              fleet_id: abcefg
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+
+  - it: agent control's config always include cluster_name, namespace and defaults
+    set:
+      cluster: my-cluster
+      config:
+        agentControl: {}
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+
+  - it: agent control's config templates
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            test: value
+            test2: value2
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+            test: value
+            test2: value2
+
+  - it: cluster_name and namespace from config have precedence
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            test: value
+            test2: value2
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              cluster_name: config-cluster
+              namespace: config-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+            test: value
+            test2: value2
+
+  - it: agent control's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
+    set:
+      cluster: my-cluster
+      region: eu
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+
+  - it: default config for agent control can be overridden
+    template: templates/configmap-agentcontrol-config.yaml
+    set:
+      cluster: my-cluster
+      region: eu
+      config:
+        subAgents:
+          test-0:
+            type: org.newrelic/test:0.0.0
+            content:
+              a: test
+              value: 0
+          test-1:
+            type: org.newrelic/test:0.0.1
+            content:
+              a: test
+              value: 1
+          test-2:
+            type: org.newrelic/test:0.0.2
+            content:
+              a: test
+              aYAML:
+                canI: HaveSomeYAML
+    asserts:
+      - matchRegex:
+          path: data["local_config"]
+          pattern: "agents:\n  test-0:\n    agent_type: org.newrelic/test:0.0.0\n  test-1:\n    agent_type: org.newrelic/test:0.0.1\n  test-2:\n    agent_type: org.newrelic/test:0.0.2"
+
+  - it: disabling the status server should trigger an error
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            server:
+              enabled: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "The status server cannot be disabled as it is used in the Agent Control container probes"
+
+  - it: status server host different from 0.0.0.0 should trigger an error
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            server:
+              host: "127.0.0.1"
+    asserts:
+      - failedTemplate:
+          errorMessage: "The status server needs to listen on 0.0.0.0 to be used in container probes"
+
+  - it: conflicting ports in agentControl.status_server and agentControl.content.server should trigger an error
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          status_server:
+            port: 1234
+          content:
+            server:
+              port: 4321
+    asserts:
+      - failedTemplate:
+          errorMessage: "Setting up the status server port is `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead"
+
+  - it: Fails is expected if chart_version is set manually
+    set:
+      cluster: my-cluster
+      config:
+        agentControl:
+          content:
+            k8s:
+              chart_version: test
+    asserts:
+      - failedTemplate:
+          errorMessage: "The chart version is set automatically via environment variable and should not be set manually"
+
+

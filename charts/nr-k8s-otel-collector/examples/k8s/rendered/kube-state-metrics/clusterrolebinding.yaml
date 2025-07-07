@@ -1,0 +1,22 @@
+---
+# Source: nr-k8s-otel-collector/charts/kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.18.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/version: "2.11.0"
+  name: nr-k8s-otel-collector-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nr-k8s-otel-collector-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: nr-k8s-otel-collector-kube-state-metrics
+  namespace: newrelic

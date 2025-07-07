@@ -1,0 +1,168 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        {{/* TODO: This hash is not reliable anymore. The identity is being generated/patched by a job.
+          With the introduction of this job, this charts is not configurable/instalable with ArgoCD/Flux as the reconcile loop
+          will empty the secret that the job has filled.
+
+          We need the config to be splitable somehow or leave another orphan object on the cluster.
+
+          This comment (and the mechanisim added in the PR when we left this comment) block the automatic upgrade feature.
+
+          See: charts/agent-control/charts/agent-control-deployment/templates/preinstall-job-register-system-identity.yaml */ -}}
+        checksum/agent-config: {{ include (print $.Template.BasePath "/configmap-agentcontrol-config.yaml") . | sha256sum }}
+        checksum/subagent-config: {{ include (print $.Template.BasePath "/configmap-subagent-configs.yaml") . | sha256sum }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+    spec:
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.imagePullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+
+      hostNetwork: {{ include "newrelic.common.hostNetwork.value" . }}
+      {{- if include "newrelic.common.hostNetwork" . }}
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
+
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          {{- with include "newrelic-agent-control.securityContext.container" . | fromYaml }}
+          securityContext:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          env:
+          {{- if ((.Values.config).fleet_control).enabled }}
+            - name: NR_AC_FLEET_CONTROL__AUTH_CONFIG__CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic-agent-control.auth.secret.name" . }}
+                  key: {{ include "newrelic-agent-control.auth.secret.clientId.key" . }}
+          {{- end }}
+          {{- if include "newrelic.common.verboseLog" . }}
+            - name: NR_AC_LOG__LEVEL
+              value: debug
+          {{- end }}
+
+            - name: NR_AC_K8S__CHART_VERSION
+              value: {{ .Chart.Version }}
+
+          {{- /* ----- Variables used to send data downstream to subagents */}}
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
+            - name: NR_CLUSTER_NAME
+              value: {{ include "newrelic.common.cluster" . }}
+            - name: NR_STAGING
+              value: "{{ include "newrelic.common.nrStaging" . | default false }}"
+            - name: NR_LOW_DATA_MODE
+              value: "{{ include "newrelic.common.lowDataMode" . | default false }}"
+            - name: NR_VERBOSE_LOG
+              value: "{{ include "newrelic.common.verboseLog" . | default false }}"
+          {{- /* ----- Variables used to send data downstream to subagents */}}
+
+          {{- with .Values.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.extraEnvFrom }}
+          envFrom:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+
+          volumeMounts:
+            - name: agent-control-config
+              mountPath: /etc/newrelic-agent-control/config.yaml
+              readOnly: true
+              subPath: config.yaml
+            {{- if ((.Values.config).fleet_control).enabled }}
+            - name: auth-secret-private-key
+              mountPath: "/etc/newrelic-agent-control/keys"
+              readOnly: true
+            {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          livenessProbe:
+            httpGet:
+              path: /status
+              port: {{ .Values.config.status_server.port }}
+            failureThreshold: 1
+            periodSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /status
+              port: {{ .Values.config.status_server.port }}
+            failureThreshold: 5
+            periodSeconds: 5
+            initialDelaySeconds: 5
+
+      volumes:
+        - name: agent-control-config
+          configMap:
+            name: local-data-agent-control
+            items:
+              - key: local_config
+                path: config.yaml
+        - name: var-lib-newrelic-agent-control
+          emptyDir: {}
+        {{- if ((.Values.config).fleet_control).enabled }}
+        - name: auth-secret-private-key
+          secret:
+            secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}
+            items:
+              - key: {{ include "newrelic-agent-control.auth.secret.privateKey.key" . }}
+                path: from-secret.key
+        {{- end }}
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
