@@ -86,7 +86,7 @@ agent-control-deployment:
 | installationJob.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-deployment` chart will be installed. |
 | installationJob.logLevel | string | info | Log level for the installation job. |
 | nameOverride | string | `""` | Override the name of the chart |
-| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.40.0"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.41.0"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | uninstallationJob.logLevel | string | info | Log level for the uninstallation job. |
 
