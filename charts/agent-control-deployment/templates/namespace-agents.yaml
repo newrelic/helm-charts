@@ -1,0 +1,8 @@
+{{- if not (lookup "v1" "Namespace" "" .Values.subAgentsNamespace) -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    "helm.sh/resource-policy": keep
+  name: {{ .Values.subAgentsNamespace }}
+{{- end -}}
