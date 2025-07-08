@@ -76,7 +76,10 @@ secretKeyRef:
   value: debug
   {{- end }}
 
-- name: NR_AC_K8S__CHART_VERSION
+  {{- /* This value is passed to the agent control via Environment Variable to avoid a race condition.
+ If set via config, after a failed upgrade we could have the "old" pod loading the new config,
+ and reading the new chart version, while the image is still the old one.*/}}  
+- name: NR_AC_K8S__CURRENT_CHART_VERSION
   value: {{ .Chart.Version }}
 
   {{- /* ----- Variables used to send data downstream to subagents */}}

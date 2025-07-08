@@ -30,6 +30,7 @@ agents: {}
 k8s:
   cluster_name: my-cluster
   namespace: my-namespace
+  namespace_agents: newrelic
 server:
   enabled: true
   host: 0.0.0.0
@@ -51,6 +52,7 @@ agents: {}
 k8s:
   cluster_name: my-cluster
   namespace: my-namespace
+  namespace_agents: newrelic
 server:
   enabled: true
   host: 0.0.0.0
@@ -77,6 +79,28 @@ token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
 k8s:
   cluster_name: my-cluster
   namespace: my-namespace
+  namespace_agents: newrelic
+server:
+  enabled: true
+  host: 0.0.0.0
+  port: 51200
+
+  - it: sub-agents namespace can be changed
+set:
+  cluster: my-cluster
+  config:
+fleet_control:
+  enabled: false
+  subAgentsNamespace: my-subagents-namespace
+asserts:
+  - equal:
+  path: data["local_config"]
+  value: |
+agents: {}
+k8s:
+  cluster_name: my-cluster
+  namespace: my-namespace
+  namespace_agents: my-subagents-namespace
 server:
   enabled: true
   host: 0.0.0.0
@@ -101,6 +125,7 @@ token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
 k8s:
   cluster_name: my-cluster
   namespace: my-namespace
+  namespace_agents: newrelic
 server:
   enabled: true
   host: 0.0.0.0
@@ -128,6 +153,7 @@ token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
 k8s:
   cluster_name: my-cluster
   namespace: my-namespace
+  namespace_agents: newrelic
 server:
   enabled: true
   host: 0.0.0.0
@@ -160,6 +186,7 @@ token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
 k8s:
   cluster_name: config-cluster
   namespace: config-namespace
+  namespace_agents: newrelic
 server:
   enabled: true
   host: 0.0.0.0
@@ -185,6 +212,7 @@ token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
 k8s:
   cluster_name: my-cluster
   namespace: my-namespace
+  namespace_agents: newrelic
 server:
   enabled: true
   host: 0.0.0.0
@@ -254,7 +282,7 @@ server:
   port: 4321
 asserts:
   - failedTemplate:
-  errorMessage: "Setting up the status server port is `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead"
+  errorMessage: "Setting up the status server port in `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead"
 
   - it: Fails is expected if chart_version is set manually
 set:
