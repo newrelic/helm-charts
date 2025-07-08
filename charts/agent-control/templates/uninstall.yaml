@@ -32,4 +32,8 @@ requests:
 - uninstall-agent-control
 - --namespace
 - "{{ .Release.Namespace }}"
+- --namespace-agents
+- "{{ index .Values "agent-control-deployment" "subAgentsNamespace" }}"
+- --log-level
+- "{{ .Values.uninstallationJob.logLevel }}"
 {{- end -}}

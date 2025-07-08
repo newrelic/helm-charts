@@ -37,5 +37,7 @@ requests:
 - --namespace
 - "{{ .Release.Namespace }}"
 - --repository-url
-- "{{ (index .Values "agent-control-deployment").chartRepositoryUrl }}"
+- "{{ .Values.installationJob.chartRepositoryUrl }}"
+- --log-level
+- "{{ .Values.installationJob.logLevel }}"
 {{- end -}}

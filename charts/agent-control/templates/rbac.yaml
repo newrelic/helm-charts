@@ -11,6 +11,16 @@ helm.sh/hook-weight: "0"
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job-resources") }}
   namespace: {{ .Release.Namespace }}
 rules:
+  - apiGroups:
+  - source.toolkit.fluxcd.io
+  - helm.toolkit.fluxcd.io
+resources: [ "helmrepositories", "helmreleases" ]
+verbs:
+  - create
+  - update
+  - get
+  - list
+  - watch
   - apiGroups: [ "" ]
 resources: [ "namespaces" ]
 verbs:
@@ -18,18 +28,9 @@ verbs:
   - apiGroups: [ "apps" ]
 resources: [ "deployments", "daemonsets", "statefulsets" ]
 verbs:
-  - list
-  - watch
-  - apiGroups:
-  - source.toolkit.fluxcd.io
-  - helm.toolkit.fluxcd.io
-resources: [ "helmrepositories", "helmreleases" ]
-verbs:
   - get
-  - create
   - list
   - watch
-  - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -52,7 +53,7 @@ name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .
 namespace: {{ .Release.Namespace }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: Role
+kind: ClusterRole
 metadata:
   annotations:
 helm.sh/hook: pre-delete
@@ -61,7 +62,6 @@ helm.sh/hook-weight: "-20"
   labels:
 {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
-  namespace: {{ .Release.Namespace }}
 rules:
   - apiGroups: [ "" ]
 resources: [ "namespaces" ]
@@ -70,11 +70,13 @@ verbs:
   - apiGroups: [ "apps" ]
 resources: [ "deployments", "daemonsets", "statefulsets" ]
 verbs:
+  - get
   - list
   - watch
   - apiGroups: [ "source.toolkit.fluxcd.io", "helm.toolkit.fluxcd.io" ]
 resources: [ "helmrepositories", "helmreleases" ]
 verbs:
+  - get
   - list
   - watch
   - delete
@@ -82,17 +84,18 @@ verbs:
   - apiGroups: [ "newrelic.com" ]
 resources: [ "*" ]
 verbs:
-  - delete
-  - deletecollection
   - get
   - list
   - watch
+  - delete
+  - deletecollection
   - apiGroups: [ "" ]
 resources: [ "configmaps","secrets" ]
 verbs:
-  - delete
+  - get
   - list
   - watch
+  - delete
   - deletecollection
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -104,11 +107,31 @@ helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
 helm.sh/hook-weight: "-20"
   labels:
 {{- include "newrelic.common.labels" . | nindent 4 }}
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job") }}
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
+subjects:
+  - kind: ServiceAccount
+name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
+namespace: {{ .Release.Namespace }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+helm.sh/hook: pre-delete
+helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+helm.sh/hook-weight: "-20"
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-agents") }}
+  namespace: {{ index .Values "agent-control-deployment" "subAgentsNamespace" }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
 subjects:
   - kind: ServiceAccount

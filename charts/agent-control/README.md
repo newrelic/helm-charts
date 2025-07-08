@@ -72,8 +72,8 @@ path: dynamic-agent-type.yaml
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | agent-control-deployment | object | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
-| agent-control-deployment.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-deployment` chart will be installed. |
 | agent-control-deployment.enabled | bool | `true` | Enable the installation of the Agent Control. |
+| agent-control-deployment.subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |
 | flux2 | object | See `values.yaml` | Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml |
 | flux2.clusterDomain | string | `"cluster.local"` | This is the domain name of the cluster. |
 | flux2.enabled | bool | `true` | Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Agent Control. |
@@ -83,9 +83,12 @@ path: dynamic-agent-type.yaml
 | flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on the whole cluster. |
 | fullnameOverride | string | `""` | Override the full name of the release |
+| installationJob.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-deployment` chart will be installed. |
+| installationJob.logLevel | string | info | Log level for the installation job. |
 | nameOverride | string | `""` | Override the name of the chart |
-| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"nightly"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.41.0"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| uninstallationJob.logLevel | string | info | Log level for the uninstallation job. |
 
 ## Maintainers
 
