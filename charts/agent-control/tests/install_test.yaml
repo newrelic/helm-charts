@@ -16,8 +16,9 @@ tests:
           value: "test:123"
   - it: should allow custom repositoryUrl
     set:
-      agent-control-deployment:
+      installationJob:
         chartRepositoryUrl: "https://example.com/some/url"
+      agent-control-deployment:
         cluster: cluster
         licenseKey: some_license_key
         identityClientId: some_client_id
@@ -30,7 +31,7 @@ tests:
       - template: templates/install.yaml
         lengthEqual:
           path: spec.template.spec.containers[0].command
-          count: 10
+          count: 12
       - template: templates/install.yaml
         equal:
           path: spec.template.spec.containers[0].command[8]
@@ -55,4 +56,4 @@ tests:
       - template: templates/install.yaml
         lengthEqual:
           path: spec.template.spec.containers[0].command
-          count: 10
+          count: 12
