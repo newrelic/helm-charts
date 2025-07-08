@@ -37,7 +37,7 @@ spec:
             - --namespace
             - "{{ .Release.Namespace }}"
             - --repository-url
-            - "{{ (index .Values "agent-control-deployment").chartRepositoryUrl }}"
+            - "{{ .Values.installationJob.chartRepositoryUrl }}"
             - --log-level
-            - {{ default "info" .Values.installationJob.logLevel }}
+            - "{{ .Values.installationJob.logLevel }}"
 {{- end -}}

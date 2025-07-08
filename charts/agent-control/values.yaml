@@ -14,6 +14,8 @@ toolkitImage:
   pullSecrets: []
 
 installationJob:
+  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+  chartRepositoryUrl: https://helm-charts.newrelic.com
   # -- Log level for the installation job.
   # @default -- info
   logLevel: "info"
@@ -28,9 +30,6 @@ uninstallationJob:
 agent-control-deployment:
   # -- Enable the installation of the Agent Control.
   enabled: true
-
-  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
-  chartRepositoryUrl: https://helm-charts.newrelic.com
 
   # -- Namespace where the sub-agents will be deployed.
   # @default -- "newrelic"
