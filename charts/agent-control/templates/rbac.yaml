@@ -111,7 +111,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
 subjects:
   - kind: ServiceAccount
@@ -131,7 +131,7 @@ metadata:
   namespace: {{ index .Values "agent-control-deployment" "subAgentsNamespace" }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
-  kind: Role
+  kind: ClusterRole
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
 subjects:
   - kind: ServiceAccount
