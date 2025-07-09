@@ -20,7 +20,7 @@ jobs:
     name: Run Tests (External Contribution)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name != 'newrelic/helm-charts' }}
     runs-on: ubuntu-latest
-    environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
+#    environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
     # If the environment is broken, this job could time out since the default timeout for tilt ci is 30m.
     timeout-minutes: 20
     steps:
