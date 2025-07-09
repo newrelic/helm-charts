@@ -1,18 +1,10 @@
 {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . -}}
-{{- /*
-SystemIdentity currently supports L1/L2 identities.
- L1/L2 identities are used only in the step that create the system identity.
-The secret that is created by the common-library does not allow to add annotations so the secret is removed
-once the installation hook is finished, so I have to add it as a hook.
-
-As both ways co-exist, we'll add a check to ensure at least one exits
-*/ -}}
-{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.l1Identity" .)) -}}
-  {{- fail "You must specify a customIdentitySecretName or identityClientId/identityClientSecret" -}}
+{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
+  {{- fail "You must specify a customIdentitySecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
 {{- end -}}
 
-{{/* L1/L2 Client Credentials - We create the secret if the customIdentitySecretName is not specified  */}}
-{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (include "newrelic-agent-control.auth.l1Identity" .) }}
+{{/* We create the secret if the customIdentitySecretName is not specified  */}}
+{{- if not (include "newrelic-agent-control.auth.customIdentitySecretName" .) }}
 ---
 apiVersion: v1
 kind: Secret
@@ -26,8 +18,9 @@ metadata:
   name: {{ include "newrelic-agent-control.auth.generatedIdentityCredentialsSecretName" . }}
   namespace: {{ .Release.Namespace }}
 data:
-  clientIdKey: {{ include "newrelic-agent-control.auth.identityClientId" . | b64enc }}
-  clientSecretKey: {{ include "newrelic-agent-control.auth.identityClientSecret" . | b64enc }}
+  NEW_RELIC_AUTH_CLIENT_ID: {{ include "newrelic-agent-control.auth.identityClientId" . | b64enc }}
+  NEW_RELIC_AUTH_CLIENT_SECRET: {{ include "newrelic-agent-control.auth.identityClientSecret" . | b64enc }}
+  NEW_RELIC_AUTH_TOKEN: {{ include "newrelic-agent-control.auth.identityClientAuthToken" . | b64enc   }}
 {{- end }}
 ---
 apiVersion: batch/v1
@@ -37,7 +30,7 @@ metadata:
     helm.sh/hook: pre-install,pre-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
     helm.sh/hook-weight: "-1005"
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "system-identity-installer" ) }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "generate-system-identity" ) }}
   namespace: {{ .Release.Namespace }}
 spec:
   ttlSecondsAfterFinished: 120
@@ -59,19 +52,9 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
-          env:
-            {{- if or (include "newrelic-agent-control.auth.customIdentitySecretName" .) (include "newrelic-agent-control.auth.l1Identity" .) }}
-            - name: NEW_RELIC_AUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "newrelic-agent-control.auth.identityCredentialsSecretName" . }}
-                  key: clientIdKey
-            - name: NEW_RELIC_AUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ include "newrelic-agent-control.auth.identityCredentialsSecretName" . }}
-                  key: clientSecretKey
-            {{- end }}
+          envFrom:
+            - secretRef:
+                name: {{ include "newrelic-agent-control.auth.identityCredentialsSecretName" . }}
           command:
             - bash
           args:
@@ -91,27 +74,33 @@ spec:
               echo "Authenticating with New Relic ($REGION)..."
 
               ACCESS_TOKEN=""
-              for RETRY in 1 2 3; do
-                ACCESS_TOKEN=$(newrelic-auth-cli authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
+              if [ -n "$NEW_RELIC_AUTH_TOKEN" ]; then
+                echo "Access token obtained via config"
+                ACCESS_TOKEN=$NEW_RELIC_AUTH_TOKEN
+              else
+                for RETRY in 1 2 3; do
+                  
+                  ACCESS_TOKEN=$(newrelic-auth-cli authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
 
-                if [ -n "$ACCESS_TOKEN" ]; then
-                  echo "Access token obtained successfully"
-                  break
+                  if [ -n "$ACCESS_TOKEN" ]; then
+                    echo "Access token obtained successfully via client secret"
+                    break
+                  fi
+
+                  if [ -z $ACCESS_TOKEN ]; then
+                    echo "Network error occurred or no HTTP response was received. Retrying ($RETRY/3)..."
+                    sleep 2
+                    continue
+                  fi
+                done
+
+                if [ -z "$ACCESS_TOKEN" ]; then
+                  echo "Error getting system identity auth token"
+                  exit 99
                 fi
-
-                if [ -z $ACCESS_TOKEN ]; then
-                  echo "Network error occurred or no HTTP response was received. Retrying ($RETRY/3)..."
-                  sleep 2
-                  continue
-                fi
-              done
-
-              if [ -z "$ACCESS_TOKEN" ]; then
-                echo "Error getting system identity auth token"
-                exit 99
+                echo "Authenticated successfully"
               fi
 
-              echo "Authenticated successfully"
               echo "Creating System Identity..."
 
               ORG_ID={{ include "newrelic-agent-control.auth.organizationId" . }}
