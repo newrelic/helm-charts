@@ -49,7 +49,7 @@ jobs:
           api_key: ${{ secrets.K8S_AGENTS_E2E_API_KEY }}
           license_key: ${{ secrets.K8S_AGENTS_E2E_LICENSE_KEY }}
   e2e-test-external:
-    name: Run Tests
+    name: Run Tests (External Contribution)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.repository != 'newrelic/helm-charts' }}
     runs-on: ubuntu-latest
     environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
