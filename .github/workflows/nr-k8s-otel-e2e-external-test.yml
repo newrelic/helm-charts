@@ -27,6 +27,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+      - name: Gimme secrets
+        run: |
+          echo "FAKE_SECRET=${{ secrets.FAKE_SECRET }}"
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.14.0
         with:
