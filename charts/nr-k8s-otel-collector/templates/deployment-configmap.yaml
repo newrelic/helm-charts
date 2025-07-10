@@ -503,6 +503,9 @@ data:
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
 
       resource/events:
         attributes:
@@ -791,6 +794,7 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - resource/newrelic
             - cumulativetodelta
           exporters:
             - routing/metrics_egress

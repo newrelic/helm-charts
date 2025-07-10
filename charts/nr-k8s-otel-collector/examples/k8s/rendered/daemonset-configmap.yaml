@@ -151,11 +151,7 @@ data:
 
     processors:
       
-      resource/newrelic_set_entity:
-        attributes:
-        - action: upsert
-          key: newrelic.entity.type
-          value: k8s
+      
 
       groupbyattrs:
         keys:
@@ -516,6 +512,9 @@ data:
           - key: "newrelic.chart.version"
             action: upsert
             value: 0.8.36
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
 
       transform/low_data_mode_inator:
         metric_statements:
@@ -720,6 +719,7 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - resource/newrelic
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
@@ -727,7 +727,7 @@ data:
           receivers:
             - routing/metrics_egress
           processors:
-            - resource/newrelic_set_entity
+            
             - batch
           exporters:
             - otlphttp/newrelic
@@ -756,7 +756,7 @@ data:
           receivers:
             - routing/logs_egress
           processors:
-            - resource/newrelic_set_entity
+            
             - batch
           exporters:
             - otlphttp/newrelic
