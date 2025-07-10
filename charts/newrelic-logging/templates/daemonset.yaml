@@ -162,9 +162,12 @@ spec:
           ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
+            {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
+
             - name: lua-scripts
               mountPath: /fluent-bit/scripts
               readOnly: true
+            {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
@@ -179,9 +182,12 @@ spec:
             failureThreshold: {{  .Values.livenessProbe.failureThreshold }}
 {{- end }}
       volumes:
+                          {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
+
         - name: lua-scripts
           configMap:
             name: {{ include "newrelic-logging.fullname" . }}-lua
+                           {{- end }}
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}

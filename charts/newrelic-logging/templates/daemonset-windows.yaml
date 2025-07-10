@@ -132,9 +132,12 @@ spec:
           ports: {{ toYaml $.Values.exposedPorts | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
+
             - name: lua-scripts
               mountPath: /fluent-bit/scripts
               readOnly: true
+               {{- end }}
             - mountPath: C:\fluent-bit\etc
               name: fluent-bit-config
             - mountPath: C:\var\log
@@ -164,9 +167,11 @@ spec:
             failureThreshold: {{ default 3 $.Values.livenessProbe.failureThreshold }}
 {{- end }}      
       volumes:
+       {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
         - name: lua-scripts
           configMap:
             name: {{ include "newrelic-logging.fullname" $ }}-lua
+        {{- end }}
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" $ }}
