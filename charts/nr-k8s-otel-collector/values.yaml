@@ -49,6 +49,13 @@ dnsConfig: {}
 
 # -- Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors
 processors:
+  resource/newrelic_set_entity:
+    attributes:
+        # newrelic.entity.type is needed to make sure we don't synthesize this as a service
+        # when service.name is present in the metric
+        - key: newrelic.entity.type
+          action: upsert
+          value: "k8s"
 
 # -- Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters
 exporters:
@@ -65,6 +72,7 @@ metricsPipeline:
     # -- List of processors to be applied to your Metrics after the NR processors have been applied.
     # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
     processors:
+      - resource/newrelic_set_entity
     # -- List of additional exports to export the processed Metrics.
     exporters:
 
@@ -80,6 +88,7 @@ logsPipeline:
     # -- List of processors to be applied to your Logs after the NR processors have been applied.
     # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
     processors:
+      - resource/newrelic_set_entity
     # -- List of additional exports to export the processed Logs.
     exporters:
 
