@@ -51,11 +51,11 @@ dnsConfig: {}
 processors:
   resource/newrelic_set_entity:
     attributes:
-        # newrelic.entity.type is needed to make sure we don't synthesize this as a service
-        # when service.name is present in the metric
-        - key: newrelic.entity.type
-          action: upsert
-          value: "k8s"
+      # newrelic.entity.type is needed to make sure we don't synthesize this as a service
+      # when service.name is present in the metric
+      - key: newrelic.entity.type
+        action: upsert
+        value: "k8s"
 
 # -- Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters
 exporters:
