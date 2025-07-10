@@ -67,6 +67,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
+| subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |
 | systemIdentityRegistration | object | See `values.yaml` | Image for the system identity registration process |
 | tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
 | verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |

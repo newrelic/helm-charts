@@ -8,10 +8,22 @@ toolkitImage:
   registry:
   repository: newrelic/newrelic-agent-control-cli
   # @default It defaults to `appVersion` in `Chart.yaml`.
-  tag: "0.40.0"
+  tag: "0.41.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
+
+installationJob:
+  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+  chartRepositoryUrl: https://helm-charts.newrelic.com
+  # -- Log level for the installation job.
+  # @default -- info
+  logLevel: "info"
+
+uninstallationJob:
+  # -- Log level for the uninstallation job.
+  # @default -- info
+  logLevel: "info"
 
 # -- Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
 # @default -- See `values.yaml`
@@ -19,8 +31,9 @@ agent-control-deployment:
   # -- Enable the installation of the Agent Control.
   enabled: true
 
-  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
-  chartRepositoryUrl: https://helm-charts.newrelic.com
+  # -- Namespace where the sub-agents will be deployed.
+  # @default -- "newrelic"
+  subAgentsNamespace: "newrelic"
 
 # -- Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
