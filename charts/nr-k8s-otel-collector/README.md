@@ -128,7 +128,6 @@ to export data to this connector which can then be connected to the New Relic ma
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | daemonset.affinity | object | `{}` | Sets daemonset pod affinities. Overrides `affinity` and `global.affinity` |
-| daemonset.configMap | object | See `values.yaml` | Settings for daemonset configmap |
 | daemonset.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | daemonset.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
 | daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
@@ -137,11 +136,10 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
-| daemonset.ports | object | `{}` | Container ports to be added to the Daemonset. |
+| daemonset.ports | object | `{"grpc":{"containerPort":4317,"enabled":true,"protocol":"TCP"},"http":{"containerPort":4318,"enabled":true,"protocol":"TCP"},"metrics":{"containerPort":8888,"enabled":true,"protocol":"TCP","servicePort":8888}}` | Ports to be opened in the daemonset |
 | daemonset.resources | object | `{}` | Sets resources for the daemonset. |
 | daemonset.tolerations | list | `[]` | Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | deployment.affinity | object | `{}` | Sets deployment pod affinities. Overrides `affinity` and `global.affinity` |
-| deployment.configMap | object | See `values.yaml` | Settings for deployment configmap |
 | deployment.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | deployment.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
 | deployment.containerSecurityContext | object | `{}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
@@ -150,7 +148,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
-| deployment.ports | object | `{}` | Container ports to be added to the Deployment. |
+| deployment.ports | object | `{"grpc":{"containerPort":4317,"enabled":true,"protocol":"TCP"},"http":{"containerPort":4318,"enabled":true,"protocol":"TCP"},"metrics":{"containerPort":8888,"enabled":true,"protocol":"TCP","servicePort":8888}}` | Ports to be opened in the deployment |
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
