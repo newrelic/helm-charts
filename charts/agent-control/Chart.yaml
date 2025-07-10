@@ -3,19 +3,17 @@ name: agent-control
 description: Bootstraps New Relic' Agent Control
 
 type: application
-version: 0.0.55-beta
+version: 0.0.71
+# This is the agent-control-deployment chart version.
+appVersion: 0.0.57
 
 dependencies:
   - name: flux2
     repository: https://fluxcd-community.github.io/helm-charts
-    version: 2.14.1
+    version: 2.15.0
     condition: flux2.enabled
-  - name: agent-control-deployment
-    version: 0.0.43-beta
-    condition: agent-control-deployment.enabled
-    # The following dependency is needed as sub-dependency of agent-control-deployment
   - name: common-library
-    version: 1.3.1
+    version: 1.3.3
     repository: https://helm-charts.newrelic.com
 
 keywords:
@@ -23,15 +21,6 @@ keywords:
   - agent-control
 
 maintainers:
-  - name: alvarocabanas
-    url: https://github.com/alvarocabanas
-  - name: DavSanchez
-    url: https://github.com/DavSanchez
-  - name: gsanchezgavier
-    url: https://github.com/gsanchezgavier
-  - name: paologallinaharbur
-    url: https://github.com/paologallinaharbur
-  - name: rubenruizdegauna
-    url: https://github.com/rubenruizdegauna
-  - name: sigilioso
-    url: https://github.com/sigilioso
+  # Agent Control Team
+  - name: ac
+    url: https://github.com/orgs/newrelic/teams/ac/members

@@ -1,0 +1,27 @@
+---
+# Source: nr-k8s-otel-collector/charts/kube-state-metrics/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nr-k8s-otel-collector-kube-state-metrics
+  namespace: newrelic
+  labels:    
+    helm.sh/chart: kube-state-metrics-5.18.0
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/version: "2.11.0"
+  annotations:
+spec:
+  type: "ClusterIP"
+  ports:
+  - name: "http"
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+  
+  selector:    
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: nr-k8s-otel-collector

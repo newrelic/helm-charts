@@ -2,6 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
+cluster: ""
+# -- This set this license key to use. Can be configured also with `global.licenseKey`
+licenseKey: ""
+
 kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository.
   # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations
@@ -11,22 +16,25 @@ kube-state-metrics:
   # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
   prometheusScrape: false
 
+# This chart has support for OpenShift and GKE Autopilot.
+# -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
+provider: ""
+
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nr-otel-collector
+  repository: newrelic/nrdot-collector-k8s
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "0.8.3"
+  tag: "1.2.0"
 
-# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
-cluster: ""
-# -- This set this license key to use. Can be configured also with `global.licenseKey`
-licenseKey: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
+
+# -- Configures the Otel collector(s) to send all data through the specified proxy.
+proxy: ""
 
 # -- Additional labels for chart pods
 podLabels: {}
@@ -39,9 +47,41 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
-# -- If deploying to a GKE autopilot cluster, set to true
-# @default -- `false`
-gkeAutopilot: false
+# -- Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors
+processors:
+
+# -- Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters
+exporters:
+
+# -- Edit how the NR Metrics pipeline handles your Metrics
+metricsPipeline:
+  collectorIngress:
+    # -- List of processors to be applied to your RAW Metrics.
+    # This is applied at the beginning of the pipeline
+    processors:
+    # -- List of exporters that you'd like to use to export RAW Metrics.
+    exporters:
+  collectorEgress:
+    # -- List of processors to be applied to your Metrics after the NR processors have been applied.
+    # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
+    processors:
+    # -- List of additional exports to export the processed Metrics.
+    exporters:
+
+# -- Edit how the NR Logs pipeline handles your Logs
+logsPipeline:
+  collectorIngress:
+    # -- List of processors to be applied to your RAW Logs.
+    # This is applied at the beginning of the pipeline
+    processors:
+    # -- List of exporters that you'd like to use to export RAW Logs.
+    exporters:
+  collectorEgress:
+    # -- List of processors to be applied to your Logs after the NR processors have been applied.
+    # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
+    processors:
+    # -- List of additional exports to export the processed Logs.
+    exporters:
 
 daemonset:
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -81,7 +121,14 @@ daemonset:
       protocol: TCP
   configMap:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
-    config: {}
+    overrideConfig: {}
+    # -- Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
+    extraConfig:
+      receivers:
+      processors:
+      exporters:
+      connectors:
+      pipelines:
 
 deployment:
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -120,7 +167,14 @@ deployment:
       protocol: TCP
   configMap:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
-    config: {}
+    overrideConfig: {}
+    # -- Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
+    extraConfig:
+      receivers:
+      processors:
+      exporters:
+      connectors:
+      pipelines:
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}

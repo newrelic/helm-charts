@@ -1,0 +1,44 @@
+name: K8s OTEL E2E Test Suite
+
+on:
+  pull_request:
+    paths:
+      - 'charts/nr-k8s-otel-collector/**'
+      - '.github/workflows/nr-k8s-otel-e2e.yml'
+      - '.github/workflows/nr-k8s-otel-e2e-external.yml'
+
+permissions:
+  contents: read
+
+env:
+  # NOTICE that apart from this, the versions in the chart linter matrix needs to be bumped too.
+  LATEST_K8S_VERSION: 'v1.32.0'
+  MINIKUBE_VERSION: 'v1.35.0'
+
+jobs:
+  e2e-test:
+    name: Run Tests
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name == 'newrelic/helm-charts' }}
+    runs-on: ubuntu-latest
+    # If the environment is broken, this job could time out since the default timeout for tilt ci is 30m.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.14.0
+        with:
+          minikube version: ${{ env.MINIKUBE_VERSION }}
+          kubernetes version: ${{ env.LATEST_K8S_VERSION }}
+          # default driver doesn't support 'eval $$(minikube docker-env)'.
+          driver: docker
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run e2e-test
+        uses: newrelic/newrelic-integration-e2e-action@v1
+        with:
+          retry_seconds: 90
+          retry_attempts: 10
+          agent_enabled: false
+          spec_path: charts/nr-k8s-otel-collector/e2e/test-specs.yml
+          account_id: ${{ secrets.K8S_AGENTS_E2E_ACCOUNT_ID }}
+          api_key: ${{ secrets.K8S_AGENTS_E2E_API_KEY }}
+          license_key: ${{ secrets.K8S_AGENTS_E2E_LICENSE_KEY }}

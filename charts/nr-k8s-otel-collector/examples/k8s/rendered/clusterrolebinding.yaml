@@ -1,0 +1,20 @@
+---
+# Source: nr-k8s-otel-collector/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nr-k8s-otel-collector
+  labels:
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nr-k8s-otel-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nr-k8s-otel-collector-0.8.37
+subjects:
+  - kind: ServiceAccount
+    name: nr-k8s-otel-collector
+    namespace: newrelic
+roleRef:
+  kind: ClusterRole
+  name: nr-k8s-otel-collector
+  apiGroup: rbac.authorization.k8s.io

@@ -1,0 +1,12 @@
+# This is a dummy CM to test that provider is templated correctly.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-provider
+  namespace: {{ .Release.Namespace }}
+data:
+  provider: {{ include "newrelic.common.provider" . }}
+  {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm */}}
+  gkeAutopilot: {{ if include "newrelic.common.gkeAutopilot" . }}true{{ else }}false{{ end }}
+  openShift: {{ if include "newrelic.common.openShift" . }}true{{ else }}false{{ end }}
+  fargate: {{ if include "newrelic.common.fargate" . }}true{{ else }}false{{ end }}

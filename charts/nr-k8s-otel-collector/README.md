@@ -34,12 +34,12 @@ kubectl logs <otel-pod-name> -n newrelic
 ```
 
 ### Confirm data coming through in New Relic
-You should see data reporting into New Relic within a couple of seconds to the `InfrastructureEvent` table, `Metric` table, and `Log` tables.
+You should see data reporting into New Relic within a couple of seconds to the `OtlpInfrastructureEvent` table, `Metric` table, and `Log` tables.
 ```
 FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 ```
-FROM InfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+FROM OtlpInfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 ```
 FROM Log SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
@@ -65,8 +65,58 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 If using GKE Autopilot, please set the following configuration in your values.yaml file in order for the agent to work with GKE Autopilot.
 
 ```
-gkeAutopilot: false
+provider: "GKE_AUTOPILOT"
 ```
+
+## OpenShift
+
+If using OpenShift, please set the following configuration in your values.yaml file in order for the agent to work with OpenShift.
+
+```
+provider: "OPEN_SHIFT"
+```
+
+## Helmless installation
+In the event that you cannot use helm to install this chart we have provided rendered files for you.
+The rendered files can be found under [examples/k8s/rendered](examples/k8s/rendered).
+Copy the contents of [examples/k8s/rendered](examples/k8s/rendered) to your local workspace.
+There's a couple of values you'll need to plug in first, but after you make some quick edits you'll be able to deploy these K8s files as you normally would.
+
+Update the license key in [secret.yaml](examples/k8s/rendered/secret.yaml).
+Ensure that you have encoded your license key in base64
+```yaml
+data:
+  licenseKey: <Your Base64 encoded License key>
+```
+
+You will also have to manually update your cluster name in [daemonset-configmap.yaml](examples/k8s/rendered/daemonset-configmap.yaml), and [deployment-configmap.yaml](examples/k8s/rendered/deployment-configmap.yaml).
+Look for uses of `k8s.cluster.name` and replace `<cluster_name>` with your cluster's name.
+```yaml
+- key: k8s.cluster.name
+  action: upsert
+  value: <cluster_name>
+```
+
+After these required fields are updated you can use the yamls to install this project onto your cluster with your preferred method.
+
+### Install the chart with kubectl
+```bash
+kubectl create namespace newrelic
+kubectl apply -n newrelic -R -f rendered
+```
+
+### Uninstall the chart with kubectl
+```bash
+kubectl delete -R -f rendered
+kubectl delete namespaces newrelic
+```
+### Adding custom pipelines
+The `Values.yaml` accepts configurations for additional receivers, processors, exporters, connectors and pipelines. Configuration added here will be
+propagated to the respective configmap.
+
+### Utilizing New Relic maintained pipelines
+The pipelines maintained by New Relic accept metrics through the `routing/nr_pipelines` connector. Additional pipelines added in `Values.yaml` can be configured
+to export data to this connector which can then be connected to the New Relic maintained pipelines.
 
 ## Values
 
@@ -79,7 +129,8 @@ gkeAutopilot: false
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | daemonset.affinity | object | `{}` | Sets daemonset pod affinities. Overrides `affinity` and `global.affinity` |
 | daemonset.configMap | object | See `values.yaml` | Settings for daemonset configmap |
-| daemonset.configMap.config | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
+| daemonset.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
+| daemonset.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
 | daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
@@ -91,7 +142,8 @@ gkeAutopilot: false
 | daemonset.tolerations | list | `[]` | Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | deployment.affinity | object | `{}` | Sets deployment pod affinities. Overrides `affinity` and `global.affinity` |
 | deployment.configMap | object | See `values.yaml` | Settings for deployment configmap |
-| deployment.configMap.config | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
+| deployment.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
+| deployment.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
 | deployment.containerSecurityContext | object | `{}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
 | deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
 | deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
@@ -102,20 +154,33 @@ gkeAutopilot: false
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
-| gkeAutopilot | bool | `false` | If deploying to a GKE autopilot cluster, set to true |
+| exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
 | image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| image.repository | string | `"newrelic/nr-otel-collector"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
-| image.tag | string | `"0.7.1"` | Overrides the image tag whose default is the chart appVersion. |
+| image.repository | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
+| image.tag | string | `"1.2.0"` | Overrides the image tag whose default is the chart appVersion. |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
+| logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
+| logsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed Logs. |
+| logsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your Logs after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
+| logsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW Logs. |
+| logsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Logs. This is applied at the beginning of the pipeline |
 | lowDataMode | bool | `true` | Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI |
+| metricsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Metrics pipeline handles your Metrics |
+| metricsPipeline.collectorEgress.exporters | string | `nil` | List of additional exports to export the processed Metrics. |
+| metricsPipeline.collectorEgress.processors | string | `nil` | List of processors to be applied to your Metrics after the NR processors have been applied. This is applied at the end of the pipeline after the default NR processors have been applied to the data. |
+| metricsPipeline.collectorIngress.exporters | string | `nil` | List of exporters that you'd like to use to export RAW Metrics. |
+| metricsPipeline.collectorIngress.processors | string | `nil` | List of processors to be applied to your RAW Metrics. This is applied at the beginning of the pipeline |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging` |
 | podLabels | object | `{}` | Additional labels for chart pods |
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
+| processors | string | `nil` | Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors |
+| provider | string | `""` | The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT" |
+| proxy | string | `""` | Configures the Otel collector(s) to send all data through the specified proxy. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
@@ -163,5 +228,5 @@ Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": 
 
 ## Maintainers
 
-* [csongnr](https://github.com/csongnr)
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
+* [Philip-R-Beckwith](https://github.com/Philip-R-Beckwith)
