@@ -494,7 +494,7 @@ data:
         override: true
     {{- end }}
 
-      resource/metrics:
+      resource/newrelic:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
@@ -503,10 +503,9 @@ data:
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
-          - key: service.name
-            action: delete
-          - key: service_name
-            action: delete
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
 
       resource/events:
         attributes:
@@ -757,7 +756,7 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-            - resource/metrics
+            - resource/newrelic
             {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
             # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
@@ -784,7 +783,7 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-            - resource/metrics
+            - resource/newrelic
             - attributes/self
             - cumulativetodelta
           exporters:
@@ -795,6 +794,8 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - resource/newrelic
+            - cumulativetodelta
           exporters:
             - routing/metrics_egress
         metrics/egress:
@@ -824,6 +825,7 @@ data:
             - memory_limiter
             - transform/events
             - resource/events
+            - resource/newrelic
           exporters:
             - routing/logs_egress
         logs/egress:
