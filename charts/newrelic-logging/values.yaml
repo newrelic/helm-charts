@@ -41,6 +41,13 @@ fluentBit:
   # For more information on Fluent Bit monitoring, visit:
   # https://docs.fluentbit.io/manual/administration/monitoring
   sendMetrics: false
+  # Configuration for sending metrics of Fluentbit to NewRelic
+  # Allowed values are: `none`, `basic`, `advanced`
+  # none: No metrics are sent
+  # basic: Only the build info metric is sent
+  # advanced: All the metrics are sent to New Relic at 1 minute scrape interval
+  # Note: By default, the `basic` option is used.
+  fluentBitMetrics: "basic"
   extraEnv: []
   # extraEnv:
   # - name: HTTPS_PROXY
@@ -193,6 +200,7 @@ fluentBit:
 #          Time_Key     time
 #          Time_Format  %Y-%m-%dT%H:%M:%S.%L
 #          Time_Keep    On
+
 
 image:
   repository: newrelic/newrelic-fluentbit-output
