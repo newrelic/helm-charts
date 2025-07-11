@@ -1,0 +1,34 @@
+suite: agent control's config
+templates:
+  - templates/namespace-agents.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+chart:
+  version: 1.2.3-beta
+tests:
+  - it: sub-agents namespace is rendered if different from AC namespace
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          enabled: false
+      subAgentsNamespace: my-subagents-namespace
+    asserts:
+      - hasDocuments:
+          count: 1
+      - containsDocument:
+          kind: Namespace
+          apiVersion: v1
+          name: my-subagents-namespace
+
+  - it: sub-agents namespace is not rendered if same as AC namespace
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          enabled: false
+      subAgentsNamespace: my-namespace
+    asserts:
+      - hasDocuments:
+          count: 0
