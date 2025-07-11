@@ -28,19 +28,15 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | config.fleet_control.auth.organizationId | string | `""` | Organization ID where fleets will live. |
 | config.fleet_control.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation. This options is mutually exclusive with `plain`. |
 | config.fleet_control.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation. This options is mutually exclusive with `base64`. |
-| config.fleet_control.auth.secret.client_id.secret_key | string | `client_id` | Key inside the secret containing the client ID. |
 | config.fleet_control.auth.secret.create | bool | `true` |  |
 | config.fleet_control.auth.secret.name | string | release name suffixed with "-auth" | Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret will have. |
 | config.fleet_control.auth.secret.private_key.base64_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation. This options is mutually exclusive with `plain_pem`. |
 | config.fleet_control.auth.secret.private_key.plain_pem | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text if you want to skip its creation. This options is mutually exclusive with `base64_pem`. |
-| config.fleet_control.auth.secret.private_key.secret_key | string | `private_key` | Key inside the secret containing the private key. |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
 | config.status_server.port | int | See `values.yaml` | Set the status server port |
 | config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
-| customIdentityClientIdSecretKey | string | `""` |  |
-| customIdentityClientSecretSecretKey | string | `""` |  |
 | customIdentitySecretName | string | `""` | In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there. |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
