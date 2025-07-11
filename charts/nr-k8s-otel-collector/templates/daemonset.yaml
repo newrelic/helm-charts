@@ -90,6 +90,11 @@ spec:
             {{- with .Values.daemonset.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
+          {{- $ports := include "nrKubernetesOtel.daemonset.ports" .}}
+          {{- if $ports }}
+          ports:
+            {{- $ports | indent 12 }}
+          {{- end }}
           volumeMounts:
             {{- if not ( include "newrelic.common.gkeAutopilot" . ) }}
             - name: host-fs
