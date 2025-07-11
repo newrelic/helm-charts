@@ -106,6 +106,27 @@ server:
   host: 0.0.0.0
   port: 51200
 
+  - it: sub-agents namespace can be the same as AC namespace
+set:
+  cluster: my-cluster
+  config:
+fleet_control:
+  enabled: false
+  subAgentsNamespace: my-namespace
+asserts:
+  - equal:
+  path: data["local_config"]
+  value: |
+agents: {}
+k8s:
+  cluster_name: my-cluster
+  namespace: my-namespace
+  namespace_agents: my-namespace
+server:
+  enabled: true
+  host: 0.0.0.0
+  port: 51200
+
   - it: agent control's config always include cluster_name, namespace and defaults
 set:
   cluster: my-cluster
