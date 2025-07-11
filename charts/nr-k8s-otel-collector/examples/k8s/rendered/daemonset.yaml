@@ -30,7 +30,14 @@ spec:
       containers:
         - name: otel-collector-daemonset
           securityContext:
-            privileged: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
           image: "newrelic/nrdot-collector-k8s:1.2.0"
           imagePullPolicy: IfNotPresent
           args: ["--config", "/config/daemonset-config.yaml", "--feature-gates","receiver.kubeletstats.enableCPUUsageMetrics"]
