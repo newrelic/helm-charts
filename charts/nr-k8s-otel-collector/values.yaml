@@ -97,6 +97,14 @@ daemonset:
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
   containerSecurityContext:
     privileged: false
+    runAsNonRoot: true 
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
   # -- Sets resources for the daemonset.
   resources: {}
   # -- Sets additional environment variables for the daemonset.
