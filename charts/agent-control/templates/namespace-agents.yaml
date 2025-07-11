@@ -1,8 +1,13 @@
 {{- if not (lookup "v1" "Namespace" "" (index .Values "agent-control-deployment" "subAgentsNamespace")) -}}
+{{- /* 
+
+*/ -}}
+{{- if not (eq .Release.Namespace (index .Values "agent-control-deployment" "subAgentsNamespace")) -}}
 apiVersion: v1
 kind: Namespace
 metadata:
   annotations:
     "helm.sh/resource-policy": keep
   name: {{ index .Values "agent-control-deployment" "subAgentsNamespace" }}
+{{- end -}}
 {{- end -}}
