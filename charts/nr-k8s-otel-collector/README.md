@@ -131,7 +131,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.configMap | object | See `values.yaml` | Settings for daemonset configmap |
 | daemonset.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | daemonset.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
-| daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
