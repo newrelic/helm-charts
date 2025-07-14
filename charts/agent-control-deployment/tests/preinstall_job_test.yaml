@@ -11,7 +11,7 @@ tests:
   - it: by default it fails with missing values
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a customIdentitySecretName or identityClientId/identityClientSecret
+  errorMessage: You must specify a customIdentitySecretName or identityClientId identityClientSecret/identityClientAuthToken
 
   - it: with fleet disabled, the job should template correctly 0 documents.
 set:
@@ -33,23 +33,50 @@ organizationId: test
 asserts:
   - hasDocuments:
   count: 5 # Secret, job, and 3 RBAC manifests
+  - documentIndex: 0
+equal:
+  path: data
+  value:
+NEW_RELIC_AUTH_CLIENT_ID: dGVzdA==
+NEW_RELIC_AUTH_CLIENT_SECRET: dGVzdA==
+NEW_RELIC_AUTH_TOKEN: null
   - documentIndex: 1
 isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
   - documentIndex: 1
 equal:
-  path: spec.template.spec.containers[0].env
+  path: spec.template.spec.containers[0].envFrom
   value:
-- name: NEW_RELIC_AUTH_CLIENT_ID
-  valueFrom:
-secretKeyRef:
-  key: clientIdKey
-  name: agent-control-preinstall-client-credentials
-- name: NEW_RELIC_AUTH_CLIENT_SECRET
-  valueFrom:
-secretKeyRef:
-  key: clientSecretKey
-  name: agent-control-preinstall-client-credentials
+- secretRef:
+name: agent-control-preinstall-client-credentials
+
+  - it: with identityClientId/identityClientAuthToken set, the job should template correctly.
+set:
+  identityClientId: test
+  identityClientAuthToken: test
+  config:
+fleet_control:
+  auth:
+organizationId: test
+asserts:
+  - hasDocuments:
+  count: 5 # Secret, job, and 3 RBAC manifests
+  - documentIndex: 0
+equal:
+  path: data
+  value:
+NEW_RELIC_AUTH_CLIENT_ID: dGVzdA==
+NEW_RELIC_AUTH_CLIENT_SECRET: null
+NEW_RELIC_AUTH_TOKEN: dGVzdA==
+  - documentIndex: 1
+isNotNullOrEmpty:
+  path: spec.template.spec.containers[0].args
+  - documentIndex: 1
+equal:
+  path: spec.template.spec.containers[0].envFrom
+  value:
+- secretRef:
+name: agent-control-preinstall-client-credentials
 
   - it: with a custom secret for clientId and clientSecret, the secret should not be created.
 set:
@@ -66,18 +93,10 @@ isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
   - documentIndex: 0
 equal:
-  path: spec.template.spec.containers[0].env
+  path: spec.template.spec.containers[0].envFrom
   value:
-- name: NEW_RELIC_AUTH_CLIENT_ID
-  valueFrom:
-secretKeyRef:
-  key: clientIdKey
-  name: test-client-name
-- name: NEW_RELIC_AUTH_CLIENT_SECRET
-  valueFrom:
-secretKeyRef:
-  key: clientSecretKey
-  name: test-client-name
+- secretRef:
+name: test-client-name
 
   - it: with a custom secret for userKey and clientId and clientSecret, the secret should not be created.
 set:
@@ -94,18 +113,10 @@ isNotNullOrEmpty:
   path: spec.template.spec.containers[0].args
   - documentIndex: 0
 equal:
-  path: spec.template.spec.containers[0].env
+  path: spec.template.spec.containers[0].envFrom
   value:
-- name: NEW_RELIC_AUTH_CLIENT_ID
-  valueFrom:
-secretKeyRef:
-  key: clientIdKey
-  name: test-client-name
-- name: NEW_RELIC_AUTH_CLIENT_SECRET
-  valueFrom:
-secretKeyRef:
-  key: clientSecretKey
-  name: test-client-name
+- secretRef:
+name: test-client-name
 
   - it: setting specific image for system identity registration with tag should use the provided tag
 set:
