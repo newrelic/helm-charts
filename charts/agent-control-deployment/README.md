@@ -46,6 +46,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
 | extraVolumes | list | `[]` | Volumes to mount in the containers |
 | hostNetwork | bool | `false` | Sets pod's hostNetwork. Can be configured also with `global.hostNetwork` |
+| identityClientAuthToken | string | `""` | Identity auth token. This option takes precedence over identityClientSecret and skips authentication. |
 | identityClientId | string | `""` | Identity client_id to use. |
 | identityClientSecret | string | `""` | Identity client_secret to use. |
 | image | object | See `values.yaml` | Image for the New Relic Agent Control |

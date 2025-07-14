@@ -231,21 +231,28 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 {{- end -}}
 {{- end -}}
 
-{{/* check if both L1 ClientID and ClientSecret are provided */}}
-{{- define "newrelic-agent-control.auth.l1Identity" -}}
-{{- if and (include "newrelic-agent-control.auth.identityClientId" .) (include "newrelic-agent-control.auth.identityClientSecret" .) -}}
+{{/* check if both a ClientID and ClientSecret are provided */}}
+{{- define "newrelic-agent-control.auth.parentIdentity" -}}
+{{- if and (include "newrelic-agent-control.auth.identityClientId" .) (or (include "newrelic-agent-control.auth.identityClientSecret" .) (include "newrelic-agent-control.auth.identityClientAuthToken" .)) -}}
     true
 {{- end -}}
 {{- end -}}
 
-{{/* return L1 ClientID */}}
+{{/* return ClientID */}}
 {{- define "newrelic-agent-control.auth.identityClientId" -}}
 {{- if .Values.identityClientId -}}
   {{- .Values.identityClientId -}}
 {{- end -}}
 {{- end -}}
 
-{{/* return L1 ClientSecret */}}
+{{/* return AuthToken */}}
+{{- define "newrelic-agent-control.auth.identityClientAuthToken" -}}
+{{- if .Values.identityClientAuthToken -}}
+  {{- .Values.identityClientAuthToken -}}
+{{- end -}}
+{{- end -}}
+
+{{/* return ClientSecret */}}
 {{- define "newrelic-agent-control.auth.identityClientSecret" -}}
 {{- if .Values.identityClientSecret -}}
   {{- .Values.identityClientSecret -}}
