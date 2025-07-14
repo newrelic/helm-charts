@@ -182,12 +182,11 @@ spec:
             failureThreshold: {{  .Values.livenessProbe.failureThreshold }}
 {{- end }}
       volumes:
-                          {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
-
+          {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
         - name: lua-scripts
           configMap:
             name: {{ include "newrelic-logging.fullname" . }}-lua
-                           {{- end }}
+          {{- end }}
         - name: fluent-bit-config
           configMap:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
