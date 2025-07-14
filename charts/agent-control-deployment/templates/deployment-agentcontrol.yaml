@@ -69,7 +69,7 @@ spec:
   valueFrom:
 secretKeyRef:
   name: {{ include "newrelic-agent-control.auth.secret.name" . }}
-  key: {{ include "newrelic-agent-control.auth.secret.clientId.key" . }}
+  key: CLIENT_ID
   {{- end }}
   {{- if include "newrelic.common.verboseLog" . }}
 - name: NR_AC_LOG__LEVEL
@@ -150,7 +150,7 @@ path: config.yaml
   secret:
 secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}
 items:
-  - key: {{ include "newrelic-agent-control.auth.secret.privateKey.key" . }}
+  - key: private_key
 path: from-secret.key
 {{- end }}
 {{- with .Values.extraVolumes }}

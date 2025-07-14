@@ -16,8 +16,7 @@ identityClientId: ""
 identityClientSecret: ""
 # -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
 customIdentitySecretName: ""
-customIdentityClientIdSecretKey: ""
-customIdentityClientSecretSecretKey: ""
+
 
 # -- Image for the New Relic Agent Control
 # @default -- See `values.yaml`
@@ -148,9 +147,6 @@ create: true
 name:
 ## If private_key and client_id values are specified, their creation is disabled and the `preinstall-user-key` job is not executed
 private_key:
-  # -- Key inside the secret containing the private key.
-  # @default -- `private_key`
-  secret_key:
   # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation.
   # This options is mutually exclusive with `plain_pem`.
   base64_pem:
@@ -158,9 +154,6 @@ private_key:
   # This options is mutually exclusive with `base64_pem`.
   plain_pem:
 client_id:
-  # -- Key inside the secret containing the client ID.
-  # @default -- `client_id`
-  secret_key:
   # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation.
   # This options is mutually exclusive with `plain`.
   base64:

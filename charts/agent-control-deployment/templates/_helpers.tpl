@@ -1,13 +1,4 @@
 {{- /*
-Return the name of the configMap holding the Agent Control's config. Defaults to release's fill name suffiexed with "-config"
-*/ -}}
-{{- define "newrelic-agent-control.config.name" -}}
-{{- include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "local-data" "suffix" "agentcontrol-config" ) -}}
-{{- end -}}
-
-
-
-{{- /*
 Test that the value of `.Values.config.subAgents` exists and its valid. If empty, returns the default.
 */ -}}
 {{- define "newrelic-agent-control.config.agents.yaml" -}}
@@ -64,30 +55,6 @@ Return to which endpoint should the agent control ask to renew its token
   {{- fail "Unknown/unsupported region set for this chart" -}}
 {{- end -}}
 {{- end -}}
-
-
-
-{{- /*
-Return to which endpoint should the agent control register its system identity
-*/ -}}
-{{- define "newrelic-agent-control.config.endpoints.systemIdentityRegistration" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://staging-api.newrelic.com/graphql
-{{- else if eq $region "EU" -}}
-  https://api.eu.newrelic.com/graphql
-{{- else if eq $region "US" -}}
-  https://api.newrelic.com/graphql
-{{- else if eq $region "Local" -}}
-  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.systemIdentityRegistration }}
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
-{{- end -}}
-{{- end -}}
-
-
 
 {{- /*
 Builds the configuration from config on the values and add more config options like
@@ -228,22 +195,6 @@ true
 {{- end -}}
 
 
-
-{{- /*
-Check if .Values.config.auth.secret.private_key.secret_key exists and use it for the key in the secret containing the private
-key needed for the system identity. Fallbacks to `private_key`.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.privateKey.key" -}}
-{{- $key := ((((((.Values.config).fleet_control).auth).secret).private_key).secret_key) -}}
-{{- if $key -}}
-  {{- $key -}}
-{{- else -}}
-  private_key
-{{- end -}}
-{{- end -}}
-
-
-
 {{- /*
 Check if .Values.config.auth.secret.private_key.(plain_pem or base64_pem) exists and use it for as the private certificate for
 auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
@@ -261,23 +212,6 @@ auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this 
   {{- /* Empty string */ -}}
 {{- end -}}
 {{- end -}}
-
-
-
-{{- /*
-Check if .Values.config.auth.secret.client_id.secret_key exists and use it for the key in the secret containing the client id
-needed for the system identity. Fallbacks to `client_id`.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.clientId.key" -}}
-{{- $key := ((((((.Values.config).fleet_control).auth).secret).client_id).secret_key) -}}
-{{- if $key -}}
-  {{- $key -}}
-{{- else -}}
-  CLIENT_ID
-{{- end -}}
-{{- end -}}
-
-
 
 {{- /*
 Check if .Values.config.auth.secret.client_id.(plain or base64) exists and use it for as the client id for auth. If no
@@ -318,40 +252,6 @@ true
 {{- end -}}
 {{- end -}}
 
-{{- /*
-Return to which endpoint should the agent control register its system identity
-*/ -}}
-{{- define "newrelic-agent-control.config.endpoints.systemIdentityCreation" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://staging-api.newrelic.com/graphql
-{{- else if eq $region "EU" -}}
-  https://api.eu.newrelic.com/graphql
-{{- else if eq $region "US" -}}
-  https://api.newrelic.com/graphql
-{{- else if eq $region "Local" -}}
-  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.systemIdentityCreation }}
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the name key for the ClientId Key inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientIdKeyName" -}}
-{{- include "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" . | default "clientIdKey" -}}
-{{- end -}}
-
-{{/*
-Return the name key for the ClientSecret Key inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientSecretKeyName" -}}
-{{- include "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" . | default "clientSecretKey" -}}
-{{- end -}}
-
 {{/*
 Return the name of the secret holding the clientdId and ClientSecret
 */}}
@@ -361,28 +261,6 @@ Return the name of the secret holding the clientdId and ClientSecret
 {{- end -}}
 {{- end -}}
 
-{{/*
-Return the name key for the ClientID inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" -}}
-{{- if .Values.customIdentityClientIdSecretKey -}}
-  {{- .Values.customIdentityClientIdSecretKey -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the name key for the ClientSecret inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" -}}
-{{- if .Values.customIdentityClientSecretSecretKey -}}
-  {{- .Values.customIdentityClientSecretSecretKey -}}
-{{- end -}}
-{{- end -}}
-
-{{/* Return the generated secret name for the CliendId and ClientSecret*/}}
-{{- define "newrelic.common.userKey.generatedSecretName" -}}
-{{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
-{{- end -}}
 
 {{/* Return the custom secret name for the CliendId and ClientSecret with fallback to the generated one */}}
 {{- define "newrelic-agent-control.auth.identityCredentialsSecretName" -}}
