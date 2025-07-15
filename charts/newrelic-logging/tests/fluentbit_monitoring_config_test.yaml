@@ -8,6 +8,8 @@ tests:
   - it: "includes additional labels with cluster name empty"
 set:
   cluster: ""
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
@@ -15,11 +17,16 @@ asserts:
   - it: "includes additional labels with cluster name empty with single quote"
 set:
   cluster: ''
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
   pattern: (?s)add_label\s+cluster_name \"\"\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging
   - it: "includes additional labels with cluster name null"
+set:
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
@@ -27,6 +34,8 @@ asserts:
   - it: "includes additional labels with cluster name setting null"
 set:
   cluster: 
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
@@ -34,6 +43,8 @@ asserts:
   - it: "includes additional labels with cluster name setting null value"
 set:
   cluster: null
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
@@ -41,6 +52,8 @@ asserts:
   - it: "includes additional labels when cluster name is set"
 set:
   cluster: my-cluster
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
@@ -48,7 +61,46 @@ asserts:
   - it: "includes additional labels when cluster name is set with double quotes"
 set:
   cluster: "my-cluster"
+  fluentBit:
+fluentBitMetrics: "advanced"
 asserts:
   - matchRegex:
   path: data["fluent-bit.conf"]
   pattern: (?s)add_label\s+cluster_name my-cluster\n\s*add_label\s+namespace my-namespace\n\s*add_label\s+daemonset_name my-release-newrelic-logging  
+  - it: "includes additional labels with cluster name empty for basic"
+set:
+  cluster: ""
+  fluentBit:
+fluentBitMetrics: "basic"
+asserts:
+  - matchRegex:
+  path: data["fluent-bit.conf"]
+  pattern: (?s)Record\s+cluster_name "\$\{CLUSTER_NAME\}"
+
+  - it: "includes additional labels with cluster name set for basic"
+set:
+  cluster: my-cluster
+  fluentBit:
+fluentBitMetrics: "basic"
+asserts:
+  - matchRegex:
+  path: data["fluent-bit.conf"]
+  pattern: (?s)Record\s+cluster_name "\$\{CLUSTER_NAME\}"
+  - it: "includes additional labels with cluster name empty for basic"
+set:
+  cluster: ""
+  fluentBit:
+fluentBitMetrics: "basic"
+asserts:
+  - matchRegex:
+  path: data["fluent-bit.conf"]
+  pattern: (?s)\[INPUT\]\s+Name\s+dummy\s+Tag\s+buildInfo
+  - it: "includes additional labels with cluster name set for basic"
+set:
+  cluster: my-cluster
+  fluentBit:
+fluentBitMetrics: "basic"
+asserts:
+  - matchRegex:
+  path: data["fluent-bit.conf"]
+  pattern: (?s)\[INPUT\]\s+Name\s+dummy\s+Tag\s+buildInfo  

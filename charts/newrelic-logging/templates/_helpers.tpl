@@ -182,6 +182,8 @@ https://log-api.newrelic.com/log/v1
 Returns fluentbit config to collect and forward its metrics to New Relic
 */}}
 {{- define "newrelic-logging.fluentBit.monitoring.config" -}}
+{{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "basic" -}}
+{{- if eq $fluentBitMetrics "advanced" }}
 [INPUT]
 name prometheus_scrape
 Alias fb-metrics-collector
@@ -205,6 +207,7 @@ add_labelapp fluent-bit
 add_labelsource kubernetes
 add_labelpod_name ${HOSTNAME}
 add_labelnode_name ${NODE_NAME}
+add_labeltier  advanced
 {{- $clusterName := (include "newrelic-logging.cluster" .) -}}
 {{- if $clusterName -}}
 {{- printf "add_labelcluster_name %s" $clusterName | nindent 4 -}}
@@ -213,6 +216,34 @@ add_labelnode_name ${NODE_NAME}
 {{- end -}}
 {{- printf "add_labelnamespace %s" .Release.Namespace | nindent 4 -}}
 {{- printf "add_labeldaemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
+{{- end -}}
+{{- if eq $fluentBitMetrics "basic" }}
+[INPUT]
+Name   dummy
+TagbuildInfo
+Dummy  {"message":"trigger for basic metric at every 10 minutes scrape_interval"}
+Interval_Sec 600
+[FILTER]
+Namemodify
+Match   buildInfo
+Add fluentBitVersion  ${FBVERSION}
+[FILTER]
+Namelua
+Match   buildInfo
+script  /fluent-bit/scripts/payload.lua
+callbuild_payload
+[OUTPUT]
+Namehttp
+Match   buildInfo
+Host${METRICS_HOST}
+Port443
+URI /metric/v1
+Format  json
+tls On
+Header  Api-Key ${LICENSE_KEY}
+Header  Content-Type application/json
+json_date_key false
+{{- end -}}
 {{- end -}}
 
 {{/*
@@ -252,3 +283,5 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
   {{- end -}}
 {{- end -}}
 {{- end -}}
+
+

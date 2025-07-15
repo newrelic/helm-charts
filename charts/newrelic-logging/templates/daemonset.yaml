@@ -130,6 +130,12 @@ fieldRef:
 - name: METRICS_HOST
   value: {{ include "newrelic-logging.metricsHost" . | quote }}
 {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
+- name: FLUENTBIT_METRICS_TIER 
+  value: {{ $.Values.fluentBit.fluentBitMetrics | default "basic" | quote }}
+- name: DAEMONSET_NAME
+  value: {{ template "newrelic-logging.fullname" . }}  
+- name: NAMESPACE
+  value: {{ .Release.Namespace }} 
   command:
 - /fluent-bit/bin/fluent-bit
 - -c
@@ -156,6 +162,12 @@ fieldRef:
   ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
   {{- end }}
   {{- if .Values.resources }}
+{{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
+
+- name: lua-scripts
+  mountPath: /fluent-bit/scripts
+  readOnly: true
+{{- end }}
   resources:
 {{ toYaml .Values.resources | indent 12 }}
   {{- end }}
@@ -170,6 +182,11 @@ timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
 failureThreshold: {{  .Values.livenessProbe.failureThreshold }}
 {{- end }}
   volumes:
+  {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
+- name: lua-scripts
+  configMap:
+name: {{ include "newrelic-logging.fullname" . }}-lua
+  {{- end }}
 - name: fluent-bit-config
   configMap:
 name: {{ template "newrelic-logging.fluentBitConfig" . }}
