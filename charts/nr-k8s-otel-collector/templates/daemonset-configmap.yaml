@@ -525,10 +525,9 @@ data:
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
-          - key: service.name
-            action: delete
-          - key: service_name
-            action: delete
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
 
       transform/low_data_mode_inator:
         metric_statements:
@@ -763,6 +762,8 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - resource/newrelic
+            - cumulativetodelta
           exporters:
             - routing/metrics_egress
         metrics/egress:

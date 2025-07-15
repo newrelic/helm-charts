@@ -5,7 +5,7 @@ on:
     paths:
       - 'charts/nr-k8s-otel-collector/**'
       - '.github/workflows/nr-k8s-otel-e2e.yml'
-      - '.github/workflows/nr-k8s-otel-e2e-external-test.yml'
+      - '.github/workflows/nr-k8s-otel-e2e-external.yml'
 
 permissions:
   contents: read
@@ -39,10 +39,9 @@ jobs:
         uses: newrelic/newrelic-integration-e2e-action@v1
         with:
           retry_seconds: 90
-          retry_attempts: 2
+          retry_attempts: 10
           agent_enabled: false
           spec_path: charts/nr-k8s-otel-collector/e2e/test-specs.yml
-          account_id: ${{ secrets.FAKE_SECRET }}
-          api_key: "SECRET_API_KEY"
-          license_key: "SECRET_LICENSE_KEY"
-
+          account_id: ${{ secrets.K8S_AGENTS_E2E_ACCOUNT_ID }}
+          api_key: ${{ secrets.K8S_AGENTS_E2E_API_KEY }}
+          license_key: ${{ secrets.K8S_AGENTS_E2E_LICENSE_KEY }}
