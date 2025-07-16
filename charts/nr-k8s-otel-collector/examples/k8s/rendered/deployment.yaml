@@ -31,6 +31,15 @@ spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
         - name: otel-collector-deployment
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
           image: "newrelic/nrdot-collector-k8s:1.2.0"
           imagePullPolicy: IfNotPresent
           args: ["--config", "/config/deployment-config.yaml"]
