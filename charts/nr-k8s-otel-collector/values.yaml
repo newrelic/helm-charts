@@ -95,15 +95,7 @@ daemonset:
   # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext:
-    privileged: false
-    runAsNonRoot: true
-    runAsUser: 1001
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: true
-    capabilities:
-      drop:
-        - ALL
+  containerSecurityContext: {}
 
   # -- Sets resources for the daemonset.
   resources: {}
@@ -136,15 +128,7 @@ deployment:
   # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext:
-    privileged: false
-    runAsNonRoot: true
-    runAsUser: 1001
-    allowPrivilegeEscalation: false
-    readOnlyRootFilesystem: true
-    capabilities:
-      drop:
-        - ALL
+  containerSecurityContext: {}
 
   # -- Sets resources for the deployment.
   resources: {}
@@ -174,7 +158,15 @@ affinity: {}
 # -- Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod`
 podSecurityContext: {}
 # -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
-containerSecurityContext: {}
+containerSecurityContext:
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 
 rbac:
   # -- Specifies whether RBAC resources should be created
