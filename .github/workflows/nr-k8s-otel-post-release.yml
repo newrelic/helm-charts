@@ -24,6 +24,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          gh pr list --search "${{ github.event.release.target_commitish }}" --state merged --json title,body,number
           scripts/get-pr-release-notes.sh ${{ github.event.release.target_commitish }} ${{ env.RELEASE_FILE }}
           gh release edit ${{ github.event.release.tag_name }} \
             --notes-file ${{ env.RELEASE_FILE }}
