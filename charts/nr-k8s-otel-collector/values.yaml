@@ -103,8 +103,21 @@ daemonset:
   envs: []
   # -- Sets additional environment variable sources for the daemonset.
   envsFrom: []
-  # -- Settings for daemonset configmap
-  # @default -- See `values.yaml`
+  # -- Ports to be opened in the daemonset
+  ports:
+    metrics:
+      enabled: true
+      containerPort: 8888
+      servicePort: 8888
+      protocol: TCP
+    http:
+      enabled: true
+      containerPort: 4318
+      protocol: TCP
+    grpc:
+      enabled: true
+      containerPort: 4317
+      protocol: TCP
   configMap:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
     overrideConfig: {}
@@ -135,8 +148,20 @@ deployment:
   envs: []
   # -- Sets additional environment variable sources for the deployment.
   envsFrom: []
-  # -- Settings for deployment configmap
-  # @default -- See `values.yaml`
+  # -- Ports to be opened in the deployment
+  ports:
+    metrics:
+      enabled: true
+      containerPort: 8888
+      protocol: TCP
+    http:
+      enabled: true
+      containerPort: 4318
+      protocol: TCP
+    grpc:
+      enabled: true
+      containerPort: 4317
+      protocol: TCP
   configMap:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     overrideConfig: {}

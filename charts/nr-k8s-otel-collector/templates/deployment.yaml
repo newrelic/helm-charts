@@ -75,10 +75,11 @@ spec:
             {{- with .Values.deployment.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
+          {{- $ports := include "nrKubernetesOtel.deployment.ports" .}}
+          {{- if $ports }}
           ports:
-            - name: http
-              containerPort: 4318
-              protocol: TCP
+            {{- $ports | indent 12 }}
+          {{- end }}
           volumeMounts:
             - name: deployment-config
               mountPath: /config

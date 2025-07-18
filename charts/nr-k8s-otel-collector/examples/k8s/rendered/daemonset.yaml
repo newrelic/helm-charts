@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.37
+    helm.sh/chart: nr-k8s-otel-collector-0.8.38
 spec:
   selector:
     matchLabels:
@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: 5456c1213981e98f7899b46d5fa7ec4f1541abeea45ed506a6dbf2f053c2e6a9
+        checksum/config: 27879d94152db135a256bf476114badf1d26dcdf5311bedd8615325e84959d25
     spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
@@ -63,6 +63,16 @@ spec:
                 secretKeyRef:
                   name: nr-k8s-otel-collector-license
                   key: licenseKey
+          ports:            
+            - name: grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: http
+              containerPort: 4318
+              protocol: TCP
+            - name: metrics
+              containerPort: 8888
+              protocol: TCP
           volumeMounts:
             - name: host-fs
               mountPath: /hostfs
