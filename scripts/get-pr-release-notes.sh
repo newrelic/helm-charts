@@ -22,7 +22,7 @@ function write_chart_release_notes() {
   # Extract the release notes from the PR body using well-known tags
   if [[ "$gh_pr_body" =~ \<!--BEGIN-RELEASE-NOTES--\>[\\r\\n]*(.*)\<!--END-RELEASE-NOTES--\> ]]; then
       release_notes=${BASH_REMATCH[1]}
-      echo $release_notes > $release_file
+      printf '%b' "$release_notes" > $release_file
       echo "Release Notes: $release_notes"
   else
       echo "Missing or malformed release notes section in PR body."
