@@ -1,0 +1,17 @@
+name: test-workflow.yml
+on:
+  push:
+jobs:
+  release-notes:
+    name: Publish release notes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr list --search "${{ github.event.release.target_commitish }}" --state merged --json title,body,number
+          scripts/get-pr-release-notes.sh ${{ github.event.release.target_commitish }} ${{ env.RELEASE_FILE }}
