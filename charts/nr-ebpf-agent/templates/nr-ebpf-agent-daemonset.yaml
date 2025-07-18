@@ -153,10 +153,6 @@ spec:
         hostPath:
           path: /sys
           type: Directory
-      {{- with include "newrelic.common.nodeSelector" . }}
-      nodeSelector:
-        {{- . | nindent 8 -}}
-      {{- end }}
       {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
@@ -164,6 +160,10 @@ spec:
           defaultMode: 420
           secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
       {{- end }}
+      {{- end }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
       {{- end }}
       {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
       affinity:
