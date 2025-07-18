@@ -17,12 +17,12 @@ function write_chart_release_notes() {
   release_file=$2
 
   # Given the commitish, we can get the PR number and then the PR body
-  gh_pr_body=$(gh pr list --search "$commitish" --state merged --json title,body,number | jq '.[0].body')
+  gh_pr_body=$(gh pr list --search "$commitish" --state merged --json title,body,number -R dbudziwojskiNR/helm-charts | jq '.[0].body')
 
   # Extract the release notes from the PR body using well-known tags
   if [[ "$gh_pr_body" =~ \<!--BEGIN-RELEASE-NOTES--\>[\\r\\n]*(.*)\<!--END-RELEASE-NOTES--\> ]]; then
       release_notes=${BASH_REMATCH[1]}
-      echo $release_notes > $release_file
+      printf '%b' "$release_notes" > $release_file
       echo "Release Notes: $release_notes"
   else
       echo "Missing or malformed release notes section in PR body."
