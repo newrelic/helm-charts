@@ -33,6 +33,10 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
