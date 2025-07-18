@@ -130,6 +130,14 @@ data:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
+            - job_name: otel-collector
+              scrape_interval: 10s
+              static_configs:
+                - targets: ['0.0.0.0:8888']
+              relabel_configs:
+                - action: replace
+                  target_label: job_label
+                  replacement: otel-collector-daemonset
 
       filelog:
         include:
@@ -664,6 +672,13 @@ data:
       telemetry:
         logs:
           level: "debug"
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: '0.0.0.0'
+                    port: 8888
       {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
