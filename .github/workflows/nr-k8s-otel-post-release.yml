@@ -1,0 +1,50 @@
+name: Post-Release Tasks (nr-k8s-otel-collector)
+
+on:
+  release:
+    types: [released]
+
+env:
+  ORIGINAL_REPO_NAME: ${{ github.event.repository.full_name }}
+#  RELEASE_PATH: charts/nr-k8s-otel-collector
+  RELEASE_FILE: RELEASE.md
+
+jobs:
+  release-notes:
+    if: startsWith(github.event.release.tag_name, 'nr-k8s-otel-collector-')
+    name: Publish release notes
+    runs-on: ubuntu-latest
+#    outputs:
+#      announcement: ${{ steps.slack-announcement.outputs.announcement }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create release notes
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          scripts/get-pr-release-notes.sh ${{ github.event.release.target_commitish }} ${{ env.RELEASE_FILE }}
+          gh release edit ${{ github.event.release.tag_name }} \
+            --notes-file ${{ env.RELEASE_FILE }}
+
+#      - name: Write Slack announcement
+#        id: slack-announcement
+#        run: |
+#          {
+#            echo 'announcement<<EOF'
+#            cat ${{ env.RELEASE_PATH }}/${{ env.SLACK_FILE }}
+#            echo EOF
+#          } >> "$GITHUB_OUTPUT"
+
+#  notify-failure:
+#    if: ${{ always() && failure() }}
+#    needs: [release-notes]
+#    runs-on: ubuntu-latest
+#    steps:
+#      - name: Notify failure via Slack
+#        uses: archive/github-actions-slack@v2.10.1
+#        with:
+#          slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
+#          slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
+#          slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Post Release Tasks (nr-k8s-otel-collector)' failed>."
