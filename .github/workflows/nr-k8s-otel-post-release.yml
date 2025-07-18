@@ -14,8 +14,6 @@ jobs:
     if: startsWith(github.event.release.tag_name, 'nr-k8s-otel-collector-')
     name: Publish release notes
     runs-on: ubuntu-latest
-#    outputs:
-#      announcement: ${{ steps.slack-announcement.outputs.announcement }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -29,23 +27,27 @@ jobs:
           gh release edit ${{ github.event.release.tag_name }} \
             --notes-file ${{ env.RELEASE_FILE }}
 
-#      - name: Write Slack announcement
-#        id: slack-announcement
-#        run: |
-#          {
-#            echo 'announcement<<EOF'
-#            cat ${{ env.RELEASE_PATH }}/${{ env.SLACK_FILE }}
-#            echo EOF
-#          } >> "$GITHUB_OUTPUT"
+  announce-release:
+    if: startsWith(github.event.release.tag_name, 'nr-k8s-otel-collector-')
+    name: Announce K8s OTEL release
+    runs-on: ubuntu-latest
+    needs: release-notes
+    steps:
+      - name: Notify release via Slack
+        uses: archive/github-actions-slack@v2.10.1
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
+          slack-channel: ${{ secrets.HELP_K8S_AGENTS_SLACK_CHANNEL }}
+          slack-text: "✅ A new release of the New Relic Kubernetes OpenTelemetry Collector chart is available: <${{ github.event.release.html_url }}|${{ github.event.release.tag_name }}>"
 
-#  notify-failure:
-#    if: ${{ always() && failure() }}
-#    needs: [release-notes]
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Notify failure via Slack
-#        uses: archive/github-actions-slack@v2.10.1
-#        with:
-#          slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
-#          slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
-#          slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Post Release Tasks (nr-k8s-otel-collector)' failed>."
+  notify-failure:
+    if: ${{ always() && failure() }}
+    needs: [release-notes,announce-release]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify failure via Slack
+        uses: archive/github-actions-slack@v2.10.1
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
+          slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
+          slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Post Release Tasks (nr-k8s-otel-collector)' failed>."
