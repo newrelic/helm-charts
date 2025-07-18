@@ -10,15 +10,6 @@ customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
 
-# -- Identity client_id to use.
-identityClientId: ""
-# -- Identity client_secret to use.
-identityClientSecret: ""
-# -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
-customIdentitySecretName: ""
-customIdentityClientIdSecretKey: ""
-customIdentityClientSecretSecretKey: ""
-
 # -- Image for the New Relic Agent Control
 # @default -- See `values.yaml`
 image:
@@ -146,11 +137,8 @@ config:
         # will have.
         # @default -- release name suffixed with "-auth"
         name:
-        ## If private_key and client_id values are specified, their creation is disabled and the `preinstall-user-key` job is not executed
+        ## If private_key and client_id values are specified, their creation is disabled and the `generate-system-identity` job is not executed
         private_key:
-          # -- Key inside the secret containing the private key.
-          # @default -- `private_key`
-          secret_key:
           # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation.
           # This options is mutually exclusive with `plain_pem`.
           base64_pem:
@@ -158,15 +146,27 @@ config:
           # This options is mutually exclusive with `base64_pem`.
           plain_pem:
         client_id:
-          # -- Key inside the secret containing the client ID.
-          # @default -- `client_id`
-          secret_key:
           # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation.
           # This options is mutually exclusive with `plain`.
           base64:
           # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation.
           # This options is mutually exclusive with `base64`.
           plain:
+
+# These options provides the required info to run the pre-install job that creates the system identity that are used communicating via OpAMP.
+# You can either authenticate via identityClientId/identityClientSecret or pass directly an `identityClientAuthToken` and manage locally the authentication.
+# The authToken can be retrieve via the cli command "newrelic-auth-cli authenticate ...".
+# System identity creation is executed only once. Subsequent upgrades will not attempt to create the identity again.
+# Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired.
+# You can skip the whole identity creation providing an identity already existing via `config.fleet_control.auth.secret.[private_key|client_id]`
+# -- Identity client_id to use.
+identityClientId: ""
+# -- Identity client_secret to use.
+identityClientSecret: ""
+# -- Identity auth token. This option takes precedence over identityClientSecret and skips authentication.
+identityClientAuthToken: ""
+# -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
+customIdentitySecretName: ""
 
 # -- Image for the system identity registration process
 # @default -- See `values.yaml`
