@@ -38,3 +38,11 @@ even continue reviewing your changes.
 - [ ] Chart Version bumped
 - [ ] Variables are documented in the README.md
 - [ ] Title of the PR starts with chart name (e.g. `[mychartname]`)
+
+# Release Notes to Publish (nr-k8s-otel-collector)
+If this PR contains changes in `nr-k8s-otel-collector`, please complete the following section. All other charts should ignore this section.
+
+<!--BEGIN-RELEASE-NOTES-->
+## 🚀 What's Changed
+* Tell the user about the latest changes in the chart.
+<!--END-RELEASE-NOTES-->
