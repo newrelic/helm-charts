@@ -44,5 +44,5 @@ If this PR contains changes in `nr-k8s-otel-collector`, please complete the foll
 
 <!--BEGIN-RELEASE-NOTES-->
 ## 🚀 What's Changed
-* Tell the user about the latest changes in the chart.
+* Tell our customers about the latest changes in the chart.
 <!--END-RELEASE-NOTES-->
