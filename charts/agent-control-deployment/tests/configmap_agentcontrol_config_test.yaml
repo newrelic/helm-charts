@@ -317,4 +317,30 @@ asserts:
   - failedTemplate:
   errorMessage: "The chart version is set automatically via environment variable and should not be set manually"
 
-
+  - it: adds allowed chart repo urls when set.
+set:
+  cluster: my-cluster
+  config:
+fleet_control:
+  enabled: false
+allowedChartRepositoryUrl:
+  - https://foo.com
+  - https://bar.com
+asserts:
+  - equal:
+  path: data["local_config"]
+  value: |
+agent_type_var_constraints:
+  variants:
+chart_repository_urls:
+- https://foo.com
+- https://bar.com
+agents: {}
+k8s:
+  cluster_name: my-cluster
+  namespace: my-namespace
+  namespace_agents: newrelic
+server:
+  enabled: true
+  host: 0.0.0.0
+  port: 51200

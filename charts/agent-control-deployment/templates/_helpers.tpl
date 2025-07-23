@@ -85,6 +85,12 @@ cluster name, licenses, and custom attributes
   {{- $config = mustMerge $config (dict "fleet_control" $fleet_control) -}}
 {{- end -}}
 
+{{- /* Add Chart Repo url list to the allowed variants */ -}}
+{{- if (.Values.config.allowedChartRepositoryUrl) -}}
+  {{- $allowedVariants := dict "variants" (dict "chart_repository_urls" .Values.config.allowedChartRepositoryUrl) -}}
+  {{- $config = mustMerge $config (dict "agent_type_var_constraints" $allowedVariants) -}}
+{{- end -}}
+
 {{- /* Add subagents to the config */ -}}
 {{- $agents := dict -}}
 {{- range $subagent, $object := (include "newrelic-agent-control.config.agents.yaml" . | fromYaml) -}}
