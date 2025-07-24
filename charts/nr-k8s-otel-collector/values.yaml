@@ -95,7 +95,15 @@ daemonset:
   # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext: {}
+  containerSecurityContext:
+    privileged: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
 
   # -- Sets resources for the daemonset.
   resources: {}
@@ -128,7 +136,16 @@ deployment:
   # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext: {}
+  containerSecurityContext:
+    privileged: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
 
   # -- Sets resources for the deployment.
   resources: {}

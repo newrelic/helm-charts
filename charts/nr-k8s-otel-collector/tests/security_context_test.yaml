@@ -110,6 +110,12 @@ tests:
       deployment:
         podSecurityContext:
           deploymentKey: deploymentValue
+          privileged: deploymentValue
+          runAsNonRoot: deploymentValue
+          runAsUser: deploymentValue
+          allowPrivilegeEscalation: deploymentValue
+          readOnlyRootFilesystem: deploymentValue
+          capabilities: deploymentValue
       podSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -120,6 +126,12 @@ tests:
           path: spec.template.spec.securityContext
           value:
             deploymentKey: deploymentValue
+            privileged: deploymentValue
+            runAsNonRoot: deploymentValue
+            runAsUser: deploymentValue
+            allowPrivilegeEscalation: deploymentValue
+            readOnlyRootFilesystem: deploymentValue
+            capabilities: deploymentValue
         template: templates/deployment.yaml
   - it: sets pod securityContext from daemonset values overriding top level and global values
     set:
@@ -128,6 +140,12 @@ tests:
       daemonset:
         podSecurityContext:
           daemonsetKey: daemonsetValue
+          privileged: daemonsetValue
+          runAsNonRoot: daemonsetValue
+          runAsUser: daemonsetValue
+          allowPrivilegeEscalation: daemonsetValue
+          readOnlyRootFilesystem: daemonsetValue
+          capabilities: daemonsetValue
       podSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -138,6 +156,12 @@ tests:
           path: spec.template.spec.securityContext
           value:
             daemonsetKey: daemonsetValue
+            privileged: daemonsetValue
+            runAsNonRoot: daemonsetValue
+            runAsUser: daemonsetValue
+            allowPrivilegeEscalation: daemonsetValue
+            readOnlyRootFilesystem: daemonsetValue
+            capabilities: daemonsetValue
         template: templates/daemonset.yaml
   - it: sets container securityContext set to defaults when no values provided
     set:
@@ -299,6 +323,12 @@ tests:
       deployment:
         containerSecurityContext:
           deploymentKey: deploymentValue
+          privileged: 
+          runAsNonRoot: 
+          runAsUser: 
+          allowPrivilegeEscalation:
+          readOnlyRootFilesystem:
+          capabilities:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].securityContext
@@ -312,6 +342,12 @@ tests:
       daemonset:
         containerSecurityContext:
           daemonsetKey: daemonsetValue
+          privileged: 
+          runAsNonRoot: 
+          runAsUser: 
+          allowPrivilegeEscalation:
+          readOnlyRootFilesystem:
+          capabilities:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].securityContext
@@ -325,6 +361,12 @@ tests:
       deployment:
         containerSecurityContext:
           deploymentKey: deploymentValue
+          privileged: deploymentValue
+          runAsNonRoot: deploymentValue
+          runAsUser: deploymentValue
+          allowPrivilegeEscalation: deploymentValue
+          readOnlyRootFilesystem: deploymentValue
+          capabilities: deploymentValue
       containerSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -335,6 +377,12 @@ tests:
           path: spec.template.spec.containers[0].securityContext
           value:
             deploymentKey: deploymentValue
+            privileged: deploymentValue
+            runAsNonRoot: deploymentValue
+            runAsUser: deploymentValue
+            allowPrivilegeEscalation: deploymentValue
+            readOnlyRootFilesystem: deploymentValue
+            capabilities: deploymentValue
         template: templates/deployment.yaml
   - it: sets container securityContext from daemonset values overriding top level and global values
     set:
@@ -343,6 +391,12 @@ tests:
       daemonset:
         containerSecurityContext:
           daemonsetKey: daemonsetValue
+          privileged: 
+          runAsNonRoot: 
+          runAsUser: 
+          allowPrivilegeEscalation:
+          readOnlyRootFilesystem:
+          capabilities:
       containerSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -361,6 +415,12 @@ tests:
       daemonset:
         containerSecurityContext:
           daemonsetKey: daemonsetValue
+          privileged: 
+          runAsNonRoot: 
+          runAsUser: 
+          allowPrivilegeEscalation:
+          readOnlyRootFilesystem:
+          capabilities:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].securityContext
