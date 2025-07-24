@@ -272,6 +272,10 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/collector:
+        metric_statements:
+          - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
+
       metricstransform/cadvisor:
         transforms:
           - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
@@ -699,6 +703,7 @@ data:
             - metricstransform/ldm
             - metricstransform/cadvisor
             - metricstransform/kubelet
+            - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             - transform/truncate

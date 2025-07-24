@@ -1,0 +1,81 @@
+# -- Default Values for the Flux chart. Full list Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
+# @default -- See `values.yaml`
+flux2:
+  # -- Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already
+  # existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs
+  # to deploy the Agent Control.
+  enabled: true
+
+  # -- The installation of the CRDs is managed by the chart itself.
+  installCRDs: true
+  # -- This is the domain name of the cluster.
+  clusterDomain: cluster.local
+
+  # -- Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference
+  # [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated
+  # operators to offload the Git, OCO, and Helm repositories management.
+  # @default -- Enabled
+  sourceController:
+    create: true
+    annotations:
+      prometheus.io/port: "8080"
+      prometheus.io/scrape: "false"
+
+  # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
+  # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
+  # named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.
+  #
+  # New Relic' Agent Control will use this controller by creating `HelmRelease` CRs based in the configuration stored on
+  # Fleet Control. This is the only controller that the Agent Control need for now, the other controllers are disabled by default.
+  #
+  # On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the
+  # `values.yaml` to see how to enable other controllers.
+  # @default -- Enabled
+  helmController:
+    create: true
+    annotations:
+      prometheus.io/port: "8080"
+      prometheus.io/scrape: "false"
+
+  # This controller is exactly the same as the Helm controller (refer to it) but assembling manifests with
+  # Kustomize instead of using templating systems like Helm.
+  kustomizeController:
+    create: false
+
+  # The image automation controller updates YAML files based on the latest images scanned by image reflector
+  # controller, and commits the changes to a given Git repository.
+  imageAutomationController:
+    create: false
+
+  # The image reflector controller scans image repositories and reflects the image metadata in Kubernetes resources
+  # ready to be used by other controllers.
+  imageReflectionController:
+    create: false
+
+  # The notification controller handles events coming from external systems (GitHub, GitLab, Bitbucket, Harbor,
+  # Jenkins, etc) and notifies the GitOps toolkit controllers about source changes. The controller also handles events
+  # emitted by the GitOps toolkit controllers (source, kustomize, helm) and dispatches them to external systems (Slack,
+  # Microsoft Teams, Discord) based on event severity and involved objects.
+  #
+  # New Relic provides a powerful alert system with multiple policies and routes to alert users so it is disabled by
+  # default on our FluxCD distribution.
+  notificationController:
+    create: false
+
+  # Upstream chart create Network Policies. They are relaxed to enough to not cut any malicious attack and not
+  # reduce the attack surface enough on environments where the security is a must.
+  policies:
+    create: false
+
+  # -- Create RBAC rules for FluxCD is able to deploy all kind of workloads on the cluster.
+  # @default -- Enabled (See `values.yaml`)
+  rbac:
+    create: true
+    createAggregation: true
+
+  # -- As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to
+  # all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the
+  # agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the
+  # user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on
+  # the whole cluster.
+  watchAllNamespaces: false

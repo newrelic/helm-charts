@@ -25,6 +25,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | config.agentControl | object | See `values.yaml` | Configuration for the Agent Control. |
 | config.agentControl.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
 | config.agentControl.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
+| config.allowedChartRepositoryUrl | list | `[]`(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"]) | List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories. |
 | config.fleet_control.auth.organizationId | string | `""` | Organization ID where fleets will live. |
 | config.fleet_control.auth.secret.client_id.base64 | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation. This options is mutually exclusive with `plain`. |
 | config.fleet_control.auth.secret.client_id.plain | string | `nil` | In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation. This options is mutually exclusive with `base64`. |
