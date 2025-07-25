@@ -46,7 +46,7 @@ In order to test custom agentTypes is possible to leverage `extraVolumeMounts` a
 
 You can run the following commands to create in the newrelic namespace a configMap containing a dynamic agentType:
 ```bash
-$ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/values-dynamic-agent-type.yaml -n default
+$ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/values-dynamic-agent-type.yaml -n <your-namespace>
 ```
 
 Then you can mount such agentType leveraging extra volumes in the values.yaml
@@ -55,16 +55,12 @@ agent-control-deployment:
 # [...]
   extraVolumeMounts:
     - name: dynamic
-      mountPath: /etc/newrelic-agent-control/dynamic-agent-type.yaml
-      subPath: dynamic-agent-type.yaml
+      mountPath: /etc/newrelic-agent-control/dynamic-agent-types
       readOnly: true
   extraVolumes:
     - name: dynamic
       configMap:
         name: dynamic-agent
-        items:
-          - key: dynamic-agent-type
-            path: dynamic-agent-type.yaml
 ```
 
 ## Values
