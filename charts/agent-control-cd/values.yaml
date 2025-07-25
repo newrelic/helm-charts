@@ -1,40 +1,4 @@
-# -- Override the name of the chart
-nameOverride: ""
-# -- Override the full name of the release
-fullnameOverride: ""
-
-# -- The image that contains the necessary tools to install and uninstall Agent Control.
-toolkitImage:
-  registry:
-  repository: newrelic/newrelic-agent-control-cli
-  tag: "0.42.0"
-  pullPolicy: IfNotPresent
-  # -- The secrets that are needed to pull images from a custom registry.
-  pullSecrets: []
-
-installationJob:
-  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
-  chartRepositoryUrl: https://helm-charts.newrelic.com
-  # -- Log level for the installation job.
-  # @default -- info
-  logLevel: "info"
-
-uninstallationJob:
-  # -- Log level for the uninstallation job.
-  # @default -- info
-  logLevel: "info"
-
-# -- Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
-# @default -- See `values.yaml`
-agent-control-deployment:
-  # -- Enable the installation of the Agent Control.
-  enabled: true
-
-  # -- Namespace where the sub-agents will be deployed.
-  # @default -- "newrelic"
-  subAgentsNamespace: "newrelic"
-
-# -- Values for the Flux chart. Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
+# -- Default Values for the Flux chart. Full list Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
 # @default -- See `values.yaml`
 flux2:
   # -- Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already
