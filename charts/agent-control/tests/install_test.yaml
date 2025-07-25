@@ -1,5 +1,45 @@
 suite: Validate AC Installation
+chart:
+  appVersion: 0.0.0
 tests:
+  - it: should have defaults args correctly set
+    asserts:
+      - template: templates/install.yaml
+        equal:
+          path: spec.template.spec.containers[0].args
+          value: 
+            - install-agent-control
+            - --chart-version=0.0.0
+            - --secrets=RELEASE-NAME-deployment=agent-control-deployment.yaml,RELEASE-NAME-deployment=global.yaml
+            - --namespace=NAMESPACE
+            - --repository-url=https://helm-charts.newrelic.com
+            - --log-level=info
+            - --chart-name=agent-control-deployment
+
+  - it: should configure arguments correctly
+    set:
+      installationJob:
+        chartRepositoryUrl: "https://newrelic.com/some/url"
+        logLevel: custom-log-level
+        chartName: custom-chart-name
+        chartVersion: custom-version
+        repositorySecretReferenceName: secret-ref
+        repositoryCertificateSecretReferenceName: cert-secret-ref 
+    asserts:
+      - template: templates/install.yaml
+        equal:
+          path: spec.template.spec.containers[0].args
+          value: 
+            - install-agent-control
+            - --chart-version=custom-version
+            - --secrets=RELEASE-NAME-deployment=agent-control-deployment.yaml,RELEASE-NAME-deployment=global.yaml
+            - --namespace=NAMESPACE
+            - --repository-url=https://newrelic.com/some/url
+            - --log-level=custom-log-level
+            - --chart-name=custom-chart-name
+            - --repository-secret-reference-name=secret-ref
+            - --repository-certificate-secret-reference-name=cert-secret-ref
+
   - it: should leverage correct image tag
     set:
       toolkitImage:
@@ -14,46 +54,3 @@ tests:
         equal:
           path: spec.template.spec.containers[0].image
           value: "test:123"
-  - it: should allow custom repositoryUrl
-    set:
-      installationJob:
-        chartRepositoryUrl: "https://example.com/some/url"
-      agent-control-deployment:
-        cluster: cluster
-        licenseKey: some_license_key
-        identityClientId: some_client_id
-        identityClientSecret: some_client_secret
-        config:
-          fleet_control:
-            auth:
-              organizationId: some_org_id
-    asserts:
-      - template: templates/install.yaml
-        lengthEqual:
-          path: spec.template.spec.containers[0].command
-          count: 12
-      - template: templates/install.yaml
-        equal:
-          path: spec.template.spec.containers[0].command[8]
-          value: "--repository-url"
-      - template: templates/install.yaml
-        equal:
-          path: spec.template.spec.containers[0].command[9]
-          value: "https://example.com/some/url"
-
-  - it: should accept no repositoryUrl
-    set:
-      agent-control-deployment:
-        cluster: cluster
-        licenseKey: some_license_key
-        identityClientId: some_client_id
-        identityClientSecret: some_client_secret
-        config:
-          fleet_control:
-            auth:
-              organizationId: some_org_id
-    asserts:
-      - template: templates/install.yaml
-        lengthEqual:
-          path: spec.template.spec.containers[0].command
-          count: 12

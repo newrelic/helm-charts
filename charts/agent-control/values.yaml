@@ -13,11 +13,28 @@ toolkitImage:
   pullSecrets: []
 
 installationJob:
-  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
-  chartRepositoryUrl: https://helm-charts.newrelic.com
   # -- Log level for the installation job.
   # @default -- info
   logLevel: "info"
+
+  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+  chartRepositoryUrl: https://helm-charts.newrelic.com
+
+  # -- The name of the chart that will be installed by the installation job.
+  # @default -- agent-control-deployment
+  chartName: agent-control-deployment
+
+  # -- The version of the Agent Control chart that will be installed by the installation job.
+  # @default -- The Chart.appVersion
+  chartVersion:
+
+  # -- Optional name of the secret containing credentials for the Helm repository.
+  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
+  repositorySecretReferenceName:
+
+  # -- Optional name of the secret containing TLS certificates for the Helm repository.
+  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
+  repositoryCertificateSecretReferenceName:
 
 uninstallationJob:
   # -- Log level for the uninstallation job.
