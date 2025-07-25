@@ -1,6 +1,6 @@
+{{- if index .Values "agent-control-cd" }}
 {{- if (index .Values "agent-control-cd" "flux2").enabled -}}
 {{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job" ) -}}
-{{- $secretName := include "agent-control.secret.name" . -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -32,3 +32,4 @@ spec:
             - |
               helm delete agent-control-cd --namespace {{ .Release.Namespace }}
 {{- end -}}
+{{- end }}
