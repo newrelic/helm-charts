@@ -67,9 +67,14 @@ data:
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
+        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
+        {{- else }}
+        endpoint: "${KUBE_NODE_NAME}:10255"
+        auth_type: "none"
+        {{- end }}
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
