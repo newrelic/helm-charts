@@ -243,7 +243,7 @@ kubeletstats:
 ```
 kubeletstats:
 collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-{{- if include "newrelic.common.privileged" . }}
+{{- if not (include "newrelic.common.gkeAutopilot" .) }}
 endpoint: "${KUBE_NODE_NAME}:10250"
 auth_type: "serviceAccount"
 insecure_skip_verify: true
