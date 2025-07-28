@@ -47,43 +47,11 @@ agent-control-cd:
     pullSecrets: []
   # -- Version of the agent-control-cd chart to install, it will only be installed if flux2 is enabled.
   # Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/Chart.yaml
-  version: 0.0.1
+  version: 0.0.2
   # -- Values for the Flux chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml
   # @default -- See `values.yaml`
   flux2:
-    # -- Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already
+    # -- Enable or disable FluxCD installation. New Relic's Agent Control need Flux to work, but the user can use an already
     # existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs
     # to deploy the Agent Control.
     enabled: true
-
-    version: 2.25.0
-    # -- The installation of the CRDs is managed by the chart itself.
-    installCRDs: true
-    # -- This is the domain name of the cluster.
-    clusterDomain: cluster.local
-
-    # -- Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference
-    # [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated
-    # operators to offload the Git, OCO, and Helm repositories management.
-    # @default -- Enabled
-    sourceController:
-      create: true
-      annotations:
-        prometheus.io/port: "8080"
-        prometheus.io/scrape: "false"
-
-    # -- Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes
-    # manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources))
-    # named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.
-    #
-    # New Relic' Agent Control will use this controller by creating `HelmRelease` CRs based in the configuration stored on
-    # Fleet Control. This is the only controller that the Agent Control need for now, the other controllers are disabled by default.
-    #
-    # On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the
-    # `values.yaml` to see how to enable other controllers.
-    # @default -- Enabled
-    helmController:
-      create: true
-      annotations:
-        prometheus.io/port: "8080"
-        prometheus.io/scrape: "false"
