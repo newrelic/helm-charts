@@ -1,0 +1,47 @@
+suite: Validate AC-CD Installation
+tests:
+  - it: should leverage correct image tag
+    set:
+      agent-control-cd:
+        installerImage:
+          tag: 123
+          repository: test
+    asserts:
+      - template: templates/install-flux.yaml
+        equal:
+          path: spec.template.spec.containers[0].image
+          value: "test:123"
+      - template: templates/uninstall-flux.yaml
+        equal:
+          path: spec.template.spec.containers[0].image
+          value: "test:123"
+  - it: should allow custom repositoryUrl
+    set:
+      agent-control-cd:
+        chartRepositoryUrl: "https://example.com/some/url"
+        version: 0.0.1
+    asserts:
+      - template: templates/install-flux.yaml
+        equal:
+          path: spec.template.spec.containers[0].args[0]
+          value: |
+            helm repo add newrelic https://example.com/some/url
+            helm upgrade --install agent-control-cd newrelic/agent-control-cd \
+              --version 0.0.1 \
+              --namespace NAMESPACE \
+              -f /tmp/flux-values/agent-control-flux.yaml
+
+  - it: should accept no repositoryUrl
+    set:
+      agent-control-cd:
+        version: 0.0.1
+    asserts:
+      - template: templates/install-flux.yaml
+        equal:
+          path: spec.template.spec.containers[0].args[0]
+          value: |
+            helm repo add newrelic https://helm-charts.newrelic.com
+            helm upgrade --install agent-control-cd newrelic/agent-control-cd \
+              --version 0.0.1 \
+              --namespace NAMESPACE \
+              -f /tmp/flux-values/agent-control-flux.yaml

@@ -18,7 +18,8 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-uninstall-job") }}
       containers:
         - name: install-flux
-          image: alpine/helm:3.17.1
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installerImage "context" .) }}
+          imagePullPolicy: {{ (index .Values "agent-control-cd").pullPolicy }}
           resources:
             limits:
               cpu: 100m

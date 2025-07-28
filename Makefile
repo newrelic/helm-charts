@@ -31,4 +31,4 @@ generate-examples:
 HELM_DOCS ?= go run github.com/norwoodj/helm-docs/cmd/helm-docs@latest
 .PHONY: generate-nr-k8s-chart-docs
 generate-nr-k8s-chart-docs:
-	$(HELM_DOCS) -c charts/agent-control
+	$(HELM_DOCS) -c charts/nr-k8s-otel-collector
