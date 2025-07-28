@@ -1,0 +1,21 @@
+suite: Validate Flux2 sourceController configuration
+tests:
+  - it: flux2.sourceController.create disabled should trigger an error
+    set:
+      flux2:
+        enabled: true
+        sourceController:
+          create: false
+    asserts:
+      - failedTemplate:
+          errorMessage: sourceController.create cannot be disabled when flux is enabled
+
+  - it: flux2.helmController.create disabled should trigger an error
+    set:
+      flux2:
+        enabled: true
+        helmController:
+          create: false
+    asserts:
+      - failedTemplate:
+          errorMessage: helmController.create cannot be disabled when flux is enabled
