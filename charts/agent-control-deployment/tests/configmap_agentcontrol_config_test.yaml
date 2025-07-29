@@ -388,3 +388,29 @@ tests:
               enabled: true
               host: 0.0.0.0
               port: 51200
+
+  - it: adds proxy config if set.
+    set:
+      cluster: my-cluster
+      proxy:
+        url: https://my.proxy.com
+      config:
+        fleet_control:
+          enabled: false
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            k8s:
+              cluster_name: my-cluster
+              namespace: my-namespace
+              namespace_agents: newrelic
+            proxy:
+              ca_bundle_dir: null
+              ca_bundle_file: null
+              url: https://my.proxy.com
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200

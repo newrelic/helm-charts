@@ -8,14 +8,6 @@ A Helm chart to install New Relic Agent Control on Kubernetes
 
 This chart is not intended to be installed on its own. Instead, it is designed to be installed as part of the [agent-control](https://github.com/newrelic/helm-charts/tree/master/charts/agent-control) chart.
 
-## Values managed globally
-
-This chart implements the [New Relic's common Helm library](https://github.com/newrelic/helm-charts/tree/master/library/common-library) which
-means that it honors a wide range of defaults and globals common to most New Relic Helm charts.
-
-Options that can be defined globally include `affinity`, `nodeSelector`, `tolerations`, `proxy` and others. The full list can be found at
-[user's guide of the common library](https://github.com/newrelic/helm-charts/blob/master/library/common-library/README.md).
-
 ## Values
 
 | Key | Type | Default | Description |
@@ -38,7 +30,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | config.status_server.port | int | See `values.yaml` | Set the status server port |
 | config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
-| customIdentitySecretName | string | `""` | In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there. |
+| customIdentitySecretName | string | `""` | In case you don't want to have the clientId and clientSecret/clientAuthToken in your values, this allows you to point to a user created secret to get the key from there. The secret is mounted in the job and used to generate the system identity. |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
@@ -61,6 +53,10 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | podLabels | object | `{}` | Additional labels for chart pods. Can be configured also with `global.podLabels` |
 | podSecurityContext | object | `{}` | Sets security context (at pod level). Can be configured also with `global.podSecurityContext` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
+| proxy | object | `{"ca_bundle_dir":null,"ca_bundle_file":null,"url":null}` | proxy configuration. It is propagated to both the system identity creation job, and to the agent control instance |
+| proxy.ca_bundle_dir | string | `nil` | System path with the CA certificates in PEM format. All `.pem` files in the directory are read. |
+| proxy.ca_bundle_file | string | `nil` | System path with the CA certificate in PEM format. |
+| proxy.url | string | `nil` | Proxy URL proxy <protocol>://<host>:<port> |
 | rbac.create | bool | `true` | Whether the chart should automatically create the RBAC objects required to run. |
 | resources | object | `{}` | Resource limits to be added to all pods created by the integration. |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
