@@ -76,7 +76,6 @@ agent-control-deployment:
 | agent-control-cd.flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
 | agent-control-cd.installerImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"alpine/helm","tag":"3.17.1"}` | The image that contains the necessary tools to install and uninstall agent control cd chart. |
 | agent-control-cd.installerImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
-| agent-control-cd.version | string | `"0.0.1"` | Version of the agent-control-cd chart to install, it will only be installed if flux2 is enabled. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/Chart.yaml |
 | agent-control-deployment | object | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
 | agent-control-deployment.enabled | bool | `true` | Enable the installation of the Agent Control. |
 | agent-control-deployment.subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |

@@ -32,7 +32,7 @@ spec:
             - |
               helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
               helm upgrade --install agent-control-cd newrelic/agent-control-cd \
-                --version {{ (index .Values "agent-control-cd").version }} \
+                --version 0.0.2 \
                 --namespace {{ .Release.Namespace }} \
                 -f /tmp/flux-values/agent-control-flux.yaml
           volumeMounts:
