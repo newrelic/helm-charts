@@ -1,0 +1,47 @@
+{{- if index .Values "agent-control-cd" }}
+{{- if (index .Values "agent-control-cd" "flux2").enabled -}}
+{{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job" ) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "20"
+  name: {{ $installJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-install-job") }}
+      containers:
+        - name: install-flux
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installerImage "context" .) }}
+          imagePullPolicy: {{ (index .Values "agent-control-cd").pullPolicy }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
+              helm upgrade --install agent-control-cd newrelic/agent-control-cd \
+                --version 0.0.2 \
+                --namespace {{ .Release.Namespace }} \
+                -f /tmp/flux-values/agent-control-flux.yaml
+          volumeMounts:
+            - name: flux-values
+              mountPath: /tmp/flux-values
+              readOnly: true
+      volumes:
+        - name: flux-values
+          secret:
+            secretName: {{ include "agent-control.secret.name" . }}-flux
+{{- end -}}
+{{- end }}
