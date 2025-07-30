@@ -135,6 +135,14 @@ spec:
                 --from-file="private_key=$TEMPORAL_FOLDER/key" | \
               jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"app.kubernetes.io/managed-by": "newrelic-agent-control"} + {"newrelic.io/agent-id": "agent-control"} )' | \
               kubectl apply -n "{{ .Release.Namespace }}" -f -
+          volumeMounts:
+            {{- with .Values.systemIdentityRegistration.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- with .Values.systemIdentityRegistration.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
 ---
 {{ if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1
