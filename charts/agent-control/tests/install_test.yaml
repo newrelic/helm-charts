@@ -31,14 +31,14 @@ tests:
       - template: templates/install.yaml
         lengthEqual:
           path: spec.template.spec.containers[0].command
-          count: 12
+          count: 14
       - template: templates/install.yaml
         equal:
-          path: spec.template.spec.containers[0].command[8]
+          path: spec.template.spec.containers[0].command[10]
           value: "--repository-url"
       - template: templates/install.yaml
         equal:
-          path: spec.template.spec.containers[0].command[9]
+          path: spec.template.spec.containers[0].command[11]
           value: "https://example.com/some/url"
 
   - it: should accept no repositoryUrl
@@ -56,4 +56,4 @@ tests:
       - template: templates/install.yaml
         lengthEqual:
           path: spec.template.spec.containers[0].command
-          count: 12
+          count: 14
