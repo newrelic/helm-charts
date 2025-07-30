@@ -88,8 +88,8 @@ cluster name, licenses, and custom attributes
 {{- end -}}
 
 {{- /* Add Proxy config if url is specified */ -}}
-{{- if .Values.proxy.url -}}
-{{- $config = mustMerge $config (dict "proxy" .Values.proxy) -}}
+{{- with .Values.proxy -}}
+  {{- $config = mustMerge $config (dict "proxy" .) -}}
 {{- end -}}
 
 {{- /* Add Chart Repo url list to the allowed variants */ -}}
