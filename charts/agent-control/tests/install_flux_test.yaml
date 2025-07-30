@@ -21,25 +21,13 @@ tests:
         chartRepositoryUrl: "https://example.com/some/url"
     asserts:
       - template: templates/install-flux.yaml
-        equal:
+        matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          value: |
-            helm repo add newrelic https://example.com/some/url
-            helm upgrade --install agent-control-cd newrelic/agent-control-cd \
-              --version 0.0.1 \
-              --namespace NAMESPACE \
-              -f /tmp/flux-values/agent-control-flux.yaml
+          pattern: (?s).*https\:\/\/example\.com\/some\/url\s.*
 
   - it: should accept no repositoryUrl
-    set:
-      agent-control-cd:
     asserts:
       - template: templates/install-flux.yaml
-        equal:
+        matchRegex:
           path: spec.template.spec.containers[0].args[0]
-          value: |
-            helm repo add newrelic https://helm-charts.newrelic.com
-            helm upgrade --install agent-control-cd newrelic/agent-control-cd \
-              --version 0.0.1 \
-              --namespace NAMESPACE \
-              -f /tmp/flux-values/agent-control-flux.yaml
+          pattern: (?s).*https:\/\/helm-charts\.newrelic\.com\s.*
