@@ -80,7 +80,7 @@ spec:
               else
                 for RETRY in 1 2 3; do
                   
-                  ACCESS_TOKEN=$(newrelic-auth-cli --proxy-url "{{.Values.proxy.url}}" --proxy-ca-dir "{{.Values.proxy.ca_bundle_dir}}" --proxy-ca-file "{{.Values.proxy.ca_bundle_file}}" authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
+                  ACCESS_TOKEN=$(newrelic-auth-cli {{  with .Values.proxy.url }} --proxy-url "{{.}}" {{ end }} {{ with .Values.proxy.ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .Values.proxy.ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
 
                   if [ -n "$ACCESS_TOKEN" ]; then
                     echo "Access token obtained successfully via client secret"
@@ -110,7 +110,7 @@ spec:
               DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
               NAME="System Identity for $(hostname) - $DATE"
               for RETRY in 1 2 3; do
-                OUTPUT=$(newrelic-auth-cli --proxy-url "{{.Values.proxy.url}}" --proxy-ca-dir "{{.Values.proxy.ca_bundle_dir}}" --proxy-ca-file "{{.Values.proxy.ca_bundle_file}}" create-identity key --name "$NAME" --organization-id "$ORG_ID" --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --environment "$REGION" --bearer-access-token "$ACCESS_TOKEN" --output-platform "local-file" --output-local-filepath "$TEMPORAL_FOLDER/key")
+                OUTPUT=$(newrelic-auth-cli {{ with .Values.proxy.url }} --proxy-url "{{.}}" {{ end }} {{ with .Values.proxy.ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .Values.proxy.ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} create-identity key --name "$NAME" --organization-id "$ORG_ID" --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --environment "$REGION" --bearer-access-token "$ACCESS_TOKEN" --output-platform "local-file" --output-local-filepath "$TEMPORAL_FOLDER/key")
                 CLIENT_ID=$(echo "$OUTPUT" | jq -r '.client_id // empty')
 
                 if [ -n "$CLIENT_ID" ]; then
