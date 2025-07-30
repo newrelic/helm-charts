@@ -63,6 +63,8 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
 | subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |
 | systemIdentityRegistration | object | See `values.yaml` | Image for the system identity registration process |
+| systemIdentityRegistration.extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
+| systemIdentityRegistration.extraVolumes | list | `[]` | Volumes to mount in the containers |
 | tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
 | verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 
