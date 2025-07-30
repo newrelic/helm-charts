@@ -111,6 +111,7 @@ spec:
               NAME="System Identity for $(hostname) - $DATE"
               for RETRY in 1 2 3; do
                 OUTPUT=$(RUST_LOG=debug newrelic-auth-cli {{ with .Values.proxy.url }} --proxy-url "{{.}}" {{ end }} {{ with .Values.proxy.ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .Values.proxy.ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} create-identity key --name "$NAME" --organization-id "$ORG_ID" --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --environment "$REGION" --bearer-access-token "$ACCESS_TOKEN" --output-platform "local-file" --output-local-filepath "$TEMPORAL_FOLDER/key")
+                echo "$OUTPUT"
                 CLIENT_ID=$(echo "$OUTPUT" | jq -r '.client_id // empty')
 
                 if [ -n "$CLIENT_ID" ]; then
