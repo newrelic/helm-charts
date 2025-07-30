@@ -69,6 +69,8 @@ cluster name, licenses, and custom attributes
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "namespace_agents" .Values.subAgentsNamespace) -}}
+{{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
+{{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.acRemoteUpdate "cd_remote_update" .Values.cdRemoteUpdate) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- /* Add fleet_control if enabled */ -}}
