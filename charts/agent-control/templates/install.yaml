@@ -27,18 +27,34 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
+          command: ["/bin/sh", "-c"]
           args:
-            - install-agent-control
-            - --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }}
-            - --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml
-            - --namespace={{ .Release.Namespace }}
-            - --repository-url={{ .Values.installationJob.chartRepositoryUrl }}
-            - --log-level={{ .Values.installationJob.logLevel }}
-            - --chart-name={{ .Values.installationJob.chartName }}
+            - |
+              newrelic-agent-control-cli install-agent-control \
+                --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }} \
+                --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
+                --namespace={{ .Release.Namespace }} \
+                --repository-url={{ .Values.installationJob.chartRepositoryUrl }} \
+                --log-level={{ .Values.installationJob.logLevel }} \
             {{- if .Values.installationJob.repositorySecretReferenceName }}
-            - --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }}
+                --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }} \
             {{- end }}
             {{- if .Values.installationJob.repositoryCertificateSecretReferenceName }}
-            - --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }}
+                --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }} \
             {{- end }}
+                --chart-name={{ .Values.installationJob.chartName }}
+
+              newrelic-agent-control-cli create-cd-resources \
+                --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }} \
+                --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
+                --namespace={{ .Release.Namespace }} \
+                --repository-url={{ .Values.installationJob.chartRepositoryUrl }} \
+                --log-level={{ .Values.installationJob.logLevel }} \
+            {{- if .Values.installationJob.repositorySecretReferenceName }}
+                --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }} \
+            {{- end }}
+            {{- if .Values.installationJob.repositoryCertificateSecretReferenceName }}
+                --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }} \
+            {{- end }}
+                --chart-name={{ .Values.installationJob.chartName }}
 {{- end -}}
