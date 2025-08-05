@@ -30,6 +30,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+              echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
                 --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }} \
                 --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
@@ -44,6 +45,7 @@ spec:
             {{- end }}
                 --chart-name={{ .Values.installationJob.chartName }}
 
+              echo "Creating CD resources..."
               newrelic-agent-control-cli create-cd-resources \
                 --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }} \
                 --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
