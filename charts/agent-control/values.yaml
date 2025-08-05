@@ -62,13 +62,19 @@ agent-control-cd:
   # -- The repository URL from where the `agent-control-cd` chart will be installed.
   chartRepositoryUrl: https://helm-charts.newrelic.com
   # -- The image that contains the necessary tools to install and uninstall agent control cd chart.
-  installerImage:
-registry:
-repository: alpine/helm
-tag: "3.17.1"
-pullPolicy: IfNotPresent
-# -- The secrets that are needed to pull images from a custom registry.
-pullSecrets: []
+  installer:
+image:
+  registry:
+  repository: alpine/helm
+  tag: "3.17.1"
+  pullPolicy: IfNotPresent
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+extraEnv: []
+# -- Volumes to mount in the containers
+extraVolumes: []
+# -- Defines where to mount volumes specified with `extraVolumes`
+extraVolumeMounts: []
   # -- Values for the Flux chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml
   # @default -- See `values.yaml`
   flux2:

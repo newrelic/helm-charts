@@ -46,7 +46,7 @@ In order to test custom agentTypes is possible to leverage `extraVolumeMounts` a
 
 You can run the following commands to create in the newrelic namespace a configMap containing a dynamic agentType:
 ```bash
-$ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/values-dynamic-agent-type.yaml -n <your-namespace>
+$ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/values-dynamic-agent-type.yaml -n default
 ```
 
 Then you can mount such agentType leveraging extra volumes in the values.yaml
@@ -55,12 +55,16 @@ agent-control-deployment:
 # [...]
   extraVolumeMounts:
 - name: dynamic
-  mountPath: /etc/newrelic-agent-control/dynamic-agent-types
+  mountPath: /etc/newrelic-agent-control/dynamic-agent-type.yaml
+  subPath: dynamic-agent-type.yaml
   readOnly: true
   extraVolumes:
 - name: dynamic
   configMap:
 name: dynamic-agent
+items:
+  - key: dynamic-agent-type
+path: dynamic-agent-type.yaml
 ```
 
 ## Values
@@ -69,21 +73,25 @@ name: dynamic-agent
 |-----|------|---------|-------------|
 | agent-control-cd.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-cd` chart will be installed. |
 | agent-control-cd.flux2 | object | See `values.yaml` | Values for the Flux chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml |
-| agent-control-cd.flux2.clusterDomain | string | `"cluster.local"` | This is the domain name of the cluster. |
-| agent-control-cd.flux2.enabled | bool | `true` | Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Agent Control. |
-| agent-control-cd.flux2.helmController | object | Enabled | Helm controller is a Kubernetes operator that allows to declaratively manage Helm chart releases with Kubernetes manifests. The Helm release is defined in a CR ([Custom Resource](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/#custom-resources)) named `HelmRelease` that the operator will reconcile on the apply, edit, or deletion of a `HelmRelease` resource.  New Relic' Agent Control will use this controller by creating `HelmRelease` CRs based in the configuration stored on Fleet Control. This is the only controller that the Agent Control need for now, the other controllers are disabled by default.  On the other hand, user might want to leverage having FluxCD installed for their own purposes. Take a look to the `values.yaml` to see how to enable other controllers. |
-| agent-control-cd.flux2.installCRDs | bool | `true` | The installation of the CRDs is managed by the chart itself. |
-| agent-control-cd.flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
-| agent-control-cd.installerImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"alpine/helm","tag":"3.17.1"}` | The image that contains the necessary tools to install and uninstall agent control cd chart. |
-| agent-control-cd.installerImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| agent-control-cd.flux2.enabled | bool | `true` | Enable or disable FluxCD installation. New Relic's Agent Control need Flux to work, but the user can use an already existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs to deploy the Agent Control. |
+| agent-control-cd.installer | object | `{"extraEnv":[],"extraVolumeMounts":[],"extraVolumes":[],"image":{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"alpine/helm","tag":"3.17.1"}}` | The image that contains the necessary tools to install and uninstall agent control cd chart. |
+| agent-control-cd.installer.extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
+| agent-control-cd.installer.extraVolumes | list | `[]` | Volumes to mount in the containers |
+| agent-control-cd.installer.image.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | agent-control-deployment | object | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
+| agent-control-deployment.acRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-deployment chart |
+| agent-control-deployment.cdRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-cd chart |
 | agent-control-deployment.enabled | bool | `true` | Enable the installation of the Agent Control. |
 | agent-control-deployment.subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |
 | fullnameOverride | string | `""` | Override the full name of the release |
+| installationJob.chartName | string | agent-control-deployment | The name of the chart that will be installed by the installation job. |
 | installationJob.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` | The repository URL from where the `agent-control-deployment` chart will be installed. |
+| installationJob.chartVersion | string | The Chart.appVersion | The version of the Agent Control chart that will be installed by the installation job. |
 | installationJob.logLevel | string | info | Log level for the installation job. |
+| installationJob.repositoryCertificateSecretReferenceName | string | `nil` | Optional name of the secret containing TLS certificates for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference |
+| installationJob.repositorySecretReferenceName | string | `nil` | Optional name of the secret containing credentials for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference |
 | nameOverride | string | `""` | Override the name of the chart |
-| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.43.0"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.44.0"}` | The image that contains the necessary tools to install and uninstall Agent Control. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | uninstallationJob.logLevel | string | info | Log level for the uninstallation job. |
 

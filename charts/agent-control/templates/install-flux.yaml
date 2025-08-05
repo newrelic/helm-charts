@@ -18,7 +18,7 @@ spec:
   serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-install-job") }}
   containers:
 - name: install-flux
-  image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installerImage "context" .) }}
+  image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installer.image "context" .) }}
   imagePullPolicy: {{ (index .Values "agent-control-cd").pullPolicy }}
   resources:
 limits:
@@ -28,6 +28,10 @@ requests:
   cpu: 50m
   memory: 64Mi
   command: ["/bin/sh", "-c"]
+  {{- with (index .Values "agent-control-cd").installer.extraEnv }}
+  env:
+{{- toYaml . | nindent 12 }}
+  {{- end }}
   args:
 - |
   helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
@@ -39,9 +43,15 @@ requests:
 - name: flux-values
   mountPath: /tmp/flux-values
   readOnly: true
+{{- with (index .Values "agent-control-cd").installer.extraVolumeMounts }}
+{{- toYaml . | nindent 12 }}
+{{- end }}  
   volumes:
 - name: flux-values
   secret:
 secretName: {{ include "agent-control.secret.name" . }}-flux
+{{- with (index .Values "agent-control-cd").installer.extraVolumes }}
+{{- toYaml . | nindent 8 }}
+{{- end }}
 {{- end -}}
 {{- end }}
