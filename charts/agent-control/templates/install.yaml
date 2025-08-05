@@ -1,10 +1,11 @@
 {{- if (index .Values "agent-control-deployment").enabled -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
 {{- $secretName := include "agent-control.secret.name" . -}}
+
 {{- $fluxSecretName := printf "%s-flux" (include "agent-control.secret.name" .) -}}
-{{- $fluxChartName := "flux2" -}}
-{{- $fluxChartRepository := "https://fluxcd-community.github.io/helm-charts" -}}
-{{- $fluxChartVersion := "2.15.0" -}}
+{{- $fluxChartName := "agent-control-cd" -}}
+{{- $fluxChartRepository := .Values.installationJob.chartRepositoryUrl -}}
+{{- $fluxChartVersion := "0.0.2" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
