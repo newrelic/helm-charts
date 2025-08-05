@@ -87,6 +87,11 @@ cluster name, licenses, and custom attributes
   {{- $config = mustMerge $config (dict "fleet_control" $fleet_control) -}}
 {{- end -}}
 
+{{- /* Add Proxy config if url is specified */ -}}
+{{- with .Values.proxy -}}
+  {{- $config = mustMerge $config (dict "proxy" .) -}}
+{{- end -}}
+
 {{- /* Add Chart Repo url list to the allowed variants */ -}}
 {{- if (.Values.config.allowedChartRepositoryUrl) -}}
   {{- $allowedVariants := dict "variants" (dict "chart_repository_urls" .Values.config.allowedChartRepositoryUrl) -}}

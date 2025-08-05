@@ -95,6 +95,18 @@ acRemoteUpdate: true
 # @default -- "true"
 cdRemoteUpdate: true
 
+# -- proxy configuration. It is propagated to both the system identity creation job, and to the agent control instance
+proxy:
+  # -- Proxy URL proxy <protocol>://<host>:<port>
+  # url:
+  # -- System path with the CA certificates in PEM format. All `.pem` files in the directory are read.
+  # ca_bundle_dir:
+  # -- System path with the CA certificate in PEM format.
+  # ca_bundle_file:
+
+# -- Config for agent control used to generate the file passed via configMap.
+# You can overwrite the generated config with the key config.agentControl.content
+# @default -- See `values.yaml`
 config:
   # -- Configuration for the Agent Control.
   # @default -- See `values.yaml`
@@ -175,12 +187,17 @@ identityClientId: ""
 identityClientSecret: ""
 # -- Identity auth token. This option takes precedence over identityClientSecret and skips authentication.
 identityClientAuthToken: ""
-# -- In case you don't want to have the client_id and client_secret in your values, this allows you to point to a user created secret to get the key from there.
+# -- In case you don't want to have the clientId and clientSecret/clientAuthToken in your values, this allows you to point to a user created secret to get the key from there.
+# The secret is mounted in the job and used to generate the system identity.
 customIdentitySecretName: ""
 
 # -- Image for the system identity registration process
 # @default -- See `values.yaml`
 systemIdentityRegistration:
+  # -- Volumes to mount in the containers
+  extraVolumes: []
+  # -- Defines where to mount volumes specified with `extraVolumes`
+  extraVolumeMounts: []
   image:
 repository: newrelic/agent-control-system-identity-registration
 tag: "0.0.10"
