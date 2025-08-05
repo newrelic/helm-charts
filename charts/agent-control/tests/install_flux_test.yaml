@@ -3,9 +3,10 @@ tests:
   - it: should leverage correct image tag
     set:
       agent-control-cd:
-        installerImage:
-          tag: 123
-          repository: test
+        installer:
+          image:
+            tag: 123
+            repository: test
     asserts:
       - template: templates/install-flux.yaml
         equal:
@@ -31,3 +32,4 @@ tests:
         matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: (?s).*https:\/\/helm-charts\.newrelic\.com\s.*
+
