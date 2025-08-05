@@ -32,10 +32,6 @@ spec:
           env:
             {{- toYaml . | nindent 12 }}
           {{- end }}
-          {{- with (index .Values "agent-control-cd").installer.extraVolumeMounts }}
-          volumeMounts:
-            {{- toYaml . | nindent 12 }}
-          {{- end }}
           args:
             - |
               helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
