@@ -1,9 +1,7 @@
 {{- if (index .Values "agent-control-deployment").enabled -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
 {{- $secretName := include "agent-control.secret.name" . -}}
-{{- if (index .Values "agent-control-cd" "flux2").enabled -}}
-  {{- $fluxSecretName := (include "agent-control.secret.name" .)-flux -}}
-{{- end -}}
+{{- $fluxSecretName := printf "%s-flux" (include "agent-control.secret.name" .) -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
