@@ -52,7 +52,7 @@ spec:
 
             {{- if (index .Values "agent-control-cd" "flux2").enabled }}
               echo "Creating Flux's CD resources..."
-              newrelic-agent-control-cli create-cd-resources \
+              newrelic-agent-control-cli create-flux-resources \
                 --chart-version={{ $fluxChartVersion }} \
                 --secrets={{ $fluxSecretName }}=agent-control-flux.yaml \
                 --namespace={{ .Release.Namespace }} \
