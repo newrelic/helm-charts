@@ -2,6 +2,9 @@
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
 {{- $secretName := include "agent-control.secret.name" . -}}
 {{- $fluxSecretName := printf "%s-flux" (include "agent-control.secret.name" .) -}}
+{{- $fluxChartName := "flux2" -}}
+{{- $fluxChartRepository := "https://fluxcd-community.github.io/helm-charts" -}}
+{{- $fluxChartVersion := "2.15.0" -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -49,17 +52,11 @@ spec:
             {{- if (index .Values "agent-control-cd" "flux2").enabled }}
               echo "Creating Flux's CD resources..."
               newrelic-agent-control-cli create-cd-resources \
-                --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }} \
+                --chart-version={{ $fluxChartVersion }} \
                 --secrets={{ $fluxSecretName }}=agent-control-flux.yaml \
                 --namespace={{ .Release.Namespace }} \
-                --repository-url={{ .Values.installationJob.chartRepositoryUrl }} \
+                --repository-url={{ $fluxChartRepository }} \
                 --log-level={{ .Values.installationJob.logLevel }} \
-            {{- if .Values.installationJob.repositorySecretReferenceName }}
-                --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }} \
-            {{- end }}
-            {{- if .Values.installationJob.repositoryCertificateSecretReferenceName }}
-                --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }} \
-            {{- end }}
-                --chart-name={{ .Values.installationJob.chartName }}
+                --chart-name={{ $fluxChartName }}
             {{- end }}
 {{- end -}}
