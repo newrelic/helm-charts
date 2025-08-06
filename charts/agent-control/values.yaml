@@ -30,6 +30,14 @@ installationJob:
     # @default -- The Chart.appVersion
     chartVersion:
 
+    # -- Optional name of the secret containing credentials for the Helm repository.
+    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
+    repositorySecretReferenceName:
+
+    # -- Optional name of the secret containing TLS certificates for the Helm repository.
+    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
+    repositoryCertificateSecretReferenceName:
+
   agentControlCd:
     # -- The repository URL from where the `agent-control-cd` chart will be installed.
     chartRepositoryUrl: https://helm-charts.newrelic.com
@@ -42,13 +50,13 @@ installationJob:
     # @default -- The Chart.appVersion
     chartVersion: "0.0.2"
 
-  # -- Optional name of the secret containing credentials for the Helm repository.
-  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
-  repositorySecretReferenceName:
+    # -- Optional name of the secret containing credentials for the Helm repository.
+    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
+    repositorySecretReferenceName:
 
-  # -- Optional name of the secret containing TLS certificates for the Helm repository.
-  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
-  repositoryCertificateSecretReferenceName:
+    # -- Optional name of the secret containing TLS certificates for the Helm repository.
+    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
+    repositoryCertificateSecretReferenceName:
 
 uninstallationJob:
   # -- Log level for the uninstallation job.
