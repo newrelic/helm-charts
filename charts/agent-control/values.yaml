@@ -17,27 +17,30 @@ installationJob:
   # @default -- info
   logLevel: "info"
 
-  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
-  acChartRepositoryUrl: https://helm-charts.newrelic.com
+  agentControlDeployment:
+    # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+    # @default -- https://helm-charts.newrelic.com
+    chartRepositoryUrl: https://helm-charts.newrelic.com
 
-  # -- The name of the chart that will be installed by the installation job.
-  # @default -- agent-control-deployment
-  acChartName: agent-control-deployment
+    # -- The name of the chart that will be installed by the installation job.
+    # @default -- agent-control-deployment
+    chartName: agent-control-deployment
 
-  # -- The version of the Agent Control chart that will be installed by the installation job.
-  # @default -- The Chart.appVersion
-  acChartVersion:
+    # -- The version of the Agent Control chart that will be installed by the installation job.
+    # @default -- The Chart.appVersion
+    chartVersion:
 
-  # -- The repository URL from where the `agent-control-cd` chart will be installed.
-  cdChartRepositoryUrl: https://helm-charts.newrelic.com
+  agentControlCd:
+    # -- The repository URL from where the `agent-control-cd` chart will be installed.
+    chartRepositoryUrl: https://helm-charts.newrelic.com
 
-  # -- The name of the CD chart that will be installed by the installation job.
-  # @default -- agent-control-cd
-  cdChartName: agent-control-cd
+    # -- The name of the CD chart that will be installed by the installation job.
+    # @default -- agent-control-cd
+    chartName: agent-control-cd
 
-  # -- The version of the CD chart that will be installed by the installation job.
-  # @default -- The Chart.appVersion
-  cdChartVersion: "0.0.2"
+    # -- The version of the CD chart that will be installed by the installation job.
+    # @default -- The Chart.appVersion
+    chartVersion: "0.0.2"
 
   # -- Optional name of the secret containing credentials for the Helm repository.
   # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference

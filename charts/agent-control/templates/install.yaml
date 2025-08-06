@@ -33,10 +33,10 @@ spec:
             - |
               echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
-                --chart-version={{ .Values.installationJob.acChartVersion | default .Chart.AppVersion }} \
+                --chart-version={{ .Values.installationJob.agentControlDeployment.chartVersion | default .Chart.AppVersion }} \
                 --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
                 --namespace={{ .Release.Namespace }} \
-                --repository-url={{ .Values.installationJob.acChartRepositoryUrl }} \
+                --repository-url={{ .Values.installationJob.agentControlDeployment.chartRepositoryUrl }} \
                 --log-level={{ .Values.installationJob.logLevel }} \
             {{- if .Values.installationJob.repositorySecretReferenceName }}
                 --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }} \
@@ -44,16 +44,16 @@ spec:
             {{- if .Values.installationJob.repositoryCertificateSecretReferenceName }}
                 --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }} \
             {{- end }}
-                --chart-name={{ .Values.installationJob.acChartName }}
+                --chart-name={{ .Values.installationJob.agentControlDeployment.chartName }}
 
             {{- if (index .Values "agent-control-cd" "flux2").enabled }}
               echo "Creating Flux's CD resources..."
               newrelic-agent-control-cli create-flux-resources \
-                --chart-version={{ .Values.installationJob.cdChartVersion }} \
+                --chart-version={{ .Values.installationJob.agentControlCd.chartVersion }} \
                 --secrets={{ $fluxSecretName }}=agent-control-flux.yaml \
                 --namespace={{ .Release.Namespace }} \
-                --repository-url={{ .Values.installationJob.cdChartRepositoryUrl }} \
+                --repository-url={{ .Values.installationJob.agentControlCd.chartRepositoryUrl }} \
                 --log-level={{ .Values.installationJob.logLevel }} \
-                --chart-name={{ .Values.installationJob.cdChartName }}
+                --chart-name={{ .Values.installationJob.agentControlCd.chartName }}
             {{- end }}
 {{- end -}}
