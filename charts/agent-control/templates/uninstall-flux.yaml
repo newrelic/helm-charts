@@ -1,0 +1,36 @@
+{{- if index .Values "agent-control-cd" }}
+{{- if (index .Values "agent-control-cd" "flux2").enabled -}}
+{{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job" ) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-5"
+  name: {{ $uninstallJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-uninstall-job") }}
+      containers:
+        - name: install-flux
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installer.image "context" .) }}
+          imagePullPolicy: {{ (index .Values "agent-control-cd").pullPolicy }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          command: [ "bash" ]
+          args:
+            - -c
+            - |
+              helm delete agent-control-cd --namespace {{ .Release.Namespace }}
+{{- end -}}
+{{- end }}

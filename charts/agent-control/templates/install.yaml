@@ -27,17 +27,18 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
-          command:
-            - newrelic-agent-control-cli
+          args:
             - install-agent-control
-            - --chart-version
-            - "{{ .Chart.AppVersion }}"
-            - --secrets
-            - "{{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml"
-            - --namespace
-            - "{{ .Release.Namespace }}"
-            - --repository-url
-            - "{{ .Values.installationJob.chartRepositoryUrl }}"
-            - --log-level
-            - "{{ .Values.installationJob.logLevel }}"
+            - --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }}
+            - --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml
+            - --namespace={{ .Release.Namespace }}
+            - --repository-url={{ .Values.installationJob.chartRepositoryUrl }}
+            - --log-level={{ .Values.installationJob.logLevel }}
+            - --chart-name={{ .Values.installationJob.chartName }}
+            {{- if .Values.installationJob.repositorySecretReferenceName }}
+            - --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }}
+            {{- end }}
+            {{- if .Values.installationJob.repositoryCertificateSecretReferenceName }}
+            - --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }}
+            {{- end }}
 {{- end -}}

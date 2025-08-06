@@ -69,6 +69,8 @@ cluster name, licenses, and custom attributes
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "namespace_agents" .Values.subAgentsNamespace) -}}
+{{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
+{{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.acRemoteUpdate "cd_remote_update" .Values.cdRemoteUpdate) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- /* Add fleet_control if enabled */ -}}
@@ -83,6 +85,11 @@ cluster name, licenses, and custom attributes
   {{- $fleet_control = mustMerge $fleet_control (dict "auth_config" $auth_config) -}}
 
   {{- $config = mustMerge $config (dict "fleet_control" $fleet_control) -}}
+{{- end -}}
+
+{{- /* Add Proxy config if url is specified */ -}}
+{{- with .Values.proxy -}}
+  {{- $config = mustMerge $config (dict "proxy" .) -}}
 {{- end -}}
 
 {{- /* Add Chart Repo url list to the allowed variants */ -}}
