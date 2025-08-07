@@ -33,6 +33,10 @@ spec:
   {{- with include "newrelic.common.priorityClassName" . }}
   priorityClassName: {{ . }}
   {{- end }}
+  {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+  imagePullSecrets:
+{{- . | nindent 8 }}
+  {{- end }}
   {{- with include "newrelic.common.dnsConfig" . }}
   dnsConfig:
 {{- . | nindent 8 }}
@@ -117,10 +121,6 @@ value: "{{- .Values.allowServiceNameRegex }}"
   - name: data
 configMap:
   name: {{ include "nr-ebpf-agent.otelconfig.name" . }}
-  {{- with include "newrelic.common.nodeSelector" . }}
-  nodeSelector:
-{{- . | nindent 8 -}}
-  {{- end }}
   {{- if (hasKey .Values "tls") }}
   {{- if eq .Values.tls.enabled true }}
   - name: cert
@@ -128,6 +128,10 @@ secret:
   defaultMode: 420
   secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
   {{- end }}
+  {{- end }}
+  {{- with include "newrelic.common.nodeSelector" . }}
+  nodeSelector:
+{{- . | nindent 8 -}}
   {{- end }}
   {{- with include "nrEbpfAgent.otelCollector.affinity" . }}
   affinity:
