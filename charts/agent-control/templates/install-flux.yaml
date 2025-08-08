@@ -34,11 +34,18 @@ spec:
           {{- end }}
           args:
             - |
-              helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
-              helm upgrade --install agent-control-cd newrelic/agent-control-cd \
-                --version 0.0.2 \
-                --namespace {{ .Release.Namespace }} \
-                -f /tmp/flux-values/agent-control-flux.yaml
+              HELM_RELEASE_EXISTS=$(kubectl get HelmRelease agent-control-cd -n {{ .Release.Namespace }})
+              if [ -z "$HELM_RELEASE_EXISTS" ]; then
+                echo "Installing agent-control-cd chart..."
+                helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
+                helm upgrade --install agent-control-cd newrelic/agent-control-cd \
+                  --version 0.0.2 \
+                  --namespace {{ .Release.Namespace }} \
+                  -f /tmp/flux-values/agent-control-flux.yaml
+              else
+                echo "agent-control-cd HelmRelease already exists, skipping installation."
+                exit 0
+              fi
           volumeMounts:
             - name: flux-values
               mountPath: /tmp/flux-values
