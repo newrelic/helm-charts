@@ -146,6 +146,18 @@ data:
       
       
 
+      transform/promote_job_label:
+        metric_statements:
+        - context: datapoint
+          statements:
+          - set(instrumentation_scope.attributes["job_label"], attributes["job_label"]) where attributes["job_label"] != nil
+
+      transform/remove_routing_metadata:
+        metric_statements:
+          - context: metric
+            statements:
+              - delete_key(instrumentation_scope.attributes, "job_label")
+
       groupbyattrs:
         keys:
           - pod
@@ -671,7 +683,7 @@ data:
       routing/metrics_egress:
         default_pipelines: [metrics/egress]
         table:
-          - context: datapoint
+          - context: metric
             condition: "true"
             pipelines: [metrics/egress]
 
@@ -679,17 +691,17 @@ data:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
-          - context: datapoint
-            condition: attributes["job_label"] == "kube-state-metrics"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "kube-state-metrics"
             pipelines: [metrics/nr_ksm]
-          - context: datapoint
-            condition: attributes["job_label"] == "apiserver"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "apiserver"
             pipelines: [metrics/nr_controlplane]
-          - context: datapoint
-            condition: attributes["job_label"] == "controller-manager"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "controller-manager"
             pipelines: [metrics/nr_controlplane]
-          - context: datapoint
-            condition: attributes["job_label"] == "scheduler"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
     service:
@@ -701,6 +713,7 @@ data:
             - prometheus/controlplane
           processors:
             
+            - transform/promote_job_label
           exporters:
             - routing/nr_metrics_pipelines
             
@@ -759,6 +772,7 @@ data:
           receivers:
             - routing/metrics_egress
           processors:
+            - transform/remove_routing_metadata
             
             - batch
           exporters:
