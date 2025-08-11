@@ -77,6 +77,13 @@ spec:
         - name: flux-cert-secrets
           secret:
             secretName: {{ $certAuthSecret }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
         {{- end }}
         {{- with (index .Values "agent-control-cd").installer.extraVolumes }}
         {{- toYaml . | nindent 8 }}
