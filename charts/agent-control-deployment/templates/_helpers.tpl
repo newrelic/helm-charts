@@ -153,10 +153,10 @@ readOnlyRootFilesystem: true
 Return .Values.config.auth.organizationId and fails if it does not exists
 */ -}}
 {{- define "newrelic-agent-control.auth.organizationId" -}}
-{{- if (((.Values.config).fleet_control).auth).organizationId -}}
-  {{- .Values.config.fleet_control.auth.organizationId -}}
+{{- with (.Values.systemIdentity).organizationId -}}
+  {{- . -}}
 {{- else -}}
-  {{- fail ".config.fleet_control.auth.organizationId is required" -}}
+  {{- fail ".Values.systemIdentity.organizationId is required" -}}
 {{- end -}}
 {{- end -}}
 
@@ -181,70 +181,12 @@ of the releases with "-auth" suffix.
 Helper to toggle the creation of the job that creates and registers the system identity.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.shouldRunJob" -}}
-{{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
-{{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
-
-{{- if and ((.Values.config).fleet_control).enabled ((((.Values.config).fleet_control).auth).secret).create (not $privateKey) (not $clientId) -}}
+{{- if and ((.Values.config).fleet_control).enabled (.Values.systemIdentity).create -}}
   true
 {{- end -}}
 {{- end -}}
 
-
-
-{{- /*
-Helper to toggle the creation of the secret that has the system identity as values.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.shouldTemplate" -}}
-{{- if and ((.Values.config).fleet_control).enabled ((((.Values.config).fleet_control).auth).secret).create -}}
-  {{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
-  {{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
-
-  {{- if and $privateKey $clientId -}}
-    true
-  {{- else if or $privateKey $clientId -}}
-    {{- fail "If you provide your own system identity data you have to provide both private key and client id" -}}
-  {{- end -}}
-{{- end -}}
-{{- end -}}
-
-
-{{- /*
-Check if .Values.config.auth.secret.private_key.(plain_pem or base64_pem) exists and use it for as the private certificate for
-auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.privateKey.data" -}}
-{{- $plain_pem := ((((((.Values.config).fleet_control).auth).secret).private_key).plain_pem) -}}
-{{- $base64_pem := ((((((.Values.config).fleet_control).auth).secret).private_key).base64_pem) -}}
-{{- if and $plain_pem $base64_pem -}}
-  {{- fail "Only one of base64_pem or plain_pem should be provided it you want to provide your own certificate." -}}
-{{- else if $base64_pem -}}
-  {{- $base64_pem }}
-{{- else if $plain_pem -}}
-  {{- $plain_pem | b64enc -}}
-{{- else -}}
-  {{- /* Empty string */ -}}
-{{- end -}}
-{{- end -}}
-
-{{- /*
-Check if .Values.config.auth.secret.client_id.(plain or base64) exists and use it for as the client id for auth. If no
-value is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.clientId.data" -}}
-{{- $plain := ((((((.Values.config).fleet_control).auth).secret).client_id).plain) -}}
-{{- $base64 := ((((((.Values.config).fleet_control).auth).secret).client_id).base64) -}}
-{{- if and $plain $base64 -}}
-  {{- fail "Only one of base64 or plain should be provided it you want to provide your own client id." -}}
-{{- else if $base64 -}}
-  {{- $base64 }}
-{{- else if $plain -}}
-  {{- $plain | b64enc -}}
-{{- else -}}
-  {{- /* Empty string */ -}}
-{{- end -}}
-{{- end -}}
-
-{{/* check if both a ClientID and ClientSecret are provided */}}
+{{/* check if both a ClientID and ClientSecret/ClientAuthToken are provided */}}
 {{- define "newrelic-agent-control.auth.parentIdentity" -}}
 {{- if and (include "newrelic-agent-control.auth.identityClientId" .) (or (include "newrelic-agent-control.auth.identityClientSecret" .) (include "newrelic-agent-control.auth.identityClientAuthToken" .)) -}}
     true
@@ -253,22 +195,22 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 
 {{/* return ClientID */}}
 {{- define "newrelic-agent-control.auth.identityClientId" -}}
-{{- if .Values.identityClientId -}}
-  {{- .Values.identityClientId -}}
+{{- with .Values.systemIdentity.parentIdentity.clientId -}}
+  {{- . -}}
 {{- end -}}
 {{- end -}}
 
 {{/* return AuthToken */}}
 {{- define "newrelic-agent-control.auth.identityClientAuthToken" -}}
-{{- if .Values.identityClientAuthToken -}}
-  {{- .Values.identityClientAuthToken -}}
+{{- with .Values.systemIdentity.parentIdentity.authToken -}}
+  {{- . -}}
 {{- end -}}
 {{- end -}}
 
 {{/* return ClientSecret */}}
 {{- define "newrelic-agent-control.auth.identityClientSecret" -}}
-{{- if .Values.identityClientSecret -}}
-  {{- .Values.identityClientSecret -}}
+{{- with .Values.systemIdentity.parentIdentity.clientSecret -}}
+  {{- . -}}
 {{- end -}}
 {{- end -}}
 
@@ -276,8 +218,8 @@ value is provided, it defaults to `""` (empty string) so this helper can be used
 Return the name of the secret holding the clientdId and ClientSecret
 */}}
 {{- define "newrelic-agent-control.auth.customIdentitySecretName" -}}
-{{- if .Values.customIdentitySecretName -}}
-  {{- .Values.customIdentitySecretName -}}
+{{- with .Values.systemIdentity.parentIdentity.fromSecret -}}
+  {{- . -}}
 {{- end -}}
 {{- end -}}
 

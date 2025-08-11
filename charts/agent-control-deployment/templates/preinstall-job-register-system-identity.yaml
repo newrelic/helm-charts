@@ -1,6 +1,6 @@
 {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . -}}
 {{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
-  {{- fail "You must specify a customIdentitySecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
+  {{- fail "You must specify a customSecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
 {{- end -}}
 
 {{/* We create the secret if the customIdentitySecretName is not specified  */}}
@@ -41,8 +41,8 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
       containers:
         - name: register-system-identity
-          image: "{{ (.Values.systemIdentityRegistration.image).repository }}:{{ (.Values.systemIdentityRegistration.image).tag }}"
-          imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
+          image: "{{ (.Values.systemIdentity.image).repository }}:{{ (.Values.systemIdentity.image).tag }}"
+          imagePullPolicy: {{ .Values.systemIdentity.image.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
           resources:
@@ -136,11 +136,11 @@ spec:
               jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"app.kubernetes.io/managed-by": "newrelic-agent-control"} + {"newrelic.io/agent-id": "agent-control"} )' | \
               kubectl apply -n "{{ .Release.Namespace }}" -f -
           volumeMounts:
-            {{- with .Values.systemIdentityRegistration.extraVolumeMounts }}
+            {{- with .Values.systemIdentity.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
-        {{- with .Values.systemIdentityRegistration.extraVolumes }}
+        {{- with .Values.systemIdentity.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
 ---
