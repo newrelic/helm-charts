@@ -1,6 +1,8 @@
 {{- if index .Values "agent-control-cd" }}
 {{- if (index .Values "agent-control-cd" "flux2").enabled -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job" ) -}}
+{{- $basicAuthSecret := .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
+{{- $certAuthSecret := .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -36,10 +38,19 @@ spec:
             - |
               HELM_RELEASE_EXISTS=$(kubectl get HelmRelease agent-control-cd -n {{ .Release.Namespace }})
               if [ -z "$HELM_RELEASE_EXISTS" ]; then
-                echo "Installing agent-control-cd chart..."
-                helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
-                helm upgrade --install agent-control-cd newrelic/agent-control-cd \
-                  --version 0.0.2 \
+                helm repo add newrelic-agent-control-cd {{ (index .Values "agent-control-cd").chartRepositoryUrl }} \
+{{- if $certAuthSecret }}
+                  # Use TLS options
+                  --ca-file /etc/flux-cert/ca.crt \
+                  --cert-file /etc/flux-cert/tls.crt \
+                  --key-file /etc/flux-cert/tls.key
+{{- else if $basicAuthSecret }}
+                  # Use basic auth options
+                  --username {{ $basicAuthSecret.stringData.username | b64dec }} \
+                  --password {{ $basicAuthSecret.stringData.password | b64dec }}
+{{- end }}
+                helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ (index .Values "agent-control-cd").chartName }} \
+                  --version {{ (index .Values "agent-control-cd").chartVersion }} \
                   --namespace {{ .Release.Namespace }} \
                   -f /tmp/flux-values/agent-control-flux.yaml
               else
@@ -50,13 +61,23 @@ spec:
             - name: flux-values
               mountPath: /tmp/flux-values
               readOnly: true
+            {{- if $certAuthSecret }}
+            - name: flux-cert-secrets
+              mountPath: /etc/flux-cert
+              readOnly: true
+            {{- end }}
             {{- with (index .Values "agent-control-cd").installer.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
-            {{- end }}              
+            {{- end }}
       volumes:
         - name: flux-values
           secret:
             secretName: {{ include "agent-control.secret.name" . }}-flux
+        {{- if $certAuthSecret }}
+        - name: flux-cert-secrets
+          secret:
+            secretName: {{ $certAuthSecret }}
+        {{- end }}
         {{- with (index .Values "agent-control-cd").installer.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
