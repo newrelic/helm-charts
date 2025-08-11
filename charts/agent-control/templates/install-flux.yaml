@@ -1,8 +1,6 @@
 {{- if index .Values "agent-control-cd" }}
 {{- if (index .Values "agent-control-cd" "flux2").enabled -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job" ) -}}
-{{- $basicAuthSecret := .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
-{{- $certAuthSecret := .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -32,7 +30,7 @@ spec:
           command: ["/bin/sh", "-c"]
           envFrom:
             - secretRef:
-                name: {{ $basicAuthSecret }}
+                name: {{ .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
                 optional: true
           {{- with (index .Values "agent-control-cd").installer.extraEnv }}
           env:
@@ -43,12 +41,12 @@ spec:
               HELM_RELEASE_EXISTS=$(kubectl get HelmRelease agent-control-cd -n {{ .Release.Namespace }})
               if [ -z "$HELM_RELEASE_EXISTS" ]; then
                 helm repo add newrelic-agent-control-cd {{ (index .Values "agent-control-cd").chartRepositoryUrl }} \
-{{- if $certAuthSecret }}
+{{- if .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName }}
                   # Use TLS options
                   --ca-file /etc/flux-cert/ca.crt \
                   --cert-file /etc/flux-cert/tls.crt \
                   --key-file /etc/flux-cert/tls.key
-{{- else if $basicAuthSecret }}
+{{- else if .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
                   # Use basic auth options
                   --username $username \
                   --password $password
@@ -65,7 +63,7 @@ spec:
             - name: flux-values
               mountPath: /tmp/flux-values
               readOnly: true
-            {{- if $certAuthSecret }}
+            {{- if .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName }}
             - name: flux-cert-secrets
               mountPath: /etc/flux-cert
               readOnly: true
@@ -77,10 +75,10 @@ spec:
         - name: flux-values
           secret:
             secretName: {{ include "agent-control.secret.name" . }}-flux
-        {{- if $certAuthSecret }}
+        {{- if .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName }}
         - name: flux-cert-secrets
           secret:
-            secretName: {{ $certAuthSecret }}
+            secretName: {{ .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName }}
             items:
               - key: ca.crt
                 path: ca.crt
