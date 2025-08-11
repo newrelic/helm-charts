@@ -28,10 +28,11 @@ spec:
               cpu: 50m
               memory: 64Mi
           command: ["/bin/sh", "-c"]
+          {{- if .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
           envFrom:
             - secretRef:
                 name: {{ .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
-                optional: true
+          {{- end }}
           {{- with (index .Values "agent-control-cd").installer.extraEnv }}
           env:
             {{- toYaml . | nindent 12 }}
