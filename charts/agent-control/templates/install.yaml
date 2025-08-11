@@ -30,7 +30,7 @@ spec:
           args:
             - install-agent-control
             - --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }}
-            - --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml
+            - --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml,{{ $secretName }}=override.yaml
             - --namespace={{ .Release.Namespace }}
             - --repository-url={{ .Values.installationJob.chartRepositoryUrl }}
             - --log-level={{ .Values.installationJob.logLevel }}
