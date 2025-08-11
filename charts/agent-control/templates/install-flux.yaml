@@ -30,8 +30,18 @@ spec:
               cpu: 50m
               memory: 64Mi
           command: ["/bin/sh", "-c"]
-          {{- with (index .Values "agent-control-cd").installer.extraEnv }}
           env:
+            - name: AC_CD_REPO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $basicAuthSecret }}
+                  key: username
+            - name: AC_CD_REPO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $basicAuthSecret }}
+                  key: password
+          {{- with (index .Values "agent-control-cd").installer.extraEnv }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           args:
@@ -45,9 +55,10 @@ spec:
                   --cert-file /etc/flux-cert/tls.crt \
                   --key-file /etc/flux-cert/tls.key
 {{- else if $basicAuthSecret }}
+{{- $secretData := (lookup "v1" "Secret" .Release.Namespace $basicAuthSecret).stringData }}
                   # Use basic auth options
-                  --username {{ $basicAuthSecret.stringData.username | b64dec }} \
-                  --password {{ $basicAuthSecret.stringData.password | b64dec }}
+                  --username $AC_CD_REPO_USERNAME \
+                  --password $AC_CD_REPO_PASSWORD
 {{- end }}
                 helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ (index .Values "agent-control-cd").chartName }} \
                   --version {{ (index .Values "agent-control-cd").chartVersion }} \
