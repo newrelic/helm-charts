@@ -28,14 +28,24 @@ spec:
               cpu: 50m
               memory: 64Mi
           command: ["/bin/sh", "-c"]
-          {{- if .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
-          envFrom:
-            - secretRef:
-                name: {{ .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
-          {{- end }}
-          {{- with (index .Values "agent-control-cd").installer.extraEnv }}
+          {{- if (or
+            .Values.installationJob.agentControlCd.repositorySecretReferenceName
+            (index .Values "agent-control-cd").installer.extraEnv
+          ) }}
           env:
+            - name: HELM_REPO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
+                  key: username
+            - name: HELM_REPO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
+                  key: password
+          {{- with (index .Values "agent-control-cd").installer.extraEnv }}
             {{- toYaml . | nindent 12 }}
+          {{- end }}
           {{- end }}
           args:
             - |
@@ -49,8 +59,8 @@ spec:
                   --key-file /etc/flux-cert/tls.key
 {{- else if .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
                   # Use basic auth options
-                  --username $username \
-                  --password $password
+                  --username $HELM_REPO_USERNAME \
+                  --password $HELM_REPO_PASSWORD
 {{- end }}
                 helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ (index .Values "agent-control-cd").chartName }} \
                   --version {{ (index .Values "agent-control-cd").chartVersion }} \
