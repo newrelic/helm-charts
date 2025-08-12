@@ -11,7 +11,7 @@ tests:
   - it: by default it fails with missing values
     asserts:
       - failedTemplate:
-          errorMessage: You must specify in .Values.systemIdentity a customSecretName or identityClientId identityClientSecret/identityClientAuthToken
+          errorMessage: You must specify in .Values.systemIdentity a secretName or identityClientId identityClientSecret/identityClientAuthToken
 
 
   - it: it fails with no organizationId
@@ -46,7 +46,7 @@ tests:
         organizationId: test
     asserts:
       - failedTemplate:
-          errorMessage: You should not specify in .Values.systemIdentity both a customSecretName and identityClientId identityClientSecret/identityClientAuthToken
+          errorMessage: You should not specify in .Values.systemIdentity both a secretName and identityClientId identityClientSecret/identityClientAuthToken
 
   - it: with fleet disabled, the job should template correctly 0 documents.
     set:

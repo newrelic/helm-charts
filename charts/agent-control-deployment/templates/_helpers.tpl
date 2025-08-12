@@ -182,11 +182,11 @@ Helper to toggle the creation of the job that creates and registers the system i
 {{- end -}}
 
 {{- if and (include "newrelic-agent-control.auth.customIdentitySecretName" .) (include "newrelic-agent-control.auth.parentIdentity" .) -}}
-  {{- fail "You should not specify in .Values.systemIdentity both a customSecretName and identityClientId identityClientSecret/identityClientAuthToken" -}}
+  {{- fail "You should not specify in .Values.systemIdentity both a secretName and identityClientId identityClientSecret/identityClientAuthToken" -}}
 {{- end -}}
 
 {{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
-  {{- fail "You must specify in .Values.systemIdentity a customSecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
+  {{- fail "You must specify in .Values.systemIdentity a secretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
 {{- end -}}
 
 {{- if not (.Values.systemIdentity).organizationId -}}
