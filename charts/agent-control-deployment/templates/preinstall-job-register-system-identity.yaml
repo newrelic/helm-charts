@@ -1,7 +1,5 @@
 {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . -}}
-{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
-  {{- fail "You must specify a customSecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
-{{- end -}}
+{{- include "newrelic-agent-control.check.system.identity.inputs" . -}}
 
 {{/* We create the secret if the customIdentitySecretName is not specified  */}}
 {{- if not (include "newrelic-agent-control.auth.customIdentitySecretName" .) }}

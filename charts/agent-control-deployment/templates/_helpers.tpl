@@ -150,24 +150,21 @@ readOnlyRootFilesystem: true
 
 
 {{- /*
-Return .Values.config.auth.organizationId and fails if it does not exists
+Return .Values.config.auth.organizationId
 */ -}}
 {{- define "newrelic-agent-control.auth.organizationId" -}}
 {{- with (.Values.systemIdentity).organizationId -}}
   {{- . -}}
-{{- else -}}
-  {{- fail ".Values.systemIdentity.organizationId is required" -}}
 {{- end -}}
 {{- end -}}
 
 
 
 {{- /*
-Check if .Values.config.auth.secret.name exists and use it to name auth' secret. If it does not exist, fallback to the name
-of the releases with "-auth" suffix.
+Check if .Values.systemIdentity.secretName exists and use it to name auth secret. If it does not exist, fallback to the name of the releases with "-auth" suffix.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.name" -}}
-{{- $secretName := (((((.Values.config).fleet_control).auth).secret).name) -}}
+{{- $secretName := (.Values.systemIdentity).secretName -}}
 {{- if $secretName -}}
   {{- $secretName -}}
 {{- else -}}
@@ -175,6 +172,28 @@ of the releases with "-auth" suffix.
 {{- end -}}
 {{- end -}}
 
+{{- /*
+Helper to toggle the creation of the job that creates and registers the system identity.
+*/ -}}
+{{- define "newrelic-agent-control.check.system.identity.inputs" -}}
+
+{{- if and (include "newrelic-agent-control.auth.identityClientSecret" .) (include "newrelic-agent-control.auth.identityClientAuthToken" .) -}}
+  {{- fail "You should not specify in .Values.systemIdentity both a identityClientSecret and a identityClientAuthToken" -}}
+{{- end -}}
+
+{{- if and (include "newrelic-agent-control.auth.customIdentitySecretName" .) (include "newrelic-agent-control.auth.parentIdentity" .) -}}
+  {{- fail "You should not specify in .Values.systemIdentity both a customSecretName and identityClientId identityClientSecret/identityClientAuthToken" -}}
+{{- end -}}
+
+{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
+  {{- fail "You must specify in .Values.systemIdentity a customSecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
+{{- end -}}
+
+{{- if not (.Values.systemIdentity).organizationId -}}
+  {{- fail "You should specify .Values.systemIdentity.organizationId" -}}
+{{- end -}}
+
+{{- end -}}
 
 
 {{- /*

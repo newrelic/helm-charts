@@ -11,7 +11,42 @@ tests:
   - it: by default it fails with missing values
     asserts:
       - failedTemplate:
-          errorMessage: You must specify a customSecretName or identityClientId identityClientSecret/identityClientAuthToken
+          errorMessage: You must specify in .Values.systemIdentity a customSecretName or identityClientId identityClientSecret/identityClientAuthToken
+
+
+  - it: it fails with no organizationId
+    set:
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
+    asserts:
+      - failedTemplate:
+          errorMessage: You should specify .Values.systemIdentity.organizationId
+
+  - it: by default it fails when specifying conflicting values clientAuth vs clietnSecret
+    set:
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
+          authToken: test
+        organizationId: test
+    asserts:
+      - failedTemplate:
+          errorMessage: You should not specify in .Values.systemIdentity both a identityClientSecret and a identityClientAuthToken
+
+  - it: by default it fails when specifying conflicting values fromSecret vs credendials
+    set:
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
+          fromSecret: test-client-name
+        organizationId: test
+    asserts:
+      - failedTemplate:
+          errorMessage: You should not specify in .Values.systemIdentity both a customSecretName and identityClientId identityClientSecret/identityClientAuthToken
 
   - it: with fleet disabled, the job should template correctly 0 documents.
     set:

@@ -51,17 +51,17 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation. |
 | serviceAccount.create | bool | `true` | Whether the chart should automatically create the ServiceAccount objects required to run. |
 | subAgentsNamespace | string | "newrelic" | Namespace where the sub-agents will be deployed. |
-| systemIdentity | object | See `values.yaml` | Configuration for the system identity registration process. These options provides the required data to run the pre-install job that creates the system identity that are used communicating via OpAMP. System identity registration is executed only once. Subsequent upgrades will not attempt to create the identity again. Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired. |
-| systemIdentity.create | bool | `true` | Set it to false to disable the registration of a new system identity. Leverage this option to configure a pre-existing system identity via secret.  The secret should be already created in the namespace having as keys "CLIENT_ID" and "private_key" of the identity to leverage. |
-| systemIdentity.customSecretName | string | `nil` | Set it to customize the name of the secret that is created and mounted in the agentControl deployment pod |
+| systemIdentity | object | See `values.yaml` | Configuration for the system identity registration process. These options provides the required data to run the pre-install job that creates the system identitythat is used when communicating via OpAMP. System identity registration is executed only once. Subsequent upgrades will not attempt to create the identity again. Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired. |
+| systemIdentity.create | bool | `true` | Set it to false to disable the registration of a new system identity. Set this to `false` to configure a pre-existing system identity via secret. The secret should be already created in the namespace having as keys "CLIENT_ID" and "private_key" of the identity to leverage. |
 | systemIdentity.extraVolumeMounts | list | `[]` | Defines where, in the systemIdentity job, to mount volumes specified with `extraVolumes` |
 | systemIdentity.extraVolumes | list | `[]` | Volumes to mount in the systemIdentity job |
 | systemIdentity.organizationId | string | `""` | Organization ID used to create the system identity. |
-| systemIdentity.parentIdentity | object | `{"authToken":"","clientId":"","clientSecret":"","fromSecret":""}` | Configuration for the parent identity  You can either authenticate via ClientId/ClientSecret or pass directly an `AuthToken` and manage locally the authentication.     The authToken can be retrieve via the cli command "newrelic-auth-cli authenticate ...". |
+| systemIdentity.parentIdentity | object | `{"authToken":"","clientId":"","clientSecret":"","fromSecret":""}` | Configuration for the parent identity You can either authenticate via ClientId/ClientSecret or pass directly an `AuthToken` and manage locally the authentication. The authToken can be retrieve via the cli command "newrelic-auth-cli authenticate ...". |
 | systemIdentity.parentIdentity.authToken | string | `""` | Identity auth token. This option takes precedence over secret and skips authentication. |
 | systemIdentity.parentIdentity.clientId | string | `""` | Identity clientId to use. |
 | systemIdentity.parentIdentity.clientSecret | string | `""` | Identity clientSecret to use. |
 | systemIdentity.parentIdentity.fromSecret | string | `""` | In case you don't want to have the clientId, the clientSecret and the clientAuthToken in your values, you can point to a secret to get the data from there. The secret data is mounted in the job via environment variables to generate the system identity. |
+| systemIdentity.secretName | string | `nil` | if create is set to false a secret having this name is expected in the AC namespace |
 | tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
 | verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 

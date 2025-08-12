@@ -151,19 +151,20 @@ config:
     fleet_id: ""
 
 # -- Configuration for the system identity registration process.
-# These options provides the required data to run the pre-install job that creates the system identity that are used communicating via OpAMP.
+# These options provides the required data to run the pre-install job that creates the system identitythat is used when communicating via OpAMP.
 # System identity registration is executed only once. Subsequent upgrades will not attempt to create the identity again.
 # Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired.
 # @default -- See `values.yaml`
 systemIdentity:
 
   # -- Set it to false to disable the registration of a new system identity.
-  # Leverage this option to configure a pre-existing system identity via secret.
+  # Set this to `false` to configure a pre-existing system identity via secret.
   # The secret should be already created in the namespace having as keys "CLIENT_ID" and "private_key" of the identity to leverage.
   create: true
 
   # -- Set it to customize the name of the secret that is created and mounted in the agentControl deployment pod
-  customSecretName:
+  # -- if create is set to false a secret having this name is expected in the AC namespace
+  secretName:
 
   # -- Organization ID used to create the system identity.
   organizationId: ""
