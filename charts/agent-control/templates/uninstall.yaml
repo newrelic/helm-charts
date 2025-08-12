@@ -27,13 +27,18 @@ spec:
             requests:
               cpu: 50m
               memory: 64Mi
-          command:
-            - newrelic-agent-control-cli
-            - uninstall-agent-control
-            - --namespace
-            - "{{ .Release.Namespace }}"
-            - --namespace-agents
-            - "{{ index .Values "agent-control-deployment" "subAgentsNamespace" }}"
-            - --log-level
-            - "{{ .Values.uninstallationJob.logLevel }}"
+          command: ["/bin/sh", "-c"]
+          args:
+            - |-
+              echo "Uninstalling Agent Control..."
+              newrelic-agent-control-cli uninstall-agent-control \
+                --namespace "{{ .Release.Namespace }}" \
+                --namespace-agents "{{ index .Values "agent-control-deployment" "subAgentsNamespace" }}" \
+                --log-level "{{ .Values.uninstallationJob.logLevel }}"
+            {{- if (index .Values "agent-control-cd" "flux2").enabled }}
+              echo "Removing agent-control-cd resources..."
+              newrelic-agent-control-cli remove-cd-resources \
+                --namespace "{{ .Release.Namespace }}" \
+                --log-level "{{ .Values.uninstallationJob.logLevel }}"
+            {{- end }}
 {{- end -}}
