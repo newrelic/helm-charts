@@ -51,19 +51,19 @@ spec:
             - |
               HELM_RELEASE_EXISTS=$(kubectl get HelmRelease agent-control-cd -n {{ .Release.Namespace }})
               if [ -z "$HELM_RELEASE_EXISTS" ]; then
-                helm repo add newrelic-agent-control-cd {{ (index .Values "agent-control-cd").chartRepositoryUrl }} \
-{{- if .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName }}
+                helm repo add newrelic-agent-control-cd {{ .Values.installationJob.agentControlCd.chartRepositoryUrl }}
+{{- if .Values.installationJob.agentControlCd.repositoryCertificateSecretReferenceName }} \
                   # Use TLS options
                   --ca-file /etc/flux-cert/ca.crt \
                   --cert-file /etc/flux-cert/tls.crt \
                   --key-file /etc/flux-cert/tls.key
-{{- else if .Values.installationJob.agentControlCd.repositorySecretReferenceName }}
+{{- else if .Values.installationJob.agentControlCd.repositorySecretReferenceName }} \
                   # Use basic auth options
                   --username $HELM_REPO_USERNAME \
                   --password $HELM_REPO_PASSWORD
 {{- end }}
-                helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ (index .Values "agent-control-cd").chartName }} \
-                  --version {{ (index .Values "agent-control-cd").chartVersion }} \
+                helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ .Values.installationJob.agentControlCd.chartName }} \
+                  --version {{ .Values.installationJob.agentControlCd.chartVersion }} \
                   --namespace {{ .Release.Namespace }} \
                   -f /tmp/flux-values/agent-control-flux.yaml
               else
