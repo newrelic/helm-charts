@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.39
+    helm.sh/chart: nr-k8s-otel-collector-0.8.40
 data:
   deployment-config.yaml: |
     receivers:
@@ -145,6 +145,18 @@ data:
     processors:
       
       
+
+      transform/promote_job_label:
+        metric_statements:
+        - context: datapoint
+          statements:
+          - set(instrumentation_scope.attributes["job_label"], attributes["job_label"]) where attributes["job_label"] != nil
+
+      transform/remove_routing_metadata:
+        metric_statements:
+          - context: metric
+            statements:
+              - delete_key(instrumentation_scope.attributes, "job_label")
 
       groupbyattrs:
         keys:
@@ -476,7 +488,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.39
+            value: 0.8.40
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -494,7 +506,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.39
+            value: 0.8.40
 
       transform/events:
         log_statements:
@@ -523,6 +535,10 @@ data:
             action: delete
 
       cumulativetodelta:
+        exclude:
+          metrics:
+            - 'kube_pod_container_status_restarts_total'
+          match_type: strict
 
       k8sattributes/ksm:
         # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
@@ -671,7 +687,7 @@ data:
       routing/metrics_egress:
         default_pipelines: [metrics/egress]
         table:
-          - context: datapoint
+          - context: metric
             condition: "true"
             pipelines: [metrics/egress]
 
@@ -679,17 +695,17 @@ data:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
-          - context: datapoint
-            condition: attributes["job_label"] == "kube-state-metrics"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "kube-state-metrics"
             pipelines: [metrics/nr_ksm]
-          - context: datapoint
-            condition: attributes["job_label"] == "apiserver"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "apiserver"
             pipelines: [metrics/nr_controlplane]
-          - context: datapoint
-            condition: attributes["job_label"] == "controller-manager"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "controller-manager"
             pipelines: [metrics/nr_controlplane]
-          - context: datapoint
-            condition: attributes["job_label"] == "scheduler"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
     service:
@@ -701,6 +717,7 @@ data:
             - prometheus/controlplane
           processors:
             
+            - transform/promote_job_label
           exporters:
             - routing/nr_metrics_pipelines
             
@@ -759,6 +776,7 @@ data:
           receivers:
             - routing/metrics_egress
           processors:
+            - transform/remove_routing_metadata
             
             - batch
           exporters:
