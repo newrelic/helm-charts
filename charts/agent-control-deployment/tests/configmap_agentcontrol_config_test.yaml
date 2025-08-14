@@ -7,15 +7,6 @@ release:
 chart:
   version: 1.2.3-beta
 tests:
-  - it: agent control's config can be disabled
-    set:
-      config:
-        agentControl:
-          create: false
-    asserts:
-      - hasDocuments:
-          count: 0
-
   - it: fleet_control can be disabled
     set:
       cluster: my-cluster
@@ -141,7 +132,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl: {}
+        override: {}
     asserts:
       - equal:
           path: data["local_config"]
@@ -168,7 +159,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl:
+        override:
           content:
             test: value
             test2: value2
@@ -200,7 +191,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl:
+        override:
           content:
             test: value
             test2: value2
@@ -263,8 +254,8 @@ tests:
       config:
         fleet_control:
           enabled: false
-      acRemoteUpdate: false
-      cdRemoteUpdate: false
+        acRemoteUpdate: false
+        cdRemoteUpdate: false
     asserts:
       - equal:
           path: data["local_config"]
@@ -285,25 +276,14 @@ tests:
     template: templates/configmap-agentcontrol-config.yaml
     set:
       cluster: my-cluster
-      region: eu
       config:
-        subAgents:
+        agents:
           test-0:
-            type: org.newrelic/test:0.0.0
-            content:
-              a: test
-              value: 0
+            agent_type: org.newrelic/test:0.0.0
           test-1:
-            type: org.newrelic/test:0.0.1
-            content:
-              a: test
-              value: 1
+            agent_type: org.newrelic/test:0.0.1
           test-2:
-            type: org.newrelic/test:0.0.2
-            content:
-              a: test
-              aYAML:
-                canI: HaveSomeYAML
+            agent_type: org.newrelic/test:0.0.2
     asserts:
       - matchRegex:
           path: data["local_config"]
@@ -313,7 +293,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl:
+        override:
           content:
             server:
               enabled: false
@@ -325,7 +305,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl:
+        override:
           content:
             server:
               host: "127.0.0.1"
@@ -337,9 +317,9 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl:
-          status_server:
-            port: 1234
+        status_server:
+          port: 1234
+        override:
           content:
             server:
               port: 4321
@@ -351,7 +331,7 @@ tests:
     set:
       cluster: my-cluster
       config:
-        agentControl:
+        override:
           content:
             k8s:
               chart_version: test
@@ -439,6 +419,40 @@ tests:
               namespace_agents: newrelic
             proxy:
               url: https://my.proxy.com
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+
+  - it: set up logs
+    set:
+      cluster: my-cluster
+      config:
+        log:
+          level: debug
+          format: whatever
+          insecure_fine_grained_level: obscure_field
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              ac_remote_update: true
+              cd_remote_update: true
+              cluster_name: my-cluster
+              namespace: my-namespace
+              namespace_agents: newrelic
+            log:
+              format: whatever
+              insecure_fine_grained_level: obscure_field
+              level: debug
             server:
               enabled: true
               host: 0.0.0.0

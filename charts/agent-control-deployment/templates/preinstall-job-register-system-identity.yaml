@@ -101,7 +101,7 @@ spec:
 
               echo "Creating System Identity..."
 
-              ORG_ID={{ include "newrelic-agent-control.auth.organizationId" . }}
+              ORG_ID={{ (.Values.systemIdentity).organizationId }}
               TEMPORAL_FOLDER=/tmp/gen-folder
               mkdir $TEMPORAL_FOLDER
               CLIENT_ID=""
