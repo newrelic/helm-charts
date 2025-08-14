@@ -12,19 +12,19 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| acRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-deployment chart |
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| cdRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-cd chart |
+| agentsConfig | string | `{}` (See `values.yaml`) | List of managed agents configs.  The key represents the name of the agent that should match the one specified in .config.agents. |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| config | object | See `values.yaml` | Config for agent control used to generate the file passed via configMap. You can overwrite the generated config with the key config.agentControl.content |
-| config.agentControl | object | See `values.yaml` | Configuration for the Agent Control. |
-| config.agentControl.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. If you need to have you own configuration, disabled the creation of this configMap and create your own. |
-| config.agentControl.create | bool | `true` | Set if the configMap is going to be created by this chart or the user will provide its own. |
+| config | object | See `values.yaml` | AgentControl config options used to generate the configFile passed to the binary. You can overwrite the configFile generated with a raw one via config.override.content |
+| config.acRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-deployment chart |
+| config.agents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed.  The key represents the name of the agent that should used when defining its configuraiton. |
 | config.allowedChartRepositoryUrl | list | `[]`(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"]) | List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories. |
+| config.cdRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-cd chart |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
-| config.status_server.port | int | See `values.yaml` | Set the status server port |
-| config.subAgents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration. |
+| config.log | string | `{}` (See `values.yaml`) | Log configuration. The log level can be overwritten as well via verboseLog |
+| config.override.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. |
+| config.status_server | object | See `values.yaml` | Set the status server port |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
@@ -63,7 +63,7 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | systemIdentity.parentIdentity.fromSecret | string | `""` | In case you don't want to have the clientId, the clientSecret and the clientAuthToken in your values, you can point to a secret to get the data from there. The secret data is mounted in the job via environment variables to generate the system identity. |
 | systemIdentity.secretName | string | `nil` | if create is set to false a secret having this name is expected in the AC namespace |
 | tolerations | list | `[]` | Sets pod's tolerations to node taints. Can be configured also with `global.tolerations` |
-| verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
+| verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`. If you need to change the logs to trace or change more complex options, please refer to config.log |
 
 ## Maintainers
 
