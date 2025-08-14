@@ -17,7 +17,7 @@ spec:
       restartPolicy: Never
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-uninstall-job") }}
       containers:
-        - name: install-flux
+        - name: uninstall-flux
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installer.image "context" .) }}
           imagePullPolicy: {{ (index .Values "agent-control-cd").pullPolicy }}
           resources:
