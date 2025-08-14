@@ -3,7 +3,7 @@ nameOverride: ""
 # -- Override the full name of the release
 fullnameOverride: ""
 
-# -- The image that contains the necessary tools to install and uninstall Agent Control.
+# -- The image that contains the necessary tools to install and uninstall the Agent Control components.
 toolkitImage:
   registry:
   repository: newrelic/newrelic-agent-control-cli
@@ -12,95 +12,80 @@ toolkitImage:
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
 
-installationJob:
-  # -- Log level for the installation job.
-  # @default -- info
-  logLevel: "info"
 
-  agentControlDeployment:
-    # -- The repository URL from where the `agent-control-deployment` chart will be installed.
-    # @default -- https://helm-charts.newrelic.com
-    chartRepositoryUrl: https://helm-charts.newrelic.com
+installation:
+  # -- Log level for installation.
+  # @default -- debug
+  logLevel: "debug"
 
-    # -- The name of the chart that will be installed by the installation job.
-    # @default -- agent-control-deployment
-    chartName: agent-control-deployment
+  # -- Extra environment variables
+  extraEnv: []
+  # -- Volumes to mount in the containers
+  extraVolumes: []
+  # -- Defines where to mount volumes specified with `extraVolumes`
+  extraVolumeMounts: []
 
-    # -- The version of the Agent Control chart that will be installed by the installation job.
-    # @default -- The Chart.appVersion
-    chartVersion:
+uninstallation:
+  # -- Log level for uninstallation.
+  # @default -- debug
+  logLevel: "debug"
 
-    # -- Optional name of the secret containing credentials for the Helm repository.
-    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
-    repositorySecretReferenceName:
 
-    # -- Optional name of the secret containing TLS certificates for the Helm repository.
-    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
-    repositoryCertificateSecretReferenceName:
-
-  agentControlCd:
-    # -- The repository URL from where the `agent-control-cd` chart will be installed.
-    chartRepositoryUrl: https://helm-charts.newrelic.com
-
-    # -- The name of the CD chart that will be installed by the installation job.
-    # @default -- agent-control-cd
-    chartName: agent-control-cd
-
-    # -- The version of the CD chart that will be installed by the installation job.
-    # @default -- The Chart.appVersion
-    chartVersion: "0.0.2"
-
-    # -- Optional name of the secret containing credentials for the Helm repository.
-    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
-    repositorySecretReferenceName:
-
-    # -- Optional name of the secret containing TLS certificates for the Helm repository.
-    # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
-    repositoryCertificateSecretReferenceName:
-
-uninstallationJob:
-  # -- Log level for the uninstallation job.
-  # @default -- info
-  logLevel: "info"
-
-# -- Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
-# @default -- See `values.yaml`
-agent-control-deployment:
-  # -- Enable the installation of the Agent Control.
+agentControlDeployment:
+  # -- Enable the installation of Agent Control.
   enabled: true
 
-  # -- Namespace where the sub-agents will be deployed.
-  # @default -- "newrelic"
-  subAgentsNamespace: "newrelic"
+  # -- Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
+  # @default -- See `values.yaml`
+  chartValues:
+    # -- Namespace where agents are deployed
+    # @default -- "newrelic"
+    subAgentsNamespace: "newrelic"
 
-  # -- (bool) enables or disables remote update from Fleet Control for the agent-control-deployment chart
-  # @default -- "true"
-  acRemoteUpdate: true
-  # -- (bool) enables or disables remote update from Fleet Control for the agent-control-cd chart
-  # @default -- "true"
-  cdRemoteUpdate: true
+  # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+  # @default -- https://helm-charts.newrelic.com
+  chartRepositoryUrl: https://helm-charts.newrelic.com
 
-agent-control-cd:
+  # -- The name of the chart that will be installed by the installation job.
+  # @default -- agent-control-deployment
+  chartName: agent-control-deployment
+
+  # -- The version of the Agent Control chart that will be installed by the installation job.
+  # @default -- `.Chart.appVersion`
+  chartVersion:
+
+  # -- Optional name of the secret containing credentials for the Helm repository.
+  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
+  repositorySecretReferenceName:
+
+  # -- Optional name of the secret containing TLS certificates for the Helm repository.
+  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
+  repositoryCertificateSecretReferenceName:
+
+agentControlCd:
+
+  # -- Enable the installation of a Continuous Deployment system that can be managed by Agent Control.
+  enabled: true
+
+  # -- Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml
+  # @default -- See `values.yaml`
+  chartValues:
+
   # -- The repository URL from where the `agent-control-cd` chart will be installed.
   chartRepositoryUrl: https://helm-charts.newrelic.com
-  # -- The image that contains the necessary tools to install and uninstall agent control cd chart.
-  installer:
-    image:
-      registry:
-      repository: newrelic/newrelic-agent-control-cli
-      tag: "0.46.0"
-      pullPolicy: IfNotPresent
-      # -- The secrets that are needed to pull images from a custom registry.
-      pullSecrets: []
-    extraEnv: []
-    # -- Volumes to mount in the containers
-    extraVolumes: []
-    # -- Defines where to mount volumes specified with `extraVolumes`
-    extraVolumeMounts: []
-  # -- Values for the Flux chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml
-  # @default -- See `values.yaml`
-  flux2:
-    # -- Enable or disable FluxCD installation. New Relic's Agent Control need Flux to work, but the user can use an already
-    # existing Flux deployment. With that use case, the use can disable Flux and use this chart to only install the CRs
-    # to deploy the Agent Control.
-    enabled: true
+
+  # -- The name of the CD chart that will be installed by the installation job.
+  # @default -- agent-control-cd
+  chartName: agent-control-cd
+
+  # -- The version of the CD chart that will be installed by the installation job.
+  # @default -- `.Chart.annotations.agentControlCdVersion`
+  chartVersion:
+
+  # -- Optional name of the secret containing credentials for the Helm repository.
+  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference
+  repositorySecretReferenceName:
+
+  # -- Optional name of the secret containing TLS certificates for the Helm repository.
+  # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
+  repositoryCertificateSecretReferenceName:
