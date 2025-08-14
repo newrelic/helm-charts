@@ -2,11 +2,9 @@ suite: Validate AC-CD Installation
 tests:
   - it: should leverage correct image tag
     set:
-      agent-control-cd:
-        installer:
-          image:
-            tag: 123
-            repository: test
+      toolkitImage:
+        tag: 123
+        repository: test
     asserts:
       - template: templates/install-flux.yaml
         equal:
@@ -18,9 +16,8 @@ tests:
           value: "test:123"
   - it: should allow custom repositoryUrl
     set:
-      installationJob:
-        agentControlCd:
-          chartRepositoryUrl: "https://example.com/some/url"
+      agentControlCd:
+        chartRepositoryUrl: "https://example.com/some/url"
     asserts:
       - template: templates/install-flux.yaml
         matchRegex:
@@ -36,9 +33,8 @@ tests:
 
   - it: should mount the TLS certificate secrets if configured
     set:
-      installationJob:
-        agentControlCd:
-          repositoryCertificateSecretReferenceName: my-cert-secret
+      agentControlCd:
+        repositoryCertificateSecretReferenceName: my-cert-secret
     asserts:
       - template: templates/install-flux.yaml
         equal:
@@ -57,9 +53,8 @@ tests:
 
   - it: should use basic auth when configured
     set:
-      installationJob:
-        agentControlCd:
-          repositorySecretReferenceName: my-basic-auth-secret
+      agentControlCd:
+        repositorySecretReferenceName: my-basic-auth-secret
     asserts:
       - template: templates/install-flux.yaml
         matchRegex:
@@ -68,10 +63,9 @@ tests:
 
   - it: if basic auth and TLS are configured, uses TLS
     set:
-      installationJob:
-        agentControlCd:
-          repositoryCertificateSecretReferenceName: my-cert-secret
-          repositorySecretReferenceName: my-basic-auth-secret
+      agentControlCd:
+        repositoryCertificateSecretReferenceName: my-cert-secret
+        repositorySecretReferenceName: my-basic-auth-secret
     asserts:
       - template: templates/install-flux.yaml
         matchRegex:
