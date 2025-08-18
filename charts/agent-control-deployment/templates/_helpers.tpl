@@ -87,7 +87,7 @@ cluster name, licenses, and custom attributes
 
 {{- $config = mustMerge $config (dict "agents" (.Values.config.agents | default dict)) -}}
 
-{{- /* Overwrite $config with everything in `config.config.override` if present */ -}}
+{{- /* Overwrite $config with everything in `config.override` if present */ -}}
 {{- $config = mustMergeOverwrite $config (deepCopy ((.Values.config).override | default dict)) -}}
 
 {{- /* Perform configuration validations */ -}}
