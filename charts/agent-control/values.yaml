@@ -14,9 +14,10 @@ toolkitImage:
 
 
 installation:
-  # -- Log level for installation.
-  # @default -- debug
-  logLevel: "debug"
+  log:
+    # -- Log level for installation.
+    # @default -- debug
+    level: "debug"
 
   # -- Extra environment variables
   extraEnv: []
@@ -26,9 +27,10 @@ installation:
   extraVolumeMounts: []
 
 uninstallation:
-  # -- Log level for uninstallation.
-  # @default -- debug
-  logLevel: "debug"
+  log:
+    # -- Log level for installation.
+    # @default -- debug
+    level: "debug"
 
 
 agentControlDeployment:
@@ -43,6 +45,8 @@ agentControlDeployment:
     subAgentsNamespace: "newrelic"
 
   # -- The repository URL from where the `agent-control-deployment` chart will be installed.
+  # When not leveraging the default, you may also need to allow the url in `agentControlDeployment.chartValues.config.allowedChartRepositoryUrl`.
+  # Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
   # @default -- https://helm-charts.newrelic.com
   chartRepositoryUrl: https://helm-charts.newrelic.com
 
@@ -72,6 +76,9 @@ agentControlCd:
   chartValues:
 
   # -- The repository URL from where the `agent-control-cd` chart will be installed.
+  # When not leveraging the default, you may also need to allow the url in `agentControlDeployment.chartValues.config.allowedChartRepositoryUrl`.
+  # Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml
+  # @default -- https://helm-charts.newrelic.com
   chartRepositoryUrl: https://helm-charts.newrelic.com
 
   # -- The name of the CD chart that will be installed by the installation job.

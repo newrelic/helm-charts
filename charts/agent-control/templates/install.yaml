@@ -37,7 +37,7 @@ spec:
                 --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
                 --namespace={{ .Release.Namespace }} \
                 --repository-url={{ .Values.agentControlDeployment.chartRepositoryUrl }} \
-                --log-level={{ .Values.installation.logLevel }} \
+                --log-level={{ .Values.installation.log.level }} \
             {{- if .Values.agentControlDeployment.repositorySecretReferenceName }}
                 --repository-secret-reference-name={{ .Values.agentControlDeployment.repositorySecretReferenceName }} \
             {{- end }}
@@ -53,7 +53,7 @@ spec:
                 --secrets={{ $fluxSecretName }}=agent-control-flux.yaml \
                 --namespace={{ .Release.Namespace }} \
                 --repository-url={{ .Values.agentControlCd.chartRepositoryUrl }} \
-                --log-level={{ .Values.installation.logLevel }} \
+                --log-level={{ .Values.installation.log.level }} \
             {{- if .Values.agentControlCd.repositorySecretReferenceName }}
                 --repository-secret-reference-name={{ .Values.agentControlCd.repositorySecretReferenceName }} \
             {{- end }}

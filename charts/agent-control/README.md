@@ -72,14 +72,14 @@ agent-control-deployment:
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | agentControlCd.chartName | string | agent-control-cd | The name of the CD chart that will be installed by the installation job. |
-| agentControlCd.chartRepositoryUrl | string | `"https://helm-charts.newrelic.com"` |  |
+| agentControlCd.chartRepositoryUrl | string | https://helm-charts.newrelic.com | The repository URL from where the `agent-control-cd` chart will be installed. When not leveraging the default, you may also need to allow the url in `agentControlDeployment.chartValues.config.allowedChartRepositoryUrl`. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
 | agentControlCd.chartValues | string | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml |
 | agentControlCd.chartVersion | string | `.Chart.annotations.agentControlCdVersion` | The version of the CD chart that will be installed by the installation job. |
 | agentControlCd.enabled | bool | `true` | Enable the installation of a Continuous Deployment system that can be managed by Agent Control. |
 | agentControlCd.repositoryCertificateSecretReferenceName | string | `nil` | Optional name of the secret containing TLS certificates for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference |
 | agentControlCd.repositorySecretReferenceName | string | `nil` | Optional name of the secret containing credentials for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference |
 | agentControlDeployment.chartName | string | agent-control-deployment | The name of the chart that will be installed by the installation job. |
-| agentControlDeployment.chartRepositoryUrl | string | https://helm-charts.newrelic.com | The repository URL from where the `agent-control-deployment` chart will be installed. |
+| agentControlDeployment.chartRepositoryUrl | string | https://helm-charts.newrelic.com | The repository URL from where the `agent-control-deployment` chart will be installed. When not leveraging the default, you may also need to allow the url in `agentControlDeployment.chartValues.config.allowedChartRepositoryUrl`. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
 | agentControlDeployment.chartValues | object | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-deployment/values.yaml |
 | agentControlDeployment.chartValues.subAgentsNamespace | string | "newrelic" | Namespace where agents are deployed |
 | agentControlDeployment.chartVersion | string | `.Chart.appVersion` | The version of the Agent Control chart that will be installed by the installation job. |
@@ -90,11 +90,11 @@ agent-control-deployment:
 | installation.extraEnv | list | `[]` | Extra environment variables |
 | installation.extraVolumeMounts | list | `[]` | Defines where to mount volumes specified with `extraVolumes` |
 | installation.extraVolumes | list | `[]` | Volumes to mount in the containers |
-| installation.logLevel | string | debug | Log level for installation. |
+| installation.log.level | string | debug | Log level for installation. |
 | nameOverride | string | `""` | Override the name of the chart |
 | toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.46.0"}` | The image that contains the necessary tools to install and uninstall the Agent Control components. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
-| uninstallation.logLevel | string | debug | Log level for uninstallation. |
+| uninstallation.log.level | string | debug | Log level for installation. |
 
 ## Maintainers
 
