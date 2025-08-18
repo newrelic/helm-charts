@@ -1,20 +1,4 @@
 {{- /*
-Test that the value of `.Values.config.subAgents` exists and its valid. If empty, returns the default.
-*/ -}}
-{{- define "newrelic-agent-control.config.agents.yaml" -}}
-{{- $agents := dict -}}
-{{- range $subAgentName, $subAgentConfig := (.Values.config).subAgents -}}
-  {{- if not ($subAgentConfig).type -}}
-    {{- fail (printf "Agent %s does not have agent type" $subAgentName) -}}
-  {{- end -}}
-  {{- $agents = mustMerge $agents (dict $subAgentName $subAgentConfig) -}}
-{{- end -}}
-{{- $agents | toYaml -}}
-{{- end -}}
-
-
-
-{{- /*
 Return to which endpoint should the agent control connect to get fleet_control data
 */ -}}
 {{- define "newrelic-agent-control.config.endpoints.fleet_control" -}}
@@ -33,7 +17,6 @@ Return to which endpoint should the agent control connect to get fleet_control d
   {{- fail "Unknown/unsupported region set for this chart" -}}
 {{- end -}}
 {{- end -}}
-
 
 
 {{- /*
@@ -70,8 +53,12 @@ cluster name, licenses, and custom attributes
 {{- /* Add to config k8s cluster and namespace config */ -}}
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "namespace_agents" .Values.subAgentsNamespace) -}}
 {{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
-{{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.acRemoteUpdate "cd_remote_update" .Values.cdRemoteUpdate) -}}
+{{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.config.acRemoteUpdate "cd_remote_update" .Values.config.cdRemoteUpdate) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
+
+{{- with .Values.config.log -}}
+{{- $config = mustMerge $config (dict "log" .) -}}
+{{- end -}}
 
 {{- /* Add fleet_control if enabled */ -}}
 {{- if ((.Values.config).fleet_control).enabled -}}
@@ -98,15 +85,10 @@ cluster name, licenses, and custom attributes
   {{- $config = mustMerge $config (dict "agent_type_var_constraints" $allowedVariants) -}}
 {{- end -}}
 
-{{- /* Add subagents to the config */ -}}
-{{- $agents := dict -}}
-{{- range $subagent, $object := (include "newrelic-agent-control.config.agents.yaml" . | fromYaml) -}}
-  {{- $agents = mustMerge $agents (dict $subagent (dict "agent_type" $object.type)) -}}
-{{- end -}}
-{{- $config = mustMerge $config (dict "agents" $agents) -}}
+{{- $config = mustMerge $config (dict "agents" (.Values.config.agents | default dict)) -}}
 
-{{- /* Overwrite $config with everything in `config.agentControl.content` if present */ -}}
-{{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).agentControl).content | default dict)) -}}
+{{- /* Overwrite $config with everything in `config.override` if present */ -}}
+{{- $config = mustMergeOverwrite $config (deepCopy ((.Values.config).override | default dict)) -}}
 
 {{- /* Perform configuration validations */ -}}
 {{- if not $config.server.enabled -}}
@@ -116,7 +98,7 @@ cluster name, licenses, and custom attributes
   {{- fail "The status server needs to listen on 0.0.0.0 to be used in container probes" -}}
 {{- end -}}
 {{- if ne (printf "%v" $config.server.port) (printf "%v" $statusServerPort) -}}
-  {{- fail "Setting up the status server port in `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
+  {{- fail "Setting up the status server port in `.Values.config.override` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
 {{- end -}}
 {{- if $config.k8s.chart_version -}}
   {{- fail "The chart version is set automatically via environment variable and should not be set manually" -}}
@@ -146,19 +128,6 @@ readOnlyRootFilesystem: true
     {{- toYaml $defaults -}}
 {{- end -}}
 {{- end -}}
-
-
-
-{{- /*
-Return .Values.config.auth.organizationId
-*/ -}}
-{{- define "newrelic-agent-control.auth.organizationId" -}}
-{{- with (.Values.systemIdentity).organizationId -}}
-  {{- . -}}
-{{- end -}}
-{{- end -}}
-
-
 
 {{- /*
 Check if .Values.systemIdentity.secretName exists and use it to name auth secret. If it does not exist, fallback to the name of the releases with "-auth" suffix.
