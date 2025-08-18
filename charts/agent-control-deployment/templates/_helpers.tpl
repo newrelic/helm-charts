@@ -87,8 +87,8 @@ cluster name, licenses, and custom attributes
 
 {{- $config = mustMerge $config (dict "agents" (.Values.config.agents | default dict)) -}}
 
-{{- /* Overwrite $config with everything in `config.config.override.content` if present */ -}}
-{{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).override).content | default dict)) -}}
+{{- /* Overwrite $config with everything in `config.config.override` if present */ -}}
+{{- $config = mustMergeOverwrite $config (deepCopy ((.Values.config).override | default dict)) -}}
 
 {{- /* Perform configuration validations */ -}}
 {{- if not $config.server.enabled -}}
@@ -98,7 +98,7 @@ cluster name, licenses, and custom attributes
   {{- fail "The status server needs to listen on 0.0.0.0 to be used in container probes" -}}
 {{- end -}}
 {{- if ne (printf "%v" $config.server.port) (printf "%v" $statusServerPort) -}}
-  {{- fail "Setting up the status server port in `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
+  {{- fail "Setting up the status server port in `.Values.config.override` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
 {{- end -}}
 {{- if $config.k8s.chart_version -}}
   {{- fail "The chart version is set automatically via environment variable and should not be set manually" -}}

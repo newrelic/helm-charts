@@ -5,22 +5,19 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: default config for each subAgent can be overridden
+  - it: pass config to each subAgent
     set:
       agentsConfig:
         test-0:
-          content: 
-            a: test
-            value: 0
+          a: test
+          value: 0
         test-1:
-          content: 
-            a: test
-            value: 1
+          a: test
+          value: 1
         test-2:
-          content: 
-            a: test
-            aYAML:
-              canI: HaveSomeYAML
+          a: test
+          aYAML:
+            canI: HaveSomeYAML
     asserts:
       - hasDocuments:
           count: 3

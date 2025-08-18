@@ -13,17 +13,17 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets pod/node affinities. Can be configured also with `global.affinity` |
-| agentsConfig | string | `{}` (See `values.yaml`) | List of managed agents configs.  The key represents the name of the agent that should match the one specified in .config.agents. |
+| agentsConfig | object | `{}` (See `values.yaml`) | List of managed agents configs. The key represents the name of the agent that should match the one specified in .config.agents. |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`. |
-| config | object | See `values.yaml` | AgentControl config options used to generate the configFile passed to the binary. You can overwrite the configFile generated with a raw one via config.override.content |
+| config | object | See `values.yaml` | AgentControl config options used to generate the configFile passed to the binary. You can overwrite the configFile generated with a raw one via config.override |
 | config.acRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-deployment chart |
-| config.agents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed.  The key represents the name of the agent that should used when defining its configuration. |
+| config.agents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent that should used when defining its configuration. |
 | config.allowedChartRepositoryUrl | list | `[]`(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"]) | List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories. |
 | config.cdRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-cd chart |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
 | config.log | string | `{}` (See `values.yaml`) | Log configuration. The log level can be overwritten as well via verboseLog |
-| config.override.content | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. |
+| config.override | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. |
 | config.status_server | object | See `values.yaml` | Set the status server port |
 | containerSecurityContext | object | `{}` | Sets security context (at container level). Can be configured also with `global.containerSecurityContext` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |

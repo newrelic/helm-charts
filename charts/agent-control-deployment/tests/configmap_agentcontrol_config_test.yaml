@@ -160,9 +160,8 @@ tests:
       cluster: my-cluster
       config:
         override:
-          content:
-            test: value
-            test2: value2
+          test: value
+          test2: value2
     asserts:
       - equal:
           path: data["local_config"]
@@ -192,12 +191,11 @@ tests:
       cluster: my-cluster
       config:
         override:
-          content:
-            test: value
-            test2: value2
-            k8s:
-              cluster_name: config-cluster
-              namespace: config-namespace
+          test: value
+          test2: value2
+          k8s:
+            cluster_name: config-cluster
+            namespace: config-namespace
     asserts:
       - equal:
           path: data["local_config"]
@@ -294,9 +292,8 @@ tests:
       cluster: my-cluster
       config:
         override:
-          content:
-            server:
-              enabled: false
+          server:
+            enabled: false
     asserts:
       - failedTemplate:
           errorMessage: "The status server cannot be disabled as it is used in the Agent Control container probes"
@@ -306,35 +303,32 @@ tests:
       cluster: my-cluster
       config:
         override:
-          content:
-            server:
-              host: "127.0.0.1"
+          server:
+            host: "127.0.0.1"
     asserts:
       - failedTemplate:
           errorMessage: "The status server needs to listen on 0.0.0.0 to be used in container probes"
 
-  - it: conflicting ports in agentControl.status_server and agentControl.content.server should trigger an error
+  - it: conflicting ports in agentControl.status_server and agentControl.override.server should trigger an error
     set:
       cluster: my-cluster
       config:
         status_server:
           port: 1234
         override:
-          content:
-            server:
-              port: 4321
+          server:
+            port: 4321
     asserts:
       - failedTemplate:
-          errorMessage: "Setting up the status server port in `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead"
+          errorMessage: "Setting up the status server port in `.Values.config.override` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead"
 
   - it: Fails is expected if chart_version is set manually
     set:
       cluster: my-cluster
       config:
         override:
-          content:
-            k8s:
-              chart_version: test
+          k8s:
+            chart_version: test
     asserts:
       - failedTemplate:
           errorMessage: "The chart version is set automatically via environment variable and should not be set manually"

@@ -10,10 +10,10 @@ metadata:
     subagent: {{ $subAgentName }}
 apiVersion: v1
 data:
-{{- if not $subAgentConfig.content }}
+{{- if not $subAgentConfig }}
   local_config: ""
 {{- else }}
   local_config: |
-    {{- $subAgentConfig.content | toYaml | nindent 4 }}
+    {{- $subAgentConfig | toYaml | nindent 4 }}
 {{- end }}
 {{- end }}

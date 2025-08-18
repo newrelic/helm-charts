@@ -99,7 +99,7 @@ proxy:
   # ca_bundle_file:
 
 # -- AgentControl config options used to generate the configFile passed to the binary.
-# You can overwrite the configFile generated with a raw one via config.override.content
+# You can overwrite the configFile generated with a raw one via config.override
 # @default -- See `values.yaml`
 config:
 
@@ -143,27 +143,25 @@ config:
     # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
     fleet_id: ""
 
-  override:
-    # -- Overrides the configuration that has been created automatically by the chart.
-    # This configuration here will be **MERGED** with the configuration specified above.
-    content: {}
+  # -- Overrides the configuration that has been created automatically by the chart.
+  # This configuration here will be **MERGED** with the configuration specified above.
+  override: {}
 
 # -- List of managed agents configs.
 # The key represents the name of the agent that should match the one specified in .config.agents.
 # @default -- `{}` (See `values.yaml`)
-agentsConfig:
+agentsConfig: {}
 # In the example below, open-telemetry configuration is specified.
 # agentsConfig:
 #   open-telemetry:
-#     content:
-#       # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
-#       chart_version: "0.8.0"
-#       # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
-#       # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
-#       # so it is not necessary to set them here.
-#       chart_values:
-#         nr-k8s-otel-collector: {}
-#         global: {}
+#     # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
+#     chart_version: "0.8.0"
+#     # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
+#     # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
+#     # so it is not necessary to set them here.
+#     chart_values:
+#       nr-k8s-otel-collector: {}
+#       global: {}
 
 # -- Configuration for the system identity registration process.
 # These options provides the required data to run the pre-install job that creates the system identitythat is used when communicating via OpAMP.
