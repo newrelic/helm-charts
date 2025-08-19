@@ -45,7 +45,8 @@ spec:
             {{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
                 --repository-certificate-secret-reference-name={{ .Values.agentControlCd.repositoryCertificateSecretReferenceName }} \
             {{- end }}
-                --chart-name={{ .Values.agentControlCd.chartName }}
+                --chart-name={{ .Values.agentControlCd.chartName }} \
+                --release-name={{ .Values.agentControlCd.releaseName }}
             {{- end }}
 
               echo "Creating agent-control-deployment resources..."
