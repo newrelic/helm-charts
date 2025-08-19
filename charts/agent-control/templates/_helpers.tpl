@@ -3,13 +3,15 @@
 {{- end -}}
 
 
-{{/*
-Generates the configuration for agent-control-deployment.yaml, applying the override logic for cdRemoteUpdate before encoding.
-*/}}
+{{- /*
+Generates the configuration for agent-control-deployment (to be stored in the corresponding secret) applying required
+overrides:
+  -  `cdRemoteUpdate` is set to false if `.Values.agentControlCd.enabled` is false.
+*/ -}}
 {{- define "agent-control.agent-control-deployment.config" -}}
-  {{- $config := (index .Values "agent-control-deployment") | deepCopy -}}
+  {{- $config := .Values.agentControlDeployment.chartValues | deepCopy -}}
 
-  {{- if not (index .Values "agent-control-cd").flux2.enabled -}}
+  {{- if not .Values.agentControlCd.enabled -}}
     {{- $_ := set $config "cdRemoteUpdate" false -}}
   {{- end -}}
 

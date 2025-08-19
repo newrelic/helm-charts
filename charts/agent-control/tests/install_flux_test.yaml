@@ -2,11 +2,9 @@ suite: Validate AC-CD Installation
 tests:
   - it: should leverage correct image tag
     set:
-      agent-control-cd:
-        installer:
-          image:
-            tag: 123
-            repository: test
+      toolkitImage:
+        tag: 123
+        repository: test
     asserts:
       - template: templates/install-flux.yaml
         equal:
@@ -18,7 +16,7 @@ tests:
           value: "test:123"
   - it: should allow custom repositoryUrl
     set:
-      agent-control-cd:
+      agentControlCd:
         chartRepositoryUrl: "https://example.com/some/url"
     asserts:
       - template: templates/install-flux.yaml
@@ -33,3 +31,47 @@ tests:
           path: spec.template.spec.containers[0].args[0]
           pattern: (?s).*https:\/\/helm-charts\.newrelic\.com\s.*
 
+  - it: should mount the TLS certificate secrets if configured
+    set:
+      agentControlCd:
+        repositoryCertificateSecretReferenceName: my-cert-secret
+    asserts:
+      - template: templates/install-flux.yaml
+        equal:
+          path: spec.template.spec.volumes[1].secret.items
+          value:
+            - key: ca.crt
+              path: ca.crt
+            - key: tls.crt
+              path: tls.crt
+            - key: tls.key
+              path: tls.key
+      - template: templates/install-flux.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: \\\s+--ca-file /etc/flux-cert/ca\.crt
+
+  - it: should use basic auth when configured
+    set:
+      agentControlCd:
+        repositorySecretReferenceName: my-basic-auth-secret
+    asserts:
+      - template: templates/install-flux.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: \\\s+--username
+
+  - it: if basic auth and TLS are configured, uses TLS
+    set:
+      agentControlCd:
+        repositoryCertificateSecretReferenceName: my-cert-secret
+        repositorySecretReferenceName: my-basic-auth-secret
+    asserts:
+      - template: templates/install-flux.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--cert-file /etc/flux-cert/tls.crt"
+      - template: templates/install-flux.yaml
+        notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--password"
