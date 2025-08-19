@@ -60,7 +60,7 @@ spec:
                   --password $HELM_REPO_PASSWORD
 {{- end }}
                 echo "Installing agent-control-cd..."
-                helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ .Values.agentControlCd.chartName }} \
+                helm upgrade --install {{ .Values.agentControlCd.releaseName }} newrelic-agent-control-cd/{{ .Values.agentControlCd.chartName }} \
                   --version {{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
                   --namespace {{ .Release.Namespace }} \
                   -f /tmp/flux-values/agent-control-flux.yaml
