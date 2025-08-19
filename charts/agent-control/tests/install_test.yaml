@@ -7,7 +7,7 @@ tests:
       - template: templates/install.yaml
         equal:
           path: spec.template.spec.containers[0].args
-          value: 
+          value:
             - |-
               echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
@@ -15,7 +15,7 @@ tests:
                 --secrets=RELEASE-NAME-deployment=agent-control-deployment.yaml,RELEASE-NAME-deployment=global.yaml \
                 --namespace=NAMESPACE \
                 --repository-url=https://helm-charts.newrelic.com \
-                --log-level=info \
+                --log-level=debug \
                 --chart-name=agent-control-deployment
               echo "Creating Flux's CD resources..."
               newrelic-agent-control-cli create-cd-resources \
@@ -23,46 +23,51 @@ tests:
                 --secrets=RELEASE-NAME-deployment-flux=agent-control-flux.yaml \
                 --namespace=NAMESPACE \
                 --repository-url=https://helm-charts.newrelic.com \
-                --log-level=info \
+                --log-level=debug \
                 --chart-name=agent-control-cd
 
   - it: should configure arguments correctly
     set:
-      installationJob:
-        agentControlDeployment:
-          chartVersion: "0.0.0"
-          chartRepositoryUrl: "https://newrelic.com/some/url"
-          chartName: "custom-deployment"
-          repositorySecretReferenceName: secret-ref
-          repositoryCertificateSecretReferenceName: cert-secret-ref 
-        agentControlCd:
-          chartVersion: "0.0.2"
-          chartRepositoryUrl: "https://newrelic.com/other/url"
-          chartName: "custom-flux"
+      installation:
+        log:
+          level: trace
+      uninstallation:
+        log:
+          level: trace
+      agentControlDeployment:
+        chartVersion: "1.2.3"
+        chartRepositoryUrl: "https://newrelic.com/some/url"
+        chartName: "custom-deployment"
+        repositorySecretReferenceName: secret-ref
+        repositoryCertificateSecretReferenceName: cert-secret-ref
+      agentControlCd:
+        chartVersion: "3.2.1"
+        chartRepositoryUrl: "https://newrelic.com/other/url"
+        chartName: "custom-flux"
 
     asserts:
       - template: templates/install.yaml
         equal:
           path: spec.template.spec.containers[0].args
-          value: 
+          value:
             - |-
               echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
-                --chart-version=0.0.0 \
+                --chart-version=1.2.3 \
                 --secrets=RELEASE-NAME-deployment=agent-control-deployment.yaml,RELEASE-NAME-deployment=global.yaml \
                 --namespace=NAMESPACE \
                 --repository-url=https://newrelic.com/some/url \
-                --log-level=info \
+                --log-level=trace \
                 --repository-secret-reference-name=secret-ref \
                 --repository-certificate-secret-reference-name=cert-secret-ref \
                 --chart-name=custom-deployment
               echo "Creating Flux's CD resources..."
               newrelic-agent-control-cli create-cd-resources \
-                --chart-version=0.0.2 \
+                --chart-version=3.2.1 \
                 --secrets=RELEASE-NAME-deployment-flux=agent-control-flux.yaml \
                 --namespace=NAMESPACE \
                 --repository-url=https://newrelic.com/other/url \
-                --log-level=info \
+                --log-level=trace \
                 --chart-name=custom-flux
 
   - it: should leverage correct image tag
