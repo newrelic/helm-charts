@@ -1,6 +1,7 @@
-{{- if (index .Values "agent-control-deployment").enabled -}}
+{{- if .Values.agentControlDeployment.enabled -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
 {{- $secretName := include "agent-control.secret.name" . -}}
+{{- $fluxSecretName := printf "%s-flux" (include "agent-control.secret.name" .) -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -27,18 +28,38 @@ limits:
 requests:
   cpu: 50m
   memory: 64Mi
+  command: ["/bin/sh", "-c"]
   args:
-- install-agent-control
-- --chart-version={{ .Values.installationJob.chartVersion | default .Chart.AppVersion }}
-- --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml
-- --namespace={{ .Release.Namespace }}
-- --repository-url={{ .Values.installationJob.chartRepositoryUrl }}
-- --log-level={{ .Values.installationJob.logLevel }}
-- --chart-name={{ .Values.installationJob.chartName }}
-{{- if .Values.installationJob.repositorySecretReferenceName }}
-- --repository-secret-reference-name={{ .Values.installationJob.repositorySecretReferenceName }}
+- |-
+  echo "Creating agent-control-deployment resources..."
+  newrelic-agent-control-cli install-agent-control \
+--chart-version={{ .Values.agentControlDeployment.chartVersion | default .Chart.AppVersion }} \
+--secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
+--namespace={{ .Release.Namespace }} \
+--repository-url={{ .Values.agentControlDeployment.chartRepositoryUrl }} \
+--log-level={{ .Values.installation.log.level }} \
+{{- if .Values.agentControlDeployment.repositorySecretReferenceName }}
+--repository-secret-reference-name={{ .Values.agentControlDeployment.repositorySecretReferenceName }} \
 {{- end }}
-{{- if .Values.installationJob.repositoryCertificateSecretReferenceName }}
-- --repository-certificate-secret-reference-name={{ .Values.installationJob.repositoryCertificateSecretReferenceName }}
+{{- if .Values.agentControlDeployment.repositoryCertificateSecretReferenceName }}
+--repository-certificate-secret-reference-name={{ .Values.agentControlDeployment.repositoryCertificateSecretReferenceName }} \
+{{- end }}
+--chart-name={{ .Values.agentControlDeployment.chartName }}
+
+{{- if .Values.agentControlCd.enabled }}
+  echo "Creating Flux's CD resources..."
+  newrelic-agent-control-cli create-cd-resources \
+--chart-version={{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
+--secrets={{ $fluxSecretName }}=agent-control-flux.yaml \
+--namespace={{ .Release.Namespace }} \
+--repository-url={{ .Values.agentControlCd.chartRepositoryUrl }} \
+--log-level={{ .Values.installation.log.level }} \
+{{- if .Values.agentControlCd.repositorySecretReferenceName }}
+--repository-secret-reference-name={{ .Values.agentControlCd.repositorySecretReferenceName }} \
+{{- end }}
+{{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+--repository-certificate-secret-reference-name={{ .Values.agentControlCd.repositoryCertificateSecretReferenceName }} \
+{{- end }}
+--chart-name={{ .Values.agentControlCd.chartName }}
 {{- end }}
 {{- end -}}

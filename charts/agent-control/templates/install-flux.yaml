@@ -1,5 +1,4 @@
-{{- if index .Values "agent-control-cd" }}
-{{- if (index .Values "agent-control-cd" "flux2").enabled -}}
+{{- if .Values.agentControlCd.enabled }}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job" ) -}}
 apiVersion: batch/v1
 kind: Job
@@ -18,8 +17,8 @@ spec:
   serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-install-job") }}
   containers:
 - name: install-flux
-  image: {{ include "newrelic.common.images.image" ( dict "imageRoot" (index .Values "agent-control-cd").installer.image "context" .) }}
-  imagePullPolicy: {{ (index .Values "agent-control-cd").pullPolicy }}
+  image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.toolkitImage "context" .) }}
+  imagePullPolicy: {{ .Values.toolkitImage.pullPolicy }}
   resources:
 limits:
   cpu: 100m
@@ -28,30 +27,76 @@ requests:
   cpu: 50m
   memory: 64Mi
   command: ["/bin/sh", "-c"]
-  {{- with (index .Values "agent-control-cd").installer.extraEnv }}
   env:
+  {{- if .Values.agentControlCd.repositorySecretReferenceName }}
+- name: HELM_REPO_USERNAME
+  valueFrom:
+secretKeyRef:
+  name: {{ .Values.agentControlCd.repositorySecretReferenceName }}
+  key: username
+- name: HELM_REPO_PASSWORD
+  valueFrom:
+secretKeyRef:
+  name: {{ .Values.agentControlCd.repositorySecretReferenceName }}
+  key: password
+  {{- end -}}
+  {{- with .Values.installation.extraEnv }}
 {{- toYaml . | nindent 12 }}
   {{- end }}
   args:
 - |
-  helm repo add newrelic {{ (index .Values "agent-control-cd").chartRepositoryUrl }}
-  helm upgrade --install agent-control-cd newrelic/agent-control-cd \
---version 0.0.2 \
---namespace {{ .Release.Namespace }} \
--f /tmp/flux-values/agent-control-flux.yaml
+  HELM_RELEASE_EXISTS=$(kubectl get HelmRelease agent-control-cd -n {{ .Release.Namespace }})
+  if [ -z "$HELM_RELEASE_EXISTS" ]; then
+echo "Adding agent-control-cd repository..."
+helm repo add newrelic-agent-control-cd {{ .Values.agentControlCd.chartRepositoryUrl }}
+{{- /* Use TLS Options */ -}}
+{{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }} \
+  --ca-file /etc/flux-cert/ca.crt \
+  --cert-file /etc/flux-cert/tls.crt \
+  --key-file /etc/flux-cert/tls.key
+{{- /* Use basic auth options */ -}}
+{{- else if .Values.agentControlCd.repositorySecretReferenceName }} \
+  --username $HELM_REPO_USERNAME \
+  --password $HELM_REPO_PASSWORD
+{{- end }}
+echo "Installing agent-control-cd..."
+helm upgrade --install agent-control-cd newrelic-agent-control-cd/{{ .Values.agentControlCd.chartName }} \
+  --version {{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
+  --namespace {{ .Release.Namespace }} \
+  -f /tmp/flux-values/agent-control-flux.yaml
+  else
+echo "agent-control-cd HelmRelease already exists, skipping installation."
+exit 0
+  fi
   volumeMounts:
 - name: flux-values
   mountPath: /tmp/flux-values
   readOnly: true
-{{- with (index .Values "agent-control-cd").installer.extraVolumeMounts }}
+{{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+- name: flux-cert-secrets
+  mountPath: /etc/flux-cert
+  readOnly: true
+{{- end }}
+{{- with .Values.installation.extraVolumeMounts }}
 {{- toYaml . | nindent 12 }}
-{{- end }}  
+{{- end }}
   volumes:
 - name: flux-values
   secret:
 secretName: {{ include "agent-control.secret.name" . }}-flux
-{{- with (index .Values "agent-control-cd").installer.extraVolumes }}
+{{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+- name: flux-cert-secrets
+  secret:
+secretName: {{ .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+items:
+  - key: ca.crt
+path: ca.crt
+  - key: tls.crt
+path: tls.crt
+  - key: tls.key
+path: tls.key
+{{- end }}
+{{- with .Values.installation.extraVolumes }}
 {{- toYaml . | nindent 8 }}
 {{- end }}
 {{- end -}}
-{{- end }}
