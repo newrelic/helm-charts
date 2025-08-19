@@ -77,7 +77,7 @@ spec:
               mountPath: /etc/flux-cert
               readOnly: true
             {{- end }}
-            {{- with (index .Values "agent-control-cd").installer.extraVolumeMounts }}
+            {{- with .Values.installation.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
