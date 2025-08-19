@@ -85,7 +85,7 @@ agent-control-deployment:
 | agentControlDeployment.chartValues.subAgentsNamespace | string | "newrelic" | Namespace where agents are deployed |
 | agentControlDeployment.chartVersion | string | `.Chart.appVersion` | The version of the Agent Control chart that will be installed by the installation job. |
 | agentControlDeployment.enabled | bool | `true` | Enable the installation of Agent Control. |
-| agentControlDeployment.releaseName | string | agent-control-cd | The name of the release for the CD chart. |
+| agentControlDeployment.releaseName | string | agent-control-deployment | The name of the release for the CD chart. |
 | agentControlDeployment.repositoryCertificateSecretReferenceName | string | `nil` | Optional name of the secret containing TLS certificates for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference |
 | agentControlDeployment.repositorySecretReferenceName | string | `nil` | Optional name of the secret containing credentials for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference |
 | fullnameOverride | string | `""` | Override the full name of the release |
