@@ -11,7 +11,42 @@ tests:
   - it: by default it fails with missing values
 asserts:
   - failedTemplate:
-  errorMessage: You must specify a customIdentitySecretName or identityClientId identityClientSecret/identityClientAuthToken
+  errorMessage: You must specify in .Values.systemIdentity a secretName or identityClientId identityClientSecret/identityClientAuthToken
+
+
+  - it: it fails with no organizationId
+set:
+  systemIdentity:
+parentIdentity:
+  clientId: test
+  clientSecret: test
+asserts:
+  - failedTemplate:
+  errorMessage: You should specify .Values.systemIdentity.organizationId
+
+  - it: by default it fails when specifying conflicting values clientAuth vs clietnSecret
+set:
+  systemIdentity:
+parentIdentity:
+  clientId: test
+  clientSecret: test
+  authToken: test
+organizationId: test
+asserts:
+  - failedTemplate:
+  errorMessage: You should not specify in .Values.systemIdentity both a identityClientSecret and a identityClientAuthToken
+
+  - it: by default it fails when specifying conflicting values fromSecret vs credendials
+set:
+  systemIdentity:
+parentIdentity:
+  clientId: test
+  clientSecret: test
+  fromSecret: test-client-name
+organizationId: test
+asserts:
+  - failedTemplate:
+  errorMessage: You should not specify in .Values.systemIdentity both a secretName and identityClientId identityClientSecret/identityClientAuthToken
 
   - it: with fleet disabled, the job should template correctly 0 documents.
 set:
@@ -24,12 +59,12 @@ asserts:
 
   - it: with identityClientId/identityClientSecret set, the job should template correctly.
 set:
-  identityClientId: test
-  identityClientSecret: test
-  config:
-fleet_control:
-  auth:
+  systemIdentity:
+parentIdentity:
+  clientId: test
+  clientSecret: test
 organizationId: test
+
 asserts:
   - hasDocuments:
   count: 5 # Secret, job, and 3 RBAC manifests
@@ -52,12 +87,12 @@ name: agent-control-preinstall-client-credentials
 
   - it: with identityClientId/identityClientAuthToken set, the job should template correctly.
 set:
-  identityClientId: test
-  identityClientAuthToken: test
-  config:
-fleet_control:
-  auth:
-organizationId: test
+  systemIdentity:
+parentIdentity:
+  clientId: test
+  authToken: test
+organizationId: test  
+   
 asserts:
   - hasDocuments:
   count: 5 # Secret, job, and 3 RBAC manifests
@@ -80,31 +115,10 @@ name: agent-control-preinstall-client-credentials
 
   - it: with a custom secret for clientId and clientSecret, the secret should not be created.
 set:
-  customIdentitySecretName: test-client-name
-  config:
-fleet_control:
-  auth:
-organizationId: test
-asserts:
-  - hasDocuments:
-  count: 4 # With everything rendered it should be 5
-  - documentIndex: 0
-isNotNullOrEmpty:
-  path: spec.template.spec.containers[0].args
-  - documentIndex: 0
-equal:
-  path: spec.template.spec.containers[0].envFrom
-  value:
-- secretRef:
-name: test-client-name
-
-  - it: with a custom secret for userKey and clientId and clientSecret, the secret should not be created.
-set:
-  customIdentitySecretName: test-client-name
-  config:
-fleet_control:
-  auth:
-organizationId: test
+  systemIdentity:
+parentIdentity:
+  fromSecret: test-client-name
+organizationId: test  
 asserts:
   - hasDocuments:
   count: 4 # With everything rendered it should be 5
@@ -120,12 +134,10 @@ name: test-client-name
 
   - it: setting specific image for system identity registration with tag should use the provided tag
 set:
-  customIdentitySecretName: test-secret
-  config:
-fleet_control:
-  auth:
-organizationId: test
-  systemIdentityRegistration:
+  systemIdentity:
+parentIdentity:
+  fromSecret: test-client-name
+organizationId: test  
 image:
   tag: 1.0.0
 asserts:
@@ -136,12 +148,10 @@ equal:
 
   - it: setting specific image for system identity registration with tag should use the provided data
 set:
-  customIdentitySecretName: test-secret
-  config:
-fleet_control:
-  auth:
-organizationId: test
-  systemIdentityRegistration:
+  systemIdentity:
+parentIdentity:
+  fromSecret: test-client-name
+organizationId: test  
 image:
   repository: some_namespace/test-image
   tag: 1.0.0
@@ -153,12 +163,10 @@ equal:
 
   - it: setting specific pullPolicy for system identity registration image should use the provided data
 set:
-  customIdentitySecretName: test-secret
-  config:
-fleet_control:
-  auth:
-organizationId: test
-  systemIdentityRegistration:
+  systemIdentity:
+parentIdentity:
+  fromSecret: test-client-name
+organizationId: test  
 image:
   pullPolicy: Always
 asserts:

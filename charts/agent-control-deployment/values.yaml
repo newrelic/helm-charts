@@ -10,6 +10,10 @@ customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
 
+# -- Namespace where the sub-agents will be deployed.
+# @default -- "newrelic"
+subAgentsNamespace: "newrelic"
+
 # -- Image for the New Relic Agent Control
 # @default -- See `values.yaml`
 image:
@@ -80,20 +84,10 @@ tolerations: []
 # @default -- `false`
 nrStaging:
 
-# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`.
+# If you need to change the logs to trace or change more complex options, please refer to config.log
 # @default -- `false`
 verboseLog:
-
-# -- Namespace where the sub-agents will be deployed.
-# @default -- "newrelic"
-subAgentsNamespace: "newrelic"
-
-# -- (bool) enables or disables remote update from Fleet Control for the agent-control-deployment chart
-# @default -- "true"
-acRemoteUpdate: true
-# -- (bool) enables or disables remote update from Fleet Control for the agent-control-cd chart
-# @default -- "true"
-cdRemoteUpdate: true
 
 # -- proxy configuration. It is propagated to both the system identity creation job, and to the agent control instance
 proxy:
@@ -104,44 +98,43 @@ proxy:
   # -- System path with the CA certificate in PEM format.
   # ca_bundle_file:
 
-# -- Config for agent control used to generate the file passed via configMap.
-# You can overwrite the generated config with the key config.agentControl.content
+# -- AgentControl config options used to generate the configFile passed to the binary.
+# You can overwrite the configFile generated with a raw one via config.override
 # @default -- See `values.yaml`
 config:
-  # -- Configuration for the Agent Control.
+
+  # -- List of managed agents that will be deployed.
+  # The key represents the name of the agent that should used when defining its configuration.
+  # @default -- `{}` (See `values.yaml`)
+  agents:
+  # In the example below, open-telemetry is a managed agent that will be deployed.
+  # agents:
+  #   open-telemetry:
+  # # -- Agent type <namespace>/<name>:<version>
+  # agent_type: newrelic/io.opentelemetry.collector:0.1.0
+
+  # -- Log configuration. The log level can be overwritten as well via verboseLog
+  # @default -- `{}` (See `values.yaml`)
+  log:
+  #   level:
+  #   format:
+  #   insecure_fine_grained_level:
+
+  # -- Set the status server port
   # @default -- See `values.yaml`
-  agentControl:
-# -- Set if the configMap is going to be created by this chart or the user will provide its own.
-create: true
-# -- Overrides the configuration that has been created automatically by the chart.
-# This configuration here will be **MERGED** with the configuration specified above.
-# If you need to have you own configuration, disabled the creation of this configMap and create your own.
-content: {}
   status_server:
-# -- Set the status server port
-# @default -- See `values.yaml`
 port: 51200
+
+  # -- (bool) enables or disables remote update from Fleet Control for the agent-control-deployment chart
+  # @default -- "true"
+  acRemoteUpdate: true
+  # -- (bool) enables or disables remote update from Fleet Control for the agent-control-cd chart
+  # @default -- "true"
+  cdRemoteUpdate: true
 
   # -- List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories.
   # @default -- `[]`(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"])
   allowedChartRepositoryUrl: []
-  # -- List of managed agents that will be deployed. The key represents the name of the agent and the value holds the configuration.
-  # @default -- `{}` (See `values.yaml`)
-  subAgents:
-  # In the example below, open-telemetry is a managed agent that will be deployed.
-  # open-telemetry:
-  #   # -- Agent type <namespace>/<name>:<version>
-  #   type: newrelic/io.opentelemetry.collector:0.1.0
-  #   # -- Agent configuration content.
-  #   content:
-  # # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
-  # chart_version: "0.8.0"
-  # # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
-  # # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
-  # # so it is not necessary to set them here.
-  # chart_values:
-  #   nr-k8s-otel-collector: {}
-  #   global: {}
 
   fleet_control:
 # -- Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent
@@ -150,55 +143,65 @@ enabled: true
 # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
 fleet_id: ""
 
-auth:
-  # -- Organization ID where fleets will live.
-  organizationId: ""
-  secret:
-create: true
-# -- Name auth' secret provided by the user. If the creation of this secret is set to `true`, this is the same the secret
-# will have.
-# @default -- release name suffixed with "-auth"
-name:
-## If private_key and client_id values are specified, their creation is disabled and the `generate-system-identity` job is not executed
-private_key:
-  # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as base64 if you want to skip its creation.
-  # This options is mutually exclusive with `plain_pem`.
-  base64_pem:
-  # -- In case `.config.auth.secret.create` is true, you can set these keys to set private key directly as plain text if you want to skip its creation.
-  # This options is mutually exclusive with `base64_pem`.
-  plain_pem:
-client_id:
-  # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as base64 if you want to skip its creation.
-  # This options is mutually exclusive with `plain`.
-  base64:
-  # -- In case `.config.auth.secret.create` is true, you can set these keys to set client ID directly as plain text if you want to skip its creation.
-  # This options is mutually exclusive with `base64`.
-  plain:
+  # -- Overrides the configuration that has been created automatically by the chart.
+  # This configuration here will be **MERGED** with the configuration specified above.
+  override: {}
 
-# These options provides the required info to run the pre-install job that creates the system identity that are used communicating via OpAMP.
-# You can either authenticate via identityClientId/identityClientSecret or pass directly an `identityClientAuthToken` and manage locally the authentication.
-# The authToken can be retrieve via the cli command "newrelic-auth-cli authenticate ...".
-# System identity creation is executed only once. Subsequent upgrades will not attempt to create the identity again.
+# -- List of managed agents configs.
+# The key represents the name of the agent that should match the one specified in .config.agents.
+# @default -- `{}` (See `values.yaml`)
+agentsConfig: {}
+# In the example below, open-telemetry configuration is specified.
+# agentsConfig:
+#   open-telemetry:
+# # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
+# chart_version: "0.8.0"
+# # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
+# # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
+# # so it is not necessary to set them here.
+# chart_values:
+#   nr-k8s-otel-collector: {}
+#   global: {}
+
+# -- Configuration for the system identity registration process.
+# These options provides the required data to run the pre-install job that creates the system identitythat is used when communicating via OpAMP.
+# System identity registration is executed only once. Subsequent upgrades will not attempt to create the identity again.
 # Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired.
-# You can skip the whole identity creation providing an identity already existing via `config.fleet_control.auth.secret.[private_key|client_id]`
-# -- Identity client_id to use.
-identityClientId: ""
-# -- Identity client_secret to use.
-identityClientSecret: ""
-# -- Identity auth token. This option takes precedence over identityClientSecret and skips authentication.
-identityClientAuthToken: ""
-# -- In case you don't want to have the clientId and clientSecret/clientAuthToken in your values, this allows you to point to a user created secret to get the key from there.
-# The secret is mounted in the job and used to generate the system identity.
-customIdentitySecretName: ""
-
-# -- Image for the system identity registration process
 # @default -- See `values.yaml`
-systemIdentityRegistration:
-  # -- Volumes to mount in the containers
-  extraVolumes: []
-  # -- Defines where to mount volumes specified with `extraVolumes`
-  extraVolumeMounts: []
+systemIdentity:
+
+  # -- Set it to false to disable the registration of a new system identity.
+  # Set this to `false` to configure a pre-existing system identity via secret.
+  # The secret should be already created in the namespace having as keys "CLIENT_ID" and "private_key" of the identity to leverage.
+  create: true
+
+  # -- Set it to customize the name of the secret that is created and mounted in the agentControl deployment pod
+  # -- if create is set to false a secret having this name is expected in the AC namespace
+  secretName:
+
+  # -- Organization ID used to create the system identity.
+  organizationId: ""
+
   image:
 repository: newrelic/agent-control-system-identity-registration
 tag: "0.0.10"
 pullPolicy: IfNotPresent
+
+  # -- Configuration for the parent identity
+  # You can either authenticate via ClientId/ClientSecret or pass directly an `AuthToken` and manage locally the authentication.
+  # The authToken can be retrieve via the cli command "newrelic-auth-cli authenticate ...".
+  parentIdentity:
+# -- Identity clientId to use.
+clientId: ""
+# -- Identity clientSecret to use.
+clientSecret: ""
+# -- Identity auth token. This option takes precedence over secret and skips authentication.
+authToken: ""
+# -- In case you don't want to have the clientId, the clientSecret and the clientAuthToken in your values, you can point to a secret to get the data from there.
+# The secret data is mounted in the job via environment variables to generate the system identity.
+fromSecret: ""
+
+  # -- Volumes to mount in the systemIdentity job
+  extraVolumes: []
+  # -- Defines where, in the systemIdentity job, to mount volumes specified with `extraVolumes`
+  extraVolumeMounts: []
