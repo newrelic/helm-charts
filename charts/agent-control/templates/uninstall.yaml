@@ -34,7 +34,8 @@ spec:
               newrelic-agent-control-cli uninstall-agent-control \
                 --namespace "{{ .Release.Namespace }}" \
                 --namespace-agents "{{ .Values.agentControlDeployment.chartValues.subAgentsNamespace }}" \
-                --log-level "{{ .Values.uninstallation.log.level }}"
+                --log-level "{{ .Values.uninstallation.log.level }}" \
+                --release-name={{ .Values.agentControlDeployment.releaseName }}
             {{- if .Values.agentControlCd.enabled }}
               echo "Removing agent-control-cd resources..."
               newrelic-agent-control-cli remove-cd-resources \
