@@ -30,5 +30,5 @@ spec:
           args:
             - -c
             - |
-              helm delete agent-control-cd --namespace {{ .Release.Namespace }}
+              helm delete {{ .Values.agentControlCd.releaseName }} --namespace {{ .Release.Namespace }}
 {{- end -}}
