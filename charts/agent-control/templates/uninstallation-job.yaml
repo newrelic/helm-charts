@@ -34,14 +34,16 @@ spec:
               newrelic-agent-control-cli uninstall-agent-control \
                 --namespace "{{ .Release.Namespace }}" \
                 --namespace-agents "{{ .Values.agentControlDeployment.chartValues.subAgentsNamespace }}" \
-                --log-level "{{ .Values.uninstallation.log.level }}"
+                --log-level "{{ .Values.uninstallation.log.level }}" \
+                --release-name={{ .Values.agentControlDeployment.releaseName }}
 {{- end -}}
 {{- if .Values.agentControlCd.enabled }}
               echo "Removing agent-control-cd resources..."
               newrelic-agent-control-cli remove-cd-resources \
                 --namespace "{{ .Release.Namespace }}" \
-                --log-level "{{ .Values.uninstallation.log.level }}"
+                --log-level "{{ .Values.uninstallation.log.level }}" \
+                --release-name={{ .Values.agentControlCd.releaseName }}
               echo "uninstalling agent-control-cd chart..."
-              helm uninstall agent-control-cd --namespace {{ .Release.Namespace }}
+              helm uninstall {{ .Values.agentControlCd.releaseName }} --namespace {{ .Release.Namespace }}
 {{- end }}
 {{- end -}}
