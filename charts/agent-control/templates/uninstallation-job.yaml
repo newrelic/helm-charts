@@ -1,4 +1,4 @@
-{{- if .Values.agentControlDeployment.enabled }}
+{{- if (or .Values.agentControlDeployment.enabled .Values.agentControlCd.enabled) -}}
 {{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
 {{- $secretName := include "agent-control.secret.name" . -}}
 apiVersion: batch/v1
@@ -30,15 +30,19 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |-
+{{- if .Values.agentControlDeployment.enabled }}
               echo "Uninstalling Agent Control..."
               newrelic-agent-control-cli uninstall-agent-control \
                 --namespace "{{ .Release.Namespace }}" \
                 --namespace-agents "{{ .Values.agentControlDeployment.chartValues.subAgentsNamespace }}" \
                 --log-level "{{ .Values.uninstallation.log.level }}"
-            {{- if .Values.agentControlCd.enabled }}
+{{- end -}}
+{{- if .Values.agentControlCd.enabled }}
               echo "Removing agent-control-cd resources..."
               newrelic-agent-control-cli remove-cd-resources \
                 --namespace "{{ .Release.Namespace }}" \
                 --log-level "{{ .Values.uninstallation.log.level }}"
-            {{- end }}
+              echo "uninstalling agent-control-cd chart..."
+              helm uninstall agent-control-cd --namespace {{ .Release.Namespace }}
+{{- end }}
 {{- end -}}
