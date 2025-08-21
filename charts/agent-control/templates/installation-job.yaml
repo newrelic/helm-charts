@@ -88,6 +88,7 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |
+{{- /* Install agent-control-cd through helm unless the corresponding helm-release already exists */ -}}
 {{- if .Values.agentControlCd.enabled }}
               HELM_RELEASE_EXISTS=$(kubectl get HelmRelease agent-control-cd -n {{ .Release.Namespace }})
               if [ -z "$HELM_RELEASE_EXISTS" ]; then
@@ -109,12 +110,14 @@ spec:
                   --namespace {{ .Release.Namespace }} \
                   -f /tmp/flux-values/agent-control-flux.yaml
               else
-                echo "agent-control-cd HelmRelease already exists, skipping installation."
+                echo "agent-control-cd HelmRelease already exists, skipping installation, performing upgrade."
               fi
 {{- end }}
+{{- /* Create or update resources owned by Agent Control to handle agent-control-cd and agent-control-deployment installations */}}
 {{- if .Values.agentControlDeployment.enabled }}
+           {{- /* Create or update resources to handle agent-control-cd release */}}
            {{- if .Values.agentControlCd.enabled }}
-              echo "Creating agent-control-cd resources..."
+              echo "Creating agent-control-cd resources owned by Agent Control..."
               newrelic-agent-control-cli create-cd-resources \
                 --chart-version={{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
                 --secrets={{ $cdSecretName }}=agent-control-flux.yaml \
@@ -129,7 +132,8 @@ spec:
             {{- end }}
                 --chart-name={{ .Values.agentControlCd.chartName }}
             {{- end }}
-              echo "Creating agent-control-deployment resources..."
+            {{- /* Create or update resources to handle agent-control-deployment release */}}
+              echo "Creating agent-control-deployment resources owned by Agent Control..."
               newrelic-agent-control-cli install-agent-control \
                 --chart-version={{ .Values.agentControlDeployment.chartVersion | default .Chart.AppVersion }} \
                 --secrets={{ $acSecretName }}=agent-control-deployment.yaml,{{ $acSecretName }}=global.yaml \
