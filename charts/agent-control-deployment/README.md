@@ -19,6 +19,7 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | config.acRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-deployment chart |
 | config.agents | string | `{}` (See `values.yaml`) | List of managed agents that will be deployed. The key represents the name of the agent that should used when defining its configuration. |
 | config.allowedChartRepositoryUrl | list | `[]`(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"]) | List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories. |
+| config.cdReleaseName | string | agent-control-cd | The name of the release for the CD chart. |
 | config.cdRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-cd chart |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
