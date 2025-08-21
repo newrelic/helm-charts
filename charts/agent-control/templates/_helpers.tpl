@@ -14,7 +14,8 @@ overrides:
   {{- if not .Values.agentControlCd.enabled -}}
     {{- $_ := set $config "cdRemoteUpdate" false -}}
   {{- else -}}
-    {{- $newValues := merge $config.config (dict "cdReleaseName" .Values.agentControlCd.releaseName) -}}
+    {{- $existingConfig := (default (dict) $config.config) -}}
+    {{- $newValues := merge $existingConfig (dict "cdReleaseName" .Values.agentControlCd.releaseName) -}}
     {{- $_ := set $config "config" $newValues -}}
   {{- end -}}
 
