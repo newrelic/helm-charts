@@ -17,8 +17,9 @@ spec:
     spec:
       restartPolicy: Never
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
-      {{- if .Values.agentControlCd.enabled }}
       volumes:
+        {{- /* agentControlCd related volumes */ -}}
+        {{- if .Values.agentControlCd.enabled }}
         - name: flux-values
           secret:
             secretName: {{ $cdSecretName }}
@@ -34,10 +35,11 @@ spec:
               - key: tls.key
                 path: tls.key
         {{- end }}
+        {{- end }}
+        {{- /* installer extra volumes */ -}}
         {{- with .Values.installation.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
-      {{- end }}
       containers:
         - name: install-agent-control
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.toolkitImage "context" .) }}
@@ -50,6 +52,7 @@ spec:
               cpu: 50m
               memory: 64Mi
           env:
+          {{- /* agentControlCd environment variables */ -}}
           {{- if (and .Values.agentControlCd.enabled .Values.agentControlCd.repositorySecretReferenceName) }}
             - name: HELM_REPO_USERNAME
               valueFrom:
@@ -62,10 +65,12 @@ spec:
                   name: {{ .Values.agentControlCd.repositorySecretReferenceName }}
                   key: password
           {{- end -}}
+          {{- /* installer extra env */ -}}
           {{- with .Values.installation.extraEnv }}
             {{- toYaml . | nindent 12 }}
           {{- end }}
           volumeMounts:
+            {{- /* agentControlCd volumeMounts */ -}}
             {{- if .Values.agentControlCd.enabled }}
             - name: flux-values
               mountPath: /tmp/flux-values
@@ -76,6 +81,7 @@ spec:
               readOnly: true
             {{- end }}
             {{- end }}
+            {{- /* installer extra volumeMounts */ -}}
             {{- with .Values.installation.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
