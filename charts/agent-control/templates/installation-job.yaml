@@ -1,7 +1,7 @@
 {{- if (or .Values.agentControlDeployment.enabled .Values.agentControlCd.enabled) -}}
 {{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
-{{- $secretName := include "agent-control.secret.name" . -}}
-{{- $fluxSecretName := printf "%s-flux" (include "agent-control.secret.name" .) -}}
+{{- $acSecretName := include "agent-control-deployment.secret.name" . -}}
+{{- $cdSecretName := include "agent-control-cd.secret.name" . -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -21,7 +21,7 @@ spec:
       volumes:
         - name: flux-values
           secret:
-            secretName: {{ include "agent-control.secret.name" . }}-flux
+            secretName: {{ $cdSecretName }}
         {{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
         - name: flux-cert-secrets
           secret:
@@ -111,7 +111,7 @@ spec:
               echo "Creating agent-control-cd resources..."
               newrelic-agent-control-cli create-cd-resources \
                 --chart-version={{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
-                --secrets={{ $fluxSecretName }}=agent-control-flux.yaml \
+                --secrets={{ $cdSecretName }}=agent-control-flux.yaml \
                 --namespace={{ .Release.Namespace }} \
                 --repository-url={{ .Values.agentControlCd.chartRepositoryUrl }} \
                 --log-level={{ .Values.installation.log.level }} \
@@ -126,7 +126,7 @@ spec:
               echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
                 --chart-version={{ .Values.agentControlDeployment.chartVersion | default .Chart.AppVersion }} \
-                --secrets={{ $secretName }}=agent-control-deployment.yaml,{{ $secretName }}=global.yaml \
+                --secrets={{ $acSecretName }}=agent-control-deployment.yaml,{{ $acSecretName }}=global.yaml \
                 --namespace={{ .Release.Namespace }} \
                 --repository-url={{ .Values.agentControlDeployment.chartRepositoryUrl }} \
                 --log-level={{ .Values.installation.log.level }} \

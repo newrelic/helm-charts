@@ -1,6 +1,5 @@
 {{- if (or .Values.agentControlDeployment.enabled .Values.agentControlCd.enabled) -}}
 {{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
-{{- $secretName := include "agent-control.secret.name" . -}}
 apiVersion: batch/v1
 kind: Job
 metadata:
