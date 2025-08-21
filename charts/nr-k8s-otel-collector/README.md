@@ -132,6 +132,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | daemonset.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
 | daemonset.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.enabled | bool | `true` | Specifies whether the DaemonSet should be installed. Set to `false` to disable DaemonSet creation. |
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
@@ -144,6 +145,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | deployment.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
 | deployment.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.enabled | bool | `true` | Specifies whether the Deployment should be installed. Set to `false` to disable Deployment creation. |
 | deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
 | deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
@@ -230,3 +232,16 @@ Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": 
 
 * [dbudziwojskiNR](https://github.com/dbudziwojskiNR)
 * [Philip-R-Beckwith](https://github.com/Philip-R-Beckwith)
+
+## Optional DaemonSet and Deployment
+
+By default, both the DaemonSet and Deployment resources are enabled and will be installed. You can control their installation using the following flags in your `values.yaml`:
+
+```yaml
+daemonset:
+  enabled: true  # Set to false to disable DaemonSet creation
+deployment:
+  enabled: true  # Set to false to disable Deployment creation
+```
+
+If you provide an empty values file, both will default to `true` and be installed. To disable either, set the corresponding flag to `false` in your custom values file.
