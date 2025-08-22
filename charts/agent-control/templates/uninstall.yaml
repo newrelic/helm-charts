@@ -35,7 +35,7 @@ spec:
                 --namespace "{{ .Release.Namespace }}" \
                 --namespace-agents "{{ .Values.agentControlDeployment.chartValues.subAgentsNamespace }}" \
                 --log-level "{{ .Values.uninstallation.log.level }}" \
-                --release-name=agent-control-deployment
+                --release-name={{ .Values.agentControlDeployment.releaseName }}
             {{- if .Values.agentControlCd.enabled }}
               echo "Removing agent-control-cd resources..."
               newrelic-agent-control-cli remove-cd-resources \

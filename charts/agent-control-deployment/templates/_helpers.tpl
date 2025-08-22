@@ -54,7 +54,7 @@ cluster name, licenses, and custom attributes
 {{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "namespace_agents" .Values.subAgentsNamespace) -}}
 {{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
 {{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.config.acRemoteUpdate "cd_remote_update" .Values.config.cdRemoteUpdate) -}}
-{{- $k8s = mustMerge $k8s (dict "cd_release_name" .Values.config.cdReleaseName) -}}
+{{- $k8s = mustMerge $k8s (dict "ac_release_name" .Release.Name "cd_release_name" .Values.config.cdReleaseName) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
 
 {{- with .Values.config.log -}}
