@@ -16,7 +16,8 @@ tests:
                 --namespace=NAMESPACE \
                 --repository-url=https://helm-charts.newrelic.com \
                 --log-level=debug \
-                --chart-name=agent-control-cd
+                --chart-name=agent-control-cd \
+                --release-name=agent-control-cd
 
               echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
@@ -25,7 +26,8 @@ tests:
                 --namespace=NAMESPACE \
                 --repository-url=https://helm-charts.newrelic.com \
                 --log-level=debug \
-                --chart-name=agent-control-deployment
+                --chart-name=agent-control-deployment \
+                --release-name=agent-control-deployment
 
   - it: should configure arguments correctly
     set:
@@ -59,7 +61,8 @@ tests:
                 --namespace=NAMESPACE \
                 --repository-url=https://newrelic.com/other/url \
                 --log-level=trace \
-                --chart-name=custom-flux
+                --chart-name=custom-flux \
+                --release-name=agent-control-cd
 
               echo "Creating agent-control-deployment resources..."
               newrelic-agent-control-cli install-agent-control \
@@ -70,7 +73,8 @@ tests:
                 --log-level=trace \
                 --repository-secret-reference-name=secret-ref \
                 --repository-certificate-secret-reference-name=cert-secret-ref \
-                --chart-name=custom-deployment
+                --chart-name=custom-deployment \
+                --release-name=agent-control-deployment
 
   - it: should leverage correct image tag
     set:

@@ -76,6 +76,7 @@ agent-control-deployment:
 | agentControlCd.chartValues | string | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml |
 | agentControlCd.chartVersion | string | `.Chart.annotations.agentControlCdVersion` | The version of the CD chart that will be installed by the installation job. |
 | agentControlCd.enabled | bool | `true` | Enable the installation of a Continuous Deployment system that can be managed by Agent Control. |
+| agentControlCd.releaseName | string | agent-control-cd | The name of the release for the CD chart. |
 | agentControlCd.repositoryCertificateSecretReferenceName | string | `nil` | Optional name of the secret containing TLS certificates for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference |
 | agentControlCd.repositorySecretReferenceName | string | `nil` | Optional name of the secret containing credentials for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference |
 | agentControlDeployment.chartName | string | agent-control-deployment | The name of the chart that will be installed by the installation job. |
