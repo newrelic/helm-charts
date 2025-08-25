@@ -12,7 +12,7 @@ helm.sh/hook-weight: "10"
   namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
-name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-install-job") }}
+name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
 namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -32,7 +32,7 @@ helm.sh/hook-weight: "-20"
   namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
-name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-uninstall-job") }}
+name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
 namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole

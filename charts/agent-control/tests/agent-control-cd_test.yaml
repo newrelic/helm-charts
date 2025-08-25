@@ -1,4 +1,4 @@
-suite: Validate AC-CD Installation
+suite: Validate agent-control-cd Installation
 tests:
   - it: should leverage correct image tag
 set:
@@ -6,11 +6,11 @@ set:
 tag: 123
 repository: test
 asserts:
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 equal:
   path: spec.template.spec.containers[0].image
   value: "test:123"
-  - template: templates/uninstall-flux.yaml
+  - template: templates/uninstallation-job.yaml
 equal:
   path: spec.template.spec.containers[0].image
   value: "test:123"
@@ -19,14 +19,14 @@ set:
   agentControlCd:
 chartRepositoryUrl: "https://example.com/some/url"
 asserts:
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 matchRegex:
   path: spec.template.spec.containers[0].args[0]
   pattern: (?s).*https\:\/\/example\.com\/some\/url\s.*
 
   - it: should accept no repositoryUrl
 asserts:
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 matchRegex:
   path: spec.template.spec.containers[0].args[0]
   pattern: (?s).*https:\/\/helm-charts\.newrelic\.com\s.*
@@ -36,7 +36,7 @@ set:
   agentControlCd:
 repositoryCertificateSecretReferenceName: my-cert-secret
 asserts:
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 equal:
   path: spec.template.spec.volumes[1].secret.items
   value:
@@ -46,7 +46,7 @@ equal:
   path: tls.crt
 - key: tls.key
   path: tls.key
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 matchRegex:
   path: spec.template.spec.containers[0].args[0]
   pattern: \\\s+--ca-file /etc/flux-cert/ca\.crt
@@ -56,7 +56,7 @@ set:
   agentControlCd:
 repositorySecretReferenceName: my-basic-auth-secret
 asserts:
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 matchRegex:
   path: spec.template.spec.containers[0].args[0]
   pattern: \\\s+--username
@@ -67,11 +67,18 @@ set:
 repositoryCertificateSecretReferenceName: my-cert-secret
 repositorySecretReferenceName: my-basic-auth-secret
 asserts:
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 matchRegex:
   path: spec.template.spec.containers[0].args[0]
   pattern: "--cert-file /etc/flux-cert/tls.crt"
-  - template: templates/install-flux.yaml
+  - template: templates/installation-job.yaml
 notMatchRegex:
   path: spec.template.spec.containers[0].args[0]
   pattern: "--password"
+
+  - it: should install agent-control-cd through helm
+asserts:
+  - template: templates/installation-job.yaml
+matchRegex:
+  path: spec.template.spec.containers[0].args[0]
+  pattern: "helm upgrade --install"
