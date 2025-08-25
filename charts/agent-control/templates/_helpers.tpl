@@ -16,6 +16,10 @@ overrides:
 
   {{- if not .Values.agentControlCd.enabled -}}
     {{- $_ := set $config "cdRemoteUpdate" false -}}
+  {{- else -}}
+    {{- $existingConfig := (default (dict) $config.config) -}}
+    {{- $newValues := merge $existingConfig (dict "cdReleaseName" .Values.agentControlCd.releaseName) -}}
+    {{- $_ := set $config "config" $newValues -}}
   {{- end -}}
 
   {{- $config | toYaml | b64enc -}}
