@@ -15,7 +15,7 @@ overrides:
   {{- $config := .Values.agentControlDeployment.chartValues | deepCopy -}}
 
   {{- if not .Values.agentControlCd.enabled -}}
-    {{- $_ := set $config "cdRemoteUpdate" false -}}
+    {{- $config = mustMergeOverwrite $config (dict "config" (dict "cdRemoteUpdate" false)) -}}
   {{- end -}}
 
   {{- $config | toYaml | b64enc -}}
