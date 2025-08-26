@@ -1,9 +1,11 @@
 {{- define "agent-control-deployment.secret.name" -}}
-  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Values.agentControlDeployment.releaseName "suffix" "local") }}
+  {{- $releaseName := printf "%s" (.Values.agentControlDeployment.releaseName | default "agent-control-deployment") -}}
+  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseName "suffix" "local") }}
 {{- end -}}
 
 {{- define "agent-control-cd.secret.name" -}}
-  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Values.agentControlCd.releaseName "suffix" "local") }}
+  {{- $releaseName := printf "%s" (.Values.agentControlCd.releaseName | default "agent-control-cd") -}}
+  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" $releaseName "suffix" "local") }}
 {{- end -}}
 
 {{- /*
