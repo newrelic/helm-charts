@@ -76,6 +76,7 @@ path: dynamic-agent-type.yaml
 | agentControlCd.chartValues | string | See `values.yaml` | Values for the agent-control-deployment chart. Ref.: https://github.com/newrelic/helm-charts/blob/master/charts/agent-control-cd/values.yaml |
 | agentControlCd.chartVersion | string | `.Chart.annotations.agentControlCdVersion` | The version of the CD chart that will be installed by the installation job. |
 | agentControlCd.enabled | bool | `true` | Enable the installation of a Continuous Deployment system that can be managed by Agent Control. |
+| agentControlCd.releaseName | string | agent-control-cd | The name of the release for the CD chart. |
 | agentControlCd.repositoryCertificateSecretReferenceName | string | `nil` | Optional name of the secret containing TLS certificates for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference |
 | agentControlCd.repositorySecretReferenceName | string | `nil` | Optional name of the secret containing credentials for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference |
 | agentControlDeployment.chartName | string | agent-control-deployment | The name of the chart that will be installed by the installation job. |
@@ -84,6 +85,7 @@ path: dynamic-agent-type.yaml
 | agentControlDeployment.chartValues.subAgentsNamespace | string | "newrelic" | Namespace where agents are deployed |
 | agentControlDeployment.chartVersion | string | `.Chart.appVersion` | The version of the Agent Control chart that will be installed by the installation job. |
 | agentControlDeployment.enabled | bool | `true` | Enable the installation of Agent Control. |
+| agentControlDeployment.releaseName | string | agent-control-deployment | The name of the release for the deployment chart. |
 | agentControlDeployment.repositoryCertificateSecretReferenceName | string | `nil` | Optional name of the secret containing TLS certificates for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference |
 | agentControlDeployment.repositorySecretReferenceName | string | `nil` | Optional name of the secret containing credentials for the Helm repository. Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#secret-reference |
 | fullnameOverride | string | `""` | Override the full name of the release |
@@ -92,7 +94,7 @@ path: dynamic-agent-type.yaml
 | installation.extraVolumes | list | `[]` | Volumes to mount in the containers |
 | installation.log.level | string | debug | Log level for installation. |
 | nameOverride | string | `""` | Override the name of the chart |
-| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.46.0"}` | The image that contains the necessary tools to install and uninstall the Agent Control components. |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.47.0"}` | The image that contains the necessary tools to install and uninstall the Agent Control components. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | uninstallation.log.level | string | debug | Log level for installation. |
 

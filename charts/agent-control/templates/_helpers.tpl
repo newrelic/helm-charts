@@ -1,9 +1,9 @@
 {{- define "agent-control-deployment.secret.name" -}}
-  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "deployment-local") }}
+  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Values.agentControlDeployment.releaseName "suffix" "local") }}
 {{- end -}}
 
 {{- define "agent-control-cd.secret.name" -}}
-  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "cd-local") }}
+  {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Values.agentControlCd.releaseName "suffix" "local") }}
 {{- end -}}
 
 {{- /*
@@ -16,6 +16,10 @@ overrides:
 
   {{- if not .Values.agentControlCd.enabled -}}
 {{- $_ := set $config "cdRemoteUpdate" false -}}
+  {{- else -}}
+{{- $existingConfig := (default (dict) $config.config) -}}
+{{- $newValues := merge $existingConfig (dict "cdReleaseName" .Values.agentControlCd.releaseName) -}}
+{{- $_ := set $config "config" $newValues -}}
   {{- end -}}
 
   {{- $config | toYaml | b64enc -}}
