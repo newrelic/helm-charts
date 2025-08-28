@@ -94,7 +94,7 @@ path: dynamic-agent-type.yaml
 | installation.extraVolumes | list | `[]` | Volumes to mount in the containers |
 | installation.log.level | string | debug | Log level for installation. |
 | nameOverride | string | `""` | Override the name of the chart |
-| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.47.0"}` | The image that contains the necessary tools to install and uninstall the Agent Control components. |
+| toolkitImage | object | `{"pullPolicy":"IfNotPresent","pullSecrets":[],"registry":null,"repository":"newrelic/newrelic-agent-control-cli","tag":"0.48.0"}` | The image that contains the necessary tools to install and uninstall the Agent Control components. |
 | toolkitImage.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | uninstallation.log.level | string | debug | Log level for installation. |
 
