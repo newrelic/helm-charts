@@ -1,0 +1,88 @@
+# These tests fetches the AC repo and executes the K8s e2e tests using the charts of the
+# current branch.
+name: Agent Control e2e test
+
+on:
+  pull_request:
+    paths:
+      - 'charts/agent-control/**'
+      - 'charts/agent-control-cd/**'
+      - 'charts/agent-control-deployment/**'
+      - '.github/workflows/agent-control-e2e.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  agent-control-e2e:
+    name: AC e2e scenario - ${{ matrix.group }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        group: ["infra", "apm", "dynamic", "custom-repo", "proxy"]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: newrelic/newrelic-agent-control
+
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.14.0
+        with:
+          minikube version: v1.35.0
+          kubernetes version: "v1.30.14"
+          start args: '--cni=calico'
+          driver: docker
+          github token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Install Tilt
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
+
+      - name: Obtain Rust version from project
+        run: |
+          RUST_VERSION=$(grep "rust-version" Cargo.toml | cut -d "=" -f2 | tr -d "[:space:]")
+          echo "RUST_VERSION=${RUST_VERSION}" >> $GITHUB_ENV
+
+      - name: Install Rust ${{ env.RUST_VERSION }}
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: >-
+            x86_64-unknown-linux-musl
+
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}-test-dev
+
+      - name: Install Zig
+        uses: mlugg/setup-zig@v2
+
+      - name: Install cargo-zigbuild
+        run: |
+          cargo install --locked cargo-zigbuild --force
+
+      - name: Run k8s e2e-test ${{ matrix.group }}
+        uses: newrelic/newrelic-integration-e2e-action@v1
+        env:
+          # SI L2->L2 for AC
+          NR_SYSTEM_IDENTITY_CLIENT_ID: ${{ secrets.AC_PROD_E2E_NR_SYSTEM_IDENTITY_CLIENT_ID }}
+          NR_SYSTEM_IDENTITY_PRIVATE_KEY: ${{ secrets.AC_PROD_E2E_NR_SYSTEM_IDENTITY_PRIVATE_KEY }}
+          # Tilt configs
+          ARCH: amd64
+          # E2E test uses the charts of the current branch
+          FEATURE_BRANCH: ${{ github.head_ref }}
+        with:
+          retry_attempts: 20
+          retry_seconds: 15
+          agent_enabled: false
+          spec_path: test/k8s-e2e/${{ matrix.group }}/e2e-${{ matrix.group }}.yml
+          account_id: ${{ secrets.AC_PROD_E2E_ACCOUNT_ID }}
+          api_key: ${{ secrets.AC_PROD_E2E_API_KEY }}
+          license_key: ${{ secrets.AC_PROD_E2E_LICENSE_KEY }}
