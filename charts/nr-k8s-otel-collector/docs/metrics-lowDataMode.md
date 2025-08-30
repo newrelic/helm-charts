@@ -90,11 +90,15 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_info                                    | Gauge   | Information about the Pod container.                                           |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_resource_limits                         | Gauge   | Resource limits of the Pod container.                                          |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_resource_requests                       | Gauge   | Resource requests of the Pod container.                                        |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_exitcode         | Gauge   | Exit code of the last terminated state of the container.                       |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_reason           | Gauge   | Reason for the last termination of the container.                              |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_timestamp        | Gauge   | Last terminated time for a pod container in unix timestamp.                    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_phase                            | Gauge   | Current phase of the Pod container.                                            |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_ready                            | Gauge   | Whether the Pod container is ready (1) or not (0).                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_restarts_total                   | Counter | Total number of restarts for the Pod container.                                |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_waiting_reason                   | Gauge   | Reason for the container waiting state.                                        |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_created                                           | Gauge   | Creation timestamp of the Pod.                                                 |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_deletion_timestamp                                | Gauge   | Deletion timestamp of the Pod.                                                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_info                                              | Gauge   | Information about the Pod.                                                     |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_owner                                             | Gauge   | Owner information of the Pod.                                                  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_start_time                                        | Gauge   | Start time of the Pod.                                                         |
