@@ -245,6 +245,29 @@ receivers:
     # -- Sets the scrape interval for metrics scraped from the deployment collector
     # @default -- `1m`
     scrapeInterval: 1m
+  prometheusServices:
+    # -- (bool) Specifies whether prometheus service metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled.
+    # @default -- `false`
+    enabled: true
+    # -- Sets the scrape interval for prometheus service scraped from the deployment collector
+    # @default -- `1m`
+    scrapeInterval: 1m
+    # NewRelic provides a list of Dashboards, alerts and entities for several Services. The integrations_filter configuration
+    # allows to scrape only the targets having this experience out of the box.
+    # If integrations_filter is enabled, then the jobs scrape merely the targets having one of the specified labels matching
+    # one of the values of app_values.
+    # Under the hood, a relabel_configs with 'action=keep' are generated, consider it in case any custom extra_relabel_config is needed.
+    integrations_filter:
+      # -- enabling the integration filters, merely the targets having one of the specified labels matching
+      #    one of the values of app_values are scraped. Each job configuration can override this default.
+      enabled: true
+      # -- source_labels used to fetch label values in the relabel config added by the integration filters configuration
+      source_labels: [ "app.kubernetes.io/name", "app.newrelic.io/name", "k8s-app" ]
+      # -- app_values used to create the regex used in the relabel config added by the integration filters configuration.
+      # Note that a single regex will be created from this list, example: '.*(?i)(app1|app2|app3).*'
+      app_values: [ "redis", "traefik", "calico", "nginx", "coredns", "kube-dns", "etcd", "cockroachdb", "velero", "harbor", "argocd", "gateway-helm", "envoy", "keda", "istio", "ztunnel" ] #gateway-helm=envoy-gateway
+    # -- Add additional scrape configs to the prometheus services receiver.
+    extra_scrape_configs: []
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
