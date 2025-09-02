@@ -46,22 +46,21 @@ spec:
           - "-c"
           - |
             # Detect OS and install kernel headers accordingly
-            sleep 1000s
-            chroot /host /bin/bash -c "\
-              if [ -f /etc/os-release ]; then \
-                . /etc/os-release; \
-                if [[ \$ID == 'amzn' || \$ID == 'centos' || \$ID == 'rhel' ]]; then \
-                  yum install -y kernel-devel-\$(uname -r); \
-                elif [[ \$ID == 'debian' || \$ID == 'ubuntu' ]]; then \
-                  apt-get update || apt-get install -y linux-headers-\$(uname -r); \
-                elif [[ \$ID == 'cos' ]]; then \
-                  toolbox run -- sudo apt-get install -y linux-headers-\$(uname -r); \
-                else \
-                  echo 'Unsupported OS: '\$ID; exit 1; \
-                fi; \
+            # sleep 10000s
+            if [ -f /host/etc/os-release ]; then \
+              . /host/etc/os-release; \
+              if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then \
+                echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...' && chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)"; \
+              elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then \
+                echo 'Detected Debian/Ubuntu. Installing linux-headers...' && chroot /host /bin/bash -c "apt-get update && apt-get install -y linux-headers-$(uname -r)"; \
+              elif [[ $ID == 'cos' ]]; then \
+                echo 'Detected GKE/Container-Optimized OS. Installing linux-headers via toolbox...' && /host/usr/bin/toolbox apt-get update && /host/usr/bin/toolbox apt-get install -y linux-headers-$(uname -r)-amd; \
               else \
-                echo '/etc/os-release not found'; exit 1; \
-              fi"    
+                echo 'Unsupported OS: '$ID; exit 1; \
+              fi; \
+            else \
+              echo '/host/etc/os-release not found'; exit 1; \
+            fi
         securityContext:
           privileged: true
         volumeMounts:
