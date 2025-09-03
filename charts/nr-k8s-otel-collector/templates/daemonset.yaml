@@ -101,6 +101,9 @@ spec:
               readOnly: true
             - name: daemonset-config
               mountPath: /config
+            {{- with .Values.daemonset.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       volumes:
         {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         - name: host-fs
@@ -113,6 +116,9 @@ spec:
         - name: daemonset-config
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+        {{- with .Values.daemonset.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
