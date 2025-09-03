@@ -135,7 +135,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
 | daemonset.extraVolumes | list | `[]` | Sets additional volumes for the daemonset. |
-| daemonset.extraVolumeMounts | list | `[]` | Sets additional volume mounts for the daemonset. |
+| daemonset.extraVolumeMounts | list | `[]` | Sets additional volume mounts for the daemonset container. |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -149,7 +149,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
 | deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
 | deployment.extraVolumes | list | `[]` | Sets additional volumes for the deployment. |
-| deployment.extraVolumeMounts | list | `[]` | Sets additional volume mounts for the deployment. |
+| deployment.extraVolumeMounts | list | `[]` | Sets additional volume mounts for the deployment container. |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
