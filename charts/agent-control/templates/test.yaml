@@ -33,6 +33,9 @@ spec:
         # Helm V4 is already providing an alternative https://github.com/helm/community/blob/main/hips/hip-0019.md#specification
 
         kubectl logs -l batch.kubernetes.io/job-name --prefix --tail=-1 -n {{ .Release.Namespace }}
+
+        echo "❌ Installation has failed! The logs are displayed above."
+        echo "📖 For troubleshooting guidance, please check: https://docs.newrelic.com/docs/new-relic-control/agent-control/troubleshooting/#helm-release-failure"
         
         # This is not a test
         exit 0
