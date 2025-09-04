@@ -98,6 +98,17 @@ spec:
             value: "{{ .Values.tls.certPath }}/"
           {{- end }}
           {{- end }}
+
+          {{- if .Values.ebpfAgent.downloaded_packaged_headers_path }}
+          - name: DOWNLOADED_PACKAGED_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.downloaded_packaged_headers_path }}"
+          {{- end }}
+
+          {{- if .Values.ebpfAgent.distro_kernel_headers_path }}
+          - name: DISTRO_KERNEL_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.distro_kernel_headers_path }}"
+          {{- end }}
+
         securityContext:
           privileged: true
         volumeMounts:
