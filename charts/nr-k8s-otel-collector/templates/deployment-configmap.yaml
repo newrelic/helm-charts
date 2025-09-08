@@ -16,6 +16,7 @@ data:
         protocols:
           http:
             endpoint: ${env:MY_POD_IP}:4318
+
       k8s_events:
       prometheus/ksm:
         config:
@@ -185,6 +186,9 @@ data:
         - context: datapoint
           statements:
           - set(instrumentation_scope.attributes["job_label"], attributes["job_label"]) where attributes["job_label"] != nil
+        - context: datapoint
+          statements:
+          - set(resource.attributes["k8s-type"], "deployment")
 
       transform/remove_routing_metadata:
         metric_statements:
@@ -447,6 +451,83 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
+
+      metricstransform/aggregation_sum:
+        transforms:
+          - include: kube_pod_container_resource_requests
+            action: insert
+            new_name: kube_node_resource_requests
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - resource
+                aggregation_type: sum
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
+
+      metricstransform/aggregation_insert:
+        transforms:
+          - include: kube_node_resource_requests
+            action: update
+            operations:
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
+          - include: kube_node_resource_requests
+            action: insert
+            new_name: kube_node_cpu_requests
+            experimental_match_labels: {resource: cpu}
+            operations:
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
+          - include: kube_node_resource_requests
+            action: insert
+            new_name: kube_node_memory_requests
+            match_type: regexp
+            experimental_match_labels: {resource: memory}
+            operations:
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
+
+          - include: kube_node_status_allocatable
+            action: insert
+            new_name: kube_node_cpu_allocatable
+            match_type: regexp
+            experimental_match_labels: {resource: cpu}
+            operations:
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
+          - include: kube_node_status_allocatable
+            action: insert
+            new_name: kube_node_memory_allocatable
+            match_type: regexp
+            experimental_match_labels: {resource: memory}
+            operations:
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
+
+{{/*      filter/aggregation:*/}}
+{{/*        metrics:*/}}
+{{/*          datapoint:*/}}
+{{/*            - 'metric.name == "new_pod_container_resource_requests" '*/}}
+
+      metricsgeneration/aggregation:
+        rules:
+          - name: node.cpu.request.percentage
+            type: calculate
+            metric1: kube_node_cpu_requests
+            metric2: kube_node_cpu_allocatable
+            operation: divide
+          - name: node.memory.request.percentage
+            type: calculate
+            metric1: kube_node_memory_requests
+            metric2: kube_node_memory_allocatable
+            operation: divide
 
       metricstransform/apiserver:
         transforms:
@@ -777,6 +858,9 @@ data:
           processors:
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
             - transform/promote_job_label
+            - metricstransform/aggregation_sum
+            - metricstransform/aggregation_insert
+            - metricsgeneration/aggregation
           exporters:
             - routing/nr_metrics_pipelines
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}

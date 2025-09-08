@@ -2,10 +2,7 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
-cluster: ""
-# -- This set this license key to use. Can be configured also with `global.licenseKey`
-licenseKey: ""
+
 
 kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository.
@@ -22,11 +19,11 @@ provider: ""
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nrdot-collector-k8s
+  repository: otel/opentelemetry-collector-contrib
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.2.0"
+  tag: "0.134.1"
 
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
@@ -206,7 +203,7 @@ verboseLog:
 
 # -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
 # @default -- `false`
-nrStaging:
+nrStaging: true
 
 receivers:
   prometheus:
@@ -248,4 +245,4 @@ receivers:
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
-lowDataMode:
+lowDataMode: false

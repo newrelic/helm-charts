@@ -500,6 +500,22 @@ data:
             - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
             - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
 
+      filter/aggregation:
+        metrics:
+          datapoint:
+            - 'metric.name != "kube_pod_container_resource_requests" '
+
+
+      metricstransform/aggregation_insert:
+        transforms:
+          - include: kube_pod_container_resource_requests
+            action: insert
+            new_name: pod_container_resource_requests
+            match_type: regexp
+            operations:
+              - action: add_label
+                new_label: pipeline
+                new_value: 'agg-pipeline'
 
       attributes/exclude_system_paging:
         include:
@@ -617,6 +633,11 @@ data:
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
+      otlphttp/aggregation:
+        endpoint: otel-deployment-collector.default.svc.cluster.local:4318
+        tls:
+          insecure: true # Use insecure for testing, use proper TLS in production
+
     connectors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
 
@@ -672,7 +693,12 @@ data:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
-
+      routing/aggregation_pipeline:
+        default_pipelines: [metrics/aggregation]
+        table:
+          - context: metric
+            condition: "true"
+            pipelines: [metrics/aggregation]
     service:
       {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
@@ -707,7 +733,16 @@ data:
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
+            - routing/aggregation_pipeline
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
+        metrics/aggregation:
+          receivers:
+            - routing/aggregation_pipeline
+          processors:
+            - filter/aggregation
+          exporters:
+            - otlphttp/aggregation
 
         metrics/nr:
           receivers:
