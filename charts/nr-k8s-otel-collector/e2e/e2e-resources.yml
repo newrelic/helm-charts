@@ -1,4 +1,11 @@
 ---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: e2e-low-priority
+value: -1 # A negative value ensures it is lower than the default of 0
+description: "This priority class is for pods that are first to be evicted."
+---
 # Source: e2e-resources/charts/kube-state-metrics/templates/serviceaccount.yaml
 apiVersion: v1
 kind: ServiceAccount
@@ -253,7 +260,7 @@ spec:
       protocol: TCP
       port: 8080
       targetPort: 8080
-  
+
   selector:
     app.kubernetes.io/name: kube-state-metrics
     app.kubernetes.io/instance: e2e-resources
@@ -350,6 +357,7 @@ metadata:
   labels:
     app: creating
 spec:
+  priorityClassName: e2e-low-priority # Assign the low-priority class
   containers:
     - name: alpine
       image: alpine:latest
@@ -371,6 +379,7 @@ metadata:
   labels:
     app: pending
 spec:
+  priorityClassName: e2e-low-priority # Assign the low-priority class
   containers:
     - name: alpine
       image: alpine:latest
@@ -409,6 +418,7 @@ spec:
         app.kubernetes.io/instance: e2e-resources
         app.kubernetes.io/version: "2.10.0"
     spec:
+      priorityClassName: e2e-low-priority # Assign the low-priority class
       hostNetwork: false
       serviceAccountName: e2e-resources-kube-state-metrics
       securityContext:
@@ -468,6 +478,7 @@ spec:
       labels:
         app: deployment
     spec:
+      priorityClassName: e2e-low-priority # Assign the low-priority class
       containers:
         - name: compute-pi-digits
           image: perl:5.34.0
@@ -504,7 +515,7 @@ kind: Deployment
 metadata:
   name: e2e-resources-hpa
 spec:
-  
+
   selector:
     matchLabels:
       run: php-apache
@@ -515,6 +526,7 @@ spec:
         run: php-apache
         app: hpa
     spec:
+      priorityClassName: e2e-low-priority # Assign the low-priority class
       containers:
         - name: php-apache
           image: registry.k8s.io/hpa-example
@@ -562,6 +574,7 @@ spec:
       labels:
         app: statefulset
     spec:
+      priorityClassName: e2e-low-priority # Assign the low-priority class
       containers:
         - name: compute-pi-digits
           image: perl:5.34.0
@@ -606,6 +619,7 @@ spec:
       labels:
         app: failjob
     spec:
+      priorityClassName: e2e-low-priority # Assign the low-priority class
       restartPolicy: Never
       containers:
         - name: main
@@ -637,6 +651,7 @@ spec:
           labels:
             app: cronjob
         spec:
+          priorityClassName: e2e-low-priority # Assign the low-priority class
           containers:
             - name: compute-pi-digits
               image: perl:5.34.0

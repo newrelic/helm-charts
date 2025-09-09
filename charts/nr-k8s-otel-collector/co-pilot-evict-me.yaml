@@ -1,0 +1,29 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: low-priority
+value: -1
+globalDefault: false
+description: "Low priority for eviction testing"
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: eviction-test-pod
+  labels:
+    app: eviction-test-pod
+spec:
+  priorityClassName: low-priority
+  containers:
+    - name: memory-hog
+      image: busybox
+      command: ["sh", "-c", "x=\"\"; while true; do x=\"$x$(head -c 1048576 </dev/zero)\"; sleep 1; done"]
+      resources:
+        requests:
+          memory: "1500Mi"
+    - name: normal
+      image: busybox
+      command: ["sleep", "3600"]
+      resources:
+        requests:
+          memory: "10Mi"

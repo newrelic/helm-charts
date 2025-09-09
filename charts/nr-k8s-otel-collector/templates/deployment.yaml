@@ -43,7 +43,7 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ["--config", "/config/deployment-config.yaml"]
+          args: ["--config", "/config/deployment-config.yaml", "--feature-gates","metricsgeneration.MatchAttributes"]
           resources:
             {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- with .Values.deployment.envsFrom }}
