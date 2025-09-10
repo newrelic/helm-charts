@@ -25,11 +25,18 @@ data:
                 enabled: false
               system.cpu.utilization:
                 enabled: true
+              system.cpu.logical.count:
+                enabled: true
           load:
           memory:
             metrics:
               system.memory.utilization:
                 enabled: true
+              system.memory.limit:
+                enabled: true
+              system.memory.usage:
+                enabled: true
+
           paging:
             metrics:
               system.paging.utilization:
@@ -250,6 +257,90 @@ data:
           - delete_key(resource.attributes, "persistentvolumeclaim")
 
 
+      metricstransform/aggregation_doup:
+        transforms:
+          - include: system.cpu.utilization
+            action: insert
+            new_name: cpu_usage
+          - include: system.cpu.logical.count
+            action: insert
+            new_name: cpu_available
+          - include: k8s.node.memory.working_set
+            action: insert
+            new_name: memory_usage
+          - include: k8s.node.memory.available
+            action: insert
+            new_name: memory_available
+
+      filter/aggregation_unused:
+        metrics:
+          datapoint:
+            - 'metric.name == "cpu_usage" and attributes["state"] == "interrupt"'
+            - 'metric.name == "cpu_usage" and attributes["state"] == "nice"'
+            - 'metric.name == "cpu_usage" and attributes["state"] == "softirq"'
+            - 'metric.name == "cpu_usage" and attributes["state"] == "idle"'
+            - 'metric.name == "cpu_usage" and attributes["state"] == "wait"'
+            - 'metric.name == "memory_usage" and attributes["state"] == "slab_unreclaimable"'
+            - 'metric.name == "memory_usage" and attributes["state"] == "inactive"'
+    #        - 'metric.name == "memory_usage" and attributes["state"] == "cached"'
+            - 'metric.name == "memory_usage" and attributes["state"] == "buffered"'
+            - 'metric.name == "memory_usage" and attributes["state"] == "slab_reclaimable"'
+            - 'metric.name == "memory_usage" and attributes["state"] == "free"'
+
+      metricstransform/aggregation_sum:
+        transforms:
+          - include: cpu_usage
+            action: update
+            operations:
+              - action: aggregate_labels
+                aggregation_type: sum
+                label_set:
+                  - node
+          - include: cpu_available
+            action: update
+            operations:
+              - action: aggregate_labels
+                aggregation_type: sum
+                label_set:
+                  - node
+
+          - include: memory_usage
+            action: update
+            operations:
+              - action: aggregate_labels
+                aggregation_type: sum
+                label_set:
+                  - node
+          - include: memory_available
+            action: update
+            operations:
+              - action: aggregate_labels
+                aggregation_type: sum
+                label_set:
+                  - node
+
+      metricsgeneration/aggregation:
+        rules:
+          - name: node.cpu.usage.percentage
+            type: calculate
+            metric1: cpu_usage
+            metric2: cpu_available
+            operation: divide
+          - name: memory_capacity
+            type: calculate
+            metric1: memory_usage
+            metric2: memory_available
+            operation: add
+
+      metricsgeneration/aggregationtwostep:
+        rules:
+          - name: node.memory.usage.percentage
+            type: calculate
+            metric1: memory_usage
+            metric2: memory_capacity
+            operation: divide
+
+
       metricstransform/ldm:
         transforms:
           - include: .*
@@ -450,11 +541,8 @@ data:
       filter/exclude_memory_utilization:
         metrics:
           datapoint:
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_unreclaimable"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "inactive"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "cached"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "buffered"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_reclaimable"'
+            - 'metric.name == "system.memory.utilization" and attributes["state"] == "freee"'
+
       filter/exclude_memory_usage:
         metrics:
           datapoint:
@@ -730,6 +818,11 @@ data:
             - prometheus
             {{- end }}
           processors:
+            - metricstransform/aggregation_doup
+            - filter/aggregation_unused
+            - metricstransform/aggregation_sum
+            - metricsgeneration/aggregation
+            - metricsgeneration/aggregationtwostep
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
