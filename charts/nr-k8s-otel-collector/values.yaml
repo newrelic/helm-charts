@@ -123,6 +123,16 @@ daemonset:
       exporters:
       connectors:
       pipelines:
+  # -- Additional volumes to be added to the daemonset pod
+  extraVolumes: []
+  # - name: example-volume
+  #   configMap:
+  #     name: example-configmap
+  # -- Additional volume mounts to be added to the daemonset container
+  extraVolumeMounts: []
+  # - name: example-volume
+  #   mountPath: /etc/example
+  #   readOnly: true
 
 deployment:
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
@@ -165,6 +175,16 @@ deployment:
       exporters:
       connectors:
       pipelines:
+  # -- Additional volumes to be added to the deployment pod
+  extraVolumes: []
+  # - name: example-volume
+  #   configMap:
+  #     name: example-configmap
+  # -- Additional volume mounts to be added to the deployment container
+  extraVolumeMounts: []
+  # - name: example-volume
+  #   mountPath: /etc/example
+  #   readOnly: true
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
