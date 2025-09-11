@@ -1,0 +1,49 @@
+{{- if (or .Values.agentControlDeployment.enabled .Values.agentControlCd.enabled) -}}
+{{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-10"
+  name: {{ $uninstallJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
+      containers:
+        - name: uninstall-agent-control-deployment
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.toolkitImage "context" .) }}
+          imagePullPolicy: {{ .Values.toolkitImage.pullPolicy }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          command: ["/bin/sh", "-c"]
+          args:
+            - |-
+{{- if .Values.agentControlDeployment.enabled }}
+              echo "Uninstalling Agent Control..."
+              newrelic-agent-control-cli uninstall-agent-control \
+                --namespace "{{ .Release.Namespace }}" \
+                --namespace-agents "{{ .Values.agentControlDeployment.chartValues.subAgentsNamespace }}" \
+                --log-level "{{ .Values.uninstallation.log.level }}" \
+                --release-name={{ .Values.agentControlDeployment.releaseName }}
+{{- end -}}
+{{- if .Values.agentControlCd.enabled }}
+              echo "Removing agent-control-cd resources..."
+              newrelic-agent-control-cli remove-cd-resources \
+                --namespace "{{ .Release.Namespace }}" \
+                --log-level "{{ .Values.uninstallation.log.level }}" \
+                --release-name={{ .Values.agentControlCd.releaseName }}
+              echo "uninstalling agent-control-cd chart..."
+              helm uninstall {{ .Values.agentControlCd.releaseName }} --namespace {{ .Release.Namespace }}
+{{- end }}
+{{- end -}}

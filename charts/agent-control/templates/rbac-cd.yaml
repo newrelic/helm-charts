@@ -1,5 +1,4 @@
-{{- if index .Values "agent-control-cd" }}
-{{- if (index .Values "agent-control-cd" "flux2").enabled -}}
+{{- if .Values.agentControlCd.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
@@ -13,7 +12,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-install-job") }}
+    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
@@ -33,11 +32,10 @@ metadata:
   namespace: {{ .Release.Namespace }}
 subjects:
   - kind: ServiceAccount
-    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "flux-uninstall-job") }}
+    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
   name: cluster-admin
   apiGroup: rbac.authorization.k8s.io
 {{- end -}}
-{{- end }}
