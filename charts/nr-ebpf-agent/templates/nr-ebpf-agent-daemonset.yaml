@@ -52,7 +52,7 @@ spec:
               if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then \
                 echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...' && chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)"; \
               elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then \
-                echo 'Detected Debian/Ubuntu. Installing linux-headers...' && chroot /host /bin/bash -c "apt-get update && apt-get install -y linux-headers-$(uname -r)"; \
+                echo 'Detected Debian/Ubuntu. Installing linux-headers...' && chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)"; \
               # elif [[ $ID == 'cos' ]]; then \
               #   echo 'Detected GKE/Container-Optimized OS. Installing linux-headers via toolbox...' && /host/usr/bin/toolbox apt-get update && /host/usr/bin/toolbox apt-get install -y linux-headers-$(uname -r)-amd; \
               else \
