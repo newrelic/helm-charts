@@ -191,6 +191,73 @@ data:
           - context: metric
             statements:
               - delete_key(instrumentation_scope.attributes, "job_label")
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "generated.metric")
+
+      metricstransform/aggregate_labels:
+        transforms:
+          - include: kube_pod_container_resource_requests
+            action: update
+            new_name: kube_node_resource_requests
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - resource
+                  - node
+                aggregation_type: sum
+
+      metricstransform/extrac_metrics_by_label:
+        transforms:
+          - include: kube_node_resource_requests
+            action: insert
+            new_name: kube_node_cpu_requests
+            experimental_match_labels: {resource: cpu}
+          - include: kube_node_resource_requests
+            action: insert
+            new_name: kube_node_memory_requests
+            match_type: regexp
+            experimental_match_labels: {resource: memory}
+          - include: kube_node_status_allocatable
+            action: insert
+            new_name: kube_node_cpu_allocatable
+            match_type: regexp
+            experimental_match_labels: {resource: cpu}
+          - include: kube_node_status_allocatable
+            action: insert
+            new_name: kube_node_memory_allocatable
+            match_type: regexp
+            experimental_match_labels: {resource: memory}
+
+      metricsgeneration/generate_metrics:
+        rules:
+          - name: node.cpu.request.percentage
+            type: calculate
+            metric1: kube_node_cpu_requests
+            metric2: kube_node_cpu_allocatable
+            operation: divide
+          - name: node.memory.request.percentage
+            type: calculate
+            metric1: kube_node_memory_requests
+            metric2: kube_node_memory_allocatable
+            operation: divide
+
+      transform/tag_generated_metrics:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - metric.name == "node.cpu.request.percentage"
+              - metric.name == "node.memory.request.percentage"
+            statements:
+              - set(attributes["generated.metric"], "true")
+
+      transform/generated_metrics_ldm:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - attributes["generated.metric"] == "true"
+            statements:
+              - set(attributes["low.data.mode"], "true")
 
       groupbyattrs:
         keys:
@@ -482,6 +549,11 @@ data:
         metrics:
           metric:
             - 'HasAttrOnDatapoint("low.data.mode", "false")'
+
+      filter/metric_generation_cleanup:
+        metrics:
+          metric:
+            - 'not HasAttrOnDatapoint("generated.metric", "true")'
 
       filter/exclude_zero_value_kube_node_status_condition:
         metrics:
@@ -780,7 +852,18 @@ data:
           exporters:
             - routing/nr_metrics_pipelines
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
-
+        metrics/generation:
+          receivers:
+            - prometheus/ksm
+          processors:
+            - transform/promote_job_label
+            - metricstransform/aggregate_labels
+            - metricstransform/extrac_metrics_by_label
+            - metricsgeneration/generate_metrics
+            - transform/tag_generated_metrics
+            - filter/metric_generation_cleanup
+          exporters:
+            - routing/nr_metrics_pipelines
         metrics/nr_ksm:
           receivers:
             - routing/nr_metrics_pipelines
@@ -794,6 +877,7 @@ data:
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm
+            - transform/generated_metrics_ldm
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_zero_value_kube_jobs
             - transform/low_data_mode_inator
