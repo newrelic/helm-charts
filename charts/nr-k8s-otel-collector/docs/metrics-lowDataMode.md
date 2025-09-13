@@ -117,6 +117,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_current                   | Gauge   | Number of current replicas for the StatefulSet.                                |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_ready                     | Gauge   | Number of ready replicas for the StatefulSet.                                  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_updated                   | Gauge   | Number of updated replicas for the StatefulSet.                                |
+| Node               | HostMetric Receiver   | node.cpu.usage.percentage                                  | Gauge   | CPU usage as a percentage of total available cores.                            |
+| Node               | HostMetric Receiver   | node.memory.usage.percentage                               | Gauge   | Memory usage as a percentage of memory available.                              |
 | Node               | HostMetric Receiver   | process.cpu.utilization                                    | Gauge   | CPU utilization of the process as a percentage.                                |
 | Node               | HostMetric Receiver   | process.disk.io                                            | Counter | Number of disk I/O operations performed by the process.                        |
 | Node               | HostMetric Receiver   | process.memory.usage                                       | Gauge   | Memory usage of the process in bytes.                                          |
