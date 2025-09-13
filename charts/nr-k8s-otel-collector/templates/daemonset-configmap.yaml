@@ -25,6 +25,8 @@ data:
                 enabled: false
               system.cpu.utilization:
                 enabled: true
+              system.cpu.logical.count:
+                enabled: true
           load:
           memory:
             metrics:
@@ -411,6 +413,72 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      filter/generation_exclude_idle_datapoints:
+        metrics:
+          datapoint:
+            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "idle"'
+            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "wait"'
+
+      transform/generation_aggregate_attributes:
+        metric_statements:
+          - context: metric
+            conditions:
+              - name == "system.cpu.utilization"
+              - name == "system.cpu.logical.count"
+              - name == "k8s.node.memory.working_set"
+              - name == "k8s.node.memory.available"
+            statements:
+              - aggregate_on_attributes("sum", ["node"])
+
+      metricsgeneration/calculate_totals:
+        rules:
+          - name: memory_capacity
+            type: calculate
+            metric1: k8s.node.memory.working_set
+            metric2: k8s.node.memory.available
+            operation: add
+
+      # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
+      metricsgeneration/calculate_percentage:
+        rules:
+          - name: node.cpu.usage.percentage
+            type: calculate
+            metric1: system.cpu.utilization
+            metric2: system.cpu.logical.count
+            operation: divide
+          - name: node.memory.usage.percentage
+            type: calculate
+            metric1: k8s.node.memory.working_set
+            metric2: memory_capacity
+            operation: divide
+
+      transform/tag_generated_metrics:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - metric.name == "node.cpu.usage.percentage"
+              - metric.name == "node.memory.usage.percentage"
+            statements:
+              - set(attributes["generated.metric"], "true")
+
+      transform/generated_metrics_ldm:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - attributes["generated.metric"] == "true"
+            statements:
+              - set(attributes["low.data.mode"], "true")
+
+      transform/remove_routing_metadata:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - delete_key(attributes, "generated.metric")
+
+      filter/metric_generation_cleanup:
+        metrics:
+          metric:
+            - 'not HasAttrOnDatapoint("generated.metric", "true")'
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -704,10 +772,29 @@ data:
             - prometheus
             {{- end }}
           processors:
+            - filter/generation_exclude_idle_datapoints
+            - transform/generation_aggregate_attributes
+            - metricsgeneration/calculate_totals
+            - metricsgeneration/calculate_percentage
+            - transform/tag_generated_metrics
+            - filter/metric_generation_cleanup
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
+        metrics/generation:
+          receivers:
+            - hostmetrics
+          processors:
+            - filter/generation_exclude_idle_datapoints
+            - transform/generation_aggregate_attributes
+            - metricsgeneration/calculate_totals
+            - metricsgeneration/calculate_percentage
+            - transform/tag_generated_metrics
+            - filter/metric_generation_cleanup
+          exporters:
+            - routing/nr_metrics_pipelines
 
         metrics/nr:
           receivers:
@@ -720,6 +807,7 @@ data:
             - metricstransform/cadvisor
             - metricstransform/kubelet
             - metricstransform/hostmetrics
+            - transform/generated_metrics_ldm
             - filter/exclude_metrics_low_data_mode
             {{- end }}
             - metricstransform/hostmetrics_cpu
@@ -795,6 +883,7 @@ data:
             - routing/metrics_egress
           processors:
             {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
+            - transform/remove_routing_metadata
             - batch
           exporters:
             - otlphttp/newrelic
