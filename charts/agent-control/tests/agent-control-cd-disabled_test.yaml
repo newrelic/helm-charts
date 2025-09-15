@@ -1,0 +1,50 @@
+suite: Validate installation job setup
+tests:
+  - it: do not include agent-control-cd permissions if disabled
+    set:
+      agentControlCd:
+        enabled: false
+    asserts:
+      - template: rbac-cd.yaml
+        hasDocuments:
+          count: 0
+      - template: ac-cd-secret.yaml
+        hasDocuments:
+          count: 0
+      - template: installation-job.yaml
+        notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "helm upgrade --install"
+      - template: uninstallation-job.yaml
+        notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "helm uninstall"
+
+  - it: include extra volumes even if agentControlCd is disabled
+    set:
+      installation:
+        extraVolumes:
+          - name: some-volume-name
+            secret:
+              secretName: some-secret
+        extraVolumeMounts:
+          - mountPath: /some/path
+            name: some-volume-name
+            readOnly: true
+      agentControlCd:
+        enabled: false
+    asserts:
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.volumes
+          content:
+            name: some-volume-name
+            secret:
+              secretName: some-secret
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /some/path
+            name: some-volume-name
+            readOnly: true

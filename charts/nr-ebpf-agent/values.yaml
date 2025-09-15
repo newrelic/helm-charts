@@ -104,7 +104,7 @@ ebpfAgent:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF agent image to be deployed.
-    tag: agent-0.2.6
+    tag: agent-0.2.8
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -124,6 +124,12 @@ ebpfAgent:
   podSecurityContext: {}
   # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
   containerSecurityContext: {}
+  # Sets the path of the directory where the required linux headers are downloaded and placed for the eBPF agent to use.
+  # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
+  downloaded_packaged_headers_path: ""
+  # Sets the path of the installed distribution linux headers. This is useful when auto discovery of distribution linux headers path fails.
+  distro_kernel_headers_path: ""
+
 
 # Configuration to apply on the eBPF client daemonset.
 ebpfClient:
@@ -133,7 +139,7 @@ ebpfClient:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF client image to be deployed.
-    tag: client-0.2.6
+    tag: client-0.2.8
   resources:
     limits:
       # -- Max memory allocated to the container.

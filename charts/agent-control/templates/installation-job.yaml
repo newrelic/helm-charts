@@ -1,0 +1,153 @@
+{{- if (or .Values.agentControlDeployment.enabled .Values.agentControlCd.enabled) -}}
+{{- $installJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "install-job" ) -}}
+{{- $acSecretName := include "agent-control-deployment.secret.name" . -}}
+{{- $cdSecretName := include "agent-control-cd.secret.name" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "20"
+  name: {{ $installJobName }}
+  namespace: {{ .Release.Namespace }}
+spec:
+  backoffLimit: 2
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
+      volumes:
+        {{- /* agentControlCd related volumes */ -}}
+        {{- if .Values.agentControlCd.enabled }}
+        - name: flux-values
+          secret:
+            secretName: {{ $cdSecretName }}
+        {{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+        - name: flux-cert-secrets
+          secret:
+            secretName: {{ .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+            items:
+              - key: ca.crt
+                path: ca.crt
+              - key: tls.crt
+                path: tls.crt
+              - key: tls.key
+                path: tls.key
+        {{- end }}
+        {{- end }}
+        {{- /* installer extra volumes */ -}}
+        {{- with .Values.installation.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      containers:
+        - name: install-agent-control
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.toolkitImage "context" .) }}
+          imagePullPolicy: {{ .Values.toolkitImage.pullPolicy }}
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 50m
+              memory: 64Mi
+          env:
+          {{- /* agentControlCd environment variables */ -}}
+          {{- if (and .Values.agentControlCd.enabled .Values.agentControlCd.repositorySecretReferenceName) }}
+            - name: HELM_REPO_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.agentControlCd.repositorySecretReferenceName }}
+                  key: username
+            - name: HELM_REPO_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.agentControlCd.repositorySecretReferenceName }}
+                  key: password
+          {{- end -}}
+          {{- /* installer extra env */ -}}
+          {{- with .Values.installation.extraEnv }}
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          volumeMounts:
+            {{- /* agentControlCd volumeMounts */ -}}
+            {{- if .Values.agentControlCd.enabled }}
+            - name: flux-values
+              mountPath: /tmp/flux-values
+              readOnly: true
+            {{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+            - name: flux-cert-secrets
+              mountPath: /etc/flux-cert
+              readOnly: true
+            {{- end }}
+            {{- end }}
+            {{- /* installer extra volumeMounts */ -}}
+            {{- with .Values.installation.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+{{- /* Install agent-control-cd through helm unless the corresponding helm-release already exists */ -}}
+{{- if .Values.agentControlCd.enabled }}
+              HELM_RELEASE_EXISTS=$(kubectl get HelmRelease {{ .Values.agentControlCd.releaseName }} -n {{ .Release.Namespace }})
+              if [ -z "$HELM_RELEASE_EXISTS" ]; then
+                echo "Adding agent-control-cd repository..."
+                helm repo add newrelic-agent-control-cd {{ .Values.agentControlCd.chartRepositoryUrl }}
+              {{- /* Use TLS Options */ -}}
+              {{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }} \
+                  --ca-file /etc/flux-cert/ca.crt \
+                  --cert-file /etc/flux-cert/tls.crt \
+                  --key-file /etc/flux-cert/tls.key
+              {{- /* Use basic auth options */ -}}
+              {{- else if .Values.agentControlCd.repositorySecretReferenceName }} \
+                  --username $HELM_REPO_USERNAME \
+                  --password $HELM_REPO_PASSWORD
+              {{- end }}
+                echo "Installing agent-control-cd..."
+                helm upgrade --install {{ .Values.agentControlCd.releaseName }} newrelic-agent-control-cd/{{ .Values.agentControlCd.chartName }} \
+                  --version {{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
+                  --namespace {{ .Release.Namespace }} \
+                  -f /tmp/flux-values/agent-control-flux.yaml
+              else
+                echo "agent-control-cd HelmRelease already exists, skipping installation, performing upgrade."
+              fi
+{{- end }}
+{{- /* Create or update resources owned by Agent Control to handle agent-control-cd and agent-control-deployment installations */}}
+{{- if .Values.agentControlDeployment.enabled }}
+           {{- /* Create or update resources to handle agent-control-cd release */}}
+           {{- if .Values.agentControlCd.enabled }}
+              echo "Creating agent-control-cd resources owned by Agent Control..."
+              newrelic-agent-control-cli create-cd-resources \
+                --chart-version={{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
+                --secrets={{ $cdSecretName }}=agent-control-flux.yaml \
+                --namespace={{ .Release.Namespace }} \
+                --repository-url={{ .Values.agentControlCd.chartRepositoryUrl }} \
+                --log-level={{ .Values.installation.log.level }} \
+            {{- if .Values.agentControlCd.repositorySecretReferenceName }}
+                --repository-secret-reference-name={{ .Values.agentControlCd.repositorySecretReferenceName }} \
+            {{- end }}
+            {{- if .Values.agentControlCd.repositoryCertificateSecretReferenceName }}
+                --repository-certificate-secret-reference-name={{ .Values.agentControlCd.repositoryCertificateSecretReferenceName }} \
+            {{- end }}
+                --chart-name={{ .Values.agentControlCd.chartName }} \
+                --release-name={{ .Values.agentControlCd.releaseName }}
+            {{- end }}
+            {{- /* Create or update resources to handle agent-control-deployment release */}}
+              echo "Creating agent-control-deployment resources owned by Agent Control..."
+              newrelic-agent-control-cli install-agent-control \
+                --chart-version={{ .Values.agentControlDeployment.chartVersion | default .Chart.AppVersion }} \
+                --secrets={{ $acSecretName }}=agent-control-deployment.yaml,{{ $acSecretName }}=global.yaml \
+                --namespace={{ .Release.Namespace }} \
+                --repository-url={{ .Values.agentControlDeployment.chartRepositoryUrl }} \
+                --log-level={{ .Values.installation.log.level }} \
+            {{- if .Values.agentControlDeployment.repositorySecretReferenceName }}
+                --repository-secret-reference-name={{ .Values.agentControlDeployment.repositorySecretReferenceName }} \
+            {{- end }}
+            {{- if .Values.agentControlDeployment.repositoryCertificateSecretReferenceName }}
+                --repository-certificate-secret-reference-name={{ .Values.agentControlDeployment.repositoryCertificateSecretReferenceName }} \
+            {{- end }}
+                --chart-name={{ .Values.agentControlDeployment.chartName }} \
+                --release-name={{ .Values.agentControlDeployment.releaseName }}
+{{- end }}
+{{- end -}}
