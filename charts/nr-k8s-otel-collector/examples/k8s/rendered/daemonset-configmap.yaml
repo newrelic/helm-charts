@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.40
+    helm.sh/chart: nr-k8s-otel-collector-0.8.41
 data:
   daemonset-config.yaml: |
     receivers:
@@ -232,6 +232,14 @@ data:
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
 
+      transform/extract_runtime:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(attributes["container_id"], ".*://.*")
+            statements:
+              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
+              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
 
       metricstransform/ldm:
         transforms:
@@ -515,7 +523,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.40
+            value: 0.8.41
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -732,6 +740,7 @@ data:
           receivers:
             - routing/metrics_egress
           processors:
+            - transform/extract_runtime
             
             - batch
           exporters:
