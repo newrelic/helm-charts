@@ -1,0 +1,147 @@
+suite: Validate agent-control-deployment Installation
+chart:
+  appVersion: 0.0.0
+release:
+  name: "ac"
+tests:
+  - it: should have defaults args correctly set
+    asserts:
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--repository-url=https://helm-charts.newrelic.com"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: --chart-name=agent-control-cd
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-name=agent-control-deployment"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--log-level=debug"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-version=0.0.0" # agent-control-deployment default chart version
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-version=0.0.2" # agent-control-cd default chart version
+      - template: templates/installation-job.yaml
+        notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--repository-secret-reference-name"
+
+  - it: should configure arguments correctly
+    set:
+      installation:
+        log:
+          level: trace
+      agentControlDeployment:
+        chartVersion: "1.2.3"
+        chartRepositoryUrl: "https://newrelic.com/some/url"
+        chartName: "custom-deployment"
+        repositorySecretReferenceName: secret-ref
+        repositoryCertificateSecretReferenceName: cert-secret-ref
+      agentControlCd:
+        chartVersion: "3.2.1"
+        chartRepositoryUrl: "https://newrelic.com/other/url"
+        chartName: "custom-flux"
+    asserts:
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--repository-url=https://newrelic.com/some/url"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--repository-url=https://newrelic.com/other/url"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-name=custom-deployment"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-name=custom-flux"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--log-level=trace"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-version=1.2.3"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--chart-version=3.2.1"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--repository-secret-reference-name=secret-ref"
+      - template: templates/installation-job.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "--repository-certificate-secret-reference-name=cert-secret-ref"
+
+  - it: Should include volumes from secrets
+    set:
+      agentControlCd:
+        repositoryCertificateSecretReferenceName: cert-secret
+    asserts:
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.volumes
+          content:
+            name: flux-values
+            secret:
+              secretName: agent-control-cd-local
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /tmp/flux-values
+            name: flux-values
+            readOnly: true
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.volumes
+          content:
+            name: flux-cert-secrets
+          any: true
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            mountPath: /etc/flux-cert
+            name: flux-cert-secrets
+            readOnly: true
+
+
+  - it: Should include environment variables
+    set:
+      agentControlCd:
+        repositorySecretReferenceName: some-secret
+    asserts:
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HELM_REPO_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: some-secret
+                key: username
+      - template: templates/installation-job.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HELM_REPO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: some-secret
+                key: password
