@@ -70,7 +70,11 @@ spec:
 
       containers:
       - name: nr-ebpf-agent
-        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        image: {{- if .Values.ebpfAgent.image.tag }}
+          {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.8
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
@@ -128,6 +132,11 @@ spec:
           {{- end }}
       - name: nr-ebpf-client
         image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        image: {{- if .Values.ebpfClient.image.tag }}
+          {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:client-0.2.8
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
         env:
