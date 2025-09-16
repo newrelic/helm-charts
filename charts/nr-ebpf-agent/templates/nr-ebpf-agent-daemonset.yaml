@@ -84,9 +84,9 @@ spec:
             value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
-            value: "cluster.local" 
+            value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ .Values.logLevel }}"            
+            value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
           - name: TABLE_STORE_DATA_LIMIT_MB
@@ -131,7 +131,6 @@ spec:
           {{- end }}
           {{- end }}
       - name: nr-ebpf-client
-        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
         image: {{- if .Values.ebpfClient.image.tag }}
           {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
         {{- else }}
@@ -168,9 +167,9 @@ spec:
           - name: IS_INSECURE
             value: "True"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ .Values.logLevel }}"            
+            value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
-            value: "{{ .Values.logFilePath }}"            
+            value: "{{ .Values.logFilePath }}"
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
             {{- if eq .Values.tls.enabled true }}
