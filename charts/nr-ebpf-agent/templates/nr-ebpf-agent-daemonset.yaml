@@ -40,26 +40,27 @@ spec:
   {{- end }}
   initContainers:
   - name: kernel-header-installer
-image: amazonlinux:2
+image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
 command:
   - "/bin/bash"
   - "-c"
   - |
 # Detect OS and install kernel headers accordingly
-# sleep 10000s
-if [ -f /host/etc/os-release ]; then \
-  . /host/etc/os-release; \
-  if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then \
-echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...' && chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)"; \
-  elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then \
-echo 'Detected Debian/Ubuntu. Installing linux-headers...' && chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)"; \
-  # elif [[ $ID == 'cos' ]]; then \
-  #   echo 'Detected GKE/Container-Optimized OS. Installing linux-headers via toolbox...' && /host/usr/bin/toolbox apt-get update && /host/usr/bin/toolbox apt-get install -y linux-headers-$(uname -r)-amd; \
-  else \
-echo 'Unsupported OS: '$ID; exit 1; \
-  fi; \
-else \
-  echo '/host/etc/os-release not found'; exit 1; \
+if [ -f /host/etc/os-release ]; then
+  . /host/etc/os-release
+  if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
+echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
+chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
+  elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
+echo 'Detected Debian/Ubuntu. Installing linux-headers...'
+chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
+  else
+echo "Unsupported OS: $ID"
+echo "Proceeding without kernel header install."
+  fi
+else
+  echo "/host/etc/os-release not found"
+  echo "Proceeding without kernel header install."
 fi
 securityContext:
   privileged: true
@@ -69,7 +70,11 @@ volumeMounts:
 
   containers:
   - name: nr-ebpf-agent
-image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+image: {{- if .Values.ebpfAgent.image.tag }}
+  {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+{{- else }}
+  docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+{{- end }}
 imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
 resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
 env:
@@ -79,7 +84,7 @@ value: "/host"
 value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
   {{- include "generateTracingEnvVars" . | indent 10 }}
   - name: KUBERNETES_CLUSTER_DOMAIN
-value: "cluster.local" 
+value: "cluster.local"
   - name: NEW_RELIC_LOG_LEVEL
 value: "{{ .Values.logLevel }}"
   - name: NEW_RELIC_LOG_FILE_PATH
@@ -126,7 +131,11 @@ readOnly: true
   {{- end }}
   {{- end }}
   - name: nr-ebpf-client
-image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+image: {{- if .Values.ebpfClient.image.tag }}
+  {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+{{- else }}
+  docker.io/newrelic/newrelic-ebpf-agent:client-0.2.9
+{{- end }}
 imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
 resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
 env:
