@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: 7f4f189c761465af677a12abd05edf9b696cdd5ef37d9b8b59cb71b829e783b3
+        checksum/config: 57e1c251d0693a5a6343b8a4dace75119996f6143664601f95888710d4f4fef6
     spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
@@ -40,7 +40,11 @@ spec:
             runAsUser: 1001
           image: "newrelic/nrdot-collector-k8s:1.2.0"
           imagePullPolicy: IfNotPresent
-          args: ["--config", "/config/daemonset-config.yaml", "--feature-gates","receiver.kubeletstats.enableCPUUsageMetrics"]
+          args:
+            - --config
+            - /config/daemonset-config.yaml
+            - --feature-gates
+            - receiver.kubeletstats.enableCPUUsageMetrics
           resources:
             {}
           env:
