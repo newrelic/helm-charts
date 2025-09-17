@@ -42,7 +42,8 @@ spec:
   {{- end }}
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
   imagePullPolicy: {{ .Values.image.pullPolicy }}
-  args: ["--config", "/config/daemonset-config.yaml", "--feature-gates","receiver.kubeletstats.enableCPUUsageMetrics"]
+  args:
+{{- include "nrKubernetesOtel.daemonset.args" . | nindent 12 }}
   resources:
 {{- toYaml .Values.daemonset.resources | nindent 12 }}
   {{- with .Values.daemonset.envsFrom }}

@@ -44,7 +44,8 @@ spec:
   {{- end }}
   image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
   imagePullPolicy: {{ .Values.image.pullPolicy }}
-  args: ["--config", "/config/deployment-config.yaml"]
+  args:
+{{- include "nrKubernetesOtel.deployment.args" . | nindent 12 }}
   resources:
 {{- toYaml .Values.deployment.resources | nindent 12 }}
   {{- with .Values.deployment.envsFrom }}

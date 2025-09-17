@@ -113,6 +113,13 @@ capabilities:
   envs: []
   # -- Sets additional environment variable sources for the daemonset.
   envsFrom: []
+  # -- Additional args for the daemonset container
+  # https://opentelemetry.io/docs/collector/configuration/
+  # Example:
+  # extraArgs:
+  #   - "--config=yaml:service::telemetry::logs::level: debug"
+  #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
+  extraArgs: []
   # -- Settings for daemonset configmap
   # @default -- See `values.yaml`
   configMap:
@@ -157,6 +164,13 @@ capabilities:
   envs: []
   # -- Sets additional environment variable sources for the deployment.
   envsFrom: []
+  # -- Additional args for the deployment container
+  #  https://opentelemetry.io/docs/collector/configuration/
+  # Example:
+  # extraArgs:
+  #   - "--config=yaml:service::telemetry::logs::level: debug"
+  #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
+  extraArgs: []
   # -- Settings for deployment configmap
   # @default -- See `values.yaml`
   configMap:
