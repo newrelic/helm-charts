@@ -184,7 +184,7 @@ processors:
 metric_statements:
 - context: datapoint
   statements:
-  - set(instrumentation_scope.attributes["job_label"], attributes["job_label"]) where attributes["job_label"] != nil
+  - set(instrumentation_scope.attributes["job_label"], datapoint.attributes["job_label"]) where datapoint.attributes["job_label"] != nil
 
   transform/remove_routing_metadata:
 metric_statements:
@@ -561,14 +561,14 @@ value: {{ .Chart.Version }}
 log_statements:
   - context: log
 statements:
-  - set(attributes["event.source.host"], resource.attributes["k8s.node.name"])
+  - set(log.attributes["event.source.host"], resource.attributes["k8s.node.name"])
 
   transform/low_data_mode_inator:
 metric_statements:
   - context: metric
 statements:
-  - set(description, "")
-  - set(unit, "")
+  - set(metric.description, "")
+  - set(metric.unit, "")
 
   resource/low_data_mode_inator:
 attributes:
