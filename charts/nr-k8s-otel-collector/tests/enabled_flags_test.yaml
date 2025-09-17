@@ -1,0 +1,48 @@
+suite: enabledCollectors
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: renders the DaemonSet when DaemonSet enabled is true
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+  daemonset.enabled: true
+asserts:
+  - containsDocument:
+  kind: DaemonSet
+  apiVersion: apps/v1
+template: templates/daemonset.yaml
+  - it: does not render the DaemonSet when DaemonSet enabled is false
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+  daemonset.enabled: false
+asserts:
+  - hasDocuments:
+  count: 0
+template: templates/daemonset.yaml
+  - it: renders the Deployment when Deployment enabled is true
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+  deployment.enabled: true
+asserts:
+  - containsDocument:
+  kind: Deployment
+  apiVersion: apps/v1
+template: templates/deployment.yaml
+  - it: does not render the Deployment when Deployment enabled is false
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+  deployment.enabled: false
+asserts:
+  - hasDocuments:
+  count: 0
+template: templates/deployment.yaml
