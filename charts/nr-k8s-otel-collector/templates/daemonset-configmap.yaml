@@ -429,7 +429,7 @@ data:
         log_statements:
           - context: log
             statements:
-              - truncate_all(attributes, 4095)
+              - truncate_all(log.attributes, 4095)
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
@@ -555,14 +555,14 @@ data:
         metric_statements:
           - context: metric
             statements:
-              - set(description, "")
-              - set(unit, "")
+              - set(metric.description, "")
+              - set(metric.unit, "")
           - context: datapoint
             statements:
-              - delete_key(attributes, "id")
-              - delete_key(attributes, "name")
-              - delete_key(attributes, "interface")
-              - delete_key(attributes, "cpu")
+              - delete_key(datapoint.attributes, "id")
+              - delete_key(datapoint.attributes, "name")
+              - delete_key(datapoint.attributes, "interface")
+              - delete_key(datapoint.attributes, "cpu")
 
       resource/low_data_mode_inator:
         attributes:
