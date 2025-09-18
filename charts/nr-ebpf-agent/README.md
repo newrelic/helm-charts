@@ -112,7 +112,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | labels | object | `{}` | Additional labels for chart objects. |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. |
+| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:443) by default. Staging (staging-otlp.nr-data.net:443) otherwise. |
 | otelCollector.affinity | object | `{}` | Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity` |
 | otelCollector.collector.serviceAccount.annotations | object | `{}` | Annotations for the OTel collector service account. |
 | otelCollector.containerSecurityContext | object | `{}` | Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |

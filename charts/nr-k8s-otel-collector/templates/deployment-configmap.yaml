@@ -184,13 +184,22 @@ data:
         metric_statements:
         - context: datapoint
           statements:
-          - set(instrumentation_scope.attributes["job_label"], attributes["job_label"]) where attributes["job_label"] != nil
+          - set(instrumentation_scope.attributes["job_label"], datapoint.attributes["job_label"]) where datapoint.attributes["job_label"] != nil
 
       transform/remove_routing_metadata:
         metric_statements:
           - context: metric
             statements:
               - delete_key(instrumentation_scope.attributes, "job_label")
+
+      transform/extract_runtime:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(attributes["container_id"], ".*://.*")
+            statements:
+              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
+              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
 
       groupbyattrs:
         keys:
@@ -552,14 +561,14 @@ data:
         log_statements:
           - context: log
             statements:
-              - set(attributes["event.source.host"], resource.attributes["k8s.node.name"])
+              - set(log.attributes["event.source.host"], resource.attributes["k8s.node.name"])
 
       transform/low_data_mode_inator:
         metric_statements:
           - context: metric
             statements:
-              - set(description, "")
-              - set(unit, "")
+              - set(metric.description, "")
+              - set(metric.unit, "")
 
       resource/low_data_mode_inator:
         attributes:
@@ -846,6 +855,7 @@ data:
             - routing/metrics_egress
           processors:
             - transform/remove_routing_metadata
+            - transform/extract_runtime
             {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
