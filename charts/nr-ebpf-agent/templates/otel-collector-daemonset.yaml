@@ -21,7 +21,7 @@ app: opentelemetry
 component: otel-collector
 {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
   annotations:
-checksum/config: ""
+checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
 {{- with .Values.otelCollector.podAnnotations }}
 {{- toYaml . | nindent 8 }}
 {{- end }}
