@@ -84,6 +84,8 @@ logsPipeline:
     exporters:
 
 daemonset:
+  # -- Specifies whether to install the DaemonSet collectors. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md
+  enabled: true
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
   # -- Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations`
@@ -111,6 +113,13 @@ daemonset:
   envs: []
   # -- Sets additional environment variable sources for the daemonset.
   envsFrom: []
+  # -- Additional args for the daemonset container
+  # https://opentelemetry.io/docs/collector/configuration/
+  # Example:
+  # extraArgs:
+  #   - "--config=yaml:service::telemetry::logs::level: debug"
+  #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
+  extraArgs: []
   # -- Settings for daemonset configmap
   # @default -- See `values.yaml`
   configMap:
@@ -125,6 +134,8 @@ daemonset:
       pipelines:
 
 deployment:
+  # -- Specifies whether to install the Deployment collector. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md
+  enabled: true
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
   # -- Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations`
@@ -153,6 +164,13 @@ deployment:
   envs: []
   # -- Sets additional environment variable sources for the deployment.
   envsFrom: []
+  # -- Additional args for the deployment container
+  #  https://opentelemetry.io/docs/collector/configuration/
+  # Example:
+  # extraArgs:
+  #   - "--config=yaml:service::telemetry::logs::level: debug"
+  #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
+  extraArgs: []
   # -- Settings for deployment configmap
   # @default -- See `values.yaml`
   configMap:
