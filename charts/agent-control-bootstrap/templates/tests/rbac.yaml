@@ -1,0 +1,49 @@
+{{- $testRbac := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "helm-test" ) -}}
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $testRbac }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ $testRbac }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+rules:
+- apiGroups: ["source.toolkit.fluxcd.io","helm.toolkit.fluxcd.io"]
+  resources: ["helmreleases","helmrepositories"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods","events"]
+  verbs: ["get", "list"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "list"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["get", "list"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ $testRbac }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+subjects:
+- kind: ServiceAccount
+  name: {{ $testRbac }}
+  namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ $testRbac }}
+  apiGroup: rbac.authorization.k8s.io
+
