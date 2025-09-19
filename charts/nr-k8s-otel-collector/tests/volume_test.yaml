@@ -1,0 +1,125 @@
+suite: volume
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: doesn't set additional volumes or volume mounts by default
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+asserts:
+  - equal:
+  path: spec.template.spec.volumes
+  value:
+- name: deployment-config
+  configMap:
+name: my-release-nr-k8s-otel-collector-deployment-config
+template: templates/deployment.yaml
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- name: deployment-config
+  mountPath: /config
+template: templates/deployment.yaml
+  - equal:
+  path: spec.template.spec.volumes
+  value:
+- hostPath:
+path: /
+  name: host-fs
+- hostPath:
+path: /var/log/pods
+  name: varlogpods
+- configMap:
+name: my-release-nr-k8s-otel-collector-daemonset-config
+  name: daemonset-config
+template: templates/daemonset.yaml
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- mountPath: /hostfs
+  name: host-fs
+  readOnly: true
+- mountPath: /var/log/pods
+  name: varlogpods
+  readOnly: true
+- mountPath: /config
+  name: daemonset-config
+template: templates/daemonset.yaml
+
+  - it: adds additional deployment volumes and volume mounts when set
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+  deployment:
+extraVolumes:
+  - name: extra-deployment-volume
+emptyDir: { }
+extraVolumeMounts:
+  - name: extra-deployment-volume
+mountPath: /extra/deployment/path
+asserts:
+  - equal:
+  path: spec.template.spec.volumes
+  value:
+- name: deployment-config
+  configMap:
+name: my-release-nr-k8s-otel-collector-deployment-config
+- name: extra-deployment-volume
+  emptyDir: { }
+template: templates/deployment.yaml
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- name: deployment-config
+  mountPath: /config
+- name: extra-deployment-volume
+  mountPath: /extra/deployment/path
+template: templates/deployment.yaml
+
+  - it: adds additional daemonset volumes and volume mounts when set
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+  daemonset:
+extraVolumes:
+  - name: extra-daemonset-volume
+emptyDir: { }
+extraVolumeMounts:
+  - name: extra-daemonset-volume
+mountPath: /extra/daemonset/path
+asserts:
+  - equal:
+  path: spec.template.spec.volumes
+  value:
+- hostPath:
+path: /
+  name: host-fs
+- hostPath:
+path: /var/log/pods
+  name: varlogpods
+- configMap:
+name: my-release-nr-k8s-otel-collector-daemonset-config
+  name: daemonset-config
+- emptyDir: { }
+  name: extra-daemonset-volume
+template: templates/daemonset.yaml
+  - equal:
+  path: spec.template.spec.containers[0].volumeMounts
+  value:
+- mountPath: /hostfs
+  name: host-fs
+  readOnly: true
+- mountPath: /var/log/pods
+  name: varlogpods
+  readOnly: true
+- mountPath: /config
+  name: daemonset-config
+- mountPath: /extra/daemonset/path
+  name: extra-daemonset-volume
+template: templates/daemonset.yaml
