@@ -337,6 +337,14 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/convert_timestamp:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(metric.name, "kube_pod_container_status_last_terminated_timestamp")
+            statements:
+              - set(datapoint.attributes["kube_pod_container_status_last_terminated_timestamp_formatted"], FormatTime(Unix(Int(datapoint.value_double)), "%Y-%m-%dT%H:%M:%SZ"))
+
       metricstransform/ksm:
         transforms:
           - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
@@ -799,6 +807,7 @@ data:
             - filter/exclude_zero_value_kube_node_status_condition
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
+            - transform/convert_timestamp
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm
