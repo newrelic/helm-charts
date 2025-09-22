@@ -479,3 +479,69 @@ tests:
               enabled: true
               host: 0.0.0.0
               port: 51200
+
+  - it: signature validation can be disabled
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          signature_validation:
+            enabled: false
+            public_key_server_url: https://my.public.key.server
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+            k8s:
+              ac_release_name: my-release
+              ac_remote_update: true
+              cd_release_name: agent-control-cd
+              cd_remote_update: true
+              cluster_name: my-cluster
+              namespace: my-namespace
+              namespace_agents: newrelic
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200
+
+
+  - it: signature validation public key url can be changed
+    set:
+      cluster: my-cluster
+      config:
+        fleet_control:
+          signature_validation:
+            public_key_server_url: https://my.public.key.server
+    asserts:
+      - equal:
+          path: data["local_config"]
+          value: |
+            agents: {}
+            fleet_control:
+              auth_config:
+                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
+                provider: local
+                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
+              endpoint: https://opamp.service.newrelic.com/v1/opamp
+              signature_validation:
+                public_key_server_url: https://my.public.key.server
+            k8s:
+              ac_release_name: my-release
+              ac_remote_update: true
+              cd_release_name: agent-control-cd
+              cd_remote_update: true
+              cluster_name: my-cluster
+              namespace: my-namespace
+              namespace_agents: newrelic
+            server:
+              enabled: true
+              host: 0.0.0.0
+              port: 51200

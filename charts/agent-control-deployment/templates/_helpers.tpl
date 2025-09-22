@@ -72,6 +72,12 @@ cluster name, licenses, and custom attributes
   {{- $auth_config := dict "token_url" (include "newrelic-agent-control.config.endpoints.tokenRenewal" .) "provider" "local" "private_key_path" "/etc/newrelic-agent-control/keys/from-secret.key" -}}
   {{- $fleet_control = mustMerge $fleet_control (dict "auth_config" $auth_config) -}}
 
+  {{- if (((.Values.config).fleet_control).signature_validation).enabled -}}
+    {{- if (((.Values.config).fleet_control).signature_validation).public_key_server_url -}}
+    {{- $fleet_control = mustMerge $fleet_control (dict "signature_validation" (dict "public_key_server_url" (((.Values.config).fleet_control).signature_validation).public_key_server_url)) -}}
+    {{- end -}}
+  {{- end -}}
+
   {{- $config = mustMerge $config (dict "fleet_control" $fleet_control) -}}
 {{- end -}}
 
