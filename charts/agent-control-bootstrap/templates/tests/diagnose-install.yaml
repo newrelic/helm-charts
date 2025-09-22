@@ -1,0 +1,53 @@
+{{- $testRbac := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "helm-test" ) -}}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ac-diagnose
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+  annotations:
+helm.sh/hook: test
+# removing the pod after the hook prevent to fetch the logs from helm cli
+helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  serviceAccountName: {{ $testRbac }}
+  containers:
+  - name: log-scraper
+image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.toolkitImage "context" .) }}
+imagePullPolicy: {{ .Values.toolkitImage.pullPolicy }}
+resources:
+  limits:
+cpu: 100m
+memory: 128Mi
+  requests:
+cpu: 50m
+memory: 64Mi
+command: ["/bin/sh", "-c"]
+args:
+  - |
+# This is not a test but a workaround to print the installations Jobs logs in case of failure to provide a better 
+# feedback for the user.
+# Helm V4 is already providing an alternative https://github.com/helm/community/blob/main/hips/hip-0019.md#specification
+
+echo "[Job logs]"
+kubectl logs -l batch.kubernetes.io/job-name --prefix --tail=-1 -n {{ .Release.Namespace }}
+
+echo "[AC logs]"
+kubectl logs deployment/agent-control --all-pods=true --tail=-1 -n {{ .Release.Namespace }}
+echo "[Flux logs]"
+kubectl logs deployment/helm-controller --all-pods=true --tail=30 -n {{ .Release.Namespace }}
+kubectl logs deployment/source-controller --all-pods=true --tail=30 -n {{ .Release.Namespace }}
+
+echo "[Events]"
+kubectl events -n {{ .Release.Namespace }}
+
+echo "[Flux CRs]"
+kubectl describe helmreleases -n {{ .Release.Namespace }}
+kubectl describe helmrepositories -n {{ .Release.Namespace }}
+
+echo "\n\n📖 For troubleshooting guidance, please check: https://docs.newrelic.com/docs/new-relic-control/agent-control/troubleshooting/#helm-release-failure"
+
+# This is not a test
+exit 0
