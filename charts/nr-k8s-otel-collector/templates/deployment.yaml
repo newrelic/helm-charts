@@ -84,10 +84,16 @@ spec:
           volumeMounts:
             - name: deployment-config
               mountPath: /config
+            {{- with .Values.deployment.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       volumes:
         - name: deployment-config
           configMap:
             name: {{ include "nrKubernetesOtel.deployment.configMap.fullname" . }}
+        {{- with .Values.deployment.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
