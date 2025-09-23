@@ -252,12 +252,12 @@ receivers:
     # -- Sets the scrape interval for prometheus service scraped from the deployment collector
     # @default -- `1m`
     scrapeInterval: 1m
-    # NewRelic provides a list of Dashboards, alerts and entities for several Services. The integrations_filter configuration
-    # allows to scrape only the targets having this experience out of the box.
+    # NewRelic provides a list of Dashboards, alerts, and entities for several Services. The integrations_filter configuration
+    # allows scraping only the targets having this experience out of the box.
     # If integrations_filter is enabled, then the jobs scrape merely the targets having one of the specified labels matching
     # one of the values of app_values.
-    # Under the hood, a relabel_configs with 'action=keep' are generated, consider it in case any custom extra_relabel_config is needed.
-    integrations_filter:
+    # Under the hood, a relabel_configs with 'action=keep' are generated.
+    integrationsFilter:
       # -- enabling the integration filters, merely the targets having one of the specified labels matching
       #    one of the values of app_values are scraped. Each job configuration can override this default.
       enabled: true
