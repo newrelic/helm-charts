@@ -18,7 +18,7 @@ spec:
         component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: ""
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -38,9 +38,43 @@ spec:
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+      initContainers:
+      - name: kernel-header-installer
+        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+        command:
+          - "/bin/bash"
+          - "-c"
+          - |
+            # Detect OS and install kernel headers accordingly
+            if [ -f /host/etc/os-release ]; then
+              . /host/etc/os-release
+              if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
+                echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
+                chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
+              elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
+                echo 'Detected Debian/Ubuntu. Installing linux-headers...'
+                chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
+              else
+                echo "Unsupported OS: $ID"
+                echo "Proceeding without kernel header install."
+              fi
+            else
+              echo "/host/etc/os-release not found"
+              echo "Proceeding without kernel header install."
+            fi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-root-volume
+          mountPath: /host
+
       containers:
       - name: nr-ebpf-agent
-        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        image: {{- if .Values.ebpfAgent.image.tag }}
+          {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
@@ -50,9 +84,9 @@ spec:
             value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
-            value: "cluster.local" 
+            value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ .Values.logLevel }}"            
+            value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
           - name: TABLE_STORE_DATA_LIMIT_MB
@@ -69,6 +103,17 @@ spec:
             value: "{{ .Values.tls.certPath }}/"
           {{- end }}
           {{- end }}
+
+          {{- if .Values.ebpfAgent.downloaded_packaged_headers_path }}
+          - name: DOWNLOADED_PACKAGED_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.downloaded_packaged_headers_path }}"
+          {{- end }}
+
+          {{- if .Values.ebpfAgent.distro_kernel_headers_path }}
+          - name: DISTRO_KERNEL_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.distro_kernel_headers_path }}"
+          {{- end }}
+
         securityContext:
           privileged: true
         volumeMounts:
@@ -86,7 +131,11 @@ spec:
           {{- end }}
           {{- end }}
       - name: nr-ebpf-client
-        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        image: {{- if .Values.ebpfClient.image.tag }}
+          {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:client-0.2.9
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
         env:
@@ -118,9 +167,9 @@ spec:
           - name: IS_INSECURE
             value: "True"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ .Values.logLevel }}"            
+            value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
-            value: "{{ .Values.logFilePath }}"            
+            value: "{{ .Values.logFilePath }}"
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
             {{- if eq .Values.tls.enabled true }}

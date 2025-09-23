@@ -1,6 +1,6 @@
 [![Community Plus header](https://github.com/newrelic/opensource-website/raw/master/src/images/categories/Community_Plus.png)](https://opensource.newrelic.com/oss-category/#community-plus)
 
-# agent-control
+# agent-control-bootstrap
 
 Bootstraps New Relic' Agent Control
 
@@ -10,7 +10,7 @@ You can install this chart using directly this Helm repository:
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm upgrade --install agent-control newrelic/agent-control -f your-custom-values.yaml
+helm upgrade --install agent-control-bootstrap newrelic/agent-control-bootstrap -f your-custom-values.yaml
 ```
 
 ## Values managed globally

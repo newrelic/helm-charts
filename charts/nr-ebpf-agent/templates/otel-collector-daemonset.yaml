@@ -21,7 +21,7 @@ spec:
         component: otel-collector
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: ""
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- with .Values.otelCollector.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -47,7 +47,11 @@ spec:
         securityContext:
           {{- . | nindent 12 }}
         {{- end }}
-        image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag | default .Chart.AppVersion }}
+        image: {{- if .Values.otelCollector.image.tag }}
+          {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
+          {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:nr-ebpf-otel-collector_0.0.1
+          {{- end }}
         imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
         ports:
@@ -91,11 +95,11 @@ spec:
             value: '^({{ .Values.dropDataForNamespaces | join "|" }})$'
           - name: OTLP_ENDPOINT
             {{- if eq $region "Staging" }}
-            value: "staging-otlp.nr-data.net:4317"
+            value: "staging-otlp.nr-data.net:443"
             {{- else if eq $region "EU" }}
-            value: "otlp.eu01.nr-data.net:4317"
+            value: "otlp.eu01.nr-data.net:443"
             {{- else }}
-            value: "otlp.nr-data.net:4317"
+            value: "otlp.nr-data.net:443"
             {{- end }}
           {{- if .Values.proxy }}
           - name: http_proxy
