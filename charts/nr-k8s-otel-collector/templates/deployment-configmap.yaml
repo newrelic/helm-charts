@@ -256,37 +256,6 @@ data:
                   regex: .*(?i)(redis|traefik|calico|nginx|coredns|kube-dns|etcd|cockroachdb|velero|harbor|argocd|gateway-helm|envoy|keda|istio|ztunnel).*
                   replacement: $1
                   action: keep
-              metric_relabel_configs:
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.namespace.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: namespaceName
-                  replacement: $1
-                  action: replace
-                - source_labels: [pod]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.pod.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [node]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.node.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [app_kubernetes_io_name]
-                  separator: ;
-                  regex: (.+)
-                  target_label: label.app.kubernetes.io/name
-                  replacement: $1
-                  action: replace
               kubernetes_sd_configs:
                 - role: pod
                   kubeconfig_file: ""
@@ -374,37 +343,6 @@ data:
                   regex: .*(?i)(redis|traefik|calico|nginx|coredns|kube-dns|etcd|cockroachdb|velero|harbor|argocd|gateway-helm|envoy|keda|istio|ztunnel).*
                   replacement: $1
                   action: keep
-              metric_relabel_configs:
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.namespace.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: namespaceName
-                  replacement: $1
-                  action: replace
-                - source_labels: [pod]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.pod.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [node]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.node.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [app_kubernetes_io_name]
-                  separator: ;
-                  regex: (.+)
-                  target_label: label.app.kubernetes.io/name
-                  replacement: $1
-                  action: replace
               kubernetes_sd_configs:
                 - role: endpoints
                   kubeconfig_file: ""
@@ -479,31 +417,6 @@ data:
                 - source_labels: [__meta_kubernetes_pod_name]
                   separator: ;
                   target_label: pod
-                  replacement: $1
-                  action: replace
-              metric_relabel_configs:
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.namespace.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: namespaceName
-                  replacement: $1
-                  action: replace
-                - source_labels: [pod]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.pod.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [app_kubernetes_io_name]
-                  separator: ;
-                  regex: (.+)
-                  target_label: label.app.kubernetes.io/name
                   replacement: $1
                   action: replace
               kubernetes_sd_configs:
@@ -586,31 +499,6 @@ data:
                 - source_labels: [__meta_kubernetes_pod_name]
                   separator: ;
                   target_label: pod
-                  replacement: $1
-                  action: replace
-              metric_relabel_configs:
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.namespace.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [namespace]
-                  separator: ;
-                  regex: (.+)
-                  target_label: namespaceName
-                  replacement: $1
-                  action: replace
-                - source_labels: [pod]
-                  separator: ;
-                  regex: (.+)
-                  target_label: k8s.pod.name
-                  replacement: $1
-                  action: replace
-                - source_labels: [app_kubernetes_io_name]
-                  separator: ;
-                  regex: (.+)
-                  target_label: label.app.kubernetes.io/name
                   replacement: $1
                   action: replace
               kubernetes_sd_configs:
