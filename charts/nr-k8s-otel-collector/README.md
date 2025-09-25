@@ -132,8 +132,12 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | daemonset.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
 | daemonset.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.enabled | bool | `true` | Specifies whether to install the DaemonSet collectors. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md |
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
+| daemonset.extraArgs | list | `[]` | Additional args for the daemonset container https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net" |
+| daemonset.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the daemonset container |
+| daemonset.extraVolumes | list | `[]` | Additional volumes to be added to the daemonset pod |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -144,8 +148,12 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | deployment.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
 | deployment.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.enabled | bool | `true` | Specifies whether to install the Deployment collector. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md |
 | deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
 | deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
+| deployment.extraArgs | list | `[]` | Additional args for the deployment container  https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net" |
+| deployment.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the deployment container |
+| deployment.extraVolumes | list | `[]` | Additional volumes to be added to the deployment pod |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -225,6 +233,19 @@ Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs",
 ```
 Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
+
+## Disable Daemonset or Deployment collectors
+
+Warning: Do not modify these values. Changing them can disrupt the Kubernetes monitoring experience and is recommended only for advanced use cases.
+
+```yaml
+daemonset:
+  enabled: true  # Set to false to disable DaemonSet creation
+deployment:
+  enabled: true  # Set to false to disable Deployment creation
+```
+
+If you provide an empty values file, both will default to `true` and be installed. To disable either, set the corresponding flag to `false` in your custom values file.
 
 ## Maintainers
 
