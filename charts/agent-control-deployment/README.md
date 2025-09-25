@@ -23,8 +23,6 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | config.cdRemoteUpdate | bool | "true" | enables or disables remote update from Fleet Control for the agent-control-cd chart |
 | config.fleet_control.enabled | bool | `true` | Enables or disables the auth against fleet control. It implies to disable any fleet communication and running the agent in stand alone mode where only the agents specified on `.config.subAgents` will be launched. |
 | config.fleet_control.fleet_id | string | `""` | Specify a fleet_id to automatically connect the Agent Control to an existing fleet. |
-| config.fleet_control.signature_validation.enabled | bool | `true` | Enables or disables signature validation for incoming requests. |
-| config.fleet_control.signature_validation.public_key_server_url | string | `""` | URL of the public key server used for signature validation. |
 | config.log | string | `{}` (See `values.yaml`) | Log configuration. The log level can be overwritten as well via verboseLog |
 | config.override | object | `{}` | Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above. |
 | config.status_server | object | See `values.yaml` | Set the status server port |
