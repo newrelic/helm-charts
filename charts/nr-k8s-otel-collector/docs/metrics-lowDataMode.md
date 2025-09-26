@@ -29,9 +29,13 @@
 | Kubelet            | KubeletStats Receiver | k8s.node.filesystem.usage                                  | Gauge   | Used filesystem space for the node.                                            |
 | Kubelet            | KubeletStats Receiver | k8s.node.memory.available                                  | Gauge   | Available memory for the node.                                                 |
 | Kubelet            | KubeletStats Receiver | k8s.node.memory.working_set                                | Gauge   | Working set size of the node memory.                                           |
+| Kubelet            | KubeletStats Receiver | k8s.pod.cpu_limit_utilization                              | Gauge   | The percentage of the set limit for cpu that is in use.                        |
+| Kubelet            | KubeletStats Receiver | k8s.pod.cpu_request_utilization                            | Gauge   | The percentage of the requested amount of cpu that is in use.                  |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.available                               | Gauge   | Available filesystem space for the pod.                                        |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.capacity                                | Gauge   | Total filesystem capacity for the pod.                                         |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.usage                                   | Gauge   | Used filesystem space for the pod.                                             |
+| Kubelet            | KubeletStats Receiver | k8s.pod.memory_limit_utilization                           | Gauge   | The percentage of the set limit for memory that is in use.                     |
+| Kubelet            | KubeletStats Receiver | k8s.pod.memory_request_utilization                         | Gauge   | The percentage of the requested amount of memory that is in use.               |
 | Kubelet            | KubeletStats Receiver | k8s.pod.memory.working_set                                 | Gauge   | Working set size of the pod memory.                                            |
 | Kubelet            | KubeletStats Receiver | k8s.pod.network.io                                         | Counter | Total network I/O for the pod.                                                 |
 | Kubelet            | Prometheus Receiver   | process_resident_memory_bytes                              | Gauge   | Resident memory size in bytes.                                                 |
