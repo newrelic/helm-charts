@@ -25,11 +25,11 @@ Return to which endpoint should the agent control connect to get the public key 
 {{- $region := include "newrelic.common.region" . -}}
 
 {{- if eq $region "Staging" -}}
-  https://staging-publickeys.newrelic.com/r/blob-management/GLOBAL/AgentConfiguration/jwks.json
+  https://staging-publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
 {{- else if eq $region "EU" -}}
-  https://publickeys.eu.newrelic.com/r/blob-management/GLOBAL/AgentConfiguration/jwks.json
+  https://publickeys.eu.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
 {{- else if eq $region "US" -}}
-  https://publickeys.newrelic.com/r/blob-management/GLOBAL/AgentConfiguration/jwks.json
+  https://publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
 {{- else -}}
   {{- fail "Unknown/unsupported region set for this chart" -}}
 {{- end -}}
