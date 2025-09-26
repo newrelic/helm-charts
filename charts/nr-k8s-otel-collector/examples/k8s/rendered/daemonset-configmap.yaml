@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.46
+    helm.sh/chart: nr-k8s-otel-collector-0.8.47
 data:
   daemonset-config.yaml: |
     receivers:
@@ -74,6 +74,16 @@ data:
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
+          
+          
 
       prometheus:
         config:
@@ -280,6 +290,17 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+
+          - include: k8s\.(pod|container)\.(cpu|memory)_(limit|request)_utilization
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
 
       transform/collector:
         metric_statements:
@@ -523,7 +544,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.46
+            value: 0.8.47
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
