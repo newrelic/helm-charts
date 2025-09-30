@@ -25,9 +25,9 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `fullnameOverride`                                | Name override used for your installation in place of the default                                                                                                                                                                                                                                                                                                     |                                                                                                                                                                      |
 | `appVersionOverride`                              | Release version of synthetics-job-manager to use in place of the version specified in [Chart.yaml](Chart.yaml)                                                                                                                                                                                                                                                       |                                                                                                                                                                      |
 | `synthetics.logLevel`                             | Modify, to boot synthetics-job-manager with a specified log level. (`ALL`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, `OFF`, `TRACE`)                                                                                                                                                                                                                                | `INFO`                                                                                                                                                               |
-| `synthetics.hordeApiEndpoint `                    | Ensure synthetics-job-manager can connect to the appropriate endpoint in order to serve your monitor.                                                                                                                                                                                                                                                                | For US-based accounts, the endpoint is: `https://synthetics-horde.nr-data.net`. For EU-based accounts, the endpoint is: `https://synthetics-horde.eu01.nr-data.net/` |
+| `synthetics.hordeApiEndpoint`                     | Ensure synthetics-job-manager can connect to the appropriate endpoint in order to serve your monitor.                                                                                                                                                                                                                                                                | For US-based accounts, the endpoint is: `https://synthetics-horde.nr-data.net`. For EU-based accounts, the endpoint is: `https://synthetics-horde.eu01.nr-data.net/` |
 | `synthetics.vsePassphrase`                        | If set, enables verified script execution and uses this value as a passphrase.                                                                                                                                                                                                                                                                                       |                                                                                                                                                                      |
-| `synthetics.vsePassphraseSecretName `             | If set, enables verified script execution and uses this value to retrieve the passphrase from a Kubernetes secret with a key called `vsePassphrase`.                                                                                                                                                                                                                 |                                                                                                                                                                      |
+| `synthetics.vsePassphraseSecretName`              | If set, enables verified script execution and uses this value to retrieve the passphrase from a Kubernetes secret with a key called `vsePassphrase`.                                                                                                                                                                                                                 |                                                                                                                                                                      |
 | `synthetics.enableWasm`                           | If set, enables Webassembly for Node Browser Runtime.                                                                                                                                                                                                                                                                                                                | `false`                                                                                                                                                              |
 | `synthetics.apiProxyHost`                         | Proxy used to allow synthetics-job-manager to communicate with New Relic to fetch and report Synthetics checks. *Required if synthetics.apiProxyPort is set*                                                                                                                                                                                                         |                                                                                                                                                                      |
 | `synthetics.apiProxyPort`                         | Proxy used to allow synthetics-job-manager to communicate with New Relic to fetch and report Synthetics checks. *Required if synthetics.apiProxyHost is set*                                                                                                                                                                                                         |                                                                                                                                                                      |
@@ -55,7 +55,6 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-api-runtime.enabled`                        | Whether or not the node api runtime deployment should be enabled.                                                                                                                                                                                                                                                                                                    | `true`                                                                                                                                                               |
 | `node-browser-runtime.enabled`                    | Whether or not the browser runtime deployment and service should be enabled.                                                                                                                                                                                                                                                                                         | `true`                                                                                                                                                               |
 
-
 ### Ping Runtime Configuration
 
 | Parameter                          | Description                                                                                          | Default                                       |
@@ -68,7 +67,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `ping-runtime.image.repository`    | The container to pull.                                                                               | `newrelic/synthetics-ping-runtime`            |
 | `ping-runtime.image.pullPolicy`    | The pull policy.                                                                                     | `IfNotPresent`                                |
 | `ping-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                           |                                               |
-| `ping-runtime.resources`           | Resource requests and limits.                                                                        | See the [Resources](#Resources) section below |                                        |
+| `ping-runtime.resources`           | Resource requests and limits.                                                                        | See the [Resources](#resources) section below |
 | `ping-runtime.podAnnotations`      | Annotations to be added to the ping-runtime pod                                                      |                                               |
 | `ping-runtime.podSecurityContext`  | Custom security context for the ping-runtime pod                                                     |                                               |
 | `ping-runtime.securityContext`     | Custom security context for the ping-runtime containers                                              |                                               |
@@ -77,7 +76,6 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `ping-runtime.nodeSelector`        | Node labels for ping-runtime pod assignment                                                          |                                               |
 | `ping-runtime.tolerations`         | Node taints to tolerate for ping-runtime                                                             |                                               |
 | `ping-runtime.affinity`            | Pod affinity for ping-runtime                                                                        |                                               |
-
 
 ### Node API Runtime Configuration
 
@@ -92,7 +90,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-api-runtime.image.repository`    | The container to pull.                                                                                                 | `newrelic/synthetics-node-api-runtime`        |
 | `node-api-runtime.image.pullPolicy`    | The pull policy.                                                                                                       | `IfNotPresent`                                |
 | `node-api-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                             |                                               |
-| `node-api-runtime.resources`           | Resource requests and limits.                                                                                          | See the [Resources](#Resources) section below |                                                                              |                                        |
+| `node-api-runtime.resources`           | Resource requests and limits.                                                                                          | See the [Resources](#resources) section below |
 | `node-api-runtime.podAnnotations`      | Annotations to be added to the node-api-runtime pod                                                                    |                                               |
 | `node-api-runtime.podSecurityContext`  | Custom security context for the node-api-runtime pod                                                                   |                                               |
 | `node-api-runtime.securityContext`     | Custom security context for the node-api-runtime containers                                                            |                                               |
@@ -101,7 +99,6 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-api-runtime.nodeSelector`        | Node labels for node-api-runtime pod assignment                                                                        |                                               |
 | `node-api-runtime.tolerations`         | Node taints to tolerate for node-api-runtime                                                                           |                                               |
 | `node-api-runtime.affinity`            | Pod affinity for node-api-runtime                                                                                      |                                               |
-
 
 ### Node Browser Runtime Configuration
 
@@ -116,7 +113,7 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-browser-runtime.image.repository`    | The container to pull.                                                                                                     | `newrelic/synthetics-node-browser-runtime`    |
 | `node-browser-runtime.image.pullPolicy`    | The pull policy.                                                                                                           | `IfNotPresent`                                |
 | `node-browser-runtime.appArmorProfileName` | *(Not yet supported)* Name of an AppArmor profile to load.                                                                 |                                               |
-| `node-browser-runtime.resources`           | Resource requests and limits.                                                                                              | See the [Resources](#Resources) section below |                                                                     |                                            |
+| `node-browser-runtime.resources`           | Resource requests and limits.                                                                                              | See the [Resources](#resources) section below |
 | `node-browser-runtime.podAnnotations`      | Annotations to be added to the node-browser-runtime pod                                                                    |                                               |
 | `node-browser-runtime.podSecurityContext`  | Custom security context for the node-browser-runtime pod                                                                   |                                               |
 | `node-browser-runtime.securityContext`     | Custom security context for the node-browser-runtime containers                                                            |                                               |
@@ -125,7 +122,6 @@ This chart will deploy the New Relic Synthetics Containerized Private Job Manage
 | `node-browser-runtime.nodeSelector`        | Node labels for node-browser-runtime pod assignment                                                                        |                                               |
 | `node-browser-runtime.tolerations`         | Node taints to tolerate for node-browser-runtime                                                                           |                                               |
 | `node-browser-runtime.affinity`            | Pod affinity for node-browser-runtime                                                                                      |                                               |
-
 
 ## Example
 
@@ -159,6 +155,7 @@ resources:
     cpu: 0.75
     memory: 1.6Gi
 ```
+
 The default set of resources assigned to **ping runtime** is shown below:
 
 ```yaml
@@ -170,7 +167,9 @@ resources:
     cpu: 0.75
     memory: 1.0Gi
 ```
-The default set of resources assignmed to the **node-api runtime** is shown below: 
+
+The default set of resources assigned to the **node-api runtime** is shown below:
+
 ```yaml
 resources:
   requests:
@@ -180,7 +179,9 @@ resources:
     cpu: 0.75
     memory: 2500Mi
 ```
-The default set of resources assigned to the **node-browser runtime** is shown below: 
+
+The default set of resources assigned to the **node-browser runtime** is shown below:
+
 ```yaml
 resources:
   requests:
