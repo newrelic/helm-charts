@@ -135,6 +135,9 @@ startupProbePeriodSeconds: 10
 # Number of seconds after which the startup probe times out.
 startupProbeTimeoutSeconds: 10
 
+# Number of seconds to delay the startup probe.
+startupProbeInitialDelaySeconds: 10
+
 # The number of times the liveness probe should retry before giving up
 livenessProbeFailureThreshold: 1
 
@@ -205,6 +208,9 @@ ping-runtime:
   # Number of seconds after which the startup probe times out.
   startupProbeTimeoutSeconds: 10
 
+  # Number of seconds to delay the startup probe to give time for the Job Manager pod to be ready first.
+  startupProbeInitialDelaySeconds: 30
+
   # The number of times the liveness probe should retry before giving up
   livenessProbeFailureThreshold: 1
 
@@ -269,21 +275,6 @@ node-api-runtime:
   ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
   # appArmorProfileName: ""
 
-  # The number of times the startup probe should retry before giving up.
-  startupProbeFailureThreshold: 60
-
-  # How often (in seconds) to perform the startup probe.
-  startupProbePeriodSeconds: 10
-
-  # The number of times the liveness probe should retry before giving up
-  livenessProbeFailureThreshold: 1
-
-  # How often (in seconds) to perform the liveness probe.
-  livenessProbePeriodSeconds: 10
-
-  # Number of seconds after which the liveness probe times out.
-  livenessProbeTimeoutSeconds: 10
-
   resources:
     requests:
       cpu: "500m"
@@ -338,21 +329,6 @@ node-browser-runtime:
 
   ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
   # appArmorProfileName: ""
-
-  # The number of times the startup probe should retry before giving up.
-  startupProbeFailureThreshold: 60
-
-  # How often (in seconds) to perform the startup probe.
-  startupProbePeriodSeconds: 10
-
-  # The number of times the liveness probe should retry before giving up
-  livenessProbeFailureThreshold: 1
-
-  # How often (in seconds) to perform the liveness probe.
-  livenessProbePeriodSeconds: 10
-
-  # Number of seconds after which the liveness probe times out.
-  livenessProbeTimeoutSeconds: 10
 
   resources:
     requests:
