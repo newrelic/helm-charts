@@ -221,7 +221,7 @@
 | API Server | Prometheus Receiver   | kube_apiserver_nodeport_allocator_available_ports  | Gauge | Number of available ports in the NodePort allocator. |
 | API Server | Prometheus Receiver   | kube_apiserver_pod_logs_backend_tls_failure_total  | Counter   | Total number of TLS failures in the pod logs backend.|
 | API Server | Prometheus Receiver   | kube_apiserver_pod_logs_insecure_backend_total | Counter   | Total number of insecure pod logs backends.  |
-| API Server | Prometheus Receiver   | kubernetes_build_info  | Gauge | Information about the Kubernetes build.  |
+| API Server | Prometheus Receiver   | k8s.cluster.info   | Gauge | Information about the Kubernetes build.  |
 | API Server | Prometheus Receiver   | kubernetes_feature_enabled | Gauge | Information about enabled Kubernetes features.   |
 | API Server | Prometheus Receiver   | node_authorizer_graph_actions_duration_seconds | Histogram | Duration of graph actions in the node authorizer.|
 | API Server | Prometheus Receiver   | pod_security_evaluations_total | Counter   | Total number of pod security evaluations |
@@ -558,7 +558,7 @@
 | Controller Manager | Prometheus Receiver   | kube_apiserver_nodeport_allocator_available_ports  | Gauge | Number of available ports in the NodePort allocator. |
 | Controller Manager | Prometheus Receiver   | kube_apiserver_pod_logs_backend_tls_failure_total  | Counter   | Total number of TLS failures in the pod logs backend.|
 | Controller Manager | Prometheus Receiver   | kube_apiserver_pod_logs_insecure_backend_total | Counter   | Total number of insecure pod logs backends.  |
-| Controller Manager | Prometheus Receiver   | kubernetes_build_info  | Gauge | Information about the Kubernetes build.  |
+| Controller Manager | Prometheus Receiver   | k8s.cluster.info   | Gauge | Information about the Kubernetes build.  |
 | Controller Manager | Prometheus Receiver   | kubernetes_feature_enabled | Gauge | Information about enabled Kubernetes features.   |
 | Controller Manager | Prometheus Receiver   | node_authorizer_graph_actions_duration_seconds | Histogram | Duration of graph actions in the node authorizer.|
 | Controller Manager | Prometheus Receiver   | pod_security_evaluations_total | Counter   | Total number of pod security evaluations.|
@@ -822,7 +822,7 @@
 | Kubelet| Prometheus Receiver   | kubelet_topology_manager_admission_requests_total  | Counter   | Total number of topology manager admission requests. |
 | Kubelet| Prometheus Receiver   | kubelet_volume_metric_collection_duration_seconds  | Histogram | Duration of volume metric collection.|
 | Kubelet| Prometheus Receiver   | kubelet_working_pods   | Gauge | Number of working pods.  |
-| Kubelet| Prometheus Receiver   | kubernetes_build_info  | Gauge | Information about the Kubernetes build.  |
+| Kubelet| Prometheus Receiver   | k8s.cluster.info   | Gauge | Information about the Kubernetes build.  |
 | Kubelet| Prometheus Receiver   | kubernetes_feature_enabled | Gauge | Information about enabled Kubernetes features.   |
 | Kubelet| Prometheus Receiver   | plugin_manager_total_plugins   | Gauge | Total number of plugins managed by the plugin manager.   |
 | Kubelet| Prometheus Receiver   | process_cpu_seconds_total  | Counter   | Total user and system CPU time spent in seconds. |
@@ -1322,7 +1322,7 @@
 | Scheduler  | Prometheus Receiver   | kube_apiserver_nodeport_allocator_available_ports  | Gauge | Number of available ports in the NodePort allocator. |
 | Scheduler  | Prometheus Receiver   | kube_apiserver_pod_logs_backend_tls_failure_total  | Counter   | Total number of TLS failures in the pod logs backend.|
 | Scheduler  | Prometheus Receiver   | kube_apiserver_pod_logs_insecure_backend_total | Counter   | Total number of insecure pod logs backends.  |
-| Scheduler  | Prometheus Receiver   | kubernetes_build_info  | Gauge | Information about the Kubernetes build.  |
+| Scheduler  | Prometheus Receiver   | k8s.cluster.info   | Gauge | Information about the Kubernetes build.  |
 | Scheduler  | Prometheus Receiver   | kubernetes_feature_enabled | Gauge | Information about enabled Kubernetes features.   |
 | Scheduler  | Prometheus Receiver   | node_authorizer_graph_actions_duration_seconds | Histogram | Duration of graph actions in the node authorizer.|
 | Scheduler  | Prometheus Receiver   | pod_security_evaluations_total | Counter   | Total number of pod security evaluations.|

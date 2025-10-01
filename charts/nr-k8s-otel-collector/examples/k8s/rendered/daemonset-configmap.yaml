@@ -10,7 +10,7 @@ app.kubernetes.io/instance: nr-k8s-otel-collector
 app.kubernetes.io/managed-by: Helm
 app.kubernetes.io/name: nr-k8s-otel-collector
 app.kubernetes.io/version: 1.2.0
-helm.sh/chart: nr-k8s-otel-collector-0.8.47
+helm.sh/chart: nr-k8s-otel-collector-0.8.48
 data:
   daemonset-config.yaml: |
 receivers:
@@ -306,6 +306,12 @@ new_value: 'true'
 metric_statements:
   - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
 
+  metricstransform/k8s_cluster_info:
+transforms:
+  - include: kubernetes_build_info
+action: update
+new_name: k8s.cluster.info
+
   metricstransform/cadvisor:
 transforms:
   - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
@@ -374,6 +380,14 @@ operations:
   value_actions:
   - value: 'false'
 new_value: 'true'
+  - include: k8s.cluster.info
+action: update
+operations:
+- action: update_label
+  label: low.data.mode
+  value_actions:
+- value: 'false'
+  new_value: 'true'
 
   metricstransform/hostmetrics:
 transforms:
@@ -544,7 +558,7 @@ action: upsert
 value: <cluser_name>
   - key: "newrelic.chart.version"
 action: upsert
-value: 0.8.47
+value: 0.8.48
   - key: newrelic.entity.type
 action: upsert
 value: "k8s"
@@ -698,6 +712,7 @@ metrics/nr:
 - routing/nr_metrics_pipelines
   processors:
 - memory_limiter
+- metricstransform/k8s_cluster_info
 - metricstransform/ldm
 - metricstransform/kubeletstats
 - metricstransform/cadvisor
@@ -730,6 +745,7 @@ metrics/nr_prometheus_cadv_kubelet:
 - routing/nr_metrics_pipelines
   processors:
 - memory_limiter
+- metricstransform/k8s_cluster_info
 - metricstransform/ldm
 - metricstransform/cadvisor
 - metricstransform/kubelet
