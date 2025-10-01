@@ -132,7 +132,10 @@ echo "agent-control-cd HelmRelease already exists, skipping installation, perfor
 {{- end }}
 --chart-name={{ .Values.agentControlCd.chartName }} \
 --release-name={{ .Values.agentControlCd.releaseName }}
+  if [ $? -ne 0 ]; then echo "Failed to create agent-control-cd resources owned by Agent Control."; exit 1; fi
 {{- end }}
+
+
 {{- /* Create or update resources to handle agent-control-deployment release */}}
   echo "Creating agent-control-deployment resources owned by Agent Control..."
   newrelic-agent-control-cli install-agent-control \
@@ -149,5 +152,6 @@ echo "agent-control-cd HelmRelease already exists, skipping installation, perfor
 {{- end }}
 --chart-name={{ .Values.agentControlDeployment.chartName }} \
 --release-name={{ .Values.agentControlDeployment.releaseName }}
+  if [ $? -ne 0 ]; then echo "Failed to create agent-control-deployment resources owned by Agent Control."; exit 1; fi
 {{- end }}
 {{- end -}}
