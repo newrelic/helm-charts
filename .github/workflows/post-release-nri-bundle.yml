@@ -19,7 +19,7 @@ jobs:
       announcement: ${{ steps.slack-announcement.outputs.announcement }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Helm
         uses: azure/setup-helm@v4
@@ -81,7 +81,7 @@ jobs:
       K8S_FOLDER: src/content/docs/release-notes/infrastructure-release-notes/kubernetes-integration-release-notes
     steps:
       - name: Checkout `nri-kubernetes` chart
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'newrelic/nri-kubernetes'
           sparse-checkout: |
@@ -116,7 +116,7 @@ jobs:
           } >> "$GITHUB_ENV"
 
       - name: Checkout docs-website
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'newrelic/docs-website'
           # Token used to run authenticated git commands
@@ -174,7 +174,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout `nri-bundle` chart
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'newrelic/helm-charts'
           sparse-checkout: |
@@ -187,7 +187,7 @@ jobs:
           echo "version=${version}" >> "$GITHUB_ENV"
 
       - name: Checkout eks-anywhere-addons
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: 'aws-samples/eks-anywhere-addons'
           # Token used to run authenticated git commands
