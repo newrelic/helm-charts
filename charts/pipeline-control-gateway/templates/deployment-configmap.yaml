@@ -12,8 +12,11 @@ data:
   deployment-config.yaml: |
     {{- with include "nrKubernetesOtel.deployment.configMap.config" . }}
     {{- . | nindent 4 }}
-    {{- else if .Values.generated }}
+    {{- end }}
+    {{- if not (include "nrKubernetesOtel.deployment.configMap.config" .) }}
+    {{- if .Values.generated }}
     {{- tpl .Values.generated . | nindent 4 }}
     {{- else }}
     # No configuration provided - please provide configuration via Values.generated
+    {{- end }}
     {{- end }}
