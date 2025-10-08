@@ -137,28 +137,22 @@ generated: |
 
   receivers:
     nrproprietaryreceiver:
-      nr_host: https://otlp.nr-data.net
-      logging:
-        enable: false
+      proxy: false
+      enable_runtime_metrics: true
+      server:
+        endpoint: "0.0.0.0:80"
+      nr_host: "staging-collector.newrelic.com"
+      endpoints:
+        infra_event_api_endpoint: "https://staging-infra-api.newrelic.com"
+        log_api_endpoint: "https://staging-log-api.newrelic.com"
+        event_api_endpoint: "https://staging-insights-collector.newrelic.com"
+        traces_endpoint: "https://staging-trace-api.newrelic.com"
+        metrics_endpoint: "https://staging-metric-api.newrelic.com"
       logfilter:
         enabled: false
-        flush_interval: 5s
-        pattern: ".*"
-        buffer_size: 262144
       enable_default_host: false
-      enable_runtime_metrics: true
-      proxy: false
-      endpoints:
-        event_api_endpoint: https://insights-collector.newrelic.com/v1/accounts/events
-        infra_event_api_endpoint: https://infra-api.newrelic.com/v1/data
-        log_api_endpoint: https://log-api.newrelic.com/log/v1
-        metrics_endpoint: https://metric-api.newrelic.com/metric/v1
-        traces_endpoint: https://trace-api.newrelic.com/trace/v1
-      server:
-        endpoint: ${env:MY_POD_IP}:80
       client:
-        compression: gzip
-        timeout: 10s
+        compression: "gzip"
     otlp:
       protocols:
         http:
