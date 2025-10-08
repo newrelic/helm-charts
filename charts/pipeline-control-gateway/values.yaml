@@ -115,11 +115,11 @@ nrStaging:
 # @default -- `false`
 lowDataMode:
 
-# -- Complete OpenTelemetry pipeline configuration as YAML string. When provided, this will override all other OpenTelemetry configuration sections.
-# @default -- `""`
-generated: |
+# -- Complete OpenTelemetry pipeline configuration as YAML map. When provided, this will override all other OpenTelemetry configuration sections.
+# @default -- `{}`
+generated:
   extensions:
-    zpages:
+    zpages: {}
     healthcheckv2:
       use_v2: true
       component_health:
@@ -127,14 +127,13 @@ generated: |
         include_recoverable_errors: true
         recovery_duration: 5m
       http:
-        endpoint: ${env:MY_POD_IP}:13133
+        endpoint: "${env:MY_POD_IP}:13133"
         status:
           enabled: true
           path: "/health/status"
         config:
           enabled: true
           path: "/health/config"
-
   receivers:
     nrproprietaryreceiver:
       proxy: false
@@ -156,10 +155,10 @@ generated: |
     otlp:
       protocols:
         http:
-          endpoint: ${env:MY_POD_IP}:4318
+          endpoint: "${env:MY_POD_IP}:4318"
         grpc:
-          endpoint: ${env:MY_POD_IP}:4317
-    prometheus/monitoring:
+          endpoint: "${env:MY_POD_IP}:4317"
+    "prometheus/monitoring":
       config:
         scrape_configs:
           - job_name: 'pipeline-gateway-monitoring'
@@ -168,8 +167,8 @@ generated: |
               - targets: [ '0.0.0.0:8888' ]
                 labels:
                   version: "1.2.0"
-                  podName: '${env:MY_POD_NAME}'
-                  clusterName: '${env:CLUSTER_NAME}'
+                  podName: "${env:MY_POD_NAME}"
+                  clusterName: "${env:CLUSTER_NAME}"
                   serviceName: 'pipeline-control-gateway'
             metric_relabel_configs:
               - action: labeldrop
@@ -177,7 +176,6 @@ generated: |
               - source_labels: [ __name__ ]
                 regex: 'godebug_.*'
                 action: drop
-
   processors:
     memory_limiter:
       check_interval: 1s
@@ -187,16 +185,15 @@ generated: |
         enabled: true
         queue_size: 100
       queries: []
-
   exporters:
     otlp:
       endpoint: https://otlp.nr-data.net:443
       headers:
-        api-key: ${env:NEW_RELIC_LICENSE_KEY}
+        api-key: "${env:NEW_RELIC_LICENSE_KEY}"
     otlphttp:
       endpoint: https://otlp.nr-data.net/v1/traces
       headers:
-        api-key: ${env:NEW_RELIC_LICENSE_KEY}
+        api-key: "${env:NEW_RELIC_LICENSE_KEY}"
     nrcollectorexporter:
       endpoint: https://log-api.newrelic.com/log/v1
       retry_on_failure:
@@ -209,41 +206,38 @@ generated: |
         enabled: false
       compression: gzip
       encoding: json
-      nr_license_key: ${env:NEW_RELIC_LICENSE_KEY}
-
+      nr_license_key: "${env:NEW_RELIC_LICENSE_KEY}"
   service:
     extensions: [ healthcheckv2 ]
-
     pipelines:
-      logs/nr:
+      "logs/nr":
         receivers: [nrproprietaryreceiver]
         processors: [nrprocessor]
         exporters: [nrcollectorexporter]
-      logs/otlp:
+      "logs/otlp":
         receivers: [ otlp ]
         processors: [ nrprocessor ]
         exporters: [ otlp ]
-      metrics/nr:
+      "metrics/nr":
         receivers: [nrproprietaryreceiver]
         processors: [nrprocessor]
         exporters: [nrcollectorexporter]
-      metrics/otlp:
+      "metrics/otlp":
         receivers: [otlp]
         processors: [ nrprocessor]
         exporters: [otlp]
-      traces/otlp:
+      "traces/otlp":
         receivers: [otlp]
         processors: [nrprocessor]
         exporters: [ otlp ]
-      traces/nr:
+      "traces/nr":
         receivers: [ nrproprietaryreceiver ]
         processors: [ nrprocessor ]
         exporters: [ nrcollectorexporter ]
-      metrics/monitoring:
-        receivers: [prometheus/monitoring]
+      "metrics/monitoring":
+        receivers: ["prometheus/monitoring"]
         processors: []
         exporters: [otlphttp]
-
     telemetry:
       logs:
         level: "info"
