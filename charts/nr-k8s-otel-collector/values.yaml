@@ -2,6 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
+cluster: ""
+# -- This set this license key to use. Can be configured also with `global.licenseKey`
+licenseKey: ""
+
 kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository.
   # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations
@@ -10,6 +15,8 @@ kube-state-metrics:
   enabled: true
   # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
   prometheusScrape: false
+  # -- Enable resource quota data exporting
+  enableResourceQuotaSamples: false
 
 # This chart has support for OpenShift and GKE Autopilot.
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
@@ -21,12 +28,8 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.1.0"
+  tag: "1.2.0"
 
-# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
-cluster: ""
-# -- This set this license key to use. Can be configured also with `global.licenseKey`
-licenseKey: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
 # -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
@@ -46,7 +49,45 @@ priorityClassName: ""
 # -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
 dnsConfig: {}
 
+# -- Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors
+processors:
+
+# -- Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters
+exporters:
+
+# -- Edit how the NR Metrics pipeline handles your Metrics
+metricsPipeline:
+  collectorIngress:
+    # -- List of processors to be applied to your RAW Metrics.
+    # This is applied at the beginning of the pipeline
+    processors:
+    # -- List of exporters that you'd like to use to export RAW Metrics.
+    exporters:
+  collectorEgress:
+    # -- List of processors to be applied to your Metrics after the NR processors have been applied.
+    # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
+    processors:
+    # -- List of additional exports to export the processed Metrics.
+    exporters:
+
+# -- Edit how the NR Logs pipeline handles your Logs
+logsPipeline:
+  collectorIngress:
+    # -- List of processors to be applied to your RAW Logs.
+    # This is applied at the beginning of the pipeline
+    processors:
+    # -- List of exporters that you'd like to use to export RAW Logs.
+    exporters:
+  collectorEgress:
+    # -- List of processors to be applied to your Logs after the NR processors have been applied.
+    # This is applied at the end of the pipeline after the default NR processors have been applied to the data.
+    processors:
+    # -- List of additional exports to export the processed Logs.
+    exporters:
+
 daemonset:
+  # -- Specifies whether to install the DaemonSet collectors. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md
+  enabled: true
   # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
   # -- Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations`
@@ -59,13 +100,28 @@ daemonset:
   podSecurityContext: {}
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
   containerSecurityContext:
-    privileged: true
+    privileged: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
   # -- Sets resources for the daemonset.
   resources: {}
   # -- Sets additional environment variables for the daemonset.
   envs: []
   # -- Sets additional environment variable sources for the daemonset.
   envsFrom: []
+  # -- Additional args for the daemonset container
+  # https://opentelemetry.io/docs/collector/configuration/
+  # Example:
+  # extraArgs:
+  #   - "--config=yaml:service::telemetry::logs::level: debug"
+  #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
+  extraArgs: []
   # -- Settings for daemonset configmap
   # @default -- See `values.yaml`
   configMap:
@@ -78,8 +134,20 @@ daemonset:
       exporters:
       connectors:
       pipelines:
+  # -- Additional volumes to be added to the daemonset pod
+  extraVolumes: []
+  # - name: example-volume
+  #   configMap:
+  #     name: example-configmap
+  # -- Additional volume mounts to be added to the daemonset container
+  extraVolumeMounts: []
+  # - name: example-volume
+  #   mountPath: /etc/example
+  #   readOnly: true
 
 deployment:
+  # -- Specifies whether to install the Deployment collector. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md
+  enabled: true
   # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
   nodeSelector: {}
   # -- Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations`
@@ -91,13 +159,30 @@ deployment:
   # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
   # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext: {}
+  containerSecurityContext:
+    privileged: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+
+
   # -- Sets resources for the deployment.
   resources: {}
   # -- Sets additional environment variables for the deployment.
   envs: []
   # -- Sets additional environment variable sources for the deployment.
   envsFrom: []
+  # -- Additional args for the deployment container
+  #  https://opentelemetry.io/docs/collector/configuration/
+  # Example:
+  # extraArgs:
+  #   - "--config=yaml:service::telemetry::logs::level: debug"
+  #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
+  extraArgs: []
   # -- Settings for deployment configmap
   # @default -- See `values.yaml`
   configMap:
@@ -110,6 +195,16 @@ deployment:
       exporters:
       connectors:
       pipelines:
+  # -- Additional volumes to be added to the deployment pod
+  extraVolumes: []
+  # - name: example-volume
+  #   configMap:
+  #     name: example-configmap
+  # -- Additional volume mounts to be added to the deployment container
+  extraVolumeMounts: []
+  # - name: example-volume
+  #   mountPath: /etc/example
+  #   readOnly: true
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
@@ -120,7 +215,15 @@ affinity: {}
 # -- Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod`
 podSecurityContext: {}
 # -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
-containerSecurityContext: {}
+containerSecurityContext:
+  privileged: false
+  runAsNonRoot: true
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 
 rbac:
   # -- Specifies whether RBAC resources should be created
@@ -175,6 +278,13 @@ receivers:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
     enabled: true
+  collectorMetrics:
+    # -- (bool) Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled.
+    # @default -- `false`
+    enabled: false
+    # -- Sets the scrape interval for metrics scraped from the deployment collector
+    # @default -- `1m`
+    scrapeInterval: 1m
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`

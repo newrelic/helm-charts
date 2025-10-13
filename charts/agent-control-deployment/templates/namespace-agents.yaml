@@ -1,0 +1,16 @@
+{{- /* 
+    We check both that the namespace does not exist and that it is not the same as the release namespace.
+    This is due to how we instruct the users to install the chart, using the options `-n <NAMESPACE> --create-namespace`,
+    that will make Helm create the release namespace if it does not exist, so we prevent the rendering to take place.
+    Otherwise, the namespace manifest would be rendered and later applied, which would fail as the namespace was created by Helm.
+*/ -}}
+{{- if not (lookup "v1" "Namespace" "" .Values.subAgentsNamespace) -}}
+{{- if not (eq .Release.Namespace .Values.subAgentsNamespace) -}}
+apiVersion: v1
+kind: Namespace
+metadata:
+  annotations:
+    "helm.sh/resource-policy": keep
+  name: {{ .Values.subAgentsNamespace }}
+{{- end -}}
+{{- end -}}

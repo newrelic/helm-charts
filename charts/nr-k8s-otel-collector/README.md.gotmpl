@@ -37,12 +37,12 @@ kubectl logs <otel-pod-name> -n newrelic
 ```
 
 ### Confirm data coming through in New Relic
-You should see data reporting into New Relic within a couple of seconds to the `InfrastructureEvent` table, `Metric` table, and `Log` tables.
+You should see data reporting into New Relic within a couple of seconds to the `OtlpInfrastructureEvent` table, `Metric` table, and `Log` tables.
 ```
 FROM Metric SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 ```
-FROM InfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
+FROM OtlpInfrastructureEvent SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 ```
 ```
 FROM Log SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
@@ -153,6 +153,19 @@ Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs",
 ```
 Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
+
+## Disable Daemonset or Deployment collectors
+
+Warning: Do not modify these values. Changing them can disrupt the Kubernetes monitoring experience and is recommended only for advanced use cases.
+
+```yaml
+daemonset:
+  enabled: true  # Set to false to disable DaemonSet creation
+deployment:
+  enabled: true  # Set to false to disable Deployment creation
+```
+
+If you provide an empty values file, both will default to `true` and be installed. To disable either, set the corresponding flag to `false` in your custom values file.
 
 {{ if .Maintainers }}
 ## Maintainers

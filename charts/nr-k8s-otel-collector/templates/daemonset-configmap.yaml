@@ -78,6 +78,16 @@ data:
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
+
+
 
       prometheus:
         config:
@@ -130,6 +140,16 @@ data:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+            - job_name: otel-collector
+              scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
+              static_configs:
+                - targets: ['0.0.0.0:8888']
+              relabel_configs:
+                - action: replace
+                  target_label: job_label
+                  replacement: otel-collector-daemonset
+            {{- end }}
 
       filelog:
         include:
@@ -158,6 +178,7 @@ data:
 
     processors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
 
       groupbyattrs:
         keys:
@@ -238,6 +259,14 @@ data:
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
 
+      transform/extract_runtime:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(attributes["container_id"], ".*://.*")
+            statements:
+              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
+              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
 
       metricstransform/ldm:
         transforms:
@@ -278,6 +307,27 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+
+          - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+
+      transform/collector:
+        metric_statements:
+          - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
+
+      metricstransform/k8s_cluster_info:
+        transforms:
+          - include: kubernetes_build_info
+            action: update
+            new_name: k8s.cluster.info
 
       metricstransform/cadvisor:
         transforms:
@@ -347,6 +397,14 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: k8s.cluster.info
+            action: update
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+                - value: 'false'
+                  new_value: 'true'
 
       metricstransform/hostmetrics:
         transforms:
@@ -406,7 +464,7 @@ data:
         log_statements:
           - context: log
             statements:
-              - truncate_all(attributes, 4095)
+              - truncate_all(log.attributes, 4095)
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
@@ -501,56 +559,45 @@ data:
         system:
           hostname_sources: ["os"]
           resource_attributes:
-            host.id:
-            {{- if include "newrelic.common.openShift" . }}
-            # TODO host.id does not work, is it required, does it work on containerized environments?
-            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
+            host.name:
               enabled: false
-            {{- else }}
-              enabled: true
-            {{- end }}
+
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
         override: true
     {{- end }}
+
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, azure, aks, ec2]
+        detectors: [gcp, eks, ec2, aks, azure]
         timeout: 2s
         override: false
-        ec2:
-          resource_attributes:
-            host.name:
-              enabled: false
-      resource:
+
+      resource/newrelic:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
             action: upsert
             value: {{ include "newrelic.common.cluster" . }}
-          - key: newrelicOnly
-            action: upsert
-            value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
-          - key: service.name
-            action: delete
-          - key: service_name
-            action: delete
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
 
       transform/low_data_mode_inator:
         metric_statements:
           - context: metric
             statements:
-              - set(description, "")
-              - set(unit, "")
+              - set(metric.description, "")
+              - set(metric.unit, "")
           - context: datapoint
             statements:
-              - delete_key(attributes, "id")
-              - delete_key(attributes, "name")
-              - delete_key(attributes, "interface")
-              - delete_key(attributes, "cpu")
+              - delete_key(datapoint.attributes, "id")
+              - delete_key(datapoint.attributes, "name")
+              - delete_key(datapoint.attributes, "interface")
+              - delete_key(datapoint.attributes, "cpu")
 
       resource/low_data_mode_inator:
         attributes:
@@ -606,6 +653,7 @@ data:
 
     exporters:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
@@ -614,7 +662,29 @@ data:
 
     connectors:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
-      routing/nr_pipelines:
+
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/egress]
+
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
+        table:
+          - context: metric
+            condition: "true"
+            pipelines: [metrics/egress]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
@@ -637,6 +707,9 @@ data:
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
             pipelines: [metrics/nr]
           - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
+            pipelines: [metrics/nr]
+          - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]
           - context: metric
@@ -648,12 +721,21 @@ data:
       telemetry:
         logs:
           level: "debug"
+        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: '0.0.0.0'
+                    port: 8888
+        {{- end }}
       {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
         {{- if or .Values.receivers.hostmetrics.enabled (or .Values.receivers.kubeletstats.enabled .Values.receivers.prometheus.enabled) }}
-        metrics/all_receivers:
+        metrics/ingress:
           receivers:
             {{- if .Values.receivers.hostmetrics.enabled }}
             - hostmetrics
@@ -664,13 +746,18 @@ data:
             {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
             {{- end }}
+          processors:
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
         metrics/nr:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/kubeletstats
@@ -697,25 +784,26 @@ data:
             {{- else  }}
             - resourcedetection/cloudproviders
             {{- end }}
-            - resource
+            - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/nr_prometheus_cadv_kubelet:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/cadvisor
             - metricstransform/kubelet
+            - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             {{- end }}
@@ -726,7 +814,7 @@ data:
             {{- else  }}
             - resourcedetection/cloudproviders
             {{- end }}
-            - resource
+            - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -735,29 +823,59 @@ data:
             - transform/ksm
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         {{- end }}
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - resource/newrelic
+            - cumulativetodelta
+          exporters:
+            - routing/metrics_egress
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            - transform/extract_runtime
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
             - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
+
         {{- if and .Values.receivers.filelog.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
-        logs:
+        logs/ingress:
           receivers:
             - filelog
           processors:
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.processors" . | nindent 12 }}
+          exporters:
+            - routing/nr_logs_pipelines
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
+          processors:
             - memory_limiter
             - transform/truncate
-            - resource
+            - resource/newrelic
             - k8sattributes/ksm
+          exporters:
+            - routing/logs_egress
+
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
             - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . | nindent 12 }}
+
         {{- end }}
     {{- end }}

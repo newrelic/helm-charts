@@ -1,29 +1,4 @@
 {{- /*
-Return the name of the configMap holding the Agent Control's config. Defaults to release's fill name suffiexed with "-config"
-*/ -}}
-{{- define "newrelic-agent-control.config.name" -}}
-{{- include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" "local-data" "suffix" "agentcontrol-config" ) -}}
-{{- end -}}
-
-
-
-{{- /*
-Test that the value of `.Values.config.subAgents` exists and its valid. If empty, returns the default.
-*/ -}}
-{{- define "newrelic-agent-control.config.agents.yaml" -}}
-{{- $agents := dict -}}
-{{- range $subAgentName, $subAgentConfig := (.Values.config).subAgents -}}
-  {{- if not ($subAgentConfig).type -}}
-    {{- fail (printf "Agent %s does not have agent type" $subAgentName) -}}
-  {{- end -}}
-  {{- $agents = mustMerge $agents (dict $subAgentName $subAgentConfig) -}}
-{{- end -}}
-{{- $agents | toYaml -}}
-{{- end -}}
-
-
-
-{{- /*
 Return to which endpoint should the agent control connect to get fleet_control data
 */ -}}
 {{- define "newrelic-agent-control.config.endpoints.fleet_control" -}}
@@ -43,6 +18,22 @@ Return to which endpoint should the agent control connect to get fleet_control d
 {{- end -}}
 {{- end -}}
 
+{{- /*
+Return to which endpoint should the agent control connect to get the public key for signature validation
+*/ -}}
+{{- define "newrelic-agent-control.config.endpoints.public_key_server_url" -}}
+{{- $region := include "newrelic.common.region" . -}}
+
+{{- if eq $region "Staging" -}}
+  https://staging-publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
+{{- else if eq $region "EU" -}}
+  https://publickeys.eu.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
+{{- else if eq $region "US" -}}
+  https://publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
+{{- else -}}
+  {{- fail "Unknown/unsupported region set for this chart" -}}
+{{- end -}}
+{{- end -}}
 
 
 {{- /*
@@ -65,30 +56,6 @@ Return to which endpoint should the agent control ask to renew its token
 {{- end -}}
 {{- end -}}
 
-
-
-{{- /*
-Return to which endpoint should the agent control register its system identity
-*/ -}}
-{{- define "newrelic-agent-control.config.endpoints.systemIdentityRegistration" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://staging-api.newrelic.com/graphql
-{{- else if eq $region "EU" -}}
-  https://api.eu.newrelic.com/graphql
-{{- else if eq $region "US" -}}
-  https://api.newrelic.com/graphql
-{{- else if eq $region "Local" -}}
-  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.systemIdentityRegistration }}
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
-{{- end -}}
-{{- end -}}
-
-
-
 {{- /*
 Builds the configuration from config on the values and add more config options like
 cluster name, licenses, and custom attributes
@@ -101,12 +68,20 @@ cluster name, licenses, and custom attributes
 {{- $config := dict "server" (dict "enabled" true "port" $statusServerPort "host" $statusServerHost) -}}
 
 {{- /* Add to config k8s cluster and namespace config */ -}}
-{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace) -}}
+{{- $k8s := (dict "cluster_name" (include "newrelic.common.cluster" .) "namespace" .Release.Namespace "namespace_agents" .Values.subAgentsNamespace) -}}
+{{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
+{{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.config.acRemoteUpdate "cd_remote_update" .Values.config.cdRemoteUpdate) -}}
+{{- $k8s = mustMerge $k8s (dict "ac_release_name" .Release.Name "cd_release_name" .Values.config.cdReleaseName) -}}
 {{- $config = mustMerge $config (dict "k8s" $k8s) -}}
+
+{{- with .Values.config.log -}}
+{{- $config = mustMerge $config (dict "log" .) -}}
+{{- end -}}
 
 {{- /* Add fleet_control if enabled */ -}}
 {{- if ((.Values.config).fleet_control).enabled -}}
   {{- $fleet_control := (dict "endpoint" (include "newrelic-agent-control.config.endpoints.fleet_control" .)) -}}
+  {{- $fleet_control = mustMerge $fleet_control (dict "signature_validation" (dict "public_key_server_url" (include "newrelic-agent-control.config.endpoints.public_key_server_url" .) )) -}}
 
   {{- if ((.Values.config).fleet_control).fleet_id -}}
   {{- $fleet_control = mustMerge $fleet_control (dict "fleet_id" ((.Values.config).fleet_control).fleet_id) -}}
@@ -118,15 +93,21 @@ cluster name, licenses, and custom attributes
   {{- $config = mustMerge $config (dict "fleet_control" $fleet_control) -}}
 {{- end -}}
 
-{{- /* Add subagents to the config */ -}}
-{{- $agents := dict -}}
-{{- range $subagent, $object := (include "newrelic-agent-control.config.agents.yaml" . | fromYaml) -}}
-  {{- $agents = mustMerge $agents (dict $subagent (dict "agent_type" $object.type)) -}}
+{{- /* Add Proxy config if url is specified */ -}}
+{{- with .Values.proxy -}}
+  {{- $config = mustMerge $config (dict "proxy" .) -}}
 {{- end -}}
-{{- $config = mustMerge $config (dict "agents" $agents) -}}
 
-{{- /* Overwrite $config with everything in `config.agentControl.content` if present */ -}}
-{{- $config = mustMergeOverwrite $config (deepCopy (((.Values.config).agentControl).content | default dict)) -}}
+{{- /* Add Chart Repo url list to the allowed variants */ -}}
+{{- if (.Values.config.allowedChartRepositoryUrl) -}}
+  {{- $allowedVariants := dict "variants" (dict "chart_repository_urls" .Values.config.allowedChartRepositoryUrl) -}}
+  {{- $config = mustMerge $config (dict "agent_type_var_constraints" $allowedVariants) -}}
+{{- end -}}
+
+{{- $config = mustMerge $config (dict "agents" (.Values.config.agents | default dict)) -}}
+
+{{- /* Overwrite $config with everything in `config.override` if present */ -}}
+{{- $config = mustMergeOverwrite $config (deepCopy ((.Values.config).override | default dict)) -}}
 
 {{- /* Perform configuration validations */ -}}
 {{- if not $config.server.enabled -}}
@@ -136,7 +117,7 @@ cluster name, licenses, and custom attributes
   {{- fail "The status server needs to listen on 0.0.0.0 to be used in container probes" -}}
 {{- end -}}
 {{- if ne (printf "%v" $config.server.port) (printf "%v" $statusServerPort) -}}
-  {{- fail "Setting up the status server port is `.Values.config.agentControl.content` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
+  {{- fail "Setting up the status server port in `.Values.config.override` is not supported because it would conflict with container probes. Use `.Values.config.status_server.port` instead" -}}
 {{- end -}}
 {{- if $config.k8s.chart_version -}}
   {{- fail "The chart version is set automatically via environment variable and should not be set manually" -}}
@@ -167,27 +148,11 @@ readOnlyRootFilesystem: true
 {{- end -}}
 {{- end -}}
 
-
-
 {{- /*
-Return .Values.config.auth.organizationId and fails if it does not exists
-*/ -}}
-{{- define "newrelic-agent-control.auth.organizationId" -}}
-{{- if (((.Values.config).fleet_control).auth).organizationId -}}
-  {{- .Values.config.fleet_control.auth.organizationId -}}
-{{- else -}}
-  {{- fail ".config.fleet_control.auth.organizationId is required" -}}
-{{- end -}}
-{{- end -}}
-
-
-
-{{- /*
-Check if .Values.config.auth.secret.name exists and use it to name auth' secret. If it does not exist, fallback to the name
-of the releases with "-auth" suffix.
+Check if .Values.systemIdentity.secretName exists and use it to name auth secret. If it does not exist, fallback to the name of the releases with "-auth" suffix.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.name" -}}
-{{- $secretName := (((((.Values.config).fleet_control).auth).secret).name) -}}
+{{- $secretName := (.Values.systemIdentity).secretName -}}
 {{- if $secretName -}}
   {{- $secretName -}}
 {{- else -}}
@@ -195,194 +160,76 @@ of the releases with "-auth" suffix.
 {{- end -}}
 {{- end -}}
 
+{{- /*
+Helper to toggle the creation of the job that creates and registers the system identity.
+*/ -}}
+{{- define "newrelic-agent-control.check.system.identity.inputs" -}}
+
+{{- if and (include "newrelic-agent-control.auth.identityClientSecret" .) (include "newrelic-agent-control.auth.identityClientAuthToken" .) -}}
+  {{- fail "You should not specify in .Values.systemIdentity both a identityClientSecret and a identityClientAuthToken" -}}
+{{- end -}}
+
+{{- if and (include "newrelic-agent-control.auth.customIdentitySecretName" .) (include "newrelic-agent-control.auth.parentIdentity" .) -}}
+  {{- fail "You should not specify in .Values.systemIdentity both a secretName and identityClientId identityClientSecret/identityClientAuthToken" -}}
+{{- end -}}
+
+{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
+  {{- fail "You must specify in .Values.systemIdentity a secretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
+{{- end -}}
+
+{{- if not (.Values.systemIdentity).organizationId -}}
+  {{- fail "You should specify .Values.systemIdentity.organizationId" -}}
+{{- end -}}
+
+{{- end -}}
 
 
 {{- /*
 Helper to toggle the creation of the job that creates and registers the system identity.
 */ -}}
 {{- define "newrelic-agent-control.auth.secret.shouldRunJob" -}}
-{{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
-{{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
-
-{{- if and ((.Values.config).fleet_control).enabled ((((.Values.config).fleet_control).auth).secret).create (not $privateKey) (not $clientId) -}}
+{{- if and ((.Values.config).fleet_control).enabled (.Values.systemIdentity).create -}}
   true
 {{- end -}}
 {{- end -}}
 
-
-
-{{- /*
-Helper to toggle the creation of the secret that has the system identity as values.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.shouldTemplate" -}}
-{{- if and ((.Values.config).fleet_control).enabled ((((.Values.config).fleet_control).auth).secret).create -}}
-  {{- $privateKey := include "newrelic-agent-control.auth.secret.privateKey.data" . -}}
-  {{- $clientId := include "newrelic-agent-control.auth.secret.clientId.data" . -}}
-
-  {{- if and $privateKey $clientId -}}
-    true
-  {{- else if or $privateKey $clientId -}}
-    {{- fail "If you provide your own system identity data you have to provide both private key and client id" -}}
-  {{- end -}}
-{{- end -}}
-{{- end -}}
-
-
-
-{{- /*
-Check if .Values.config.auth.secret.private_key.secret_key exists and use it for the key in the secret containing the private
-key needed for the system identity. Fallbacks to `private_key`.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.privateKey.key" -}}
-{{- $key := ((((((.Values.config).fleet_control).auth).secret).private_key).secret_key) -}}
-{{- if $key -}}
-  {{- $key -}}
-{{- else -}}
-  private_key
-{{- end -}}
-{{- end -}}
-
-
-
-{{- /*
-Check if .Values.config.auth.secret.private_key.(plain_pem or base64_pem) exists and use it for as the private certificate for
-auth. If no ceritifcate is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.privateKey.data" -}}
-{{- $plain_pem := ((((((.Values.config).fleet_control).auth).secret).private_key).plain_pem) -}}
-{{- $base64_pem := ((((((.Values.config).fleet_control).auth).secret).private_key).base64_pem) -}}
-{{- if and $plain_pem $base64_pem -}}
-  {{- fail "Only one of base64_pem or plain_pem should be provided it you want to provide your own certificate." -}}
-{{- else if $base64_pem -}}
-  {{- $base64_pem }}
-{{- else if $plain_pem -}}
-  {{- $plain_pem | b64enc -}}
-{{- else -}}
-  {{- /* Empty string */ -}}
-{{- end -}}
-{{- end -}}
-
-
-
-{{- /*
-Check if .Values.config.auth.secret.client_id.secret_key exists and use it for the key in the secret containing the client id
-needed for the system identity. Fallbacks to `client_id`.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.clientId.key" -}}
-{{- $key := ((((((.Values.config).fleet_control).auth).secret).client_id).secret_key) -}}
-{{- if $key -}}
-  {{- $key -}}
-{{- else -}}
-  CLIENT_ID
-{{- end -}}
-{{- end -}}
-
-
-
-{{- /*
-Check if .Values.config.auth.secret.client_id.(plain or base64) exists and use it for as the client id for auth. If no
-value is provided, it defaults to `""` (empty string) so this helper can be used directly as a test.
-*/ -}}
-{{- define "newrelic-agent-control.auth.secret.clientId.data" -}}
-{{- $plain := ((((((.Values.config).fleet_control).auth).secret).client_id).plain) -}}
-{{- $base64 := ((((((.Values.config).fleet_control).auth).secret).client_id).base64) -}}
-{{- if and $plain $base64 -}}
-  {{- fail "Only one of base64 or plain should be provided it you want to provide your own client id." -}}
-{{- else if $base64 -}}
-  {{- $base64 }}
-{{- else if $plain -}}
-  {{- $plain | b64enc -}}
-{{- else -}}
-  {{- /* Empty string */ -}}
-{{- end -}}
-{{- end -}}
-
-{{/* check if both L1 ClientID and ClientSecret are provided */}}
-{{- define "newrelic-agent-control.auth.l1Identity" -}}
-{{- if and (include "newrelic-agent-control.auth.identityClientId" .) (include "newrelic-agent-control.auth.identityClientSecret" .) -}}
+{{/* check if both a ClientID and ClientSecret/ClientAuthToken are provided */}}
+{{- define "newrelic-agent-control.auth.parentIdentity" -}}
+{{- if and (include "newrelic-agent-control.auth.identityClientId" .) (or (include "newrelic-agent-control.auth.identityClientSecret" .) (include "newrelic-agent-control.auth.identityClientAuthToken" .)) -}}
     true
 {{- end -}}
 {{- end -}}
 
-{{/* return L1 ClientID */}}
+{{/* return ClientID */}}
 {{- define "newrelic-agent-control.auth.identityClientId" -}}
-{{- if .Values.identityClientId -}}
-  {{- .Values.identityClientId -}}
+{{- with .Values.systemIdentity.parentIdentity.clientId -}}
+  {{- . -}}
 {{- end -}}
 {{- end -}}
 
-{{/* return L1 ClientSecret */}}
+{{/* return AuthToken */}}
+{{- define "newrelic-agent-control.auth.identityClientAuthToken" -}}
+{{- with .Values.systemIdentity.parentIdentity.authToken -}}
+  {{- . -}}
+{{- end -}}
+{{- end -}}
+
+{{/* return ClientSecret */}}
 {{- define "newrelic-agent-control.auth.identityClientSecret" -}}
-{{- if .Values.identityClientSecret -}}
-  {{- .Values.identityClientSecret -}}
+{{- with .Values.systemIdentity.parentIdentity.clientSecret -}}
+  {{- . -}}
 {{- end -}}
-{{- end -}}
-
-{{- /*
-Return to which endpoint should the agent control register its system identity
-*/ -}}
-{{- define "newrelic-agent-control.config.endpoints.systemIdentityCreation" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://staging-api.newrelic.com/graphql
-{{- else if eq $region "EU" -}}
-  https://api.eu.newrelic.com/graphql
-{{- else if eq $region "US" -}}
-  https://api.newrelic.com/graphql
-{{- else if eq $region "Local" -}}
-  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.systemIdentityCreation }}
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the name key for the ClientId Key inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientIdKeyName" -}}
-{{- include "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" . | default "clientIdKey" -}}
-{{- end -}}
-
-{{/*
-Return the name key for the ClientSecret Key inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.l1IdentityCredentialsKey.clientSecretKeyName" -}}
-{{- include "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" . | default "clientSecretKey" -}}
 {{- end -}}
 
 {{/*
 Return the name of the secret holding the clientdId and ClientSecret
 */}}
 {{- define "newrelic-agent-control.auth.customIdentitySecretName" -}}
-{{- if .Values.customIdentitySecretName -}}
-  {{- .Values.customIdentitySecretName -}}
+{{- with .Values.systemIdentity.parentIdentity.fromSecret -}}
+  {{- . -}}
 {{- end -}}
 {{- end -}}
 
-{{/*
-Return the name key for the ClientID inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientIdKey" -}}
-{{- if .Values.customIdentityClientIdSecretKey -}}
-  {{- .Values.customIdentityClientIdSecretKey -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
-Return the name key for the ClientSecret inside the secret.
-*/}}
-{{- define "newrelic-agent-control.auth.identityCredentialsL1._customClientSecretKey" -}}
-{{- if .Values.customIdentityClientSecretSecretKey -}}
-  {{- .Values.customIdentityClientSecretSecretKey -}}
-{{- end -}}
-{{- end -}}
-
-{{/* Return the generated secret name for the CliendId and ClientSecret*/}}
-{{- define "newrelic.common.userKey.generatedSecretName" -}}
-{{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "preinstall-user-key" ) }}
-{{- end -}}
 
 {{/* Return the custom secret name for the CliendId and ClientSecret with fallback to the generated one */}}
 {{- define "newrelic-agent-control.auth.identityCredentialsSecretName" -}}

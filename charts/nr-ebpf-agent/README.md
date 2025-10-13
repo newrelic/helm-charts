@@ -8,6 +8,8 @@ A Helm chart to monitor a Kubernetes Cluster using the eBPF agent.
 
 1. Download and modify the default configuration file [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml#L1-L4). At minimum, you will need populate the `licenseKey` field with a valid New Relic Ingest key and the `cluster` field with the name of the cluster to monitor.
 
+**NOTE: From chart version 0.2.x onwards, please use the latest [values.yaml](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/values.yaml) bundled with each Helm release. This will ensure compatibility with new features and configuration options.**
+
 Example:
 ```
 licenseKey: "EXAMPLEINGESTLICENSEKEY345878592NRALL"
@@ -80,11 +82,14 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
+| logLevel | string | `INFO` | To configure the log level in increasing order of verboseness. OFF, FATAL, ERROR, WARNING, INFO, DEBUG |
+| logFilePath | string | `""` | To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout. |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
-| dropAPMEnabledPods | bool | `true` | Drop data from pods that are monitored by New Relic APM via auto attach. |
+| dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
 | dropDataIpServiceNames | bool | `true` | Drop data when service names map to an IP address. |
-| dropDataKubeSystem | bool | `true` | Drop data from the kube-system namespace. |
-| dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace. |
+| dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace and newrelic-bundle services. |
+| dropDataForEntity | list | `[]` | list entity to ignore the process monitoring based on `NEW_RELIC_APP_NAME` |
+| dropDataForNamespaces | list | `[]` | List of Kubernetes namespaces for which all data should be dropped by the agent. |
 | dropDataServiceNameRegex | string | `""` | Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b" see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax |
 | ebpfAgent.affinity | object | `{}` | Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity` |
 | ebpfAgent.containerSecurityContext | object | `{}` | Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |
@@ -107,7 +112,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | labels | object | `{}` | Additional labels for chart objects. |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
-| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:4317) by default. Staging (staging-otlp.nr-data.net:4317) otherwise. |
+| nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:443) by default. Staging (staging-otlp.nr-data.net:443) otherwise. |
 | otelCollector.affinity | object | `{}` | Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity` |
 | otelCollector.collector.serviceAccount.annotations | object | `{}` | Annotations for the OTel collector service account. |
 | otelCollector.containerSecurityContext | object | `{}` | Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |
@@ -153,10 +158,9 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | protocols.redis.spans.enabled | bool | `false` |  |
 | protocols.redis.spans.samplingLatency | string | `""` |  |
 | proxy | string | `""` | Configures the agent to send all data through the proxy specified via the otel collector. |
-| pushPeriod | string | `"15"` | - The periodicity in seconds at which the eBPF agent pushes data to the OTel collector for export to NR. The eBPF agent applies a request path clustering algorithm to reduce cardinality in exported HTTP data. The algorithm only looks for similar request paths within data of the same push period. To increase the window under consideration for cardinality reduction, increase this value. Accepted range: 15-60. |
 | stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
 | tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
-| tls.autoGenerateCert.certPath | string | `"/tmp/ebpf/certs/"` | Certificates path. |
+| tls.certPath | string | `"/etc/newrelic-ebpf-agent/certs/"` | Certificates path. |
 | tls.autoGenerateCert.certPeriodDays | int | `365` | Cert validity period time in days. |
 | tls.autoGenerateCert.enabled | bool | `true` | If true, Helm will automatically create a self-signed cert and secret for you. |
 | tls.autoGenerateCert.recreate | bool | `true` | If set to true, a new key/certificate is generated on helm upgrade. |

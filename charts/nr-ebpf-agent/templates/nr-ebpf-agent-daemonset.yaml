@@ -18,7 +18,7 @@ spec:
         component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: ""
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -30,37 +30,90 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+      initContainers:
+      - name: kernel-header-installer
+        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+        command:
+          - "/bin/bash"
+          - "-c"
+          - |
+            # Detect OS and install kernel headers accordingly
+            if [ -f /host/etc/os-release ]; then
+              . /host/etc/os-release
+              if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
+                echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
+                chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
+              elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
+                echo 'Detected Debian/Ubuntu. Installing linux-headers...'
+                chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
+              else
+                echo "Unsupported OS: $ID"
+                echo "Proceeding without kernel header install."
+              fi
+            else
+              echo "/host/etc/os-release not found"
+              echo "Proceeding without kernel header install."
+            fi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-root-volume
+          mountPath: /host
+
       containers:
       - name: nr-ebpf-agent
-        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        image: {{- if .Values.ebpfAgent.image.tag }}
+          {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
-            value: "{{ .Values.stirlingSources }}"
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
-          - name: PL_TABLE_STORE_DATA_LIMIT_MB
+          - name: NEW_RELIC_LOG_LEVEL
+            value: "{{ .Values.logLevel }}"
+          - name: NEW_RELIC_LOG_FILE_PATH
+            value: "{{ .Values.logFilePath }}"
+          - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
-          - name: PX_DISABLE_TLS
+          - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
-            value: "0"
+            value: "true"
           {{- else }}
-            value: "1"
+            value: "false"
           {{- end }}
           {{- if eq .Values.tls.enabled true }}
-          - name: CERT_PATH
-            value: "{{ .Values.tls.autoGenerateCert.certPath }}"
+          - name: TLS_CERT_PATH
+            value: "{{ .Values.tls.certPath }}/"
           {{- end }}
           {{- end }}
+
+          {{- if .Values.ebpfAgent.downloaded_packaged_headers_path }}
+          - name: DOWNLOADED_PACKAGED_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.downloaded_packaged_headers_path }}"
+          {{- end }}
+
+          {{- if .Values.ebpfAgent.distro_kernel_headers_path }}
+          - name: DISTRO_KERNEL_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.distro_kernel_headers_path }}"
+          {{- end }}
+
         securityContext:
           privileged: true
         volumeMounts:
@@ -73,32 +126,34 @@ spec:
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
-            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            mountPath: "{{ .Values.tls.certPath }}/"
             readOnly: true
           {{- end }}
           {{- end }}
       - name: nr-ebpf-client
-        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        image: {{- if .Values.ebpfClient.image.tag }}
+          {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:client-0.2.9
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
         env:
           - name: DEPLOYMENT_NAME
             value: {{ .Values.cluster }}
-          - name: PERIOD
-            value: "{{ .Values.pushPeriod }}"
           - name: HOST_IP
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-          - name: ENDPOINT
+          - name: OTLP_ENDPOINT
             value: {{ include "nr-otel-collector-receiver.endpoint" .}}
           - name: PL_STIRLING_SOURCES
-            value: "{{ .Values.stirlingSources }}"
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{-  if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
-          - name: SAMPLE_HTTP_ERROR_RATE
+          - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
             value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
           {{- end }}
           {{- end }}
@@ -111,19 +166,23 @@ spec:
           # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
           - name: IS_INSECURE
             value: "True"
-          - name: PX_DISABLE_TLS
+          - name: NEW_RELIC_LOG_LEVEL
+            value: "{{ .Values.logLevel }}"
+          - name: NEW_RELIC_LOG_FILE_PATH
+            value: "{{ .Values.logFilePath }}"
+          - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
             {{- if eq .Values.tls.enabled true }}
-            value: "0"
+            value: "true"
             {{- else }}
-            value: "1"
+            value: "false"
             {{- end }}
         {{- if eq .Values.tls.enabled true }}
-          - name: CERT_PATH
-            value: "{{ .Values.tls.autoGenerateCert.certPath }}"
+          - name: TLS_CERT_PATH
+            value: "{{ .Values.tls.certPath }}/"
         volumeMounts:
           - name: cert
-            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            mountPath: "{{ .Values.tls.certPath }}/"
             readOnly: true
         {{- end }}
           {{- end }}
@@ -143,10 +202,6 @@ spec:
         hostPath:
           path: /sys
           type: Directory
-      {{- with include "newrelic.common.nodeSelector" . }}
-      nodeSelector:
-        {{- . | nindent 8 -}}
-      {{- end }}
       {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
@@ -154,6 +209,10 @@ spec:
           defaultMode: 420
           secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
       {{- end }}
+      {{- end }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
       {{- end }}
       {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
       affinity:

@@ -21,7 +21,7 @@ spec:
         component: otel-collector
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: ""
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- with .Values.otelCollector.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -33,6 +33,10 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
@@ -43,7 +47,11 @@ spec:
         securityContext:
           {{- . | nindent 12 }}
         {{- end }}
-        image: {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag | default .Chart.AppVersion }}
+        image: {{- if .Values.otelCollector.image.tag }}
+          {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
+          {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:nr-ebpf-otel-collector_0.0.1
+          {{- end }}
         imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
         ports:
@@ -58,7 +66,7 @@ spec:
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
-            mountPath: "{{ .Values.tls.autoGenerateCert.certPath }}"
+            mountPath: "{{ .Values.tls.certPath }}/"
             readOnly: true
           {{- end }}
           {{- end }}
@@ -73,23 +81,25 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.podIP
-          - name: NR_LICENSE_KEY
+          - name: NEW_RELIC_LICENSE_KEY
             valueFrom:
               secretKeyRef:
                 {{- if (include "newrelic.common.license._licenseKey" .) }}
-                key: NR_LICENSE_KEY
+                key: NEW_RELIC_LICENSE_KEY
                 name: nr-ebpf-agent-secrets
                 {{- else }}
                 name: {{ include "newrelic.common.license._customSecretName" . }}
                 key: {{ include "newrelic.common.license._customSecretKey" . }}
                 {{- end }}
-          - name: NR_OTLP_ENDPOINT
+          - name: FILTER_NAMESPACE_REGEX
+            value: '^({{ .Values.dropDataForNamespaces | join "|" }})$'
+          - name: OTLP_ENDPOINT
             {{- if eq $region "Staging" }}
-            value: "staging-otlp.nr-data.net:4317"
+            value: "staging-otlp.nr-data.net:443"
             {{- else if eq $region "EU" }}
-            value: "otlp.eu01.nr-data.net:4317"
+            value: "otlp.eu01.nr-data.net:443"
             {{- else }}
-            value: "otlp.nr-data.net:4317"
+            value: "otlp.nr-data.net:443"
             {{- end }}
           {{- if .Values.proxy }}
           - name: http_proxy
@@ -115,10 +125,6 @@ spec:
       - name: data
         configMap:
           name: {{ include "nr-ebpf-agent.otelconfig.name" . }}
-      {{- with include "newrelic.common.nodeSelector" . }}
-      nodeSelector:
-        {{- . | nindent 8 -}}
-      {{- end }}
       {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
@@ -126,6 +132,10 @@ spec:
           defaultMode: 420
           secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
       {{- end }}
+      {{- end }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
       {{- end }}
       {{- with include "nrEbpfAgent.otelCollector.affinity" . }}
       affinity:

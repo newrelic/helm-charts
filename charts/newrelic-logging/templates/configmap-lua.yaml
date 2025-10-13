@@ -1,0 +1,10 @@
+{{- if eq (get $.Values.fluentBit "fluentBitMetrics") "basic" }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  namespace: {{ .Release.Namespace }}  
+  name: {{ include "newrelic-logging.fullname" . }}-lua
+data:
+  payload.lua: |-
+{{ .Files.Get "files/scripts/payload.lua" | indent 4 }}
+{{- end }}

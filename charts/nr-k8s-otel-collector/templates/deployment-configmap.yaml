@@ -162,8 +162,44 @@ data:
                 target_label: job_label
                 replacement: scheduler
 
+      {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+      prometheus/collector:
+        config:
+          scrape_configs:
+            - job_name: otel-collector
+              scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
+              static_configs:
+                - targets: ['0.0.0.0:8888']
+              relabel_configs:
+                - action: replace
+                  target_label: job_label
+                  replacement: otel-collector-deployment
+      {{- end }}
+
     processors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
+
+      transform/promote_job_label:
+        metric_statements:
+        - context: datapoint
+          statements:
+          - set(instrumentation_scope.attributes["job_label"], datapoint.attributes["job_label"]) where datapoint.attributes["job_label"] != nil
+
+      transform/remove_routing_metadata:
+        metric_statements:
+          - context: metric
+            statements:
+              - delete_key(instrumentation_scope.attributes, "job_label")
+
+      transform/extract_runtime:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(attributes["container_id"], ".*://.*")
+            statements:
+              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
+              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
 
       groupbyattrs:
         keys:
@@ -223,7 +259,6 @@ data:
           - set(resource.attributes["k8s.replicationcontroller.name"], resource.attributes["replicationcontroller"])
           - set(resource.attributes["k8s.hpa.name"], resource.attributes["horizontalpodautoscaler"])
           - set(resource.attributes["k8s.resourcequota.name"], resource.attributes["resourcequota"])
-          - set(resource.attributes["k8s.volume.name"], resource.attributes["volumename"])
           - set(resource.attributes["k8s.volume.name"], resource.attributes["persistentvolume"])
           - set(resource.attributes["k8s.pvc.name"], resource.attributes["persistentvolumeclaim"])
           - delete_key(resource.attributes, "uid")
@@ -240,9 +275,13 @@ data:
           - delete_key(resource.attributes, "replicationcontroller")
           - delete_key(resource.attributes, "horizontalpodautoscaler")
           - delete_key(resource.attributes, "resourcequota")
-          - delete_key(resource.attributes, "volumename")
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
+
+      transform/ksm_datapoints:
+        metric_statements:
+          - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
+          - delete_key(datapoint.attributes, "volumename")
 
       metricstransform/k8s_cluster_info:
         transforms:
@@ -390,6 +429,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: ^kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: kube_statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas)|status_replicas_(available|current|ready|updated))
             action: update
             match_type: regexp
@@ -408,6 +456,17 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
+        {{- if (index .Values "kube-state-metrics").enableResourceQuotaSamples }}
+          - include: ^kube_resourcequota(_created)?$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+        {{- end }}
 
       metricstransform/apiserver:
         transforms:
@@ -466,7 +525,6 @@ data:
             - metric.name == "kube_deployment_status_condition" and value_double < 0.5
             - metric.name == "kube_pod_container_status_waiting_reason" and value_double < 0.5
 
-
       filter/nr_exclude_zero_value_kube_jobs:
         metrics:
           datapoint:
@@ -476,53 +534,24 @@ data:
             - metric.name == "kube_job_status_active" and value_double < 0.5
             - metric.name == "kube_job_status_succeeded" and value_double < 0.5
 
-
-      resourcedetection/env:
-        detectors: ["env", "system"]
-        override: false
-        system:
-          hostname_sources: ["os"]
-          resource_attributes:
-            host.id:
-            {{- if include "newrelic.common.openShift" . }}
-            # TODO host.id does not work, is it required, does it work on containerized environments?
-            # https://github.com/open-telemetry/opentelemetry-go/pull/4317
-              enabled: false
-            {{- else }}
-              enabled: true
-            {{- end }}
-
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:
         detectors: ["openshift"]
         override: true
     {{- end }}
 
-      resourcedetection/cloudproviders:
-        detectors: [gcp, eks, azure, aks, ec2, ecs]
-        timeout: 2s
-        override: false
-        ec2:
-          resource_attributes:
-            host.name:
-              enabled: false
-
-      resource/metrics:
+      resource/newrelic:
         attributes:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
             action: upsert
             value: {{ include "newrelic.common.cluster" . }}
-          - key: newrelicOnly
-            action: upsert
-            value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
-          - key: service.name
-            action: delete
-          - key: service_name
-            action: delete
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
 
       resource/events:
         attributes:
@@ -535,9 +564,6 @@ data:
           - key: k8s.cluster.name
             action: upsert
             value: {{ include "newrelic.common.cluster" . }}
-          - key: newrelicOnly
-            action: upsert
-            value: 'true'
           - key: "newrelic.chart.version"
             action: upsert
             value: {{ .Chart.Version }}
@@ -546,14 +572,14 @@ data:
         log_statements:
           - context: log
             statements:
-              - set(attributes["event.source.host"], resource.attributes["k8s.node.name"])
+              - set(log.attributes["event.source.host"], resource.attributes["k8s.node.name"])
 
       transform/low_data_mode_inator:
         metric_statements:
           - context: metric
             statements:
-              - set(description, "")
-              - set(unit, "")
+              - set(metric.description, "")
+              - set(metric.unit, "")
 
       resource/low_data_mode_inator:
         attributes:
@@ -569,6 +595,10 @@ data:
             action: delete
 
       cumulativetodelta:
+        exclude:
+          metrics:
+            - 'kube_pod_container_status_restarts_total'
+          match_type: strict
 
       k8sattributes/ksm:
         # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
@@ -691,6 +721,7 @@ data:
 
     exporters:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
@@ -699,21 +730,42 @@ data:
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
-      routing/nr_pipelines:
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/egress]
+
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
+        table:
+          - context: metric
+            condition: "true"
+            pipelines: [metrics/egress]
+
+      routing/nr_metrics_pipelines:
         default_pipelines: [metrics/default]
         error_mode: propagate
         table:
-          - context: datapoint
-            condition: attributes["job_label"] == "kube-state-metrics"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "kube-state-metrics"
             pipelines: [metrics/nr_ksm]
-          - context: datapoint
-            condition: attributes["job_label"] == "apiserver"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "apiserver"
             pipelines: [metrics/nr_controlplane]
-          - context: datapoint
-            condition: attributes["job_label"] == "controller-manager"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "controller-manager"
             pipelines: [metrics/nr_controlplane]
-          - context: datapoint
-            condition: attributes["job_label"] == "scheduler"
+          - context: metric
+            condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
     service:
@@ -721,20 +773,37 @@ data:
       telemetry:
         logs:
           level: "debug"
+        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: '0.0.0.0'
+                    port: 8888
+        {{- end }}
       {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
 
         {{- if .Values.receivers.prometheus.enabled }}
-        metrics/all_receivers:
+        metrics/ingress:
           receivers:
             - prometheus/ksm
             - prometheus/controlplane
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+            - prometheus/collector
+            {{- end }}
+          processors:
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
+            - transform/promote_job_label
           exporters:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
         metrics/nr_ksm:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/kube_pod_container_status_phase
@@ -750,25 +819,22 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-            - resource/metrics
-            - resourcedetection/env
+            - resource/newrelic
             {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
-           # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
-           # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
-            {{- else  }}
-            - resourcedetection/cloudproviders
+            # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
+            # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
             {{- end }}
             - groupbyattrs
             - transform/ksm
+            - transform/ksm_datapoints
             - k8sattributes/ksm
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         metrics/nr_controlplane:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
             - metricstransform/k8s_cluster_info
@@ -780,31 +846,61 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-            - resource/metrics
+            - resource/newrelic
             - attributes/self
             - cumulativetodelta
-            - batch
           exporters:
-            - otlphttp/newrelic
+            - routing/metrics_egress
         {{- end }}
         metrics/default:
           receivers:
-            - routing/nr_pipelines
+            - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - resource/newrelic
+            - cumulativetodelta
+          exporters:
+            - routing/metrics_egress
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            - transform/remove_routing_metadata
+            - transform/extract_runtime
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
             - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
+
+
         {{- if .Values.receivers.k8sEvents.enabled }}
-        logs/events:
+        logs/ingress:
           receivers:
             - k8s_events
+          processors:
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.processors" . | nindent 12 }}
+          exporters:
+            - routing/nr_logs_pipelines
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.exporters" . | nindent 12 }}
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
           processors:
             - memory_limiter
             - transform/events
             - resource/events
+            - resource/newrelic
+          exporters:
+            - routing/logs_egress
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
             - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . | nindent 12 }}
         {{- end }}
     {{- end }}

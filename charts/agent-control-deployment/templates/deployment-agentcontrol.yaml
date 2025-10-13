@@ -69,14 +69,17 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: {{ include "newrelic-agent-control.auth.secret.name" . }}
-                  key: {{ include "newrelic-agent-control.auth.secret.clientId.key" . }}
+                  key: CLIENT_ID
           {{- end }}
           {{- if include "newrelic.common.verboseLog" . }}
             - name: NR_AC_LOG__LEVEL
               value: debug
           {{- end }}
 
-            - name: NR_AC_K8S__CHART_VERSION
+          {{- /* This value is passed to the agent control via Environment Variable to avoid a race condition.
+                 If set via config, after a failed upgrade we could have the "old" pod loading the new config,
+                 and reading the new chart version, while the image is still the old one.*/}}  
+            - name: NR_AC_K8S__CURRENT_CHART_VERSION
               value: {{ .Chart.Version }}
 
           {{- /* ----- Variables used to send data downstream to subagents */}}
@@ -147,7 +150,7 @@ spec:
           secret:
             secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}
             items:
-              - key: {{ include "newrelic-agent-control.auth.secret.privateKey.key" . }}
+              - key: private_key
                 path: from-secret.key
         {{- end }}
         {{- with .Values.extraVolumes }}

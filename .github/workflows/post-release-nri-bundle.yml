@@ -67,7 +67,7 @@ jobs:
     needs: release-notes
     steps:
       - name: Notify release via Slack
-        uses: archive/github-actions-slack@v2.9.0
+        uses: archive/github-actions-slack@v2.10.1
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.HELP_K8S_AGENTS_SLACK_CHANNEL }}
@@ -201,8 +201,8 @@ jobs:
             eks-anywhere-vsphere/Addons/Partner/newrelic/namespace.yaml
             eks-hybrid-nodes/Addons/Partner/newrelic/newrelic.yaml
             eks-hybrid-nodes/Addons/Partner/newrelic/namespace.yaml
-            eks-cloud/Partner/newrelic/newrelic.yaml
-            eks-cloud/Partner/newrelic/namespace.yaml
+            eks-cloud/Addons/Partner/newrelic/newrelic.yaml
+            eks-cloud/Addons/Partner/newrelic/namespace.yaml
           sparse-checkout-cone-mode: false
 
       - name: Configure Git
@@ -224,7 +224,7 @@ jobs:
             'eks-anywhere-snow/Addons/Partner/newrelic'
             'eks-anywhere-vsphere/Addons/Partner/newrelic'
             'eks-hybrid-nodes/Addons/Partner/newrelic'
-            'eks-cloud/Partner/newrelic'
+            'eks-cloud/Addons/Partner/newrelic'
           )
           for directory in "${folders[@]}"; do
             file_name="${directory}/newrelic.yaml"
@@ -255,7 +255,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify failure via Slack
-        uses: archive/github-actions-slack@v2.9.0
+        uses: archive/github-actions-slack@v2.10.1
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}

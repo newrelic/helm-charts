@@ -15,8 +15,8 @@ data:
               {{- if (hasKey .Values "tls") }}
               {{- if eq .Values.tls.enabled true }}
               tls:
-                cert_file: "{{ .Values.tls.autoGenerateCert.certPath }}tls.crt"
-                key_file: "{{ .Values.tls.autoGenerateCert.certPath }}tls.key"
+                cert_file: "{{ .Values.tls.certPath }}/tls.crt"
+                key_file: "{{ .Values.tls.certPath }}/tls.key"
               {{- end }}
               {{- end }}
       processors:
@@ -38,6 +38,8 @@ data:
               - tag_name: apm.pod.label
                 key: newrelic-k8s-agents-operator-version
                 from: pod
+              - key: app.kubernetes.io/instance
+              - key: app.kubernetes.io/name
           pod_association: # Rules to associate the incoming OTel data with a pod. Order matters.
             - sources:
               - from: resource_attribute
@@ -104,23 +106,29 @@ data:
               - 'resource.attributes["k8s.service.name"] == "-" or resource.attributes["k8s.service.name"] == ""'
               - 'resource.attributes["k8s.service.name"] == nil and (resource.attributes["service.name"] == "-" or resource.attributes["service.name"] == "")'
 
-        filter/kube_system: # Drop data from the kube-service namespace
+        filter/namespaces: # Drop data from the kube-service namespace
           error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
           traces:
             span:
-              - 'resource.attributes["k8s.namespace.name"] == "kube-system"'
+              - 'IsMatch(resource.attributes["k8s.namespace.name"], "${FILTER_NAMESPACE_REGEX}")'
           metrics:
             metric:
-              - 'resource.attributes["k8s.namespace.name"] == "kube-system"'
+              - 'IsMatch(resource.attributes["k8s.namespace.name"], "${FILTER_NAMESPACE_REGEX}")'
 
         filter/new_relic: # Drop data from the NewRelic namespace
           error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
           traces:
             span:
               - 'resource.attributes["k8s.namespace.name"] == "newrelic"'
+              - 'resource.attributes["k8s.pod.labels.app.kubernetes.io/instance"] == "newrelic-bundle"'
+              - 'resource.attributes["k8s.pod.labels.app.kubernetes.io/instance"] == "nri-bundle"'
+              - 'IsMatch(resource.attributes["k8s.pod.labels.app.kubernetes.io/name"], "(newrelic-infrastructure|nri-prometheus|newrelic-prometheus-agent|nri-metadata-injection|newrelic-k8s-metrics-adapter|kube-state-metrics|nri-kube-events|newrelic-logging|newrelic-pixie|nr-ebpf-agent|k8s-agents-operator|pixie-operator-chart|newrelic-infra-operator)")'
           metrics:
             metric:
               - 'resource.attributes["k8s.namespace.name"] == "newrelic"'
+              - 'resource.attributes["k8s.pod.labels.app.kubernetes.io/instance"] == "newrelic-bundle"'
+              - 'resource.attributes["k8s.pod.labels.app.kubernetes.io/instance"] == "nri-bundle"'
+              - 'IsMatch(resource.attributes["k8s.pod.labels.app.kubernetes.io/name"], "(newrelic-infrastructure|nri-prometheus|newrelic-prometheus-agent|nri-metadata-injection|newrelic-k8s-metrics-adapter|kube-state-metrics|nri-kube-events|newrelic-logging|newrelic-pixie|nr-ebpf-agent|k8s-agents-operator|pixie-operator-chart|newrelic-infra-operator)")'
 
         filter/ip_named_services: # Drop data where the service name maps to an IP address
           error_mode: ignore # If for some reason this throws an exception we'll log it and not drop data.
@@ -170,19 +178,17 @@ data:
             - key: k8s.cluster.name
               action: insert
               value: $CLUSTER_NAME
-            # Remove the addr/ports.
-            - key: remote_addr
-              action: delete
-            - key: remote_port
-              action: delete
             - key: apm.pod.label
               action: delete
-
+            - key: k8s.pod.labels.app.kubernetes.io/instance
+              action: delete
+            - key: k8s.pod.labels.app.kubernetes.io/name
+              action: delete              
       exporters:
         otlp:
-          endpoint: $NR_OTLP_ENDPOINT
+          endpoint: $OTLP_ENDPOINT
           headers:
-            "api-key": "$NR_LICENSE_KEY"
+            "api-key": "$NEW_RELIC_LICENSE_KEY"
       service:
         {{- if include "newrelic.common.verboseLog" . }}
         telemetry:
@@ -200,8 +206,10 @@ data:
               {{- if .Values.dropAPMEnabledPods}}
               - filter/apm_instrumented_pods
               {{- end}}
-              {{- if .Values.dropDataKubeSystem}}
-              - filter/kube_system
+              {{- if .Values.dropDataForNamespaces}}
+              {{- if gt (len .Values.dropDataForNamespaces) 0 }}
+              - filter/namespaces
+              {{- end}}
               {{- end}}
               {{- if .Values.dropDataNewRelic}}
               - filter/new_relic
@@ -227,8 +235,10 @@ data:
               {{- if .Values.dropAPMEnabledPods}}
               - filter/apm_instrumented_pods
               {{- end}}
-              {{- if .Values.dropDataKubeSystem}}
-              - filter/kube_system
+              {{- if .Values.dropDataForNamespaces}}
+              {{- if gt (len .Values.dropDataForNamespaces) 0 }}
+              - filter/namespaces
+              {{- end}}
               {{- end}}
               {{- if .Values.dropDataNewRelic}}
               - filter/new_relic

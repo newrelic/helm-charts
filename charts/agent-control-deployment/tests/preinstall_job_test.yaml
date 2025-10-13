@@ -11,135 +11,114 @@ tests:
   - it: by default it fails with missing values
     asserts:
       - failedTemplate:
-          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+          errorMessage: You must specify in .Values.systemIdentity a secretName or identityClientId identityClientSecret/identityClientAuthToken
 
-  - it: if userKey is set, it should fail with missing organization id
+
+  - it: it fails with no organizationId
     set:
-      userKey: test
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
     asserts:
       - failedTemplate:
-          errorMessage: .config.fleet_control.auth.organizationId is required
+          errorMessage: You should specify .Values.systemIdentity.organizationId
 
-  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+  - it: by default it fails when specifying conflicting values clientAuth vs clietnSecret
     set:
-      identityCredentialsL1: {}
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
+          authToken: test
+        organizationId: test
     asserts:
       - failedTemplate:
-          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+          errorMessage: You should not specify in .Values.systemIdentity both a identityClientSecret and a identityClientAuthToken
 
-  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+  - it: by default it fails when specifying conflicting values fromSecret vs credendials
     set:
-      identityCredentialsL1:
-        clientId: test
-        clientSecret: ""
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
+          fromSecret: test-client-name
+        organizationId: test
     asserts:
       - failedTemplate:
-          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+          errorMessage: You should not specify in .Values.systemIdentity both a secretName and identityClientId identityClientSecret/identityClientAuthToken
 
-  - it: if identityCredentialsL1 is set but any fields empty, it should fail
+  - it: with fleet disabled, the job should template correctly 0 documents.
     set:
-      identityCredentialsL1:
-        clientId: ""
-        clientSecret: "test"
-    asserts:
-      - failedTemplate:
-          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
-
-  - it: if organizationId is set, it should fail with missing userKey
-    set:
-      config:
+      config:   
         fleet_control:
-          auth:
-            organizationId: test
+          enabled: false
     asserts:
-      - failedTemplate:
-          errorMessage: You must specify a userKey/customUserKeySecretName or l1Identity/customIdentitySecretName
+      - hasDocuments:
+          count: 0
 
-  - it: with legacy userKey set, the job should template correctly.
+  - it: with identityClientId/identityClientSecret set, the job should template correctly.
     set:
-      userKey: test
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          clientSecret: test
+        organizationId: test
+            
     asserts:
       - hasDocuments:
           count: 5 # Secret, job, and 3 RBAC manifests
+      - documentIndex: 0
+        equal:
+          path: data
+          value:
+            NEW_RELIC_AUTH_CLIENT_ID: dGVzdA==
+            NEW_RELIC_AUTH_CLIENT_SECRET: dGVzdA==
+            NEW_RELIC_AUTH_TOKEN: null
       - documentIndex: 1
         isNotNullOrEmpty:
           path: spec.template.spec.containers[0].args
       - documentIndex: 1
         equal:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.containers[0].envFrom
           value:
-            - name: USER_KEY
-              valueFrom:
-                secretKeyRef:
-                  key: userKey
-                  name: agent-control-preinstall-user-key
+            - secretRef:
+                name: agent-control-preinstall-client-credentials
 
-  - it: with identityCredentialsL1 set, the job should template correctly.
+  - it: with identityClientId/identityClientAuthToken set, the job should template correctly.
     set:
-      identityClientId: test
-      identityClientSecret: test
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
+      systemIdentity:
+        parentIdentity:
+          clientId: test
+          authToken: test
+        organizationId: test  
+       
     asserts:
       - hasDocuments:
           count: 5 # Secret, job, and 3 RBAC manifests
+      - documentIndex: 0
+        equal:
+          path: data
+          value:
+            NEW_RELIC_AUTH_CLIENT_ID: dGVzdA==
+            NEW_RELIC_AUTH_CLIENT_SECRET: null
+            NEW_RELIC_AUTH_TOKEN: dGVzdA==
       - documentIndex: 1
         isNotNullOrEmpty:
           path: spec.template.spec.containers[0].args
       - documentIndex: 1
         equal:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.containers[0].envFrom
           value:
-            - name: NEW_RELIC_AUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: clientIdKey
-                  name: agent-control-preinstall-client-credentials
-            - name: NEW_RELIC_AUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: clientSecretKey
-                  name: agent-control-preinstall-client-credentials
-
-  - it: with a custom secret for userKey, the secret should not be created.
-    set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-    asserts:
-      - hasDocuments:
-          count: 4 # With everything rendered it should be 5
-      - documentIndex: 0
-        isNotNullOrEmpty:
-          path: spec.template.spec.containers[0].args
-      - documentIndex: 0
-        contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: USER_KEY
-            valueFrom:
-              secretKeyRef:
-                name: test-secret
-                key: test-key
+            - secretRef:
+                name: agent-control-preinstall-client-credentials
 
   - it: with a custom secret for clientId and clientSecret, the secret should not be created.
     set:
-      customIdentitySecretName: test-client-name
-      customIdentityClientIdSecretKey: test-client-id-key
-      customIdentityClientSecretSecretKey: test-client-secret-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
+      systemIdentity:
+        parentIdentity:
+          fromSecret: test-client-name
+        organizationId: test  
     asserts:
       - hasDocuments:
           count: 4 # With everything rendered it should be 5
@@ -148,96 +127,17 @@ tests:
           path: spec.template.spec.containers[0].args
       - documentIndex: 0
         equal:
-          path: spec.template.spec.containers[0].env
+          path: spec.template.spec.containers[0].envFrom
           value:
-            - name: NEW_RELIC_AUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: test-client-id-key
-                  name: test-client-name
-            - name: NEW_RELIC_AUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: test-client-secret-key
-                  name: test-client-name
-
-  - it: with a custom secret for userKey and clientId and clientSecret, the secret should not be created.
-    set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      customIdentitySecretName: test-client-name
-      customIdentityClientIdSecretKey: test-client-id-key
-      customIdentityClientSecretSecretKey: test-client-secret-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-    asserts:
-      - hasDocuments:
-          count: 4 # With everything rendered it should be 5
-      - documentIndex: 0
-        isNotNullOrEmpty:
-          path: spec.template.spec.containers[0].args
-      - documentIndex: 0
-        equal:
-          path: spec.template.spec.containers[0].env
-          value:
-            - name: USER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: test-secret
-                  key: test-key
-            - name: NEW_RELIC_AUTH_CLIENT_ID
-              valueFrom:
-                secretKeyRef:
-                  key: test-client-id-key
-                  name: test-client-name
-            - name: NEW_RELIC_AUTH_CLIENT_SECRET
-              valueFrom:
-                secretKeyRef:
-                  key: test-client-secret-key
-                  name: test-client-name
-
-  - it: without specific image for system identity registration, uses the one provided by default
-    set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-    asserts:
-      - documentIndex: 0
-        equal:
-          path: spec.template.spec.containers[0].image
-          value: newrelic/agent-control-system-identity-registration:latest
-
-  - it: setting specific image for system identity registration but no tag should use the default tag
-    set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-      systemIdentityRegistration:
-        image:
-          repository: some_namespace/test-image
-    asserts:
-      - documentIndex: 0
-        equal:
-          path: spec.template.spec.containers[0].image
-          value: some_namespace/test-image:latest
+            - secretRef:
+                name: test-client-name
 
   - it: setting specific image for system identity registration with tag should use the provided tag
     set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-      systemIdentityRegistration:
+      systemIdentity:
+        parentIdentity:
+          fromSecret: test-client-name
+        organizationId: test  
         image:
           tag: 1.0.0
     asserts:
@@ -248,13 +148,10 @@ tests:
 
   - it: setting specific image for system identity registration with tag should use the provided data
     set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-      systemIdentityRegistration:
+      systemIdentity:
+        parentIdentity:
+          fromSecret: test-client-name
+        organizationId: test  
         image:
           repository: some_namespace/test-image
           tag: 1.0.0
@@ -266,13 +163,10 @@ tests:
 
   - it: setting specific pullPolicy for system identity registration image should use the provided data
     set:
-      customUserKeySecretName: test-secret
-      customUserKeySecretKey: test-key
-      config:
-        fleet_control:
-          auth:
-            organizationId: test
-      systemIdentityRegistration:
+      systemIdentity:
+        parentIdentity:
+          fromSecret: test-client-name
+        organizationId: test  
         image:
           pullPolicy: Always
     asserts:
