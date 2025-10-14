@@ -18,13 +18,13 @@ sources:
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 6.0.14
+version: 6.0.16
 
 dependencies:
   - name: newrelic-infrastructure
     repository: https://newrelic.github.io/nri-kubernetes
     condition: infrastructure.enabled,newrelic-infrastructure.enabled
-    version: 3.50.2
+    version: 3.50.4
 
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
@@ -74,7 +74,7 @@ dependencies:
   - name: k8s-agents-operator
     repository: https://newrelic.github.io/k8s-agents-operator
     condition: k8s-agents-operator.enabled
-    version: 0.31.1
+    version: 0.31.2
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
   # olm_crd.yaml and px.dev_viziers.yaml in
@@ -88,7 +88,7 @@ dependencies:
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 2.15.1
+    version: 2.16.0
 
 maintainers:
   - name: Philip-R-Beckwith

@@ -456,6 +456,17 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
+        {{- if (index .Values "kube-state-metrics").enableResourceQuotaSamples }}
+          - include: ^kube_resourcequota(_created)?$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+        {{- end }}
 
       metricstransform/apiserver:
         transforms:
