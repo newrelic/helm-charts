@@ -57,42 +57,42 @@ spans:
   mysql:
 enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   pgsql:
 enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   cass:
 enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   redis:
 enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   mongodb:
 enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   kafka:
-enabled: false
+enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   amqp:
-enabled: false
+enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
   dns:
-enabled: false
+enabled: true
 spans:
-  enabled: false
+  enabled: true
   samplingLatency: ""
 
 
@@ -124,11 +124,15 @@ requests:
   podSecurityContext: {}
   # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
   containerSecurityContext: {}
-  # Sets the path of the directory where the required linux headers are downloaded and placed for the eBPF agent to use.
+  # Sets the absolute path of the complete directory where the required linux headers are manually downloaded and placed for the eBPF agent to use.
   # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
-  downloaded_packaged_headers_path: ""
-  # Sets the path of the installed distribution linux headers. This is useful when auto discovery of distribution linux headers path fails.
-  distro_kernel_headers_path: ""
+  # The absolute path in case of K8s should also be prepended with /host when necessary.
+  # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
+  downloadedPackagedHeadersPath: ""
+  # Sets the absolute path of the complete directory where the linux headers are present for the eBPF agent to use.
+  # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
+  # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
+  distroKernelHeadersPath: ""
 
 
 # Configuration to apply on the eBPF client daemonset.
