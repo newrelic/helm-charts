@@ -91,6 +91,12 @@ spec:
             value: "{{ .Values.logFilePath }}"
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
+          - name: APPLICATION_LOG_MAX_SAMPLES_STORED
+            value: "{{ .Values.applicationLogMaxSamplesStored }}"
+          - name: APPLICATION_LOG_FORWARDING_ENABLED
+            value: "{{ .Values.applicationLogForwardingEnabled }}"          
+          - name: APPLICATION_LOG_FILE_REGEX
+            value: "{{ .Values.applicationLogFileRegex }}"
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}

@@ -39,7 +39,9 @@ tableStoreDataLimitMB: "250"
 # Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
 # while tcp_stats tracks TCP metrics.
 # stirlingSources: "socket_tracer,tcp_stats"
-
+applicationLogMaxSamplesStored: "10000"
+applicationLogForwardingEnabled: "true"
+applicationLogFileRegex: ".*\\.log$"
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.
 # Metrics are sent by default when a protocol is enabled and it supports metrics. Note: AMQP, Kafka, DNS do not report metrics.
