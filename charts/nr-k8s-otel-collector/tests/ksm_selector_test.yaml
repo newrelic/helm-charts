@@ -1,0 +1,106 @@
+suite: ksmSelector
+templates:
+  - templates/deployment-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: uses default KSM selector when not specified
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "regex: kube-state-metrics"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_name"
+        template: templates/deployment-configmap.yaml
+
+  - it: uses custom KSM selector when specified
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      receivers:
+        prometheus:
+          ksmSelector: "app.kubernetes.io/instance=my-custom-ksm"
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "regex: my-custom-ksm"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_instance"
+        template: templates/deployment-configmap.yaml
+
+  - it: handles custom selector with different label key
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      receivers:
+        prometheus:
+          ksmSelector: "custom.label/name=test-value"
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "regex: test-value"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "__meta_kubernetes_pod_label_custom_label_name"
+        template: templates/deployment-configmap.yaml
+
+  - it: handles selector with hyphens in label name
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      receivers:
+        prometheus:
+          ksmSelector: "app-name=ksm-prod"
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "regex: ksm-prod"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app-name"
+        template: templates/deployment-configmap.yaml
+
+  - it: uses default selector when receivers.prometheus is set but ksmSelector is not
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      receivers:
+        prometheus:
+          enabled: true
+          scrapeInterval: 30s
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "regex: kube-state-metrics"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_name"
+        template: templates/deployment-configmap.yaml
+
+  - it: correctly formats label key with dots and slashes
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      receivers:
+        prometheus:
+          ksmSelector: "io.kubernetes.pod.name/instance=test"
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "__meta_kubernetes_pod_label_io_kubernetes_pod_name_instance"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "regex: test"
+        template: templates/deployment-configmap.yaml
