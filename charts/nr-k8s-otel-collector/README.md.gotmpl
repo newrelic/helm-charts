@@ -79,23 +79,6 @@ If using OpenShift, please set the following configuration in your values.yaml f
 provider: "OPEN_SHIFT"
 ```
 
-## Multiple kube-state-metrics instances
-
-If you have multiple kube-state-metrics instances running in your cluster (for example, running both nri-bundle and nr-k8s-otel-collector), you can configure the prometheus scraper to target a specific instance using a custom label selector. This prevents duplicate metrics from being scraped.
-
-By default, the chart discovers kube-state-metrics using the label `app.kubernetes.io/name=kube-state-metrics`. You can override this with a custom label selector:
-
-```yaml
-receivers:
-  prometheus:
-    ksmSelector: "app.kubernetes.io/instance=my-custom-ksm"
-```
-
-This is particularly useful when:
-- Running both nri-bundle and nr-k8s-otel-collector simultaneously during migration
-- You have customized labels on your kube-state-metrics deployment
-- You need to target a specific kube-state-metrics instance in a multi-tenant environment
-
 ## Helmless installation
 In the event that you cannot use helm to install this chart we have provided rendered files for you.
 The rendered files can be found under [examples/k8s/rendered](examples/k8s/rendered).
