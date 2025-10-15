@@ -30,7 +30,7 @@ data:
                   source_labels:
                   - __meta_kubernetes_pod_label_{{ include "nrKubernetesOtel.receivers.prometheus.ksmSelector.labelKey" . }}
                 {{- if include "newrelic.common.openShift" . }}
-                # this is targeting our ksm deployment label {{ include "nrKubernetesOtel.receivers.prometheus.ksmSelector.fullSelector" . }}
+                # this is targeting our ksm deployment label app_kubernetes_io_name=kube-state-metrics
                 - action: keep
                   source_labels:
                   - __address__
