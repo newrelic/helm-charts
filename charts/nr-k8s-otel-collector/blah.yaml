@@ -1,0 +1,49 @@
+#apiVersion: apps/v1
+#kind: DaemonSet
+#metadata:
+#  name: busybox-daemonset
+#spec:
+#  selector:
+#    matchLabels:
+#      app: busybox
+#  template:
+#    metadata:
+#      labels:
+#        app: busybox
+#    spec:
+#      containers:
+#        - name: busybox
+#          image: busybox:latest
+#          command: ["/bin/sh", "-c", "while true; do date; sleep 5; done"]
+#          resources:
+#            limits:
+#              cpu: "100m"
+#              memory: "64Mi"
+#            requests:
+#              cpu: "50m"
+#              memory: "32Mi"
+#---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: busybox-daemonset2
+spec:
+  selector:
+    matchLabels:
+      app: busybox
+  template:
+    metadata:
+      labels:
+        app: busybox
+    spec:
+      containers:
+        - name: busybox
+          image: busybox:latest
+          command: ["/bin/sh", "-c", "while true; do date; sleep 5; done"]
+          resources:
+            limits:
+              cpu: "75m"
+              memory: "70Mi"
+            requests:
+              cpu: "50m"
+              memory: "32Mi"
