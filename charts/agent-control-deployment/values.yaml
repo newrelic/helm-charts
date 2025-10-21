@@ -1,5 +1,5 @@
 # -- Override the name of the chart used to template resource names.
-# @default -- See `values.yaml`
+# @default -- See <a href="values.yaml">values.yaml</a>
 nameOverride: "agent-control"
 # -- Name of the Kubernetes cluster monitored. Can be configured also with `global.cluster`.
 cluster: ""
@@ -15,7 +15,7 @@ customSecretLicenseKey: ""
 subAgentsNamespace: "newrelic"
 
 # -- Image for the New Relic Agent Control
-# @default -- See `values.yaml`
+# @default -- See <a href="values.yaml">values.yaml</a>
 image:
   registry:
   repository: newrelic/newrelic-agent-control
@@ -36,7 +36,7 @@ extraVolumes: []
 extraVolumeMounts: []
 
 # -- Settings controlling ServiceAccount creation.
-# @default -- See `values.yaml`
+# @default -- See <a href="values.yaml">values.yaml</a>
 serviceAccount:
   # -- Whether the chart should automatically create the ServiceAccount objects required to run.
   create: true
@@ -89,38 +89,64 @@ nrStaging:
 # @default -- `false`
 verboseLog:
 
-# -- proxy configuration. It is propagated to both the system identity creation job, and to the agent control instance
+# -- (object) proxy configuration. It is propagated to both the system identity creation job, and to the agent control instance
+# @raw
+# If set possible values are:
+#
+# ```yaml
+# proxy:
+#   # Proxy URL proxy <protocol>://<host>:<port>
+#   url:
+#   # System path with the CA certificates in PEM format. All `.pem` files in the directory are read.
+#   ca_bundle_dir:
+#   # System path with the CA certificate in PEM format
+#   ca_bundle_file:
+# ```
+#
 proxy:
-  # -- Proxy URL proxy <protocol>://<host>:<port>
   # url:
-  # -- System path with the CA certificates in PEM format. All `.pem` files in the directory are read.
   # ca_bundle_dir:
-  # -- System path with the CA certificate in PEM format.
   # ca_bundle_file:
 
 # -- AgentControl config options used to generate the configFile passed to the binary.
 # You can overwrite the configFile generated with a raw one via config.override
-# @default -- See `values.yaml`
+# @default -- See <a href="values.yaml">values.yaml</a>
 config:
   # -- List of managed agents that will be deployed.
   # The key represents the name of the agent that should used when defining its configuration.
-  # @default -- `{}` (See `values.yaml`)
-  agents:
+  # @raw
   # In the example below, open-telemetry is a managed agent that will be deployed.
+  #
+  # ```yaml
   # agents:
   #   open-telemetry:
   #     # -- Agent type <namespace>/<name>:<version>
-  #     agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
+  #     agent_type: agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
+  # ```
+  #
+  # @default -- `{}` (See <a href="values.yaml">values.yaml</a>)
+  agents:
 
   # -- Log configuration. The log level can be overwritten as well via verboseLog
-  # @default -- `{}` (See `values.yaml`)
+  # @raw
+  # Example:
+  #
+  # ```yaml
+  # log:
+  #   format:
+  #     formatter: json
+  #   level: debug
+  #   insecure_fine_grained_level: debug
+  # ```
+  #
+  # @default -- `{}` (See <a href="values.yaml">values.yaml</a>)
   log:
   #   level:
   #   format:
   #   insecure_fine_grained_level:
 
   # -- Set the status server port
-  # @default -- See `values.yaml`
+  # @default -- See <a href="values.yaml">values.yaml</a>
   status_server:
     port: 51200
 
@@ -135,7 +161,9 @@ config:
   cdReleaseName: agent-control-cd
 
   # -- List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories.
-  # @default -- `[]`(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"])
+  #
+  # `(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"])
+  # @default -- `[]`
   allowedChartRepositoryUrl: []
 
   fleet_control:
@@ -151,25 +179,30 @@ config:
 
 # -- List of managed agents configs.
 # The key represents the name of the agent that should match the one specified in .config.agents.
-# @default -- `{}` (See `values.yaml`)
-agentsConfig: {}
+# @raw
 # In the example below, open-telemetry configuration is specified.
+#
+# ```yaml
 # agentsConfig:
 #   open-telemetry:
 #     # -- Version of the newrelic/nr-k8s-otel-collector Helm Chart.
 #     chart_version: "0.8.44"
 #     # -- Values to be passed to the newrelic/nr-k8s-otel-collector Helm Chart.
-#     # By default the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
+#     # By default, the Agent type already has the `licenseKey` and `cluster` values set to the ones provided,
 #     # so it is not necessary to set them here.
 #     chart_values:
 #       nr-k8s-otel-collector: {}
 #       global: {}
+# ```
+#
+# @default -- `{}` (See <a href="values.yaml">values.yaml</a>)
+agentsConfig: {}
 
 # -- Configuration for the system identity registration process.
 # These options provides the required data to run the pre-install job that creates the system identitythat is used when communicating via OpAMP.
 # System identity registration is executed only once. Subsequent upgrades will not attempt to create the identity again.
 # Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired.
-# @default -- See `values.yaml`
+# @default -- See <a href="values.yaml">values.yaml</a>
 systemIdentity:
   # -- Set it to false to disable the registration of a new system identity.
   # Set this to `false` to configure a pre-existing system identity via secret.
@@ -191,6 +224,7 @@ systemIdentity:
   # -- Configuration for the parent identity
   # You can either authenticate via ClientId/ClientSecret or pass directly an `AuthToken` and manage locally the authentication.
   # The authToken can be retrieve via the cli command "newrelic-auth-cli authenticate ...".
+  # @default -- See <a href="values.yaml">values.yaml</a>
   parentIdentity:
     # -- Identity clientId to use.
     clientId: ""
