@@ -49,9 +49,9 @@ spec:
         {{- end }}
         image: {{- if .Values.otelCollector.image.tag }}
           {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
-          {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:nr-ebpf-otel-collector_0.0.1
-          {{- end }}
+        {{- else }}
+          {{ .Values.otelCollector.image.repository }}:nr-ebpf-otel-collector_0.0.1
+        {{- end }}
         imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
         ports:
