@@ -18,6 +18,23 @@ Return to which endpoint should the agent control connect to get fleet_control d
 {{- end -}}
 {{- end -}}
 
+{{- /*
+Return to which endpoint should the agent control connect to get the public key for signature validation
+*/ -}}
+{{- define "newrelic-agent-control.config.endpoints.public_key_server_url" -}}
+{{- $region := include "newrelic.common.region" . -}}
+
+{{- if eq $region "Staging" -}}
+  https://staging-publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
+{{- else if eq $region "EU" -}}
+  https://publickeys.eu.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
+{{- else if eq $region "US" -}}
+  https://publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
+{{- else -}}
+  {{- fail "Unknown/unsupported region set for this chart" -}}
+{{- end -}}
+{{- end -}}
+
 
 {{- /*
 Return to which endpoint should the agent control ask to renew its token
@@ -64,6 +81,7 @@ cluster name, licenses, and custom attributes
 {{- /* Add fleet_control if enabled */ -}}
 {{- if ((.Values.config).fleet_control).enabled -}}
   {{- $fleet_control := (dict "endpoint" (include "newrelic-agent-control.config.endpoints.fleet_control" .)) -}}
+  {{- $fleet_control = mustMerge $fleet_control (dict "signature_validation" (dict "public_key_server_url" (include "newrelic-agent-control.config.endpoints.public_key_server_url" .) )) -}}
 
   {{- if ((.Values.config).fleet_control).fleet_id -}}
   {{- $fleet_control = mustMerge $fleet_control (dict "fleet_id" ((.Values.config).fleet_control).fleet_id) -}}

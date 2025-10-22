@@ -18,7 +18,7 @@ spec:
         component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: ""
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -40,7 +40,7 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
         command:
           - "/bin/bash"
           - "-c"
@@ -73,7 +73,7 @@ spec:
         image: {{- if .Values.ebpfAgent.image.tag }}
           {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
         {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+          docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
@@ -104,14 +104,14 @@ spec:
           {{- end }}
           {{- end }}
 
-          {{- if .Values.ebpfAgent.downloaded_packaged_headers_path }}
+          {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
           - name: DOWNLOADED_PACKAGED_HEADERS_PATH
-            value: "{{ .Values.ebpfAgent.downloaded_packaged_headers_path }}"
+            value: "{{ .Values.ebpfAgent.downloadedPackagedHeadersPath }}"
           {{- end }}
 
-          {{- if .Values.ebpfAgent.distro_kernel_headers_path }}
+          {{- if .Values.ebpfAgent.distroKernelHeadersPath }}
           - name: DISTRO_KERNEL_HEADERS_PATH
-            value: "{{ .Values.ebpfAgent.distro_kernel_headers_path }}"
+            value: "{{ .Values.ebpfAgent.distroKernelHeadersPath }}"
           {{- end }}
 
         securityContext:
@@ -134,7 +134,7 @@ spec:
         image: {{- if .Values.ebpfClient.image.tag }}
           {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
         {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:client-0.2.9
+          docker.io/newrelic/newrelic-ebpf-agent:client-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
