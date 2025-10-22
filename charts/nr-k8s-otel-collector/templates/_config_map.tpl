@@ -247,7 +247,7 @@
 {{- define "nrKubernetesOtel.receivers.prometheus.ksmSelector.labelKey" -}}
     {{- $ksmSelector := .Values.receivers.prometheus.ksmSelector | default "app.kubernetes.io/name=kube-state-metrics" -}}
     {{- $parts := split "=" $ksmSelector -}}
-    {{- $parts._0 | replace "." "_" | replace "/" "_" -}}
+    {{- mustRegexReplaceAll "[^a-zA-Z0-9_]" $parts._0 "_" -}}
 {{- end -}}
 
 {{- /* Parse KSM selector and return the label value */ -}}
