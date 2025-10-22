@@ -40,9 +40,9 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: {{- if .Values.ebpfAgent.image.tag }}
+        image: {{ if .Values.ebpfAgent.image.tag -}}
           {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
-        {{- else }}
+        {{- else -}}
           {{ .Values.ebpfAgent.image.repository }}:agent-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
@@ -75,9 +75,9 @@ spec:
 
       containers:
       - name: nr-ebpf-agent
-        image: {{- if .Values.ebpfAgent.image.tag }}
+        image: {{ if .Values.ebpfAgent.image.tag -}}
           {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
-        {{- else }}
+        {{- else -}}
           {{ .Values.ebpfAgent.image.repository }}:agent-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
@@ -136,9 +136,9 @@ spec:
           {{- end }}
           {{- end }}
       - name: nr-ebpf-client
-        image: {{- if .Values.ebpfClient.image.tag }}
+        image: {{ if .Values.ebpfClient.image.tag -}}
           {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
-        {{- else }}
+        {{- else -}}
           {{ .Values.ebpfClient.image.repository }}:client-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
