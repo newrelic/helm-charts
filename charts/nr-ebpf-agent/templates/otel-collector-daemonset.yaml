@@ -47,9 +47,9 @@ spec:
         securityContext:
           {{- . | nindent 12 }}
         {{- end }}
-        image: {{- if .Values.otelCollector.image.tag }}
+        image: {{ if .Values.otelCollector.image.tag -}}
           {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
-        {{- else }}
+        {{- else -}}
           {{ .Values.otelCollector.image.repository }}:nr-ebpf-otel-collector_0.0.1
         {{- end }}
         imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
