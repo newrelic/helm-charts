@@ -394,3 +394,13 @@ template: templates/deployment-configmap.yaml
   pattern: |
 ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
 template: templates/daemonset-configmap.yaml
+  - it: uses default KSM selector when not specified
+set:
+  cluster: my-cluster
+  licenseKey: us-whatever
+asserts:
+  - template: templates/deployment-configmap.yaml
+matchRegex:
+  path: data["deployment-config.yaml"]
+  pattern: |
+^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+***REMOVED*** kube-state-metrics\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+

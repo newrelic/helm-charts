@@ -985,6 +985,7 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_state_started   | Gauge | Whether the Pod container has started (1) or not (0).|
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_exitcode | Gauge | Exit code of the last terminated state of the container. |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_reason   | Gauge | Reason for the last termination of the container.|
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_timestamp| Gauge | Last terminated time for a pod container in unix timestamp.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_phase| Gauge | Current phase of the Pod container.  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_ready| Gauge | Whether the Pod container is ready (1) or not (0).   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_restarts_total   | Counter   | Total number of restarts for the Pod container.  |
