@@ -28,9 +28,9 @@ data:
                 - role: pod
               relabel_configs:
                 - action: keep
-                  regex: kube-state-metrics
+                  regex: {{ include "nrKubernetesOtel.receivers.prometheus.ksmSelector.labelValue" . }}
                   source_labels:
-                  - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                  - __meta_kubernetes_pod_label_{{ include "nrKubernetesOtel.receivers.prometheus.ksmSelector.labelKey" . }}
                 {{- if include "newrelic.common.openShift" . }}
                 # this is targeting our ksm deployment label app_kubernetes_io_name=kube-state-metrics
                 - action: keep
