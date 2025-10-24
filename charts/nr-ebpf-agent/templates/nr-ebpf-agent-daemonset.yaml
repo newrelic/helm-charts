@@ -91,6 +91,10 @@ spec:
             value: "{{ .Values.logFilePath }}"
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
+          - name: APM_DATA_REPORTING
+            value: "{{ .Values.apmDataReporting }}"
+          - name: TCP_STATS_REPORTING
+            value: "{{ .Values.tcpStatsReporting }}"
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
