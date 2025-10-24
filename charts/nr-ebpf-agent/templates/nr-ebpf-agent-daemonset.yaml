@@ -77,7 +77,7 @@ spec:
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
-            value: "{{ .Values.stirlingSources | default \"socket_tracer,tcp_stats\" }}"
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
@@ -122,7 +122,7 @@ spec:
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
           - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
-            value: "{{ .Values.protocols.http.spans.samplingErrorRate | default \"0\"}}"
+            value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
           {{- end }}
           {{- end }}
           - name: NAMESPACE
