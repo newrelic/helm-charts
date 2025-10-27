@@ -17,6 +17,18 @@ kube-state-metrics:
   prometheusScrape: false
   # -- Enable resource quota data exporting
   enableResourceQuotaSamples: false
+  # kube-state-metrics.metricLabelsAllowlist -- List of Kubernetes label keys that will be used in the resources' labels metric.
+  # By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels
+  # should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]".
+  # Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"]
+  # @default -- `[]`
+  metricLabelsAllowlist: []
+  # kube-state-metrics.metricAnnotationsAllowList -- List of Kubernetes annotation keys that will be used in the resources' annotations metric.
+  # By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations
+  # should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]".
+  # Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"]
+  # @default -- `[]`
+  metricAnnotationsAllowList: []
 
 # This chart has support for OpenShift and GKE Autopilot.
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
