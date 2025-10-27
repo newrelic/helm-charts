@@ -62,6 +62,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_deployment_status_replicas_ready                      | Gauge   | Number of ready replicas for the Deployment.                                   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_deployment_status_replicas_unavailable                | Gauge   | Number of unavailable replicas for the Deployment.                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_deployment_status_replicas_updated                    | Gauge   | Number of updated replicas for the Deployment.                                 |
+| KubeStateMetrics   | Prometheus Receiver   | kube_deployment_labels                                     | Gauge   | Kubernetes labels attached to Deployments (requires metricLabelsAllowlist).   |
+| KubeStateMetrics   | Prometheus Receiver   | kube_deployment_annotations                                | Gauge   | Kubernetes annotations attached to Deployments (requires metricAnnotationsAllowList). |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_spec_max_replicas             | Gauge   | Maximum number of replicas for the HorizontalPodAutoscaler.                    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_spec_min_replicas             | Gauge   | Minimum number of replicas for the HorizontalPodAutoscaler.                    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_horizontalpodautoscaler_status_condition              | Gauge   | Status conditions of the HorizontalPodAutoscaler.                              |
@@ -79,6 +81,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_status_failed                                     | Gauge   | Number of failed pods for the Job.                                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_status_start_time                                 | Gauge   | Start time of the Job.                                                         |
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_status_succeeded                                  | Gauge   | Number of succeeded pods for the Job.                                          |
+| KubeStateMetrics   | Prometheus Receiver   | kube_namespace_labels                                      | Gauge   | Kubernetes labels attached to Namespaces (requires metricLabelsAllowlist).    |
+| KubeStateMetrics   | Prometheus Receiver   | kube_namespace_annotations                                 | Gauge   | Kubernetes annotations attached to Namespaces (requires metricAnnotationsAllowList). |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_allocatable                               | Gauge   | Allocatable resources of the Node.                                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_capacity                                  | Gauge   | Capacity of the Node.                                                          |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_condition                                 | Gauge   | Condition of the Node's status.                                                |
@@ -111,6 +115,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_ready_time                                 | Gauge   | Time when the Pod status became ready.                                         |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled                                  | Gauge   | Whether the Pod is scheduled (1) or not (0).                                   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled_time                             | Gauge   | Time when the Pod became scheduled.                                            |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_labels                                            | Gauge   | Kubernetes labels attached to Pods (requires metricLabelsAllowlist).          |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_annotations                                       | Gauge   | Kubernetes annotations attached to Pods (requires metricAnnotationsAllowList). |
 | KubeStateMetrics   | Prometheus Receiver   | kube_replicaset_owner                                      | Gauge   | Owner information of the ReplicaSet.                                           |
 | KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota                                          | Gauge   | Resource quotas applied.                                                                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota_created                                  | Gauge   | Creation timestamp of the ResourceQuota.                                                 |
