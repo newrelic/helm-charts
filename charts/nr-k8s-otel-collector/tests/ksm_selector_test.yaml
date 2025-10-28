@@ -24,14 +24,11 @@ tests:
         prometheus:
           ksmSelector: "app.kubernetes.io/instance=my-custom-ksm"
     asserts:
-      - matchRegex:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
           path: data["deployment-config.yaml"]
-          pattern: "regex: my-custom-ksm"
-        template: templates/deployment-configmap.yaml
-      - matchRegex:
-          path: data["deployment-config.yaml"]
-          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_instance"
-        template: templates/deployment-configmap.yaml
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: my-custom-ksm\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_instance\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
 
   - it: handles custom selector with different label key
     set:
@@ -41,14 +38,11 @@ tests:
         prometheus:
           ksmSelector: "custom.label/name=test-value"
     asserts:
-      - matchRegex:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
           path: data["deployment-config.yaml"]
-          pattern: "regex: test-value"
-        template: templates/deployment-configmap.yaml
-      - matchRegex:
-          path: data["deployment-config.yaml"]
-          pattern: "__meta_kubernetes_pod_label_custom_label_name"
-        template: templates/deployment-configmap.yaml
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: test-value\s+source_labels:\s+- __meta_kubernetes_pod_label_custom_label_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
 
   - it: handles selector with hyphens in label name
     set:
@@ -58,14 +52,11 @@ tests:
         prometheus:
           ksmSelector: "app-name=ksm-prod"
     asserts:
-      - matchRegex:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
           path: data["deployment-config.yaml"]
-          pattern: "regex: ksm-prod"
-        template: templates/deployment-configmap.yaml
-      - matchRegex:
-          path: data["deployment-config.yaml"]
-          pattern: "__meta_kubernetes_pod_label_app-name"
-        template: templates/deployment-configmap.yaml
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: ksm-prod\s+source_labels:\s+- __meta_kubernetes_pod_label_app-name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
 
   - it: uses default selector when receivers.prometheus is set but ksmSelector is not
     set:
@@ -74,16 +65,12 @@ tests:
       receivers:
         prometheus:
           enabled: true
-          scrapeInterval: 30s
     asserts:
-      - matchRegex:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
           path: data["deployment-config.yaml"]
-          pattern: "regex: kube-state-metrics"
-        template: templates/deployment-configmap.yaml
-      - matchRegex:
-          path: data["deployment-config.yaml"]
-          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_name"
-        template: templates/deployment-configmap.yaml
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: kube-state-metrics\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
 
   - it: correctly formats label key with dots and slashes
     set:
@@ -93,11 +80,8 @@ tests:
         prometheus:
           ksmSelector: "io.kubernetes.pod.name/instance=test"
     asserts:
-      - matchRegex:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
           path: data["deployment-config.yaml"]
-          pattern: "__meta_kubernetes_pod_label_io_kubernetes_pod_name_instance"
-        template: templates/deployment-configmap.yaml
-      - matchRegex:
-          path: data["deployment-config.yaml"]
-          pattern: "regex: test"
-        template: templates/deployment-configmap.yaml
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: test\s+source_labels:\s+- __meta_kubernetes_pod_label_io_kubernetes_pod_name_instance\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
