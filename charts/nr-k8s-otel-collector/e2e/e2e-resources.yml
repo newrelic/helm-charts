@@ -661,3 +661,12 @@ spec:
             - name: storage
               emptyDir:
                 sizeLimit: 30Mi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: e2e-resource-quota
+  namespace: default
+spec:
+  hard:
+    secrets: "100"

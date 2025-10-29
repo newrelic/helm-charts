@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.48
+
 spec:
   replicas: 1
   minReadySeconds: 5
@@ -26,7 +26,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: deployment
       annotations:
-        checksum/config: 4625f30dbfaa22852c8012d97b038be6d1404a3710ecf135e1c219a714856b6b
+
     spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
@@ -66,6 +66,9 @@ spec:
           ports:
             - name: http
               containerPort: 4318
+              protocol: TCP
+            - name: grpc
+              containerPort: 4317
               protocol: TCP
           volumeMounts:
             - name: deployment-config

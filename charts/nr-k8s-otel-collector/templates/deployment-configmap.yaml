@@ -16,6 +16,8 @@ data:
         protocols:
           http:
             endpoint: ${env:MY_POD_IP}:4318
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
       k8s_events:
       prometheus/ksm:
         config:
@@ -337,6 +339,14 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/convert_timestamp:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(metric.name, "kube_pod_container_status_last_terminated_timestamp")
+            statements:
+              - set(datapoint.attributes["kube_pod_container_status_last_terminated_timestamp_formatted"], FormatTime(Unix(Int(datapoint.value_double)), "%Y-%m-%dT%H:%M:%SZ"))
+
       metricstransform/ksm:
         transforms:
           - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
@@ -411,7 +421,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason))
+          - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason|last_terminated_timestamp|last_terminated_exitcode|last_terminated_reason))
             action: update
             match_type: regexp
             operations:
@@ -420,7 +430,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time)$$
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time|deletion_timestamp)$$
             action: update
             match_type: regexp
             operations:
@@ -456,6 +466,17 @@ data:
                 value_actions:
                   - value: 'false'
                     new_value: 'true'
+        {{- if (index .Values "kube-state-metrics").enableResourceQuotaSamples }}
+          - include: ^kube_resourcequota(_created)?$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+        {{- end }}
 
       metricstransform/apiserver:
         transforms:
@@ -799,6 +820,7 @@ data:
             - filter/exclude_zero_value_kube_node_status_condition
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
+            - transform/convert_timestamp
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm

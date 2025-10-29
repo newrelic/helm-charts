@@ -40,7 +40,7 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
         command:
           - "/bin/bash"
           - "-c"
@@ -73,7 +73,7 @@ spec:
         image: {{- if .Values.ebpfAgent.image.tag }}
           {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
         {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:agent-0.2.9
+          docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
@@ -104,14 +104,14 @@ spec:
           {{- end }}
           {{- end }}
 
-          {{- if .Values.ebpfAgent.downloaded_packaged_headers_path }}
+          {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
           - name: DOWNLOADED_PACKAGED_HEADERS_PATH
-            value: "{{ .Values.ebpfAgent.downloaded_packaged_headers_path }}"
+            value: "{{ .Values.ebpfAgent.downloadedPackagedHeadersPath }}"
           {{- end }}
 
-          {{- if .Values.ebpfAgent.distro_kernel_headers_path }}
+          {{- if .Values.ebpfAgent.distroKernelHeadersPath }}
           - name: DISTRO_KERNEL_HEADERS_PATH
-            value: "{{ .Values.ebpfAgent.distro_kernel_headers_path }}"
+            value: "{{ .Values.ebpfAgent.distroKernelHeadersPath }}"
           {{- end }}
 
         securityContext:
@@ -134,7 +134,7 @@ spec:
         image: {{- if .Values.ebpfClient.image.tag }}
           {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
         {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:client-0.2.9
+          docker.io/newrelic/newrelic-ebpf-agent:client-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
@@ -150,7 +150,7 @@ spec:
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
-          {{-  if (hasKey .Values.protocols.http "spans") }}
+          {{- if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
           - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
@@ -170,6 +170,16 @@ spec:
             value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
           - name: TLS_ENABLED
           {{- if (hasKey .Values "tls") }}
             {{- if eq .Values.tls.enabled true }}
@@ -186,9 +196,6 @@ spec:
             readOnly: true
         {{- end }}
           {{- end }}
-        envFrom:
-        - secretRef:
-            name: nr-ebpf-agent-secrets
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
