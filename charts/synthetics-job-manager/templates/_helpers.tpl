@@ -41,14 +41,16 @@ Allows to override the appVersion to use.
 Allows overriding of the synthetics-job-manager Service hostname
 */}}
 {{- define "synthetics-job-manager.hostname" -}}
-{{- default "synthetics-job-manager" .Values.global.hostnameOverride | trunc 63 | trimSuffix "-" }}
+{{- $name := default "synthetics-job-manager" (index .Values "global" "hostnameOverride") -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
-Allows overriding of the ping-runtime Service hostname
+Allows overriding of the ping-runtime Service hostname, making it unique per release
 */}}
 {{- define "ping-runtime.hostname" -}}
-{{- default "ping" (index .Values "global" "ping-runtime" "hostnameOverride") | trunc 63 | trimSuffix "-" }}
+{{- $name := default "ping" (index .Values "global" "ping-runtime" "hostnameOverride") -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
