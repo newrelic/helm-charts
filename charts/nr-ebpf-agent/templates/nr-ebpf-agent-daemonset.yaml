@@ -150,7 +150,7 @@ value: {{ include "nr-otel-collector-receiver.endpoint" .}}
   - name: PL_STIRLING_SOURCES
 value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
   {{- include "generateClientScriptEnvVars" . | nindent 10 }}
-  {{-  if (hasKey .Values.protocols.http "spans") }}
+  {{- if (hasKey .Values.protocols.http "spans") }}
   {{- if .Values.protocols.http.spans.samplingErrorRate}}
   {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
   - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
@@ -170,6 +170,16 @@ value: "True"
 value: "{{ .Values.logLevel }}"
   - name: NEW_RELIC_LOG_FILE_PATH
 value: "{{ .Values.logFilePath }}"
+  - name: NEW_RELIC_LICENSE_KEY
+valueFrom:
+  secretKeyRef:
+{{- if (include "newrelic.common.license._licenseKey" .) }}
+key: NEW_RELIC_LICENSE_KEY
+name: nr-ebpf-agent-secrets
+{{- else }}
+key: {{ include "newrelic.common.license._customSecretKey" . }}
+name: {{ include "newrelic.common.license._customSecretName" . }}
+{{- end }}
   - name: TLS_ENABLED
   {{- if (hasKey .Values "tls") }}
 {{- if eq .Values.tls.enabled true }}
@@ -186,9 +196,6 @@ mountPath: "{{ .Values.tls.certPath }}/"
 readOnly: true
 {{- end }}
   {{- end }}
-envFrom:
-- secretRef:
-name: nr-ebpf-agent-secrets
   dnsPolicy: ClusterFirstWithHostNet
   hostNetwork: true
   hostPID: true
