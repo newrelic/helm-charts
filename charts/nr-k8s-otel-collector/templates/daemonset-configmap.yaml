@@ -140,6 +140,27 @@ data:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
+            - job_name: node-exporter
+              scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
+              kubernetes_sd_configs:
+                - role: endpoints
+              relabel_configs:
+                - action: keep
+                  regex: .+node-exporter
+                  source_labels:
+                    - __meta_kubernetes_endpoints_name
+                - action: replace
+                  target_label: job_label
+                  replacement: node-exporter
+                - source_labels: [__meta_kubernetes_endpoint_node_name]
+                  regex: ${KUBE_NODE_NAME}
+                  action: keep
+                - source_labels: [ __meta_kubernetes_endpoint_node_name, __meta_kubernetes_pod_node_name ]
+                  separator: ;
+                  action: replace
+                  regex: ".*;(.+)|(.+);"
+                  replacement: "$1$2"
+                  target_label: k8s.node.name
             {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - job_name: otel-collector
               scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
