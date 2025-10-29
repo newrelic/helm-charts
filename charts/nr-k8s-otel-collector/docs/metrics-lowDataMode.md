@@ -29,9 +29,13 @@
 | Kubelet            | KubeletStats Receiver | k8s.node.filesystem.usage                                  | Gauge   | Used filesystem space for the node.                                            |
 | Kubelet            | KubeletStats Receiver | k8s.node.memory.available                                  | Gauge   | Available memory for the node.                                                 |
 | Kubelet            | KubeletStats Receiver | k8s.node.memory.working_set                                | Gauge   | Working set size of the node memory.                                           |
+| Kubelet            | KubeletStats Receiver | k8s.pod.cpu_limit_utilization                              | Gauge   | The percentage of the set limit for cpu that is in use.                        |
+| Kubelet            | KubeletStats Receiver | k8s.pod.cpu_request_utilization                            | Gauge   | The percentage of the requested amount of cpu that is in use.                  |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.available                               | Gauge   | Available filesystem space for the pod.                                        |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.capacity                                | Gauge   | Total filesystem capacity for the pod.                                         |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.usage                                   | Gauge   | Used filesystem space for the pod.                                             |
+| Kubelet            | KubeletStats Receiver | k8s.pod.memory_limit_utilization                           | Gauge   | The percentage of the set limit for memory that is in use.                     |
+| Kubelet            | KubeletStats Receiver | k8s.pod.memory_request_utilization                         | Gauge   | The percentage of the requested amount of memory that is in use.               |
 | Kubelet            | KubeletStats Receiver | k8s.pod.memory.working_set                                 | Gauge   | Working set size of the pod memory.                                            |
 | Kubelet            | KubeletStats Receiver | k8s.pod.network.io                                         | Counter | Total network I/O for the pod.                                                 |
 | Kubelet            | Prometheus Receiver   | process_resident_memory_bytes                              | Gauge   | Resident memory size in bytes.                                                 |
@@ -90,11 +94,15 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_info                                    | Gauge   | Information about the Pod container.                                           |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_resource_limits                         | Gauge   | Resource limits of the Pod container.                                          |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_resource_requests                       | Gauge   | Resource requests of the Pod container.                                        |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_exitcode         | Gauge   | Exit code of the last terminated state of the container.                       |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_reason           | Gauge   | Reason for the last termination of the container.                              |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_last_terminated_timestamp        | Gauge   | Last terminated time for a pod container in unix timestamp.                    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_phase                            | Gauge   | Current phase of the Pod container.                                            |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_ready                            | Gauge   | Whether the Pod container is ready (1) or not (0).                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_restarts_total                   | Counter | Total number of restarts for the Pod container.                                |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_container_status_waiting_reason                   | Gauge   | Reason for the container waiting state.                                        |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_created                                           | Gauge   | Creation timestamp of the Pod.                                                 |
+| KubeStateMetrics   | Prometheus Receiver   | kube_pod_deletion_timestamp                                | Gauge   | Deletion timestamp of the Pod.                                                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_info                                              | Gauge   | Information about the Pod.                                                     |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_owner                                             | Gauge   | Owner information of the Pod.                                                  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_start_time                                        | Gauge   | Start time of the Pod.                                                         |
@@ -104,6 +112,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled                                  | Gauge   | Whether the Pod is scheduled (1) or not (0).                                   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled_time                             | Gauge   | Time when the Pod became scheduled.                                            |
 | KubeStateMetrics   | Prometheus Receiver   | kube_replicaset_owner                                      | Gauge   | Owner information of the ReplicaSet.                                           |
+| KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota                                          | Gauge   | Resource quotas applied.                                                                 |
+| KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota_created                                  | Gauge   | Creation timestamp of the ResourceQuota.                                                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_created                                       | Gauge   | Creation timestamp of the Service.                                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_info                                          | Gauge   | Information about the Service.                                                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_spec_type                                     | Gauge   | Type of the Service specification.                                             |
