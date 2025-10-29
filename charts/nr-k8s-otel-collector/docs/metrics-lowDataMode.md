@@ -83,6 +83,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_job_status_succeeded                                  | Gauge   | Number of succeeded pods for the Job.                                          |
 | KubeStateMetrics   | Prometheus Receiver   | kube_namespace_labels                                      | Gauge   | Kubernetes labels attached to Namespaces (requires metricLabelsAllowlist).    |
 | KubeStateMetrics   | Prometheus Receiver   | kube_namespace_annotations                                 | Gauge   | Kubernetes annotations attached to Namespaces (requires metricAnnotationsAllowList). |
+| KubeStateMetrics   | Prometheus Receiver   | kube_namespace_status_phase                                | Gauge   | Phase of the Namespace.                                                        |
+| KubeStateMetrics   | Prometheus Receiver   | kube_namespace_created                                     | Gauge   | Creation timestamp of the Namespace.                                           |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_allocatable                               | Gauge   | Allocatable resources of the Node.                                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_capacity                                  | Gauge   | Capacity of the Node.                                                          |
 | KubeStateMetrics   | Prometheus Receiver   | kube_node_status_condition                                 | Gauge   | Condition of the Node's status.                                                |
