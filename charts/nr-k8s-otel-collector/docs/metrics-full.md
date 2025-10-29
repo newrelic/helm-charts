@@ -1362,3 +1362,4 @@
 | Scheduler          | Prometheus Receiver                         | workqueue_retries_total                                                | Counter           | Total number of retries in the workqueue.                                                |
 | Scheduler          | Prometheus Receiver                         | workqueue_unfinished_work_seconds                                      | Gauge             | Total seconds of unfinished work in the workqueue.                                       |
 | Scheduler          | Prometheus Receiver                         | workqueue_work_duration_seconds                                        | Histogram         | Duration of work in the workqueue                                                        |
+

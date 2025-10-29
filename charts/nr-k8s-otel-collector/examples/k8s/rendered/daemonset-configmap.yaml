@@ -9,8 +9,7 @@ metadata:
     app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.5.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.0
+
 data:
   daemonset-config.yaml: |
     receivers:
@@ -74,6 +73,16 @@ data:
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
+
+
 
       prometheus:
         config:
@@ -281,9 +290,26 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+          - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+
       transform/collector:
         metric_statements:
           - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
+
+      metricstransform/k8s_cluster_info:
+        transforms:
+          - include: kubernetes_build_info
+            action: update
+            new_name: k8s.cluster.info
 
       metricstransform/cadvisor:
         transforms:
@@ -353,6 +379,14 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: k8s.cluster.info
+            action: update
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+                - value: 'false'
+                  new_value: 'true'
 
       metricstransform/hostmetrics:
         transforms:
@@ -523,7 +557,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.9.0
+
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -677,6 +711,7 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - metricstransform/k8s_cluster_info
             - metricstransform/ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
@@ -709,6 +744,7 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - metricstransform/k8s_cluster_info
             - metricstransform/ldm
             - metricstransform/cadvisor
             - metricstransform/kubelet
