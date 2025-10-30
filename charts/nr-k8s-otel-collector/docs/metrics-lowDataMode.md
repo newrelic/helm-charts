@@ -31,11 +31,13 @@
 | Kubelet            | KubeletStats Receiver | k8s.node.memory.working_set                                | Gauge   | Working set size of the node memory.                                           |
 | Kubelet            | KubeletStats Receiver | k8s.pod.cpu_limit_utilization                              | Gauge   | The percentage of the set limit for cpu that is in use.                        |
 | Kubelet            | KubeletStats Receiver | k8s.pod.cpu_request_utilization                            | Gauge   | The percentage of the requested amount of cpu that is in use.                  |
+| Kubelet            | KubeletStats Receiver | k8s.pod.cpu_request_limit_ratio                            | Gauge   | The ratio of the requested amount of cpu vs the set cpu limit.                 |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.available                               | Gauge   | Available filesystem space for the pod.                                        |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.capacity                                | Gauge   | Total filesystem capacity for the pod.                                         |
 | Kubelet            | KubeletStats Receiver | k8s.pod.filesystem.usage                                   | Gauge   | Used filesystem space for the pod.                                             |
 | Kubelet            | KubeletStats Receiver | k8s.pod.memory_limit_utilization                           | Gauge   | The percentage of the set limit for memory that is in use.                     |
 | Kubelet            | KubeletStats Receiver | k8s.pod.memory_request_utilization                         | Gauge   | The percentage of the requested amount of memory that is in use.               |
+| Kubelet            | KubeletStats Receiver | k8s.pod.k8s.pod.memory_request_limit_ratio                 | Gauge   | The ratio of the requested amount of memory vs the set memory limit.           |
 | Kubelet            | KubeletStats Receiver | k8s.pod.memory.working_set                                 | Gauge   | Working set size of the pod memory.                                            |
 | Kubelet            | KubeletStats Receiver | k8s.pod.network.io                                         | Counter | Total network I/O for the pod.                                                 |
 | Kubelet            | Prometheus Receiver   | process_resident_memory_bytes                              | Gauge   | Resident memory size in bytes.                                                 |
@@ -112,8 +114,8 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled                                  | Gauge   | Whether the Pod is scheduled (1) or not (0).                                   |
 | KubeStateMetrics   | Prometheus Receiver   | kube_pod_status_scheduled_time                             | Gauge   | Time when the Pod became scheduled.                                            |
 | KubeStateMetrics   | Prometheus Receiver   | kube_replicaset_owner                                      | Gauge   | Owner information of the ReplicaSet.                                           |
-| KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota                                          | Gauge   | Resource quotas applied.                                                                 |
-| KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota_created                                  | Gauge   | Creation timestamp of the ResourceQuota.                                                 |
+| KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota                                         | Gauge   | Resource quotas applied.                                                       |
+| KubeStateMetrics   | Prometheus Receiver   | kube_resourcequota_created                                 | Gauge   | Creation timestamp of the ResourceQuota.                                       |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_created                                       | Gauge   | Creation timestamp of the Service.                                             |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_info                                          | Gauge   | Information about the Service.                                                 |
 | KubeStateMetrics   | Prometheus Receiver   | kube_service_spec_type                                     | Gauge   | Type of the Service specification.                                             |
@@ -127,7 +129,6 @@
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_current                   | Gauge   | Number of current replicas for the StatefulSet.                                |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_ready                     | Gauge   | Number of ready replicas for the StatefulSet.                                  |
 | KubeStateMetrics   | Prometheus Receiver   | kube_statefulset_status_replicas_updated                   | Gauge   | Number of updated replicas for the StatefulSet.                                |
-| Node               | HostMetric Receiver   | node.cpu.usage.percentage                                  | Gauge   | CPU usage as a percentage of total available cores.                            |
 | Node               | HostMetric Receiver   | node.memory.usage.percentage                               | Gauge   | Memory usage as a percentage of memory available.                              |
 | Node               | HostMetric Receiver   | process.cpu.utilization                                    | Gauge   | CPU utilization of the process as a percentage.                                |
 | Node               | HostMetric Receiver   | process.disk.io                                            | Counter | Number of disk I/O operations performed by the process.                        |
