@@ -70,7 +70,11 @@ spec:
 
       containers:
       - name: nr-ebpf-agent
-        image: docker.io/newrelic/newrelic-ebpf-agent:unified-latest
+        image: {{- if .Values.ebpfAgent.image.tag }}
+          {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        {{- else }}
+          docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
+        {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
