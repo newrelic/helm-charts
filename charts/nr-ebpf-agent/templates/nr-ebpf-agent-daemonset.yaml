@@ -40,7 +40,12 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
+        image: {{ if .Values.ebpfAgent.image.tag -}}
+          {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        {{- else -}}
+          {{ .Values.ebpfAgent.image.repository }}:agent-0.3.0
+        {{- end }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         command:
           - "/bin/bash"
           - "-c"
@@ -70,10 +75,10 @@ spec:
 
       containers:
       - name: nr-ebpf-agent
-        image: {{- if .Values.ebpfAgent.image.tag }}
+        image: {{ if .Values.ebpfAgent.image.tag -}}
           {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
-        {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:agent-0.3.0
+        {{- else -}}
+          {{ .Values.ebpfAgent.image.repository }}:agent-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
@@ -131,10 +136,10 @@ spec:
           {{- end }}
           {{- end }}
       - name: nr-ebpf-client
-        image: {{- if .Values.ebpfClient.image.tag }}
+        image: {{ if .Values.ebpfClient.image.tag -}}
           {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
-        {{- else }}
-          docker.io/newrelic/newrelic-ebpf-agent:client-0.3.0
+        {{- else -}}
+          {{ .Values.ebpfClient.image.repository }}:client-0.3.0
         {{- end }}
         imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
