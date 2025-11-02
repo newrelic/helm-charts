@@ -78,6 +78,8 @@ spec:
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
+          - name: VIZIER_PORT
+            value: "{{ .Values.ebpfAgent.vizier_port | default "12345" }}"
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
