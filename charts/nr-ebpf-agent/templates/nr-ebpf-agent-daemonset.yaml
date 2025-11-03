@@ -91,6 +91,16 @@ spec:
             value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
           - name: TLS_ENABLED
@@ -137,9 +147,6 @@ spec:
             value: {{ include "nr-ebpf-agent.service.name" . }}
           - name: IS_INSECURE
             value: "True"
-        envFrom:
-          - secretRef:
-              name: nr-ebpf-agent-secrets
         securityContext:
           privileged: true
         volumeMounts:
