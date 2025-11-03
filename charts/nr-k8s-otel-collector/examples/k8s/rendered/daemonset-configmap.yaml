@@ -446,41 +446,9 @@ data:
               - value: 'false'
                 new_value: 'true'
 
-      metricstransform/generation_create_temporary_metrics:
-        transforms:
-          - new_name: k8s.node.memory.working_set_tmp
-            include: k8s.node.memory.working_set
-            action: insert
-          - new_name: k8s.node.memory.available_tmp
-            include: k8s.node.memory.available
-            action: insert
-
-      transform/generation_aggregate_attributes:
-        metric_statements:
-          - context: metric
-            conditions:
-              - name == "k8s.node.memory.working_set_tmp"
-              - name == "k8s.node.memory.available_tmp"
-            statements:
-              - aggregate_on_attributes("sum", ["node"])
-
-      metricsgeneration/calculate_totals:
-        rules:
-          - name: memory_capacity_tmp
-            type: calculate
-            metric1: k8s.node.memory.working_set_tmp
-            metric2: k8s.node.memory.available_tmp
-            operation: add
-
       # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
       metricsgeneration/calculate_percentage:
         rules:
-          - name: node.memory.usage.percentage
-            type: calculate
-            metric1: k8s.node.memory.working_set_tmp
-            metric2: memory_capacity_tmp
-            operation: divide
-
             # Ratio of Requested Resources to Limits
             # request_limit_ratio = Limit_Utilization / Request_Utilization
             # = (usage / limit) / (usage / request) = (usage / limit) * (request / usage) = request / limit
@@ -495,16 +463,10 @@ data:
             metric2: k8s.pod.cpu_request_utilization
             operation: divide
 
-      filter/remove_temporary_metrics:
-        metrics:
-          metric:
-            - 'IsMatch(metric.name, ".*_tmp$")'
-
       transform/tag_generated_metrics_ldm:
         metric_statements:
           - context: datapoint
             conditions:
-              - metric.name == "node.memory.usage.percentage"
               - metric.name == "k8s.pod.cpu_request_limit_ratio"
               - metric.name == "k8s.pod.memory_request_limit_ratio"
             statements:
@@ -774,11 +736,7 @@ data:
             - kubeletstats
             - prometheus
           processors:
-            - metricstransform/generation_create_temporary_metrics
-            - transform/generation_aggregate_attributes
-            - metricsgeneration/calculate_totals
             - metricsgeneration/calculate_percentage
-            - filter/remove_temporary_metrics
             
           exporters:
             - routing/nr_metrics_pipelines
