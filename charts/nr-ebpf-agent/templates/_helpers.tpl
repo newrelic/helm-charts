@@ -69,7 +69,7 @@ Validates that user-provided tags don't contain "agent-" prefix for chart versio
 {{- if .Values.ebpfAgent.image.tag -}}
   {{- if semverCompare ">=0.4.0" .Chart.Version -}}
     {{- if hasPrefix "agent-" .Values.ebpfAgent.image.tag -}}
-      {{- fail (printf "Error: For chart version %s (>=0.4.0), the ebpfAgent.image.tag should not contain 'agent-' prefix. Use unified image tag without prefix (e.g., '%s' instead of '%s')" .Chart.Version (trimPrefix "agent-" .Values.ebpfAgent.image.tag) .Values.ebpfAgent.image.tag) -}}
+      {{- fail (printf "Error: For chart version %s (>=0.4.0), the ebpfAgent.image.tag should not contain 'agent-' prefix. Please use image tags that do not contain the prefix." .Chart.Version) -}}
     {{- end -}}
     {{- .Values.ebpfAgent.image.tag -}}
   {{- else -}}
