@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.54
+    helm.sh/chart: nr-k8s-otel-collector-0.9.0
 spec:
   selector:
     matchLabels:
@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: d7e8b22045d1c74b0e5c9a43a2fa2ea7bfe1fe72212d88fe74949eb8bb80fc2e
+        checksum/config: 8642440e20482bfac3b36b4627568fe20e39b868f724f4eac1c0870ca11ed6e8
     spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
@@ -38,13 +38,13 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "newrelic/nrdot-collector-k8s:1.2.0"
+          image: "newrelic/nrdot-collector-k8s:1.5.0"
           imagePullPolicy: IfNotPresent
           args:
             - --config
             - /config/daemonset-config.yaml
             - --feature-gates
-            - receiver.kubeletstats.enableCPUUsageMetrics
+            - receiver.kubeletstats.enableCPUUsageMetrics,metricsgeneration.MatchAttributes
           resources:
             {}
           env:
