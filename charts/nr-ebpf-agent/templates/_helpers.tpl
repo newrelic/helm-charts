@@ -63,6 +63,28 @@ Create otel collector receiver endpoint
 {{- end }}
 
 {{/*
+Validates that user-provided tags don't contain "agent-" prefix for chart version >= 0.4.0
+*/}}
+{{- define "nr-ebpf-agent.imageTag" -}}
+{{- if .Values.ebpfAgent.image.tag -}}
+  {{- if semverCompare ">=0.4.0" .Chart.Version -}}
+{{- if hasPrefix "agent-" .Values.ebpfAgent.image.tag -}}
+  {{- fail (printf "Error: For chart version %s (>=0.4.0), the ebpfAgent.image.tag should not contain 'agent-' prefix. Please use image tags that do not contain the prefix." .Chart.Version) -}}
+{{- end -}}
+{{- .Values.ebpfAgent.image.tag -}}
+  {{- else -}}
+{{- .Values.ebpfAgent.image.tag -}}
+  {{- end -}}
+{{- else -}}
+  {{- if semverCompare ">=0.4.0" .Chart.Version -}}
+{{- .Chart.AppVersion -}}
+  {{- else -}}
+{{- printf "agent-%s" .Chart.AppVersion -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Validate the user inputted quantile when sampling by latency.
 */}}
 {{- define "validate.samplingLatency" -}}

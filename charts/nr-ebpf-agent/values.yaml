@@ -124,6 +124,8 @@ requests:
   podSecurityContext: {}
   # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
   containerSecurityContext: {}
+  # Vizier server port on which agent receives pxl scripts from the client. Default to 12345
+  vizierPort: ""
   # Sets the absolute path of the complete directory where the required linux headers are manually downloaded and placed for the eBPF agent to use.
   # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
   # The absolute path in case of K8s should also be prepended with /host when necessary.
@@ -133,26 +135,6 @@ requests:
   # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
-
-
-# Configuration to apply on the eBPF client daemonset.
-ebpfClient:
-  image:
-# -- eBPF client image to be deployed.
-repository: docker.io/newrelic/newrelic-ebpf-agent
-# -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
-pullPolicy: IfNotPresent
-# -- The tag of the eBPF client image to be deployed.
-tag: ""
-  resources:
-limits:
-  # -- Max memory allocated to the container.
-  memory: 100Mi
-requests:
-  # -- Min CPU allocated to the container.
-  cpu: 50m
-  # -- Min memory allocated to the container.
-  memory: 50Mi
 
 # Configuration to apply on the OpenTelemetry collector daemonset.
 otelCollector:
@@ -166,9 +148,9 @@ tag: ""
   resources:
 limits:
   # -- Max CPU allocated to the container.
-  cpu: 100m
+  cpu: 200m
   # -- Max memory allocated to the container.
-  memory: 200Mi
+  memory: 500Mi
 requests:
   # -- Min CPU allocated to the container.
   cpu: 100m
