@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.53
+    helm.sh/chart: nr-k8s-otel-collector-0.9.0
 data:
   daemonset-config.yaml: |
     receivers:
@@ -25,6 +25,8 @@ data:
               system.cpu.time:
                 enabled: false
               system.cpu.utilization:
+                enabled: true
+              system.cpu.logical.count:
                 enabled: true
           load:
           memory:
@@ -82,8 +84,6 @@ data:
             enabled: true
           k8s.pod.memory_request_utilization:
             enabled: true
-
-
 
       prometheus:
         config:
@@ -300,6 +300,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
 
 
       transform/collector:
@@ -437,6 +446,31 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
+      metricsgeneration/calculate_percentage:
+        rules:
+            # Ratio of Requested Resources to Limits
+            # request_limit_ratio = Limit_Utilization / Request_Utilization
+            # = (usage / limit) / (usage / request) = (usage / limit) * (request / usage) = request / limit
+          - name: k8s.pod.memory_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.memory_limit_utilization
+            metric2: k8s.pod.memory_request_utilization
+            operation: divide
+          - name: k8s.pod.cpu_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.cpu_limit_utilization
+            metric2: k8s.pod.cpu_request_utilization
+            operation: divide
+
+      transform/tag_generated_metrics_ldm:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - metric.name == "k8s.pod.cpu_request_limit_ratio"
+              - metric.name == "k8s.pod.memory_request_limit_ratio"
+            statements:
+              - set(attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -558,7 +592,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.53
+            value: 0.9.0
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -702,6 +736,7 @@ data:
             - kubeletstats
             - prometheus
           processors:
+            - metricsgeneration/calculate_percentage
             
           exporters:
             - routing/nr_metrics_pipelines
@@ -714,6 +749,7 @@ data:
             - memory_limiter
             - metricstransform/k8s_cluster_info
             - metricstransform/ldm
+            - transform/tag_generated_metrics_ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
             - metricstransform/kubelet
