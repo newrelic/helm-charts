@@ -144,6 +144,10 @@ spec:
             value: {{ include "nr-ebpf-agent.service.name" . }}
           - name: IS_INSECURE
             value: "True"
+          - name: APM_DATA_REPORTING
+            value: "{{ .Values.apmDataReporting }}"
+          - name: TCP_STATS_REPORTING
+            value: "{{ .Values.tcpStatsReporting }}"
         securityContext:
           privileged: true
         volumeMounts:
