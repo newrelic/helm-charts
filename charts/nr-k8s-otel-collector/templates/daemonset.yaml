@@ -34,6 +34,31 @@ spec:
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+      initContainers:
+        - name: get-cpu-allocatable
+          image: bitnami/kubectl:latest
+          command:
+            - sh
+            - -c
+            - |
+              NODE_NAME=$(echo $KUBE_NODE_NAME)
+              echo "Node Name: $KUBE_NODE_NAME"
+              export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+              echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+              cp /temp-config/daemonset-config.yaml /final-config
+              yq -i '.processors.metricsgeneration/calculate_percentage.rules[2].scale_by = env(NODE_CPU_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              cat /final-config/daemonset-config.yaml
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: daemonset-config
+              mountPath: /temp-config
+            - name: final-daemonset-config
+              mountPath: /final-config
       containers:
         - name: otel-collector-daemonset
           {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
@@ -101,7 +126,7 @@ spec:
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
-            - name: daemonset-config
+            - name: final-daemonset-config
               mountPath: /config
             {{- with .Values.daemonset.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -115,6 +140,8 @@ spec:
         - name: varlogpods
           hostPath:
             path: /var/log/pods
+        - name: final-daemonset-config
+          emptyDir: {}
         - name: daemonset-config
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
