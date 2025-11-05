@@ -1,0 +1,29 @@
+suite: configMap
+templates:
+  - templates/daemonset.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Should not allow cpu resource limits to be set when enableNodeUtilizationMetrics is true
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      enableNodeUtilizationMetrics: true
+      daemonset.resources.limits.cpu: 500m
+
+    asserts:
+      - failedTemplate:
+          errorMessage: "Resource limits must not be set for otel-collector-daemonset"
+        template: templates/daemonset.yaml
+  - it: Should not allow memory resource limits to be set when enableNodeUtilizationMetrics is true
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      enableNodeUtilizationMetrics: true
+      daemonset.resources.limits.memory: 256Mi
+
+    asserts:
+      - failedTemplate:
+          errorMessage: "Resource limits must not be set for otel-collector-daemonset"
+        template: templates/daemonset.yaml
