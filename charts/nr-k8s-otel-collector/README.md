@@ -200,6 +200,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
 | receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubeletstats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
+| receivers.prometheus.ksmSelector | string | `app.kubernetes.io/name=kube-state-metrics` | Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster. |
 | receivers.prometheus.scrapeInterval | string | `1m` | Sets the scrape interval for the `prometheus` receiver |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |
