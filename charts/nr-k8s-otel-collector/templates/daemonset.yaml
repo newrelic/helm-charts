@@ -55,7 +55,7 @@ spec:
           env:
             {{- if .Values.enableNodeUtilizationMetrics }}
             # Resource Limits default to node allocatable when not set.
-            # We are abusing this fact to get node allocatable values into env vars.
+            # We are using this fact to get node allocatable values into env vars. when the resource limits are not set
             # See: https://kubernetes.io/docs/concepts/workloads/pods/downward-api/#downwardapi-resourceFieldRef
             - name: NODE_CPU_ALLOCATABLE
               valueFrom:
