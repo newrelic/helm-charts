@@ -59,7 +59,7 @@ Return the cluster name
 Create otel collector receiver endpoint
 */}}
 {{- define "nr-otel-collector-receiver.endpoint" -}}
-{{- printf "dns:///%s.%s.svc.%s:4317" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain }}
+{{- printf "dns:///%s.%s.svc.%s:%v" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain .Values.otelCollector.receiverPort }}
 {{- end }}
 
 {{/*
