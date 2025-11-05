@@ -404,3 +404,33 @@ tests:
           path: data["deployment-config.yaml"]
           pattern: |
             ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: kube-state-metrics\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
+
+  - it: Adds CPU/Memory generated metrics when enabled
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      enableNodeUtilizationMetrics: true
+
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "- name: node.cpu.usage.percentage"
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "- name: node.memory.usage.percentage"
+        template: templates/daemonset-configmap.yaml
+
+  - it: Does not add CPU/Memory generated metrics when not enabled
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "- name: node.cpu.usage.percentage"
+        template: templates/daemonset-configmap.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "- name: node.memory.usage.percentage"
+        template: templates/daemonset-configmap.yaml
