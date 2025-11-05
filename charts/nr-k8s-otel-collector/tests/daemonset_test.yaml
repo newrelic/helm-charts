@@ -14,7 +14,7 @@ tests:
 
     asserts:
       - failedTemplate:
-          errorMessage: "Resource limits must not be set for otel-collector-daemonset"
+          errorMessage: "Resource limits must not be set for otel-collector-daemonset when enabling enableNodeUtilizationMetrics"
         template: templates/daemonset.yaml
   - it: Should not allow memory resource limits to be set when enableNodeUtilizationMetrics is true
     set:
@@ -25,5 +25,5 @@ tests:
 
     asserts:
       - failedTemplate:
-          errorMessage: "Resource limits must not be set for otel-collector-daemonset"
+          errorMessage: "Resource limits must not be set for otel-collector-daemonset when enabling enableNodeUtilizationMetrics"
         template: templates/daemonset.yaml
