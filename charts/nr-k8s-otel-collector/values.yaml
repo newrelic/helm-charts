@@ -256,6 +256,9 @@ receivers:
     # -- Sets the scrape interval for the `prometheus` receiver
     # @default -- `1m`
     scrapeInterval: 1m
+    # -- Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster.
+    # @default -- `app.kubernetes.io/name=kube-state-metrics`
+    ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
   k8sEvents:
     # -- (bool) Specifies whether the `k8s_events` receiver is enabled
     # @default -- `true`
