@@ -34,6 +34,53 @@ spec:
   dnsConfig:
 {{- . | nindent 8 }}
   {{- end }}
+  initContainers:
+- name: get-cpu-allocatable
+  image: bitnami/kubectl:latest
+  command:
+- sh
+- -c
+- |
+  NODE_NAME=$(echo $KUBE_NODE_NAME)
+  echo "Node Name: $KUBE_NODE_NAME"
+
+  export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+  if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+exit 1
+  fi
+
+  # Convert milliCPU values to plain CPU values
+  if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
+# Strip the 'm' and convert the milliCPUs to CPUs
+export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+  fi
+
+  export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | numfmt --from=auto)
+
+  if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+exit 1
+  fi
+
+  echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+  echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
+  cp /temp-config/daemonset-config.yaml /final-config
+  yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/daemonset-config.yaml
+  yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/daemonset-config.yaml
+  cat /final-config/daemonset-config.yaml
+  env:
+- name: KUBE_NODE_NAME
+  valueFrom:
+fieldRef:
+  apiVersion: v1
+  fieldPath: spec.nodeName
+  volumeMounts:
+- name: daemonset-config
+  mountPath: /temp-config
+- name: final-daemonset-config
+  mountPath: /final-config
   containers:
 - name: otel-collector-daemonset
   {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
@@ -99,7 +146,7 @@ secretKeyRef:
 - name: varlogpods
   mountPath: /var/log/pods
   readOnly: true
-- name: daemonset-config
+- name: final-daemonset-config
   mountPath: /config
 {{- with .Values.daemonset.extraVolumeMounts }}
 {{- toYaml . | nindent 12 }}
@@ -113,6 +160,8 @@ path: /
 - name: varlogpods
   hostPath:
 path: /var/log/pods
+- name: final-daemonset-config
+  emptyDir: {}
 - name: daemonset-config
   configMap:
 name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}

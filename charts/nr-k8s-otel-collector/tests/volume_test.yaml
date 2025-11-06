@@ -35,6 +35,8 @@ path: /
 - hostPath:
 path: /var/log/pods
   name: varlogpods
+- emptyDir: {}
+  name: final-daemonset-config
 - configMap:
 name: my-release-nr-k8s-otel-collector-daemonset-config
   name: daemonset-config
@@ -49,7 +51,7 @@ template: templates/daemonset.yaml
   name: varlogpods
   readOnly: true
 - mountPath: /config
-  name: daemonset-config
+  name: final-daemonset-config
 template: templates/daemonset.yaml
 
   - it: adds additional deployment volumes and volume mounts when set
@@ -103,6 +105,8 @@ path: /
 - hostPath:
 path: /var/log/pods
   name: varlogpods
+- emptyDir: {}
+  name: final-daemonset-config
 - configMap:
 name: my-release-nr-k8s-otel-collector-daemonset-config
   name: daemonset-config
@@ -119,7 +123,7 @@ template: templates/daemonset.yaml
   name: varlogpods
   readOnly: true
 - mountPath: /config
-  name: daemonset-config
+  name: final-daemonset-config
 - mountPath: /extra/daemonset/path
   name: extra-daemonset-volume
 template: templates/daemonset.yaml

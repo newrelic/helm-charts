@@ -479,6 +479,17 @@ type: calculate
 metric1: k8s.pod.cpu_limit_utilization
 metric2: k8s.pod.cpu_request_utilization
 operation: divide
+  - name: node.cpu.usage.percentage
+type: scale
+metric1: k8s.node.cpu.usage
+scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
+operation: divide
+  - name: node.memory.usage.percentage
+type: scale
+metric1: k8s.node.memory.working_set
+scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
+operation: divide
+
 
   transform/tag_generated_metrics_ldm:
 metric_statements:
@@ -486,6 +497,8 @@ metric_statements:
 conditions:
   - metric.name == "k8s.pod.cpu_request_limit_ratio"
   - metric.name == "k8s.pod.memory_request_limit_ratio"
+  - metric.name == "node.cpu.usage.percentage"
+  - metric.name == "node.memory.usage.percentage"
 statements:
   - set(attributes["low.data.mode"], "true")
 
