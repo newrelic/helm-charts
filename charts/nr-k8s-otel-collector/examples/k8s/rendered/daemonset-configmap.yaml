@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.3
+    helm.sh/chart: nr-k8s-otel-collector-0.9.4
 data:
   daemonset-config.yaml: |
     receivers:
@@ -462,6 +462,17 @@ data:
             metric1: k8s.pod.cpu_limit_utilization
             metric2: k8s.pod.cpu_request_utilization
             operation: divide
+          - name: node.cpu.usage.percentage
+            type: scale
+            metric1: k8s.node.cpu.usage
+            scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+          - name: node.memory.usage.percentage
+            type: scale
+            metric1: k8s.node.memory.working_set
+            scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+
 
       transform/tag_generated_metrics_ldm:
         metric_statements:
@@ -469,6 +480,8 @@ data:
             conditions:
               - metric.name == "k8s.pod.cpu_request_limit_ratio"
               - metric.name == "k8s.pod.memory_request_limit_ratio"
+              - metric.name == "node.cpu.usage.percentage"
+              - metric.name == "node.memory.usage.percentage"
             statements:
               - set(attributes["low.data.mode"], "true")
 
@@ -592,7 +605,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.9.3
+            value: 0.9.4
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
