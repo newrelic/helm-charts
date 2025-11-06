@@ -19,7 +19,7 @@ asserts:
 template: templates/deployment.yaml
   - lengthEqual:
   path: spec.template.spec.containers[0].env
-  count: 7
+  count: 6
 template: templates/daemonset.yaml
   - it: sets deployment pod environment variables from values
 set:
@@ -51,7 +51,7 @@ value: "my-dae-value"
 asserts:
   - lengthEqual:
   path: spec.template.spec.containers[0].env
-  count: 8
+  count: 7
 template: templates/daemonset.yaml
   - contains:
   path: spec.template.spec.containers[0].env
@@ -84,7 +84,7 @@ value: "my-dep-value"
 template: templates/deployment.yaml
   - lengthEqual:
   path: spec.template.spec.containers[0].env
-  count: 8
+  count: 7
 template: templates/daemonset.yaml
   - contains:
   path: spec.template.spec.containers[0].env
@@ -116,7 +116,7 @@ value: "my-proxy"
 template: templates/deployment.yaml
   - lengthEqual:
   path: spec.template.spec.containers[0].env
-  count: 9
+  count: 8
 template: templates/daemonset.yaml
   - contains:
   path: spec.template.spec.containers[0].env
