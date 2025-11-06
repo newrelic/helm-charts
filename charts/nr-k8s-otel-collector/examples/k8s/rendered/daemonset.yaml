@@ -38,6 +38,12 @@ spec:
               echo "Node Name: $KUBE_NODE_NAME"
 
               export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+              if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
               # Convert milliCPU values to plain CPU values
               if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
                 # Strip the 'm' and convert the milliCPUs to CPUs
@@ -45,6 +51,12 @@ spec:
               fi
 
               export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | numfmt --from=auto)
+
+              if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
               echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
               echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
               cp /temp-config/daemonset-config.yaml /final-config
