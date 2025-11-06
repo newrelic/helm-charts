@@ -109,6 +109,16 @@ Validate the user inputted value when sampling by error rate.
 {{- end -}}
 
 {{/*
+Validate that receiverPort is not less than 1024 (privileged port range).
+*/}}
+{{- define "validate.receiverPort" -}}
+{{- $port := .Values.otelCollector.receiverPort | int -}}
+{{- if lt $port 1025 -}}
+{{- fail (printf "Error: receiverPort must be > 1024 (got %d). Ports below 1024 are privileged ports and should not be used." $port) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Pass environment variables to the agent container if tracing a specific protocol is to be disabled.
 */}}
 {{- define "generateTracingEnvVars" -}}
