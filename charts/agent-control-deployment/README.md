@@ -131,6 +131,12 @@ formatter: json
 			<td>Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above.</td>
 		</tr>
 		<tr>
+			<td>config.secretsProviders</td>
+			<td>object</td>
+			<td>`{}` (See <a href="values.yaml">values.yaml</a>)</td>
+			<td>List of external secrets providers configurations.  Agent Control supports the following external secrets providers types: - vault  k8s secrets and env vars are used by default.  ```yaml secretsProviders:   # -- External secret provider type   vault: # -- List of sources from where to get secrets sources:   # -- Source name (chosen by the user)   sourceA: # -- URL of the vault server url: urlA # -- Token to access the vault token: tokenA # -- Vault engine version engine: kv1   sourceB: url: urlB token: tokenB engine: kv2 # -- Client timeout for requests to the vault client_timeout: 10s # -- Proxy settings for the vault # -- See `proxy` value in that same file proxy:   ... ``` </td>
+		</tr>
+		<tr>
 			<td>config.status_server</td>
 			<td>object</td>
 			<td>See <a href="values.yaml">values.yaml</a></td>
