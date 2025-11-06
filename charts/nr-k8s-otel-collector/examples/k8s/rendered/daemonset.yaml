@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.2
+    helm.sh/chart: nr-k8s-otel-collector-0.9.3
 spec:
   selector:
     matchLabels:
@@ -24,44 +24,9 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: 73b2ecdc29c3bf90b806e9f580eaa0422fbdf8ce2fb7b6c0e12e97b2e4eebe96
+        checksum/config: f8cc3cc65da7e0454444f43187b064a282e76bc63917a3b629f5205b14f9597a
     spec:
       serviceAccountName: nr-k8s-otel-collector
-      initContainers:
-        - name: get-cpu-allocatable
-          image: bitnami/kubectl:latest
-          command:
-            - sh
-            - -c
-            - |
-              NODE_NAME=$(echo $KUBE_NODE_NAME)
-              echo "Node Name: $KUBE_NODE_NAME"
-
-              export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
-              # Convert milliCPU values to plain CPU values
-              if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
-                # Strip the 'm' and convert the milliCPUs to CPUs
-                export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
-              fi
-
-              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | numfmt --from=auto)
-              echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
-              echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
-              cp /temp-config/daemonset-config.yaml /final-config
-              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/daemonset-config.yaml
-              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/daemonset-config.yaml
-              cat /final-config/daemonset-config.yaml
-          env:
-            - name: KUBE_NODE_NAME
-              valueFrom:
-                fieldRef:
-                  apiVersion: v1
-                  fieldPath: spec.nodeName
-          volumeMounts:
-            - name: daemonset-config
-              mountPath: /temp-config
-            - name: final-daemonset-config
-              mountPath: /final-config
       containers:
         - name: otel-collector-daemonset
           securityContext:
@@ -87,8 +52,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://$(HOST_IP):55680"
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -116,7 +79,7 @@ spec:
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
-            - name: final-daemonset-config
+            - name: daemonset-config
               mountPath: /config
       volumes:
         - name: host-fs
@@ -125,8 +88,6 @@ spec:
         - name: varlogpods
           hostPath:
             path: /var/log/pods
-        - name: final-daemonset-config
-          emptyDir: {}
         - name: daemonset-config
           configMap:
             name: nr-k8s-otel-collector-daemonset-config
