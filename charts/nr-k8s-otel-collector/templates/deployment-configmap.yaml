@@ -367,7 +367,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated))
+          - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated)|labels|annotations)
             action: update
             match_type: regexp
             operations:
@@ -403,6 +403,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: ^kube_namespace_(labels|annotations|status_phase|created)$$
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
           - include: kube_persistentvolume_(capacity_bytes|created|info|status_phase)
             action: update
             match_type: regexp
@@ -430,7 +439,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time|deletion_timestamp)$$
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time|deletion_timestamp|labels|annotations)$$
             action: update
             match_type: regexp
             operations:
