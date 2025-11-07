@@ -98,6 +98,12 @@ cluster name, licenses, and custom attributes
   {{- $config = mustMerge $config (dict "proxy" .) -}}
 {{- end -}}
 
+{{- /* Add secrets providers */ -}}
+{{- with .Values.config.secretsProviders -}}
+  {{- $config = mustMerge $config (dict "secrets_providers" .) -}}
+{{- end -}}
+
+
 {{- /* Add Chart Repo url list to the allowed variants */ -}}
 {{- if (.Values.config.allowedChartRepositoryUrl) -}}
   {{- $allowedVariants := dict "variants" (dict "chart_repository_urls" .Values.config.allowedChartRepositoryUrl) -}}

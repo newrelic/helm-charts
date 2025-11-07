@@ -17,6 +17,26 @@ kube-state-metrics:
   prometheusScrape: false
   # -- Enable resource quota data exporting
   enableResourceQuotaSamples: false
+  # kube-state-metrics.metricLabelsAllowlist -- List of Kubernetes label keys that will be used in the resources' labels metric.
+  # By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels
+  # should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]".
+  # Use "*" to include all labels for a resource type.
+  # Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"]
+  # @default -- `["pods=[*]", "namespaces=[*]", "deployments=[*]"]`
+  metricLabelsAllowlist:
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
+  # kube-state-metrics.metricAnnotationsAllowList -- List of Kubernetes annotation keys that will be used in the resources' annotations metric.
+  # By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations
+  # should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]".
+  # Use "*" to include all annotations for a resource type.
+  # Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"]
+  # @default -- `["pods=[*]", "namespaces=[*]", "deployments=[*]"]`
+  metricAnnotationsAllowList:
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
 
 # This chart has support for OpenShift and GKE Autopilot.
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
@@ -28,7 +48,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.2.0"
+  tag: "1.5.0"
 
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
@@ -256,6 +276,9 @@ receivers:
     # -- Sets the scrape interval for the `prometheus` receiver
     # @default -- `1m`
     scrapeInterval: 1m
+    # -- Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster.
+    # @default -- `app.kubernetes.io/name=kube-state-metrics`
+    ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
   k8sEvents:
     # -- (bool) Specifies whether the `k8s_events` receiver is enabled
     # @default -- `true`
