@@ -56,20 +56,21 @@ $ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/
 
 Then you can mount such agentType leveraging extra volumes in the values.yaml
 ```yaml
-agent-control-deployment:
+agentControlDeployment:
+  chartValues:
 # [...]
-  extraVolumeMounts:
-- name: dynamic
-  mountPath: /etc/newrelic-agent-control/dynamic-agent-type.yaml
-  subPath: dynamic-agent-type.yaml
-  readOnly: true
-  extraVolumes:
-- name: dynamic
-  configMap:
-name: dynamic-agent
-items:
-  - key: dynamic-agent-type
-path: dynamic-agent-type.yaml
+extraVolumeMounts:
+  - name: dynamic
+mountPath: /etc/newrelic-agent-control/dynamic-agent-type.yaml
+subPath: dynamic-agent-type.yaml
+readOnly: true
+extraVolumes:
+  - name: dynamic
+configMap:
+  name: dynamic-agent
+  items:
+- key: dynamic-agent-type
+  path: dynamic-agent-type.yaml
 ```
 
 {{ template "chart.valuesSection" . }}
