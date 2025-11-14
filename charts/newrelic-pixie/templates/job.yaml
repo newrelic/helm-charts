@@ -29,9 +29,9 @@ spec:
           {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.image.pullSecrets }}
+      {{- if (include "newrelic-pixie.imagePullSecrets" .) }}
       imagePullSecrets:
-        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
+        {{- include "newrelic-pixie.imagePullSecrets" . | nindent 8 }}
       {{- end }}
       restartPolicy: Never
       initContainers:

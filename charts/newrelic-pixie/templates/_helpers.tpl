@@ -186,6 +186,28 @@ Return the customSecretApiKeyKey
 {{- end -}}
 
 {{/*
+Returns imagePullSecrets combining global and chart-level settings
+*/}}
+{{- define "newrelic-pixie.imagePullSecrets" -}}
+{{- $globalPullSecrets := .Values.global.images.pullSecrets | default list }}
+{{- $chartPullSecrets := .Values.image.pullSecrets | default list }}
+{{- if or $globalPullSecrets $chartPullSecrets }}
+  {{- concat $globalPullSecrets $chartPullSecrets | toYaml }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Returns imagePullSecrets for cluster wait init container
+*/}}
+{{- define "newrelic-pixie.clusterWaitImagePullSecrets" -}}
+{{- $globalPullSecrets := .Values.global.images.pullSecrets | default list }}
+{{- $chartPullSecrets := .Values.image.pullSecrets | default list }}
+{{- if or $globalPullSecrets $chartPullSecrets }}
+  {{- concat $globalPullSecrets $chartPullSecrets | toYaml }}
+{{- end }}
+{{- end -}}
+
+{{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
 */}}
