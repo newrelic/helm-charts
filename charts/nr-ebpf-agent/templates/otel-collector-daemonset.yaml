@@ -33,8 +33,7 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- $globalPullSecrets := .Values.global.images.pullSecrets | default list }}
-      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (concat $globalPullSecrets (list .Values.pullSecrets)) "context" .) }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
@@ -49,11 +48,11 @@ spec:
           {{- . | nindent 12 }}
         {{- end }}
         image: {{ if .Values.otelCollector.image.tag -}}
-          {{ include "nr-ebpf-agent.otelCollector.image" . }}:{{ .Values.otelCollector.image.tag }}
+          {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
         {{ else -}}
-          {{ include "nr-ebpf-agent.otelCollector.image" . }}:nr-ebpf-otel-collector_0.0.1
+          {{ .Values.otelCollector.image.repository }}:nr-ebpf-otel-collector_0.0.1
         {{ end -}}
-        imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.otelCollector.imagePullPolicy" . }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
         ports:
           - name: otlp
