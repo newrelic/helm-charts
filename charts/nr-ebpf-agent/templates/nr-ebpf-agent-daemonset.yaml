@@ -133,8 +133,7 @@ value: "{{ .Values.tls.certPath }}/"
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- $globalPullSecrets := .Values.global.images.pullSecrets | default list }}
-      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (concat $globalPullSecrets (list .Values.pullSecrets)) "context" .) }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
@@ -144,8 +143,8 @@ value: "{{ .Values.tls.certPath }}/"
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: {{ include "nr-ebpf-agent.kernelHeaderInstaller.image" . }}:{{ .Values.ebpfAgent.kernelHeaderInstaller.tag }}
-        imagePullPolicy: {{ .Values.ebpfAgent.kernelHeaderInstaller.pullPolicy }}
+        image: docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        imagePullPolicy: {{ include "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" . }}
         command:
           - "/bin/bash"
           - "-c"
@@ -175,8 +174,8 @@ value: "{{ .Values.tls.certPath }}/"
 
       containers:
       - name: nr-ebpf-agent
-        image: {{ include "nr-ebpf-agent.ebpfAgent.image" . }}:{{ include "nr-ebpf-agent.imageTag" . }}
-        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ include "nr-ebpf-agent.imageTag" . }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.ebpfAgent.imagePullPolicy" . }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
           - name: VIZIER_PORT
