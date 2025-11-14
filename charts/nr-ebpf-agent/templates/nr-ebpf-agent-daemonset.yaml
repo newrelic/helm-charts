@@ -30,7 +30,8 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+      {{- $globalPullSecrets := .Values.global.images.pullSecrets | default list }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (concat $globalPullSecrets (list .Values.pullSecrets)) "context" .) }}
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
