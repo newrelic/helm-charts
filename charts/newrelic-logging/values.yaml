@@ -57,6 +57,12 @@ fluentBit:
   #     fieldRef:
   #       fieldPath: metadata.name
 
+  # -- Image for the persistence init container (busybox). Defaults to busybox. If global.images.registry is set, it will be used instead.
+  persistenceInitContainerImage:
+    repository: busybox
+    tag: "1.36"
+    pullPolicy: IfNotPresent
+
   # Indicates how fluent-bit database is persisted
   persistence:
     # Define the persistent mode for fluent-bit db, allowed options are `hostPath` (default), `none`, `persistentVolume`.
