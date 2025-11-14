@@ -13,6 +13,7 @@ spec:
 matchLabels:
   {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
+<<<<<<< HEAD
 metadata:
   labels:
 app: nr-ebpf-agent
@@ -113,6 +114,108 @@ value: "false"
 value: "{{ .Values.tls.certPath }}/"
   {{- end }}
   {{- end }}
+=======
+    metadata:
+      labels:
+        app: nr-ebpf-agent
+        component: agent
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- with .Values.ebpfAgent.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "nrEbpfAgent.ebpfAgent.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      initContainers:
+      - name: kernel-header-installer
+        image: {{ include "nr-ebpf-agent.kernelHeaderInstaller.image" . }}:{{ .Values.ebpfAgent.kernelHeaderInstaller.tag }}
+        imagePullPolicy: {{ .Values.ebpfAgent.kernelHeaderInstaller.pullPolicy }}
+        command:
+          - "/bin/bash"
+          - "-c"
+          - |
+            # Detect OS and install kernel headers accordingly
+            if [ -f /host/etc/os-release ]; then
+              . /host/etc/os-release
+              if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
+                echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
+                chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
+              elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
+                echo 'Detected Debian/Ubuntu. Installing linux-headers...'
+                chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
+              else
+                echo "Unsupported OS: $ID"
+                echo "Proceeding without kernel header install."
+              fi
+            else
+              echo "/host/etc/os-release not found"
+              echo "Proceeding without kernel header install."
+            fi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: host-root-volume
+          mountPath: /host
+
+      containers:
+      - name: nr-ebpf-agent
+        image: {{ include "nr-ebpf-agent.ebpfAgent.image" . }}:{{ include "nr-ebpf-agent.imageTag" . }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
+        env:
+          - name: VIZIER_PORT
+            value: "{{ .Values.ebpfAgent.vizierPort | default "12345" }}"
+          - name: PL_HOST_PATH
+            value: "/host"
+          - name: PL_STIRLING_SOURCES
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
+          {{- include "generateTracingEnvVars" . | indent 10 }}
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "cluster.local"
+          - name: NEW_RELIC_LOG_LEVEL
+            value: "{{ .Values.logLevel }}"
+          - name: NEW_RELIC_LOG_FILE_PATH
+            value: "{{ .Values.logFilePath }}"
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
+          - name: TABLE_STORE_DATA_LIMIT_MB
+            value: "{{ .Values.tableStoreDataLimitMB }}"
+          - name: TLS_ENABLED
+          {{- if (hasKey .Values "tls") }}
+          {{- if eq .Values.tls.enabled true }}
+            value: "true"
+          {{- else }}
+            value: "false"
+          {{- end }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: TLS_CERT_PATH
+            value: "{{ .Values.tls.certPath }}/"
+          {{- end }}
+          {{- end }}
+>>>>>>> 7c5c077e (feat(nr-ebpf-agent): support global.images.registry for all container images)
 
   {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
   - name: DOWNLOADED_PACKAGED_HEADERS_PATH
