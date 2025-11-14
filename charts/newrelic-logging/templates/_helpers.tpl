@@ -284,4 +284,20 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Returns the persistence init container (busybox) image repository, respecting global.images.registry
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImage" -}}
+{{- $imageRepository := .Values.fluentBit.persistenceInitContainerImage.repository -}}
+{{- $defaultRepository := "busybox" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $imageRepository $defaultRepository) -}}
+  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- else -}}
+  {{- $imageRepository -}}
+{{- end -}}
+{{- end -}}
 
