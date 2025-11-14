@@ -37,7 +37,7 @@ spec:
       initContainers:
       - name: cluster-registration-wait
         image: "{{ include "newrelic-pixie.clusterRegistrationWaitImage" . }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
-        imagePullPolicy: "{{ (.Values.clusterRegistrationWaitImage).pullPolicy | default "IfNotPresent" }}"
+        imagePullPolicy: {{ include "newrelic-pixie.clusterWaitImagePullPolicy" . }}
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
           until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
@@ -54,7 +54,7 @@ spec:
       containers:
       - name: {{ template "newrelic-pixie.name" . }}
         image: "{{ include "newrelic-pixie.image" . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        imagePullPolicy: {{ include "newrelic-pixie.imagePullPolicy" . }}
         env:
         - name: CLUSTER_NAME
           value: {{ template "newrelic-pixie.cluster" . }}
