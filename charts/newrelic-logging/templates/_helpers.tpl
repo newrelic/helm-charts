@@ -285,19 +285,31 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 
 {{/*
-Returns the persistence init container (busybox) image repository, respecting global.images.registry
+Returns the pull policy for main image, respecting global.images.pullPolicy
 */}}
-{{- define "newrelic-logging.persistenceInitContainerImage" -}}
-{{- $imageRepository := .Values.fluentBit.persistenceInitContainerImage.repository -}}
-{{- $defaultRepository := "busybox" -}}
-{{- $registry := "" -}}
-{{- if .Values.global }}
-  {{- $registry = .Values.global.images.registry | default "" -}}
-{{- end -}}
-{{- if and $registry (eq $imageRepository $defaultRepository) -}}
-  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- define "newrelic-logging.imagePullPolicy" -}}
+{{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
+{{- $chartPullPolicy := .Values.image.pullPolicy | default "" -}}
+{{- if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
 {{- else -}}
-  {{- $imageRepository -}}
+  IfNotPresent
 {{- end -}}
 {{- end -}}
 
+{{/*
+Returns the pull policy for persistence init container, respecting global.images.pullPolicy
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImagePullPolicy" -}}
+{{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
+{{- $chartPullPolicy := .Values.fluentBit.persistenceInitContainerImage.pullPolicy | default "" -}}
+{{- if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
