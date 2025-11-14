@@ -141,15 +141,66 @@ Generate environment variables for disabling protocols and setting sampling late
         {{- if (eq $config.spans.enabled false) }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
   value: "false"
-        {{- end }}  
+        {{- end }}
       {{- if (eq $config.spans.enabled true) }}
       {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_SAMPLING_LATENCY
   value: "{{ $config.spans.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.spans.samplingLatency "" }}"
       {{- end }}
     {{- end }}
-  {{- end }} 
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Returns the kernel header installer image repository, respecting global.images.registry
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
+{{- $imageRepository := .Values.ebpfAgent.kernelHeaderInstaller.repository -}}
+{{- $defaultRepository := "docker.io/newrelic/newrelic-ebpf-agent" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $imageRepository $defaultRepository) -}}
+  {{- printf "%s/newrelic/newrelic-ebpf-agent" $registry -}}
+{{- else -}}
+  {{- $imageRepository -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the eBPF agent image repository, respecting global.images.registry
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.image" -}}
+{{- $imageRepository := .Values.ebpfAgent.image.repository -}}
+{{- $defaultRepository := "docker.io/newrelic/newrelic-ebpf-agent" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $imageRepository $defaultRepository) -}}
+  {{- printf "%s/newrelic/newrelic-ebpf-agent" $registry -}}
+{{- else -}}
+  {{- $imageRepository -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the OTel collector image repository, respecting global.images.registry
+*/}}
+{{- define "nr-ebpf-agent.otelCollector.image" -}}
+{{- $imageRepository := .Values.otelCollector.image.repository -}}
+{{- $defaultRepository := "docker.io/newrelic/newrelic-ebpf-agent" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $imageRepository $defaultRepository) -}}
+  {{- printf "%s/newrelic/newrelic-ebpf-agent" $registry -}}
+{{- else -}}
+  {{- $imageRepository -}}
+{{- end -}}
+{{- end -}}

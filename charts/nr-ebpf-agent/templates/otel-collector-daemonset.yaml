@@ -48,9 +48,9 @@ spec:
           {{- . | nindent 12 }}
         {{- end }}
         image: {{ if .Values.otelCollector.image.tag -}}
-          {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
+          {{ include "nr-ebpf-agent.otelCollector.image" . }}:{{ .Values.otelCollector.image.tag }}
         {{ else -}}
-          {{ .Values.otelCollector.image.repository }}:nr-ebpf-otel-collector_0.0.1
+          {{ include "nr-ebpf-agent.otelCollector.image" . }}:nr-ebpf-otel-collector_0.0.1
         {{ end -}}
         imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
