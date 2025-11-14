@@ -157,6 +157,34 @@ Return the customSecretApiKeyKey
     {{- .Values.customSecretApiKeyKey | default "" -}}
 {{- end -}}
 
+{{- define "newrelic-pixie.clusterRegistrationWaitImage" -}}
+{{- $waitRepository := .Values.clusterRegistrationWaitImage.repository -}}
+{{- $defaultRepository := "pixie-oss/curl" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $waitRepository $defaultRepository) -}}
+  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- else -}}
+  {{- $waitRepository -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "newrelic-pixie.image" -}}
+{{- $imageRepository := .Values.image.repository -}}
+{{- $defaultRepository := "newrelic/newrelic-pixie-integration" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $imageRepository $defaultRepository) -}}
+  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- else -}}
+  {{- $imageRepository -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
