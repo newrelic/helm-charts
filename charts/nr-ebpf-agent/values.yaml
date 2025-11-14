@@ -99,12 +99,17 @@ protocols:
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
   image:
-    # -- eBPF agent image to be deployed.
+    # -- eBPF agent image to be deployed. Defaults to docker.io/newrelic/newrelic-ebpf-agent. If global.images.registry is set, it will be used instead.
     repository: docker.io/newrelic/newrelic-ebpf-agent
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF agent image to be deployed.
     tag: ""
+  # -- Image for the kernel header installer init container. Defaults to docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest. If global.images.registry is set, it will be used instead.
+  kernelHeaderInstaller:
+    repository: docker.io/newrelic/newrelic-ebpf-agent
+    tag: agent-base-image-latest
+    pullPolicy: IfNotPresent
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -139,7 +144,7 @@ ebpfAgent:
 # Configuration to apply on the OpenTelemetry collector daemonset.
 otelCollector:
   image:
-    # -- OpenTelemetry collector image to be deployed.
+    # -- OpenTelemetry collector image to be deployed. Defaults to docker.io/newrelic/newrelic-ebpf-agent. If global.images.registry is set, it will be used instead.
     repository: docker.io/newrelic/newrelic-ebpf-agent
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
     pullPolicy: IfNotPresent

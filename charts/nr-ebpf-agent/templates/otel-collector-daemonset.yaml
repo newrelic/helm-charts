@@ -52,7 +52,7 @@ spec:
         {{ else -}}
           {{ .Values.otelCollector.image.repository }}:nr-ebpf-otel-collector_0.0.1
         {{ end -}}
-        imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.otelCollector.imagePullPolicy" . }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
         ports:
           - name: otlp

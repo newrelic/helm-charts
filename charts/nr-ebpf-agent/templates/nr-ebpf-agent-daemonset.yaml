@@ -41,7 +41,7 @@ spec:
       initContainers:
       - name: kernel-header-installer
         image: docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest
-        imagePullPolicy: IfNotPresent
+        imagePullPolicy: {{ include "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" . }}
         command:
           - "/bin/bash"
           - "-c"
@@ -72,7 +72,7 @@ spec:
       containers:
       - name: nr-ebpf-agent
         image: {{ .Values.ebpfAgent.image.repository }}:{{ include "nr-ebpf-agent.imageTag" . }}
-        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.ebpfAgent.imagePullPolicy" . }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
           - name: VIZIER_PORT
