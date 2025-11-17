@@ -10,6 +10,11 @@ tests:
   - it: volumes are correctly set
     set:
       cluster: test
+      config:
+        fleet_control:
+          enabled: true
+          auth:
+            enable: true
     asserts:
       - template: templates/deployment-agentcontrol.yaml
         equal:
@@ -20,7 +25,7 @@ tests:
               readOnly: true
               subPath: config.yaml
             - mountPath: /etc/newrelic-agent-control/keys
-              name: auth-secret-private-key
+              name: agent-keys-volume
               readOnly: true
       - template: templates/deployment-agentcontrol.yaml
         equal:
@@ -34,6 +39,9 @@ tests:
                     path: config.yaml
             - name: var-lib-newrelic-agent-control
               emptyDir: {}
+            - name: agent-keys-volume
+              emptyDir:
+                medium: Memory
             - name: auth-secret-private-key
               secret:
                 secretName: agent-control-auth

@@ -54,6 +54,26 @@ spec:
 
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
 
+      {{- if and .Values.config.fleet_control.enabled ((.Values.config.fleet_control.auth | default dict).enable) }}
+      initContainers:
+        - name: init-secret-loader
+          image: busybox:1.36.1
+          command: ['sh', '-c']
+          args:
+            - |
+              set -e
+              echo "Copying private key to shared volume..."
+              cp /mnt/k8s-secret/from-secret.key /etc/newrelic-agent-control/keys/from-secret.key
+              chmod 400 /etc/newrelic-agent-control/keys/from-secret.key
+              echo "Key copy complete."
+          volumeMounts:
+            - name: auth-secret-private-key
+              mountPath: /mnt/k8s-secret
+              readOnly: true
+            - name: agent-keys-volume
+              mountPath: /etc/newrelic-agent-control/keys
+      {{- end }}
+
       containers:
         - name: {{ .Chart.Name }}
           {{- with include "newrelic-agent-control.securityContext.container" . | fromYaml }}
@@ -78,7 +98,7 @@ spec:
 
           {{- /* This value is passed to the agent control via Environment Variable to avoid a race condition.
                  If set via config, after a failed upgrade we could have the "old" pod loading the new config,
-                 and reading the new chart version, while the image is still the old one.*/}}  
+                 and reading the new chart version, while the image is still the old one.*/}}
             - name: NR_AC_K8S__CURRENT_CHART_VERSION
               value: {{ .Chart.Version }}
 
@@ -111,8 +131,8 @@ spec:
               mountPath: /etc/newrelic-agent-control/local-data/agent-control/local_config.yaml
               readOnly: true
               subPath: config.yaml
-            {{- if ((.Values.config).fleet_control).enabled }}
-            - name: auth-secret-private-key
+            {{- if and .Values.config.fleet_control.enabled ((.Values.config.fleet_control.auth | default dict).enable) }}
+            - name: agent-keys-volume
               mountPath: "/etc/newrelic-agent-control/keys"
               readOnly: true
             {{- end }}
@@ -145,7 +165,10 @@ spec:
                 path: config.yaml
         - name: var-lib-newrelic-agent-control
           emptyDir: {}
-        {{- if ((.Values.config).fleet_control).enabled }}
+        {{- if and .Values.config.fleet_control.enabled ((.Values.config.fleet_control.auth | default dict).enable) }}
+        - name: agent-keys-volume
+          emptyDir:
+            medium: Memory
         - name: auth-secret-private-key
           secret:
             secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}
