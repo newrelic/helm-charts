@@ -145,9 +145,9 @@ spec:
           - name: IS_INSECURE
             value: "True"
           - name: APM_DATA_REPORTING
-            value: "{{ .Values.apmDataReporting | default true }}"
+            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
-            value: "{{ .Values.tcpStatsReporting | default true }}"
+            value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
         securityContext:
           privileged: true
         volumeMounts:
