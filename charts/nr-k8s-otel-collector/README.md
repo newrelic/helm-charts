@@ -141,7 +141,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
-| daemonset.resources | object | `{}` | Sets resources for the daemonset. |
+| daemonset.resources | object | `{"limits":{"cpu":"200m","memory":"750Mi"},"requests":{"cpu":"20m","memory":"200Mi"}}` | Sets resources for the daemonset. |
 | daemonset.tolerations | list | `[]` | Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | deployment.affinity | object | `{}` | Sets deployment pod affinities. Overrides `affinity` and `global.affinity` |
 | deployment.configMap | object | See `values.yaml` | Settings for deployment configmap |
@@ -157,7 +157,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
-| deployment.resources | object | `{}` | Sets resources for the deployment. |
+| deployment.resources | object | `{"limits":{"cpu":"200m","memory":"750Mi"},"requests":{"cpu":"20m","memory":"200Mi"}}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
@@ -169,6 +169,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | kube-state-metrics.metricAnnotationsAllowList | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes annotation keys that will be used in the resources' annotations metric. By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]". Use "*" to include all annotations for a resource type. Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"] |
 | kube-state-metrics.metricLabelsAllowlist | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes label keys that will be used in the resources' labels metric. By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]". Use "*" to include all labels for a resource type. Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"] |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
+| kube-state-metrics.resources | object | `{"limits":{"cpu":"200m","memory":"64Mi"},"requests":{"cpu":"50m","memory":"32Mi"}}` | Sets resources for kube-state-metrics. |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
@@ -188,7 +189,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | podSecurityContext | object | `{}` | Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
 | processors | string | `nil` | Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors |
-| provider | string | `""` | The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT" |
+| provider | string | `"GKE_AUTOPILOT"` | The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT" |
 | proxy | string | `""` | Configures the Otel collector(s) to send all data through the specified proxy. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.collectorMetrics.enabled | bool | `false` | Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled. |
