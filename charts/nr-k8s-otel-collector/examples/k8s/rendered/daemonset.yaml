@@ -70,12 +70,7 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           resources:
-            limits:
-              cpu: 200m
-              memory: 750Mi
-            requests:
-              cpu: 20m
-              memory: 200Mi
+            {}
           volumeMounts:
             - name: daemonset-config
               mountPath: /temp-config
@@ -100,12 +95,7 @@ spec:
             - --feature-gates
             - receiver.kubeletstats.enableCPUUsageMetrics,metricsgeneration.MatchAttributes
           resources:
-            limits:
-              cpu: 200m
-              memory: 750Mi
-            requests:
-              cpu: 20m
-              memory: 200Mi
+            {}
           env:
             - name: HOST_IP
               valueFrom:
