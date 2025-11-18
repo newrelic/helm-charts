@@ -11,7 +11,7 @@ data:
 otlp:
   protocols:
 grpc:
-  endpoint: $RECEIVER_ENDPOINT:4317
+  endpoint: $RECEIVER_ENDPOINT:$RECEIVER_PORT
   {{- if (hasKey .Values "tls") }}
   {{- if eq .Values.tls.enabled true }}
   tls:

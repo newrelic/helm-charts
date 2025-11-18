@@ -56,7 +56,7 @@ imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
 resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
 ports:
   - name: otlp
-containerPort: 4317
+containerPort: {{ .Values.otelCollector.receiverPort }}
 protocol: TCP
 volumeMounts:
   - name: data
@@ -81,6 +81,9 @@ valueFrom:
   fieldRef:
 apiVersion: v1
 fieldPath: status.podIP
+{{- include "validate.receiverPort" . }}
+  - name: RECEIVER_PORT
+value: "{{ .Values.otelCollector.receiverPort }}"
   - name: NEW_RELIC_LICENSE_KEY
 valueFrom:
   secretKeyRef:

@@ -8,13 +8,13 @@ app: opentelemetry
 component: otel-collector
 {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
-  # The OTel collector pod will use a service containing a clusterIP and port 4317 to interface via.
+  # The OTel collector pod will use a service containing a clusterIP and the configured receiver port to interface via.
   type: ClusterIP
   selector:
 {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
 component: otel-collector
   ports:
 - name: otlp-grpc
-  port: 4317
+  port: {{ .Values.otelCollector.receiverPort }}
   protocol: TCP
-  targetPort: 4317
+  targetPort: {{ .Values.otelCollector.receiverPort }}
