@@ -13,6 +13,14 @@ kube-state-metrics:
   # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
   # your Kubernetes clusters.
   enabled: true
+  resources: 
+    limits:
+      cpu: 100m
+      memory: 64Mi
+    requests: 
+      cpu: 50m
+      memory: 32Mi
+
   # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
   prometheusScrape: false
   # -- Enable resource quota data exporting
@@ -40,7 +48,7 @@ kube-state-metrics:
 
 # This chart has support for OpenShift and GKE Autopilot.
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
-provider: ""
+provider: "GKE_AUTOPILOT"
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
@@ -130,7 +138,13 @@ daemonset:
         - ALL
 
   # -- Sets resources for the daemonset.
-  resources: {}
+  resources: 
+    limits:
+      cpu: 100
+      memory: 100
+    requests:
+      cpu: 10
+      memory: 500
   # -- Sets additional environment variables for the daemonset.
   envs: []
   # -- Sets additional environment variable sources for the daemonset.
@@ -191,7 +205,13 @@ deployment:
 
 
   # -- Sets resources for the deployment.
-  resources: {}
+  resources:
+    limits:
+      cpu: 200
+      memory: 750Mi
+    requests:
+      cpu: 20
+      memory: 200Mi
   # -- Sets additional environment variables for the deployment.
   envs: []
   # -- Sets additional environment variable sources for the deployment.
