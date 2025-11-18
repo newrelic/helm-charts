@@ -13,11 +13,11 @@ kube-state-metrics:
   # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
   # your Kubernetes clusters.
   enabled: true
-  resources: 
+  resources:
     limits:
-      cpu: 100m
+      cpu: 200m
       memory: 64Mi
-    requests: 
+    requests:
       cpu: 50m
       memory: 32Mi
 
@@ -138,13 +138,13 @@ daemonset:
         - ALL
 
   # -- Sets resources for the daemonset.
-  resources: 
+  resources:
     limits:
-      cpu: 100
-      memory: 100
+      cpu: 200m
+      memory: 750Mi
     requests:
-      cpu: 10
-      memory: 500
+      cpu: 20m
+      memory: 200Mi
   # -- Sets additional environment variables for the daemonset.
   envs: []
   # -- Sets additional environment variable sources for the daemonset.
@@ -207,10 +207,10 @@ deployment:
   # -- Sets resources for the deployment.
   resources:
     limits:
-      cpu: 200
+      cpu: 200m
       memory: 750Mi
     requests:
-      cpu: 20
+      cpu: 20m
       memory: 200Mi
   # -- Sets additional environment variables for the deployment.
   envs: []
