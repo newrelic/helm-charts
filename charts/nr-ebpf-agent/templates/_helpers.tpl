@@ -59,7 +59,7 @@ Return the cluster name
 Create otel collector receiver endpoint
 */}}
 {{- define "nr-otel-collector-receiver.endpoint" -}}
-{{- printf "dns:///%s.%s.svc.%s:4317" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain }}
+{{- printf "dns:///%s.%s.svc.%s:%v" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain .Values.otelCollector.receiverPort }}
 {{- end }}
 
 {{/*
@@ -105,6 +105,16 @@ Validate the user inputted value when sampling by error rate.
 {{- $errorRate := .errorRate | int -}}
 {{- if or (lt $errorRate 1) (gt $errorRate 100) -}}
 {{- fail (printf "Invalid samplingErrorRate '%s' for protocol '%s'. Valid range is between 1 and 100" $errorRateString $protocol) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate that receiverPort is not less than 1024 (privileged port range).
+*/}}
+{{- define "validate.receiverPort" -}}
+{{- $port := .Values.otelCollector.receiverPort | int -}}
+{{- if lt $port 1025 -}}
+{{- fail (printf "Error: receiverPort must be > 1024 (got %d). Ports below 1024 are privileged ports and should not be used." $port) -}}
 {{- end -}}
 {{- end -}}
 
