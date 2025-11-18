@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: 3a606c280f9580882850f3303a65ba5ea2c338717b303085962dcce43668cb14
+        checksum/config: 77a7cce06c82557a2dd736d5097decdee255f98396c867accc2a38a2f3296a41
     spec:
       serviceAccountName: nr-k8s-otel-collector
       initContainers:
@@ -132,12 +132,18 @@ spec:
                   name: nr-k8s-otel-collector-license
                   key: licenseKey
           volumeMounts:
+            - name: host-fs
+              mountPath: /hostfs
+              readOnly: true
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
       volumes:
+        - name: host-fs
+          hostPath:
+            path: /
         - name: varlogpods
           hostPath:
             path: /var/log/pods

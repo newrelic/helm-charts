@@ -17,6 +17,7 @@ data:
       
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
+        root_path: /hostfs
         collection_interval: 1m
         scrapers:
           cpu:
@@ -69,8 +70,9 @@ data:
 
       kubeletstats:
         collection_interval: 1m
-        endpoint: "${KUBE_NODE_NAME}:10255"
-        auth_type: "none"
+        endpoint: "${KUBE_NODE_NAME}:10250"
+        auth_type: "serviceAccount"
+        insecure_skip_verify: true
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
@@ -825,6 +827,35 @@ data:
             - routing/metrics_egress
           processors:
             - transform/extract_runtime
+            
+            - batch
+          exporters:
+            - otlphttp/newrelic
+            
+        logs/ingress:
+          receivers:
+            - filelog
+          processors:
+            
+          exporters:
+            - routing/nr_logs_pipelines
+            
+
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
+          processors:
+            - memory_limiter
+            - transform/truncate
+            - resource/newrelic
+            - k8sattributes/ksm
+          exporters:
+            - routing/logs_egress
+
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
             
             - batch
           exporters:
