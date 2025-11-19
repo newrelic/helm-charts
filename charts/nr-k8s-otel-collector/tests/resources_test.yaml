@@ -28,17 +28,17 @@ resources:
   requests:
 memory: "64Mi"
 cpu: "250m"
-limits:
-  memory: "128Mi"
-  cpu: "500m"
+  limits:
+memory: "128Mi"
+cpu: "500m"
   daemonset:
 resources:
   requests:
 memory: "32Mi"
 cpu: "125m"
-limits:
-  memory: "64Mi"
-  cpu: "250m"
+  limits:
+memory: "64Mi"
+cpu: "250m"
 asserts:
   - equal:
   path: spec.template.spec.containers[0].resources
@@ -46,9 +46,9 @@ asserts:
 requests:
   memory: "64Mi"
   cpu: "250m"
-  limits:
-memory: "128Mi"
-cpu: "500m"
+limits:
+  memory: "128Mi"
+  cpu: "500m"
 template: templates/deployment.yaml
   - equal:
   path: spec.template.spec.containers[0].resources
@@ -56,7 +56,7 @@ template: templates/deployment.yaml
 requests:
   memory: "32Mi"
   cpu: "125m"
-  limits:
-memory: "64Mi"
-cpu: "250m"
+limits:
+  memory: "64Mi"
+  cpu: "250m"
 template: templates/daemonset.yaml
