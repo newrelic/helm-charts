@@ -9,6 +9,10 @@ rules:
     resources:
       - namespaces
       - pods
+      {{- if .Values.rbac.nodeAccess }}
+      - nodes
+      - nodes/proxy
+      {{- end }}
     verbs: ["get", "list", "watch"]
 {{- if .Values.rbac.pspEnabled }}
   - apiGroups:
