@@ -136,43 +136,6 @@ ebpfAgent:
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
 
-# Configuration to apply on the OpenTelemetry collector daemonset.
-otelCollector:
-  image:
-    # -- OpenTelemetry collector image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
-    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
-    pullPolicy: IfNotPresent
-    # -- The tag of the OpenTelemetry collector image to be deployed.
-    tag: ""
-  resources:
-    limits:
-      # -- Max CPU allocated to the container.
-      cpu: 200m
-      # -- Max memory allocated to the container.
-      memory: 500Mi
-    requests:
-      # -- Min CPU allocated to the container.
-      cpu: 100m
-      # -- Min memory allocated to the container.
-      memory: 200Mi
-  # -- Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations`
-  tolerations: []
-  # -- Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity`
-  affinity: {}
-  # -- Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
-  podAnnotations: {}
-  # -- Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
-  podSecurityContext: {}
-  # -- Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
-  containerSecurityContext: {}
-  # -- Port on which the OTLP receiver listens for gRPC connections.
-  receiverPort: 4317
-  collector:
-    serviceAccount:
-      # -- Annotations for the OTel collector service account.
-      annotations: {}
-
 # -- The secrets that are needed to pull images from a custom registry.
 pullSecrets: []
 # -- Additional labels for chart pods.

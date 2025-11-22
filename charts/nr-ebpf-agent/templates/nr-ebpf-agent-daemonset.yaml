@@ -148,6 +148,16 @@ spec:
             value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
             value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
+          - name: DROP_DATA_NEW_RELIC
+            value: "{{ if hasKey .Values "dropDataNewRelic" }}{{ .Values.dropDataNewRelic }}{{ else }}true{{ end }}"
+          - name: DROP_APM_ENABLED_PODS
+            value: "{{ if hasKey .Values "dropAPMEnabledPods" }}{{ .Values.dropAPMEnabledPods }}{{ else }}true{{ end }}"
+          - name: DROP_DATA_FOR_NAMESPACES
+            value: '({{ .Values.dropDataForNamespaces | join "," }})'
+          - name: DROP_SERVICE_NAME_REGEX
+            value: {{ .Values.dropDataServiceNameRegex }}
+          - name: ALLOW_SERVICE_NAME_REGEX
+            value: {{ .Values.allowServiceNameRegex }}
         securityContext:
           privileged: true
         volumeMounts:
