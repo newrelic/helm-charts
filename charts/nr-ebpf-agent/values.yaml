@@ -1,8 +1,8 @@
 ---
 # -- Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster`
-cluster: ""
+cluster: "burhan-otel-removal"
 # -- The license key to use. Can be configured with `global.licenseKey`
-licenseKey: ""
+licenseKey: "3480aa122c1cdccdbb8572c228b838a6FFFFNRAL"
 # -- In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
 # -- In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
@@ -39,6 +39,8 @@ tableStoreDataLimitMB: "250"
 apmDataReporting: true
 # -- Enable TCP statistics reporting. When enabled, the agent collects and reports low level tcp metrics and starts network monitoring
 tcpStatsReporting: true
+# -- OTEL region to use for reporting eBPF agent data
+otelRegion: "production"
 
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.
@@ -104,7 +106,7 @@ ebpfAgent:
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF agent image to be deployed.
-    tag: ""
+    tag: "remove-otel-amd"
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -114,6 +116,8 @@ ebpfAgent:
       cpu: 100m
       # -- Min memory allocated to the container.
       memory: 250Mi
+  serviceAccount:
+    annotations: {}
   # -- Sets ebpfAgent pod tolerations. Overrides `tolerations` and `global.tolerations`
   tolerations: []
   # -- Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity`
@@ -136,42 +140,42 @@ ebpfAgent:
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
 
-# Configuration to apply on the OpenTelemetry collector daemonset.
-otelCollector:
-  image:
-    # -- OpenTelemetry collector image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
-    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
-    pullPolicy: IfNotPresent
-    # -- The tag of the OpenTelemetry collector image to be deployed.
-    tag: ""
-  resources:
-    limits:
-      # -- Max CPU allocated to the container.
-      cpu: 200m
-      # -- Max memory allocated to the container.
-      memory: 500Mi
-    requests:
-      # -- Min CPU allocated to the container.
-      cpu: 100m
-      # -- Min memory allocated to the container.
-      memory: 200Mi
-  # -- Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations`
-  tolerations: []
-  # -- Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity`
-  affinity: {}
-  # -- Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
-  podAnnotations: {}
-  # -- Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
-  podSecurityContext: {}
-  # -- Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
-  containerSecurityContext: {}
-  # -- Port on which the OTLP receiver listens for gRPC connections.
-  receiverPort: 4317
-  collector:
-    serviceAccount:
-      # -- Annotations for the OTel collector service account.
-      annotations: {}
+# # Configuration to apply on the OpenTelemetry collector daemonset.
+# otelCollector:
+#   image:
+#     # -- OpenTelemetry collector image to be deployed.
+#     repository: docker.io/newrelic/newrelic-ebpf-agent
+#     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
+#     pullPolicy: IfNotPresent
+#     # -- The tag of the OpenTelemetry collector image to be deployed.
+#     tag: ""
+#   resources:
+#     limits:
+#       # -- Max CPU allocated to the container.
+#       cpu: 200m
+#       # -- Max memory allocated to the container.
+#       memory: 500Mi
+#     requests:
+#       # -- Min CPU allocated to the container.
+#       cpu: 100m
+#       # -- Min memory allocated to the container.
+#       memory: 200Mi
+#   # -- Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations`
+#   tolerations: []
+#   # -- Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity`
+#   affinity: {}
+#   # -- Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
+#   podAnnotations: {}
+#   # -- Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
+#   podSecurityContext: {}
+#   # -- Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
+#   containerSecurityContext: {}
+#   # -- Port on which the OTLP receiver listens for gRPC connections.
+#   receiverPort: 4317
+#   collector:
+#     serviceAccount:
+#       # -- Annotations for the OTel collector service account.
+#       annotations: {}
 
 # -- The secrets that are needed to pull images from a custom registry.
 pullSecrets: []

@@ -128,8 +128,16 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
-          - name: OTLP_ENDPOINT
-            value: {{ include "nr-otel-collector-receiver.endpoint" .}}
+        {{- if eq .Values.otelRegion "staging" }}
+          - name:  OTLP_ENDPOINT
+            value: "staging-otlp.nr-data.net:443"
+        {{- else if eq .Values.otelRegion "eu-production" }}
+          - name:  OTLP_ENDPOINT
+            value: "otlp.eu01.nr-data.net:443"
+        {{- else if eq .Values.otelRegion "production" }}
+          - name:  OTLP_ENDPOINT
+            value: "otlp.nr-data.net:443"
+        {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{- if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
@@ -168,6 +176,7 @@ spec:
       hostNetwork: true
       hostPID: true
       restartPolicy: Always
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
       - name: host-root-volume
         hostPath:
