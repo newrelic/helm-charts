@@ -40,8 +40,8 @@ spec:
       {{- end }}
       containers:
       - name: nr-ebpf-agent
-        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
-        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.ebpfAgent.image "context" .) }}
+        imagePullPolicy: {{ include "newrelic.common.images.pullPolicy" ( dict "pullPolicy" .Values.ebpfAgent.image.pullPolicy "context" .) | quote }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
           - name: PL_HOST_PATH
@@ -86,8 +86,8 @@ spec:
           {{- end }}
           {{- end }}
       - name: nr-ebpf-client
-        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
-        imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
+        image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.ebpfClient.image "context" .) }}
+        imagePullPolicy: {{ include "newrelic.common.images.pullPolicy" ( dict "pullPolicy" .Values.ebpfClient.image.pullPolicy "context" .) | quote }}
         resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
         env:
           - name: DEPLOYMENT_NAME
