@@ -149,8 +149,6 @@ spec:
             value: {{ .Release.Namespace }}
           - name: AGENT_SERVICE_NAME
             value: {{ include "nr-ebpf-agent.service.name" . }}
-          - name: IS_INSECURE
-            value: "True"
           - name: APM_DATA_REPORTING
             value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
