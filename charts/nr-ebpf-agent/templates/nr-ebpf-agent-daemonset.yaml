@@ -158,7 +158,7 @@ spec:
           - name: DROP_APM_ENABLED_PODS
             value: "{{ if hasKey .Values "dropAPMEnabledPods" }}{{ .Values.dropAPMEnabledPods }}{{ else }}false{{ end }}"
           - name: DROP_DATA_FOR_NAMESPACES
-            value: '({{ .Values.dropDataForNamespaces | join "," }})'
+            value: "{{ .Values.dropDataForNamespaces | join "," }}"
           - name: DROP_SERVICE_NAME_REGEX
             value: {{ .Values.dropDataServiceNameRegex }}
           - name: ALLOW_SERVICE_NAME_REGEX
