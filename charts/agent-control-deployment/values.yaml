@@ -160,6 +160,14 @@ config:
   # -- The name of the release for the CD chart.
   # @default -- agent-control-cd
   cdReleaseName: agent-control-cd
+  # -- Configuration for the authentication secret needed for OpAMP connection.
+  authSecret:
+    # -- (string) The name of the Kubernetes Secret resource containing the credentials.
+    # @default -- "agent-control-auth"
+    secretName: agent-control-auth
+    # -- (string) The specific key within the Secret data map that holds the actual private key content.
+    # @default -- "private_key"
+    secretKeyName: private_key
 
   # -- List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories.
   #
