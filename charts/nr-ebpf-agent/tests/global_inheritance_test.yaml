@@ -1,0 +1,229 @@
+suite: test global value inheritance
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/otel-collector-daemonset.yaml
+  - templates/otel-collector-service-account.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  # =============================================================================
+  # IMAGE REGISTRY INHERITANCE (CRITICAL - Air-gapped deployments)
+  # =============================================================================
+  - it: ebpf-agent image uses global.images.registry
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        images:
+          registry: harbor.corp.net/newrelic
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: harbor\.corp\.net/newrelic/.*
+
+  - it: otel-collector image uses global.images.registry
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        images:
+          registry: harbor.corp.net/newrelic
+    template: templates/otel-collector-daemonset.yaml
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: harbor\.corp\.net/newrelic/.*
+
+  # =============================================================================
+  # PROXY INHERITANCE (CRITICAL - Corporate proxy environments)
+  # =============================================================================
+  - it: proxy from global sets http_proxy env var in otel-collector
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        proxy: http://global-proxy.example.com:3128
+    template: templates/otel-collector-daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: http_proxy
+            value: http://global-proxy.example.com:3128
+
+  - it: proxy from global sets https_proxy env var in otel-collector
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        proxy: http://global-proxy.example.com:3128
+    template: templates/otel-collector-daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: https_proxy
+            value: http://global-proxy.example.com:3128
+
+  - it: local proxy overrides global proxy
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        proxy: http://global-proxy.example.com:3128
+      proxy: http://local-proxy.example.com:8080
+    template: templates/otel-collector-daemonset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[?(@.name == "http_proxy")].value
+          value: http://local-proxy.example.com:8080
+
+  # =============================================================================
+  # SERVICE ACCOUNT ANNOTATIONS INHERITANCE (CRITICAL - Cloud IAM)
+  # =============================================================================
+  - it: serviceAccount.annotations inherit from global for AWS IRSA
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        serviceAccount:
+          create: true
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/eks-service-role
+    template: templates/otel-collector-service-account.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["eks.amazonaws.com/role-arn"]
+          value: arn:aws:iam::123456789012:role/eks-service-role
+
+  - it: serviceAccount.annotations inherit from global for GCP Workload Identity
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        serviceAccount:
+          create: true
+          annotations:
+            iam.gke.io/gcp-service-account: irsa@my-project.iam.gserviceaccount.com
+    template: templates/otel-collector-service-account.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["iam.gke.io/gcp-service-account"]
+          value: irsa@my-project.iam.gserviceaccount.com
+
+  - it: local serviceAccount.annotations override global
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        serviceAccount:
+          create: true
+          annotations:
+            global-key: global-value
+      otelCollector:
+        collector:
+          serviceAccount:
+            annotations:
+              local-key: local-value
+    template: templates/otel-collector-service-account.yaml
+    asserts:
+      - equal:
+          path: metadata.annotations["global-key"]
+          value: global-value
+      - equal:
+          path: metadata.annotations["local-key"]
+          value: local-value
+
+  # =============================================================================
+  # OTHER GLOBAL VALUES (Already implemented via common-library)
+  # =============================================================================
+  - it: imagePullSecrets inherit from global.images.pullSecrets
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        images:
+          pullSecrets:
+            - name: my-pull-secret
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: my-pull-secret
+
+  - it: nodeSelector inherits from global
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        nodeSelector:
+          node.role/monitoring: "true"
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector["node.role/monitoring"]
+          value: "true"
+
+  - it: tolerations inherit from global
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        tolerations:
+          - key: global-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+      tolerations: []
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: global-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+
+  - it: labels inherit from global
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        labels:
+          team: platform
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    asserts:
+      - equal:
+          path: metadata.labels.team
+          value: platform
+
+  - it: podLabels inherit from global
+    set:
+      licenseKey: test_license
+      global:
+        cluster: test-cluster
+        podLabels:
+          environment: production
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    asserts:
+      - equal:
+          path: spec.template.metadata.labels.environment
+          value: production
+
+  # =============================================================================
+  # NOT APPLICABLE GLOBAL VALUES (Documented for completeness)
+  # =============================================================================
+  # The following global values are NOT applicable to nr-ebpf-agent:
+  # - global.provider: Not used by nr-ebpf-agent
+  # - global.customAttributes: Not applicable (agent sends traces, not custom metrics)
+  # - global.lowDataMode: Not applicable (eBPF agent doesn't support low data mode)
+  # - global.fargate: Not applicable (eBPF requires privileged mode, incompatible with Fargate)
+  # - global.insightsKey: Deprecated, use licenseKey instead
+  # - global.privileged: eBPF agent is already privileged (not configurable)
+  # - global.fedramp: Not applicable (New Relic doesn't support FedRAMP for eBPF yet)
+  # - global.hostNetwork: DaemonSet uses host network by design
+  # - global.containerSecurityContext: eBPF agent runs privileged globally
