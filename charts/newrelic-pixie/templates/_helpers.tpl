@@ -158,6 +158,213 @@ Return the customSecretApiKeyKey
 {{- end -}}
 
 {{/*
+Return proxy configuration from global or local values
+*/}}
+{{- define "newrelic-pixie.proxy" -}}
+{{- if .Values.proxy }}
+  {{- .Values.proxy -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.proxy }}
+    {{- .Values.global.proxy -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return image registry from global or local values
+*/}}
+{{- define "newrelic-pixie.image.registry" -}}
+{{- if .Values.image.registry }}
+  {{- .Values.image.registry -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.images -}}
+    {{- if .Values.global.images.registry -}}
+      {{- .Values.global.images.registry -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return image pull policy from global or local values
+*/}}
+{{- define "newrelic-pixie.image.pullPolicy" -}}
+{{- if .Values.image.pullPolicy }}
+  {{- .Values.image.pullPolicy -}}
+{{- else if .Values.global -}}
+  {{- if .Values.global.images -}}
+    {{- if .Values.global.images.pullPolicy -}}
+      {{- .Values.global.images.pullPolicy -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return image pull secrets from global or local values, merging both
+*/}}
+{{- define "newrelic-pixie.image.pullSecrets" -}}
+{{- $localPullSecrets := .Values.image.pullSecrets | default list -}}
+{{- $globalPullSecrets := list -}}
+{{- if .Values.global -}}
+  {{- if .Values.global.images -}}
+    {{- $globalPullSecrets = .Values.global.images.pullSecrets | default list -}}
+  {{- end -}}
+{{- end -}}
+{{- $merged := concat $globalPullSecrets $localPullSecrets -}}
+{{- if $merged }}
+{{- toJson $merged -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return nodeSelector from global or local values
+*/}}
+{{- define "newrelic-pixie.nodeSelector" -}}
+{{- if .Values.nodeSelector }}
+  {{- toJson .Values.nodeSelector -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.nodeSelector }}
+    {{- toJson .Values.global.nodeSelector -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return tolerations from global or local values
+*/}}
+{{- define "newrelic-pixie.tolerations" -}}
+{{- if .Values.tolerations }}
+  {{- toJson .Values.tolerations -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.tolerations }}
+    {{- toJson .Values.global.tolerations -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return affinity from global or local values
+*/}}
+{{- define "newrelic-pixie.affinity" -}}
+{{- if .Values.affinity }}
+  {{- toJson .Values.affinity -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.affinity }}
+    {{- toJson .Values.global.affinity -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return priorityClassName from global or local values
+*/}}
+{{- define "newrelic-pixie.priorityClassName" -}}
+{{- if .Values.priorityClassName }}
+  {{- .Values.priorityClassName -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.priorityClassName }}
+    {{- .Values.global.priorityClassName -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return podSecurityContext from global or local values
+*/}}
+{{- define "newrelic-pixie.podSecurityContext" -}}
+{{- if .Values.podSecurityContext }}
+  {{- toJson .Values.podSecurityContext -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.podSecurityContext }}
+    {{- toJson .Values.global.podSecurityContext -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return containerSecurityContext from global or local values
+*/}}
+{{- define "newrelic-pixie.containerSecurityContext" -}}
+{{- if .Values.containerSecurityContext }}
+  {{- toJson .Values.containerSecurityContext -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.containerSecurityContext }}
+    {{- toJson .Values.global.containerSecurityContext -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return dnsConfig from global or local values
+*/}}
+{{- define "newrelic-pixie.dnsConfig" -}}
+{{- if .Values.dnsConfig }}
+  {{- toJson .Values.dnsConfig -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.dnsConfig }}
+    {{- toJson .Values.global.dnsConfig -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return hostNetwork from global or local values
+*/}}
+{{- define "newrelic-pixie.hostNetwork" -}}
+{{- if kindIs "bool" .Values.hostNetwork }}
+  {{- .Values.hostNetwork -}}
+{{- else if .Values.global }}
+  {{- if kindIs "bool" .Values.global.hostNetwork }}
+    {{- .Values.global.hostNetwork -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return labels merged from global and local values
+*/}}
+{{- define "newrelic-pixie.labels.merged" -}}
+{{- $globalLabels := dict -}}
+{{- if .Values.global -}}
+  {{- $globalLabels = .Values.global.labels | default dict -}}
+{{- end -}}
+{{- $localLabels := .Values.labels | default dict -}}
+{{- $merged := merge $localLabels $globalLabels -}}
+{{- if $merged }}
+{{- toJson $merged -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return podLabels merged from global and local values
+*/}}
+{{- define "newrelic-pixie.podLabels.merged" -}}
+{{- $globalLabels := dict -}}
+{{- if .Values.global -}}
+  {{- $globalLabels = .Values.global.podLabels | default dict -}}
+{{- end -}}
+{{- $localLabels := .Values.podLabels | default dict -}}
+{{- $merged := merge $localLabels $globalLabels -}}
+{{- if $merged }}
+{{- toJson $merged -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return verboseLog from global or local values
+*/}}
+{{- define "newrelic-pixie.verboseLog" -}}
+{{- if .Values.verboseLog }}
+  {{- .Values.verboseLog -}}
+{{- else if .Values.global }}
+  {{- if .Values.global.verboseLog }}
+    {{- .Values.global.verboseLog -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns if the template should render, it checks if the required values
 licenseKey and cluster are set.
 */}}
