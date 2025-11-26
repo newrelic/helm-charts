@@ -45,8 +45,8 @@ spec:
         {{- $registry := include "newrelic-pixie.image.registry" . | default "" }}
         {{- $repo := .Values.clusterRegistrationWaitImage.repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}
         {{- if $registry }}
-          {{- if (hasPrefix "gcr.io" $repo) or (hasPrefix "docker.io" $repo) }}
-            {{- $repo = (trimPrefix "gcr.io/pixie-oss/pixie-dev-public/" $repo | trimPrefix "docker.io/") }}
+          {{- if or (hasPrefix "gcr.io" $repo) (hasPrefix "docker.io" $repo) }}
+            {{- $repo = ($repo | trimPrefix "gcr.io/pixie-oss/pixie-dev-public/" | trimPrefix "docker.io/") }}
           {{- end }}
         image: {{ printf "%s/%s:%s" $registry $repo (.Values.clusterRegistrationWaitImage.tag | default "1.0") | quote }}
         {{- else }}
@@ -72,8 +72,8 @@ spec:
         {{- $registry := include "newrelic-pixie.image.registry" . | default "" -}}
         {{- $repo := .Values.image.repository | default "newrelic/newrelic-pixie-integration" -}}
         {{- if $registry -}}
-          {{- if (hasPrefix "docker.io" $repo) }}
-            {{- $repo = (trimPrefix "docker.io/" $repo) }}
+          {{- if hasPrefix "docker.io" $repo }}
+            {{- $repo = ($repo | trimPrefix "docker.io/") }}
           {{- end }}
         image: "{{ $registry }}/{{ $repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
         {{- else }}
