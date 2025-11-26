@@ -2,6 +2,8 @@ suite: Validate agent-control-cd Installation
 tests:
   - it: should leverage correct image tag
     set:
+      config.authSecret.secretName: agent-control-auth
+      config.authSecret.secretKeyName: private_key
       toolkitImage:
         tag: 123
         repository: test
@@ -16,6 +18,8 @@ tests:
           value: "test:123"
   - it: should allow custom repositoryUrl
     set:
+      config.authSecret.secretName: agent-control-auth
+      config.authSecret.secretKeyName: private_key
       agentControlCd:
         chartRepositoryUrl: "https://example.com/some/url"
     asserts:
@@ -33,6 +37,8 @@ tests:
 
   - it: should mount the TLS certificate secrets if configured
     set:
+      config.authSecret.secretName: agent-control-auth
+      config.authSecret.secretKeyName: private_key
       agentControlCd:
         repositoryCertificateSecretReferenceName: my-cert-secret
     asserts:
@@ -53,6 +59,8 @@ tests:
 
   - it: should use basic auth when configured
     set:
+      config.authSecret.secretName: agent-control-auth
+      config.authSecret.secretKeyName: private_key
       agentControlCd:
         repositorySecretReferenceName: my-basic-auth-secret
     asserts:
@@ -63,6 +71,8 @@ tests:
 
   - it: if basic auth and TLS are configured, uses TLS
     set:
+      config.authSecret.secretName: agent-control-auth
+      config.authSecret.secretKeyName: private_key
       agentControlCd:
         repositoryCertificateSecretReferenceName: my-cert-secret
         repositorySecretReferenceName: my-basic-auth-secret
