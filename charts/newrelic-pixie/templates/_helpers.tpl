@@ -37,14 +37,12 @@ release: {{.Release.Name }}
 {{- end }}
 
 {{- define "newrelic-pixie.cluster" -}}
-{{- if .Values.global -}}
+{{- if .Values.cluster -}}
+  {{- .Values.cluster -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.cluster -}}
-      {{- .Values.global.cluster -}}
-  {{- else -}}
-      {{- .Values.cluster | default "" -}}
+    {{- .Values.global.cluster -}}
   {{- end -}}
-{{- else -}}
-  {{- .Values.cluster | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -59,26 +57,22 @@ release: {{.Release.Name }}
 {{- end -}}
 
 {{- define "newrelic-pixie.licenseKey" -}}
-{{- if .Values.global}}
+{{- if .Values.licenseKey }}
+  {{- .Values.licenseKey -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.licenseKey }}
-      {{- .Values.global.licenseKey -}}
-  {{- else -}}
-      {{- .Values.licenseKey | default "" -}}
+    {{- .Values.global.licenseKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.licenseKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
 {{- define "newrelic-pixie.apiKey" -}}
-{{- if .Values.global}}
+{{- if .Values.apiKey }}
+  {{- .Values.apiKey -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.apiKey }}
-      {{- .Values.global.apiKey -}}
-  {{- else -}}
-      {{- .Values.apiKey | default "" -}}
+    {{- .Values.global.apiKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.apiKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -117,14 +111,12 @@ Returns "true" if `lowDataMode` is enabled, otherwise "" (empty string)
 Return the customSecretName where the New Relic license is being stored.
 */}}
 {{- define "newrelic-pixie.customSecretName" -}}
-{{- if .Values.global }}
+{{- if .Values.customSecretName }}
+  {{- .Values.customSecretName -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.customSecretName }}
-      {{- .Values.global.customSecretName -}}
-  {{- else -}}
-      {{- .Values.customSecretName | default "" -}}
+    {{- .Values.global.customSecretName -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretName | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -139,14 +131,12 @@ Return the customSecretApiKeyName where the Pixie API key is being stored.
 Return the customSecretLicenseKey
 */}}
 {{- define "newrelic-pixie.customSecretLicenseKey" -}}
-{{- if .Values.global }}
+{{- if .Values.customSecretLicenseKey }}
+  {{- .Values.customSecretLicenseKey -}}
+{{- else if .Values.global -}}
   {{- if .Values.global.customSecretLicenseKey }}
-      {{- .Values.global.customSecretLicenseKey -}}
-  {{- else -}}
-      {{- .Values.customSecretLicenseKey | default "" -}}
+    {{- .Values.global.customSecretLicenseKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretLicenseKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
