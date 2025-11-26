@@ -1,11 +1,15 @@
 # IMPORTANT: The Kubernetes cluster name
 # https://docs.newrelic.com/docs/kubernetes-monitoring-integration
+# Precedence: local `cluster` > `global.cluster` > default (empty)
 # cluster: ""
 
 # The New Relic license key
+# Precedence: local `licenseKey` > `global.licenseKey` > default (empty)
 # licenseKey: ""
 
 # The Pixie API key
+# NOTE: This is NOT inherited from global.licenseKey - Pixie uses a separate auth system
+# Precedence: local `apiKey` > `global.apiKey` > default (empty)
 # apiKey: ""
 
 # The Pixie Cluster Id
@@ -53,12 +57,20 @@ job:
   # job.labels -- Labels to add to the Job.
   labels: {}
 
+# HTTP/HTTPS proxy for connectivity
+# Precedence: local `proxy` > `global.proxy` > default (none)
 proxy: {}
 
+# Node selector for pod scheduling
+# Precedence: local `nodeSelector` > `global.nodeSelector` > default (none)
 nodeSelector: {}
 
+# Node tolerations for tainted nodes
+# Precedence: local `tolerations` > `global.tolerations` > default (none)
 tolerations: []
 
+# Pod affinity rules
+# Precedence: local `affinity` > `global.affinity` > default (none)
 affinity: {}
 
 customScripts: {}
