@@ -1,0 +1,488 @@
+suite: test global value inheritance (focused on implemented features)
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/otel-collector-daemonset.yaml
+  - templates/otel-collector-service-account.yaml
+  - templates/otel-collector-config.yaml
+  - templates/secrets.yaml
+release:
+  name: test-release
+  namespace: test-namespace
+tests:
+  # =============================================================================
+  # Cluster Name Tests
+  # =============================================================================
+  - it: should use local cluster value
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[1].env[0].value
+          value: test-cluster
+
+  # =============================================================================
+  # License Key Tests (via common-library)
+  # =============================================================================
+  - it: should create secret with license key
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - template: templates/secrets.yaml
+        documentIndex: 0
+        equal:
+          path: data.NEW_RELIC_LICENSE_KEY
+          value: dGVzdC1saWNlbnNlLWtleQ==  # base64 of "test-license-key"
+
+  # =============================================================================
+  # Labels Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.labels on ebpf-agent daemonset
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        labels:
+          global-label: global-value
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: metadata.labels["global-label"]
+          value: global-value
+
+  - it: should inherit global.labels on otel-collector daemonset
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        labels:
+          global-label: global-value
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: metadata.labels["global-label"]
+          value: global-value
+
+  # =============================================================================
+  # Pod Labels Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.podLabels on ebpf-agent pods
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        podLabels:
+          global-pod-label: global-value
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.metadata.labels["global-pod-label"]
+          value: global-value
+
+  - it: should inherit global.podLabels on otel-collector pods
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        podLabels:
+          global-pod-label: global-value
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.metadata.labels["global-pod-label"]
+          value: global-value
+
+  # =============================================================================
+  # Image Registry Tests (NEWLY FIXED)
+  # =============================================================================
+  - it: should use global.images.registry for ebpfAgent image
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          registry: harbor.corp.net
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
+
+  - it: should use global.images.registry for ebpfClient image
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          registry: harbor.corp.net
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        matchRegex:
+          path: spec.template.spec.containers[1].image
+          pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
+
+  - it: should use global.images.registry for otelCollector image
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          registry: harbor.corp.net
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
+
+  # =============================================================================
+  # Image Pull Secrets Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.images.pullSecrets on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          pullSecrets:
+            - name: global-pull-secret
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: global-pull-secret
+
+  - it: should inherit global.images.pullSecrets on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          pullSecrets:
+            - name: global-pull-secret
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: global-pull-secret
+
+  # =============================================================================
+  # ServiceAccount Annotations Tests (NEWLY FIXED)
+  # =============================================================================
+  - it: should inherit global.serviceAccount.annotations on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        serviceAccount:
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/global-role
+    asserts:
+      - template: templates/otel-collector-service-account.yaml
+        equal:
+          path: metadata.annotations["eks.amazonaws.com/role-arn"]
+          value: arn:aws:iam::123456789012:role/global-role
+
+  - it: should merge local serviceAccount.annotations with global
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        serviceAccount:
+          annotations:
+            eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/global-role
+      otelCollector:
+        collector:
+          serviceAccount:
+            annotations:
+              custom-annotation: custom-value
+    asserts:
+      - template: templates/otel-collector-service-account.yaml
+        equal:
+          path: metadata.annotations["eks.amazonaws.com/role-arn"]
+          value: arn:aws:iam::123456789012:role/global-role
+      - template: templates/otel-collector-service-account.yaml
+        equal:
+          path: metadata.annotations["custom-annotation"]
+          value: custom-value
+
+  # =============================================================================
+  # DNS Config Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.dnsConfig on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        dnsConfig:
+          nameservers:
+            - 8.8.8.8
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.dnsConfig.nameservers[0]
+          value: 8.8.8.8
+
+  - it: should inherit global.dnsConfig on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        dnsConfig:
+          nameservers:
+            - 8.8.8.8
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.dnsConfig.nameservers[0]
+          value: 8.8.8.8
+
+  # =============================================================================
+  # Priority Class Name Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.priorityClassName on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        priorityClassName: high-priority
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+
+  - it: should inherit global.priorityClassName on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        priorityClassName: high-priority
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+
+  # =============================================================================
+  # NodeSelector Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.nodeSelector on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nodeSelector:
+          global-key: global-value
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.nodeSelector["global-key"]
+          value: global-value
+
+  - it: should inherit global.nodeSelector on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nodeSelector:
+          global-key: global-value
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.nodeSelector["global-key"]
+          value: global-value
+
+  # =============================================================================
+  # Tolerations Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.tolerations on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        tolerations:
+          - key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.tolerations[0].key
+          value: monitoring-taint
+
+  - it: should inherit global.tolerations on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        tolerations:
+          - key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.tolerations[0].key
+          value: monitoring-taint
+
+  # =============================================================================
+  # Affinity Tests (via common-library)
+  # =============================================================================
+  - it: should inherit global.affinity on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/monitoring
+                      operator: In
+                      values:
+                        - "true"
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-role.kubernetes.io/monitoring
+
+  - it: should inherit global.affinity on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/monitoring
+                      operator: In
+                      values:
+                        - "true"
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-role.kubernetes.io/monitoring
+
+  # =============================================================================
+  # Privileged Mode Tests
+  # =============================================================================
+  - it: should have privileged mode enabled for ebpf-agent (eBPF requirement)
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+
+  # =============================================================================
+  # Proxy Tests (NEWLY IMPLEMENTED)
+  # =============================================================================
+  - it: should inherit global.proxy on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        proxy: http://proxy.corp.net:3128
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[5].name
+          value: http_proxy
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[5].value
+          value: http://proxy.corp.net:3128
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[6].name
+          value: https_proxy
+
+  - it: should allow local proxy to override global.proxy
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        proxy: http://global-proxy.corp.net:3128
+      proxy: http://local-proxy.corp.net:8080
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[5].value
+          value: http://local-proxy.corp.net:8080
+
+  # =============================================================================
+  # VerboseLog Tests (via common-library)
+  # =============================================================================
+  - it: should enable debug logging when global.verboseLog is true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        verboseLog: true
+    asserts:
+      - template: templates/otel-collector-config.yaml
+        matchRegex:
+          path: data["config.yaml"]
+          pattern: 'level: "debug"'
+
+  - it: should not have debug logging when global.verboseLog is false
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        verboseLog: false
+    asserts:
+      - template: templates/otel-collector-config.yaml
+        notMatchRegex:
+          path: data["config.yaml"]
+          pattern: 'level: "debug"'
+
+  # =============================================================================
+  # NrStaging Tests (endpoint selection via common-library)
+  # =============================================================================
+  - it: should use staging endpoint when global.nrStaging is true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nrStaging: true
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: OTLP_ENDPOINT
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: staging-otlp.nr-data.net:4317
+
+  # =============================================================================
+  # FedRAMP Tests (endpoint selection - NEWLY IMPLEMENTED)
+  # =============================================================================
+  - it: should use gov endpoint when global.fedramp.enabled is true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        fedramp:
+          enabled: true
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[4].name
+          value: OTLP_ENDPOINT
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: gov-otlp.nr-data.net:4317
