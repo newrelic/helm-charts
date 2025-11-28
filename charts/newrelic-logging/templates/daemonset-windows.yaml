@@ -6,7 +6,7 @@ metadata:
   namespace: {{ $.Release.Namespace }}
   labels:
     kubernetes.io/os: windows
-{{ include "newrelic-logging.labels" $ | indent 4 }}
+    {{- include "newrelic.common.labels" $ | nindent 4 }}
   name: {{ template "newrelic-logging.fullname" $ }}-windows-{{ .version }}
   annotations:
   {{- if $.Values.daemonSet.annotations }}
@@ -28,13 +28,8 @@ spec:
 {{ toYaml $.Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
-        app: {{ template "newrelic-logging.name" $ }}
-        release: {{ $.Release.Name }}
         kubernetes.io/os: windows
-        app.kubernetes.io/name: {{ template "newrelic-logging.name" $ }}
-        {{- if $.Values.podLabels}}
-{{ toYaml $.Values.podLabels | indent 8 }}
-        {{- end }}
+        {{- include "newrelic.common.labels.podLabels" $ | nindent 8 }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" $ }}
       {{- with include "newrelic.common.dnsConfig" $ }}
@@ -47,8 +42,16 @@ spec:
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- if $.Values.hostNetwork }}
-      hostNetwork: {{ $.Values.hostNetwork }}
+      {{- $hostNetwork := false }}
+      {{- if not (kindIs "invalid" $.Values.hostNetwork) }}
+        {{- $hostNetwork = $.Values.hostNetwork }}
+      {{- else if $.Values.global }}
+        {{- if not (kindIs "invalid" $.Values.global.hostNetwork) }}
+          {{- $hostNetwork = $.Values.global.hostNetwork }}
+        {{- end }}
+      {{- end }}
+      {{- if $hostNetwork }}
+      hostNetwork: {{ $hostNetwork }}
       {{- end }}
       {{- if $.Values.windows.initContainers }}
       initContainers:
@@ -78,8 +81,18 @@ spec:
               {{- end }}
             - name: CLUSTER_NAME
               value: {{ include "newrelic-logging.cluster" $ }}
+            {{- $verboseLog := include "newrelic.common.verboseLog" $ -}}
+            {{- $logLevel := $.Values.fluentBit.logLevel | default "" -}}
+            {{- if $logLevel }}
             - name: LOG_LEVEL
-              value: {{ $.Values.fluentBit.logLevel | quote }}
+              value: {{ $logLevel | quote }}
+            {{- else if eq $verboseLog "true" }}
+            - name: LOG_LEVEL
+              value: "debug"
+            {{- else }}
+            - name: LOG_LEVEL
+              value: "info"
+            {{- end }}
             - name: LOG_PARSER
               {{- if $.Values.fluentBit.criEnabled }}
               value: "cri,docker"
@@ -115,7 +128,18 @@ spec:
               value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
             - name: METRICS_HOST
               value: {{ include "newrelic-logging.metricsHost" $ | quote }}
-            - name: FLUENTBIT_METRICS_TIER 
+            {{- $globalProxy := "" }}
+            {{- if $.Values.global }}
+              {{- $globalProxy = $.Values.global.proxy | default "" }}
+            {{- end }}
+            {{- $proxy := $.Values.proxy | default $globalProxy | default "" }}
+            {{- if $proxy }}
+            - name: HTTP_PROXY
+              value: {{ $proxy | quote }}
+            - name: HTTPS_PROXY
+              value: {{ $proxy | quote }}
+            {{- end }}
+            - name: FLUENTBIT_METRICS_TIER
               value: {{ $.Values.fluentBit.fluentBitMetrics | default "basic" | quote }}
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
             - name: DAEMONSET_NAME
@@ -181,20 +205,28 @@ spec:
         - name: progdata
           hostPath:
             path: C:\ProgramData
-      {{- if $.Values.priorityClassName }}
-      priorityClassName: {{ $.Values.priorityClassName }}
+      {{- with include "newrelic.common.priorityClassName" $ }}
+      priorityClassName: {{ . }}
       {{- end }}
+      {{- with include "newrelic.common.affinity" $ }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- $nodeSelector := include "newrelic.common.nodeSelector" $ }}
       nodeSelector:
+        {{- if $nodeSelector }}
+        {{- $nodeSelector | nindent 8 }}
+        {{- end }}
         {{- if $.Values.windowsNodeSelector }}
-{{ toYaml $.Values.windowsNodeSelector | indent 8 }}
+        {{- toYaml $.Values.windowsNodeSelector | nindent 8 }}
         {{- else }}
         kubernetes.io/os: windows
         # Windows containers can only be executed on hosts running the exact same Windows version and build number
         node.kubernetes.io/windows-build: {{ .buildNumber }}
         {{- end }}
-      {{- if $.Values.tolerations }}
+      {{- with include "newrelic.common.tolerations" $ }}
       tolerations:
-{{ toYaml $.Values.tolerations | indent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
 ---
 {{- end }}
