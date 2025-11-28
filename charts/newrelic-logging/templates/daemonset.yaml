@@ -3,7 +3,8 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   namespace: {{ .Release.Namespace }}
-  labels: {{ include "newrelic-logging.labels" . | indent 4 }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ template "newrelic-logging.fullname" . }}
   annotations:
   {{- if .Values.daemonSet.annotations }}
@@ -24,13 +25,8 @@ spec:
 {{ toYaml .Values.podAnnotations | indent 8}}
     {{- end }}
       labels:
-        app: {{ template "newrelic-logging.name" . }}
-        release: {{.Release.Name }}
         kubernetes.io/os: linux
-        app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
-        {{- if .Values.podLabels}}
-{{ toYaml .Values.podLabels | indent 8 }}
-        {{- end }}
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       {{- with include "newrelic.common.dnsConfig" . }}
@@ -47,8 +43,16 @@ spec:
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- if .Values.hostNetwork }}
-      hostNetwork: {{ .Values.hostNetwork }}
+      {{- $hostNetwork := false }}
+      {{- if not (kindIs "invalid" .Values.hostNetwork) }}
+        {{- $hostNetwork = .Values.hostNetwork }}
+      {{- else if .Values.global }}
+        {{- if not (kindIs "invalid" .Values.global.hostNetwork) }}
+          {{- $hostNetwork = .Values.global.hostNetwork }}
+        {{- end }}
+      {{- end }}
+      {{- if $hostNetwork }}
+      hostNetwork: {{ $hostNetwork }}
       {{- end }}
       initContainers:
       {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
@@ -88,8 +92,18 @@ spec:
                   {{- end }}
             - name: CLUSTER_NAME
               value: {{ include "newrelic-logging.cluster" . }}
+            {{- $verboseLog := include "newrelic.common.verboseLog" . -}}
+            {{- $logLevel := .Values.fluentBit.logLevel | default "" -}}
+            {{- if $logLevel }}
             - name: LOG_LEVEL
-              value: {{ .Values.fluentBit.logLevel | quote }}
+              value: {{ $logLevel | quote }}
+            {{- else if eq $verboseLog "true" }}
+            - name: LOG_LEVEL
+              value: "debug"
+            {{- else }}
+            - name: LOG_LEVEL
+              value: "info"
+            {{- end }}
             - name: LOG_PARSER
               {{- if .Values.fluentBit.criEnabled }}
               value: "cri,docker"
@@ -129,6 +143,17 @@ spec:
               value: {{ $.Values.fluentBit.sendMetrics | default "false" | quote }}
             - name: METRICS_HOST
               value: {{ include "newrelic-logging.metricsHost" . | quote }}
+            {{- $globalProxy := "" }}
+            {{- if .Values.global }}
+              {{- $globalProxy = .Values.global.proxy | default "" }}
+            {{- end }}
+            {{- $proxy := .Values.proxy | default $globalProxy | default "" }}
+            {{- if $proxy }}
+            - name: HTTP_PROXY
+              value: {{ $proxy | quote }}
+            - name: HTTPS_PROXY
+              value: {{ $proxy | quote }}
+            {{- end }}
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
             - name: FLUENTBIT_METRICS_TIER 
               value: {{ $.Values.fluentBit.fluentBitMetrics | default "basic" | quote }}
@@ -205,14 +230,17 @@ spec:
       {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
       {{- end }}
-      {{- if $.Values.priorityClassName }}
-      priorityClassName: {{ $.Values.priorityClassName }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
       {{- end }}
-      {{- if .Values.nodeAffinity }}
+      {{- $affinity := include "newrelic.common.affinity" . }}
+      {{- if or .Values.nodeAffinity $affinity (include "newrelic.fargate" .) }}
       affinity:
+        {{- if .Values.nodeAffinity }}
         nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
-      {{- else if include "newrelic.fargate" . }}
-      affinity:
+        {{- else if $affinity }}
+        {{- $affinity | nindent 8 }}
+        {{- else if include "newrelic.fargate" . }}
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             nodeSelectorTerms:
@@ -221,19 +249,24 @@ spec:
                     operator: NotIn
                     values:
                       - fargate
+        {{- end }}
       {{- end }}
+      {{- $nodeSelector := include "newrelic.common.nodeSelector" . }}
+      {{- if or $nodeSelector $.Values.enableWindows }}
       nodeSelector:
-        {{- if .Values.nodeSelector }}
-{{ toYaml .Values.nodeSelector | indent 8 }}
-        {{- else if $.Values.enableWindows }}
+        {{- if $nodeSelector }}
+        {{- $nodeSelector | nindent 8 }}
+        {{- end }}
+        {{- if $.Values.enableWindows }}
         # We add this only if Windows is enabled to keep backwards-compatibility. Prior to version 1.14, this label was
         # named beta.kubernetes.io/os. In version 1.14, it was deprecated and replaced by this one. Version 1.14 also
         # introduces Windows support. Therefore, anyone wishing to use Windows containers must bet at version >=1.14 and
         # are going to need this label, in order to avoid placing a linux container on a windows node, and vice-versa.
         kubernetes.io/os: linux
         {{- end }}
-      {{- if .Values.tolerations }}
+      {{- end }}
+      {{- with include "newrelic.common.tolerations" . }}
       tolerations:
-{{ toYaml .Values.tolerations | indent 8 }}
+        {{- . | nindent 8 }}
       {{- end }}
 {{- end }}

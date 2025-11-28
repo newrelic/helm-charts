@@ -63,14 +63,12 @@ Return the licenseKey
 Return the cluster name
 */}}
 {{- define "newrelic-logging.cluster" -}}
-{{- if .Values.global}}
+{{- if .Values.cluster }}
+  {{- .Values.cluster -}}
+{{- else if .Values.global }}
   {{- if .Values.global.cluster }}
     {{- .Values.global.cluster -}}
-  {{- else -}}
-    {{- .Values.cluster | default "" -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.cluster | default "" -}}
 {{- end -}}
 {{- end -}}
 
