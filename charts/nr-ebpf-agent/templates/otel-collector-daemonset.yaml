@@ -21,7 +21,7 @@ spec:
         component: otel-collector
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        checksum/config: ""
         {{- with .Values.otelCollector.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -47,16 +47,12 @@ spec:
         securityContext:
           {{- . | nindent 12 }}
         {{- end }}
-        image: {{ if .Values.otelCollector.image.tag -}}
-          {{ .Values.otelCollector.image.repository }}:{{ .Values.otelCollector.image.tag }}
-        {{ else -}}
-          {{ .Values.otelCollector.image.repository }}:nr-ebpf-otel-collector_0.0.1
-        {{ end -}}
+        image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.otelCollector.image "defaultRegistry" "docker.io" "context" .) }}
         imagePullPolicy: {{ .Values.otelCollector.image.pullPolicy }}
         resources: {{- toYaml .Values.otelCollector.resources | nindent 10}}
         ports:
           - name: otlp
-            containerPort: {{ .Values.otelCollector.receiverPort }}
+            containerPort: 4317
             protocol: TCP
         volumeMounts:
           - name: data
@@ -81,9 +77,6 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: status.podIP
-        {{- include "validate.receiverPort" . }}
-          - name: RECEIVER_PORT
-            value: "{{ .Values.otelCollector.receiverPort }}"
           - name: NEW_RELIC_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -97,18 +90,25 @@ spec:
           - name: FILTER_NAMESPACE_REGEX
             value: '^({{ .Values.dropDataForNamespaces | join "|" }})$'
           - name: OTLP_ENDPOINT
-            {{- if eq $region "Staging" }}
-            value: "staging-otlp.nr-data.net:443"
+            {{- if and .Values.global .Values.global.fedramp .Values.global.fedramp.enabled }}
+            value: "gov-otlp.nr-data.net:4317"
+            {{- else if eq $region "Staging" }}
+            value: "staging-otlp.nr-data.net:4317"
             {{- else if eq $region "EU" }}
-            value: "otlp.eu01.nr-data.net:443"
+            value: "otlp.eu01.nr-data.net:4317"
             {{- else }}
-            value: "otlp.nr-data.net:443"
+            value: "otlp.nr-data.net:4317"
             {{- end }}
-          {{- if .Values.proxy }}
+          {{- $globalProxy := "" }}
+          {{- if .Values.global }}
+            {{- $globalProxy = .Values.global.proxy | default "" }}
+          {{- end }}
+          {{- $proxy := .Values.proxy | default $globalProxy | default "" }}
+          {{- if $proxy }}
           - name: http_proxy
-            value: "{{- .Values.proxy }}"
+            value: {{ $proxy | quote }}
           - name: https_proxy
-            value: "{{- .Values.proxy }}"
+            value: {{ $proxy | quote }}
           {{- end }}
           - name: CLUSTER_NAME
             valueFrom:
