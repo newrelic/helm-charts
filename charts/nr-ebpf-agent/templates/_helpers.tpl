@@ -135,6 +135,51 @@ Pass environment variables to the agent container if tracing a specific protocol
 {{- end -}}
 
 {{/*
+Returns the pull policy for kernel header installer, respecting global.images.pullPolicy
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" -}}
+{{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
+{{- $chartPullPolicy := .Values.ebpfAgent.kernelHeaderInstaller.pullPolicy | default "" -}}
+{{- if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for eBPF agent, respecting global.images.pullPolicy
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.imagePullPolicy" -}}
+{{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
+{{- $chartPullPolicy := .Values.ebpfAgent.image.pullPolicy | default "" -}}
+{{- if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for OTel collector, respecting global.images.pullPolicy
+*/}}
+{{- define "nr-ebpf-agent.otelCollector.imagePullPolicy" -}}
+{{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
+{{- $chartPullPolicy := .Values.otelCollector.image.pullPolicy | default "" -}}
+{{- if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
+
+{{/*
 Generate environment variables for disabling protocols and setting sampling latency.
 */}}
 {{- define "generateClientScriptEnvVars" -}}
