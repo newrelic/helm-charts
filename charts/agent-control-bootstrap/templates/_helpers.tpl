@@ -21,5 +21,8 @@ overrides:
     {{- $config = mustMergeOverwrite $config (dict "config" (dict "cdRemoteUpdate" false)) -}}
   {{- end -}}
 
+  {{- $secretName := .Values.agentControlDeployment.secretPrivateKeyName | default "agent-control-auth" -}}
+  {{- $config = mustMergeOverwrite $config (dict "config" (dict "secret_private_key_name" $secretName)) -}}
+
   {{- $config | toYaml | b64enc -}}
 {{- end -}}
