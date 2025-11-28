@@ -1,0 +1,125 @@
+name: Functional E2E Tests - Global Value Inheritance
+
+on:
+  pull_request:
+    paths:
+      - 'charts/newrelic-logging/**'
+      - '.github/workflows/functional-e2e.yaml'
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'charts/newrelic-logging/**'
+      - '.github/workflows/functional-e2e.yaml'
+  workflow_dispatch:
+
+jobs:
+  functional-e2e:
+    name: Functional E2E (K8s ${{ matrix.k8sVersion }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        k8sVersion:
+          - v1.34.0
+          - v1.33.0
+          - v1.32.0
+          - v1.31.0
+          - v1.30.0
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: '3.16.3'
+
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.14.0
+        with:
+          minikube version: v1.37.0
+          kubernetes version: ${{ matrix.k8sVersion }}
+          driver: docker
+          github token: ${{ secrets.GITHUB_TOKEN }}
+          start args: "--container-runtime=containerd"
+
+      - name: Verify Minikube
+        run: |
+          kubectl version
+          kubectl get nodes
+          kubectl cluster-info
+
+      - name: Setup chart dependencies
+        run: |
+          cd charts/newrelic-logging
+          helm dependency update
+
+      - name: Build test image
+        run: |
+          cd charts/newrelic-logging
+          # Build a minimal test image that won't actually run Fluent Bit
+          # (we only need the image to exist for pod scheduling tests)
+          cat > Dockerfile.test <<'EOF'
+          FROM busybox:latest
+          CMD ["/bin/sh", "-c", "while true; do sleep 3600; done"]
+          EOF
+          docker build -f Dockerfile.test -t e2e/newrelic-fluentbit-output:test .
+          rm Dockerfile.test
+
+      - name: Load image into Minikube
+        run: |
+          minikube image load e2e/newrelic-fluentbit-output:test
+          minikube image ls | grep newrelic-fluentbit || true
+
+      - name: Run functional E2E tests
+        run: |
+          cd charts/newrelic-logging/tests/functional-e2e
+          chmod +x test-global-values.sh
+          ./test-global-values.sh
+        env:
+          KUBECONFIG: ${{ env.KUBECONFIG }}
+
+      - name: Collect pod logs on failure
+        if: failure()
+        run: |
+          echo "=== Collecting diagnostics ==="
+          kubectl get pods --all-namespaces
+          kubectl get daemonsets --all-namespaces
+          kubectl get nodes -o wide
+
+          # Get logs from any newrelic-logging pods
+          for pod in $(kubectl get pods -l app.kubernetes.io/name=newrelic-logging -o name); do
+            echo "=== Logs from $pod ==="
+            kubectl logs $pod || echo "Failed to get logs from $pod"
+            echo "=== Describe $pod ==="
+            kubectl describe $pod || echo "Failed to describe $pod"
+          done
+
+          # Get DaemonSet status
+          kubectl get daemonset nr-logging-e2e-newrelic-logging -o yaml || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          helm delete nr-logging-e2e --namespace default || true
+          kubectl delete pod test-pod-for-exec --namespace default || true
+          kubectl label node --all test-label- || true
+          kubectl taint node --all test-taint- || true
+
+  summary:
+    name: Functional E2E Summary
+    runs-on: ubuntu-latest
+    needs: functional-e2e
+    if: always()
+    steps:
+      - name: Check test results
+        run: |
+          if [ "${{ needs.functional-e2e.result }}" != "success" ]; then
+            echo "❌ Functional E2E tests failed"
+            exit 1
+          else
+            echo "✅ All functional E2E tests passed"
+          fi
