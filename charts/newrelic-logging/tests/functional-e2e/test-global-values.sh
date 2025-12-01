@@ -193,7 +193,7 @@ test_nodeselector_propagation() {
     helm upgrade --install ${RELEASE_NAME} ${CHART_DIR} \
         --namespace ${NAMESPACE} \
         --set licenseKey="test-license-key-000000000000000000000000000000000000NRAL" \
-        --set global.nodeSelector."test-label"="true" \
+        --set-string global.nodeSelector."test-label"="true" \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
         --wait=false
@@ -230,10 +230,12 @@ test_tolerations_propagation() {
     kubectl taint node --all test-taint=true:NoSchedule --overwrite
 
     # Install with global.tolerations
+    # NOTE: Must unset local tolerations default to allow global.tolerations to take effect
     log_info "Installing chart with global.tolerations..."
     helm upgrade --install ${RELEASE_NAME} ${CHART_DIR} \
         --namespace ${NAMESPACE} \
         --set licenseKey="test-license-key-000000000000000000000000000000000000NRAL" \
+        --set 'tolerations=null' \
         --set 'global.tolerations[0].key=test-taint' \
         --set 'global.tolerations[0].operator=Exists' \
         --set 'global.tolerations[0].effect=NoSchedule' \
