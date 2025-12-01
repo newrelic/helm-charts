@@ -18,8 +18,6 @@ logLevel: "INFO"
 logFilePath: ""
 # -- Drop data from the newrelic namespace and newrelic-bundle services.
 dropDataNewRelic: true
-# -- Drop data from pods that are monitored by New Relic APM via auto attach.
-dropAPMEnabledPods: false
 # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
 dropDataForNamespaces: ["kube-system"]
 # -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
@@ -101,7 +99,7 @@ ebpfAgent:
     repository: docker.io/newrelic/newrelic-ebpf-agent
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
-    # -- The tag of the eBPF agent image to be deployed.
+    # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
     tag: ""
   resources:
     limits:

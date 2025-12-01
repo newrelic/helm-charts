@@ -22,6 +22,35 @@ helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
+## Version Compatibility
+
+Starting with chart version 1.0.0, version validation is automatically performed to ensure agent compatibility. Chart 1.0.0+ removed OpenTelemetry collector support and requires agent version >= 1.0.0.
+
+**Default Behavior:**
+When no custom image tag is specified, the chart uses `Chart.AppVersion` (1.0.0 for chart 1.0.0), which is guaranteed to be compatible.
+
+```yaml
+ebpfAgent:
+  image:
+    tag: ""  # Uses Chart.AppVersion (1.0.0)
+```
+
+**Custom Image Tag:**
+If you specify a custom image tag, ensure it contains an agent version >= 1.0.0:
+
+```yaml
+ebpfAgent:
+  image:
+    tag: "1.0.0"  # Or any version >= 1.0.0
+```
+
+### Troubleshooting Version Validation
+
+If you encounter version validation errors:
+
+1. **Check your image tag:** Ensure `ebpfAgent.image.tag` is set to a version >= 1.0.0
+2. **Use default version:** Remove the custom tag to use the chart's default version (recommended)
+
 ## Source Code
 
 * <https://github.com/newrelic/>
