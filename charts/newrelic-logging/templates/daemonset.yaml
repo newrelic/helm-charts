@@ -15,8 +15,7 @@ spec:
     type: {{ .Values.updateStrategy }}
   selector:
     matchLabels:
-      app: {{ template "newrelic-logging.name" . }}
-      release: {{.Release.Name }}
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       annotations:
@@ -97,7 +96,7 @@ spec:
             {{- if $logLevel }}
             - name: LOG_LEVEL
               value: {{ $logLevel | quote }}
-            {{- else if eq $verboseLog "true" }}
+            {{- else if $verboseLog }}
             - name: LOG_LEVEL
               value: "debug"
             {{- else }}
