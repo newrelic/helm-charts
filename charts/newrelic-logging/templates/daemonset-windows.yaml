@@ -17,8 +17,7 @@ spec:
     type: {{ $.Values.updateStrategy }}
   selector:
     matchLabels:
-      app: {{ template "newrelic-logging.name" $ }}
-      release: {{ $.Release.Name }}
+      {{- include "newrelic.common.labels.selectorLabels" $ | nindent 6 }}
       kubernetes.io/os: windows
   template:
     metadata:
