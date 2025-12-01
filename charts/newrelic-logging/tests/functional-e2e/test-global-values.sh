@@ -58,12 +58,12 @@ cleanup() {
     kubectl taint node --all test-taint- 2>/dev/null || true
 }
 
-wait_for_daemonset() {
-    local timeout=120
-    local interval=5
+wait_for_pod_creation() {
+    local timeout=30
+    local interval=2
     local elapsed=0
 
-    log_info "Waiting for DaemonSet to be ready (timeout: ${timeout}s)..."
+    log_info "Waiting for pod to be created (timeout: ${timeout}s)..."
 
     while [ $elapsed -lt $timeout ]; do
         # Check if DaemonSet exists
@@ -74,21 +74,22 @@ wait_for_daemonset() {
             continue
         fi
 
-        # Get desired and ready pods
-        local desired=$(kubectl get daemonset ${RELEASE_NAME}-newrelic-logging --namespace ${NAMESPACE} -o jsonpath='{.status.desiredNumberScheduled}')
-        local ready=$(kubectl get daemonset ${RELEASE_NAME}-newrelic-logging --namespace ${NAMESPACE} -o jsonpath='{.status.numberReady}')
+        # Check if at least one pod exists (not checking readiness)
+        local pod_count=$(kubectl get pods --namespace ${NAMESPACE} -l "app.kubernetes.io/name=newrelic-logging" --no-headers 2>/dev/null | wc -l)
 
-        if [ "$desired" == "$ready" ] && [ "$desired" != "0" ]; then
-            log_info "DaemonSet ready: ${ready}/${desired} pods"
+        if [ "$pod_count" -gt 0 ]; then
+            log_info "Pod created (count: ${pod_count})"
+            # Give Kubernetes a moment to populate the pod spec
+            sleep 2
             return 0
         fi
 
-        log_warn "DaemonSet not ready yet: ${ready}/${desired} pods (${elapsed}s elapsed)"
+        log_warn "No pods found yet (${elapsed}s elapsed)"
         sleep $interval
         elapsed=$((elapsed + interval))
     done
 
-    log_error "DaemonSet did not become ready within ${timeout}s"
+    log_error "Pod was not created within ${timeout}s"
     return 1
 }
 
@@ -112,10 +113,10 @@ test_proxy_configuration() {
         --set global.proxy="http://test-proxy.example.com:3128" \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "Proxy test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "Proxy test - Pod not created"
         return
     fi
 
@@ -158,10 +159,10 @@ test_proxy_override() {
         --set proxy="http://local-proxy.example.com:8080" \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "Proxy override test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "Proxy override test - Pod not created"
         return
     fi
 
@@ -195,10 +196,10 @@ test_nodeselector_propagation() {
         --set global.nodeSelector."test-label"="true" \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "NodeSelector test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "NodeSelector test - Pod not created"
         kubectl label node --all test-label-
         return
     fi
@@ -238,10 +239,10 @@ test_tolerations_propagation() {
         --set 'global.tolerations[0].effect=NoSchedule' \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "Tolerations test - DaemonSet not ready (pod may not tolerate taint)"
+    if ! wait_for_pod_creation; then
+        test_fail "Tolerations test - Pod not created (pod may not tolerate taint)"
         kubectl taint node --all test-taint-
         return
     fi
@@ -276,10 +277,10 @@ test_registry_propagation() {
         --set global.images.registry="custom-registry.example.com" \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "Registry test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "Registry test - Pod not created"
         return
     fi
 
@@ -309,10 +310,10 @@ test_serviceaccount_annotations() {
         --set 'global.serviceAccount.annotations.eks\.amazonaws\.com/role-arn=arn:aws:iam::123456789012:role/test-role' \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "ServiceAccount annotations test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "ServiceAccount annotations test - Pod not created"
         return
     fi
 
@@ -343,10 +344,10 @@ test_verboselog_propagation() {
         --set global.verboseLog=true \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "VerboseLog test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "VerboseLog test - Pod not created"
         return
     fi
 
@@ -376,10 +377,10 @@ test_hostnetwork_propagation() {
         --set global.hostNetwork=true \
         --set image.tag="test" \
         --set image.pullPolicy="Never" \
-        --wait --timeout=2m
+        --wait=false
 
-    if ! wait_for_daemonset; then
-        test_fail "HostNetwork test - DaemonSet not ready"
+    if ! wait_for_pod_creation; then
+        test_fail "HostNetwork test - Pod not created"
         return
     fi
 

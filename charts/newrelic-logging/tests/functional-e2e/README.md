@@ -38,6 +38,37 @@ The test suite validates that the following global values propagate correctly to
    - `global.hostNetwork: true` enables host network mode for DaemonSet pods
    - Required for certain networking configurations
 
+## Test Approach and Limitations
+
+### What These Tests Validate
+
+These tests validate **configuration propagation** - they verify that Helm values reach the Kubernetes pod specifications correctly. The tests:
+
+- ✅ Deploy the chart using Helm with specific global values
+- ✅ Wait for pod objects to be created in Kubernetes
+- ✅ Inspect pod specifications to verify configuration is present
+- ✅ Validate environment variables, nodeSelectors, tolerations, etc.
+
+### What These Tests Do NOT Validate
+
+These tests do NOT validate runtime behavior:
+
+- ❌ Pods do NOT need to become "Ready" (tests don't wait for readiness)
+- ❌ Fluent Bit does NOT need to actually run
+- ❌ No telemetry validation (data reaching New Relic)
+- ❌ No functional testing of log collection
+
+### Rationale
+
+This approach allows fast, lightweight testing of configuration inheritance without requiring:
+- Working container images in the test environment
+- New Relic account credentials
+- Long test execution times (tests complete in ~2-3 minutes vs ~10+ minutes)
+
+The tests use lightweight test images (or image pull policy `Never`) to speed up execution and reduce dependencies. Since we're only validating pod specifications (which Kubernetes populates immediately), we don't need the containers to successfully start.
+
+**For runtime and telemetry validation**, see the main repository E2E test suite using `newrelic-integration-e2e-action`.
+
 ## Prerequisites
 
 ### Required Tools
@@ -57,26 +88,28 @@ The test suite validates that the following global values propagate correctly to
 
 ### Test Environment Setup
 
-The tests are designed to run on a local Minikube cluster. To set up:
+The tests are designed to run on local Kubernetes clusters (Minikube, KIND, k3d). Example setup with k3d:
 
 ```bash
-# Install Minikube
-brew install minikube  # macOS
+# Install k3d (lightweight Kubernetes)
+brew install k3d  # macOS
 # OR
-# Install from https://minikube.sigs.k8s.io/docs/start/
+# curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
 
-# Start Minikube with containerd runtime
-minikube start --container-runtime=containerd --kubernetes-version=v1.30.0
+# Create a local cluster
+k3d cluster create demo
 
 # Verify cluster is running
 kubectl get nodes
 
-# Build test image (from chart root directory)
-docker build -t e2e/newrelic-fluentbit-output:test .
+# Build lightweight test image
+docker build -t e2e/newrelic-fluentbit-output:test -f Dockerfile.test .
 
-# Load image into Minikube
-minikube image load e2e/newrelic-fluentbit-output:test
+# Load image into k3d cluster
+k3d image import e2e/newrelic-fluentbit-output:test -c demo
 ```
+
+**Note**: The test image can be any lightweight image (busybox, alpine) since tests only validate pod specifications, not runtime behavior. The chart is configured with `image.pullPolicy=Never` to use locally loaded images.
 
 ## Running the Tests
 
