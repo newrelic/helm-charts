@@ -22,6 +22,35 @@ helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
+## Version Compatibility
+
+Starting with chart version 1.0.0, version validation is automatically performed to ensure agent compatibility. Chart 1.0.0+ removed OpenTelemetry collector support and requires agent version >= 1.0.0.
+
+**Default Behavior:**
+When no custom image tag is specified, the chart uses `Chart.AppVersion` (1.0.0 for chart 1.0.0), which is guaranteed to be compatible.
+
+```yaml
+ebpfAgent:
+  image:
+    tag: ""  # Uses Chart.AppVersion (1.0.0)
+```
+
+**Custom Image Tag:**
+If you specify a custom image tag, ensure it contains an agent version >= 1.0.0:
+
+```yaml
+ebpfAgent:
+  image:
+    tag: "1.0.0"  # Or any version >= 1.0.0
+```
+
+### Troubleshooting Version Validation
+
+If you encounter version validation errors:
+
+1. **Check your image tag:** Ensure `ebpfAgent.image.tag` is set to a version >= 1.0.0
+2. **Use default version:** Remove the custom tag to use the chart's default version (recommended)
+
 ## Source Code
 
 * <https://github.com/newrelic/>
@@ -40,11 +69,6 @@ kubectl logs <ebpf-pod-name> -c nr-ebpf-client -n newrelic
 
 # The agent container logs detail probe attachment and data collection.
 kubectl logs <ebpf-pod-name> -c nr-ebpf-agent -n newrelic
-```
-
-### Check the logs of the OpenTelemetry collector pod:
-```
-kubectl logs <otel-pod-name> -n newrelic
 ```
 
 ### Confirm data ingest to New Relic
@@ -86,7 +110,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | logFilePath | string | `""` | To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout. |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
-| dropDataIpServiceNames | bool | `true` | Drop data when service names map to an IP address. |
 | dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace and newrelic-bundle services. |
 | dropDataForEntity | list | `[]` | list entity to ignore the process monitoring based on `NEW_RELIC_APP_NAME` |
 | dropDataForNamespaces | list | `[]` | List of Kubernetes namespaces for which all data should be dropped by the agent. |
@@ -113,19 +136,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:443) by default. Staging (staging-otlp.nr-data.net:443) otherwise. |
-| otelCollector.affinity | object | `{}` | Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity` |
-| otelCollector.collector.serviceAccount.annotations | object | `{}` | Annotations for the OTel collector service account. |
-| otelCollector.containerSecurityContext | object | `{}` | Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |
-| otelCollector.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always. |
-| otelCollector.image.repository | string | `"docker.io/newrelic/newrelic-ebpf-agent"` | OpenTelemetry collector image to be deployed. |
-| otelCollector.image.tag | string | `"nr-ebpf-otel-collector_0.0.1"` | The tag of the OpenTelemetry collector image to be deployed. |
-| otelCollector.podAnnotations | object | `{}` | Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations` |
-| otelCollector.podSecurityContext | object | `{}` | Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod` |
-| otelCollector.resources.limits.cpu | string | `"100m"` | Max CPU allocated to the container. |
-| otelCollector.resources.limits.memory | string | `"200Mi"` | Max memory allocated to the container. |
-| otelCollector.resources.requests.cpu | string | `"100m"` | Min CPU allocated to the container. |
-| otelCollector.resources.requests.memory | string | `"200Mi"` | Min memory allocated to the container. |
-| otelCollector.tolerations | list | `[]` | Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | podLabels | object | `{}` | Additional labels for chart pods. |
 | podSecurityContext | object | `{}` | Sets all pods' podSecurityContext. Can be configured also with `global.securityContext.pod` |
 | priorityClassName | string | `""` | Sets pod's priorityClassName. Can be configured also with `global.priorityClassName` |
@@ -169,7 +179,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | tls.enabled | bool | `true` | Enable TLS communication between the eBPF client and agent. |
 | tls.keyFile | string | `""` | Path to your own PEM-encoded private key. |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |
-| verboseLog | bool | `false` | Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog` |
 
 ## Common Errors
 
