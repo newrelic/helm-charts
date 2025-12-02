@@ -395,5 +395,3 @@ endpoint: https://otlp.eu01.nr-data.net
 headers:
 api-key: <<NR api key>
 ```
-
-
