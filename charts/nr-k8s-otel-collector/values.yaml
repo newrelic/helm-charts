@@ -46,13 +46,23 @@ kube-state-metrics:
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
 provider: ""
 
-image:
-  # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nrdot-collector-k8s
-  # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
-  pullPolicy: IfNotPresent
-  # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.5.0"
+# -- Images used by the chart.
+images:
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+  # -- Image for the OpenTelemetry Collector.
+  collector:
+    registry: ""
+    repository: newrelic/nrdot-collector-k8s
+    tag: "1.5.0"
+    pullPolicy: IfNotPresent
+  # -- Image for the initContainer that retrieves node allocatable resources.
+  kubectl:
+    registry: ""
+    repository: bitnami/kubectl
+    tag: latest
+    pullPolicy: IfNotPresent
 
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""

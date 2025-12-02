@@ -8,20 +8,7 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: has a default image tag
-    set:
-      cluster: my-cluster
-      licenseKey: us-whatever
-    asserts:
-      - notMatchRegex:
-          path: spec.template.spec.containers[0].image
-          pattern: ".*nil.*"
-        template: templates/deployment.yaml
-      - notMatchRegex:
-          path: spec.template.spec.containers[0].image
-          pattern: ".*nil.*"
-        template: templates/daemonset.yaml
-  - it: loads image and version
+  - it: loads image and version from deprecated config
     set:
       cluster: my-cluster
       licenseKey: us-whatever
@@ -45,4 +32,136 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
+        template: templates/daemonset.yaml
+  - it: has a default image tag
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ".*nil.*"
+        template: templates/deployment.yaml
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ".*nil.*"
+        template: templates/daemonset.yaml
+  - it: loads collector and version
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      images:
+        collector:
+          repository: nr/dot
+          tag: "1.1.1"
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nr/dot:1.1.1
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nr/dot:1.1.1
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/daemonset.yaml
+  - it: loads kubectl image with registry
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      images:
+        kubectl:
+          registry: my.registry.io
+          repository: custom/kubectl
+          tag: "1.28"
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.registry.io/custom/kubectl:1.28
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/daemonset.yaml
+  - it: uses registry for collector image
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      images:
+        collector:
+          registry: ecr.aws.io
+          repository: newrelic/nrdot-collector-k8s
+          tag: "1.5.0"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ecr.aws.io/newrelic/nrdot-collector-k8s:1.5.0
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: ecr.aws.io/newrelic/nrdot-collector-k8s:1.5.0
+        template: templates/daemonset.yaml
+  - it: supports imagePullSecrets
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      images:
+        pullSecrets:
+          - name: my-ecr-secret
+          - name: another-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: my-ecr-secret
+            - name: another-secret
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: my-ecr-secret
+            - name: another-secret
+        template: templates/daemonset.yaml
+  - it: supports global registry
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      global:
+        images:
+          registry: global.registry.io
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: global.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: global.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+        template: templates/daemonset.yaml
+  - it: local registry overrides global registry
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      global:
+        images:
+          registry: global.registry.io
+      images:
+        collector:
+          registry: local.registry.io
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: local.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: local.registry.io/newrelic/nrdot-collector-k8s:1.5.0
         template: templates/daemonset.yaml
