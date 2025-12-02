@@ -8,6 +8,31 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
+  - it: loads image and version from deprecated config
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image:
+        repository: nr/dot
+        pullPolicy: Always
+        tag: "1.1.1"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nr/dot:1.1.1
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nr/dot:1.1.1
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/daemonset.yaml
   - it: has a default image tag
     set:
       cluster: my-cluster
