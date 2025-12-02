@@ -64,23 +64,59 @@ Create otel collector receiver endpoint
 
 {{/*
 Validates that user-provided tags don't contain "agent-" prefix for chart version >= 0.4.0
+Also validates agent version compatibility for chart version >= 1.0.0
 */}}
 {{- define "nr-ebpf-agent.imageTag" -}}
+{{- $imageTag := "" -}}
 {{- if .Values.ebpfAgent.image.tag -}}
   {{- if semverCompare ">=0.4.0" .Chart.Version -}}
 {{- if hasPrefix "agent-" .Values.ebpfAgent.image.tag -}}
   {{- fail (printf "Error: For chart version %s (>=0.4.0), the ebpfAgent.image.tag should not contain 'agent-' prefix. Please use image tags that do not contain the prefix." .Chart.Version) -}}
 {{- end -}}
-{{- .Values.ebpfAgent.image.tag -}}
+{{- $imageTag = .Values.ebpfAgent.image.tag -}}
   {{- else -}}
-{{- .Values.ebpfAgent.image.tag -}}
+{{- $imageTag = .Values.ebpfAgent.image.tag -}}
   {{- end -}}
 {{- else -}}
   {{- if semverCompare ">=0.4.0" .Chart.Version -}}
-{{- .Chart.AppVersion -}}
+{{- $imageTag = .Chart.AppVersion -}}
   {{- else -}}
-{{- printf "agent-%s" .Chart.AppVersion -}}
+{{- $imageTag = printf "agent-%s" .Chart.AppVersion -}}
   {{- end -}}
+{{- end -}}
+{{- if and (semverCompare ">=1.0.0" .Chart.Version) (not .Values.skipVersionValidation) -}}
+  {{- include "nr-ebpf-agent.validateVersion" (dict "tag" $imageTag "chartVersion" .Chart.Version "appVersion" .Chart.AppVersion) -}}
+{{- end -}}
+{{- $imageTag -}}
+{{- end -}}
+
+{{/*
+Validate agent version compatibility at template rendering time
+For chart version >= 1.0.0, ensure agent version >= 1.0.0
+Extracts version from image tag and compares using semver
+*/}}
+{{- define "nr-ebpf-agent.validateVersion" -}}
+{{- $tag := .tag -}}
+{{- $chartVersion := .chartVersion -}}
+{{- $appVersion := .appVersion -}}
+{{- $minVersion := "1.0.0" -}}
+{{- $agentVersion := "" -}}
+
+{{- /* Try to extract semantic version from tag */ -}}
+{{- if regexMatch "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag -}}
+  {{- /* Extract X.Y.Z from patterns like "0.5.0", "v0.5.0", "0.5.0-beta", etc */ -}}
+  {{- $agentVersion = regexFind "^v?([0-9]+\\.[0-9]+\\.[0-9]+)" $tag | trimPrefix "v" -}}
+{{- else if eq $tag $appVersion -}}
+  {{- /* If tag equals appVersion, use appVersion directly */ -}}
+  {{- $agentVersion = $appVersion -}}
+{{- else -}}
+  {{- /* Cannot parse version from custom tag - fail with helpful message */ -}}
+  {{- fail (printf "\nError: Chart version %s requires agent version >= %s.\n\nCannot determine agent version from image tag '%s'.\n\nRESOLUTION:\n  1. Use a semantic version tag (e.g., '1.0.0', '0.7.0')\n  2. Remove the image tag to use Chart.AppVersion (%s)\n\nFor more information:\n  https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent\n" $chartVersion $minVersion $tag $appVersion) -}}
+{{- end -}}
+
+{{- /* Validate extracted version is >= minimum required version */ -}}
+{{- if not (semverCompare (printf ">=%s" $minVersion) $agentVersion) -}}
+  {{- fail (printf "\n================================================================================\nERROR: INCOMPATIBLE AGENT VERSION\n================================================================================\n\nChart Version:%s\nAgent Version:%s (from tag: %s)\nRequired Version: >= %s\n\nChart version %s removed OpenTelemetry collector support and requires\nagent version >= %s.\n\nRESOLUTION:\n  1. Update ebpfAgent.image.tag to version >= %s\n OR\n  2. Remove custom image tag to use Chart.AppVersion (%s)\n\nFor more information:\n  https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent\n\n================================================================================\n" $chartVersion $agentVersion $tag $minVersion $chartVersion $minVersion $minVersion $appVersion) -}}
 {{- end -}}
 {{- end -}}
 

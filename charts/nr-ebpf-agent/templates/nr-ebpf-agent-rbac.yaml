@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "nr-ebpf-agent.otelcollector.name" . }}
+  name: {{ include "nr-ebpf-agent.service.name" . }}
   labels:
 {{- include "newrelic.common.labels" . | nindent 4 }}
 rules:
@@ -29,14 +29,14 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "nr-ebpf-agent.otelcollector.name" . }}
+  name: {{ include "nr-ebpf-agent.service.name" . }}
   labels:
 {{- include "newrelic.common.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
-  name: {{ include "nr-ebpf-agent.otelcollector.name" . }}
+  name: {{ include "nr-ebpf-agent.service.name" . }}
 subjects:
 - kind: ServiceAccount
-  name: {{ include "nr-ebpf-agent.collector.name" . }}
+  name: {{ include "nr-ebpf-agent.service.name" . }}
   namespace: '{{ .Release.Namespace }}'
