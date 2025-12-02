@@ -70,49 +70,49 @@ volumeMounts:
 - name: host-root-volume
   mountPath: /host
 
-  containers:
-  - name: nr-ebpf-agent
-image: {{ .Values.ebpfAgent.image.repository }}:{{ include "nr-ebpf-agent.imageTag" . }}
-imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
-resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
-env:
-  - name: VIZIER_PORT
-value: "{{ .Values.ebpfAgent.vizierPort | default "12345" }}"
-  - name: PL_HOST_PATH
-value: "/host"
-  - name: PL_STIRLING_SOURCES
-value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
-  {{- include "generateTracingEnvVars" . | indent 10 }}
-  - name: KUBERNETES_CLUSTER_DOMAIN
-value: "cluster.local"
-  - name: NEW_RELIC_LOG_LEVEL
-value: "{{ .Values.logLevel }}"
-  - name: NEW_RELIC_LOG_FILE_PATH
-value: "{{ .Values.logFilePath }}"
-  - name: NEW_RELIC_LICENSE_KEY
-valueFrom:
-  secretKeyRef:
-{{- if (include "newrelic.common.license._licenseKey" .) }}
-key: NEW_RELIC_LICENSE_KEY
-name: nr-ebpf-agent-secrets
-{{- else }}
-key: {{ include "newrelic.common.license._customSecretKey" . }}
-name: {{ include "newrelic.common.license._customSecretName" . }}
-{{- end }}
-  - name: TABLE_STORE_DATA_LIMIT_MB
-value: "{{ .Values.tableStoreDataLimitMB }}"
-  - name: TLS_ENABLED
-  {{- if (hasKey .Values "tls") }}
-  {{- if eq .Values.tls.enabled true }}
-value: "true"
-  {{- else }}
-value: "false"
-  {{- end }}
-  {{- if eq .Values.tls.enabled true }}
-  - name: TLS_CERT_PATH
-value: "{{ .Values.tls.certPath }}/"
-  {{- end }}
-  {{- end }}
+      containers:
+      - name: nr-ebpf-agent
+        image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.ebpfAgent.image "defaultRegistry" "docker.io" "context" .) }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
+        env:
+          - name: VIZIER_PORT
+            value: "{{ .Values.ebpfAgent.vizierPort | default "12345" }}"
+          - name: PL_HOST_PATH
+            value: "/host"
+          - name: PL_STIRLING_SOURCES
+            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
+          {{- include "generateTracingEnvVars" . | indent 10 }}
+          - name: KUBERNETES_CLUSTER_DOMAIN
+            value: "cluster.local"
+          - name: NEW_RELIC_LOG_LEVEL
+            value: "{{ .Values.logLevel }}"
+          - name: NEW_RELIC_LOG_FILE_PATH
+            value: "{{ .Values.logFilePath }}"
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
+          - name: TABLE_STORE_DATA_LIMIT_MB
+            value: "{{ .Values.tableStoreDataLimitMB }}"
+          - name: TLS_ENABLED
+          {{- if (hasKey .Values "tls") }}
+          {{- if eq .Values.tls.enabled true }}
+            value: "true"
+          {{- else }}
+            value: "false"
+          {{- end }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: TLS_CERT_PATH
+            value: "{{ .Values.tls.certPath }}/"
+          {{- end }}
+          {{- end }}
 
   {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
   - name: DOWNLOADED_PACKAGED_HEADERS_PATH

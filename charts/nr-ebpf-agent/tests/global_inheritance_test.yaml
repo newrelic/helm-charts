@@ -19,7 +19,7 @@ tests:
     asserts:
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[1].env[0].value
+          path: spec.template.spec.containers[0].env[10].value
           value: test-cluster
 
   # =============================================================================
@@ -108,19 +108,6 @@ tests:
       - template: templates/nr-ebpf-agent-daemonset.yaml
         matchRegex:
           path: spec.template.spec.containers[0].image
-          pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
-
-  - it: should use global.images.registry for ebpfClient image
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        images:
-          registry: harbor.corp.net
-    asserts:
-      - template: templates/nr-ebpf-agent-daemonset.yaml
-        matchRegex:
-          path: spec.template.spec.containers[1].image
           pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
 
   - it: should use global.images.registry for otelCollector image
