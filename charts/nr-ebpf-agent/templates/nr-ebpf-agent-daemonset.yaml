@@ -1,4 +1,5 @@
 ---
+{{- $region := include "newrelic.common.region" . }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -129,7 +130,13 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: OTLP_ENDPOINT
-            value: {{ include "nr-otel-collector-receiver.endpoint" .}}
+        {{- if eq $region "Staging" }}
+            value: "staging-otlp.nr-data.net:443"
+        {{- else if eq $region "EU" }}
+            value: "otlp.eu01.nr-data.net:443"
+        {{- else }}
+            value: "otlp.nr-data.net:443"
+        {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{- if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
@@ -142,12 +149,20 @@ spec:
             value: {{ .Release.Namespace }}
           - name: AGENT_SERVICE_NAME
             value: {{ include "nr-ebpf-agent.service.name" . }}
-          - name: IS_INSECURE
-            value: "True"
           - name: APM_DATA_REPORTING
             value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
             value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
+          - name: DROP_DATA_NEW_RELIC
+            value: "{{ if hasKey .Values "dropDataNewRelic" }}{{ .Values.dropDataNewRelic }}{{ else }}true{{ end }}"
+          - name: DROP_APM_ENABLED_PODS
+            value: "{{ if hasKey .Values "dropAPMEnabledPods" }}{{ .Values.dropAPMEnabledPods }}{{ else }}false{{ end }}"
+          - name: DROP_DATA_FOR_NAMESPACES
+            value: "{{ .Values.dropDataForNamespaces | join "," }}"
+          - name: DROP_SERVICE_NAME_REGEX
+            value: {{ .Values.dropDataServiceNameRegex }}
+          - name: ALLOW_SERVICE_NAME_REGEX
+            value: {{ .Values.allowServiceNameRegex }}
         securityContext:
           privileged: true
         volumeMounts:
@@ -168,6 +183,7 @@ spec:
       hostNetwork: true
       hostPID: true
       restartPolicy: Always
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
       - name: host-root-volume
         hostPath:
