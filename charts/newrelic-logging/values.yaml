@@ -30,7 +30,10 @@
 proxy: ""
 
 fluentBit:
-  logLevel: "info"
+  # logLevel: Set the log level for Fluent Bit (trace, debug, info, warn, error, off)
+  # When empty, defaults to "info" unless global.verboseLog is true (then "debug")
+  # Override this to explicitly set a log level, which takes precedence over global.verboseLog
+  logLevel: ""
   path: "/var/log/containers/*.log"
   linuxMountPath: /var
   windowsPath: "C:\\var\\log\\containers\\*.log"
