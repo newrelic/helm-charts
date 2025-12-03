@@ -290,7 +290,7 @@ Security context specifically for init containers with Pod Security Standards co
 {{- define "newrelic.common.securityContext.initContainer" -}}
 allowPrivilegeEscalation: false
 runAsNonRoot: true
-{{- if .Values.global.podSecurityContext.runAsUser }}
+{{- if and .Values.global .Values.global.podSecurityContext .Values.global.podSecurityContext.runAsUser }}
 runAsUser: {{ .Values.global.podSecurityContext.runAsUser }}
 {{- else }}
 runAsUser: 2000
