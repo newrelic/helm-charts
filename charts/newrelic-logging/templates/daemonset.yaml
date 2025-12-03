@@ -54,6 +54,10 @@ spec:
       {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
         - name: init
           image: busybox:1.36
+          {{- with include "newrelic.common.securityContext.initContainer" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
           command: ["/bin/sh", "-c"]
           args: ["/bin/find /db -type f -mtime +1 -delete"] # Delete all db files not updated in the last 24h
           volumeMounts:

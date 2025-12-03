@@ -284,4 +284,20 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 {{- end -}}
 
-
+{{/*
+Security context specifically for init containers with Pod Security Standards compliance
+*/}}
+{{- define "newrelic.common.securityContext.initContainer" -}}
+allowPrivilegeEscalation: false
+runAsNonRoot: true
+{{- if .Values.global.podSecurityContext.runAsUser }}
+runAsUser: {{ .Values.global.podSecurityContext.runAsUser }}
+{{- else }}
+runAsUser: 1000
+{{- end }}
+capabilities:
+  drop:
+  - ALL
+seccompProfile:
+  type: RuntimeDefault
+{{- end -}}
