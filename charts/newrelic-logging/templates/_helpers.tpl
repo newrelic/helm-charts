@@ -293,7 +293,7 @@ runAsNonRoot: true
 {{- if .Values.global.podSecurityContext.runAsUser }}
 runAsUser: {{ .Values.global.podSecurityContext.runAsUser }}
 {{- else }}
-runAsUser: 1000
+runAsUser: 2000
 {{- end }}
 capabilities:
   drop:
