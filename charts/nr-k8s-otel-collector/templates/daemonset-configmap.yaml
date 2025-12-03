@@ -632,6 +632,12 @@ data:
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
 
       transform/low_data_mode_inator:
         metric_statements:

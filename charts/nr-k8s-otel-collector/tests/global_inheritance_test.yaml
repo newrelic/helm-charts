@@ -418,6 +418,103 @@ tests:
         template: templates/deployment.yaml
 
   # =============================================================================
+  # CUSTOM ATTRIBUTES
+  # =============================================================================
+
+  - it: global.customAttributes are added to deployment ConfigMap resource/newrelic processor
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        customAttributes:
+          team: platform
+          env: production
+          region: us-west-2
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: team\\s+action: upsert\\s+value: \"platform\""
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: env\\s+action: upsert\\s+value: \"production\""
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: region\\s+action: upsert\\s+value: \"us-west-2\""
+        template: templates/deployment-configmap.yaml
+
+  - it: global.customAttributes are added to daemonset ConfigMap resource/newrelic processor
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        customAttributes:
+          team: platform
+          env: production
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "- key: team\\s+action: upsert\\s+value: \"platform\""
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "- key: env\\s+action: upsert\\s+value: \"production\""
+        template: templates/daemonset-configmap.yaml
+
+  - it: local customAttributes merge with global.customAttributes in deployment
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        customAttributes:
+          global-attr: global-value
+      customAttributes:
+        local-attr: local-value
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: global-attr\\s+action: upsert\\s+value: \"global-value\""
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: local-attr\\s+action: upsert\\s+value: \"local-value\""
+        template: templates/deployment-configmap.yaml
+
+  - it: local customAttributes override global.customAttributes for same key in deployment
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        customAttributes:
+          env: global-env
+      customAttributes:
+        env: local-env
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: env\\s+action: upsert\\s+value: \"local-env\""
+        template: templates/deployment-configmap.yaml
+      - notMatchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: env\\s+action: upsert\\s+value: \"global-env\""
+        template: templates/deployment-configmap.yaml
+
+  - it: no custom attributes added when global.customAttributes is not set
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "resource/newrelic:\\s+attributes:"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "- key: k8s\\.cluster\\.name"
+        template: templates/deployment-configmap.yaml
+
+  # =============================================================================
   # SERVICE ACCOUNT
   # =============================================================================
 
