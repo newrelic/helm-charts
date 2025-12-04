@@ -3,6 +3,7 @@ templates:
   - templates/configmap.yaml
   - templates/daemonset.yaml
   - templates/daemonset-windows.yaml
+  - templates/serviceaccount.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -795,4 +796,196 @@ tests:
           path: spec.template.spec.containers[0].securityContext
           content:
             readOnlyRootFilesystem: false
+        template: templates/daemonset.yaml
+
+  # ====================
+  # images.registry Tests (2)
+  # ====================
+  - it: should inherit global.images.registry when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          registry: global-registry.io
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^global-registry\.io/
+        template: templates/daemonset.yaml
+
+  - it: should use local image.registry when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          registry: global-registry.io
+      image:
+        registry: local-registry.io
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^local-registry\.io/
+        template: templates/daemonset.yaml
+
+  # ====================
+  # images.pullSecrets Tests (2)
+  # ====================
+  - it: should inherit global.images.pullSecrets when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: global-secret
+        template: templates/daemonset.yaml
+
+  - it: should use local image.pullSecrets when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+      image:
+        pullSecrets:
+          - name: local-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: local-secret
+        template: templates/daemonset.yaml
+
+  # ====================
+  # serviceAccount.create Tests (2)
+  # ====================
+  - it: should inherit global.serviceAccount.create when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/serviceaccount.yaml
+
+  - it: should use local serviceAccount.create when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          create: false
+      serviceAccount:
+        create: true
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/serviceaccount.yaml
+
+  # ====================
+  # serviceAccount.annotations Tests (2)
+  # ====================
+  - it: should inherit global.serviceAccount.annotations when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          annotations:
+            global-annotation: global-value
+    asserts:
+      - equal:
+          path: metadata.annotations.global-annotation
+          value: global-value
+        template: templates/serviceaccount.yaml
+
+  - it: should use local serviceAccount.annotations when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          annotations:
+            global-annotation: global-value
+      serviceAccount:
+        annotations:
+          local-annotation: local-value
+    asserts:
+      - equal:
+          path: metadata.annotations.local-annotation
+          value: local-value
+        template: templates/serviceaccount.yaml
+
+  # ====================
+  # customSecretName Tests (2)
+  # ====================
+  - it: should inherit global.customSecretName when local not set
+    set:
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: global-secret
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.key
+          value: global-key
+        template: templates/daemonset.yaml
+
+  - it: should use local customSecretName when both global and local are set
+    set:
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+      customSecretName: local-secret
+      customSecretLicenseKey: local-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: local-secret
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.key
+          value: local-key
+        template: templates/daemonset.yaml
+
+  # ====================
+  # dnsConfig Tests (2)
+  # ====================
+  - it: should inherit global.dnsConfig when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: "1"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].name
+          value: ndots
+        template: templates/daemonset.yaml
+
+  - it: should use local dnsConfig when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: "1"
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "2"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].value
+          value: "2"
         template: templates/daemonset.yaml
