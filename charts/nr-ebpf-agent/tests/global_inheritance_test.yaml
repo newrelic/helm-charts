@@ -473,3 +473,166 @@ tests:
         equal:
           path: spec.template.spec.containers[0].env[4].value
           value: gov-otlp.nr-data.net:4317
+
+  # =============================================================================
+  # Global Cluster Tests
+  # =============================================================================
+  - it: should inherit global.cluster when local cluster not set
+    set:
+      licenseKey: test-key
+      global:
+        cluster: global-cluster
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[10].value
+          value: global-cluster
+
+  - it: should use local cluster when both global and local are set
+    set:
+      cluster: local-cluster
+      licenseKey: test-key
+      global:
+        cluster: global-cluster
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[10].value
+          value: local-cluster
+
+  # =============================================================================
+  # Global License Key Tests
+  # =============================================================================
+  - it: should inherit global.licenseKey when local licenseKey not set
+    set:
+      cluster: test-cluster
+      global:
+        licenseKey: global-license-key
+    asserts:
+      - template: templates/secrets.yaml
+        documentIndex: 0
+        equal:
+          path: data.NEW_RELIC_LICENSE_KEY
+          value: Z2xvYmFsLWxpY2Vuc2Uta2V5  # base64 of "global-license-key"
+
+  - it: should use local licenseKey when both global and local are set
+    set:
+      cluster: test-cluster
+      licenseKey: local-license-key
+      global:
+        licenseKey: global-license-key
+    asserts:
+      - template: templates/secrets.yaml
+        documentIndex: 0
+        equal:
+          path: data.NEW_RELIC_LICENSE_KEY
+          value: bG9jYWwtbGljZW5zZS1rZXk=  # base64 of "local-license-key"
+
+  # =============================================================================
+  # Global Custom Secret Tests
+  # =============================================================================
+  - it: should inherit global.customSecretName when local customSecretName not set
+    set:
+      cluster: test-cluster
+      region: US
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: global-secret
+                key: global-key
+
+  - it: should use local customSecretName when both global and local are set
+    set:
+      cluster: test-cluster
+      region: US
+      customSecretName: local-secret
+      customSecretLicenseKey: local-key
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: local-secret
+                key: local-key
+
+  # =============================================================================
+  # Global ServiceAccount Tests
+  # =============================================================================
+  - it: should inherit global.serviceAccount.create when local not set
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        serviceAccount:
+          create: false
+    asserts:
+      - template: templates/otel-collector-service-account.yaml
+        hasDocuments:
+          count: 0
+
+  - it: should use local serviceAccount.create when both global and local are set
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      serviceAccount:
+        create: true
+      global:
+        serviceAccount:
+          create: false
+    asserts:
+      - template: templates/otel-collector-service-account.yaml
+        hasDocuments:
+          count: 1
+
+  # =============================================================================
+  # Global Security Context Tests
+  # =============================================================================
+  - it: should inherit global.podSecurityContext on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        podSecurityContext:
+          runAsUser: 2000
+          fsGroup: 3000
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 3000
+
+  - it: should inherit global.podSecurityContext on otel-collector
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        podSecurityContext:
+          runAsUser: 2000
+          fsGroup: 3000
+    asserts:
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 2000
+      - template: templates/otel-collector-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 3000

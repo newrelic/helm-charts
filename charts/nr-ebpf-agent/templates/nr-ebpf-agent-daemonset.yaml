@@ -119,97 +119,70 @@ volumeMounts:
 value: "{{ .Values.ebpfAgent.downloadedPackagedHeadersPath }}"
   {{- end }}
 
-  {{- if .Values.ebpfAgent.distroKernelHeadersPath }}
-  - name: DISTRO_KERNEL_HEADERS_PATH
-value: "{{ .Values.ebpfAgent.distroKernelHeadersPath }}"
-  {{- end }}
-  - name: DEPLOYMENT_NAME
-value: {{ .Values.cluster }}
-  - name: HOST_IP
-valueFrom:
-  fieldRef:
-fieldPath: status.hostIP
-  - name: OTLP_ENDPOINT
-{{- if eq $region "Staging" }}
-value: "staging-otlp.nr-data.net:443"
-{{- else if eq $region "EU" }}
-value: "otlp.eu01.nr-data.net:443"
-{{- else }}
-value: "otlp.nr-data.net:443"
-{{- end }}
-  {{- include "generateClientScriptEnvVars" . | nindent 10 }}
-  {{- if (hasKey .Values.protocols.http "spans") }}
-  {{- if .Values.protocols.http.spans.samplingErrorRate}}
-  {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
-  - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
-value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
-  {{- end }}
-  {{- end }}
-  - name: NAMESPACE
-value: {{ .Release.Namespace }}
-  - name: AGENT_SERVICE_NAME
-value: {{ include "nr-ebpf-agent.service.name" . }}
-  - name: APM_DATA_REPORTING
-value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
-  - name: TCP_STATS_REPORTING
-value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
-  - name: DROP_DATA_NEW_RELIC
-value: "{{ if hasKey .Values "dropDataNewRelic" }}{{ .Values.dropDataNewRelic }}{{ else }}true{{ end }}"
-  - name: DROP_APM_ENABLED_PODS
-value: "{{ if hasKey .Values "dropAPMEnabledPods" }}{{ .Values.dropAPMEnabledPods }}{{ else }}false{{ end }}"
-  - name: DROP_DATA_FOR_NAMESPACES
-value: "{{ .Values.dropDataForNamespaces | join "," }}"
-  - name: DROP_SERVICE_NAME_REGEX
-value: {{ .Values.dropDataServiceNameRegex }}
-  - name: ALLOW_SERVICE_NAME_REGEX
-value: {{ .Values.allowServiceNameRegex }}
-securityContext:
-  privileged: true
-volumeMounts:
-  - name: host-root-volume
-mountPath: /host
-readOnly: true
-  - name: sys-volume
-mountPath: /sys
-readOnly: true
-  {{- if (hasKey .Values "tls") }}
-  {{- if eq .Values.tls.enabled true }}
-  - name: cert
-mountPath: "{{ .Values.tls.certPath }}/"
-readOnly: true
-  {{- end }}
-  {{- end }}
-  dnsPolicy: ClusterFirstWithHostNet
-  hostNetwork: true
-  hostPID: true
-  restartPolicy: Always
-  serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
-  volumes:
-  - name: host-root-volume
-hostPath:
-  path: /
-  type: Directory
-  - name: sys-volume
-hostPath:
-  path: /sys
-  type: Directory
-  {{- if (hasKey .Values "tls") }}
-  {{- if eq .Values.tls.enabled true }}
-  - name: cert
-secret:
-  defaultMode: 420
-  secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
-  {{- end }}
-  {{- end }}
-  {{- with include "newrelic.common.nodeSelector" . }}
-  nodeSelector:
-{{- . | nindent 8 -}}
-  {{- end }}
-  {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
-  affinity:
-{{- . | nindent 8 }}
-  {{- end }}
-  {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
-  tolerations:
-{{- . | nindent 8 }}
-  {{- end }}
+          {{- if .Values.ebpfAgent.distroKernelHeadersPath }}
+          - name: DISTRO_KERNEL_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.distroKernelHeadersPath }}"
+          {{- end }}
+          - name: DEPLOYMENT_NAME
+            value: {{ include "newrelic.common.cluster" . }}
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: NAMESPACE
+            value: {{ .Release.Namespace }}
+          - name: AGENT_SERVICE_NAME
+            value: {{ include "nr-ebpf-agent.service.name" . }}
+          - name: APM_DATA_REPORTING
+            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
+          - name: TCP_STATS_REPORTING
+            value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
+        securityContext:
+          privileged: true
+        volumeMounts:
+          - name: host-root-volume
+            mountPath: /host
+            readOnly: true
+          - name: sys-volume
+            mountPath: /sys
+            readOnly: true
+          {{- if (hasKey .Values "tls") }}
+          {{- if eq .Values.tls.enabled true }}
+          - name: cert
+            mountPath: "{{ .Values.tls.certPath }}/"
+            readOnly: true
+          {{- end }}
+          {{- end }}
+      dnsPolicy: ClusterFirstWithHostNet
+      hostNetwork: true
+      hostPID: true
+      restartPolicy: Always
+      volumes:
+      - name: host-root-volume
+        hostPath:
+          path: /
+          type: Directory
+      - name: sys-volume
+        hostPath:
+          path: /sys
+          type: Directory
+      {{- if (hasKey .Values "tls") }}
+      {{- if eq .Values.tls.enabled true }}
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
+      {{- end }}
+      {{- end }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
