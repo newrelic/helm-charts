@@ -18,7 +18,7 @@ overrides:
   {{- if .Values.agentControlCd.enabled -}}
 {{- $config = mustMergeOverwrite $config (dict "config" (dict "cdReleaseName" .Values.agentControlCd.releaseName)) -}}
   {{- else -}}
-{{- $config = mustMergeOverwrite $config (dict "config" (dict "cdRemoteUpdate" false)) -}}
+{{- $config = mustMergeOverwrite $config (dict "config" (dict "cdRemoteUpdate" false "cdReleaseName" "")) -}}
   {{- end -}}
 
   {{- $config | toYaml | b64enc -}}
