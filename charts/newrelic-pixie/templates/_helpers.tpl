@@ -47,12 +47,12 @@ release: {{.Release.Name }}
 {{- end -}}
 
 {{- define "newrelic-pixie.nrStaging" -}}
-{{- if .Values.global }}
+{{- if .Values.nrStaging }}
+  {{- .Values.nrStaging -}}
+{{- else if .Values.global }}
   {{- if .Values.global.nrStaging }}
     {{- .Values.global.nrStaging -}}
   {{- end -}}
-{{- else if .Values.nrStaging }}
-  {{- .Values.nrStaging -}}
 {{- end -}}
 {{- end -}}
 
@@ -176,7 +176,8 @@ Return image registry from global or local values
 {{- end -}}
 
 {{/*
-Return image pull policy from global or local values
+Return image pull policy from local or global values with proper fallback precedence.
+Precedence: local .Values.image.pullPolicy > global.images.pullPolicy > default "IfNotPresent"
 */}}
 {{- define "newrelic-pixie.image.pullPolicy" -}}
 {{- if .Values.image.pullPolicy }}
@@ -187,6 +188,9 @@ Return image pull policy from global or local values
       {{- .Values.global.images.pullPolicy -}}
     {{- end -}}
   {{- end -}}
+{{- else }}
+  {{- /* Default fallback when neither local nor global set */ -}}
+  IfNotPresent
 {{- end -}}
 {{- end -}}
 

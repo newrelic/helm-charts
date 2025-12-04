@@ -27,15 +27,17 @@ customSecretApiKeyKey: ""
 clusterRegistrationWaitImage:
   repository: gcr.io/pixie-oss/pixie-dev-public/curl
   tag: "1.0"
-  pullPolicy: IfNotPresent
+  # -- Image pull policy. Can be configured also with `global.images.pullPolicy`. Defaults to IfNotPresent
+  pullPolicy: ""
 
 # -- Image for New Relic Pixie integration
 # @default -- See `values.yaml`
 image:
   repository: newrelic/newrelic-pixie-integration
   tag: ""
-  pullPolicy: IfNotPresent
-  # -- Image pull secrets
+  # -- Image pull policy. Can be configured also with `global.images.pullPolicy`. Defaults to IfNotPresent
+  pullPolicy: ""
+  # -- Image pull secrets. Can be configured also with `global.images.pullSecrets`
   pullSecrets: []
   # - name: regsecret
 
@@ -80,6 +82,12 @@ customScriptsConfigMap: ""
 excludeNamespacesRegex: ""
 # -- Regex pattern to exclude pods from monitoring
 excludePodsRegex: ""
+
+# -- Enable verbose logging. Can be configured also with `global.verboseLog`
+verbose:
+
+# -- Enable New Relic staging endpoints. Can be configured also with `global.nrStaging`
+nrStaging:
 
 # -- Enable low data mode for reduced telemetry volume. When enabled, the integration performs heavier sampling on Pixie span data and sets the collect interval to 15 seconds instead of 10 seconds. Can be configured also with `global.lowDataMode`
 # @default -- false
