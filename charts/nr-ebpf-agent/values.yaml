@@ -16,12 +16,8 @@ proxy: ""
 logLevel: "INFO"
 # -- To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout.
 logFilePath: ""
-# -- Drop data when service names map to an IP address.
-dropDataIpServiceNames: true
 # -- Drop data from the newrelic namespace and newrelic-bundle services.
 dropDataNewRelic: true
-# -- Drop data from pods that are monitored by New Relic APM via auto attach.
-dropAPMEnabledPods: false
 # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
 dropDataForNamespaces: ["kube-system"]
 # -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
@@ -103,7 +99,7 @@ ebpfAgent:
     repository: docker.io/newrelic/newrelic-ebpf-agent
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
-    # -- The tag of the eBPF agent image to be deployed.
+    # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
     tag: ""
   resources:
     limits:
@@ -114,6 +110,8 @@ ebpfAgent:
       cpu: 100m
       # -- Min memory allocated to the container.
       memory: 250Mi
+  serviceAccount:
+    annotations: {}
   # -- Sets ebpfAgent pod tolerations. Overrides `tolerations` and `global.tolerations`
   tolerations: []
   # -- Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity`
@@ -135,43 +133,6 @@ ebpfAgent:
   # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
-
-# Configuration to apply on the OpenTelemetry collector daemonset.
-otelCollector:
-  image:
-    # -- OpenTelemetry collector image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
-    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
-    pullPolicy: IfNotPresent
-    # -- The tag of the OpenTelemetry collector image to be deployed.
-    tag: ""
-  resources:
-    limits:
-      # -- Max CPU allocated to the container.
-      cpu: 200m
-      # -- Max memory allocated to the container.
-      memory: 500Mi
-    requests:
-      # -- Min CPU allocated to the container.
-      cpu: 100m
-      # -- Min memory allocated to the container.
-      memory: 200Mi
-  # -- Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations`
-  tolerations: []
-  # -- Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity`
-  affinity: {}
-  # -- Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
-  podAnnotations: {}
-  # -- Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
-  podSecurityContext: {}
-  # -- Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
-  containerSecurityContext: {}
-  # -- Port on which the OTLP receiver listens for gRPC connections.
-  receiverPort: 4317
-  collector:
-    serviceAccount:
-      # -- Annotations for the OTel collector service account.
-      annotations: {}
 
 # -- The secrets that are needed to pull images from a custom registry.
 pullSecrets: []
@@ -195,9 +156,6 @@ podSecurityContext: {}
 containerSecurityContext: {}
 # --  Kubernetes cluster domain.
 kubernetesClusterDomain: cluster.local
-# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
-# @default -- `false`
-verboseLog:
 # tls makes sure only requests with correctly formatted rules will get into the operator.
 tls:
   # -- Enable TLS communication between the eBPF client and agent.
