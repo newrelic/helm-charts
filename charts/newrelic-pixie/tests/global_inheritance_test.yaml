@@ -580,6 +580,53 @@ tests:
             value: "true"
 
   # ================================================================================
+  # FIXED LIMITATIONS (Previously blocked by defaults in values.yaml)
+  # ================================================================================
+  - it: Image pull policy NOW propagates from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].imagePullPolicy"
+          value: "Always"
+      - equal:
+          path: "spec.template.spec.initContainers[0].imagePullPolicy"
+          value: "Always"
+
+  - it: VerboseLog NOW propagates from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        verboseLog: true
+    asserts:
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: VERBOSE
+            value: "true"
+
+  - it: NrStaging NOW respects local override (precedence fix)
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      nrStaging: false
+      global:
+        nrStaging: true
+    asserts:
+      - notContains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: NR_OTLP_HOST
+
+  # ================================================================================
   # NOT APPLICABLE (These should not cause errors)
   # ================================================================================
   - it: Unsupported global values do not cause errors (provider)

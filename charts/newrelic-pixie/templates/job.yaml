@@ -118,7 +118,8 @@ spec:
               key: cluster-id
               name: pl-cluster-secrets
           {{- end }}
-        {{- if .Values.verbose }}
+        {{- $verboseLog := include "newrelic-pixie.verboseLog" . }}
+        {{- if or .Values.verbose $verboseLog }}
         - name: VERBOSE
           value: "true"
         {{- end }}
