@@ -115,7 +115,6 @@ tests:
           runAsUser: deploymentValue
           allowPrivilegeEscalation: deploymentValue
           readOnlyRootFilesystem: deploymentValue
-          capabilities: deploymentValue
       podSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -131,7 +130,6 @@ tests:
             runAsUser: deploymentValue
             allowPrivilegeEscalation: deploymentValue
             readOnlyRootFilesystem: deploymentValue
-            capabilities: deploymentValue
         template: templates/deployment.yaml
   - it: sets pod securityContext from daemonset values overriding top level and global values
     set:
@@ -145,7 +143,6 @@ tests:
           runAsUser: daemonsetValue
           allowPrivilegeEscalation: daemonsetValue
           readOnlyRootFilesystem: daemonsetValue
-          capabilities: daemonsetValue
       podSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -161,7 +158,6 @@ tests:
             runAsUser: daemonsetValue
             allowPrivilegeEscalation: daemonsetValue
             readOnlyRootFilesystem: daemonsetValue
-            capabilities: daemonsetValue
         template: templates/daemonset.yaml
   - it: sets container securityContext set to defaults when no values provided
     set:
@@ -366,7 +362,9 @@ tests:
           runAsUser: deploymentValue
           allowPrivilegeEscalation: deploymentValue
           readOnlyRootFilesystem: deploymentValue
-          capabilities: deploymentValue
+          capabilities:
+            drop:
+              - ALL
       containerSecurityContext:
         topLevelKey: topLevelValue
       global:
@@ -382,7 +380,9 @@ tests:
             runAsUser: deploymentValue
             allowPrivilegeEscalation: deploymentValue
             readOnlyRootFilesystem: deploymentValue
-            capabilities: deploymentValue
+            capabilities:
+              drop:
+                - ALL
         template: templates/deployment.yaml
   - it: sets container securityContext from daemonset values overriding top level and global values
     set:
