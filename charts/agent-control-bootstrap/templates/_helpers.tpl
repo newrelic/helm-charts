@@ -21,8 +21,11 @@ overrides:
     {{- $config = mustMergeOverwrite $config (dict "config" (dict "cdRemoteUpdate" false "cdReleaseName" "")) -}}
   {{- end -}}
 
-  {{- $sName := .Values.config.authSecret.secretName | default "agent-control-auth" -}}
-  {{- $sKey  := .Values.config.authSecret.secretKeyName | default "private_key" -}}
+  {{- $rootConfig := .Values.config | default dict -}}
+  {{- $authSecret := $rootConfig.authSecret | default dict -}}
+
+  {{- $sName := $authSecret.secretName | default "agent-control-auth" -}}
+  {{- $sKey  := $authSecret.secretKeyName | default "private_key" -}}
 
   {{- $secretObj := dict "secret_name" $sName "secret_key_name" $sKey -}}
 
