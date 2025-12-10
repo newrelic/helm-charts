@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.7
+    helm.sh/chart: nr-k8s-otel-collector-0.9.8
 data:
   deployment-config.yaml: |
     receivers:
@@ -432,7 +432,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_(replicaset_owner)
+          - include: kube_replicaset_(owner|created)
             action: update
             match_type: regexp
             operations:
@@ -516,7 +516,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.9.7
+            value: 0.9.8
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -534,7 +534,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.9.7
+            value: 0.9.8
 
       transform/events:
         log_statements:
