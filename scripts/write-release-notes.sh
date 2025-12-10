@@ -43,7 +43,7 @@ function setup() {
   echo "🚀 Latest Releases included in <${url}|nri-bundle-${version}>" >> $slack_file
   echo "" >> $slack_file
 
-  # Remove charts that we do not include in the release notes
+  # Remove the deprecated pixie charts from release notes
   cd charts
   rm -f newrelic-pixie-*
   rm -f pixie-operator-chart-*
