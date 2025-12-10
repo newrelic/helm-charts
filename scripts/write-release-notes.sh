@@ -45,10 +45,7 @@ function setup() {
 
   # Remove charts that we do not include in the release notes
   cd charts
-  rm -f kube-state-metrics-*
-  rm -f newrelic-logging-*
   rm -f newrelic-pixie-*
-  rm -f nri-prometheus-*
   rm -f pixie-operator-chart-*
   cd ..
 }
