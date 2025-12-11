@@ -112,7 +112,7 @@ spec:
             value: "{{ .Values.ebpfAgent.distroKernelHeadersPath }}"
           {{- end }}
           - name: DEPLOYMENT_NAME
-            value: {{ .Values.cluster }}
+            value: {{ if .Values.global }}{{ .Values.global.cluster | default .Values.cluster }}{{ else }}{{ .Values.cluster }}{{ end }}
           - name: HOST_IP
             valueFrom:
               fieldRef:
