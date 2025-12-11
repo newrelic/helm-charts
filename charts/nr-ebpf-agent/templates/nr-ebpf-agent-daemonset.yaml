@@ -43,32 +43,20 @@ spec:
       - name: kernel-header-installer
         image: docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest
         imagePullPolicy: IfNotPresent
-        command:
-          - "/bin/bash"
-          - "-c"
-          - |
-            # Detect OS and install kernel headers accordingly
-            if [ -f /host/etc/os-release ]; then
-              . /host/etc/os-release
-              if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
-                echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
-                chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
-              elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
-                echo 'Detected Debian/Ubuntu. Installing linux-headers...'
-                chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
-              else
-                echo "Unsupported OS: $ID"
-                echo "Proceeding without kernel header install."
-              fi
-            else
-              echo "/host/etc/os-release not found"
-              echo "Proceeding without kernel header install."
-            fi
+        command: ["/scripts/install-headers.sh"]
         securityContext:
           privileged: true
         volumeMounts:
+        - name: installer-script
+          mountPath: /scripts
+          readOnly: true
         - name: host-root-volume
           mountPath: /host
+        - name: kernel-headers-volume
+          mountPath: /kernel-headers
+        - name: host-containerd-socket
+          mountPath: /run/host-containerd
+          readOnly: true
 
       containers:
       - name: nr-ebpf-agent
@@ -172,6 +160,9 @@ spec:
           - name: sys-volume
             mountPath: /sys
             readOnly: true
+          - name: kernel-headers-volume
+            mountPath: /kernel-headers
+            readOnly: true
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
@@ -185,6 +176,10 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
+      - name: installer-script
+        configMap:
+          name: {{ include "nr-ebpf-agent.fullname" . }}-installer-script
+          defaultMode: 0755
       - name: host-root-volume
         hostPath:
           path: /
@@ -193,6 +188,12 @@ spec:
         hostPath:
           path: /sys
           type: Directory
+      - name: kernel-headers-volume
+        emptyDir: {}
+      - name: host-containerd-socket
+        hostPath:
+          path: /run/containerd
+          type: DirectoryOrCreate
       {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
