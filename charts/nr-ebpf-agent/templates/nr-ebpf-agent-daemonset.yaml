@@ -41,8 +41,8 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest
-        imagePullPolicy: IfNotPresent
+        image: {{ .Values.ebpfAgent.image.repository }}:agent-base-image-latest
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         command: ["/scripts/install-headers.sh"]
         securityContext:
           privileged: true
