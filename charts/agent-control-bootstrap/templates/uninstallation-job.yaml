@@ -44,6 +44,8 @@ spec:
                 --log-level "{{ .Values.uninstallation.log.level }}" \
                 --release-name={{ .Values.agentControlCd.releaseName }}
               echo "uninstalling agent-control-cd chart..."
-              helm uninstall {{ .Values.agentControlCd.releaseName }} --namespace {{ .Release.Namespace }}
+              if helm status {{ .Values.agentControlCd.releaseName }} --namespace {{ .Release.Namespace }}; then
+                helm uninstall {{ .Values.agentControlCd.releaseName }} --namespace {{ .Release.Namespace }}
+              fi
 {{- end }}
 {{- end -}}
