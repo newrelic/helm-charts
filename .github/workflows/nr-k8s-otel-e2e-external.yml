@@ -1,4 +1,4 @@
-name: K8s OTEL E2E Test Suite (Test)
+name: K8s OTEL E2E Test Suite (External Contribution)
 
 on:
   pull_request_target:
@@ -17,7 +17,8 @@ env:
 
 jobs:
   e2e-test-external:
-    name: Run Tests (External Contribution)
+    name: Run Tests
+    # Do not run e2e tests if PR has skip-e2e label or if it's a non-forked repo (internal contribution)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name != 'newrelic/helm-charts' }}
     runs-on: ubuntu-latest
     environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
