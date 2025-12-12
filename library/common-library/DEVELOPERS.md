@@ -214,8 +214,8 @@ images:
 ### `newrelic.common.images.image`
 This will return a string with the image ready to be downloaded that includes the registry, the image and the tag.
 `defaultRegistry` is used to keep `registry` field empty in `values.yaml` so you can override the image using
-`global.images.registry`, your local `jobImage.registry` and be able to fallback to a registry that is not `docker.io`
-(Or the default repository that the client could have set in the CRI).
+`global.images.registry`, your local `jobImage.registry` and be able to fallback to a registry that you specify.
+If no registry is specified at any level, `docker.io` is used as the default registry.
 
 Usage:
 ```mustache
