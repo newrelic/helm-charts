@@ -1,89 +1,113 @@
-{{- if .Values.rbac.create }}
+{{- if include "newrelic.common.serviceAccount.create" . }}
+---
+# ClusterRole for StatefulSet collector
+# Permissions: cluster-wide resources for prometheus scraping and k8sattributes enrichment
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ include "nrKubernetesOtel.deployment.serviceAccountName" . }}
   labels:
-{{- include "newrelic.common.labels" . | nindent 4 }}
+  {{- include "newrelic.common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: statefulset-collector
 rules:
-{{- if include "newrelic.common.openShift" . }}
-  # required for openshift resource detection
-  - apiGroups: ["config.openshift.io"]
-resources: ["infrastructures", "infrastructures/status"]
-verbs: ["get", "watch", "list"]
-{{- end }}
-  - apiGroups:
-- ""
-resources:
-# following required for k8s_events, k8s_cluster receiver
-- events
-# following required for k8s_cluster receiver
-- namespaces
-# following required for prometheus, k8s_cluster receiver
-- nodes
-- nodes/metrics
-- pods
-- pods/status
-- services
-- endpoints
-verbs:
-- get
-- list
-- watch
-  - apiGroups:
-- ""
-resources:
-# following required for hostmetrics, prometheus receiver
-- nodes/spec
-- nodes/stats
-- nodes/proxy
-# following required for filelog receiver
-- pods/logs
-  {{- if include "newrelic.common.openShift" . }}
-# following required for resourcedetection
-- configmaps
-  {{- end }}
-verbs:
-- get
-  # following required for prometheus receiver
-  - apiGroups:
-- ""
-resources:
-- replicationcontrollers
-- resourcequotas
-verbs:
-- list
-- watch
-  # following required for prometheus receiver
-  - apiGroups:
-- apps
-resources:
-- daemonsets
-- deployments
-- replicasets
-- statefulsets
-verbs:
-- get
-- list
-- watch
-  # following required for prometheus receiver
-  - apiGroups:
-- batch
-resources:
-- jobs
-- cronjobs
-verbs:
-- list
-- watch
-  # following required for prometheus receiver
-  - apiGroups:
-- autoscaling
-resources:
-- horizontalpodautoscalers
-verbs:
-- list
-- watch
-  # following required for prometheus receiver
-  - nonResourceURLs: ["/metrics"]
-verbs: ["get"]
+  # Required for k8sattributes processor to enrich telemetry with Kubernetes metadata
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - services
+      - endpoints
+      - pods
+      - events
+      - namespaces
+    verbs: ["get", "list", "watch"]
+  # Required for k8sattributes processor to enrich telemetry with workload metadata
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+      - deployments
+      - daemonsets
+      - statefulsets
+    verbs: ["get", "list", "watch"]
+  # Required for k8sattributes processor to enrich telemetry with job metadata
+  - apiGroups: ["batch"]
+    resources:
+      - jobs
+      - cronjobs
+    verbs: ["get", "list", "watch"]
+  # Required for prometheus receiver to discover service monitors and pod monitors
+  - apiGroups: [""]
+    resources:
+      - configmaps
+    verbs: ["get"]
+  # Required for Target Allocator to discover prometheus scrape targets
+  - apiGroups: ["discovery.k8s.io"]
+    resources:
+      - endpointslices
+    verbs: ["get", "list", "watch"]
+  # Required for prometheus receiver to scrape metrics from non-resource URLs (e.g., /metrics)
+  - nonResourceURLs:
+      - /metrics
+    verbs: ["get"]
+---
+# ClusterRole for DaemonSet collector
+# Permissions: node-local resources for kubeletstats receiver and k8sattributes enrichment
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "nrKubernetesOtel.daemonset.serviceAccountName" . }}
+  labels:
+  {{- include "newrelic.common.labels" . | nindent 4 }}
+    app.kubernetes.io/component: daemonset-collector
+rules:
+  # Required for kubeletstats receiver to collect node and pod metrics
+  - apiGroups: [""]
+    resources:
+      - nodes
+      - nodes/proxy
+      - nodes/stats
+      - nodes/metrics
+    verbs: ["get", "list", "watch"]
+  # Required for k8sattributes processor to enrich telemetry with pod metadata
+  - apiGroups: [""]
+    resources:
+      - pods
+      - namespaces
+    verbs: ["get", "list", "watch"]
+  # Required for k8sattributes processor to enrich telemetry with workload metadata
+  - apiGroups: ["apps"]
+    resources:
+      - replicasets
+      - deployments
+      - daemonsets
+      - statefulsets
+    verbs: ["get", "list", "watch"]
+  # Required for Target Allocator to discover and distribute prometheus scrape targets
+  - apiGroups: [""]
+    resources:
+      - services
+      - endpoints
+      - configmaps
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources:
+      - endpointslices
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources:
+      - ingresses
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["monitoring.coreos.com"]
+    resources:
+      - servicemonitors
+      - podmonitors
+    verbs: ["*"]
+  # Required for prometheus receiver to scrape cadvisor and kubelet metrics
+  - nonResourceURLs:
+      - /metrics
+      - /metrics/cadvisor
+      - /api
+      - /api/*
+      - /apis
+      - /apis/*
+    verbs: ["get"]
 {{- end -}}

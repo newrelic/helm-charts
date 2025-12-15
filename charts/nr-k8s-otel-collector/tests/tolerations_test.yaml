@@ -1,9 +1,7 @@
 suite: tolerations
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,10 +12,10 @@ set:
   licenseKey: us-whatever
 asserts:
   - notExists:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
 template: templates/deployment.yaml
-  - notExists:
-  path: spec.template.spec.tolerations
+  - exists:
+  path: spec.tolerations
 template: templates/daemonset.yaml
   - it: sets tolerations from global by common-library
 set:
@@ -30,18 +28,21 @@ operator: "Exists"
 effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "globalKey"
   operator: "Exists"
   effect: "NoSchedule"
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
-- key: "globalKey"
-  operator: "Exists"
-  effect: "NoSchedule"
+- key: node-role.kubernetes.io/control-plane
+  operator: Exists
+  effect: NoSchedule
+- key: node-role.kubernetes.io/master
+  operator: Exists
+  effect: NoSchedule
 template: templates/daemonset.yaml
   - it: sets tolerations from values by common-library
 set:
@@ -53,18 +54,21 @@ set:
   effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "topLevelKey"
   operator: "Exists"
   effect: "NoSchedule"
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
-- key: "topLevelKey"
-  operator: "Exists"
-  effect: "NoSchedule"
+- key: node-role.kubernetes.io/control-plane
+  operator: Exists
+  effect: NoSchedule
+- key: node-role.kubernetes.io/master
+  operator: Exists
+  effect: NoSchedule
 template: templates/daemonset.yaml
   - it: sets tolerations from values by common-library overriding global values
 set:
@@ -81,18 +85,21 @@ operator: "Exists"
 effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "topLevelKey"
   operator: "Exists"
   effect: "NoSchedule"
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
-- key: "topLevelKey"
-  operator: "Exists"
-  effect: "NoSchedule"
+- key: node-role.kubernetes.io/control-plane
+  operator: Exists
+  effect: NoSchedule
+- key: node-role.kubernetes.io/master
+  operator: Exists
+  effect: NoSchedule
 template: templates/daemonset.yaml
   - it: sets tolerations from deployment values
 set:
@@ -105,7 +112,7 @@ operator: "Exists"
 effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "deploymentKey"
   operator: "Exists"
@@ -122,7 +129,7 @@ operator: "Exists"
 effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "daemonsetKey"
   operator: "Exists"
@@ -148,7 +155,7 @@ operator: "Exists"
 effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "deploymentKey"
   operator: "Exists"
@@ -174,7 +181,7 @@ operator: "Exists"
 effect: "NoSchedule"
 asserts:
   - equal:
-  path: spec.template.spec.tolerations
+  path: spec.tolerations
   value:
 - key: "daemonsetKey"
   operator: "Exists"

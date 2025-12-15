@@ -1,9 +1,7 @@
 suite: envVars
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,12 +12,12 @@ set:
   licenseKey: us-whatever
 asserts:
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   count: 3
 template: templates/deployment.yaml
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
-  count: 6
+  path: spec.env
+  count: 7
 template: templates/daemonset.yaml
   - it: sets deployment pod environment variables from values
 set:
@@ -31,11 +29,11 @@ envs:
 value: "my-dep-value"
 asserts:
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   count: 4
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "TEST_DEP_ENV_VAR"
 value: "my-dep-value"
@@ -50,11 +48,11 @@ envs:
 value: "my-dae-value"
 asserts:
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
-  count: 7
+  path: spec.env
+  count: 8
 template: templates/daemonset.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "TEST_DAE_ENV_VAR"
 value: "my-dae-value"
@@ -73,21 +71,21 @@ envs:
   value: "my-dae-value"
 asserts:
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   count: 4
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "TEST_DEP_ENV_VAR"
 value: "my-dep-value"
 template: templates/deployment.yaml
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
-  count: 7
+  path: spec.env
+  count: 8
 template: templates/daemonset.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "TEST_DAE_ENV_VAR"
 value: "my-dae-value"
@@ -99,33 +97,33 @@ set:
   proxy: 'my-proxy'
 asserts:
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   count: 5
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "http_proxy"
 value: "my-proxy"
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "https_proxy"
 value: "my-proxy"
 template: templates/deployment.yaml
   - lengthEqual:
-  path: spec.template.spec.containers[0].env
-  count: 8
+  path: spec.env
+  count: 9
 template: templates/daemonset.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "http_proxy"
 value: "my-proxy"
 template: templates/daemonset.yaml
   - contains:
-  path: spec.template.spec.containers[0].env
+  path: spec.env
   content:
 name: "https_proxy"
 value: "my-proxy"

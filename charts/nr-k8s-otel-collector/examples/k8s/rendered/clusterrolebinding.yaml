@@ -1,20 +1,44 @@
 ---
 # Source: nr-k8s-otel-collector/templates/clusterrolebinding.yaml
+# ClusterRoleBinding for StatefulSet collector
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: nr-k8s-otel-collector
+  name: nr-k8s-otel-ss
   labels:
-app.kubernetes.io/instance: nr-k8s-otel-collector
-app.kubernetes.io/managed-by: Helm
-app.kubernetes.io/name: nr-k8s-otel-collector
-app.kubernetes.io/version: 1.2.0
-helm.sh/chart: nr-k8s-otel-collector-0.9.7
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nr-k8s-otel
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nr-k8s-otel-collector-0.10.0
+app.kubernetes.io/component: statefulset-collector
 subjects:
   - kind: ServiceAccount
-name: nr-k8s-otel-collector
-namespace: newrelic
+    name: nr-k8s-otel-ss
+    namespace: newrelic
 roleRef:
   kind: ClusterRole
-  name: nr-k8s-otel-collector
+  name: nr-k8s-otel-ss
+  apiGroup: rbac.authorization.k8s.io
+---
+# Source: nr-k8s-otel-collector/templates/clusterrolebinding.yaml
+# ClusterRoleBinding for DaemonSet collector
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nr-k8s-otel-ds
+  labels:
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nr-k8s-otel
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nr-k8s-otel-collector-0.10.0
+app.kubernetes.io/component: daemonset-collector
+subjects:
+  - kind: ServiceAccount
+    name: nr-k8s-otel-ds
+    namespace: newrelic
+roleRef:
+  kind: ClusterRole
+  name: nr-k8s-otel-ds
   apiGroup: rbac.authorization.k8s.io

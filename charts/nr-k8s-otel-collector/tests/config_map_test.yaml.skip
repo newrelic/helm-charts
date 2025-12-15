@@ -1,7 +1,5 @@
 suite: configMap
 templates:
-  - templates/deployment-configmap.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -266,7 +264,6 @@ logs/deployment:
   receivers:
   - otlp
 template: templates/deployment-configmap.yaml
-
   - it: Adds extra configuration to deployment and daemonset configMap
 set:
   cluster: my-cluster
@@ -281,7 +278,6 @@ set:
   daemonset.configMap.extraConfig.exporters: extraExporter
   daemonset.configMap.extraConfig.connectors: extraConnector
   daemonset.configMap.extraConfig.pipelines: extraPipeline
-
 asserts:
   - matchRegex:
   path: data["deployment-config.yaml"]
@@ -293,16 +289,12 @@ template: templates/deployment-configmap.yaml
   pattern: |
 ^\s*receivers:[\S\s]*extraReceiver[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*extraConnector[\S\s]*service:[\S\s]*pipelines:[\S\s]*extraPipeline[\S\s]*
 template: templates/daemonset-configmap.yaml
-
-
   - it: Adds custom Processors and Exporters to both the deployment and daemonset
 set:
   cluster: my-cluster
   licenseKey: us-key
-
   processors: extraProcessor
   exporters: extraExporter
-
 asserts:
   - matchRegex:
   path: data["deployment-config.yaml"]
@@ -314,15 +306,12 @@ template: templates/deployment-configmap.yaml
   pattern: |
 ^\s*receivers:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*
 template: templates/daemonset-configmap.yaml
-
   - it: Adds Processors and Exporters to metric preprocessor pipelines for both the deployment and daemonset
 set:
   cluster: my-cluster
   licenseKey: us-key
-
   metricsPipeline.collectorIngress.processors: extraProcessor
   metricsPipeline.collectorIngress.exporters: extraExporter
-
 asserts:
   - matchRegex:
   path: data["deployment-config.yaml"]
@@ -334,15 +323,12 @@ template: templates/deployment-configmap.yaml
   pattern: |
 ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
 template: templates/daemonset-configmap.yaml
-
   - it: Adds processors and Exporters to metric postprocessor pipelines for both the deployment and daemonset
 set:
   cluster: my-cluster
   licenseKey: us-key
-
   metricsPipeline.collectorEgress.processors: extraProcessor
   metricsPipeline.collectorEgress.exporters: extraExporter
-
 asserts:
   - matchRegex:
   path: data["deployment-config.yaml"]
@@ -354,15 +340,12 @@ template: templates/deployment-configmap.yaml
   pattern: |
 ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
 template: templates/daemonset-configmap.yaml
-
   - it: Adds Processors and Exporters to logs preprocessor pipelines for both the deployment and daemonset
 set:
   cluster: my-cluster
   licenseKey: us-key
-
   logsPipeline.collectorIngress.processors: extraProcessor
   logsPipeline.collectorIngress.exporters: extraExporter
-
 asserts:
   - matchRegex:
   path: data["deployment-config.yaml"]
@@ -374,15 +357,12 @@ template: templates/deployment-configmap.yaml
   pattern: |
 ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
 template: templates/daemonset-configmap.yaml
-
   - it: Adds processors and Exporters to logs postprocessor pipelines for both the deployment and daemonset
 set:
   cluster: my-cluster
   licenseKey: us-key
-
   logsPipeline.collectorEgress.processors: extraProcessor
   logsPipeline.collectorEgress.exporters: extraExporter
-
 asserts:
   - matchRegex:
   path: data["deployment-config.yaml"]

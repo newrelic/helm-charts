@@ -1,9 +1,7 @@
 suite: envVarsFrom
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,10 +12,10 @@ set:
   licenseKey: us-whatever
 asserts:
   - notExists:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
 template: templates/deployment.yaml
   - notExists:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
 template: templates/daemonset.yaml
   - it: adds additional deployment env sources from Values file using 'nr-otel-for-k8s-license' secret
 set:
@@ -31,19 +29,19 @@ name: test-secret-dep
 name: test-configmap-dep
 asserts:
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 secretRef: 
   name: test-secret-dep
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 configMapRef:
   name: test-configmap-dep
 template: templates/deployment.yaml
   - notExists:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
 template: templates/daemonset.yaml
   - it: adds additional daemonset env sources from Values file using 'nr-otel-for-k8s-license' secret
 set:
@@ -57,19 +55,19 @@ envsFrom:
   name: test-configmap-dae
 asserts:
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 secretRef:
   name: test-secret-dae
 template: templates/daemonset.yaml
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 configMapRef:
   name: test-configmap-dae
 template: templates/daemonset.yaml
   - notExists:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
 template: templates/deployment.yaml
   - it: adds additional deployment and daemonset env sources from Values file using 'nr-otel-for-k8s-license' secret
 set:
@@ -89,25 +87,25 @@ envsFrom:
   name: test-configmap-dae
 asserts:
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 secretRef:
   name: test-secret-dep
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 configMapRef:
   name: test-configmap-dep
 template: templates/deployment.yaml
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 secretRef:
   name: test-secret-dae
 template: templates/daemonset.yaml
   - contains:
-  path: spec.template.spec.containers[0].envFrom
+  path: spec.envFrom
   content:
 configMapRef:
   name: test-configmap-dae

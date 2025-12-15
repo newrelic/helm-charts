@@ -1,7 +1,5 @@
 suite: lowdatamode
 templates:
-  - templates/deployment-configmap.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -21,7 +19,6 @@ template: templates/deployment-configmap.yaml
   path: data["daemonset-config.yaml"]
   pattern: " +- filter/exclude_metrics_low_data_mode"
 template: templates/daemonset-configmap.yaml
-
   - it: lowDataMode set to true at global level is honored
 set:
   cluster: test
@@ -37,7 +34,6 @@ template: templates/deployment-configmap.yaml
   path: data["daemonset-config.yaml"]
   pattern: " +- filter/exclude_metrics_low_data_mode"
 template: templates/daemonset-configmap.yaml
-
   - it: lowDataMode set to false at global level is honored
 set:
   cluster: test
@@ -53,7 +49,6 @@ template: templates/deployment-configmap.yaml
   path: data["daemonset-config.yaml"]
   pattern: " +- filter/exclude_metrics_low_data_mode"
 template: templates/daemonset-configmap.yaml
-
   - it: lowDataMode set to true at local level is honored
 set:
   cluster: test
@@ -69,7 +64,6 @@ template: templates/deployment-configmap.yaml
   path: data["daemonset-config.yaml"]
   pattern: " +- filter/exclude_metrics_low_data_mode"
 template: templates/daemonset-configmap.yaml
-
   - it: lowDataMode set to false at local level is honored
 set:
   cluster: test

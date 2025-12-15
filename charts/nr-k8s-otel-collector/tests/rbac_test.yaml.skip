@@ -1,9 +1,7 @@
 suite: rbac
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
   - templates/secret.yaml
 release:
   name: my-release
@@ -24,7 +22,6 @@ template: templates/deployment.yaml
   path: spec.template.spec.serviceAccountName
   value: my-release-nr-k8s-otel-collector
 template: templates/daemonset.yaml
-
   - it: points RBAC to the service account the user supplies when serviceAccount is disabled
 set:
   licenseKey: test
@@ -41,7 +38,6 @@ template: templates/deployment.yaml
   path: spec.template.spec.serviceAccountName
   value: sa-test
 template: templates/daemonset.yaml
-
   - it: points RBAC to the default service account when the user disables serviceAccount creation
 set:
   licenseKey: test

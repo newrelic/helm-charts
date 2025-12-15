@@ -17,5 +17,5 @@ Temporary imagePullPolicy helper to transition from old image config structure t
    {{- .Values.image.pullPolicy }}
 {{- else }}
    {{- .Values.images.collector.pullPolicy }}
-{{- end }}
+{{- end -}}
 {{- end }}

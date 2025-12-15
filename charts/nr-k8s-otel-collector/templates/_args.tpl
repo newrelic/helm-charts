@@ -3,8 +3,8 @@ A helper to return the args to pass into the deployment.
 */ -}}
 {{- define "nrKubernetesOtel.deployment.args" -}}
 {{- $defaultDeploymentArgs := list "--config" "/config/deployment-config.yaml" }}
-{{- if .Values.deployment.extraArgs -}}
-{{- toYaml (concat $defaultDeploymentArgs .Values.deployment.extraArgs) }}
+{{- if .Values.statefulset.extraArgs -}}
+{{- toYaml (concat $defaultDeploymentArgs .Values.statefulset.extraArgs) }}
 {{- else -}}
 {{- toYaml $defaultDeploymentArgs -}}
 {{- end -}}

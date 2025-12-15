@@ -1,16 +1,36 @@
-{{- if .Values.rbac.create }}
+{{- if include "newrelic.common.serviceAccount.create" . }}
+---
+# ClusterRoleBinding for StatefulSet collector
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ include "nrKubernetesOtel.deployment.serviceAccountName" . }}
   labels:
 {{- include "newrelic.common.labels" . | nindent 4 }}
+app.kubernetes.io/component: statefulset-collector
 subjects:
   - kind: ServiceAccount
-name: {{ include "newrelic.common.serviceAccount.name" . }}
-namespace: {{ .Release.Namespace }}
+    name: {{ include "nrKubernetesOtel.deployment.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ include "newrelic.common.naming.fullname" . }}
+  name: {{ include "nrKubernetesOtel.deployment.serviceAccountName" . }}
+  apiGroup: rbac.authorization.k8s.io
+---
+# ClusterRoleBinding for DaemonSet collector
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ include "nrKubernetesOtel.daemonset.serviceAccountName" . }}
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+app.kubernetes.io/component: daemonset-collector
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "nrKubernetesOtel.daemonset.serviceAccountName" . }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: ClusterRole
+  name: {{ include "nrKubernetesOtel.daemonset.serviceAccountName" . }}
   apiGroup: rbac.authorization.k8s.io
 {{- end -}}

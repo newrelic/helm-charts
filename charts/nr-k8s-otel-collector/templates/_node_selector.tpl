@@ -2,8 +2,8 @@
 A helper to return the nodeSelector to apply to the deployment.
 */ -}}
 {{- define "nrKubernetesOtel.deployment.nodeSelector" -}}
-{{- if .Values.deployment.nodeSelector -}}
-{{- toYaml .Values.deployment.nodeSelector -}}
+{{- if .Values.statefulset.nodeSelector -}}
+{{- toYaml .Values.statefulset.nodeSelector -}}
 {{- else if include "newrelic.common.nodeSelector" . -}}
 {{- include "newrelic.common.nodeSelector" . -}}
 {{- end -}}

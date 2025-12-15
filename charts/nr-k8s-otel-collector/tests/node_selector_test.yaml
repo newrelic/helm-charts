@@ -1,9 +1,7 @@
 suite: nodeSelector
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,10 +12,10 @@ set:
   licenseKey: us-whatever
 asserts:
   - notExists:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
 template: templates/deployment.yaml
   - notExists:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
 template: templates/daemonset.yaml
   - it: sets nodeSelector from global by common-library
 set:
@@ -28,12 +26,12 @@ nodeSelector:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 globalKey: globalValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 globalKey: globalValue
 template: templates/daemonset.yaml
@@ -45,12 +43,12 @@ set:
 topLevelKey: topLevelValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 topLevelKey: topLevelValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 topLevelKey: topLevelValue
 template: templates/daemonset.yaml
@@ -65,12 +63,12 @@ nodeSelector:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 topLevelKey: topLevelValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 topLevelKey: topLevelValue
 template: templates/daemonset.yaml
@@ -83,7 +81,7 @@ nodeSelector:
   deploymentKey: deploymentValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 deploymentKey: deploymentValue
 template: templates/deployment.yaml
@@ -96,7 +94,7 @@ nodeSelector:
   daemonsetKey: daemonsetValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 daemonsetKey: daemonsetValue
 template: templates/daemonset.yaml
@@ -114,7 +112,7 @@ nodeSelector:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 deploymentKey: deploymentValue
 template: templates/deployment.yaml
@@ -132,7 +130,7 @@ nodeSelector:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.nodeSelector
+  path: spec.nodeSelector
   value:
 daemonsetKey: daemonsetValue
 template: templates/daemonset.yaml

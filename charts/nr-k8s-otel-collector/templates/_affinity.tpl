@@ -2,8 +2,8 @@
 A helper to return the affinity to apply to the deployment.
 */ -}}
 {{- define "nrKubernetesOtel.deployment.affinity" -}}
-{{- if .Values.deployment.affinity -}}
-{{- toYaml .Values.deployment.affinity -}}
+{{- if .Values.statefulset.affinity -}}
+{{- toYaml .Values.statefulset.affinity -}}
 {{- else if include "newrelic.common.affinity" . -}}
 {{- include "newrelic.common.affinity" . -}}
 {{- end -}}

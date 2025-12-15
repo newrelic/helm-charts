@@ -1,0 +1,307 @@
+{{- if .Values.statefulset.enabled }}
+apiVersion: opentelemetry.io/v1beta1
+kind: OpenTelemetryCollector
+metadata:
+  name: {{ include "nrKubernetesOtel.deployment.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  mode: statefulset
+  replicas: {{ .Values.statefulset.replicas | default 1 }}
+  upgradeStrategy: automatic
+  serviceAccount: {{ include "nrKubernetesOtel.deployment.serviceAccountName" . }}
+  {{- if .Values.targetAllocator.statefulset.enabled }}
+  # Target Allocator for cluster-wide Prometheus target distribution
+  targetAllocator:
+    enabled: true
+    allocationStrategy: {{ .Values.targetAllocator.statefulset.strategy | default "least-weighted" }}
+    serviceAccount: {{ include "nrKubernetesOtel.deployment.serviceAccountName" . }}
+    {{- if .Values.targetAllocator.statefulset.image }}
+    image: {{ .Values.targetAllocator.statefulset.image.repository }}:{{ .Values.targetAllocator.statefulset.image.tag }}
+    {{- end }}
+    {{- if .Values.targetAllocator.statefulset.resources }}
+    resources:
+      {{- toYaml .Values.targetAllocator.statefulset.resources | nindent 6 }}
+    {{- end }}
+    prometheusCR:
+      enabled: false
+  {{- end }}
+  image: {{ include "nrKubernetesOtel.images.collector.image" . }}
+  imagePullPolicy: {{ include "nrKubernetesOtel.images.collector.imagePullPolicy" . }}
+  {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.images.pullSecrets) "context" .) }}
+  imagePullSecrets:
+{{- . | nindent 4 }}
+  {{- end }}
+  {{- with include "newrelic.common.priorityClassName" . }}
+  priorityClassName: {{ . }}
+  {{- end }}
+  {{- with include "newrelic.common.dnsConfig" . }}
+  dnsConfig:
+{{- . | nindent 4 }}
+  {{- end }}
+  {{- if or .Values.statefulset.podAnnotations }}
+  podAnnotations:
+{{- toYaml .Values.statefulset.podAnnotations | nindent 4 }}
+  {{- end }}
+  {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
+  podSecurityContext:
+{{- . | nindent 4 }}
+  {{- end }}
+  {{- with include "nrKubernetesOtel.deployment.securityContext.container" . }}
+  securityContext:
+{{- . | nindent 4 }}
+  {{- end }}
+  {{- if .Values.statefulset.resources }}
+  resources:
+{{- toYaml .Values.statefulset.resources | nindent 4 }}
+  {{- end }}
+
+  {{- with include "nrKubernetesOtel.deployment.affinity" . }}
+  affinity:
+{{- . | nindent 4 }}
+  {{- end }}
+  {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
+  nodeSelector:
+{{- . | nindent 4 }}
+  {{- end }}
+  {{- with include "nrKubernetesOtel.deployment.tolerations" . }}
+  tolerations:
+{{- . | nindent 4 }}
+  {{- end }}
+  env:
+  - name: KUBE_NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: MY_POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: NR_LICENSE_KEY
+    valueFrom:
+      secretKeyRef:
+        name: {{ include "newrelic.common.license.secretName" . }}
+        key: {{ include "newrelic.common.license.secretKeyName" . }}
+  {{- if include "newrelic.common.proxy" . }}
+  - name: http_proxy
+    value: "{{- include "newrelic.common.proxy" . }}"
+  - name: https_proxy
+    value: "{{- include "newrelic.common.proxy" . }}"
+  {{- end }}
+{{- with .Values.statefulset.envs }}
+{{- toYaml . | nindent 4 }}
+{{- end }}
+  {{- if .Values.statefulset.envsFrom }}
+  envFrom:
+{{- toYaml .Values.statefulset.envsFrom | nindent 4 }}
+  {{- end }}
+  {{- with .Values.statefulset.extraVolumeMounts }}
+  volumeMounts:
+{{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- with .Values.statefulset.extraVolumes }}
+  volumes:
+{{- toYaml . | nindent 4 }}
+  {{- end }}
+  config:
+    receivers:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" . | nindent 6 -}}
+      otlp:
+        protocols:
+          http:
+            endpoint: ${env:MY_POD_IP}:4318
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
+      k8s_events: {}
+      {{- if .Values.receivers.prometheus.enabled }}
+      prometheus:
+        config:
+          {{- if .Values.targetAllocator.statefulset.enabled }}
+          global:
+            scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+          {{- end }}
+          scrape_configs:
+{{- include "nrKubernetesOtel.receivers.kubeStateMetrics.statefulset.job" . | nindent 10 }}
+{{- include "nrKubernetesOtel.receivers.controlPlane.statefulset.jobs" . | nindent 10 }}
+{{- include "nrKubernetesOtel.receivers.collectorMetrics.statefulset.receiver" . | nindent 10 }}
+        {{- if .Values.targetAllocator.statefulset.enabled }}
+        target_allocator:
+          endpoint: http://{{ include "nrKubernetesOtel.deployment.fullname" . }}-targetallocator.{{ .Release.Namespace }}.svc.cluster.local:80
+          interval: {{ .Values.receivers.prometheus.scrapeInterval }}
+          collector_id: ${env:KUBE_NODE_NAME}
+        {{- end }}
+      {{- end }}
+    
+    processors:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.common.processors.transformExtractRuntime" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.common.processors.groupbyattrs" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.common.processors.transformKsm" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.metricstransformLdm" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.metricstransformK8sClusterInfo" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.receivers.kubeStateMetrics.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.receivers.controlPlane.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.receivers.collectorMetrics.statefulset.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.filterExcludeMetricsLdm" . | nindent 6 }}
+      {{- if include "newrelic.common.openShift" . }}
+      {{- include "nrKubernetesOtel.common.processors.resourcedetectionOpenshift" . | nindent 6 }}
+      {{- end }}
+      {{- include "nrKubernetesOtel.common.processors.resourceNewrelic" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.receivers.k8sEvents.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.transformLowDataModeinator" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.resourceLowDataModeinator" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.memoryLimiter" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.cumulativetodelta" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.cumulativetodelta.ksm" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.k8sattributesPerNode" . | nindent 6 }}
+      # Prometheus metrics routing infrastructure (promotes job_label for routing, then removes it)
+      transform/promote_job_label:
+        metric_statements:
+        - context: datapoint
+          statements:
+          - set(instrumentation_scope.attributes["job_label"], datapoint.attributes["job_label"]) where datapoint.attributes["job_label"] != nil
+      transform/remove_routing_metadata:
+        metric_statements:
+        - context: metric
+          statements:
+          - delete_key(instrumentation_scope.attributes, "job_label")
+      {{- include "nrKubernetesOtel.common.processors.transformTruncate" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.processors.batch" . | nindent 6 }}
+    
+    exporters:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.common.exporters.otlphttpNewrelic" . | nindent 6 }}
+    
+    connectors:
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.common.connectors.routingLogsPipelines" . | nindent 6 -}}
+      {{- include "nrKubernetesOtel.common.connectors.routingLogsEgress" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.connectors.routingMetricsEgress" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.common.connectors.nrmetricspipelines.statefulset" . | nindent 6 }}
+    
+    service:
+      {{- include "nrKubernetesOtel.common.service.telemetry" . | nindent 6 }}
+      pipelines:
+{{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
+        traces/otlp:
+          receivers: [otlp]
+          processors: [memory_limiter, resource/newrelic, transform/truncate, batch]
+          exporters: [otlphttp/newrelic]
+
+        {{- if .Values.receivers.prometheus.enabled }}
+        metrics/ingress:
+          receivers:
+            - prometheus
+          processors:
+            - transform/collector
+            - transform/promote_job_label
+          exporters:
+            - routing/nr_metrics_pipelines
+
+        metrics/nr_ksm:
+          receivers:
+            - routing/nr_metrics_pipelines
+          processors:
+            - memory_limiter
+            - metricstransform/kube_pod_container_status_phase
+            - filter/exclude_zero_value_kube_node_status_condition
+            - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
+            - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
+            - transform/convert_timestamp
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - metricstransform/ldm
+            - metricstransform/k8s_cluster_info_ldm
+            - metricstransform/ksm
+            - filter/exclude_metrics_low_data_mode
+            - filter/nr_exclude_zero_value_kube_jobs
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            {{- end }}
+            - resource/newrelic
+            {{- if include "newrelic.common.openShift" . }}
+            - resourcedetection/openshift
+            {{- end }}
+            - groupbyattrs
+            - transform/ksm
+            - transform/ksm_datapoints
+            - k8sattributes/ksm
+            - cumulativetodelta/ksm
+          exporters:
+            - routing/metrics_egress
+
+        metrics/nr_controlplane:
+          receivers:
+            - routing/nr_metrics_pipelines
+          processors:
+            - memory_limiter
+            - metricstransform/k8s_cluster_info
+            {{- if include "newrelic.common.lowDataMode" . }}
+            - metricstransform/ldm
+            - metricstransform/k8s_cluster_info_ldm
+            - metricstransform/controlPlane
+            - filter/exclude_metrics_low_data_mode
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            {{- end }}
+            - resource/newrelic
+            - attributes/self
+            - cumulativetodelta
+          exporters:
+            - routing/metrics_egress
+
+        metrics/default:
+          receivers:
+            - routing/nr_metrics_pipelines
+          processors:
+            - memory_limiter
+            - resource/newrelic
+            - cumulativetodelta
+            - groupbyattrs
+          exporters:
+            - routing/metrics_egress
+
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            - transform/remove_routing_metadata
+            - transform/extract_runtime
+            - transform/truncate
+            - batch
+          exporters:
+            - otlphttp/newrelic
+        {{- end }}
+
+        {{- if .Values.receivers.k8sEvents.enabled }}
+        logs/ingress:
+          receivers:
+            - k8s_events
+          processors: []
+          exporters:
+            - routing/nr_logs_pipelines
+
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
+          processors:
+            - memory_limiter
+            - transform/events
+            - resource/events
+            - resource/newrelic
+          exporters:
+            - routing/logs_egress
+
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            - transform/truncate
+            - batch
+          exporters:
+            - otlphttp/newrelic
+        {{- end }}
+
+{{- end }}

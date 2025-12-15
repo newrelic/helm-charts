@@ -1,9 +1,7 @@
 suite: resources
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,10 +12,10 @@ set:
   licenseKey: us-whatever
 asserts:
   - notExists:
-  path: spec.template.metadata.resources
+  path: spec.resources
 template: templates/deployment.yaml
   - notExists:
-  path: spec.template.metadata.resources
+  path: spec.resources
 template: templates/daemonset.yaml
   - it: sets pod resources from values
 set:
@@ -41,7 +39,7 @@ memory: "64Mi"
 cpu: "250m"
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].resources
+  path: spec.resources
   value:
 requests:
   memory: "64Mi"
@@ -51,7 +49,7 @@ limits:
   cpu: "500m"
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.containers[0].resources
+  path: spec.resources
   value:
 requests:
   memory: "32Mi"

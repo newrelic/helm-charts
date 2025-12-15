@@ -1,148 +1,130 @@
-# Default values for nr-k8s-otel-collector.
-# This is a YAML-formatted file.
-# Declare variables to be passed into your templates.
-
-# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
-cluster: ""
-# -- This set this license key to use. Can be configured also with `global.licenseKey`
-licenseKey: ""
-
 kube-state-metrics:
-  # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository.
-  # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations
-  # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
-  # your Kubernetes clusters.
+  # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics).
   enabled: true
-
   # -- Sets resources for kube-state-metrics.
   resources: {}
-
   # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
   prometheusScrape: false
   # -- Enable resource quota data exporting
   enableResourceQuotaSamples: false
-  # kube-state-metrics.metricLabelsAllowlist -- List of Kubernetes label keys that will be used in the resources' labels metric.
-  # By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels
-  # should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]".
-  # Use "*" to include all labels for a resource type.
-  # Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"]
+  # kube-state-metrics.metricLabelsAllowlist -- Expose resource labels as metric dimensions.
   # @default -- `["pods=[*]", "namespaces=[*]", "deployments=[*]"]`
   metricLabelsAllowlist:
-- "pods=[*]"
-- "namespaces=[*]"
-- "deployments=[*]"
-  # kube-state-metrics.metricAnnotationsAllowList -- List of Kubernetes annotation keys that will be used in the resources' annotations metric.
-  # By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations
-  # should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]".
-  # Use "*" to include all annotations for a resource type.
-  # Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"]
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
+  # kube-state-metrics.metricAnnotationsAllowList -- Expose resource annotations as metric dimensions.
   # @default -- `["pods=[*]", "namespaces=[*]", "deployments=[*]"]`
   metricAnnotationsAllowList:
-- "pods=[*]"
-- "namespaces=[*]"
-- "deployments=[*]"
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
 
-# This chart has support for OpenShift and GKE Autopilot.
-# -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
-provider: ""
-
-# -- Images used by the chart.
-images:
-  # -- The secrets that are needed to pull images from a custom registry.
-  pullSecrets: []
-  # - name: regsecret
-  # -- Image for the OpenTelemetry Collector.
-  collector:
-registry: ""
-repository: newrelic/nrdot-collector-k8s
-tag: "1.5.0"
-pullPolicy: IfNotPresent
-  # -- Image for the initContainer that retrieves node allocatable resources.
-  kubectl:
-registry: ""
-repository: bitnami/kubectl
-tag: latest
-pullPolicy: IfNotPresent
-
-# -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
-customSecretName: ""
-# -- In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
-customSecretLicenseKey: ""
-
-# -- Configures the Otel collector(s) to send all data through the specified proxy.
-proxy: ""
-
-# -- Additional labels for chart pods
-podLabels: {}
-# -- Additional labels for chart objects
-labels: {}
-
-# -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
-priorityClassName: ""
-
-# -- Sets pod's dnsConfig. Can be configured also with `global.dnsConfig`
-dnsConfig: {}
-
-# -- Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors
-processors:
-
-# -- Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters
-exporters:
-
-# -- Edit how the NR Metrics pipeline handles your Metrics
-metricsPipeline:
-  collectorIngress:
-# -- List of processors to be applied to your RAW Metrics.
-# This is applied at the beginning of the pipeline
-processors:
-# -- List of exporters that you'd like to use to export RAW Metrics.
-exporters:
-  collectorEgress:
-# -- List of processors to be applied to your Metrics after the NR processors have been applied.
-# This is applied at the end of the pipeline after the default NR processors have been applied to the data.
-processors:
-# -- List of additional exports to export the processed Metrics.
-exporters:
-
-# -- Edit how the NR Logs pipeline handles your Logs
-logsPipeline:
-  collectorIngress:
-# -- List of processors to be applied to your RAW Logs.
-# This is applied at the beginning of the pipeline
-processors:
-# -- List of exporters that you'd like to use to export RAW Logs.
-exporters:
-  collectorEgress:
-# -- List of processors to be applied to your Logs after the NR processors have been applied.
-# This is applied at the end of the pipeline after the default NR processors have been applied to the data.
-processors:
-# -- List of additional exports to export the processed Logs.
-exporters:
-
-daemonset:
-  # -- Specifies whether to install the DaemonSet collectors. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md
+opentelemetry-kube-stack:
+  # opentelemetry-kube-stack.enabled -- Enable the OpenTelemetry Kube Stack for managing CRDs and the OpenTelemetry Operator.
   enabled: true
-  # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
-  nodeSelector: {}
-  # -- Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations`
-  tolerations: []
-  # -- Sets daemonset pod affinities. Overrides `affinity` and `global.affinity`
-  affinity: {}
-  # -- Annotations to be added to the daemonset.
-  podAnnotations: {}
-  # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
-  podSecurityContext: {}
-  # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
-  containerSecurityContext:
-privileged: false
-runAsNonRoot: true
-runAsUser: 1001
-allowPrivilegeEscalation: false
-readOnlyRootFilesystem: true
-capabilities:
-  drop:
-- ALL
 
+  # -- Disable default daemon collector (this chart manages custom OpenTelemetryCollector CRs with New Relic-specific configurations)
+  collectors:
+    daemon:
+      enabled: false
+
+  # CRD installation settings
+  crds:
+    # -- Install OpenTelemetry CRDs: OpenTelemetryCollector, TargetAllocator, Instrumentation, and OpAMPBridge
+    installOtel: true
+    # -- Control Prometheus Operator CRDs installation (not required for New Relic integration)
+    installPrometheus: false
+
+  # OpenTelemetry Operator configuration for reconciling OpenTelemetryCollector custom resources
+  opentelemetry-operator:
+    enabled: true
+    manager:
+      collectorImage:
+        repository: otel/opentelemetry-collector-k8s
+        tag: "0.141.0"
+    # Admission webhook configuration with Ignore policy to prevent installation race conditions.
+    # Reference: https://github.com/open-telemetry/opentelemetry-helm-charts/issues/677
+    admissionWebhooks:
+      failurePolicy: "Ignore"
+      certManager:
+        enabled: false
+      autoGenerateCert:
+        enabled: true
+    # CRD creation is disabled as CRDs are managed by the kube-stack's CRD subchart
+    crds:
+      create: false
+
+  # Auto-instrumentation is disabled as it is not utilized by this New Relic integration
+  instrumentation:
+    enabled: false
+
+  # Cluster role is disabled as RBAC resources are managed by this chart's templates
+  clusterRole:
+    enabled: false
+
+# -- OpenTelemetry Target Allocator configuration for dynamic distribution of Prometheus scrape targets across collector instances.
+# The Target Allocator enables horizontal scaling of metric collection by distributing scrape targets efficiently.
+# Reference: https://github.com/open-telemetry/opentelemetry-operator/blob/main/cmd/otel-allocator/README.md
+targetAllocator:
+  # -- Target Allocator configuration for the StatefulSet collector to distribute cluster-wide scrape targets.
+  statefulset:
+    # -- Enable Target Allocator for the StatefulSet collector deployment.
+    enabled: true
+    # -- Target allocation strategy. Options: "least-weighted" (balances load) or "consistent-hashing" (sticky assignments).
+    strategy: "least-weighted"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+  # -- Target Allocator configuration for the DaemonSet collector to distribute node-local scrape targets.
+  daemonset:
+    # -- Enable Target Allocator for the DaemonSet collector deployment. Typically disabled as DaemonSet pods naturally scrape node-local targets.
+    enabled: true
+    # -- Target allocation strategy. For DaemonSet deployments, "per-node" ensures each pod only scrapes targets on its node.
+    strategy: "per-node"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+# -- DaemonSet collector configuration for node-local metrics including kubelet stats, cAdvisor, and host metrics.
+daemonset:
+  # -- Enable the DaemonSet collector deployment for collecting node-local metrics including kubelet stats, cAdvisor, and host metrics.
+  enabled: true
+  # -- Sets daemonset pod node selector. Overrides root-level `nodeSelector`
+  nodeSelector: {}
+  # -- Tolerations to allow scheduling on control-plane and master nodes.
+  tolerations:
+    - key: node-role.kubernetes.io/control-plane
+      operator: Exists
+      effect: NoSchedule
+    - key: node-role.kubernetes.io/master
+      operator: Exists
+      effect: NoSchedule
+  # -- Sets daemonset pod affinities. Overrides root-level `affinity`
+  affinity: {}
+  # -- Annotations to be added to the daemonset pods.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the daemonset. Overrides root-level `podSecurityContext`
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the daemonset. Overrides root-level `containerSecurityContext`
+  containerSecurityContext:
+    privileged: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
   # -- Sets resources for the daemonset.
   resources: {}
   # -- Sets additional environment variables for the daemonset.
@@ -159,170 +141,258 @@ capabilities:
   # -- Settings for daemonset configmap
   # @default -- See `values.yaml`
   configMap:
-# -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
-overrideConfig: {}
-# -- Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
-extraConfig:
-  receivers:
-  processors:
-  exporters:
-  connectors:
-  pipelines:
+    # -- OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset.
+    overrideConfig: {}
+    # -- Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
+    extraConfig:
+      receivers: []
+      processors: []
+      exporters: []
+      connectors: []
+      pipelines: []
   # -- Additional volumes to be added to the daemonset pod
   extraVolumes: []
   # - name: example-volume
   #   configMap:
-  # name: example-configmap
+  #     name: example-configmap
   # -- Additional volume mounts to be added to the daemonset container
   extraVolumeMounts: []
   # - name: example-volume
   #   mountPath: /etc/example
   #   readOnly: true
 
-deployment:
-  # -- Specifies whether to install the Deployment collector. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md
+# -- StatefulSet collector configuration for cluster-wide metrics including kube-state-metrics and control plane components.
+# Note: This collector runs in StatefulSet mode.
+statefulset:
+  # -- Enable the StatefulSet collector deployment for collecting cluster-wide metrics.
   enabled: true
-  # -- Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
+  # -- Sets statefulset pod node selector. Overrides root-level `nodeSelector`
   nodeSelector: {}
-  # -- Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations`
+  # -- Tolerations for the statefulset pods.
   tolerations: []
-  # -- Sets deployment pod affinities. Overrides `affinity` and `global.affinity`
+  # -- Sets statefulset pod affinities. Overrides root-level `affinity`
   affinity: {}
-  # -- Annotations to be added to the deployment.
+  # -- Annotations to be added to the statefulset pods.
   podAnnotations: {}
-  # -- Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext`
+  # -- Sets security context (at pod level) for the statefulset. Overrides root-level `podSecurityContext`
   podSecurityContext: {}
-  # -- Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext`
+  # -- Sets security context (at container level) for the statefulset. Overrides root-level `containerSecurityContext`
   containerSecurityContext:
-privileged: false
-runAsNonRoot: true
-runAsUser: 1001
-allowPrivilegeEscalation: false
-readOnlyRootFilesystem: true
-capabilities:
-  drop:
-- ALL
-
-
-  # -- Sets resources for the deployment.
+    privileged: false
+    runAsNonRoot: true
+    runAsUser: 1001
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  # -- Sets resources for the statefulset.
   resources: {}
-  # -- Sets additional environment variables for the deployment.
+  # -- Sets additional environment variables for the statefulset.
   envs: []
-  # -- Sets additional environment variable sources for the deployment.
+  # -- Sets additional environment variable sources for the statefulset.
   envsFrom: []
-  # -- Additional args for the deployment container
-  #  https://opentelemetry.io/docs/collector/configuration/
+  # -- Additional args for the statefulset container
+  # https://opentelemetry.io/docs/collector/configuration/
   # Example:
   # extraArgs:
   #   - "--config=yaml:service::telemetry::logs::level: debug"
   #   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net"
   extraArgs: []
-  # -- Settings for deployment configmap
+  # -- Settings for statefulset configmap
   # @default -- See `values.yaml`
   configMap:
-# -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
-overrideConfig: {}
-# -- Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
-extraConfig:
-  receivers:
-  processors:
-  exporters:
-  connectors:
-  pipelines:
-  # -- Additional volumes to be added to the deployment pod
+    # -- OpenTelemetry config for the statefulset. If set, overrides default config and disables configuration parameters for the statefulset.
+    overrideConfig: {}
+    # -- Additional OpenTelemetry config for the statefulset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines.
+    extraConfig:
+      receivers: []
+      processors: []
+      exporters: []
+      connectors: []
+      pipelines: []
+  # -- Additional volumes to be added to the statefulset pod
   extraVolumes: []
   # - name: example-volume
   #   configMap:
-  # name: example-configmap
-  # -- Additional volume mounts to be added to the deployment container
+  #     name: example-configmap
+  # -- Additional volume mounts to be added to the statefulset container
   extraVolumeMounts: []
   # - name: example-volume
   #   mountPath: /etc/example
   #   readOnly: true
 
-# -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
-nodeSelector: {}
-# -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`
-tolerations: []
-# -- Sets all pods' affinities. Can be configured also with `global.affinity`
-affinity: {}
-# -- Sets all security contexts (at pod level). Can be configured also with `global.securityContext.pod`
-podSecurityContext: {}
-# -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
-containerSecurityContext:
-  privileged: false
-  runAsNonRoot: true
-  runAsUser: 1001
-  allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-drop:
-  - ALL
+# -- Common configuration for both daemonset and statefulset collectors.
+# nameOverride shortens resource names by replacing the chart name.
+# Since the OpenTelemetry Operator adds "-collector" suffix to pod names,
+# using "nr-k8s-otel" avoids duplication (instead of "nr-k8s-otel-collector-{ds|ss}-collector").
+# Result: {release}-nr-k8s-otel-{ds|ss}-collector-{hash}
+nameOverride: "nr-k8s-otel"
+# -- Proxy configuration for collectors.
+proxy: ""
+# -- Feature gates for OpenTelemetry Collector.
+featureGates: ""
 
-rbac:
-  # -- Specifies whether RBAC resources should be created
-  create: true
+# -- Define custom processors here. See: https://opentelemetry.io/docs/collector/configuration/#processors
+# @default -- Empty (use built-in processors configured in helpers)
+processors: {}
 
-# -- Settings controlling ServiceAccount creation
-# @default -- See `values.yaml`
-serviceAccount:
-  # serviceAccount.create -- (bool) Specifies whether a ServiceAccount should be created
-  # @default -- `true`
-  create:
-  # If not set and create is true, a name is generated using the fullname template
-  name: ""
-  # Specify any annotations to add to the ServiceAccount
-  annotations:
+# -- Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters
+# @default -- Empty (use built-in exporters configured in helpers)
+exporters: {}
 
-# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
-# @default -- `false`
-verboseLog:
+# -- Configure the New Relic metrics pipeline processing behavior.
+# Allows insertion of custom processors and exporters at pipeline ingress (before New Relic processing) and egress (after New Relic processing).
+metricsPipeline:
+  # -- Ingress configuration: processors and exporters applied before New Relic metric transformation.
+  collectorIngress:
+    # -- Additional processors to apply to raw metrics at the beginning of the pipeline, before New Relic processors.
+    processors: []
+    # -- Additional exporters for raw metrics before New Relic processing.
+    exporters: []
+  # -- Egress configuration: processors and exporters applied after New Relic metric transformation.
+  collectorEgress:
+    # -- Additional processors to apply after New Relic metrics processors have transformed the data.
+    processors: []
+    # -- Additional exporters for processed metrics after New Relic transformation.
+    exporters: []
 
-# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key. Can be configured also with `global.nrStaging`
-# @default -- `false`
-nrStaging:
+# -- Configure the New Relic logs pipeline processing behavior.
+# Allows insertion of custom processors and exporters at pipeline ingress (before New Relic processing) and egress (after New Relic processing).
+logsPipeline:
+  # -- Ingress configuration: processors and exporters applied before New Relic log transformation.
+  collectorIngress:
+    # -- Additional processors to apply to raw logs at the beginning of the pipeline, before New Relic processors.
+    processors: []
+    # -- Additional exporters for raw logs before New Relic processing.
+    exporters: []
+  # -- Egress configuration: processors and exporters applied after New Relic log transformation.
+  collectorEgress:
+    # -- Additional processors to apply after New Relic logs processors have transformed the data.
+    processors: []
+    # -- Additional exporters for processed logs after New Relic transformation.
+    exporters: []
 
 receivers:
   prometheus:
-# -- (bool) Specifies whether the `prometheus` receiver is enabled
-# @default -- `true`
-enabled: true
-# -- Sets the scrape interval for the `prometheus` receiver
-# @default -- `1m`
-scrapeInterval: 1m
-# -- Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster.
-# @default -- `app.kubernetes.io/name=kube-state-metrics`
-ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
+    # -- Enable the Prometheus receiver for scraping metrics from Kubernetes components and kube-state-metrics.
+    # @default -- `true`
+    enabled: true
+    # @default -- `1m`
+    scrapeInterval: 1m
+    # @default -- `app.kubernetes.io/name=kube-state-metrics`
+    ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
   k8sEvents:
-# -- (bool) Specifies whether the `k8s_events` receiver is enabled
-# @default -- `true`
-enabled: true
+    # -- Enable the Kubernetes events receiver for capturing cluster events.
+    # @default -- `true`
+    enabled: true
   hostmetrics:
-# -- (bool) Specifies whether the `hostmetrics` receiver is enabled
-# @default -- `true`
-enabled: true
-# -- Sets the scrape interval for the `hostmetrics` receiver
-# @default -- `1m`
-scrapeInterval: 1m
+    # -- Enable the host metrics receiver for collecting node-level system metrics.
+    # @default -- `true`
+    enabled: true
+    # @default -- `1m`
+    scrapeInterval: 1m
   kubeletstats:
-# -- (bool) Specifies whether the `kubeletstats` receiver is enabled
-# @default -- `true`
-enabled: true
-# -- Sets the scrape interval for the `kubeletstats` receiver
-# @default -- `1m`
-scrapeInterval: 1m
+    # -- Enable the kubelet stats receiver for collecting container and pod metrics from the kubelet API.
+    # @default -- `true`
+    enabled: true
+    # @default -- `1m`
+    scrapeInterval: 1m
   filelog:
-# -- (bool) Specifies whether the `filelog` receiver is enabled
-# @default -- `true`
-enabled: true
+    # -- Enable the file log receiver for collecting container logs from node file systems.
+    # @default -- `true`
+    enabled: true
   collectorMetrics:
-# -- (bool) Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled.
+    # -- Enable collection of OpenTelemetry Collector self-monitoring metrics.
+    # @default -- `false`
+    enabled: false
+    # @default -- `1m`
+    scrapeInterval: 1m
+
+# -- Images used by the chart.
+images:
+  pullSecrets: []
+  # -- Image for the OpenTelemetry Collector.
+  collector:
+    registry: ""
+    repository: newrelic/nrdot-collector-k8s
+    tag: "1.5.0"
+    pullPolicy: IfNotPresent
+  # -- Image for the initContainer that retrieves node allocatable resources.
+  kubectl:
+    registry: ""
+    repository: bitnami/kubectl
+    tag: latest
+    pullPolicy: IfNotPresent
+
+# -- The cluster name for the Kubernetes cluster.
+cluster: ""
+
+# -- The license key for your New Relic Account. This will be preferred configuration option if both `licenseKey` and `customSecret` are specified.
+licenseKey: ""
+
+# -- Name of the Secret object where the license key is stored
+customSecretName: ""
+
+# -- Key in the Secret object where the license key is stored
+customSecretLicenseKey: ""
+
+# -- The provider that hosts your cluster. Can be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
+provider: ""
+
+# -- Additional labels for chart objects
+labels: {}
+
+# -- Additional labels for chart pods
+podLabels: {}
+
+# -- Sets pod's priorityClassName
+priorityClassName: ""
+
+# -- Sets pod's dnsConfig
+dnsConfig: {}
+
+# -- Sets pod's affinity. Can be configured also with `daemonset.affinity` or `statefulset.affinity`
+affinity: {}
+
+# -- Sets pod's nodeSelector. Can be configured also with `daemonset.nodeSelector` or `statefulset.nodeSelector`
+nodeSelector: {}
+
+# -- Sets pod's tolerations. Can be configured also with `daemonset.tolerations` or `statefulset.tolerations`
+tolerations: []
+
+# -- Sets pod's security context at pod level
+podSecurityContext: {}
+
+# -- Sets pod's security context at container level
+containerSecurityContext: {}
+
+# -- Image pull secrets
+imagePullSecrets: []
+
+# -- Sets RBAC mode
+rbac:
+  # -- Enable RBAC
+  enabled: true
+
+# -- Sets service account
+serviceAccount:
+  # -- Enable service account
+  enabled: true
+  # -- Name of the service account
+  name: ""
+  # -- Annotations for the service account
+  annotations: {}
+
+# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally.
 # @default -- `false`
-enabled: false
-# -- Sets the scrape interval for metrics scraped from the deployment collector
-# @default -- `1m`
-scrapeInterval: 1m
+# Setting to true will cause collector to crash, known upstream bug https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/44705
+verboseLog: false
+
+# -- (bool) Send the metrics to the staging backend. Requires a valid staging license key.
+# @default -- `false`
+nrStaging: false
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
-lowDataMode:
+lowDataMode: true

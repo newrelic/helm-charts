@@ -1,9 +1,7 @@
 suite: affinity
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,10 +12,10 @@ set:
   licenseKey: us-whatever
 asserts:
   - notExists:
-  path: spec.template.spec.affinity
+  path: spec.affinity
 template: templates/deployment.yaml
   - notExists:
-  path: spec.template.spec.affinity
+  path: spec.affinity
 template: templates/daemonset.yaml
   - it: sets affinity from global by common-library
 set:
@@ -36,7 +34,7 @@ requiredDuringSchedulingIgnoredDuringExecution:
 topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -49,7 +47,7 @@ values:
   topologyKey: failure-domain.beta.kubernetes.io/zone
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -77,7 +75,7 @@ values:
   topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -90,7 +88,7 @@ values:
   topologyKey: failure-domain.beta.kubernetes.io/zone
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -129,7 +127,7 @@ requiredDuringSchedulingIgnoredDuringExecution:
 topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -142,7 +140,7 @@ values:
   topologyKey: failure-domain.beta.kubernetes.io/zone
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -171,7 +169,7 @@ requiredDuringSchedulingIgnoredDuringExecution:
 topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -200,7 +198,7 @@ requiredDuringSchedulingIgnoredDuringExecution:
 topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -250,7 +248,7 @@ requiredDuringSchedulingIgnoredDuringExecution:
 topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:
@@ -300,7 +298,7 @@ requiredDuringSchedulingIgnoredDuringExecution:
 topologyKey: failure-domain.beta.kubernetes.io/zone
 asserts:
   - equal:
-  path: spec.template.spec.affinity
+  path: spec.affinity
   value:
 podAffinity:
   requiredDuringSchedulingIgnoredDuringExecution:

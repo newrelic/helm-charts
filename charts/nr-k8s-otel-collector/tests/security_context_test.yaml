@@ -1,9 +1,7 @@
 suite: securityContext
 templates:
   - templates/deployment.yaml
-  - templates/deployment-configmap.yaml
   - templates/daemonset.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -14,10 +12,10 @@ set:
   licenseKey: us-whatever
 asserts:
   - notExists:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
 template: templates/deployment.yaml
   - notExists:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
 template: templates/daemonset.yaml
   - it: sets pod securityContext from global by common-library
 set:
@@ -28,12 +26,12 @@ podSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 globalKey: globalValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 globalKey: globalValue
 template: templates/daemonset.yaml
@@ -45,12 +43,12 @@ set:
 topLevelKey: topLevelValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 topLevelKey: topLevelValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 topLevelKey: topLevelValue
 template: templates/daemonset.yaml
@@ -68,12 +66,12 @@ podSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 topLevelKey: topLevelValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 topLevelKey: topLevelValue
 template: templates/daemonset.yaml
@@ -86,7 +84,7 @@ podSecurityContext:
   deploymentKey: deploymentValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 deploymentKey: deploymentValue
 template: templates/deployment.yaml
@@ -99,7 +97,7 @@ podSecurityContext:
   daemonsetKey: daemonsetValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 daemonsetKey: daemonsetValue
 template: templates/daemonset.yaml
@@ -123,7 +121,7 @@ podSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 deploymentKey: deploymentValue
 privileged: deploymentValue
@@ -153,7 +151,7 @@ podSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.securityContext
+  path: spec.podSecurityContext
   value:
 daemonsetKey: daemonsetValue
 privileged: daemonsetValue
@@ -169,7 +167,7 @@ set:
   licenseKey: us-whatever
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 allowPrivilegeEscalation: false
 capabilities:
@@ -181,7 +179,7 @@ runAsNonRoot: true
 runAsUser: 1001
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 allowPrivilegeEscalation: false
 capabilities:
@@ -206,12 +204,12 @@ containerSecurityContext:
   containerSecurityContext:
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 globalKey: globalValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 globalKey: globalValue
 template: templates/daemonset.yaml
@@ -243,7 +241,7 @@ drop:
   runAsUser: 1001
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 topLevelKey: topLevelValue
 allowPrivilegeEscalation: false
@@ -256,7 +254,7 @@ runAsNonRoot: true
 runAsUser: 1001
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 allowPrivilegeEscalation: false
 capabilities:
@@ -291,7 +289,7 @@ containerSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 allowPrivilegeEscalation: false
 capabilities:
@@ -304,7 +302,7 @@ runAsUser: 1001
 topLevelKey: topLevelValue
 template: templates/deployment.yaml
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 allowPrivilegeEscalation: false
 capabilities:
@@ -331,7 +329,7 @@ containerSecurityContext:
   capabilities:
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 deploymentKey: deploymentValue
 template: templates/deployment.yaml
@@ -350,7 +348,7 @@ containerSecurityContext:
   capabilities:
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 daemonsetKey: daemonsetValue
 template: templates/daemonset.yaml
@@ -374,7 +372,7 @@ containerSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 deploymentKey: deploymentValue
 privileged: deploymentValue
@@ -404,7 +402,7 @@ containerSecurityContext:
   globalKey: globalValue
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 daemonsetKey: daemonsetValue
 template: templates/daemonset.yaml
@@ -423,7 +421,7 @@ containerSecurityContext:
   capabilities:
 asserts:
   - equal:
-  path: spec.template.spec.containers[0].securityContext
+  path: spec.securityContext
   value:
 daemonsetKey: daemonsetValue
 template: templates/daemonset.yaml
