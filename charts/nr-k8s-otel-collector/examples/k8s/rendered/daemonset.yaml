@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.8
+    helm.sh/chart: nr-k8s-otel-collector-0.9.9
 spec:
   selector:
     matchLabels:
@@ -24,12 +24,12 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: c63f9a61b11d6af54b9dde2ecfbfc609188fa24c2a4b59cc202d947f1c12ef19
+        checksum/config: e5ed2a50cca2ea8d60809343fedea4aa56b79d590445edf7bbf5227dfa6d436c
     spec:
       serviceAccountName: nr-k8s-otel-collector
       initContainers:
         - name: get-cpu-allocatable
-          image: "bitnami/kubectl:latest"
+          image: "docker.io/bitnami/kubectl:latest"
           imagePullPolicy: IfNotPresent
           command:
             - sh
@@ -88,7 +88,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "newrelic/nrdot-collector-k8s:1.5.0"
+          image: "docker.io/newrelic/nrdot-collector-k8s:1.5.0"
           imagePullPolicy: IfNotPresent
           args:
             - --config
