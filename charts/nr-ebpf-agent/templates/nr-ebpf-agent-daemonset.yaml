@@ -6,6 +6,7 @@ metadata:
   name: nr-ebpf-agent
   labels:
     app: nr-ebpf-agent
+    app.kubernetes.io/name: nr-ebpf-agent
     component: agent
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
@@ -16,6 +17,7 @@ spec:
     metadata:
       labels:
         app: nr-ebpf-agent
+        app.kubernetes.io/name: nr-ebpf-agent
         component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
