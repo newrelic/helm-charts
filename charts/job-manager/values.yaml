@@ -113,26 +113,43 @@ jobManager:
   ## A job-manager is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
   #  networkHealthCheckDisabled: "false"
 
-  ## Configuration for Horizontal Pod Autoscaler based on queue depth from Broker Service
+  ## Configuration for Horizontal Pod Autoscaler based on queue depth from orchestrator platform
   hpa:
     enabled: true
     minReplicas: 1
     maxReplicas: 10
-    ## Custom metrics for scaling based on Broker queue depth
-    ## This requires external metrics adapter to be configured
+    ## Custom external metrics for scaling based on pending jobs queue depth
+    ## The orchestrator platform exposes an authenticated endpoint implementing
+    ## K8s custom external metrics interface providing pending job counts and age
+    ## This requires external metrics adapter (e.g., kube-metrics-adapter) to be configured
     customMetrics:
-      # Name of the custom metric exposed by Broker Service
+      # Name of the custom metric exposed by orchestrator platform
       queueDepthMetricName: "serverless_queue_depth"
       # Target value for queue depth per replica
       targetValue: "100"
+      # Optional metric selector labels to identify the specific metric endpoint
+      # Example: endpoint: "https://orchestrator.nr-data.net/metrics"
+      metricSelector: {}
+    ## Enable CPU-based scaling as fallback or supplement to custom metrics
+    enableCPUMetric: false
+    cpuTargetUtilization: 70
 
   ## Configuration for sidecar container that acts as egress proxy and communication agent
+  ## The sidecar is deployed alongside runtime pods (both persistent and ephemeral) as an init container
+  ## with restartPolicy: Always, making it a long-running sidecar container.
+  ## It handles all EGRESS traffic from runtime pods and communicates job results back to the job manager.
+  ##
+  ## Note: Runtime pods are dynamically created by the job manager application. This configuration
+  ## defines the sidecar image and resources that will be used in those runtime pod templates.
   sidecar:
     enabled: true
     image:
       repository: newrelic/serverless-sidecar
       tag: "latest"
       pullPolicy: IfNotPresent
+    # Port for sidecar health check and communication
+    port: 8081
+    # Resources for sidecar container in runtime pods
     resources:
       requests:
         cpu: "100m"
@@ -140,6 +157,15 @@ jobManager:
       limits:
         cpu: "200m"
         memory: "256Mi"
+
+  ## K8s Leases for distributed coordination between job manager pods
+  ## Two leases are created:
+  ## 1. runtime-pruning: Coordinates unresponsive job deletion
+  ## 2. service-setup: Coordinates persistent workload service/deployment/HPA creation
+  leases:
+    enabled: true
+    # Duration in seconds for which a lease holder can hold the lease
+    leaseDurationSeconds: 5
 
 image:
   # This parameter determines what container the pod will run as.
@@ -204,12 +230,32 @@ rbac:
   # Specifies whether RBAC resources should be created
   create: true
 
-# Network policies for isolation
+# Network policies for security and isolation
+## NetworkPolicy implementation based on security threat model
+## Reference: https://microsoft.github.io/Threat-Matrix-for-Kubernetes/
 networkPolicy:
   enabled: false
-  # Egress rules
+
+  ## Allow egress to internet for broker communication
+  ## Set to false in highly restricted environments
+  allowEgressToInternet: true
+
+  ## Default selector for runtime namespace(s) that job manager communicates with
+  ## Runtime pods will send job results to the job manager
+  defaultRuntimeNamespaceSelector:
+    newrelic.com/runtime-namespace: "true"
+
+  ## Custom egress rules (overrides defaults if specified)
+  ## Leave empty to use secure defaults:
+  ## - Allow K8s API server access for resource management
+  ## - Allow DNS resolution
+  ## - Allow broker/orchestrator platform communication
+  ## - Block cloud metadata APIs (169.254.169.254)
   egress: []
-  # Ingress rules
+
+  ## Custom ingress rules (overrides defaults if specified)
+  ## Leave empty to use secure defaults:
+  ## - Allow ingress from runtime pods on service port
   ingress: []
 
 

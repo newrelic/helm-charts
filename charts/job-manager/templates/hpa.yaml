@@ -15,20 +15,27 @@ spec:
   maxReplicas: {{ .Values.jobManager.hpa.maxReplicas }}
   metrics:
     {{- if .Values.jobManager.hpa.customMetrics }}
-    # Custom metric from Broker Service for queue depth
+    # Custom external metric from orchestrator platform for pending jobs queue depth
     - type: External
       external:
         metric:
           name: {{ .Values.jobManager.hpa.customMetrics.queueDepthMetricName }}
+          {{- if .Values.jobManager.hpa.customMetrics.metricSelector }}
+          selector:
+            matchLabels:
+              {{- toYaml .Values.jobManager.hpa.customMetrics.metricSelector | nindent 14 }}
+          {{- end }}
         target:
           type: Value
           value: {{ .Values.jobManager.hpa.customMetrics.targetValue | quote }}
     {{- end }}
+    {{- if .Values.jobManager.hpa.enableCPUMetric }}
     # Fallback to CPU utilization if custom metrics are unavailable
     - type: Resource
       resource:
         name: cpu
         target:
           type: Utilization
-          averageUtilization: 70
+          averageUtilization: {{ .Values.jobManager.hpa.cpuTargetUtilization | default 70 }}
+    {{- end }}
 {{- end }}
