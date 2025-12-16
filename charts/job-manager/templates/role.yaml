@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "job-manager.labels" . | nindent 4 }}
 rules:
-  # Runtime Role: CRUD operations on workload resources
+  # Runtime Role: CRUD operations on ephemeral workload resources
   - apiGroups: ["batch"]
     resources: ["jobs"]
     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
@@ -15,16 +15,7 @@ rules:
     resources: ["pods"]
     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
   - apiGroups: [""]
-    resources: ["services"]
-    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
-  - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
-  - apiGroups: ["apps"]
-    resources: ["deployments"]
-    verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
-  - apiGroups: ["autoscaling"]
-    resources: ["horizontalpodautoscalers"]
     verbs: ["create", "get", "list", "watch", "update", "patch", "delete"]
   # Coordination Role: CRUD operations on K8s Leases for distributed coordination
   - apiGroups: ["coordination.k8s.io"]

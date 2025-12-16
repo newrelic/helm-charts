@@ -12,29 +12,21 @@ The Job Manager implements a secure, scalable platform for executing jobs across
 
 ### Core Components
 
-- **Job Manager Deployment**: Lightweight orchestrator pods that poll the orchestrator platform for pending jobs and dynamically provision K8s runtime resources (Jobs, Pods, Services, Deployments, HPAs)
+- **Job Manager Deployment**: Lightweight orchestrator pods that poll the orchestrator platform for pending jobs and dynamically provision K8s runtime resources (Jobs, Pods, ConfigMaps)
 - **Job Manager Service (ClusterIP)**: Provides stable DNS endpoint for runtime pods to report job results back to any available job manager pod
 - **Service Account & RBAC**: Grants job manager pods permissions to CRUD runtime resources and coordinate via K8s Leases
 - **Horizontal Pod Autoscaler**: Auto-scales job manager replicas based on external metrics (pending job queue depth) from the orchestrator platform
 - **K8s Leases**: Coordinates distributed activities between job manager pods:
   - **runtime-pruning-lease**: Coordinates deletion of unresponsive ephemeral jobs
-  - **service-setup-lease**: Coordinates setup of persistent workload services/deployments/HPAs
 - **NetworkPolicy**: Enforces security boundaries - job managers can reach K8s API and broker; runtime pods are isolated
 - **Sidecar Container**: Deployed with runtime workloads as init container (restartPolicy: Always) acting as egress proxy and secure communication agent
 
 ### Workload Types
 
-The job manager dynamically creates two types of workloads:
+The job manager dynamically creates ephemeral workloads for job execution:
 
-**1. Persistent Workloads** (Long-running, load-balanced):
-- K8s Deployment with configurable replicas
-- ClusterIP Service for load balancing
-- CPU/Memory based HPA for auto-scaling
-- Sidecar handles ingress proxying to runtime
-
-**2. Ephemeral Workloads** (One-time execution):
+**Ephemeral Workloads** (One-time execution):
 - K8s Job per execution
-- No service or HPA
 - Self-terminating upon job completion
 - Sidecar handles egress and result reporting
 
@@ -214,7 +206,7 @@ This implementation follows security best practices from the [Kubernetes Threat 
 ### RBAC & Service Accounts
 
 - **Job Manager SA**: Granted minimal permissions:
-  - CRUD on runtime resources (Jobs, Pods, Services, Deployments, HPAs, ConfigMaps)
+  - CRUD on runtime resources (Jobs, Pods, ConfigMaps)
   - CRUD on Leases for coordination
   - NO permissions to create/modify Roles or access cluster-wide resources
   - TLS certificate for K8s API authentication
@@ -238,7 +230,7 @@ This implementation follows security best practices from the [Kubernetes Threat 
 
 ## Autoscaling Strategy
 
-The platform implements multi-layer autoscaling using K8s native primitives:
+The platform implements 3-layer autoscaling using K8s native primitives:
 
 ### 1. Job Manager Autoscaling (HPA)
 
@@ -253,23 +245,15 @@ The platform implements multi-layer autoscaling using K8s native primitives:
   jobManager.hpa.customMetrics.targetValue: "100"  # jobs per replica
   ```
 
-### 2. Persistent Runtime Autoscaling (HPA)
-
-- **Metric Source**: CPU and Memory utilization
-- **Managed By**: Job manager creates HPA when setting up persistent workload
-- **Scaling Logic**: Surge in jobs → increased service load → HPA scales deployment
-- **Backpressure**: Runtime pods can return 429 to slow down job dispatch
-- **Configuration**: Based on workload compute requirements
-
-### 3. Ephemeral Runtime Scaling
+### 2. Ephemeral Runtime Scaling
 
 - **Scaling Logic**: Each job execution creates a new K8s Job
 - **K8s Native**: Cluster autoscaler provisions nodes as needed
 - **Backpressure**: If pod creation fails due to resources, job manager retries with exponential backoff
 
-### 4. Node Autoscaling (Cluster Autoscaler)
+### 3. Node Autoscaling (Cluster Autoscaler)
 
-- **Triggers**: Pending pods from job manager or runtime HPAs
+- **Triggers**: Pending pods from job manager ephemeral workloads
 - **Configuration**:
   - `scale-down-utilization-threshold`: Determines node underutilization
   - `scale-down-unneeded-time`: Grace period before scale-down
@@ -285,23 +269,21 @@ The platform implements multi-layer autoscaling using K8s native primitives:
 2. **Service (ClusterIP)**: Provides stable DNS endpoint for result reporting from runtime pods
 3. **ServiceAccount**: Dedicated identity for K8s API interactions with TLS certificate
 4. **Role & RoleBinding**: Grants permissions for:
-   - CRUD operations on Jobs, Pods, Services, Deployments, HPAs, ConfigMaps (runtime namespace)
+   - CRUD operations on Jobs, Pods, ConfigMaps (runtime namespace)
    - CRUD on Leases for distributed coordination (job manager namespace)
 5. **HorizontalPodAutoscaler**: Auto-scales based on external queue depth metrics from orchestrator
-6. **Leases**: Two leases for distributed coordination:
+6. **Leases**: Distributed coordination for:
    - `runtime-pruning`: One manager pod holds lease to prune unresponsive jobs
-   - `service-setup`: One manager pod holds lease to create persistent workload infrastructure
 7. **NetworkPolicy**: Enforces egress/ingress rules per security model
 
 ### Job Execution Flow
 
 1. Job manager pods poll orchestrator platform at fixed rate with fixed batch size
 2. Jobs acknowledged only after handed to runtime pod (minimizes delay on backpressure)
-3. For persistent workloads: Forward to service endpoint (K8s handles load balancing)
-4. For ephemeral workloads: Create K8s Job with single-use token
-5. Runtime pod executes job, sidecar proxies all EGRESS traffic
-6. Runtime pod sends result to job manager service (any manager can handle)
-7. Periodic coordination: One manager holds lease to prune TTL-breached jobs
+3. Create K8s Job for ephemeral workload execution with single-use token
+4. Runtime pod executes job, sidecar proxies all EGRESS traffic
+5. Runtime pod sends result to job manager service (any manager can handle)
+6. Periodic coordination: One manager holds lease to prune TTL-breached jobs
 
 ## Differences from synthetics-job-manager
 
