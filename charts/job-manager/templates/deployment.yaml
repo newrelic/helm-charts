@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "serverless-job-manager.fullname" . }}
+  name: {{ include "job-manager.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "serverless-job-manager.labels" . | nindent 4 }}
+    {{- include "job-manager.labels" . | nindent 4 }}
     {{- with .Values.labels -}}
       {{ toYaml . | nindent 4 }}
     {{- end }}
@@ -12,18 +12,18 @@ spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "serverless-job-manager.selectorLabels" . | nindent 6 }}
+      {{- include "job-manager.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "serverless-job-manager.selectorLabels" . | nindent 8 }}
+        {{- include "job-manager.selectorLabels" . | nindent 8 }}
         {{- with .Values.labels -}}
           {{ toYaml . | nindent 8 }}
         {{- end }}
-      {{- include "serverless-job-manager.podAnnotations" . | nindent 6 }}
+      {{- include "job-manager.podAnnotations" . | nindent 6 }}
     spec:
       {{- if .Values.serviceAccount.create }}
-      serviceAccountName: {{ include "serverless-job-manager.serviceAccountName" . }}
+      serviceAccountName: {{ include "job-manager.serviceAccountName" . }}
       {{- end }}
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
@@ -31,50 +31,50 @@ spec:
         - name: {{ .Chart.Name }}
           securityContext:
             {{- toYaml .Values.securityContext | nindent 12 }}
-          image: "{{ .Values.image.repository }}:{{ include "serverless-job-manager.appVersion" . }}"
+          image: "{{ .Values.image.repository }}:{{ include "job-manager.appVersion" . }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           env:
             - name: LOCATION_KEY
-              {{- include "serverless-job-manager.locationKey" . | nindent 14 }}
+              {{- include "job-manager.locationKey" . | nindent 14 }}
             - name: LOG_LEVEL
-              value: {{ .Values.serverless.logLevel | quote }}
-            {{- if .Values.serverless.brokerApiEndpoint }}
+              value: {{ .Values.jobManager.logLevel | quote }}
+            {{- if .Values.jobManager.brokerApiEndpoint }}
             - name: BROKER_API_ENDPOINT
-              value: {{ .Values.serverless.brokerApiEndpoint | quote }}
+              value: {{ .Values.jobManager.brokerApiEndpoint | quote }}
             {{- end }}
-            {{- include "serverless-job-manager.vsePassphrase" . | nindent 12 -}}
+            {{- include "job-manager.vsePassphrase" . | nindent 12 -}}
 
-            {{- include "serverless-job-manager.apiProxyHost" . | nindent 12 -}}
-            {{- include "serverless-job-manager.apiProxyPort" . | nindent 12 -}}
-            {{- if .Values.serverless.brokerApiProxySelfSignedCert }}
+            {{- include "job-manager.apiProxyHost" . | nindent 12 -}}
+            {{- include "job-manager.apiProxyPort" . | nindent 12 -}}
+            {{- if .Values.jobManager.brokerApiProxySelfSignedCert }}
             - name: BROKER_API_PROXY_ACCEPT_SELF_SIGNED_CERT
-              value: {{ .Values.serverless.brokerApiProxySelfSignedCert | quote }}
+              value: {{ .Values.jobManager.brokerApiProxySelfSignedCert | quote }}
             {{- end }}
-            {{- if .Values.serverless.brokerApiProxyUsername }}
+            {{- if .Values.jobManager.brokerApiProxyUsername }}
             - name: BROKER_API_PROXY_USERNAME
-              value: {{ .Values.serverless.brokerApiProxyUsername | quote }}
+              value: {{ .Values.jobManager.brokerApiProxyUsername | quote }}
             {{- end }}
-            {{- if .Values.serverless.brokerApiProxyPw }}
+            {{- if .Values.jobManager.brokerApiProxyPw }}
             - name: BROKER_API_PROXY_PW
-              value: {{ .Values.serverless.brokerApiProxyPw | quote }}
+              value: {{ .Values.jobManager.brokerApiProxyPw | quote }}
             {{- end }}
             {{- if .Values.global.checkTimeout }}
             - name: CHECK_TIMEOUT
               value: {{ .Values.global.checkTimeout | quote }}
             {{- end }}
-            {{- if (.Values.serverless.userDefinedVariables).userDefinedJson }}
+            {{- if (.Values.jobManager.userDefinedVariables).userDefinedJson }}
             - name: USER_DEFINED_VARIABLES
-              value: {{ .Values.serverless.userDefinedVariables.userDefinedJson | quote }}
+              value: {{ .Values.jobManager.userDefinedVariables.userDefinedJson | quote }}
             {{- end }}
             - name: HEAVYWEIGHT_WORKERS
-              value: {{ include "serverless-job-manager.runtimeParallelism" . | quote }}
+              value: {{ include "job-manager.runtimeParallelism" . | quote }}
 
           {{- /*
           TODO - The following are not yet implemented
 
-            {{- if .Values.serverless.networkHealthCheckDisabled }}
+            {{- if .Values.jobManager.networkHealthCheckDisabled }}
             - name: NETWORK_HEALTHCHECK_DISABLED
-              value: {{ .Values.serverless.networkHealthCheckDisabled | quote }}
+              value: {{ .Values.jobManager.networkHealthCheckDisabled | quote }}
             {{- end }}
 
             {{- if .Values.appArmorProfileName }}
@@ -82,14 +82,14 @@ spec:
               value: "{{ .Values.appArmorProfileName }}"
             {{- end }}
 
-            {{- if .Values.serverless.jvmOpts }}
+            {{- if .Values.jobManager.jvmOpts }}
             - name: JVM_OPTS
-              value: "{{ .Values.serverless.jvmOpts }}"
+              value: "{{ .Values.jobManager.jvmOpts }}"
             {{- end }}
           */}}
-          {{ if include "serverless-job-manager.toMount" . }}
+          {{ if include "job-manager.toMount" . }}
           volumeMounts:
-            {{- include "serverless-job-manager.volumeMounts" . | nindent 12 }}
+            {{- include "job-manager.volumeMounts" . | nindent 12 }}
           {{ end }}
           ports:
             - name: http
@@ -119,7 +119,7 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
           terminationMessagePolicy: FallbackToLogsOnError
 
-      terminationGracePeriodSeconds: {{ include "serverless-job-manager.terminationGracePeriodSeconds" . }}
+      terminationGracePeriodSeconds: {{ include "job-manager.terminationGracePeriodSeconds" . }}
 
       {{- with .Values.nodeSelector }}
       nodeSelector:
@@ -142,14 +142,14 @@ spec:
       {{- end }}
 
       restartPolicy: Always
-      {{ if include "serverless-job-manager.toMount" . }}
+      {{ if include "job-manager.toMount" . }}
       volumes:
-        {{ if (.Values.serverless.userDefinedVariables).userDefinedFile }}
-        - name: {{ include "serverless-job-manager.configMapName" . | quote }}
+        {{ if (.Values.jobManager.userDefinedVariables).userDefinedFile }}
+        - name: {{ include "job-manager.configMapName" . | quote }}
           configMap:
-            name: {{ include "serverless-job-manager.configMapName" . | quote }}
+            name: {{ include "job-manager.configMapName" . | quote }}
         {{ end }}
-        - name: {{ include "serverless-job-manager.volumeName" . | quote }}
+        - name: {{ include "job-manager.volumeName" . | quote }}
           persistentVolumeClaim:
-            claimName: {{ include "serverless-job-manager.claimName" . | quote }}
+            claimName: {{ include "job-manager.claimName" . | quote }}
       {{ end }}

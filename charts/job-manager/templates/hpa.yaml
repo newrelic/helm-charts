@@ -1,28 +1,28 @@
-{{- if .Values.serverless.hpa.enabled -}}
+{{- if .Values.jobManager.hpa.enabled -}}
 apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "serverless-job-manager.fullname" . }}
+  name: {{ include "job-manager.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "serverless-job-manager.labels" . | nindent 4 }}
+    {{- include "job-manager.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
     kind: Deployment
-    name: {{ include "serverless-job-manager.fullname" . }}
-  minReplicas: {{ .Values.serverless.hpa.minReplicas }}
-  maxReplicas: {{ .Values.serverless.hpa.maxReplicas }}
+    name: {{ include "job-manager.fullname" . }}
+  minReplicas: {{ .Values.jobManager.hpa.minReplicas }}
+  maxReplicas: {{ .Values.jobManager.hpa.maxReplicas }}
   metrics:
-    {{- if .Values.serverless.hpa.customMetrics }}
+    {{- if .Values.jobManager.hpa.customMetrics }}
     # Custom metric from Broker Service for queue depth
     - type: External
       external:
         metric:
-          name: {{ .Values.serverless.hpa.customMetrics.queueDepthMetricName }}
+          name: {{ .Values.jobManager.hpa.customMetrics.queueDepthMetricName }}
         target:
           type: Value
-          value: {{ .Values.serverless.hpa.customMetrics.targetValue | quote }}
+          value: {{ .Values.jobManager.hpa.customMetrics.targetValue | quote }}
     {{- end }}
     # Fallback to CPU utilization if custom metrics are unavailable
     - type: Resource

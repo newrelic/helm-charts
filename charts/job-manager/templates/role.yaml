@@ -2,10 +2,10 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: {{ include "serverless-job-manager.fullname" . }}-runtime
+  name: {{ include "job-manager.fullname" . }}-runtime
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "serverless-job-manager.labels" . | nindent 4 }}
+    {{- include "job-manager.labels" . | nindent 4 }}
 rules:
   # Runtime Role: CRUD operations on workload resources
   - apiGroups: ["batch"]

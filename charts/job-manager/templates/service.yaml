@@ -1,10 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: {{ include "serverless-job-manager.hostname" . }}
+  name: {{ include "job-manager.hostname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "serverless-job-manager.labels" . | nindent 4 }}
+    {{- include "job-manager.labels" . | nindent 4 }}
       {{- with .Values.labels -}}
       {{ toYaml . | nindent 4 }}
       {{- end }}
@@ -20,4 +20,4 @@ spec:
       targetPort: admin
       protocol: TCP
   selector:
-    {{- include "serverless-job-manager.selectorLabels" . | nindent 4 }}
+    {{- include "job-manager.selectorLabels" . | nindent 4 }}

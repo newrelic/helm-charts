@@ -1,14 +1,14 @@
-# serverless-job-manager
+# job-manager
 
 ## Chart Details
 
-This chart deploys the New Relic Serverless Job Manager for Kubernetes-based Serverless Location Deployment Configuration. It orchestrates serverless workloads using K8s native features for deployment, scaling, and observability, following the architecture described in the CDD: Job Manager Service With Sidecar Using K8's.
+This chart deploys the New Relic Job Manager for Kubernetes-based Location Deployment Configuration. It orchestrates workloads using K8s native features for deployment, scaling, and observability, following the architecture described in the CDD: Job Manager Service With Sidecar Using K8's.
 
-**Note:** This chart does NOT include ping-runtime. It only supports node-api-runtime and node-browser-runtime for serverless job execution.
+**Note:** This chart does NOT include ping-runtime. It only supports node-api-runtime and node-browser-runtime for job execution.
 
 ## Architecture Overview
 
-The Serverless Job Manager implements a secure, scalable platform for executing serverless jobs across Kubernetes environments:
+The Job Manager implements a secure, scalable platform for executing jobs across Kubernetes environments:
 
 - **Job Manager (JM)**: Acts as the primary orchestrator, fetching jobs from the Compute Broker Service and dynamically provisioning K8s resources
 - **Sidecar Container**: Deployed with runtime workloads as the egress proxy and communication agent for secure result reporting
@@ -19,11 +19,11 @@ The Serverless Job Manager implements a secure, scalable platform for executing 
 
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `serverless.locationKey` | *Required if serverless.locationKeySecretName not set* - The authentication key associated with your Serverless Location | |
-| `serverless.locationKeySecretName` | *Required if serverless.locationKey not set* - Name of the Kubernetes Secret containing the key `locationKey` | |
-| `global.internalApiKey` | *Required if global.internalApiKeySecretName is not set* - Key that restricts communication between serverless-job-manager and runtimes | |
+| `jobManager.locationKey` | *Required if jobManager.locationKeySecretName not set* - The authentication key associated with your Location | |
+| `jobManager.locationKeySecretName` | *Required if jobManager.locationKey not set* - Name of the Kubernetes Secret containing the key `locationKey` | |
+| `global.internalApiKey` | *Required if global.internalApiKeySecretName is not set* - Key that restricts communication between job-manager and runtimes | |
 | `global.internalApiKeySecretName` | *Required if global.internalApiKey is not set* - Name of the Kubernetes Secret containing `internalApiKey` | |
-| `global.hostnameOverride` | Overrides the default hostname used for the serverless-job-manager Service | `serverless-job-manager` |
+| `global.hostnameOverride` | Overrides the default hostname used for the job-manager Service | `job-manager` |
 | `global.checkTimeout` | Maximum number of seconds that jobs are allowed to run (1-900 seconds) | `180` |
 | `global.persistence.existingClaimName` | Name of existing PersistentVolumeClaim for mounting volumes | |
 | `global.persistence.existingVolumeName` | Name of existing PersistentVolume (Helm will generate a PVC) | |
@@ -34,29 +34,29 @@ The Serverless Job Manager implements a secure, scalable platform for executing 
 | `nameOverride` | Replaces the chart name in Chart.yaml | |
 | `fullnameOverride` | Name override for the installation | |
 | `appVersionOverride` | Release version override | |
-| `serverless.logLevel` | Log level for serverless-job-manager (`ALL`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, `OFF`, `TRACE`) | `INFO` |
-| `serverless.brokerApiEndpoint` | Compute Broker API endpoint. US: `https://compute-broker.nr-data.net`, EU: `https://compute-broker.eu01.nr-data.net/` | `https://compute-broker.nr-data.net` |
-| `serverless.vsePassphrase` | Passphrase for verified script execution | |
-| `serverless.vsePassphraseSecretName` | Kubernetes Secret name containing `vsePassphrase` key | |
-| `serverless.apiProxyHost` | Proxy host for broker communication | |
-| `serverless.apiProxyPort` | Proxy port for broker communication | |
-| `serverless.brokerApiProxySelfSignedCert` | Accept self-signed certs (true, 1, or yes) | |
-| `serverless.brokerApiProxyUsername` | Proxy authentication username | |
-| `serverless.brokerApiProxyPw` | Proxy authentication password | |
-| `serverless.jvmOpts` | JVM command line options | |
-| `serverless.networkHealthCheckDisabled` | Bypass public internet health check | `false` |
-| `serverless.userDefinedVariables.userDefinedJson` | JSON string of user-defined variables | |
-| `serverless.userDefinedVariables.userDefinedFile` | Path to local JSON file with user-defined variables | |
-| `serverless.userDefinedVariables.userDefinedPath` | Path on PersistentVolume to user_defined_variables.json | |
-| `serverless.hpa.enabled` | Enable Horizontal Pod Autoscaler | `true` |
-| `serverless.hpa.minReplicas` | Minimum number of JM replicas | `1` |
-| `serverless.hpa.maxReplicas` | Maximum number of JM replicas | `10` |
-| `serverless.hpa.customMetrics.queueDepthMetricName` | Custom metric name from Broker Service | `serverless_queue_depth` |
-| `serverless.hpa.customMetrics.targetValue` | Target queue depth per replica | `100` |
-| `serverless.sidecar.enabled` | Enable sidecar container in runtime pods | `true` |
-| `serverless.sidecar.image.repository` | Sidecar container image | `newrelic/serverless-sidecar` |
-| `serverless.sidecar.image.tag` | Sidecar image tag | `latest` |
-| `serverless.sidecar.resources` | Sidecar resource requests and limits | See [Resources](#Resources) |
+| `jobManager.logLevel` | Log level for job-manager (`ALL`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL`, `OFF`, `TRACE`) | `INFO` |
+| `jobManager.brokerApiEndpoint` | Compute Broker API endpoint. US: `https://compute-broker.nr-data.net`, EU: `https://compute-broker.eu01.nr-data.net/` | `https://compute-broker.nr-data.net` |
+| `jobManager.vsePassphrase` | Passphrase for verified script execution | |
+| `jobManager.vsePassphraseSecretName` | Kubernetes Secret name containing `vsePassphrase` key | |
+| `jobManager.apiProxyHost` | Proxy host for broker communication | |
+| `jobManager.apiProxyPort` | Proxy port for broker communication | |
+| `jobManager.brokerApiProxySelfSignedCert` | Accept self-signed certs (true, 1, or yes) | |
+| `jobManager.brokerApiProxyUsername` | Proxy authentication username | |
+| `jobManager.brokerApiProxyPw` | Proxy authentication password | |
+| `jobManager.jvmOpts` | JVM command line options | |
+| `jobManager.networkHealthCheckDisabled` | Bypass public internet health check | `false` |
+| `jobManager.userDefinedVariables.userDefinedJson` | JSON string of user-defined variables | |
+| `jobManager.userDefinedVariables.userDefinedFile` | Path to local JSON file with user-defined variables | |
+| `jobManager.userDefinedVariables.userDefinedPath` | Path on PersistentVolume to user_defined_variables.json | |
+| `jobManager.hpa.enabled` | Enable Horizontal Pod Autoscaler | `true` |
+| `jobManager.hpa.minReplicas` | Minimum number of JM replicas | `1` |
+| `jobManager.hpa.maxReplicas` | Maximum number of JM replicas | `10` |
+| `jobManager.hpa.customMetrics.queueDepthMetricName` | Custom metric name from Broker Service | `serverless_queue_depth` |
+| `jobManager.hpa.customMetrics.targetValue` | Target queue depth per replica | `100` |
+| `jobManager.sidecar.enabled` | Enable sidecar container in runtime pods | `true` |
+| `jobManager.sidecar.image.repository` | Sidecar container image | `newrelic/serverless-sidecar` |
+| `jobManager.sidecar.image.tag` | Sidecar image tag | `latest` |
+| `jobManager.sidecar.resources` | Sidecar resource requests and limits | See [Resources](#Resources) |
 | `image.repository` | Job Manager container image | `newrelic/serverless-job-manager` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `resources` | Resource requests and limits for Job Manager | See [Resources](#Resources) |
@@ -65,10 +65,10 @@ The Serverless Job Manager implements a secure, scalable platform for executing 
 | `serviceAccount.annotations` | ServiceAccount annotations | |
 | `rbac.create` | Create RBAC resources (Role, RoleBinding) | `true` |
 | `networkPolicy.enabled` | Enable NetworkPolicy | `false` |
-| `podAnnotations` | Annotations for the serverless-job-manager pod | |
+| `podAnnotations` | Annotations for the job-manager pod | |
 | `podSecurityContext` | Security context for the pod | |
 | `securityContext` | Security context for containers | |
-| `labels` | Labels for all serverless-job-manager resources | |
+| `labels` | Labels for all job-manager resources | |
 | `annotations` | Annotations for the pod | |
 | `nodeSelector` | Node labels for pod assignment | |
 | `tolerations` | Node taints to tolerate | |
@@ -105,22 +105,22 @@ Make sure you have [added the New Relic chart repository.](../../README.md#insta
 Then, to install this chart, run the following command:
 
 ```sh
-helm install newrelic/serverless-job-manager \
---set serverless.locationKey=<enter_serverless_location_key> \
+helm install newrelic/job-manager \
+--set jobManager.locationKey=<enter_location_key> \
 --set global.internalApiKey=<enter_internal_api_key>
 ```
 
-To install the runtime charts, pass in the values.yaml for both serverless-job-manager and runtime charts:
+To install the runtime charts, pass in the values.yaml for both job-manager and runtime charts:
 
 ```sh
-helm install [chart-name] charts/serverless-job-manager/charts/node-api-runtime \
---values charts/serverless-job-manager/values.yaml \
---values charts/serverless-job-manager/charts/node-api-runtime/values.yaml
+helm install [chart-name] charts/job-manager/charts/node-api-runtime \
+--values charts/job-manager/values.yaml \
+--values charts/job-manager/charts/node-api-runtime/values.yaml
 ```
 
 ## Resources
 
-The default set of resources assigned to **serverless-job-manager**:
+The default set of resources assigned to **job-manager**:
 
 ```yaml
 resources:
@@ -197,7 +197,7 @@ resources:
 
 ## Differences from synthetics-job-manager
 
-This chart is based on synthetics-job-manager but adapted for serverless deployments:
+This chart is based on synthetics-job-manager but adapted for job deployments:
 
 1. **No ping-runtime**: Excludes the ping-runtime sub-chart and all related configurations
 2. **Broker Integration**: Uses Compute Broker Service instead of Synthetics Horde API
@@ -205,7 +205,7 @@ This chart is based on synthetics-job-manager but adapted for serverless deploym
 4. **HPA Support**: Built-in Horizontal Pod Autoscaler with custom metrics
 5. **Sidecar Configuration**: Explicit sidecar container configuration for runtime pods
 6. **Network Policies**: Optional NetworkPolicy support for enhanced isolation
-7. **Renamed Parameters**: Uses `serverless.*` instead of `synthetics.*` for configuration
+7. **Renamed Parameters**: Uses `jobManager.*` instead of `synthetics.*` for configuration
 
 ## Support
 

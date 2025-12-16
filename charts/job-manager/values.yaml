@@ -1,4 +1,4 @@
-# This is a YAML-formatted file that contains default values for serverless-job-manager and associated runtime charts.
+# This is a YAML-formatted file that contains default values for job-manager and associated runtime charts.
 # Declare variables to be passed into your templates.
 
 # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
@@ -14,10 +14,10 @@ fullnameOverride: ""
 appVersionOverride: ""
 
 global:
-  # The hostnameOverride overrides the default DNS service name for serverless-job-manager
+  # The hostnameOverride overrides the default DNS service name for job-manager
   hostnameOverride: ""
 
-  # The internalApiKey is a key used for restricting communication between serverless-job-manager and runtime
+  # The internalApiKey is a key used for restricting communication between job-manager and runtime
   # pods. The default value is empty but this is required.
   internalApiKey: "default"
 
@@ -54,9 +54,9 @@ global:
     ## and include the package.json file before installing Helm Chart.
     customNodeModulesPath: ""
 
-serverless:
-  # The locationKey is a key generated when creating a serverless location.
-  # Serverless locations allow you to run jobs in new geographical locations or behind a firewall, such as an intranet site.
+jobManager:
+  # The locationKey is a key generated when creating a location.
+  # Locations allow you to run jobs in new geographical locations or behind a firewall, such as an intranet site.
   locationKey: ""
 
   # locationKeySecretName expects a Kubernetes Secret to exist that includes the key locationKey
@@ -72,7 +72,7 @@ serverless:
   ## For EU-based accounts, the endpoint is: https://compute-broker.eu01.nr-data.net/
   brokerApiEndpoint: "https://compute-broker.nr-data.net"
 
-  ## Users have 3 different options when providing user-defined variables to their serverless job manager -
+  ## Users have 3 different options when providing user-defined variables to their job manager -
   userDefinedVariables:
     ## The userDefinedVariables defines the locally hosted set of user-defined key value pairs.
     ## eg: '{"key":"value","key2":"value2"}'
@@ -110,7 +110,7 @@ serverless:
   ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
   #  jvmOpts: "-XX:-UsePerfData"
 
-  ## A serverless-job-manager is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
+  ## A job-manager is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
   #  networkHealthCheckDisabled: "false"
 
   ## Configuration for Horizontal Pod Autoscaler based on queue depth from Broker Service

@@ -1,11 +1,11 @@
-{{- if include "serverless-job-manager.generatePVC" . }}
+{{- if include "job-manager.generatePVC" . }}
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: {{ include "serverless-job-manager.defaultClaimName" . }}
+  name: {{ include "job-manager.defaultClaimName" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "serverless-job-manager.labels" . | nindent 4 }}
+    {{- include "job-manager.labels" . | nindent 4 }}
     {{- with .Values.labels -}}
       {{ toYaml . | nindent 4 }}
     {{- end }}
