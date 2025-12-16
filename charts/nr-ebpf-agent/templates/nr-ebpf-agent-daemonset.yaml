@@ -151,9 +151,8 @@ spec:
             value: {{ include "nr-ebpf-agent.service.name" . }}
           - name: APM_DATA_REPORTING
             value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
-          - name: TCP_STATS_REPORTING
-            value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
-          
+          - name: NETWORK_METRICS_REPORTING
+            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
@@ -198,6 +197,8 @@ spec:
           # If you are using an older configuration file with a newer Helm chart version, these settings will still work.
           # However, please update your configuration to use the new filtering mechanisms.
           # These variables will be removed in a future release.
+          - name: TCP_STATS_REPORTING
+            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
           - name: DROP_DATA_NEW_RELIC
             value: "{{ if hasKey .Values "dropDataNewRelic" }}{{ .Values.dropDataNewRelic }}{{ else }}true{{ end }}"
           - name: DROP_APM_ENABLED_PODS

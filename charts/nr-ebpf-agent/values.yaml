@@ -20,8 +20,9 @@ logFilePath: ""
 tableStoreDataLimitMB: "250"
 # -- Enable APM data reporting. When enabled, the agent collects and reports application performance monitoring data
 apmDataReporting: true
-# -- Enable TCP statistics reporting. When enabled, the agent collects and reports low level tcp metrics and starts network monitoring
-tcpStatsReporting: true
+# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics
+# RENAMED from 'tcpStatsReporting' for clarity. The old name is deprecated but still supported for backward compatibility.
+networkMetricsReporting: true
 
 # ---
 # -- All data drop filters configuration
@@ -128,6 +129,8 @@ protocols:
 # However, please update your configuration to use the new filtering mechanisms.
 # These variables will be removed in a future release.
 
+# -- DEPRECATED: Use 'networkMetricsReporting' instead. This will be removed in a future release.
+tcpStatsReporting: true
 # -- Drop data from the newrelic namespace and newrelic-bundle services.
 # DEPRECATED: Use 'allDataFilters.dropNewRelicBundle' instead.
 dropDataNewRelic: true
