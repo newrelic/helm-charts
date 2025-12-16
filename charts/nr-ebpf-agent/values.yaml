@@ -37,7 +37,7 @@ allDataFilters:
   dropServiceNameRegex: ""
   # -- This config acts as a bypass for the dropServiceNameRegex config.
   # Service names that match this regex will not have their data dropped by the dropServiceNameRegex.
-  allowServiceNameRegex: ""
+  keepServiceNameRegex: ""
   # -- Drop All data for application/entity that have newrelic/otel APM agents running
   dropApmAgentEnabledEntity: false
 
@@ -53,7 +53,7 @@ apmDataFilters:
   dropEntityName: []
   # -- List of entity names to always keep APM data. default all entity is keepd/enabled
   # -- This config bypasses dropEntityName filter. 
-  allowEntityName: []
+  keepEntityName: []
 
 # -- TCP stats filters / Network metrix Data filter
 # Configure filters to drop/keep TCP statistics data based on config provided
@@ -65,7 +65,7 @@ networkMetricsDataFilter:
   dropEntityName: []
   # -- List of entity names to always keep TCP statistics data. default all entity is keepd/enabled
   # -- This config bypasses dropEntityName filter.
-  allowEntityName: []
+  keepEntityName: []
 
 
 
@@ -127,23 +127,22 @@ protocols:
 
 # DEPRECATED: The following environment variables are deprecated/renamed and kept for backward compatibility.
 # However, please update your configuration to use the new filtering mechanisms.
+# Supported till version 1.0.0.
 # These variables will be removed in a future release.
 
-# -- DEPRECATED: Use 'networkMetricsReporting' instead. This will be removed in a future release.
-tcpStatsReporting: true
 # -- Drop data from the newrelic namespace and newrelic-bundle services.
-# DEPRECATED: Use 'allDataFilters.dropNewRelicBundle' instead.
+# DEPRECATED: Use 'networkMetricsReporting' instead.
 dropDataNewRelic: true
 # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
-# DEPRECATED: Use 'allDataFilters.dropNamespaces' instead.
-dropDataForNamespaces: []
+# DEPRECATED: Use 'allDataFilters.dropNewRelicBundle' instead.
+dropDataForNamespaces: ["kube-system"]
 # -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
 # DEPRECATED: Use 'allDataFilters.dropServiceNameRegex' instead.
 dropDataServiceNameRegex: ""
 # -- This config acts as a bypass for the dropDataServiceNameRegex config.
 # Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex.
 # If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent.
-# DEPRECATED: Use 'allDataFilters.allowServiceNameRegex' instead.
+# DEPRECATED: Use 'allDataFilters.keepServiceNameRegex' instead.
 allowServiceNameRegex: ""
 # -- list entity to ignore the process monitoring based on NEW_RELIC_APP_NAME
 # DEPRECATED: Use 'apmDataFilters.dropEntityName' or 'networkMetricsDataFilter.dropEntityName' instead.
