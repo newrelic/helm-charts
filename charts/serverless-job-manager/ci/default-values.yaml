@@ -1,0 +1,44 @@
+# CI/CD test values for serverless-job-manager chart
+
+serverless:
+  locationKey: "test-location-key-for-ci"
+  logLevel: "INFO"
+  brokerApiEndpoint: "https://compute-broker.nr-data.net"
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+  sidecar:
+    enabled: true
+
+global:
+  internalApiKey: "test-internal-api-key-for-ci"
+  checkTimeout: "180"
+
+image:
+  repository: newrelic/serverless-job-manager
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "800Mi"
+  limits:
+    cpu: "750m"
+    memory: "1600Mi"
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+node-api-runtime:
+  enabled: true
+  parallelism: 1
+  completions: 6
+
+node-browser-runtime:
+  enabled: true
+  parallelism: 1
+  completions: 6

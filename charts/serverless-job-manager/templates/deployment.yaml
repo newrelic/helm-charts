@@ -1,0 +1,155 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "serverless-job-manager.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "serverless-job-manager.labels" . | nindent 4 }}
+    {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "serverless-job-manager.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "serverless-job-manager.selectorLabels" . | nindent 8 }}
+        {{- with .Values.labels -}}
+          {{ toYaml . | nindent 8 }}
+        {{- end }}
+      {{- include "serverless-job-manager.podAnnotations" . | nindent 6 }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ include "serverless-job-manager.serviceAccountName" . }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ include "serverless-job-manager.appVersion" . }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            - name: LOCATION_KEY
+              {{- include "serverless-job-manager.locationKey" . | nindent 14 }}
+            - name: LOG_LEVEL
+              value: {{ .Values.serverless.logLevel | quote }}
+            {{- if .Values.serverless.brokerApiEndpoint }}
+            - name: BROKER_API_ENDPOINT
+              value: {{ .Values.serverless.brokerApiEndpoint | quote }}
+            {{- end }}
+            {{- include "serverless-job-manager.vsePassphrase" . | nindent 12 -}}
+
+            {{- include "serverless-job-manager.apiProxyHost" . | nindent 12 -}}
+            {{- include "serverless-job-manager.apiProxyPort" . | nindent 12 -}}
+            {{- if .Values.serverless.brokerApiProxySelfSignedCert }}
+            - name: BROKER_API_PROXY_ACCEPT_SELF_SIGNED_CERT
+              value: {{ .Values.serverless.brokerApiProxySelfSignedCert | quote }}
+            {{- end }}
+            {{- if .Values.serverless.brokerApiProxyUsername }}
+            - name: BROKER_API_PROXY_USERNAME
+              value: {{ .Values.serverless.brokerApiProxyUsername | quote }}
+            {{- end }}
+            {{- if .Values.serverless.brokerApiProxyPw }}
+            - name: BROKER_API_PROXY_PW
+              value: {{ .Values.serverless.brokerApiProxyPw | quote }}
+            {{- end }}
+            {{- if .Values.global.checkTimeout }}
+            - name: CHECK_TIMEOUT
+              value: {{ .Values.global.checkTimeout | quote }}
+            {{- end }}
+            {{- if (.Values.serverless.userDefinedVariables).userDefinedJson }}
+            - name: USER_DEFINED_VARIABLES
+              value: {{ .Values.serverless.userDefinedVariables.userDefinedJson | quote }}
+            {{- end }}
+            - name: HEAVYWEIGHT_WORKERS
+              value: {{ include "serverless-job-manager.runtimeParallelism" . | quote }}
+
+          {{- /*
+          TODO - The following are not yet implemented
+
+            {{- if .Values.serverless.networkHealthCheckDisabled }}
+            - name: NETWORK_HEALTHCHECK_DISABLED
+              value: {{ .Values.serverless.networkHealthCheckDisabled | quote }}
+            {{- end }}
+
+            {{- if .Values.appArmorProfileName }}
+            - name: RUNNER_APPARMOR
+              value: "{{ .Values.appArmorProfileName }}"
+            {{- end }}
+
+            {{- if .Values.serverless.jvmOpts }}
+            - name: JVM_OPTS
+              value: "{{ .Values.serverless.jvmOpts }}"
+            {{- end }}
+          */}}
+          {{ if include "serverless-job-manager.toMount" . }}
+          volumeMounts:
+            {{- include "serverless-job-manager.volumeMounts" . | nindent 12 }}
+          {{ end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: admin
+              containerPort: 8082
+              protocol: TCP
+          startupProbe:
+            httpGet:
+              path: /status/check
+              port: http
+            # Allow up to 10 minutes for startup before marking as failed
+            failureThreshold: {{ .Values.startupProbeFailureThreshold }}
+            periodSeconds: {{ .Values.startupProbePeriodSeconds }}
+
+          livenessProbe:
+            httpGet:
+              path: /status/check
+              port: http
+            # If two consecutive failures occur the liveness check fails
+            failureThreshold: {{ .Values.livenessProbeFailureThreshold }}
+            periodSeconds: {{ .Values.livenessProbePeriodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbeTimeoutSeconds }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          terminationMessagePolicy: FallbackToLogsOnError
+
+      terminationGracePeriodSeconds: {{ include "serverless-job-manager.terminationGracePeriodSeconds" . }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+      restartPolicy: Always
+      {{ if include "serverless-job-manager.toMount" . }}
+      volumes:
+        {{ if (.Values.serverless.userDefinedVariables).userDefinedFile }}
+        - name: {{ include "serverless-job-manager.configMapName" . | quote }}
+          configMap:
+            name: {{ include "serverless-job-manager.configMapName" . | quote }}
+        {{ end }}
+        - name: {{ include "serverless-job-manager.volumeName" . | quote }}
+          persistentVolumeClaim:
+            claimName: {{ include "serverless-job-manager.claimName" . | quote }}
+      {{ end }}
