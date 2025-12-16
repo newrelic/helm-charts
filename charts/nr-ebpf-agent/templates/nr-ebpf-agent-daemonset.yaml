@@ -153,6 +153,51 @@ spec:
             value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
             value: "{{ if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
+          
+          # ALL Data filtering configuration
+          {{- if .Values.allDataFilters }}
+          - name: DROP_ALL_DATA_FOR_NEW_RELIC
+            value: "{{ if hasKey .Values.allDataFilters "dropNewRelicBundle" }}{{ .Values.allDataFilters.dropNewRelicBundle }}{{ else }}true{{ end }}"
+          - name: DROP_ALL_DATA_FOR_NAMESPACES
+            value: "{{ .Values.allDataFilters.dropNamespaces | join "," }}"
+          - name: DROP_ALL_DATA_FOR_SERVICE_NAME_REGEX
+            value: {{ .Values.allDataFilters.dropServiceNameRegex }}
+          - name: ALLOW_ALL_DATA_FOR_SERVICE_NAME_REGEX
+            value: {{ .Values.allDataFilters.allowServiceNameRegex }}
+          - name: DROP_ALL_DATA_FOR_APM_AGENT_ENABLED_ENTITY
+            value: "{{ if hasKey .Values.allDataFilters "dropApmAgentEnabledEntity" }}{{ .Values.allDataFilters.dropApmAgentEnabledEntity }}{{ else }}false{{ end }}"
+          {{- end }}
+          
+          # APM data filtering configuration
+          {{- if .Values.apmDataFilters }}
+          - name: DROP_APM_DATA_FOR_APM_AGENT_ENABLED_ENTITY
+            value: "{{ if hasKey .Values.apmDataFilters "apmAgentEnabledEntity" }}{{ .Values.apmDataFilters.apmAgentEnabledEntity }}{{ else }}true{{ end }}"
+          {{- if .Values.apmDataFilters.dropPodLabels }}
+          - name: DROP_APM_DATA_FOR_POD_LABELS
+            value: "{{ range $key, $value := .Values.apmDataFilters.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"
+          {{- end }}
+          - name: DROP_APM_DATA_FOR_ENTITY_NAME
+            value: "{{ .Values.apmDataFilters.dropEntityName | join "," }}"
+          - name: ALLOW_APM_DATA_FOR_ENTITY_NAME
+            value: "{{ .Values.apmDataFilters.allowEntityName | join "," }}"
+          {{- end }}
+
+          # Network metrics data filtering configuration
+          {{- if .Values.networkMetricsDataFilter }}
+          {{- if .Values.networkMetricsDataFilter.dropPodLabels }}
+          - name: DROP_TCP_STATS_FOR_POD_LABELS
+            value: "{{ range $key, $value := .Values.networkMetricsDataFilter.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"
+          {{- end }}
+          - name: DROP_TCP_STATS_FOR_ENTITY_NAME
+            value: "{{ .Values.networkMetricsDataFilter.dropEntityName | join "," }}"
+          - name: ALLOW_TCP_STATS_FOR_ENTITY_NAME
+            value: "{{ .Values.networkMetricsDataFilter.allowEntityName | join "," }}"
+          {{- end }}
+
+          # DEPRECATED: The following environment variables are deprecated and kept for backward compatibility.
+          # If you are using an older configuration file with a newer Helm chart version, these settings will still work.
+          # However, please update your configuration to use the new filtering mechanisms.
+          # These variables will be removed in a future release.
           - name: DROP_DATA_NEW_RELIC
             value: "{{ if hasKey .Values "dropDataNewRelic" }}{{ .Values.dropDataNewRelic }}{{ else }}true{{ end }}"
           - name: DROP_APM_ENABLED_PODS
