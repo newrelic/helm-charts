@@ -35,16 +35,16 @@ spec:
               imagePullPolicy: {{ .Values.image.pullPolicy }}
               env:
                 - name: GET_JOB_URL
-                  value: "{{- printf "http://%s:8080/job/get" (include "synthetics-job-manager.hostname" .) }}"
+                  value: "{{- printf "http://%s:8080/job/get" (include "job-manager.hostname" .) }}"
                 - name: POST_RESULT_URL
-                  value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "synthetics-job-manager.hostname" .) }}"
+                  value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "job-manager.hostname" .) }}"
                 - name: CHECK_TIMEOUT
                   value: {{ .Values.global.checkTimeout | quote }}
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
-              {{ if include "synthetics-job-manager.toMountCustomNodeModules" . }}
+              {{ if include "job-manager.toMountCustomNodeModules" . }}
               volumeMounts:
-                {{- include "synthetics-job-manager.customNodeModulesMount" . | nindent 16 }}
+                {{- include "job-manager.customNodeModulesMount" . | nindent 16 }}
               {{ end }}
           {{- with .Values.nodeSelector }}
           nodeSelector:
@@ -64,9 +64,9 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           restartPolicy: OnFailure
-          {{ if include "synthetics-job-manager.toMountCustomNodeModules" . }}
+          {{ if include "job-manager.toMountCustomNodeModules" . }}
           volumes:
-            - name: {{ include "synthetics-job-manager.volumeName" . | quote }}
+            - name: {{ include "job-manager.volumeName" . | quote }}
               persistentVolumeClaim:
-                claimName: {{ include "synthetics-job-manager.claimName" . | quote }}
+                claimName: {{ include "job-manager.claimName" . | quote }}
           {{ end }}

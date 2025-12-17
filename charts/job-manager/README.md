@@ -79,6 +79,8 @@ The job manager dynamically creates ephemeral workloads for job execution:
 | `serviceAccount.name` | ServiceAccount name to use | |
 | `serviceAccount.annotations` | ServiceAccount annotations | |
 | `rbac.create` | Create RBAC resources (Role, RoleBinding) | `true` |
+| `service.port` | Port for the job-manager service | `8080` |
+| `service.adminPort` | Admin port for health checks and metrics | `8082` |
 | `networkPolicy.enabled` | Enable NetworkPolicy | `false` |
 | `podAnnotations` | Annotations for the job-manager pod | |
 | `podSecurityContext` | Security context for the pod | |
@@ -115,7 +117,7 @@ The job manager dynamically creates ephemeral workloads for job execution:
 
 ## Example
 
-Make sure you have [added the New Relic chart repository.](../../README.md#installing-charts)
+Make sure you have [added the New Relic chart repository.](../../README.md#Installthecharts)
 
 Then, to install this chart, run the following command:
 
