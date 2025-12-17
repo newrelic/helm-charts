@@ -1,4 +1,4 @@
-name: K8s OTEL E2E Test Suite
+name: K8s OTEL E2E Test Suite (Internal Contribution)
 
 on:
   pull_request:
@@ -18,6 +18,7 @@ env:
 jobs:
   e2e-test:
     name: Run Tests
+    # Do not run e2e tests if PR has skip-e2e label or if it's from a forked repo (external contribution)
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name == 'newrelic/helm-charts' }}
     runs-on: ubuntu-latest
     # If the environment is broken, this job could time out since the default timeout for tilt ci is 30m.

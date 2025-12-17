@@ -35,7 +35,8 @@ jobs:
           version: 'v3.19.2'
 
       - name: Set up helm-unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+        # workaround for https://github.com/helm-unittest/helm-unittest/issues/790
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.0.2
 
       - name: Lint charts
         run: ct lint --config .github/ct-lint.yaml
