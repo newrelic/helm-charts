@@ -40,32 +40,32 @@ allDataFilters:
   # Service names that match this regex will not have their data dropped by the dropServiceNameRegex.
   # RENAMED from 'allowServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
   keepServiceNameRegex: ""
-  # -- Drop All data for application/entity that have newrelic/otel APM agents running
+  # -- Drop all data for applications/entities that have NewRelic/OTEL APM agents running
   dropApmAgentEnabledEntity: false
 
 # -- APM data filters configuration
 # Configure filters to drop ebpf APM data based on config provided
 apmDataFilters:
-  # -- Drop eBPF APM data for application/entity that have newrelic/otel APM agents running 
+  # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running 
   apmAgentEnabledEntity: false
   # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering 
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
   dropPodLabels: {} 
   # -- List of entity names to drop ebpf APM data for
   dropEntityName: []
-  # -- List of entity names to always keep APM data. default all entity is keepd/enabled
+  # -- List of entity names to always keep APM data. By default all entities are kept/enabled
   # -- This config bypasses dropEntityName filter. 
   keepEntityName: []
 
-# -- Network metrix Data filter / TCP stats filters
-# Configure filters to drop/keep Network metrix data based on config provided
+# -- Network metrics Data filter / TCP stats filters
+# Configure filters to drop/keep Network metrics data based on config provided
 networkMetricsDataFilter:
-  # -- Pod labels to match for filtering Network metrix data. Empty map means no label-based filtering
+  # -- Pod labels to match for filtering Network metrics data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
   dropPodLabels: {}
-  # -- List of entity names to drop Network metrix data for
+  # -- List of entity names to drop Network metrics data for
   dropEntityName: []
-  # -- List of entity names to always keep Network metrix data. default all entity is keepd/enabled
+  # -- List of entity names to always keep Network metrics data. By default all entities are kept/enabled
   # -- This config bypasses dropEntityName filter.
   keepEntityName: []
 
