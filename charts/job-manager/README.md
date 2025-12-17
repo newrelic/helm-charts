@@ -285,6 +285,19 @@ The platform implements 3-layer autoscaling using K8s native primitives:
 5. Runtime pod sends result to job manager service (any manager can handle)
 6. Periodic coordination: One manager holds lease to prune TTL-breached jobs
 
+## Differences from synthetics-job-manager
+
+This chart is based on synthetics-job-manager but adapted for ephemeral job deployments:
+
+1. **No ping-runtime**: Excludes the ping-runtime sub-chart and all related configurations
+2. **Broker Integration**: Uses Compute Broker Service instead of Synthetics Horde API
+3. **Enhanced RBAC**: Includes ServiceAccount, Role, and RoleBinding for K8s orchestration
+4. **HPA Support**: Built-in Horizontal Pod Autoscaler with custom metrics
+5. **Sidecar Configuration**: Explicit sidecar container configuration for runtime pods
+6. **Network Policies**: Optional NetworkPolicy support for enhanced isolation
+7. **Renamed Parameters**: Uses `jobManager.*` instead of `synthetics.*` for configuration
+8. **Ephemeral Workloads Only**: Focuses on K8s Job-based execution without persistent workload support
+
 ## Support
 
 For issues and questions, please refer to the [New Relic Helm Charts repository](https://github.com/newrelic/helm-charts).
