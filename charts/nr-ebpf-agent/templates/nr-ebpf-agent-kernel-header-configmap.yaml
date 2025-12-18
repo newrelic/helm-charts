@@ -35,19 +35,34 @@ data:
         fi
 
         if [ -n "$COS_BUILD_ID" ]; then
+
           echo "Found COS BUILD_ID: ${COS_BUILD_ID}"
-          KERNEL_HEADERS_URL="https://storage.googleapis.com/cos-tools/${COS_BUILD_ID}/kernel-headers.tgz"
+
+          # Detect architecture and set architecture-specific variables
+          ARCH=$(uname -m)
+          echo "Detected architecture: ${ARCH}"
+
+          if [[ "$ARCH" == "aarch64" ]]; then
+            echo "Using ARM-specific flow for COS"
+            KERNEL_HEADERS_URL="https://storage.googleapis.com/cos-tools/${COS_BUILD_ID}/lakitu-arm64/kernel-headers.tgz"
+            CREATE_ARM_SYMLINKS=true
+          else
+            echo "Using AMD/x86_64 flow for COS"
+            KERNEL_HEADERS_URL="https://storage.googleapis.com/cos-tools/${COS_BUILD_ID}/kernel-headers.tgz"
+            CREATE_ARM_SYMLINKS=false
+          fi
+
           echo "Attempting to download kernel headers from: ${KERNEL_HEADERS_URL}"
 
-          # Create temporary directory for download
+          # Create working directory
           TEMP_DIR=$(mktemp -d)
+          mkdir -p /kernel-headers
 
           # Download kernel headers
           if curl -f -L -o "${TEMP_DIR}/kernel-headers.tgz" "${KERNEL_HEADERS_URL}"; then
             echo "Successfully downloaded kernel headers for build ${COS_BUILD_ID}"
 
-            # Extract to temporary directory first
-            mkdir -p /kernel-headers
+            # Extract headers
             if tar -xzf "${TEMP_DIR}/kernel-headers.tgz" -C /kernel-headers; then
               echo "Kernel headers archive extracted"
 
@@ -57,17 +72,28 @@ data:
               if [ -n "$KERNEL_HEADER_DIR" ] && [ -d "$KERNEL_HEADER_DIR" ]; then
                 echo "Found kernel headers at: ${KERNEL_HEADER_DIR}"
 
-                # Move contents from nested directory to /kernel-headers/
-                echo "Moving kernel headers to /kernel-headers/"
+                # Flatten directory structure for both ARM and AMD
+                echo "Flattening kernel headers structure to /kernel-headers/"
                 mv "${KERNEL_HEADER_DIR}"/* /kernel-headers/ 2>/dev/null || cp -r "${KERNEL_HEADER_DIR}"/* /kernel-headers/
-
-                # Clean up the usr directory structure
                 rm -rf /kernel-headers/usr
 
-                echo "Kernel headers successfully installed to /kernel-headers"
+                # Create ARM-specific symlinks if needed
+                if [[ "$CREATE_ARM_SYMLINKS" == "true" ]]; then
+                  echo "Creating ARM-specific symlinks for BCC compatibility"
+                  mkdir -p /kernel-headers/include/asm
+                  ln -sf ../arch/arm64/include/uapi/asm/types.h /kernel-headers/include/asm/types.h
+
+                  cd /kernel-headers/include/uapi
+                  ln -sf asm-generic asm
+                fi
+
+                KERNEL_PATH="/kernel-headers"
+                echo "Kernel headers successfully installed to ${KERNEL_PATH}"
+
+                # Write kernel headers path
                 echo "Writing kernel headers path to /host/tmp/kernel-headers-path.txt"
-                if ERROR_MSG=$(echo "/kernel-headers" > /host/tmp/kernel-headers-path.txt 2>&1); then
-                  echo "Successfully wrote kernel headers path: /kernel-headers"
+                if ERROR_MSG=$(echo "${KERNEL_PATH}" > /host/tmp/kernel-headers-path.txt 2>&1); then
+                  echo "Successfully wrote kernel headers path: ${KERNEL_PATH}"
                 else
                   echo "ERROR: Failed to write kernel headers path to /host/tmp/kernel-headers-path.txt"
                   echo "Reason: ${ERROR_MSG}"
@@ -115,114 +141,9 @@ data:
           fi
         fi
 
-        # Method 1: Try downloading kmod kit from GitHub releases
-        # Format: bottlerocket-{variant}-{arch}-v{version}-kmod-kit.tar.xz
-        # Example: bottlerocket-aws-k8s-1.32-x86_64-v1.46.0-kmod-kit.tar.xz
-        if [ -n "$VERSION_ID" ] && [ -n "$VARIANT_ID" ]; then
-          KMOD_KIT_NAME="bottlerocket-${VARIANT_ID}-${ARCH}-v${VERSION_ID}-kmod-kit.tar.xz"
-          KERNEL_HEADERS_URL="https://github.com/bottlerocket-os/bottlerocket/releases/download/v${VERSION_ID}/${KMOD_KIT_NAME}"
-          echo "Method 1: Attempting to download kmod kit from: ${KERNEL_HEADERS_URL}"
-
-          TEMP_DIR=$(mktemp -d)
-          if curl -f -L -o "${TEMP_DIR}/kmod-kit.tar.xz" "${KERNEL_HEADERS_URL}" 2>/dev/null; then
-            echo "Successfully downloaded kmod kit for Bottlerocket ${VERSION_ID}"
-
-            # Extract the kmod kit
-            if tar -xJf "${TEMP_DIR}/kmod-kit.tar.xz" -C "${TEMP_DIR}" 2>/dev/null; then
-              # Look for kernel-devel directory
-              KMOD_DIR="${TEMP_DIR}/bottlerocket-${VARIANT_ID}-${ARCH}-v${VERSION_ID}-kmod-kit"
-              if [ -d "${KMOD_DIR}/kernel-devel" ]; then
-                mkdir -p /kernel-headers
-                cp -r "${KMOD_DIR}/kernel-devel/"* /kernel-headers/
-                echo "Kernel headers extracted to /kernel-headers from kmod kit"
-                HEADERS_FOUND=true
-              else
-                # Try alternate structure
-                if find "${TEMP_DIR}" -type d -name "kernel-devel" -o -name "usr" | grep -q .; then
-                  mkdir -p /kernel-headers
-                  find "${TEMP_DIR}" -type d \( -name "kernel-devel" -o -name "usr" \) -exec cp -r {} /kernel-headers/ \; 2>/dev/null
-                  echo "Kernel headers extracted to /kernel-headers from alternate location"
-                  HEADERS_FOUND=true
-                else
-                  echo "WARNING: kernel-devel directory not found in kmod kit"
-                fi
-              fi
-            else
-              echo "WARNING: Failed to extract kmod kit"
-            fi
-          else
-            echo "WARNING: Kmod kit not found at ${KERNEL_HEADERS_URL}"
-          fi
-          rm -rf "${TEMP_DIR}"
-        else
-          echo "WARNING: VERSION_ID or VARIANT_ID not found in os-release"
-        fi
-
-        # Method 2: Fallback to admin container access
-        if [ "$HEADERS_FOUND" = false ]; then
-          echo "Method 2: Attempting to access Bottlerocket admin container..."
-
-          # Install ctr tool if not available
-          if ! command -v ctr >/dev/null 2>&1; then
-            echo "Installing containerd ctr tool..."
-            CTR_VERSION="1.7.13"
-            mkdir -p /tmp/bin
-            if curl -sL "https://github.com/containerd/containerd/releases/download/v${CTR_VERSION}/containerd-${CTR_VERSION}-linux-amd64.tar.gz" | tar -xz -C /tmp bin/ctr 2>/dev/null; then
-              chmod +x /tmp/bin/ctr
-              export PATH="/tmp/bin:$PATH"
-              echo "Successfully installed ctr tool"
-            else
-              echo "WARNING: Failed to install ctr tool"
-            fi
-          fi
-
-          # Bottlerocket's containerd socket is at /run/containerd/containerd.sock
-          CONTAINERD_SOCK=""
-          if [ -S /run/host-containerd/containerd.sock ]; then
-            CONTAINERD_SOCK="/run/host-containerd/containerd.sock"
-          elif [ -S /run/containerd/containerd.sock ]; then
-            CONTAINERD_SOCK="/run/containerd/containerd.sock"
-          fi
-
-          if [ -n "$CONTAINERD_SOCK" ] && command -v ctr >/dev/null 2>&1; then
-            echo "Found containerd socket at ${CONTAINERD_SOCK}"
-
-            # Find the admin container
-            ADMIN_CONTAINER=$(ctr -a "$CONTAINERD_SOCK" -n k8s.io c ls 2>/dev/null | grep -i admin | head -1 | awk '{print $1}')
-
-            if [ -n "$ADMIN_CONTAINER" ]; then
-              echo "Found admin container: ${ADMIN_CONTAINER}"
-
-              # Get the admin container's PID
-              ADMIN_PID=$(ctr -a "$CONTAINERD_SOCK" -n k8s.io t ls 2>/dev/null | grep "$ADMIN_CONTAINER" | head -1 | awk '{print $2}')
-
-              if [ -n "$ADMIN_PID" ] && command -v nsenter >/dev/null 2>&1; then
-                echo "Accessing admin container namespace (PID: ${ADMIN_PID})..."
-                mkdir -p /kernel-headers
-
-                # Copy kernel headers from admin container
-                if nsenter -t "$ADMIN_PID" -m sh -c "[ -d /usr/src/kernels ] && ls /usr/src/kernels" 2>/dev/null; then
-                  nsenter -t "$ADMIN_PID" -m sh -c "cp -r /usr/src/kernels/* /kernel-headers/" 2>/dev/null && \
-                  echo "Kernel headers successfully copied from admin container" && \
-                  HEADERS_FOUND=true || \
-                  echo "Failed to copy kernel headers from admin container"
-                else
-                  echo "kernel-devel not found in admin container at /usr/src/kernels"
-                fi
-              else
-                echo "Could not access admin container: PID=${ADMIN_PID}, nsenter available=$(command -v nsenter >/dev/null 2>&1 && echo yes || echo no)"
-              fi
-            else
-              echo "Admin container not found in containerd"
-            fi
-          else
-            echo "Containerd socket not available or ctr command not found"
-          fi
-        fi
-
         # Method 3: Download kmod kit using tuftool (official Bottlerocket approach)
         if [ "$HEADERS_FOUND" = false ]; then
-          echo "Method 3: Downloading kmod kit using tuftool..."
+          echo "Downloading kmod kit using tuftool..."
 
           # Install build dependencies required for compiling Rust crates
           echo "Installing build dependencies for Rust compilation..."
