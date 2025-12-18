@@ -2,8 +2,6 @@ suite: Validate installation job setup
 tests:
   - it: do not include agent-control-cd permissions if disabled
     set:
-      config.authSecret.secretName: agent-control-auth
-      config.authSecret.secretKeyName: private_key
       agentControlCd:
         enabled: false
     asserts:
@@ -24,8 +22,6 @@ tests:
 
   - it: include extra volumes even if agentControlCd is disabled
     set:
-      config.authSecret.secretName: agent-control-auth
-      config.authSecret.secretKeyName: private_key
       installation:
         extraVolumes:
           - name: some-volume-name

@@ -37,8 +37,6 @@ tests:
 
   - it: should configure arguments correctly
     set:
-      config.authSecret.secretName: agent-control-auth
-      config.authSecret.secretKeyName: private_key
       installation:
         log:
           level: trace
@@ -92,8 +90,6 @@ tests:
 
   - it: Should include volumes from secrets
     set:
-      config.authSecret.secretName: agent-control-auth
-      config.authSecret.secretKeyName: private_key
       agentControlCd:
         repositoryCertificateSecretReferenceName: cert-secret
     asserts:
@@ -128,8 +124,6 @@ tests:
 
   - it: Should include environment variables
     set:
-      config.authSecret.secretName: agent-control-auth
-      config.authSecret.secretKeyName: private_key
       agentControlCd:
         repositorySecretReferenceName: some-secret
     asserts:
