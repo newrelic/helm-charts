@@ -4,6 +4,8 @@
 
 This chart deploys the New Relic Job Manager for Kubernetes-based Location Deployment Configuration. It orchestrates workloads using K8s native features for deployment, scaling, and observability.
 
+**Important:** This chart is currently under development. Docker images referenced by this chart (`newrelic/serverless-job-manager:release-1`) are not yet published to Docker Hub. The chart passes linting and template validation tests but is excluded from CI installation tests until images are available.
+
 **Note:** This chart does NOT include ping-runtime. It only supports node-api-runtime and node-browser-runtime for job execution.
 
 ## Architecture Overview
