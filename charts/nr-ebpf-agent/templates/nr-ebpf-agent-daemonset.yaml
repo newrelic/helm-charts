@@ -54,9 +54,6 @@ spec:
           mountPath: /host
         - name: kernel-headers-volume
           mountPath: /kernel-headers
-        - name: host-containerd-socket
-          mountPath: /run/host-containerd
-          readOnly: true
 
       containers:
       - name: nr-ebpf-agent
@@ -236,10 +233,6 @@ spec:
           type: Directory
       - name: kernel-headers-volume
         emptyDir: {}
-      - name: host-containerd-socket
-        hostPath:
-          path: /run/containerd
-          type: DirectoryOrCreate
       {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
