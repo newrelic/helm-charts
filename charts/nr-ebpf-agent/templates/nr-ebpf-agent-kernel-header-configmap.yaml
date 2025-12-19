@@ -1,0 +1,253 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-installer-script
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  install-headers.sh: |
+    #!/bin/bash
+    set -e
+
+    # Detect OS and install kernel headers accordingly
+    if [ -f /host/etc/os-release ]; then
+      . /host/etc/os-release
+      if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
+        echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
+        chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
+      elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
+        echo 'Detected Debian/Ubuntu. Installing linux-headers...'
+        chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
+      elif [[ $ID == 'cos' ]]; then
+        echo 'Detected Container-Optimized OS (COS). Downloading kernel headers...'
+
+        # Get BUILD_ID from os-release
+        COS_BUILD_ID="${BUILD_ID}"
+
+        # If BUILD_ID is empty, try to extract it from VERSION_ID
+        if [ -z "$COS_BUILD_ID" ] && [ -n "$VERSION_ID" ]; then
+          COS_BUILD_ID="${VERSION_ID}"
+        fi
+
+        # If still empty, try to read directly from the file
+        if [ -z "$COS_BUILD_ID" ]; then
+          COS_BUILD_ID=$(grep "^BUILD_ID=" /host/etc/os-release | cut -d '=' -f2 | tr -d '"')
+        fi
+
+        if [ -n "$COS_BUILD_ID" ]; then
+
+          echo "Found COS BUILD_ID: ${COS_BUILD_ID}"
+
+          # Detect architecture and set architecture-specific variables
+          ARCH=$(uname -m)
+          echo "Detected architecture: ${ARCH}"
+
+          if [[ "$ARCH" == "aarch64" ]]; then
+            echo "Using ARM-specific flow for COS"
+            KERNEL_HEADERS_URL="https://storage.googleapis.com/cos-tools/${COS_BUILD_ID}/lakitu-arm64/kernel-headers.tgz"
+            CREATE_ARM_SYMLINKS=true
+          else
+            echo "Using AMD/x86_64 flow for COS"
+            KERNEL_HEADERS_URL="https://storage.googleapis.com/cos-tools/${COS_BUILD_ID}/kernel-headers.tgz"
+            CREATE_ARM_SYMLINKS=false
+          fi
+
+          echo "Attempting to download kernel headers from: ${KERNEL_HEADERS_URL}"
+
+          # Create working directory
+          TEMP_DIR=$(mktemp -d)
+          mkdir -p /kernel-headers
+
+          # Download kernel headers
+          if curl -f -L -o "${TEMP_DIR}/kernel-headers.tgz" "${KERNEL_HEADERS_URL}"; then
+            echo "Successfully downloaded kernel headers for build ${COS_BUILD_ID}"
+
+            # Extract headers
+            if tar -xzf "${TEMP_DIR}/kernel-headers.tgz" -C /kernel-headers; then
+              echo "Kernel headers archive extracted"
+
+              # Find the actual kernel headers directory (usr/src/linux-headers-*)
+              KERNEL_HEADER_DIR=$(find /kernel-headers/usr/src -type d -name "linux-headers-*" 2>/dev/null | head -1)
+
+              if [ -n "$KERNEL_HEADER_DIR" ] && [ -d "$KERNEL_HEADER_DIR" ]; then
+                echo "Found kernel headers at: ${KERNEL_HEADER_DIR}"
+
+                # Flatten directory structure for both ARM and AMD
+                echo "Flattening kernel headers structure to /kernel-headers/"
+                mv "${KERNEL_HEADER_DIR}"/* /kernel-headers/ 2>/dev/null || cp -r "${KERNEL_HEADER_DIR}"/* /kernel-headers/
+                rm -rf /kernel-headers/usr
+
+                # Create ARM-specific symlinks if needed
+                if [[ "$CREATE_ARM_SYMLINKS" == "true" ]]; then
+                  echo "Creating ARM-specific symlinks for BCC compatibility"
+                  mkdir -p /kernel-headers/include/asm
+                  ln -sf ../arch/arm64/include/uapi/asm/types.h /kernel-headers/include/asm/types.h
+
+                  cd /kernel-headers/include/uapi
+                  ln -sf asm-generic asm
+                fi
+
+                KERNEL_PATH="/kernel-headers"
+                echo "Kernel headers successfully installed to ${KERNEL_PATH}"
+
+                # Write kernel headers path
+                echo "Writing kernel headers path to /host/tmp/kernel-headers-path.txt"
+                if ERROR_MSG=$(echo "${KERNEL_PATH}" > /host/tmp/kernel-headers-path.txt 2>&1); then
+                  echo "Successfully wrote kernel headers path: ${KERNEL_PATH}"
+                else
+                  echo "ERROR: Failed to write kernel headers path to /host/tmp/kernel-headers-path.txt"
+                  echo "Reason: ${ERROR_MSG}"
+                  echo "This may cause issues with kernel header detection"
+                fi
+              else
+                echo "WARNING: Could not find kernel headers directory in extracted archive"
+                echo "Searched for: /kernel-headers/usr/src/linux-headers-*"
+                echo "Proceeding without kernel headers."
+              fi
+            else
+              echo "ERROR: Failed to extract kernel headers from ${TEMP_DIR}/kernel-headers.tgz"
+              echo "Proceeding without kernel headers."
+            fi
+          else
+            echo "WARNING: Kernel headers not found for COS build ${COS_BUILD_ID}"
+            echo "URL attempted: ${KERNEL_HEADERS_URL}"
+            echo "Proceeding without kernel headers."
+          fi
+
+          # Cleanup
+          rm -rf "${TEMP_DIR}"
+        else
+          echo "WARNING: BUILD_ID not found in os-release for COS"
+          echo "Checked BUILD_ID, VERSION_ID, and /host/etc/os-release file"
+          echo "Proceeding without kernel headers."
+        fi
+      elif [[ $ID == 'bottlerocket' ]]; then
+        echo 'Detected Bottlerocket OS. Attempting to retrieve kernel headers...'
+
+        # Bottlerocket is an immutable OS, kernel headers come from:
+        # 1. kmod kits from GitHub releases
+        # 2. Admin container (has kernel-devel pre-installed)
+
+        ARCH=$(uname -m)
+        HEADERS_FOUND=false
+
+        # Ensure xz-utils is installed for extracting .tar.xz files
+        if ! command -v xz >/dev/null 2>&1; then
+          echo "Installing xz-utils for archive extraction..."
+          if command -v apt-get >/dev/null 2>&1; then
+            apt-get update -qq && apt-get install -y xz-utils >/dev/null 2>&1
+          elif command -v yum >/dev/null 2>&1; then
+            yum install -y xz >/dev/null 2>&1
+          fi
+        fi
+
+        # Method 3: Download kmod kit using tuftool (official Bottlerocket approach)
+        if [ "$HEADERS_FOUND" = false ]; then
+          echo "Downloading kmod kit using tuftool..."
+
+          # Install build dependencies required for compiling Rust crates
+          echo "Installing build dependencies for Rust compilation..."
+          if command -v apt-get >/dev/null 2>&1; then
+            apt-get update -qq && apt-get install -y build-essential pkg-config libssl-dev >/dev/null 2>&1
+          elif command -v yum >/dev/null 2>&1; then
+            yum install -y gcc make pkgconfig openssl-devel >/dev/null 2>&1
+          fi
+
+          # Install Rust and cargo if not available
+          if ! command -v cargo >/dev/null 2>&1; then
+            echo "Installing Rust toolchain..."
+            curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --quiet >/dev/null 2>&1
+            export PATH="$HOME/.cargo/bin:$PATH"
+            source "$HOME/.cargo/env" 2>/dev/null || true
+          fi
+
+          if command -v cargo >/dev/null 2>&1; then
+            echo "Installing tuftool (this may take a few minutes)..."
+            cargo install --quiet tuftool 2>&1 | grep -v "Compiling\|Locking\|Updating\|Adding" || echo "tuftool installation warning (continuing...)"
+
+            if command -v tuftool >/dev/null 2>&1; then
+              TEMP_DIR=$(mktemp -d)
+              cd "${TEMP_DIR}" || exit 1
+
+              # Download and verify root.json
+              echo "Downloading Bottlerocket root role..."
+              if curl -f -L -o root.json "https://cache.bottlerocket.aws/root.json" 2>/dev/null; then
+
+                # Set parameters from os-release
+                KMOD_ARCH=$(uname -m)
+                KMOD_VERSION="v${VERSION_ID}"
+                KMOD_VARIANT="${VARIANT_ID}"
+                OUTDIR="${KMOD_VARIANT}-${KMOD_VERSION}"
+
+                echo "Downloading kmod kit: ${KMOD_VARIANT}-${KMOD_ARCH}-kmod-kit-${KMOD_VERSION}.tar.xz"
+
+                # Download kmod kit using tuftool
+                if tuftool download "${OUTDIR}" \
+                  --target-name "${KMOD_VARIANT}-${KMOD_ARCH}-kmod-kit-${KMOD_VERSION}.tar.xz" \
+                  --root ./root.json \
+                  --metadata-url "https://updates.bottlerocket.aws/2020-07-07/${KMOD_VARIANT}/${KMOD_ARCH}/" \
+                  --targets-url "https://updates.bottlerocket.aws/targets/" 2>/dev/null; then
+
+                  echo "Successfully downloaded kmod kit via tuftool"
+
+                  KMOD_KIT_FILE="${OUTDIR}/${KMOD_VARIANT}-${KMOD_ARCH}-kmod-kit-${KMOD_VERSION}.tar.xz"
+
+                  if [ -n "${KMOD_KIT_FILE}" ] && [ -f "${KMOD_KIT_FILE}" ]; then
+                    echo "Found kmod kit at: ${KMOD_KIT_FILE}"
+                    echo "Extracting kmod kit..."
+                    if tar -xJf "${KMOD_KIT_FILE}" -C "${TEMP_DIR}" 2>/dev/null; then
+                      KMOD_DIR="${TEMP_DIR}/${KMOD_VARIANT}-${KMOD_ARCH}-kmod-kit-${KMOD_VERSION}"
+
+                      if [ -d "${KMOD_DIR}/kernel-devel" ]; then
+                        mkdir -p /kernel-headers
+                        cp -r "${KMOD_DIR}/kernel-devel/"* /kernel-headers/
+                        echo "Kernel headers extracted to /kernel-headers from kmod kit"
+                        echo "Writing kernel headers path to /host/tmp/kernel-headers-path.txt"
+                        if ERROR_MSG=$(echo "/kernel-headers" > /host/tmp/kernel-headers-path.txt 2>&1); then
+                          echo "Successfully wrote kernel headers path: /kernel-headers"
+                        else
+                          echo "ERROR: Failed to write kernel headers path to /host/tmp/kernel-headers-path.txt"
+                          echo "Reason: ${ERROR_MSG}"
+                          echo "This may cause issues with kernel header detection"
+                        fi
+                        HEADERS_FOUND=true
+                      else
+                        echo "WARNING: kernel-devel directory not found in kmod kit"
+                      fi
+                    else
+                      echo "WARNING: Failed to extract kmod kit"
+                    fi
+                  else
+                    echo "WARNING: Kmod kit file not found at expected location"
+                  fi
+                else
+                  echo "WARNING: tuftool download failed"
+                fi
+              else
+                echo "WARNING: Failed to download root.json"
+              fi
+
+              # Cleanup
+              cd / && rm -rf "${TEMP_DIR}"
+            else
+              echo "WARNING: tuftool installation failed"
+            fi
+          else
+            echo "WARNING: cargo not available, cannot install tuftool"
+          fi
+        fi
+
+        if [ "$HEADERS_FOUND" = false ]; then
+          echo "WARNING: Could not retrieve kernel headers for Bottlerocket"
+          echo "Proceeding without kernel headers."
+        fi
+      else
+        echo "Unsupported OS: $ID"
+        echo "Proceeding without kernel header install."
+      fi
+    else
+      echo "/host/etc/os-release not found"
+      echo "Proceeding without kernel header install."
+    fi
+
+    echo "Kernel header installation script completed."
