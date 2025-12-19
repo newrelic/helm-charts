@@ -1,3 +1,5 @@
+{{- include "job-manager.validateLocation" . -}}
+{{- include "job-manager.validateRuntimes" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,6 +7,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "job-manager.labels" . | nindent 4 }}
+    {{- include "job-manager.locationLabels" . | nindent 4 }}
     {{- with .Values.labels -}}
       {{ toYaml . | nindent 4 }}
     {{- end }}
@@ -17,6 +20,7 @@ spec:
     metadata:
       labels:
         {{- include "job-manager.selectorLabels" . | nindent 8 }}
+        {{- include "job-manager.locationLabels" . | nindent 8 }}
         {{- with .Values.labels -}}
           {{ toYaml . | nindent 8 }}
         {{- end }}
@@ -68,6 +72,46 @@ spec:
             {{- end }}
             - name: HEAVYWEIGHT_WORKERS
               value: {{ include "job-manager.runtimeParallelism" . | quote }}
+
+            {{/* Location metadata environment variables */}}
+            - name: LOCATION_NAME
+              value: {{ .Values.jobManager.location.name | quote }}
+            {{- if .Values.jobManager.location.id }}
+            - name: LOCATION_ID
+              value: {{ .Values.jobManager.location.id | quote }}
+            {{- end }}
+            {{- if .Values.jobManager.location.description }}
+            - name: LOCATION_DESCRIPTION
+              value: {{ .Values.jobManager.location.description | quote }}
+            {{- end }}
+            {{- if .Values.jobManager.location.tags.region }}
+            - name: LOCATION_REGION
+              value: {{ .Values.jobManager.location.tags.region | quote }}
+            {{- end }}
+            {{- if .Values.jobManager.location.tags.provider }}
+            - name: LOCATION_PROVIDER
+              value: {{ .Values.jobManager.location.tags.provider | quote }}
+            {{- end }}
+            {{- if .Values.jobManager.location.tags.environment }}
+            - name: LOCATION_ENVIRONMENT
+              value: {{ .Values.jobManager.location.tags.environment | quote }}
+            {{- end }}
+
+            {{/* Multi-tenant configuration */}}
+            {{- if .Values.jobManager.multiTenant.enabled }}
+            - name: MULTI_TENANT_ENABLED
+              value: "true"
+            - name: MAX_CONCURRENT_JOBS
+              value: {{ .Values.jobManager.multiTenant.capacity.maxConcurrentJobs | quote }}
+            - name: PER_ACCOUNT_QUOTA
+              value: {{ .Values.jobManager.multiTenant.capacity.perAccountQuota | quote }}
+            {{- if .Values.jobManager.multiTenant.accountValidation.enabled }}
+            - name: ACCOUNT_VALIDATION_ENABLED
+              value: "true"
+            - name: ACCOUNT_VALIDATION_ENDPOINT
+              value: {{ .Values.jobManager.multiTenant.accountValidation.validationEndpoint | quote }}
+            {{- end }}
+            {{- end }}
 
           {{- /*
           TODO - The following are not yet implemented

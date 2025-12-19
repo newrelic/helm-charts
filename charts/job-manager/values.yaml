@@ -55,12 +55,62 @@ global:
     customNodeModulesPath: ""
 
 jobManager:
-  # The locationKey is a key generated when creating a location.
-  # Locations allow you to run jobs in new geographical locations or behind a firewall, such as an intranet site.
-  locationKey: ""
+  ## ComputeLocation Configuration (aligned with NGEP schema)
+  ## This section defines the NR-HOSTED PUBLIC serverless location where jobs will be executed
+  ## NOTE: This chart is ONLY for public NR-hosted multi-tenant locations
+  location:
+    ## Identity and Authentication (REQUIRED)
+    ## The locationKey is a key generated when creating a ComputeLocation in NGEP
+    ## Use keySecretName (recommended) for production deployments
+    key: ""
+    keySecretName: ""  # Kubernetes Secret containing key 'locationKey'
 
-  # locationKeySecretName expects a Kubernetes Secret to exist that includes the key locationKey
-  locationKeySecretName: ""
+    ## Location Identity (REQUIRED)
+    ## Must match the ComputeLocation name in NGEP
+    name: ""  # Example: "us-east-1-public", "eu-west-1-public"
+
+    ## Location ID from NGEP (OPTIONAL but recommended)
+    ## This is the NGEP entity ID for the ComputeLocation
+    id: ""  # Example: "d9b2d63d-a233-4123-847a-8a1f3b4d6b25"
+
+    ## Location Description (OPTIONAL)
+    description: ""
+
+    ## Tags for routing and filtering (REQUIRED for production)
+    tags:
+      region: ""       # Example: "us-east-1", "eu-west-1"
+      provider: ""     # Example: "AWS", "Azure", "GCP"
+      environment: ""  # Example: "production", "staging", "development"
+
+    ## Associated Workload Definitions from NGEP (REQUIRED)
+    ## Must match ServerlessJobDefinitions configured in NGEP for this location
+    ## Serverless PUBLIC locations support ONLY: node-api-runtime and node-browser-runtime
+    ## NO ping-runtime support in serverless architecture
+    associatedWorkloads:
+      - "node-api-runtime_v1"
+      - "node-browser-runtime_v1"
+
+  ## Multi-Tenant Configuration (REQUIRED - always enabled for public locations)
+  multiTenant:
+    ## Account Validation
+    accountValidation:
+      enabled: true
+      ## Validation endpoint to verify account permissions
+      validationEndpoint: "https://auth.newrelic.com/validate"
+
+    ## Capacity Management
+    capacity:
+      ## Maximum concurrent jobs across all accounts
+      maxConcurrentJobs: 1000
+      ## Default quota per account
+      perAccountQuota: 50
+
+    ## Isolation Configuration
+    isolation:
+      ## Enable network policies for account-level isolation
+      networkPolicies: true
+      ## Enable resource quotas per account
+      resourceQuotas: true
 
   # The logLevel is defaulted to INFO, which report about normal operations, but they provide the skeleton of what happened.
   # Other Options:

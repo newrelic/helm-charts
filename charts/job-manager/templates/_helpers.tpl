@@ -128,17 +128,100 @@ annotations:
 Add locationKey directly or retrieve from a Kubernetes Secret
 */}}
 {{- define "job-manager.locationKey" }}
-{{- if .Values.jobManager.locationKey -}}
-value: {{ .Values.jobManager.locationKey | quote }}
-{{- else if .Values.jobManager.locationKeySecretName -}}
+{{- if .Values.jobManager.location.key -}}
+value: {{ .Values.jobManager.location.key | quote }}
+{{- else if .Values.jobManager.location.keySecretName -}}
 valueFrom:
   secretKeyRef:
-    name: {{ .Values.jobManager.locationKeySecretName  }}
+    name: {{ .Values.jobManager.location.keySecretName  }}
     key: locationKey
 {{- else -}}
-{{- required ".Values.jobManager.locationKey or .Values.jobManager.locationKeySecretName must be set!" nil }}
+{{- required ".Values.jobManager.location.key or .Values.jobManager.location.keySecretName must be set!" nil }}
 {{- end -}}
 {{- end }}
+
+{{/*
+Validate location configuration (PUBLIC NR-hosted locations ONLY)
+*/}}
+{{- define "job-manager.validateLocation" -}}
+{{- $location := .Values.jobManager.location -}}
+
+{{/* This chart is ONLY for public NR-hosted locations */}}
+{{/* Validate required fields */}}
+{{- if not $location.name -}}
+{{- fail "jobManager.location.name is required (e.g., 'us-east-1-public', 'eu-west-1-public')" -}}
+{{- end -}}
+
+{{/* Validate associated workloads */}}
+{{- if not $location.associatedWorkloads -}}
+{{- fail "jobManager.location.associatedWorkloads must be specified" -}}
+{{- end -}}
+
+{{/* Validate no ping-runtime in serverless */}}
+{{- range $location.associatedWorkloads -}}
+{{- if contains "ping-runtime" . -}}
+{{- fail (printf "Unsupported workload '%s'. Serverless PUBLIC locations do not support ping-runtime. Only node-api-runtime and node-browser-runtime are supported." .) -}}
+{{- end -}}
+{{- end -}}
+
+{{/* Validate region tag for production deployments */}}
+{{- if not $location.tags.region -}}
+{{- fail "jobManager.location.tags.region is required (e.g., 'us-east-1', 'eu-west-1')" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Validate runtime configuration matches associated workloads
+*/}}
+{{- define "job-manager.validateRuntimes" -}}
+{{- $apiEnabled := index .Values "node-api-runtime" "enabled" -}}
+{{- $browserEnabled := index .Values "node-browser-runtime" "enabled" -}}
+{{- $associated := .Values.jobManager.location.associatedWorkloads -}}
+
+{{/* Validate at least one runtime is enabled */}}
+{{- if not (or $apiEnabled $browserEnabled) -}}
+{{- fail "At least one runtime (node-api-runtime or node-browser-runtime) must be enabled" -}}
+{{- end -}}
+
+{{/* Validate enabled runtimes match NGEP associatedWorkloads */}}
+{{- if $apiEnabled -}}
+{{- $found := false -}}
+{{- range $associated -}}
+{{- if contains "node-api-runtime" . -}}
+{{- $found = true -}}
+{{- end -}}
+{{- end -}}
+{{- if not $found -}}
+{{- fail "node-api-runtime is enabled but no 'node-api-runtime' workload found in location.associatedWorkloads" -}}
+{{- end -}}
+{{- end -}}
+
+{{- if $browserEnabled -}}
+{{- $found := false -}}
+{{- range $associated -}}
+{{- if contains "node-browser-runtime" . -}}
+{{- $found = true -}}
+{{- end -}}
+{{- end -}}
+{{- if not $found -}}
+{{- fail "node-browser-runtime is enabled but no 'node-browser-runtime' workload found in location.associatedWorkloads" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Generate location labels for pods and resources
+*/}}
+{{- define "job-manager.locationLabels" -}}
+newrelic.com/location-name: {{ .Values.jobManager.location.name | quote }}
+newrelic.com/region: {{ .Values.jobManager.location.tags.region | quote }}
+{{- if .Values.jobManager.location.tags.provider }}
+newrelic.com/provider: {{ .Values.jobManager.location.tags.provider | quote }}
+{{- end }}
+{{- if .Values.jobManager.location.tags.environment }}
+newrelic.com/environment: {{ .Values.jobManager.location.tags.environment | quote }}
+{{- end }}
+{{- end -}}
 
 {{/*
 Add vsePassphrase directly or retrieve from a Kubernetes Secret
