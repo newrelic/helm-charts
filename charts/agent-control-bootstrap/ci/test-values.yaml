@@ -1,0 +1,11 @@
+global:
+  cluster: sa-cluster
+  licenseKey: test
+
+agentControlDeployment:
+  chartValues:
+    config:
+      # There is no way to test the auth flow for now. Tests get stuck as the pre-install job cannot succeed to create a new system identity.
+      # Until we have a better idea or we are able to create a fake oauth server, we have to disable fleet_control.
+      fleet_control:
+        enabled: false

@@ -154,6 +154,19 @@ Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs",
 Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
 
+## Disable Daemonset or Deployment collectors
+
+Warning: Do not modify these values. Changing them can disrupt the Kubernetes monitoring experience and is recommended only for advanced use cases.
+
+```yaml
+daemonset:
+  enabled: true  # Set to false to disable DaemonSet creation
+deployment:
+  enabled: true  # Set to false to disable Deployment creation
+```
+
+If you provide an empty values file, both will default to `true` and be installed. To disable either, set the corresponding flag to `false` in your custom values file.
+
 {{ if .Maintainers }}
 ## Maintainers
 {{ range .Maintainers }}

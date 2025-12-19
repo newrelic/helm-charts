@@ -25,6 +25,8 @@ data:
                 enabled: false
               system.cpu.utilization:
                 enabled: true
+              system.cpu.logical.count:
+                enabled: true
           load:
           memory:
             metrics:
@@ -78,6 +80,14 @@ data:
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
 
       prometheus:
         config:
@@ -130,6 +140,16 @@ data:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 insecure_skip_verify: false
                 server_name: kubernetes
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+            - job_name: otel-collector
+              scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
+              static_configs:
+                - targets: ['0.0.0.0:8888']
+              relabel_configs:
+                - action: replace
+                  target_label: job_label
+                  replacement: otel-collector-daemonset
+            {{- end }}
 
       filelog:
         include:
@@ -239,6 +259,14 @@ data:
           - delete_key(resource.attributes, "persistentvolume")
           - delete_key(resource.attributes, "persistentvolumeclaim")
 
+      transform/extract_runtime:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(attributes["container_id"], ".*://.*")
+            statements:
+              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
+              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
 
       metricstransform/ldm:
         transforms:
@@ -279,6 +307,36 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+
+          - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+
+      transform/collector:
+        metric_statements:
+          - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
+
+      metricstransform/k8s_cluster_info:
+        transforms:
+          - include: kubernetes_build_info
+            action: update
+            new_name: k8s.cluster.info
 
       metricstransform/cadvisor:
         transforms:
@@ -348,6 +406,14 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: k8s.cluster.info
+            action: update
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+                - value: 'false'
+                  new_value: 'true'
 
       metricstransform/hostmetrics:
         transforms:
@@ -397,6 +463,44 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
+      metricsgeneration/calculate_percentage:
+        rules:
+            # Ratio of Requested Resources to Limits
+            # request_limit_ratio = Limit_Utilization / Request_Utilization
+            # = (usage / limit) / (usage / request) = (usage / limit) * (request / usage) = request / limit
+          - name: k8s.pod.memory_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.memory_limit_utilization
+            metric2: k8s.pod.memory_request_utilization
+            operation: divide
+          - name: k8s.pod.cpu_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.cpu_limit_utilization
+            metric2: k8s.pod.cpu_request_utilization
+            operation: divide
+          - name: node.cpu.usage.percentage
+            type: scale
+            metric1: k8s.node.cpu.usage
+            scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+          - name: node.memory.usage.percentage
+            type: scale
+            metric1: k8s.node.memory.working_set
+            scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+
+
+      transform/tag_generated_metrics_ldm:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - metric.name == "k8s.pod.cpu_request_limit_ratio"
+              - metric.name == "k8s.pod.memory_request_limit_ratio"
+              - metric.name == "node.cpu.usage.percentage"
+              - metric.name == "node.memory.usage.percentage"
+            statements:
+              - set(attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -407,7 +511,7 @@ data:
         log_statements:
           - context: log
             statements:
-              - truncate_all(attributes, 4095)
+              - truncate_all(log.attributes, 4095)
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
@@ -533,14 +637,14 @@ data:
         metric_statements:
           - context: metric
             statements:
-              - set(description, "")
-              - set(unit, "")
+              - set(metric.description, "")
+              - set(metric.unit, "")
           - context: datapoint
             statements:
-              - delete_key(attributes, "id")
-              - delete_key(attributes, "name")
-              - delete_key(attributes, "interface")
-              - delete_key(attributes, "cpu")
+              - delete_key(datapoint.attributes, "id")
+              - delete_key(datapoint.attributes, "name")
+              - delete_key(datapoint.attributes, "interface")
+              - delete_key(datapoint.attributes, "cpu")
 
       resource/low_data_mode_inator:
         attributes:
@@ -664,6 +768,15 @@ data:
       telemetry:
         logs:
           level: "debug"
+        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        metrics:
+          readers:
+            - pull:
+                exporter:
+                  prometheus:
+                    host: '0.0.0.0'
+                    port: 8888
+        {{- end }}
       {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
@@ -681,6 +794,7 @@ data:
             - prometheus
             {{- end }}
           processors:
+            - metricsgeneration/calculate_percentage
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
@@ -691,8 +805,10 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
+            - transform/tag_generated_metrics_ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
             - metricstransform/kubelet
@@ -731,10 +847,12 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
             - metricstransform/cadvisor
             - metricstransform/kubelet
+            - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             {{- end }}
@@ -770,6 +888,7 @@ data:
           receivers:
             - routing/metrics_egress
           processors:
+            - transform/extract_runtime
             {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:

@@ -23,8 +23,6 @@ will run across your changes and do some initial checks and linting. These check
 very quickly. Please check the results. We would like these checks to pass before we
 even continue reviewing your changes.
 -->
-#### Is this a new chart
-
 #### What this PR does / why we need it:
 
 #### Which issue this PR fixes
@@ -38,3 +36,11 @@ even continue reviewing your changes.
 - [ ] Chart Version bumped
 - [ ] Variables are documented in the README.md
 - [ ] Title of the PR starts with chart name (e.g. `[mychartname]`)
+
+# Release Notes to Publish (nr-k8s-otel-collector)
+If this PR contains changes in `nr-k8s-otel-collector`, please complete the following section. All other charts should ignore this section.
+
+<!--BEGIN-RELEASE-NOTES-->
+## 🚀 What's Changed
+* Tell the world about the latest changes in the chart.
+<!--END-RELEASE-NOTES-->

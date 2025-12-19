@@ -16,29 +16,59 @@ proxy: ""
 logLevel: "INFO"
 # -- To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout.
 logFilePath: ""
-# -- Drop data when service names map to an IP address.
-dropDataIpServiceNames: true
-# -- Drop data from the newrelic namespace and newrelic-bundle services.
-dropDataNewRelic: true
-# -- Drop data from pods that are monitored by New Relic APM via auto attach.
-dropAPMEnabledPods: false
-# -- List of Kubernetes namespaces for which all data should be dropped by the agent.
-dropDataForNamespaces: ["kube-system"]
-# -- Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
-# see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax
-dropDataServiceNameRegex: ""
-# -- This config acts as a bypass for the dropDataServiceNameRegex config.
-# Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex.
-# If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent.
-allowServiceNameRegex: ""
-# -- list entity to ignore the process monitoring based on NEW_RELIC_APP_NAME
-dropDataForEntity: []
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
-# -- The source connectors (and data export scripts) to enable.
-# Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql
-# while tcp_stats tracks TCP metrics.
-# stirlingSources: "socket_tracer,tcp_stats"
+# -- Enable APM data reporting. When enabled, the agent collects and reports application performance monitoring data
+apmDataReporting: true
+# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics
+# RENAMED from 'tcpStatsReporting' for clarity. The old name is deprecated but still supported for backward compatibility.
+networkMetricsReporting: true
+
+# -- All data drop filters configuration
+# Configure filters to drop all types of data (Network Metrics and APM data) based on config provided
+allDataFilters:
+  # -- Drop data from the newrelic namespace and newrelic-bundle services.
+  # RENAMED from 'dropDataNewRelic' for clarity. The old name is deprecated but still supported for backward compatibility.
+  dropNewRelicBundle: true
+  # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
+  # RENAMED from 'dropDataForNamespaces' for clarity. The old name is deprecated but still supported for backward compatibility.
+  dropNamespaces: ["kube-system"]
+  # -- Define a regex to match k8s service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
+  # RENAMED from 'dropServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
+  dropServiceNameRegex: ""
+  # -- This config acts as a bypass for the dropServiceNameRegex config.
+  # Service names that match this regex will not have their data dropped by the dropServiceNameRegex.
+  # RENAMED from 'allowServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
+  keepServiceNameRegex: ""
+  # -- Drop all data for applications/entities that have NewRelic/OTEL APM agents running
+  dropApmAgentEnabledEntity: false
+
+# -- APM data filters configuration
+# Configure filters to drop ebpf APM data based on config provided
+apmDataFilters:
+  # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running
+  apmAgentEnabledEntity: false
+  # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
+  # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  dropPodLabels: {}
+  # -- List of entity names to drop ebpf APM data for
+  dropEntityName: []
+  # -- List of entity names to always keep APM data. By default all entities are kept/enabled
+  # -- This config bypasses dropEntityName filter.
+  keepEntityName: []
+
+# -- Network metrics Data filter / TCP stats filters
+# Configure filters to drop/keep Network metrics data based on config provided
+networkMetricsDataFilter:
+  # -- Pod labels to match for filtering Network metrics data. Empty map means no label-based filtering
+  # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  dropPodLabels: {}
+  # -- List of entity names to drop Network metrics data for
+  dropEntityName: []
+  # -- List of entity names to always keep Network metrics data. By default all entities are kept/enabled
+  # -- This config bypasses dropEntityName filter.
+  keepEntityName: []
+
 
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.
@@ -57,42 +87,42 @@ protocols:
   mysql:
     enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   pgsql:
     enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   cass:
     enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   redis:
     enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   mongodb:
     enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   kafka:
-    enabled: false
+    enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   amqp:
-    enabled: false
+    enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
   dns:
-    enabled: false
+    enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: ""
 
 
@@ -103,8 +133,8 @@ ebpfAgent:
     repository: docker.io/newrelic/newrelic-ebpf-agent
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
-    # -- The tag of the eBPF agent image to be deployed.
-    tag: agent-0.2.5
+    # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
+    tag: ""
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -114,6 +144,8 @@ ebpfAgent:
       cpu: 100m
       # -- Min memory allocated to the container.
       memory: 250Mi
+  serviceAccount:
+    annotations: {}
   # -- Sets ebpfAgent pod tolerations. Overrides `tolerations` and `global.tolerations`
   tolerations: []
   # -- Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity`
@@ -124,61 +156,20 @@ ebpfAgent:
   podSecurityContext: {}
   # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
   containerSecurityContext: {}
+  # Vizier server port on which agent receives pxl scripts from the client. Default to 12345
+  vizierPort: ""
+  # Sets the absolute path of the complete directory where the required linux headers are manually downloaded and placed for the eBPF agent to use.
+  # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
+  # The absolute path in case of K8s should also be prepended with /host when necessary.
+  # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
+  downloadedPackagedHeadersPath: ""
+  # Sets the absolute path of the complete directory where the linux headers are present for the eBPF agent to use.
+  # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
+  # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
+  distroKernelHeadersPath: ""
 
-# Configuration to apply on the eBPF client daemonset.
-ebpfClient:
-  image:
-    # -- eBPF client image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
-    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
-    pullPolicy: IfNotPresent
-    # -- The tag of the eBPF client image to be deployed.
-    tag: client-0.2.5
-  resources:
-    limits:
-      # -- Max memory allocated to the container.
-      memory: 100Mi
-    requests:
-      # -- Min CPU allocated to the container.
-      cpu: 50m
-      # -- Min memory allocated to the container.
-      memory: 50Mi
-
-# Configuration to apply on the OpenTelemetry collector daemonset.
-otelCollector:
-  image:
-    # -- OpenTelemetry collector image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
-    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is set to Always.
-    pullPolicy: IfNotPresent
-    # -- The tag of the OpenTelemetry collector image to be deployed.
-    tag: nr-ebpf-otel-collector_0.0.1
-  resources:
-    limits:
-      # -- Max CPU allocated to the container.
-      cpu: 100m
-      # -- Max memory allocated to the container.
-      memory: 200Mi
-    requests:
-      # -- Min CPU allocated to the container.
-      cpu: 100m
-      # -- Min memory allocated to the container.
-      memory: 200Mi
-  # -- Sets otelCollector pod tolerations. Overrides `tolerations` and `global.tolerations`
-  tolerations: []
-  # -- Sets otelCollector pod affinities. Overrides `affinity` and `global.affinity`
-  affinity: {}
-  # -- Sets otelCollector pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
-  podAnnotations: {}
-  # -- Sets otelCollector pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
-  podSecurityContext: {}
-  # -- Sets otelCollector pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
-  containerSecurityContext: {}
-  collector:
-    serviceAccount:
-      # -- Annotations for the OTel collector service account.
-      annotations: {}
-
+# -- The secrets that are needed to pull images from a custom registry.
+pullSecrets: []
 # -- Additional labels for chart pods.
 podLabels: {}
 # -- Additional labels for chart objects.
@@ -199,9 +190,6 @@ podSecurityContext: {}
 containerSecurityContext: {}
 # --  Kubernetes cluster domain.
 kubernetesClusterDomain: cluster.local
-# -- (bool) Sets the debug logs to this integration or all integrations if it is set globally. Can be configured also with `global.verboseLog`
-# @default -- `false`
-verboseLog:
 # tls makes sure only requests with correctly formatted rules will get into the operator.
 tls:
   # -- Enable TLS communication between the eBPF client and agent.

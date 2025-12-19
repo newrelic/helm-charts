@@ -1,0 +1,22 @@
+apiVersion: v2
+name: agent-control-cd
+description: A Helm chart to install New Relic Agent Control CD (Flux) on Kubernetes
+
+type: application
+
+version: 1.0.0
+
+dependencies:
+  - name: flux2
+    repository: https://fluxcd-community.github.io/helm-charts
+    version: 2.15.0
+    condition: flux2.enabled
+
+keywords:
+  - newrelic
+  - agent-control
+
+maintainers:
+  # Agent Control Team
+  - name: ac
+    url: https://github.com/orgs/newrelic/teams/ac/members

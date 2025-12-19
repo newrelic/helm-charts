@@ -124,16 +124,20 @@ to export data to this connector which can then be connected to the New Relic ma
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
-| containerSecurityContext | object | `{}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
+| containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | daemonset.affinity | object | `{}` | Sets daemonset pod affinities. Overrides `affinity` and `global.affinity` |
 | daemonset.configMap | object | See `values.yaml` | Settings for daemonset configmap |
 | daemonset.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the daemonset. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | daemonset.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the daemonset. If set, overrides default config and disables configuration parameters for the daemonset. |
-| daemonset.containerSecurityContext | object | `{"privileged":true}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| daemonset.enabled | bool | `true` | Specifies whether to install the DaemonSet collectors. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md |
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
+| daemonset.extraArgs | list | `[]` | Additional args for the daemonset container https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net" |
+| daemonset.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the daemonset container |
+| daemonset.extraVolumes | list | `[]` | Additional volumes to be added to the daemonset pod |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -143,9 +147,13 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.configMap | object | See `values.yaml` | Settings for deployment configmap |
 | deployment.configMap.extraConfig | object | `{"connectors":null,"exporters":null,"pipelines":null,"processors":null,"receivers":null}` | Additional OpenTelemetry config for the deployment. If set, extends the default config by adding more receivers/processors/exporters/connectors/pipelines. |
 | deployment.configMap.overrideConfig | object | `{}` | OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment. |
-| deployment.containerSecurityContext | object | `{}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets security context (at container level) for the deployment. Overrides `containerSecurityContext` and `global.containerSecurityContext` |
+| deployment.enabled | bool | `true` | Specifies whether to install the Deployment collector. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md |
 | deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
 | deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
+| deployment.extraArgs | list | `[]` | Additional args for the deployment container  https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net" |
+| deployment.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the deployment container |
+| deployment.extraVolumes | list | `[]` | Additional volumes to be added to the deployment pod |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | deployment.podAnnotations | object | `{}` | Annotations to be added to the deployment. |
 | deployment.podSecurityContext | object | `{}` | Sets security context (at pod level) for the deployment. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -153,11 +161,16 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
-| image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| image.repository | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
-| image.tag | string | `"1.2.0"` | Overrides the image tag whose default is the chart appVersion. |
+| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.5.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.5.0"}` | Image for the OpenTelemetry Collector. |
+| images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
+| images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| kube-state-metrics.enableResourceQuotaSamples | bool | `false` | Enable resource quota data exporting |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
+| kube-state-metrics.metricAnnotationsAllowList | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes annotation keys that will be used in the resources' annotations metric. By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]". Use "*" to include all annotations for a resource type. Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"] |
+| kube-state-metrics.metricLabelsAllowlist | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes label keys that will be used in the resources' labels metric. By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]". Use "*" to include all labels for a resource type. Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"] |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
+| kube-state-metrics.resources | object | `{}` | Sets resources for kube-state-metrics. |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
@@ -180,6 +193,8 @@ to export data to this connector which can then be connected to the New Relic ma
 | provider | string | `""` | The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT" |
 | proxy | string | `""` | Configures the Otel collector(s) to send all data through the specified proxy. |
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
+| receivers.collectorMetrics.enabled | bool | `false` | Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled. |
+| receivers.collectorMetrics.scrapeInterval | string | `1m` | Sets the scrape interval for metrics scraped from the deployment collector |
 | receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
 | receivers.hostmetrics.scrapeInterval | string | `1m` | Sets the scrape interval for the `hostmetrics` receiver |
@@ -187,6 +202,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
 | receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubeletstats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
+| receivers.prometheus.ksmSelector | string | `app.kubernetes.io/name=kube-state-metrics` | Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster. |
 | receivers.prometheus.scrapeInterval | string | `1m` | Sets the scrape interval for the `prometheus` receiver |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |
@@ -223,6 +239,19 @@ Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs",
 ```
 Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
+
+## Disable Daemonset or Deployment collectors
+
+Warning: Do not modify these values. Changing them can disrupt the Kubernetes monitoring experience and is recommended only for advanced use cases.
+
+```yaml
+daemonset:
+  enabled: true  # Set to false to disable DaemonSet creation
+deployment:
+  enabled: true  # Set to false to disable Deployment creation
+```
+
+If you provide an empty values file, both will default to `true` and be installed. To disable either, set the corresponding flag to `false` in your custom values file.
 
 ## Maintainers
 

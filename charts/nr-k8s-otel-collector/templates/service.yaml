@@ -12,6 +12,10 @@ spec:
       port: 4318
       protocol: TCP
       targetPort: 4318
+    - name: otlp-grpc
+      port: 4317
+      protocol: TCP
+      targetPort: 4317
   selector:
     {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
     component: deployment

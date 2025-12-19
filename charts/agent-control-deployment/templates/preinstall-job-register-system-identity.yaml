@@ -1,7 +1,5 @@
 {{- if include "newrelic-agent-control.auth.secret.shouldRunJob" . -}}
-{{- if and (not (include "newrelic-agent-control.auth.customIdentitySecretName" .)) (not (include "newrelic-agent-control.auth.parentIdentity" .)) -}}
-  {{- fail "You must specify a customIdentitySecretName or identityClientId identityClientSecret/identityClientAuthToken" -}}
-{{- end -}}
+{{- include "newrelic-agent-control.check.system.identity.inputs" . -}}
 
 {{/* We create the secret if the customIdentitySecretName is not specified  */}}
 {{- if not (include "newrelic-agent-control.auth.customIdentitySecretName" .) }}
@@ -33,7 +31,6 @@ metadata:
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "generate-system-identity" ) }}
   namespace: {{ .Release.Namespace }}
 spec:
-  ttlSecondsAfterFinished: 120
   backoffLimit: 3
   template:
     spec:
@@ -41,8 +38,8 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
       containers:
         - name: register-system-identity
-          image: "{{ (.Values.systemIdentityRegistration.image).repository }}:{{ (.Values.systemIdentityRegistration.image).tag }}"
-          imagePullPolicy: {{ .Values.systemIdentityRegistration.image.pullPolicy }}
+          image: "{{ (.Values.systemIdentity.image).repository }}:{{ (.Values.systemIdentity.image).tag }}"
+          imagePullPolicy: {{ .Values.systemIdentity.image.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
           resources:
@@ -80,7 +77,7 @@ spec:
               else
                 for RETRY in 1 2 3; do
                   
-                  ACCESS_TOKEN=$(newrelic-auth-cli authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
+                  ACCESS_TOKEN=$(newrelic-auth-cli {{ with .Values.proxy }} {{ with .url }} --proxy-url "{{.}}" {{ end }} {{ with .ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} {{ end }} authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
 
                   if [ -n "$ACCESS_TOKEN" ]; then
                     echo "Access token obtained successfully via client secret"
@@ -103,14 +100,14 @@ spec:
 
               echo "Creating System Identity..."
 
-              ORG_ID={{ include "newrelic-agent-control.auth.organizationId" . }}
+              ORG_ID={{ (.Values.systemIdentity).organizationId }}
               TEMPORAL_FOLDER=/tmp/gen-folder
               mkdir $TEMPORAL_FOLDER
               CLIENT_ID=""
               DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
               NAME="System Identity for $(hostname) - $DATE"
               for RETRY in 1 2 3; do
-                OUTPUT=$(newrelic-auth-cli create-identity key --name "$NAME" --organization-id "$ORG_ID" --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --environment "$REGION" --bearer-access-token "$ACCESS_TOKEN" --output-platform "local-file" --output-local-filepath "$TEMPORAL_FOLDER/key")
+                OUTPUT=$(newrelic-auth-cli {{ with .Values.proxy }} {{ with .url }} --proxy-url "{{.}}" {{ end }} {{ with .ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} {{ end }} create-identity key --name "$NAME" --organization-id "$ORG_ID" --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --environment "$REGION" --bearer-access-token "$ACCESS_TOKEN" --output-platform "local-file" --output-local-filepath "$TEMPORAL_FOLDER/key")
                 CLIENT_ID=$(echo "$OUTPUT" | jq -r '.client_id // empty')
 
                 if [ -n "$CLIENT_ID" ]; then
@@ -135,6 +132,14 @@ spec:
                 --from-file="private_key=$TEMPORAL_FOLDER/key" | \
               jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"app.kubernetes.io/managed-by": "newrelic-agent-control"} + {"newrelic.io/agent-id": "agent-control"} )' | \
               kubectl apply -n "{{ .Release.Namespace }}" -f -
+          volumeMounts:
+            {{- with .Values.systemIdentity.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- with .Values.systemIdentity.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
 ---
 {{ if .Values.rbac.create }}
 apiVersion: rbac.authorization.k8s.io/v1

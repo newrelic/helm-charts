@@ -1,4 +1,5 @@
 ---
+{{- $region := include "newrelic.common.region" . }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -18,7 +19,7 @@ spec:
         component: agent
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: ""
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -30,27 +31,59 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
       {{- with include "newrelic.common.dnsConfig" . }}
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+      initContainers:
+      - name: kernel-header-installer
+        image: {{ .Values.ebpfAgent.image.repository }}:agent-base-image-latest
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        command: ["/scripts/install-headers.sh"]
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: installer-script
+          mountPath: /scripts
+          readOnly: true
+        - name: host-root-volume
+          mountPath: /host
+        - name: kernel-headers-volume
+          mountPath: /kernel-headers
+
       containers:
       - name: nr-ebpf-agent
-        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.ebpfAgent.image.tag }}
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ include "nr-ebpf-agent.imageTag" . }}
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
+          - name: VIZIER_PORT
+            value: "{{ .Values.ebpfAgent.vizierPort | default "12345" }}"
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
           {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
-            value: "cluster.local" 
+            value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ .Values.logLevel }}"            
+            value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
           - name: TLS_ENABLED
@@ -65,6 +98,102 @@ spec:
             value: "{{ .Values.tls.certPath }}/"
           {{- end }}
           {{- end }}
+
+          {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
+          - name: DOWNLOADED_PACKAGED_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.downloadedPackagedHeadersPath }}"
+          {{- end }}
+
+          {{- if .Values.ebpfAgent.distroKernelHeadersPath }}
+          - name: DISTRO_KERNEL_HEADERS_PATH
+            value: "{{ .Values.ebpfAgent.distroKernelHeadersPath }}"
+          {{- end }}
+          - name: DEPLOYMENT_NAME
+            value: {{ if .Values.global }}{{ .Values.global.cluster | default .Values.cluster }}{{ else }}{{ .Values.cluster }}{{ end }}
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: OTLP_ENDPOINT
+        {{- if eq $region "Staging" }}
+            value: "staging-otlp.nr-data.net:443"
+        {{- else if eq $region "EU" }}
+            value: "otlp.eu01.nr-data.net:443"
+        {{- else }}
+            value: "otlp.nr-data.net:443"
+        {{- end }}
+          {{- include "generateClientScriptEnvVars" . | nindent 10 }}
+          {{- if (hasKey .Values.protocols.http "spans") }}
+          {{- if .Values.protocols.http.spans.samplingErrorRate}}
+          {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
+          - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
+            value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
+          {{- end }}
+          {{- end }}
+          - name: NAMESPACE
+            value: {{ .Release.Namespace }}
+          - name: AGENT_SERVICE_NAME
+            value: {{ include "nr-ebpf-agent.service.name" . }}
+          - name: APM_DATA_REPORTING
+            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
+          - name: NETWORK_METRICS_REPORTING
+            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
+          # ALL Data filtering configuration
+          {{- if .Values.allDataFilters }}
+          - name: DROP_ALL_DATA_FOR_NEW_RELIC
+            value: "{{ if hasKey .Values.allDataFilters "dropNewRelicBundle" }}{{ .Values.allDataFilters.dropNewRelicBundle }}{{ else }}true{{ end }}"
+          - name: DROP_ALL_DATA_FOR_NAMESPACES
+            value: "{{ .Values.allDataFilters.dropNamespaces | join "," }}"
+          - name: DROP_ALL_DATA_FOR_SERVICE_NAME_REGEX
+            value: {{ .Values.allDataFilters.dropServiceNameRegex }}
+          - name: KEEP_ALL_DATA_FOR_SERVICE_NAME_REGEX
+            value: {{ .Values.allDataFilters.keepServiceNameRegex }}
+          - name: DROP_ALL_DATA_FOR_APM_AGENT_ENABLED_ENTITY
+            value: "{{ if hasKey .Values.allDataFilters "dropApmAgentEnabledEntity" }}{{ .Values.allDataFilters.dropApmAgentEnabledEntity }}{{ else }}false{{ end }}"
+          {{- end }}
+          
+          # APM data filtering configuration
+          {{- if .Values.apmDataFilters }}
+          - name: DROP_APM_DATA_FOR_APM_AGENT_ENABLED_ENTITY
+            value: "{{ if hasKey .Values.apmDataFilters "apmAgentEnabledEntity" }}{{ .Values.apmDataFilters.apmAgentEnabledEntity }}{{ else }}true{{ end }}"
+          {{- if .Values.apmDataFilters.dropPodLabels }}
+          - name: DROP_APM_DATA_FOR_POD_LABELS
+            value: "{{ range $key, $value := .Values.apmDataFilters.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"
+          {{- end }}
+          - name: DROP_APM_DATA_FOR_ENTITY_NAME
+            value: "{{ .Values.apmDataFilters.dropEntityName | join "," }}"
+          - name: KEEP_APM_DATA_FOR_ENTITY_NAME
+            value: "{{ .Values.apmDataFilters.keepEntityName | join "," }}"
+          {{- end }}
+
+          # Network metrics data filtering configuration
+          {{- if .Values.networkMetricsDataFilter }}
+          {{- if .Values.networkMetricsDataFilter.dropPodLabels }}
+          - name: DROP_NETWORK_METRICS_DATA_FOR_POD_LABELS
+            value: "{{ range $key, $value := .Values.networkMetricsDataFilter.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"
+          {{- end }}
+          - name: DROP_NETWORK_METRICS_DATA_FOR_ENTITY_NAME
+            value: "{{ .Values.networkMetricsDataFilter.dropEntityName | join "," }}"
+          - name: KEEP_NETWORK_METRICS_DATA_FOR_ENTITY_NAME
+            value: "{{ .Values.networkMetricsDataFilter.keepEntityName | join "," }}"
+          {{- end }}
+
+          # DEPRECATED: The following environment variables are deprecated and kept for backward compatibility.
+          # If you are using an older configuration file with a newer Helm chart version, these settings will still work.
+          # However, please update your configuration to use the new filtering mechanisms.
+          # These variables will be removed in a future release.
+          - name: TCP_STATS_REPORTING
+            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
+          - name: DROP_DATA_NEW_RELIC
+            value: "{{ if hasKey .Values "dropDataNewRelic" }}{{ .Values.dropDataNewRelic }}{{ else }}true{{ end }}"
+          - name: DROP_APM_ENABLED_PODS
+            value: "{{ if hasKey .Values "dropAPMEnabledPods" }}{{ .Values.dropAPMEnabledPods }}{{ else }}false{{ end }}"
+          - name: DROP_DATA_FOR_NAMESPACES
+            value: "{{ .Values.dropDataForNamespaces | join "," }}"
+          - name: DROP_SERVICE_NAME_REGEX
+            value: {{ .Values.dropDataServiceNameRegex }}
+          - name: ALLOW_SERVICE_NAME_REGEX
+            value: {{ .Values.allowServiceNameRegex }}
         securityContext:
           privileged: true
         volumeMounts:
@@ -74,6 +203,9 @@ spec:
           - name: sys-volume
             mountPath: /sys
             readOnly: true
+          - name: kernel-headers-volume
+            mountPath: /kernel-headers
+            readOnly: true
           {{- if (hasKey .Values "tls") }}
           {{- if eq .Values.tls.enabled true }}
           - name: cert
@@ -81,66 +213,16 @@ spec:
             readOnly: true
           {{- end }}
           {{- end }}
-      - name: nr-ebpf-client
-        image: {{ .Values.ebpfClient.image.repository }}:{{ .Values.ebpfClient.image.tag }}
-        imagePullPolicy: {{ .Values.ebpfClient.image.pullPolicy }}
-        resources: {{ .Values.ebpfClient.resources | toYaml | nindent 10 }}
-        env:
-          - name: DEPLOYMENT_NAME
-            value: {{ .Values.cluster }}
-          - name: HOST_IP
-            valueFrom:
-              fieldRef:
-                fieldPath: status.hostIP
-          - name: OTLP_ENDPOINT
-            value: {{ include "nr-otel-collector-receiver.endpoint" .}}
-          - name: PL_STIRLING_SOURCES
-            value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
-          {{- include "generateClientScriptEnvVars" . | nindent 10 }}
-          {{-  if (hasKey .Values.protocols.http "spans") }}
-          {{- if .Values.protocols.http.spans.samplingErrorRate}}
-          {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
-          - name: PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE
-            value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
-          {{- end }}
-          {{- end }}
-          - name: KUBERNETES_CLUSTER_DOMAIN
-            value: "{{ .Values.kubernetesClusterDomain }}"
-          - name: NAMESPACE
-            value: {{ .Release.Namespace }}
-          - name: AGENT_SERVICE_NAME
-            value: {{ include "nr-ebpf-agent.service.name" . }}
-          # TODO(kpattaswamy): Once we implement TLS, we should make this configurable again
-          - name: IS_INSECURE
-            value: "True"
-          - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ .Values.logLevel }}"            
-          - name: NEW_RELIC_LOG_FILE_PATH
-            value: "{{ .Values.logFilePath }}"            
-          - name: TLS_ENABLED
-          {{- if (hasKey .Values "tls") }}
-            {{- if eq .Values.tls.enabled true }}
-            value: "true"
-            {{- else }}
-            value: "false"
-            {{- end }}
-        {{- if eq .Values.tls.enabled true }}
-          - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.certPath }}/"
-        volumeMounts:
-          - name: cert
-            mountPath: "{{ .Values.tls.certPath }}/"
-            readOnly: true
-        {{- end }}
-          {{- end }}
-        envFrom:
-        - secretRef:
-            name: nr-ebpf-agent-secrets
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
       restartPolicy: Always
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
+      - name: installer-script
+        configMap:
+          name: {{ include "nr-ebpf-agent.fullname" . }}-installer-script
+          defaultMode: 0755
       - name: host-root-volume
         hostPath:
           path: /
@@ -149,10 +231,8 @@ spec:
         hostPath:
           path: /sys
           type: Directory
-      {{- with include "newrelic.common.nodeSelector" . }}
-      nodeSelector:
-        {{- . | nindent 8 -}}
-      {{- end }}
+      - name: kernel-headers-volume
+        emptyDir: {}
       {{- if (hasKey .Values "tls") }}
       {{- if eq .Values.tls.enabled true }}
       - name: cert
@@ -160,6 +240,10 @@ spec:
           defaultMode: 420
           secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
       {{- end }}
+      {{- end }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 -}}
       {{- end }}
       {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
       affinity:
