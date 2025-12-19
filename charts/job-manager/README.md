@@ -2,11 +2,13 @@
 
 ## Chart Details
 
-This chart deploys the New Relic Job Manager for Kubernetes-based Location Deployment Configuration. It orchestrates workloads using K8s native features for deployment, scaling, and observability.
+This chart deploys the New Relic Job Manager for **PUBLIC NR-hosted serverless locations**. It orchestrates workloads using K8s native features for deployment, scaling, and observability in a multi-tenant architecture.
 
 **Important:** This chart is currently under development. Docker images referenced by this chart (`newrelic/job-manager:release-1`) are not yet published to Docker Hub. The chart passes linting and template validation tests but is excluded from CI installation tests until images are available.
 
-**Note:** This chart does NOT include ping-runtime. It only supports node-api-runtime and node-browser-runtime for job execution.
+**Scope:** This chart is designed for PUBLIC NR-hosted multi-tenant locations only. It is not intended for private customer-hosted locations.
+
+**Note:** This chart does NOT include ping-runtime. Serverless architecture only supports node-api-runtime and node-browser-runtime for job execution.
 
 ## Architecture Overview
 
@@ -34,10 +36,38 @@ The job manager dynamically creates ephemeral workloads for job execution:
 
 ## Configuration
 
+### Location Configuration (NGEP-Aligned)
+
+This chart uses a location configuration structure aligned with the NGEP ComputeLocation schema. All location settings are configurable but designed for PUBLIC NR-hosted multi-tenant deployments.
+
+| Parameter | Description | Required | Default |
+|-----------|-------------|----------|---------|
+| `jobManager.location.key` | *Required if keySecretName not set* - Authentication key from NGEP for this location | Yes (one of) | |
+| `jobManager.location.keySecretName` | *Required if key not set* - Name of Kubernetes Secret containing `locationKey` | Yes (one of) | |
+| `jobManager.location.name` | Location name (e.g., "us-east-1-public", "eu-west-1-public") | Yes | |
+| `jobManager.location.id` | NGEP entity ID for the ComputeLocation (recommended for production) | No | |
+| `jobManager.location.description` | Human-readable description of the location | No | |
+| `jobManager.location.tags.region` | AWS/Azure/GCP region (e.g., "us-east-1", "eu-west-1") | Yes | |
+| `jobManager.location.tags.provider` | Cloud provider (e.g., "AWS", "Azure", "GCP") | No | |
+| `jobManager.location.tags.environment` | Environment type (e.g., "production", "staging") | No | |
+| `jobManager.location.associatedWorkloads` | List of workload types from NGEP (e.g., ["node-api-runtime_v1", "node-browser-runtime_v1"]) | Yes | See values.yaml |
+
+### Multi-Tenant Configuration
+
 | Parameter | Description | Default |
 |-----------|-------------|---------|
-| `jobManager.locationKey` | *Required if jobManager.locationKeySecretName not set* - The authentication key associated with your Location | |
-| `jobManager.locationKeySecretName` | *Required if jobManager.locationKey not set* - Name of the Kubernetes Secret containing the key `locationKey` | |
+| `jobManager.multiTenant.enabled` | Enable multi-tenant mode (always true for public locations) | `true` |
+| `jobManager.multiTenant.accountValidation.enabled` | Enable account validation before job execution | `true` |
+| `jobManager.multiTenant.accountValidation.validationEndpoint` | Account validation API endpoint | `https://auth.newrelic.com/validate` |
+| `jobManager.multiTenant.capacity.maxConcurrentJobs` | Maximum concurrent jobs across all accounts | `1000` |
+| `jobManager.multiTenant.capacity.perAccountQuota` | Default quota per account | `50` |
+| `jobManager.multiTenant.isolation.networkPolicies` | Enable network policies for account isolation | `true` |
+| `jobManager.multiTenant.isolation.resourceQuotas` | Enable resource quotas per account | `true` |
+
+### Global Configuration
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
 | `global.internalApiKey` | *Required if global.internalApiKeySecretName is not set* - Key that restricts communication between job-manager and runtimes | |
 | `global.internalApiKeySecretName` | *Required if global.internalApiKey is not set* - Name of the Kubernetes Secret containing `internalApiKey` | |
 | `global.hostnameOverride` | Overrides the default hostname used for the job-manager Service | `job-manager` |
@@ -121,21 +151,99 @@ The job manager dynamically creates ephemeral workloads for job execution:
 
 Make sure you have [added the New Relic chart repository.](../../README.md#Installthecharts)
 
-Then, to install this chart, run the following command:
+### Quick Start (Minimal Configuration)
+
+First, create a Kubernetes Secret with your location credentials:
 
 ```sh
-helm install newrelic/job-manager \
---set jobManager.locationKey=<enter_location_key> \
---set global.internalApiKey=<enter_internal_api_key>
+kubectl create secret generic nr-location-secrets \
+  --from-literal=locationKey=<YOUR_LOCATION_KEY_FROM_NGEP> \
+  --from-literal=internalApiKey=<YOUR_INTERNAL_API_KEY>
 ```
 
-To install the runtime charts, pass in the values.yaml for both job-manager and runtime charts:
+Then, install the chart with minimal required configuration:
 
 ```sh
-helm install [chart-name] charts/job-manager/charts/node-api-runtime \
---values charts/job-manager/values.yaml \
---values charts/job-manager/charts/node-api-runtime/values.yaml
+helm install job-manager newrelic/job-manager \
+  --set jobManager.location.name=us-east-1-public \
+  --set jobManager.location.tags.region=us-east-1 \
+  --set jobManager.location.keySecretName=nr-location-secrets \
+  --set global.internalApiKeySecretName=nr-location-secrets
 ```
+
+### Full Configuration Example
+
+For a complete production setup, use a values file:
+
+```sh
+helm install job-manager newrelic/job-manager \
+  -f charts/job-manager/ci/values-public-location.yaml
+```
+
+Example `values-public-location.yaml`:
+
+```yaml
+jobManager:
+  location:
+    keySecretName: "nr-location-secrets"
+    name: "us-east-1-public"
+    id: "a1b2c3d4-5678-90ab-cdef-1234567890ab"
+    description: "New Relic public serverless location in US East"
+    tags:
+      region: "us-east-1"
+      provider: "AWS"
+      environment: "production"
+    associatedWorkloads:
+      - "node-api-runtime_v1"
+      - "node-browser-runtime_v1"
+
+global:
+  internalApiKeySecretName: "nr-location-secrets"
+  checkTimeout: "180"
+
+node-api-runtime:
+  enabled: true
+  parallelism: 5
+
+node-browser-runtime:
+  enabled: true
+  parallelism: 5
+```
+
+## Validation
+
+The chart includes automatic validation to ensure correct configuration:
+
+1. **Required Fields**: The following fields are validated at install/upgrade time:
+   - `jobManager.location.name` - Location identifier
+   - `jobManager.location.tags.region` - Cloud region
+   - `jobManager.location.associatedWorkloads` - Workload definitions
+   - Either `jobManager.location.key` or `jobManager.location.keySecretName`
+
+2. **Runtime Validation**: Ensures enabled runtimes match `associatedWorkloads`:
+   - If `node-api-runtime.enabled=true`, then `node-api-runtime` must be in `associatedWorkloads`
+   - If `node-browser-runtime.enabled=true`, then `node-browser-runtime` must be in `associatedWorkloads`
+   - At least one runtime must be enabled
+
+3. **Serverless Restrictions**:
+   - **ping-runtime is NOT supported** in serverless architecture
+   - Chart will fail if `ping-runtime` is found in `associatedWorkloads`
+
+If validation fails, Helm will display a clear error message indicating what needs to be fixed.
+
+## Important Notes
+
+- **Location Creation**: ComputeLocation entities are created in NGEP (via NerdGraph API or UI), not by this Helm chart. You must create the location in NGEP first and obtain the `locationKey` before deploying.
+
+- **Public Locations Only**: This chart is optimized for PUBLIC NR-hosted multi-tenant locations. Private customer-hosted locations have different requirements.
+
+- **Multi-Tenant Mode**: Multi-tenant features are always enabled for public locations and include:
+  - Account validation before job execution
+  - Per-account resource quotas
+  - Network isolation between accounts
+  - Job queue management per account
+
+- **NGEP Alignment**: All location configuration parameters align with the NGEP ComputeLocation schema to ensure consistency between NGEP entities and Kubernetes deployments.
 
 ## Resources
 
