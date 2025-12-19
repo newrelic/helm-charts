@@ -69,6 +69,8 @@ networkMetricsDataFilter:
   # -- This config bypasses dropEntityName filter.
   keepEntityName: []
 
+
+
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.
 # Metrics are sent by default when a protocol is enabled and it supports metrics. Note: AMQP, Kafka, DNS do not report metrics.
@@ -123,16 +125,9 @@ protocols:
     spans:
       enabled: true
       samplingLatency: ""
- 
-# Configuration for the init container that sets up the eBPF agent environment.
-init_container:
-  image:
-    # -- Init container image to be used.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
-    # -- The tag of the init container image to be used. Defaults to "agent-base-image-latest".
-    tag: "agent-base-image-latest"
-    # -- The pull policy is defaulted to Always.
-    pullPolicy: Always
+
+
+
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
