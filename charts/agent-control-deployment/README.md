@@ -96,6 +96,13 @@ agents:
 			<td>"true"</td>
 			<td>enables or disables remote update from Fleet Control for the agent-control-cd chart</td>
 		</tr>
+        <tr>
+			<td>config.secretPrivateKeyName</td>
+			<td>string</td>
+			<td>`""`</td>
+			<td>Provide the secret name from where the private key should be loaded</td>
+		</tr>
+		<tr>
 		<tr>
 			<td>config.fleet_control.enabled</td>
 			<td>bool</td>
