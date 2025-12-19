@@ -46,15 +46,15 @@ allDataFilters:
 # -- APM data filters configuration
 # Configure filters to drop ebpf APM data based on config provided
 apmDataFilters:
-  # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running 
+  # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running
   apmAgentEnabledEntity: false
-  # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering 
+  # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
-  dropPodLabels: {} 
+  dropPodLabels: {}
   # -- List of entity names to drop ebpf APM data for
   dropEntityName: []
   # -- List of entity names to always keep APM data. By default all entities are kept/enabled
-  # -- This config bypasses dropEntityName filter. 
+  # -- This config bypasses dropEntityName filter.
   keepEntityName: []
 
 # -- Network metrics Data filter / TCP stats filters
@@ -68,7 +68,6 @@ networkMetricsDataFilter:
   # -- List of entity names to always keep Network metrics data. By default all entities are kept/enabled
   # -- This config bypasses dropEntityName filter.
   keepEntityName: []
-
 
 
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
@@ -125,8 +124,6 @@ protocols:
     spans:
       enabled: true
       samplingLatency: ""
-
-
 
 
 # Configuration to apply on the eBPF agent daemonset.
