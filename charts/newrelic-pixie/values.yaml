@@ -24,11 +24,13 @@
 # customSecretApiKeyKey:
 
 clusterRegistrationWaitImage:
-  repository: gcr.io/pixie-oss/pixie-dev-public/curl
+  # -- Defaults to pixie-oss/curl. If global.images.registry is set, it will be used instead.
+  repository: pixie-oss/curl
   tag: "1.0"
   pullPolicy: IfNotPresent
 
 image:
+  # -- Defaults to newrelic/newrelic-pixie-integration. If global.images.registry is set, it will be used instead.
   repository: newrelic/newrelic-pixie-integration
   tag: ""
   pullPolicy: IfNotPresent
