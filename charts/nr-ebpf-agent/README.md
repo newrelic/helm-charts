@@ -101,7 +101,15 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
-| allowServiceNameRegex | string | `""` | This config acts as a bypass for the dropDataServiceNameRegex config. Service names that match this regex will not have their data dropped by the dropDataServiceNameRegex. If dropDataServiceNameRegex is not defined, this config has no impact on the eBPF agent. |
+| allDataFilters.dropNewRelicBundle | boolean | `true` | Drop data from the newrelic namespace and newrelic-bundle services. (RENAMED from `dropDataNewRelic` for clarity. The old name is deprecated but still supported for backward compatibility). |
+| allDataFilters.dropNamespaces | list | `["kube-system"]` | List of Kubernetes namespaces for which all data should be dropped by the agent. (RENAMED from `dropDataForNamespaces` for clarity. The old name is deprecated but still supported for backward compatibility). |
+| allDataFilters.dropServiceNameRegex | string | `""` | Define a regex to match k8s service names to drop. Example `"kube-dns\|otel-collector\|\\bblah\\b"`. (RENAMED from `dropDataServiceNameRegex` for clarity. The old name is deprecated but still supported for backward compatibility). |
+| allDataFilters.keepServiceNameRegex | string | `""` | This config acts as a bypass for the `dropServiceNameRegex` config. Service names that match this regex will not have their data dropped by the `dropServiceNameRegex`. (RENAMED from `allowServiceNameRegex` for clarity. The old name is deprecated but still supported for backward compatibility). |
+| allDataFilters.dropApmAgentEnabledEntity | boolean | `false` | Drop all data for applications or entities that have New Relic or OTEL APM agents running. |
+| apmDataFilters.apmAgentEnabledEntity | boolean | `false` | Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running. |
+| apmDataFilters.dropPodLabels | object | `{}` | Pod labels to match for filtering APM data. Empty map means no label-based filtering. (Example: dropPodLabels: `{ "app": "frontend", "env": "production" }`) |
+| apmDataFilters.dropEntityName | list | `[]` | List of entity names to drop ebpf APM data.|
+| apmDataFilters.keepEntityName | list | `[]` | List of entity names to always keep APM data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |
 | cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
 | containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
@@ -110,10 +118,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | logFilePath | string | `""` | To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout. |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
-| dropDataNewRelic | bool | `true` | Drop data from the newrelic namespace and newrelic-bundle services. |
-| dropDataForEntity | list | `[]` | list entity to ignore the process monitoring based on `NEW_RELIC_APP_NAME` |
-| dropDataForNamespaces | list | `[]` | List of Kubernetes namespaces for which all data should be dropped by the agent. |
-| dropDataServiceNameRegex | string | `""` | Define a regex to match service names to drop. Example "kube-dns|otel-collector|\\bblah\\b" see Golang Docs for Regex syntax https://github.com/google/re2/wiki/Syntax |
 | ebpfAgent.affinity | object | `{}` | Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity` |
 | ebpfAgent.containerSecurityContext | object | `{}` | Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |
 | ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
@@ -134,6 +138,10 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | kubernetesClusterDomain | string | `"cluster.local"` | Kubernetes cluster domain. |
 | labels | object | `{}` | Additional labels for chart objects. |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
+| networkMetricsDataFilter.dropPodLabels | object | `{}` | Pod labels to match for filtering Network metrics data. Empty map means no label-based filtering. (Example: dropPodLabels: `{ "app": "frontend", "env": "production" }`) |
+| networkMetricsDataFilter.dropEntityName | list | `[]` | List of entity names to drop Network metrics data for |
+| networkMetricsDataFilter.keepEntityName | list | `[]` | List of entity names to always keep Network metrics data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |
+| networkMetricsReporting | string | `true` | Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics. RENAMED from `tcpStatsReporting`. The old name is deprecated however backward compatibility is supported. |
 | nodeSelector | object | `{}` | Sets all pods' node selector. Can be configured also with `global.nodeSelector` |
 | nrStaging | bool | `false` | Endpoint to export data to via the otel collector. NR prod (otlp.nr-data.net:443) by default. Staging (staging-otlp.nr-data.net:443) otherwise. |
 | podLabels | object | `{}` | Additional labels for chart pods. |
@@ -188,6 +196,5 @@ If the `nr-ebpf-client` or `nr-ebpf-agent` container logs indicate that the scri
 
 ## Maintainers
 
-* ramkrishankumarN
-* kpattaswamy
-* benkilimnik
+* kkhandelwal
+* bsanwarwala
