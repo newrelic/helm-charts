@@ -1,0 +1,159 @@
+# Example configuration for NR-HOSTED PUBLIC Serverless Location
+# This configuration is for testing NR-hosted public multi-tenant serverless locations
+
+jobManager:
+  ## ComputeLocation Configuration (NR-Hosted Public Location)
+  location:
+    ## Authentication - Use Secret managed by NR
+    # key: ""  # Not exposed for public locations
+    keySecretName: "nr-public-location-secrets"
+
+    ## Identity - Must match NGEP ComputeLocation
+    name: "us-east-1-public"
+    id: "a1b2c3d4-5678-90ab-cdef-1234567890ab"  # NGEP entity ID
+
+    ## Classification - NR-hosted public location
+    hostedBy: "newrelic"
+    visibility: "public"
+
+    ## Scope - Organization-level for public locations (multi-tenant)
+    scope:
+      # accountId: ""  # No specific accountId - serves all accounts
+      type: "ORGANIZATION"
+
+    ## Description
+    description: "New Relic public serverless location in US East"
+
+    ## Tags
+    tags:
+      region: "us-east-1"
+      provider: "AWS"
+      environment: "production"
+
+    ## Associated Workloads (matches NGEP)
+    associatedWorkloads:
+      - "node-api-runtime_v1"
+      - "node-browser-runtime_v1"
+
+  ## Multi-tenant REQUIRED for public locations
+  multiTenant:
+    enabled: true
+
+    ## Account validation for public locations
+    accountValidation:
+      enabled: true
+      validationEndpoint: "https://auth.newrelic.com/validate"
+
+    ## Capacity management
+    capacity:
+      maxConcurrentJobs: 1000
+      perAccountQuota: 50
+
+    ## Isolation configuration
+    isolation:
+      networkPolicies: true
+      resourceQuotas: true
+
+  ## Logging
+  logLevel: "INFO"
+
+  ## Broker endpoint
+  brokerApiEndpoint: "https://compute-broker.nr-data.net"
+
+  ## HPA configuration (higher capacity for public multi-tenant)
+  hpa:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 50
+    customMetrics:
+      queueDepthMetricName: "serverless_queue_depth"
+      targetValue: "200"
+      metricSelector:
+        location: "us-east-1-public"
+        hostedBy: "newrelic"
+        visibility: "public"
+
+## Global configuration
+global:
+  internalApiKey: "test-internal-api-key-public"
+  checkTimeout: "180"
+
+## Image configuration
+image:
+  repository: newrelic/serverless-job-manager
+  pullPolicy: IfNotPresent
+
+## Resources (higher for multi-tenant public)
+resources:
+  requests:
+    cpu: "2000m"
+    memory: "4Gi"
+  limits:
+    cpu: "4000m"
+    memory: "8Gi"
+
+## Security Context (stricter for public multi-tenant)
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+## Network Policy (MANDATORY for public)
+networkPolicy:
+  enabled: true
+  allowEgressToInternet: true
+
+## Service Account
+serviceAccount:
+  create: true
+
+## RBAC (with additional permissions for multi-tenant)
+rbac:
+  create: true
+
+## Node Selection (regional affinity)
+nodeSelector:
+  topology.kubernetes.io/region: us-east-1
+  newrelic.com/location-type: public
+
+## Pod Topology Spread (HA across AZs)
+topologySpreadConstraints:
+  - maxSkew: 1
+    topologyKey: topology.kubernetes.io/zone
+    whenUnsatisfiable: DoNotSchedule
+    labelSelector:
+      matchLabels:
+        app.kubernetes.io/name: job-manager
+
+## Runtime Configurations (higher parallelism for public)
+node-api-runtime:
+  enabled: true
+  parallelism: 5
+  completions: 30
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1250Mi"
+    limits:
+      cpu: "750m"
+      memory: "2500Mi"
+
+node-browser-runtime:
+  enabled: true
+  parallelism: 5
+  completions: 30
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2000Mi"
+    limits:
+      cpu: "1500m"
+      memory: "3000Mi"
