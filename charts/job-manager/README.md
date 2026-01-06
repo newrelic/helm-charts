@@ -104,7 +104,7 @@ This chart uses a location configuration structure aligned with the NGEP Compute
 | `jobManager.sidecar.image.repository` | Sidecar container image | `newrelic/serverless-sidecar` |
 | `jobManager.sidecar.image.tag` | Sidecar image tag | `latest` |
 | `jobManager.sidecar.resources` | Sidecar resource requests and limits | See [Resources](#Resources) |
-| `image.repository` | Job Manager container image | `newrelic/serverless-job-manager` |
+| `image.repository` | Job Manager container image | `newrelic/job-manager` |
 | `image.pullPolicy` | Image pull policy | `IfNotPresent` |
 | `resources` | Resource requests and limits for Job Manager | See [Resources](#Resources) |
 | `serviceAccount.create` | Create a ServiceAccount | `true` |
