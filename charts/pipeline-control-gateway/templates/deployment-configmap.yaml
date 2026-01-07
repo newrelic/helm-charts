@@ -32,6 +32,7 @@ data:
 
     receivers:
       nrproprietaryreceiver:
+        fleet_id: ${env:FLEET_ID:-""}
         nr_host: {{ include "nrKubernetesOtel.NrHost.endpoint" . }}
         logging:
           enable:  {{ .Values.receivers.nrproprietaryreceiver.logging.enable }}
