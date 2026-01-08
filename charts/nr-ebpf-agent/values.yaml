@@ -130,7 +130,7 @@ protocols:
 ebpfAgent:
   image:
     # -- eBPF agent image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
+    repository: docker.io/newrelic/nr-ebpf-agent
     # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
     pullPolicy: IfNotPresent
     # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
@@ -156,8 +156,6 @@ ebpfAgent:
   podSecurityContext: {}
   # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
   containerSecurityContext: {}
-  # Vizier server port on which agent receives pxl scripts from the client. Default to 12345
-  vizierPort: ""
   # Sets the absolute path of the complete directory where the required linux headers are manually downloaded and placed for the eBPF agent to use.
   # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
   # The absolute path in case of K8s should also be prepended with /host when necessary.
@@ -190,30 +188,3 @@ podSecurityContext: {}
 containerSecurityContext: {}
 # --  Kubernetes cluster domain.
 kubernetesClusterDomain: cluster.local
-# tls makes sure only requests with correctly formatted rules will get into the operator.
-tls:
-  # -- Enable TLS communication between the eBPF client and agent.
-  enabled: true
-  # TLS Certificate Option 1: Use Helm to automatically generate a self-signed certificate.
-  # autoGenerateCert must be enabled.
-  autoGenerateCert:
-    # -- If true, Helm will automatically create a self-signed cert and secret for you.
-    enabled: true
-    # -- If set to true, a new key/certificate is generated on helm upgrade.
-    recreate: true
-    # -- Cert validity period time in days.
-    certPeriodDays: 365
-    # -- Certificates path.
-  certPath: "/etc/newrelic-ebpf-agent/certs/"
-
-  # TLS Certificate Option 2: Use your own self-signed certificate.
-  # autoGenerateCert must be disabled, and certFile, keyFile, and caFile must be set.
-  # The chart reads the contents of the file paths with the helm. Files.Get function.
-  # Refer to this doc https://helm.sh/docs/chart_template_guide/accessing_files/ to understand
-  # limitations of file paths accessible to the chart.
-  # -- Path to your own PEM-encoded certificate.
-  certFile: ""
-  # -- Path to your own PEM-encoded private key.
-  keyFile: ""
-  # -- Path to the CA cert.
-  caFile: ""

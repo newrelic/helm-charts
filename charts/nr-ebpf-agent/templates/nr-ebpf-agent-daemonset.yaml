@@ -61,8 +61,6 @@ spec:
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
-          - name: VIZIER_PORT
-            value: "{{ .Values.ebpfAgent.vizierPort | default "12345" }}"
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
@@ -86,18 +84,6 @@ spec:
                 {{- end }}
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
-          - name: TLS_ENABLED
-          {{- if (hasKey .Values "tls") }}
-          {{- if eq .Values.tls.enabled true }}
-            value: "true"
-          {{- else }}
-            value: "false"
-          {{- end }}
-          {{- if eq .Values.tls.enabled true }}
-          - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.certPath }}/"
-          {{- end }}
-          {{- end }}
 
           {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
           - name: DOWNLOADED_PACKAGED_HEADERS_PATH
@@ -206,13 +192,6 @@ spec:
           - name: kernel-headers-volume
             mountPath: /kernel-headers
             readOnly: true
-          {{- if (hasKey .Values "tls") }}
-          {{- if eq .Values.tls.enabled true }}
-          - name: cert
-            mountPath: "{{ .Values.tls.certPath }}/"
-            readOnly: true
-          {{- end }}
-          {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -233,14 +212,6 @@ spec:
           type: Directory
       - name: kernel-headers-volume
         emptyDir: {}
-      {{- if (hasKey .Values "tls") }}
-      {{- if eq .Values.tls.enabled true }}
-      - name: cert
-        secret:
-          defaultMode: 420
-          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
-      {{- end }}
-      {{- end }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 -}}
