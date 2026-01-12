@@ -65,7 +65,6 @@ spec:
             value: "/host"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
-          {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
@@ -109,6 +108,12 @@ spec:
             value: "otlp.nr-data.net:443"
         {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
+          {{- if .Values.protocols.global }}
+          {{- if (hasKey .Values.protocols.global "max_unlinked_spans") }}
+          - name: PROTOCOLS_SPANS_UNLINKED_MAX
+            value: "{{ .Values.protocols.global.max_unlinked_spans }}"
+          {{- end }}
+          {{- end }}
           {{- if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}

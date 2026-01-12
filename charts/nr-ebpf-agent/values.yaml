@@ -74,6 +74,9 @@ networkMetricsDataFilter:
 # samplingLatency represents the sampling latency threshold for the spans to export.
 # Options: p1, p10, p50, p90, p99.
 protocols:
+  global:
+    # Controls maximum unlinked spans reported per protocol. Set to 0 to disable limit
+    max_unlinked_spans: "100"
   http:
     enabled: true
     spans:
@@ -86,42 +89,42 @@ protocols:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   pgsql:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   cass:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   redis:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   mongodb:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   kafka:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   amqp:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   dns:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
 
 
 # Configuration to apply on the eBPF agent daemonset.
