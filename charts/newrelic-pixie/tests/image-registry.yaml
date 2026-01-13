@@ -1,0 +1,187 @@
+suite: test image registry precedence
+templates:
+  - templates/job.yaml
+tests:
+  - it: Default behavior - docker.io for main image, preserved gcr.io for initContainer
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "gcr.io/pixie-oss/pixie-dev-public/curl:1.0"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^docker\\.io/newrelic/newrelic-pixie-integration:"
+
+  - it: Global registry override affects main image but not initContainer with embedded registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          registry: "globalregistry.io"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "gcr.io/pixie-oss/pixie-dev-public/curl:1.0"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^globalregistry\\.io/newrelic/newrelic-pixie-integration:"
+
+  - it: Local registry override on main image takes precedence
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      image:
+        registry: "localregistry.io"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "gcr.io/pixie-oss/pixie-dev-public/curl:1.0"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^localregistry\\.io/newrelic/newrelic-pixie-integration:"
+
+  - it: Local registry override on initContainer strips embedded registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      clusterRegistrationWaitImage:
+        registry: "customregistry.io"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "customregistry.io/pixie-oss/pixie-dev-public/curl:1.0"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^docker\\.io/newrelic/newrelic-pixie-integration:"
+
+  - it: Local registry takes precedence over global registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          registry: "globalregistry.io"
+      image:
+        registry: "localregistry.io"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "gcr.io/pixie-oss/pixie-dev-public/curl:1.0"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^localregistry\\.io/newrelic/newrelic-pixie-integration:"
+
+  - it: Both images can have independent local registry overrides
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      clusterRegistrationWaitImage:
+        registry: "initregistry.io"
+      image:
+        registry: "mainregistry.io"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "initregistry.io/pixie-oss/pixie-dev-public/curl:1.0"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^mainregistry\\.io/newrelic/newrelic-pixie-integration:"
+
+  - it: Custom tag with default registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      image:
+        tag: "v1.2.3"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].image"
+          value: "docker.io/newrelic/newrelic-pixie-integration:v1.2.3"
+
+  - it: Custom tag with global registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          registry: "myregistry.io"
+      image:
+        tag: "v1.2.3"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].image"
+          value: "myregistry.io/newrelic/newrelic-pixie-integration:v1.2.3"
+
+  - it: Custom tag with local registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      image:
+        registry: "localregistry.io"
+        tag: "v1.2.3"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].image"
+          value: "localregistry.io/newrelic/newrelic-pixie-integration:v1.2.3"
+
+  - it: Global registry with both custom tags
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          registry: "myregistry.io"
+      clusterRegistrationWaitImage:
+        tag: "2.0"
+      image:
+        tag: "v1.2.3"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].image"
+          value: "gcr.io/pixie-oss/pixie-dev-public/curl:2.0"
+      - equal:
+          path: "spec.template.spec.containers[0].image"
+          value: "myregistry.io/newrelic/newrelic-pixie-integration:v1.2.3"
+
+  - it: Job has Helm hook annotations for upgrade compatibility
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            helm.sh/hook: "pre-install,pre-upgrade"
+            helm.sh/hook-delete-policy: "before-hook-creation"
+            helm.sh/hook-weight: "-5"
+
+  - it: Custom job annotations are merged with hook annotations
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      job:
+        annotations:
+          custom-annotation: "test-value"
+    asserts:
+      - equal:
+          path: metadata.annotations
+          value:
+            helm.sh/hook: "pre-install,pre-upgrade"
+            helm.sh/hook-delete-policy: "before-hook-creation"
+            helm.sh/hook-weight: "-5"
+            custom-annotation: "test-value"

@@ -4,13 +4,16 @@ kind: Job
 metadata:
   name: {{ template "newrelic-pixie.fullname" . }}
   namespace: {{ template "newrelic-pixie.namespace" . }}
-  labels: 
+  labels:
   {{- include "newrelic-pixie.labels" . | trim | nindent 4}}
   {{- if ((.Values.job).labels) }}
     {{- toYaml .Values.job.labels | nindent 4 }}
   {{- end }}
-  {{- if ((.Values.job).annotations) }}
   annotations:
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation
+    helm.sh/hook-weight: "-5"
+  {{- if ((.Values.job).annotations) }}
     {{ toYaml .Values.job.annotations | nindent 4 | trim }}
   {{- end }}
 spec:
