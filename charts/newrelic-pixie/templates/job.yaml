@@ -36,7 +36,7 @@ spec:
       restartPolicy: Never
       initContainers:
       - name: cluster-registration-wait
-        image: "{{ (.Values.clusterRegistrationWaitImage).repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
+        image: {{ include "newrelic-pixie.images.image" ( dict "imageRoot" .Values.clusterRegistrationWaitImage "context" .) }}
         imagePullPolicy: "{{ (.Values.clusterRegistrationWaitImage).pullPolicy | default "IfNotPresent" }}"
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
@@ -53,7 +53,7 @@ spec:
           value: "50800"
       containers:
       - name: {{ template "newrelic-pixie.name" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        image: {{ include "newrelic-pixie.images.image" ( dict "imageRoot" .Values.image "context" .) }}
         imagePullPolicy: "{{ .Values.image.pullPolicy }}"
         env:
         - name: CLUSTER_NAME

@@ -170,3 +170,93 @@ licenseKey and cluster are set.
 {{- $customSecretApiKeyKey := include "newrelic-pixie.customSecretApiKeyKey" . -}}
 {{- and (or (and $licenseKey $apiKey) (and $customSecretName $customSecretLicenseKey $customSecretApiKeyKey)) $cluster}}
 {{- end -}}
+
+{{/*
+Return the proper image registry
+Precedence: local chart registry > global registry > docker.io
+*/}}
+{{- define "newrelic-pixie.images.registry" -}}
+{{- $globalRegistry := "" -}}
+{{- if .context.Values.global -}}
+    {{- if .context.Values.global.images -}}
+        {{- with .context.Values.global.images.registry -}}
+            {{- $globalRegistry = . -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+
+{{- $localRegistry := "" -}}
+{{- if .imageRoot.registry -}}
+    {{- $localRegistry = .imageRoot.registry -}}
+{{- end -}}
+
+{{- $registry := $localRegistry | default $globalRegistry | default "docker.io" -}}
+{{- if $registry -}}
+    {{- $registry -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the proper image repository
+*/}}
+{{- define "newrelic-pixie.images.repository" -}}
+    {{- .repository -}}
+{{- end -}}
+
+{{/*
+Return the proper image tag
+*/}}
+{{- define "newrelic-pixie.images.tag" -}}
+    {{- .imageRoot.tag | default .context.Chart.AppVersion | toString -}}
+{{- end -}}
+
+{{/*
+Return the proper image name
+Handles repositories that include registry prefix (e.g., gcr.io/path/image)
+If imageRoot.registry is explicitly set, it takes precedence and will be prepended
+*/}}
+{{- define "newrelic-pixie.images.image" -}}
+    {{- $repositoryName := include "newrelic-pixie.images.repository" .imageRoot -}}
+    {{- $tag := include "newrelic-pixie.images.tag" ( dict "imageRoot" .imageRoot "context" .context) -}}
+
+    {{- /* Check if repository contains a registry prefix (has . or : before first /) */ -}}
+    {{- $hasRegistryPrefix := false -}}
+    {{- if contains "." $repositoryName -}}
+        {{- $firstSegment := $repositoryName | splitList "/" | first -}}
+        {{- if or (contains "." $firstSegment) (contains ":" $firstSegment) -}}
+            {{- $hasRegistryPrefix = true -}}
+        {{- end -}}
+    {{- end -}}
+
+    {{- /* Check if local registry is explicitly set */ -}}
+    {{- $hasLocalRegistry := false -}}
+    {{- if .imageRoot.registry -}}
+        {{- $hasLocalRegistry = true -}}
+    {{- end -}}
+
+    {{- if $hasLocalRegistry -}}
+        {{- /* Explicit local registry set - strip registry from repository if present */ -}}
+        {{- $registryName := include "newrelic-pixie.images.registry" ( dict "imageRoot" .imageRoot "context" .context ) -}}
+        {{- $repoPath := $repositoryName -}}
+        {{- if $hasRegistryPrefix -}}
+            {{- /* Strip the registry prefix from repository */ -}}
+            {{- $parts := $repositoryName | splitList "/" | rest -}}
+            {{- $repoPath = $parts | join "/" -}}
+        {{- end -}}
+        {{- printf "%s/%s:%s" $registryName $repoPath $tag -}}
+    {{- else -}}
+        {{- /* No explicit local registry */ -}}
+        {{- if $hasRegistryPrefix -}}
+            {{- /* Repository already contains registry, just append tag */ -}}
+            {{- printf "%s:%s" $repositoryName $tag -}}
+        {{- else -}}
+            {{- /* Normal behavior: use registry precedence (global or default) */ -}}
+            {{- $registryName := include "newrelic-pixie.images.registry" ( dict "imageRoot" .imageRoot "context" .context ) -}}
+            {{- if $registryName -}}
+                {{- printf "%s/%s:%s" $registryName $repositoryName $tag -}}
+            {{- else -}}
+                {{- printf "%s:%s" $repositoryName $tag -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}

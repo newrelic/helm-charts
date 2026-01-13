@@ -24,11 +24,16 @@
 # customSecretApiKeyKey:
 
 clusterRegistrationWaitImage:
+  # For this image, repository contains the full path including registry to preserve backwards compatibility.
+  # If you need to override, set registry and it will take precedence
   repository: gcr.io/pixie-oss/pixie-dev-public/curl
   tag: "1.0"
   pullPolicy: IfNotPresent
 
 image:
+  # Image registry, defaults to docker.io if not set
+  # Can be overridden globally via global.images.registry
+  # registry: docker.io
   repository: newrelic/newrelic-pixie-integration
   tag: ""
   pullPolicy: IfNotPresent
