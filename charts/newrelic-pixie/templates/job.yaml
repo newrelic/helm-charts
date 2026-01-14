@@ -4,8 +4,12 @@ kind: Job
 metadata:
   name: {{ template "newrelic-pixie.fullname" . }}
   namespace: {{ template "newrelic-pixie.namespace" . }}
-  labels: 
+  labels:
   {{- include "newrelic-pixie.labels" . | trim | nindent 4}}
+  {{- $mergedLabels := include "newrelic-pixie.labels.merged" . }}
+  {{- if $mergedLabels }}
+    {{- $mergedLabels | fromJson | toYaml | nindent 4 }}
+  {{- end }}
   {{- if ((.Values.job).labels) }}
     {{- toYaml .Values.job.labels | nindent 4 }}
   {{- end }}
@@ -21,23 +25,35 @@ spec:
       labels:
         app.kubernetes.io/name: {{ template "newrelic-pixie.name" . }}
         release: {{.Release.Name }}
-        {{- if .Values.podLabels }}
-          {{- toYaml .Values.podLabels | nindent 8 }}
+        {{- $mergedPodLabels := include "newrelic-pixie.podLabels.merged" . }}
+        {{- if $mergedPodLabels }}
+          {{- $mergedPodLabels | fromJson | toYaml | nindent 8 }}
         {{- end }}
       {{- if .Values.podAnnotations }}
       annotations:
           {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.image.pullSecrets }}
+      {{- $pullSecrets := include "newrelic-pixie.image.pullSecrets" . }}
+      {{- if $pullSecrets }}
       imagePullSecrets:
-        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
+        {{- $pullSecrets | fromJson | toYaml | nindent 8 }}
       {{- end }}
       restartPolicy: Never
       initContainers:
       - name: cluster-registration-wait
-        image: "{{ (.Values.clusterRegistrationWaitImage).repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
-        imagePullPolicy: "{{ (.Values.clusterRegistrationWaitImage).pullPolicy | default "IfNotPresent" }}"
+        {{- $registry := include "newrelic-pixie.image.registry" . | default "" }}
+        {{- $repo := .Values.clusterRegistrationWaitImage.repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}
+        {{- if $registry }}
+          {{- if or (hasPrefix "gcr.io" $repo) (hasPrefix "docker.io" $repo) }}
+            {{- $repo = ($repo | trimPrefix "gcr.io/pixie-oss/pixie-dev-public/" | trimPrefix "docker.io/") }}
+          {{- end }}
+        image: {{ printf "%s/%s:%s" $registry $repo (.Values.clusterRegistrationWaitImage.tag | default "1.0") | quote }}
+        {{- else }}
+        image: {{ printf "%s:%s" $repo (.Values.clusterRegistrationWaitImage.tag | default "1.0") | quote }}
+        {{- end }}
+        {{- $pullPolicy := include "newrelic-pixie.image.pullPolicy" . | default "" }}
+        imagePullPolicy: {{ if $pullPolicy }}{{ $pullPolicy | quote }}{{ else }}{{ .Values.clusterRegistrationWaitImage.pullPolicy | default "IfNotPresent" | quote }}{{ end }}
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
           until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
@@ -53,8 +69,23 @@ spec:
           value: "50800"
       containers:
       - name: {{ template "newrelic-pixie.name" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        {{- $registry := include "newrelic-pixie.image.registry" . | default "" -}}
+        {{- $repo := .Values.image.repository | default "newrelic/newrelic-pixie-integration" -}}
+        {{- if $registry -}}
+          {{- if hasPrefix "docker.io" $repo }}
+            {{- $repo = ($repo | trimPrefix "docker.io/") }}
+          {{- end }}
+        image: "{{ $registry }}/{{ $repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- else }}
+        image: "{{ $repo }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        {{- end }}
+        {{- $pullPolicy := include "newrelic-pixie.image.pullPolicy" . | default "" }}
+        imagePullPolicy: "{{ if $pullPolicy }}{{ $pullPolicy }}{{ else }}{{ .Values.image.pullPolicy | default "IfNotPresent" }}{{ end }}"
+        {{- $containerSecurityContext := include "newrelic-pixie.containerSecurityContext" . }}
+        {{- if $containerSecurityContext }}
+        securityContext:
+          {{- $containerSecurityContext | fromJson | toYaml | nindent 10 }}
+        {{- end }}
         env:
         - name: CLUSTER_NAME
           value: {{ template "newrelic-pixie.cluster" . }}
@@ -87,7 +118,8 @@ spec:
               key: cluster-id
               name: pl-cluster-secrets
           {{- end }}
-        {{- if .Values.verbose }}
+        {{- $verboseLog := include "newrelic-pixie.verboseLog" . }}
+        {{- if or .Values.verbose $verboseLog }}
         - name: VERBOSE
           value: "true"
         {{- end }}
@@ -118,11 +150,12 @@ spec:
           value: "staging.withpixie.dev:443"
           {{- end }}
         {{- end }}
-        {{- if .Values.proxy }}
+        {{- $proxy := include "newrelic-pixie.proxy" . }}
+        {{- if $proxy }}
         - name: HTTP_PROXY
-          value: {{ .Values.proxy | quote }}
+          value: {{ $proxy | quote }}
         - name: HTTPS_PROXY
-          value: {{ .Values.proxy | quote }}
+          value: {{ $proxy | quote }}
         {{- end }}
         {{- if .Values.excludePodsRegex }}
         - name: EXCLUDE_PODS_REGEX
@@ -150,16 +183,37 @@ spec:
             name: {{ template "newrelic-pixie.fullname" . }}-scripts
             {{- end}}
       {{- end }}
-      {{- if $.Values.nodeSelector }}
+      {{- $priorityClassName := include "newrelic-pixie.priorityClassName" . }}
+      {{- if $priorityClassName }}
+      priorityClassName: {{ $priorityClassName }}
+      {{- end }}
+      {{- $nodeSelector := include "newrelic-pixie.nodeSelector" . }}
+      {{- if $nodeSelector }}
       nodeSelector:
-        {{- toYaml $.Values.nodeSelector | nindent 8 }}
+        {{- $nodeSelector | fromJson | toYaml | nindent 8 }}
       {{- end }}
-      {{- if .Values.tolerations }}
+      {{- $tolerations := include "newrelic-pixie.tolerations" . }}
+      {{- if $tolerations }}
       tolerations:
-        {{- toYaml .Values.tolerations | nindent 8 }}
+        {{- $tolerations | fromJson | toYaml | nindent 8 }}
       {{- end }}
-      {{- if .Values.affinity }}
+      {{- $affinity := include "newrelic-pixie.affinity" . }}
+      {{- if $affinity }}
       affinity:
-        {{- toYaml .Values.affinity | nindent 8 }}
+        {{- $affinity | fromJson | toYaml | nindent 8 }}
+      {{- end }}
+      {{- $dnsConfig := include "newrelic-pixie.dnsConfig" . }}
+      {{- if $dnsConfig }}
+      dnsConfig:
+        {{- $dnsConfig | fromJson | toYaml | nindent 8 }}
+      {{- end }}
+      {{- $hostNetwork := include "newrelic-pixie.hostNetwork" . }}
+      {{- if $hostNetwork }}
+      hostNetwork: {{ $hostNetwork }}
+      {{- end }}
+      {{- $podSecurityContext := include "newrelic-pixie.podSecurityContext" . }}
+      {{- if $podSecurityContext }}
+      securityContext:
+        {{- $podSecurityContext | fromJson | toYaml | nindent 8 }}
       {{- end }}
 {{- end }}
