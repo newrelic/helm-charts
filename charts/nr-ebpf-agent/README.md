@@ -103,7 +103,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | allDataFilters.dropServiceNameRegex | string | `""` | Define a regex to match k8s service names to drop. Example `"kube-dns\|otel-collector\|\\bblah\\b"`. (RENAMED from `dropDataServiceNameRegex` for clarity. The old name is deprecated but still supported for backward compatibility). |
 | allDataFilters.keepServiceNameRegex | string | `""` | This config acts as a bypass for the `dropServiceNameRegex` config. Service names that match this regex will not have their data dropped by the `dropServiceNameRegex`. (RENAMED from `allowServiceNameRegex` for clarity. The old name is deprecated but still supported for backward compatibility). |
 | allDataFilters.dropApmAgentEnabledEntity | boolean | `false` | Drop all data for applications or entities that have New Relic or OTEL APM agents running. |
-| apmDataFilters.apmAgentEnabledEntity | boolean | `false` | Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running. |
+| apmDataFilters.dropEapmForApmEnabledEntity | boolean | `true` | Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running. |
 | apmDataFilters.dropPodLabels | object | `{}` | Pod labels to match for filtering APM data. Empty map means no label-based filtering. (Example: dropPodLabels: `{ "app": "frontend", "env": "production" }`) |
 | apmDataFilters.dropEntityName | list | `[]` | List of entity names to drop ebpf APM data.|
 | apmDataFilters.keepEntityName | list | `[]` | List of entity names to always keep APM data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |

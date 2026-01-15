@@ -146,7 +146,7 @@ spec:
           # APM data filtering configuration
           {{- if .Values.apmDataFilters }}
           - name: DROP_APM_DATA_FOR_APM_AGENT_ENABLED_ENTITY
-            value: "{{ if hasKey .Values.apmDataFilters "apmAgentEnabledEntity" }}{{ .Values.apmDataFilters.apmAgentEnabledEntity }}{{ else }}true{{ end }}"
+            value: "{{ if hasKey .Values.apmDataFilters "dropEapmForApmEnabledEntity" }}{{ .Values.apmDataFilters.dropEapmForApmEnabledEntity }}{{ else if hasKey .Values.apmDataFilters "apmAgentEnabledEntity" }}{{ .Values.apmDataFilters.apmAgentEnabledEntity }}{{ else }}true{{ end }}"
           {{- if .Values.apmDataFilters.dropPodLabels }}
           - name: DROP_APM_DATA_FOR_POD_LABELS
             value: "{{ range $key, $value := .Values.apmDataFilters.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"

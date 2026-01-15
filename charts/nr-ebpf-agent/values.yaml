@@ -45,7 +45,7 @@ allDataFilters:
 # Configure filters to drop ebpf APM data based on config provided
 apmDataFilters:
   # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running
-  apmAgentEnabledEntity: false
+  dropEapmForApmEnabledEntity: true
   # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
   dropPodLabels: {}
@@ -135,7 +135,6 @@ protocols:
     spans:
       enabled: true
       samplingLatency: "p50"
-
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
