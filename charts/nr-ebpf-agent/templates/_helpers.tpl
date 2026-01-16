@@ -171,31 +171,28 @@ Pass environment variables to the agent container if tracing a specific protocol
 {{- end -}}
 
 {{/*
-Generate environment variables for disabling protocols and setting sampling latency.
+Generate environment variables for protocols configuration including enabled/disabled state and sampling latency.
 */}}
 {{- define "generateClientScriptEnvVars" -}}
 {{- if .Values.protocols }}
 {{- range $protocol, $config := .Values.protocols }}
+  {{- if ne $protocol "global" }}
   {{- if (hasKey $config "enabled") }}
-    {{- if eq $config.enabled false }}
 - name: PROTOCOLS_{{ upper $protocol }}_ENABLED
-  value: "false"
+  value: "{{ $config.enabled }}"
+  {{- end }}
+  {{- if (hasKey $config "spans") }}
+    {{- if (hasKey $config.spans "enabled") }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
-  value: "false"
-    {{- else if eq $config.enabled true }}
-      {{- if (hasKey $config "spans") }}
-        {{- if (eq $config.spans.enabled false) }}
-- name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
-  value: "false"
-        {{- end }}  
-      {{- if (eq $config.spans.enabled true) }}
+  value: "{{ $config.spans.enabled }}"
+    {{- end }}
+    {{- if and (eq $config.spans.enabled true) (hasKey $config.spans "samplingLatency") }}
       {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_SAMPLING_LATENCY
   value: "{{ $config.spans.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.spans.samplingLatency "" }}"
-      {{- end }}
     {{- end }}
-  {{- end }} 
-{{- end }}
+  {{- end }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}

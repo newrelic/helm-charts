@@ -9,8 +9,6 @@ customSecretName: ""
 customSecretLicenseKey: ""
 # -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
 region: ""
-# -- Configures the agent to send all data through the proxy specified via the otel collector.
-proxy: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: "INFO"
@@ -47,7 +45,7 @@ allDataFilters:
 # Configure filters to drop ebpf APM data based on config provided
 apmDataFilters:
   # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running
-  apmAgentEnabledEntity: false
+  dropEapmForApmEnabledEntity: true
   # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
   dropPodLabels: {}
@@ -76,6 +74,9 @@ networkMetricsDataFilter:
 # samplingLatency represents the sampling latency threshold for the spans to export.
 # Options: p1, p10, p50, p90, p99.
 protocols:
+  global:
+    # Controls maximum unlinked spans reported per protocol. Set to 0 to disable limit
+    max_unlinked_spans: "100"
   http:
     enabled: true
     spans:
@@ -88,43 +89,52 @@ protocols:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   pgsql:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   cass:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   redis:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   mongodb:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   kafka:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   amqp:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
+      samplingLatency: "p50"
   dns:
     enabled: true
     spans:
       enabled: true
-      samplingLatency: ""
-
+      samplingLatency: "p50"
+  dynamodb:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  mssql:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
@@ -156,8 +166,6 @@ ebpfAgent:
   podSecurityContext: {}
   # -- Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container`
   containerSecurityContext: {}
-  # Vizier server port on which agent receives pxl scripts from the client. Default to 12345
-  vizierPort: ""
   # Sets the absolute path of the complete directory where the required linux headers are manually downloaded and placed for the eBPF agent to use.
   # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
   # The absolute path in case of K8s should also be prepended with /host when necessary.
@@ -190,30 +198,3 @@ podSecurityContext: {}
 containerSecurityContext: {}
 # --  Kubernetes cluster domain.
 kubernetesClusterDomain: cluster.local
-# tls makes sure only requests with correctly formatted rules will get into the operator.
-tls:
-  # -- Enable TLS communication between the eBPF client and agent.
-  enabled: true
-  # TLS Certificate Option 1: Use Helm to automatically generate a self-signed certificate.
-  # autoGenerateCert must be enabled.
-  autoGenerateCert:
-    # -- If true, Helm will automatically create a self-signed cert and secret for you.
-    enabled: true
-    # -- If set to true, a new key/certificate is generated on helm upgrade.
-    recreate: true
-    # -- Cert validity period time in days.
-    certPeriodDays: 365
-    # -- Certificates path.
-  certPath: "/etc/newrelic-ebpf-agent/certs/"
-
-  # TLS Certificate Option 2: Use your own self-signed certificate.
-  # autoGenerateCert must be disabled, and certFile, keyFile, and caFile must be set.
-  # The chart reads the contents of the file paths with the helm. Files.Get function.
-  # Refer to this doc https://helm.sh/docs/chart_template_guide/accessing_files/ to understand
-  # limitations of file paths accessible to the chart.
-  # -- Path to your own PEM-encoded certificate.
-  certFile: ""
-  # -- Path to your own PEM-encoded private key.
-  keyFile: ""
-  # -- Path to the CA cert.
-  caFile: ""
