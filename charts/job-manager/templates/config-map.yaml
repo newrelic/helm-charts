@@ -1,0 +1,14 @@
+{{- if (.Values.jobManager.userDefinedVariables).userDefinedFile -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "job-manager.configMapName" . | quote }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+    {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+    {{- end }}
+data:
+  user_defined_variables.json: {{ .Values.jobManager.userDefinedVariables.userDefinedFile | quote }}
+{{- end -}}
