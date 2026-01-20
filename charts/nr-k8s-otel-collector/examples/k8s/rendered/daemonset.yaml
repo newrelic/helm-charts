@@ -88,7 +88,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "docker.io/newrelic/nrdot-collector-k8s:1.5.0"
+          image: "docker.io/gmanandhar321/nrdot-collector-host:2.11"
           imagePullPolicy: IfNotPresent
           args:
             - --config
@@ -131,6 +131,8 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
       volumes:
         - name: host-fs
           hostPath:
@@ -143,3 +145,7 @@ spec:
         - name: daemonset-config
           configMap:
             name: nr-k8s-otel-collector-daemonset-config
+        - name: nrdot-data-storage
+          hostPath:
+            path: /var/lib/nrdot-collector
+            type: DirectoryOrCreate
