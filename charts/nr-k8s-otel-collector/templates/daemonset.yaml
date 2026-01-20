@@ -155,6 +155,8 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
             {{- with .Values.daemonset.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -172,6 +174,10 @@ spec:
         - name: daemonset-config
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+        - name: nrdot-data-storage
+          hostPath:
+            path: /var/lib/nrdot-collector
+            type: DirectoryOrCreate
         {{- with .Values.daemonset.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

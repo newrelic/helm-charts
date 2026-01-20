@@ -55,17 +55,39 @@ data:
               system.network.connections:
                 enabled: false
           # Uncomment to enable process metrics, which can be noisy but valuable.
-          # processes:
-          # process:
-          #   metrics:
-          #     process.cpu.utilization:
-          #       enabled: true
-          #     process.cpu.time:
-          #       enabled: false
-          #   mute_process_name_error: true
-          #   mute_process_exe_error: true
-          #   mute_process_io_error: true
-          #   mute_process_user_error: true
+          processes:
+          process:
+            metrics:
+              process.cpu.time:
+                enabled: true
+              process.cpu.utilization:
+                enabled: true
+              process.memory.usage:
+                enabled: true
+              process.memory.virtual:
+                enabled: true
+              process.disk.io:
+                enabled: true
+              process.disk.operations:
+                enabled: true
+              process.threads:
+                enabled: true
+              process.open_file_descriptors:
+                enabled: true
+              process.paging.faults:
+                enabled: true
+              process.context_switches:
+                enabled: true
+              process.uptime:
+                enabled: true
+              process.handles:
+                enabled: false
+              process.signals_pending:
+                enabled: true
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
@@ -206,6 +228,42 @@ data:
           - resourcequota
           - node
           - namespace
+
+      attributes/atp_identifier:
+        include:
+          match_type: regexp
+          metric_names:
+            - ".*"
+        actions:
+          - key: telemetry.atp.env
+            value: "atp-customer-zero"
+            action: insert
+
+      adaptivetelemetryprocessor:
+        storage_path: "/var/lib/nrdot-collector/adaptivetelemetry.db"
+        retention_minutes: 30
+        include_process_list:
+          - "stress-ng"
+        metric_thresholds:
+          process.cpu.utilization: 0.0005
+          process.memory.utilization: 0.0005
+        enable_dynamic_thresholds: true
+        dynamic_smoothing_factor: 0.1
+        min_thresholds:
+          process.cpu.utilization: 0.0005
+          process.memory.utilization: 0.0005
+        max_thresholds:
+          process.cpu.utilization: 0.30
+          process.memory.utilization: 0.30
+        enable_multi_metric: true
+        composite_threshold: 0.8
+        weights:
+          process.cpu.utilization: 0.5
+          process.memory.utilization: 0.5
+        enable_anomaly_detection: true
+        anomaly_history_size: 15
+        anomaly_change_threshold: 50.0
+        anomaly_min_data_points: 3
 
       transform/ksm:
         metric_statements:
@@ -417,7 +475,16 @@ data:
 
       metricstransform/hostmetrics:
         transforms:
-          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+          - include: process\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: processes\..*
             action: update
             match_type: regexp
             operations:
@@ -737,25 +804,31 @@ data:
         table:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/loadscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
-            pipelines: [metrics/nr]
+            pipelines: [metrics/nr_hostmetrics]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
+            pipelines: [metrics/nr_hostmetrics]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
+            pipelines: [metrics/nr_hostmetrics]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]
@@ -839,6 +912,44 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - k8sattributes/ksm
+            - cumulativetodelta
+          exporters:
+            - routing/metrics_egress
+        metrics/nr_hostmetrics:
+          receivers:
+            - routing/nr_metrics_pipelines
+          processors:
+            - memory_limiter
+            - attributes/atp_identifier
+            - adaptivetelemetryprocessor
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
+            - metricstransform/ldm
+            - metricstransform/hostmetrics
+            - filter/exclude_metrics_low_data_mode
+            {{- end }}
+            - metricstransform/hostmetrics_cpu
+            - transform/truncate
+            - filter/exclude_cpu_utilization
+            - filter/exclude_memory_utilization
+            - filter/exclude_memory_usage
+            - filter/exclude_filesystem_utilization
+            - filter/exclude_filesystem_usage
+            - filter/exclude_filesystem_inodes_usage
+            - filter/exclude_system_disk
+            - filter/exclude_system_paging
+            - filter/exclude_network
+            - attributes/exclude_system_paging
+            - resourcedetection/env
+            {{- if include "newrelic.common.openShift" . }}
+            - resourcedetection/openshift
+            {{- else  }}
+            - resourcedetection/cloudproviders
+            {{- end }}
+            - resource/newrelic
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            {{- end }}
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
