@@ -4,6 +4,7 @@ apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: nr-ebpf-agent
+  namespace: {{ .Release.Namespace }}
   labels:
     app: nr-ebpf-agent
     component: agent
@@ -61,13 +62,10 @@ spec:
         imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
-          - name: VIZIER_PORT
-            value: "{{ .Values.ebpfAgent.vizierPort | default "12345" }}"
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES
             value: "{{ .Values.stirlingSources | default "socket_tracer,tcp_stats" }}"
-          {{- include "generateTracingEnvVars" . | indent 10 }}
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
@@ -86,18 +84,6 @@ spec:
                 {{- end }}
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
-          - name: TLS_ENABLED
-          {{- if (hasKey .Values "tls") }}
-          {{- if eq .Values.tls.enabled true }}
-            value: "true"
-          {{- else }}
-            value: "false"
-          {{- end }}
-          {{- if eq .Values.tls.enabled true }}
-          - name: TLS_CERT_PATH
-            value: "{{ .Values.tls.certPath }}/"
-          {{- end }}
-          {{- end }}
 
           {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
           - name: DOWNLOADED_PACKAGED_HEADERS_PATH
@@ -123,6 +109,12 @@ spec:
             value: "otlp.nr-data.net:443"
         {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
+          {{- if .Values.protocols.global }}
+          {{- if (hasKey .Values.protocols.global "max_unlinked_spans") }}
+          - name: PROTOCOLS_SPANS_UNLINKED_MAX
+            value: "{{ .Values.protocols.global.max_unlinked_spans }}"
+          {{- end }}
+          {{- end }}
           {{- if (hasKey .Values.protocols.http "spans") }}
           {{- if .Values.protocols.http.spans.samplingErrorRate}}
           {{- include "validate.samplingErrorRate" (dict "protocol" "http" "errorRate" .Values.protocols.http.spans.samplingErrorRate) }}
@@ -155,7 +147,7 @@ spec:
           # APM data filtering configuration
           {{- if .Values.apmDataFilters }}
           - name: DROP_APM_DATA_FOR_APM_AGENT_ENABLED_ENTITY
-            value: "{{ if hasKey .Values.apmDataFilters "apmAgentEnabledEntity" }}{{ .Values.apmDataFilters.apmAgentEnabledEntity }}{{ else }}true{{ end }}"
+            value: "{{ if hasKey .Values.apmDataFilters "dropEapmForApmEnabledEntity" }}{{ .Values.apmDataFilters.dropEapmForApmEnabledEntity }}{{ else if hasKey .Values.apmDataFilters "apmAgentEnabledEntity" }}{{ .Values.apmDataFilters.apmAgentEnabledEntity }}{{ else }}true{{ end }}"
           {{- if .Values.apmDataFilters.dropPodLabels }}
           - name: DROP_APM_DATA_FOR_POD_LABELS
             value: "{{ range $key, $value := .Values.apmDataFilters.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"
@@ -206,13 +198,6 @@ spec:
           - name: kernel-headers-volume
             mountPath: /kernel-headers
             readOnly: true
-          {{- if (hasKey .Values "tls") }}
-          {{- if eq .Values.tls.enabled true }}
-          - name: cert
-            mountPath: "{{ .Values.tls.certPath }}/"
-            readOnly: true
-          {{- end }}
-          {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -233,14 +218,6 @@ spec:
           type: Directory
       - name: kernel-headers-volume
         emptyDir: {}
-      {{- if (hasKey .Values "tls") }}
-      {{- if eq .Values.tls.enabled true }}
-      - name: cert
-        secret:
-          defaultMode: 420
-          secretName: {{ include "nr-ebpf-agent-certificates.certificateSecret.name" . }}
-      {{- end }}
-      {{- end }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 -}}
