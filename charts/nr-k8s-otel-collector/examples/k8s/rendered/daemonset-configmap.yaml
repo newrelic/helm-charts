@@ -56,17 +56,39 @@ data:
               system.network.connections:
                 enabled: false
           # Uncomment to enable process metrics, which can be noisy but valuable.
-          # processes:
-          # process:
-          #   metrics:
-          #     process.cpu.utilization:
-          #       enabled: true
-          #     process.cpu.time:
-          #       enabled: false
-          #   mute_process_name_error: true
-          #   mute_process_exe_error: true
-          #   mute_process_io_error: true
-          #   mute_process_user_error: true
+          processes:
+          process:
+            metrics:
+              process.cpu.time:
+                enabled: true
+              process.cpu.utilization:
+                enabled: true
+              process.memory.usage:
+                enabled: true
+              process.memory.virtual:
+                enabled: true
+              process.disk.io:
+                enabled: true
+              process.disk.operations:
+                enabled: true
+              process.threads:
+                enabled: true
+              process.open_file_descriptors:
+                enabled: true
+              process.paging.faults:
+                enabled: true
+              process.context_switches:
+                enabled: true
+              process.uptime:
+                enabled: true
+              process.handles:
+                enabled: false
+              process.signals_pending:
+                enabled: true
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
 
       kubeletstats:
         collection_interval: 1m
@@ -400,7 +422,16 @@ data:
 
       metricstransform/hostmetrics:
         transforms:
-          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+          - include: process\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: processes\..*
             action: update
             match_type: regexp
             operations:
@@ -732,6 +763,12 @@ data:
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"

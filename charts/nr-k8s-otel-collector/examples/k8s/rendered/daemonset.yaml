@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: e5ed2a50cca2ea8d60809343fedea4aa56b79d590445edf7bbf5227dfa6d436c
+        checksum/config: b6143109537f5330e68ed65d73c5552d792fce18687bc8aab1edbd8a14ed0f58
     spec:
       serviceAccountName: nr-k8s-otel-collector
       initContainers:
@@ -131,6 +131,8 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
       volumes:
         - name: host-fs
           hostPath:
@@ -143,3 +145,7 @@ spec:
         - name: daemonset-config
           configMap:
             name: nr-k8s-otel-collector-daemonset-config
+        - name: nrdot-data-storage
+          hostPath:
+            path: /var/lib/nrdot-collector
+            type: DirectoryOrCreate

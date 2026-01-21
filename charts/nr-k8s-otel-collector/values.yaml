@@ -2,6 +2,20 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- NRDOT Plus configuration
+nrdot_plus:
+  # -- Enable NRDOT Plus features. When false (default), uses standard k8s collector.
+  # When true, enables NRDOT Plus collector with advanced features.
+  enabled: false
+  # -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering
+  atp: true
+  # -- Image for NRDOT Plus collector (only used when nrdot_plus.enabled is true)
+  image:
+    registry: "docker.io"
+    repository: gmanandhar321/nrdot-collector-host
+    tag: "2.11"
+    pullPolicy: IfNotPresent
+
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
 # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -51,7 +65,8 @@ images:
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
   # - name: regsecret
-  # -- Image for the OpenTelemetry Collector.
+  # -- Image for the OpenTelemetry Collector (standard New Relic k8s collector).
+  # This is used when nrdot_plus.enabled is false (default).
   collector:
     registry: ""
     repository: newrelic/nrdot-collector-k8s
