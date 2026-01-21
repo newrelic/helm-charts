@@ -51,6 +51,8 @@ spec:
             {{- . | toYaml | nindent 12 }}
           {{- end }}
           env:
+            - name: NEW_RELIC_HOST
+              value: {{ include "nrKubernetesOtel.NrHost.endpoint" . }}
             - name: KUBE_NODE_NAME
               valueFrom:
                 fieldRef:
