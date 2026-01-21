@@ -804,31 +804,31 @@ data:
         table:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/loadscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr_process]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr_process]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]
@@ -915,7 +915,7 @@ data:
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
-        metrics/nr_hostmetrics:
+        metrics/nr_process:
           receivers:
             - routing/nr_metrics_pipelines
           processors:
