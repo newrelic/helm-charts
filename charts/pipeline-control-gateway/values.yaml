@@ -152,7 +152,7 @@ generated:
       enable_default_host: false
       client:
         compression: "gzip"
-    otlp:
+    otlp/receiver:
       protocols:
         http:
           endpoint: "${env:MY_POD_IP}:4318"
@@ -177,16 +177,11 @@ generated:
                 regex: 'godebug_.*'
                 action: drop
   processors:
-    memory_limiter:
-      check_interval: 1s
-      limit_mib: 100
-    nrprocessor:
-      queue:
-        enabled: true
-        queue_size: 100
-      queries: []
+    filter/Logs:
+    filter/Metrics:
+    filter/Traces:
   exporters:
-    otlp:
+    otlp/exporter:
       endpoint: https://otlp.nr-data.net:443
       headers:
         api-key: "${env:NEW_RELIC_LICENSE_KEY}"
@@ -212,27 +207,27 @@ generated:
     pipelines:
       "logs/nr":
         receivers: [nrproprietaryreceiver]
-        processors: [nrprocessor]
+        processors: [filter/Logs]
         exporters: [nrcollectorexporter]
       "logs/otlp":
-        receivers: [ otlp ]
-        processors: [ nrprocessor ]
-        exporters: [ otlp ]
+        receivers: [ otlp/receiver ]
+        processors: [filter/Logs]
+        exporters: [ otlp/exporter ]
       "metrics/nr":
         receivers: [nrproprietaryreceiver]
-        processors: [nrprocessor]
+        processors: [filter/Metrics]
         exporters: [nrcollectorexporter]
       "metrics/otlp":
-        receivers: [otlp]
-        processors: [ nrprocessor]
-        exporters: [otlp]
+        receivers: [otlp/receiver]
+        processors: [filter/Metrics]
+        exporters: [otlp/exporter]
       "traces/otlp":
-        receivers: [otlp]
-        processors: [nrprocessor]
-        exporters: [ otlp ]
+        receivers: [otlp/receiver]
+        processors: [filter/Traces]
+        exporters: [ otlp/exporter ]
       "traces/nr":
         receivers: [ nrproprietaryreceiver ]
-        processors: [ nrprocessor ]
+        processors: [filter/Traces]
         exporters: [ nrcollectorexporter ]
       "metrics/monitoring":
         receivers: ["prometheus/monitoring"]
