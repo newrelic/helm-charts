@@ -229,6 +229,7 @@ data:
           - node
           - namespace
 
+      {{- if and .Values.nrdot_plus.enabled .Values.nrdot_plus.atp }}
       attributes/atp_identifier:
         include:
           match_type: regexp
@@ -247,6 +248,7 @@ data:
         metric_thresholds:
           process.cpu.utilization: 0.0005
           process.memory.utilization: 0.0005
+          system.cpu.utilization: 0.0001
         enable_dynamic_thresholds: true
         dynamic_smoothing_factor: 0.1
         min_thresholds:
@@ -264,6 +266,7 @@ data:
         anomaly_history_size: 15
         anomaly_change_threshold: 50.0
         anomaly_min_data_points: 3
+      {{- end }}
 
       transform/ksm:
         metric_statements:
@@ -825,10 +828,10 @@ data:
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
-            pipelines: [metrics/nr_process]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
-            pipelines: [metrics/nr_process]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]
@@ -878,6 +881,10 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            {{- if and .Values.nrdot_plus.enabled .Values.nrdot_plus.atp }}
+            - attributes/atp_identifier
+            - adaptivetelemetryprocessor
+            {{- end }}
             - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
@@ -912,44 +919,6 @@ data:
             - resource/low_data_mode_inator
             {{- end }}
             - k8sattributes/ksm
-            - cumulativetodelta
-          exporters:
-            - routing/metrics_egress
-        metrics/nr_process:
-          receivers:
-            - routing/nr_metrics_pipelines
-          processors:
-            - memory_limiter
-            - attributes/atp_identifier
-            - adaptivetelemetryprocessor
-            {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - metricstransform/ldm
-            - metricstransform/hostmetrics
-            - filter/exclude_metrics_low_data_mode
-            {{- end }}
-            - metricstransform/hostmetrics_cpu
-            - transform/truncate
-            - filter/exclude_cpu_utilization
-            - filter/exclude_memory_utilization
-            - filter/exclude_memory_usage
-            - filter/exclude_filesystem_utilization
-            - filter/exclude_filesystem_usage
-            - filter/exclude_filesystem_inodes_usage
-            - filter/exclude_system_disk
-            - filter/exclude_system_paging
-            - filter/exclude_network
-            - attributes/exclude_system_paging
-            - resourcedetection/env
-            {{- if include "newrelic.common.openShift" . }}
-            - resourcedetection/openshift
-            {{- else  }}
-            - resourcedetection/cloudproviders
-            {{- end }}
-            - resource/newrelic
-            {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - transform/low_data_mode_inator
-            - resource/low_data_mode_inator
-            {{- end }}
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
