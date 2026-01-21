@@ -63,17 +63,17 @@ data:
                 enabled: true
               process.cpu.utilization:
                 enabled: true
-              process.memory.usage: # Physical memory
+              process.memory.usage:
                 enabled: true
-              process.memory.virtual: # Virtual memory
+              process.memory.virtual:
                 enabled: true
-              process.disk.io: # Bytes read/written
+              process.disk.io:
                 enabled: true
-              process.disk.operations: # Number of read/write operations
+              process.disk.operations:
                 enabled: true
-              process.threads: # Number of threads (replaces process.thread.count)
+              process.threads:
                 enabled: true
-              process.open_file_descriptors: # Number of open file descriptors (replaces process.open_file_descriptor.count)
+              process.open_file_descriptors:
                 enabled: true
               process.paging.faults:
                 enabled: true
@@ -81,10 +81,9 @@ data:
                 enabled: true
               process.uptime:
                 enabled: true
-              # Platform-specific metrics (enable if on the respective OS, might be ignored or cause errors on others)
-              process.handles: # Windows-specific: Number of open handles
+              process.handles:
                 enabled: false
-              process.signals_pending: # Linux-specific: Number of pending signals for the process
+              process.signals_pending:
                 enabled: true
             mute_process_name_error: true
             mute_process_exe_error: true
@@ -212,53 +211,6 @@ data:
           - resourcequota
           - node
           - namespace
-
-      attributes/atp_identifier:
-        include:
-          match_type: regexp
-          metric_names:
-            - ".*"  # Apply to all metrics
-        actions:
-          - key: telemetry.atp.env
-            value: "atp-customer-zero"
-            action: insert
-
-      adaptivetelemetryprocessor:
-        # Storage configuration for persistence
-        storage_path: "/var/lib/nrdot-collector/adaptivetelemetry.db"
-        retention_minutes: 30
-        include_process_list:
-          - "stress-ng"
-
-        # Metric thresholds for actual hostmetrics receiver metrics
-        metric_thresholds:
-          # CPU metrics from hostmetrics receiver
-          # Process metrics from hostmetrics receiver
-          process.cpu.utilization: 0.0005          # This means 0.05%
-          process.memory.utilization: 0.0005       # This means 0.05%
-
-        # Dynamic threshold configuration
-        enable_dynamic_thresholds: true
-        dynamic_smoothing_factor: 0.1
-        min_thresholds:
-          process.cpu.utilization: 0.0005           # Minimum 0.05% CPU
-          process.memory.utilization: 0.0005          # Minimum 0.05% CPU
-        max_thresholds:
-          process.cpu.utilization: 0.30           # Minimum 4% CPU
-          process.memory.utilization: 0.30          # Minimum 4% process CPU
-
-        # Multi-metric composite scoring
-        enable_multi_metric: true
-        composite_threshold: 0.8                 # Lower threshold for testing
-        weights:
-          process.cpu.utilization: 0.5
-          process.memory.utilization: 0.5
-
-        # Anomaly detection configuration
-        enable_anomaly_detection: true
-        anomaly_history_size: 15
-        anomaly_change_threshold: 50.0
-        anomaly_min_data_points: 3
 
       transform/ksm:
         metric_statements:
@@ -681,7 +633,7 @@ data:
           # We set the cluster name to what the customer specified in the helm chart
           - key: k8s.cluster.name
             action: upsert
-            value: gaurab-nrdot-plus-manifest
+            value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
             value: 0.9.9
@@ -793,31 +745,31 @@ data:
         table:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/loadscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
-            pipelines: [metrics/nr_hostmetrics]
+            pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]
@@ -871,36 +823,6 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             - k8sattributes/ksm
-            - cumulativetodelta
-          exporters:
-            - routing/metrics_egress
-        metrics/nr_hostmetrics:
-          receivers:
-            - routing/nr_metrics_pipelines
-          processors:
-            - memory_limiter
-            - attributes/atp_identifier
-            - adaptivetelemetryprocessor
-            - metricstransform/ldm
-            - metricstransform/hostmetrics
-            - filter/exclude_metrics_low_data_mode
-            - metricstransform/hostmetrics_cpu
-            - transform/truncate
-            - filter/exclude_cpu_utilization
-            - filter/exclude_memory_utilization
-            - filter/exclude_memory_usage
-            - filter/exclude_filesystem_utilization
-            - filter/exclude_filesystem_usage
-            - filter/exclude_filesystem_inodes_usage
-            - filter/exclude_system_disk
-            - filter/exclude_system_paging
-            - filter/exclude_network
-            - attributes/exclude_system_paging
-            - resourcedetection/env
-            - resourcedetection/cloudproviders
-            - resource/newrelic
-            - transform/low_data_mode_inator
-            - resource/low_data_mode_inator
             - cumulativetodelta
           exporters:
             - routing/metrics_egress

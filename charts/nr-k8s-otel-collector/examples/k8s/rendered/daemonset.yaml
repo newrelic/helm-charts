@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: e5ed2a50cca2ea8d60809343fedea4aa56b79d590445edf7bbf5227dfa6d436c
+        checksum/config: b6143109537f5330e68ed65d73c5552d792fce18687bc8aab1edbd8a14ed0f58
     spec:
       serviceAccountName: nr-k8s-otel-collector
       initContainers:
@@ -88,7 +88,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "docker.io/gmanandhar321/nrdot-collector-host:2.11"
+          image: "docker.io/newrelic/nrdot-collector-k8s:1.5.0"
           imagePullPolicy: IfNotPresent
           args:
             - --config
