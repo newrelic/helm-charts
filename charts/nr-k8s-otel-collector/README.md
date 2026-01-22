@@ -125,7 +125,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
 | collectorObservability.enabled | bool | `false` | Specifies whether the collector reports its own metrics |
-| collectorObservability.scrapeInterval | string | `1m` | Specifies the interval at which to report metrics for the deployment collector |
+| collectorObservability.scrapeIntervalSeconds | int | `60` | Specifies the interval at which to report metrics for the deployment collector |
 | containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
