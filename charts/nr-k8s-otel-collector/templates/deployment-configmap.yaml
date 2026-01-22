@@ -804,6 +804,7 @@ data:
             {{- end }}
             {{- if .Values.collectorObservability.enabled }}
             - periodic:
+                interval: {{ .Values.collectorObservability.scrapeInterval }}
                 exporter:
                   otlp:
                     protocol: http/protobuf
