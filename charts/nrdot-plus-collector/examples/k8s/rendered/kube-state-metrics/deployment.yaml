@@ -1,9 +1,9 @@
 ---
-# Source: nr-k8s-otel-collector/charts/kube-state-metrics/templates/deployment.yaml
+# Source: nrdot-plus-collector/charts/kube-state-metrics/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nr-k8s-otel-collector-kube-state-metrics
+  name: nrdot-plus-collector-kube-state-metrics
   namespace: newrelic
   labels:    
     helm.sh/chart: kube-state-metrics-6.1.5
@@ -11,13 +11,13 @@ metadata:
     app.kubernetes.io/component: metrics
     app.kubernetes.io/part-of: kube-state-metrics
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/instance: nrdot-plus-collector
     app.kubernetes.io/version: "2.16.0"
 spec:
   selector:
     matchLabels:      
       app.kubernetes.io/name: kube-state-metrics
-      app.kubernetes.io/instance: nr-k8s-otel-collector
+      app.kubernetes.io/instance: nrdot-plus-collector
   replicas: 1
   strategy:
     type: RollingUpdate
@@ -30,12 +30,12 @@ spec:
         app.kubernetes.io/component: metrics
         app.kubernetes.io/part-of: kube-state-metrics
         app.kubernetes.io/name: kube-state-metrics
-        app.kubernetes.io/instance: nr-k8s-otel-collector
+        app.kubernetes.io/instance: nrdot-plus-collector
         app.kubernetes.io/version: "2.16.0"
     spec:
       automountServiceAccountToken: true
       hostNetwork: false
-      serviceAccountName: nr-k8s-otel-collector-kube-state-metrics
+      serviceAccountName: nrdot-plus-collector-kube-state-metrics
       securityContext:
         fsGroup: 65534
         runAsGroup: 65534

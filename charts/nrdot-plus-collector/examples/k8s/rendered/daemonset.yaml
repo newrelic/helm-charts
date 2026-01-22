@@ -1,32 +1,32 @@
 ---
-# Source: nr-k8s-otel-collector/templates/daemonset.yaml
+# Source: nrdot-plus-collector/templates/daemonset.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: nr-k8s-otel-collector-daemonset
+  name: nrdot-plus-collector-daemonset
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/instance: nrdot-plus-collector
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: nr-k8s-otel-collector
+    app.kubernetes.io/name: nrdot-plus-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.9
+    helm.sh/chart: nrdot-plus-collector-0.9.9
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/instance: nr-k8s-otel-collector
-      app.kubernetes.io/name: nr-k8s-otel-collector
+      app.kubernetes.io/instance: nrdot-plus-collector
+      app.kubernetes.io/name: nrdot-plus-collector
       component: daemonset
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: nr-k8s-otel-collector
-        app.kubernetes.io/name: nr-k8s-otel-collector
+        app.kubernetes.io/instance: nrdot-plus-collector
+        app.kubernetes.io/name: nrdot-plus-collector
         component: daemonset
       annotations:
-        checksum/config: e5ed2a50cca2ea8d60809343fedea4aa56b79d590445edf7bbf5227dfa6d436c
+        checksum/config: c12efdba15af9902d0dfc0bd709f6c9efba74886200c9d0adec4905b2a96575a
     spec:
-      serviceAccountName: nr-k8s-otel-collector
+      serviceAccountName: nrdot-plus-collector
       initContainers:
         - name: get-cpu-allocatable
           image: "docker.io/bitnami/kubectl:latest"
@@ -88,7 +88,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "docker.io/newrelic/nrdot-collector-k8s:1.5.0"
+          image: "docker.io/gmanandhar321/nrdot-collector-host:2.13"
           imagePullPolicy: IfNotPresent
           args:
             - --config
@@ -120,7 +120,7 @@ spec:
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: nr-k8s-otel-collector-license
+                  name: nrdot-plus-collector-license
                   key: licenseKey
           volumeMounts:
             - name: host-fs
@@ -131,6 +131,8 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
       volumes:
         - name: host-fs
           hostPath:
@@ -142,4 +144,8 @@ spec:
           emptyDir: {}
         - name: daemonset-config
           configMap:
-            name: nr-k8s-otel-collector-daemonset-config
+            name: nrdot-plus-collector-daemonset-config
+        - name: nrdot-data-storage
+          hostPath:
+            path: /var/lib/nrdot-collector
+            type: DirectoryOrCreate

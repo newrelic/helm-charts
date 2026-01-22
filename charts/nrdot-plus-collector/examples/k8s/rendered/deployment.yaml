@@ -1,34 +1,34 @@
 ---
-# Source: nr-k8s-otel-collector/templates/deployment.yaml
+# Source: nrdot-plus-collector/templates/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nr-k8s-otel-collector-deployment
+  name: nrdot-plus-collector-deployment
   namespace: newrelic
   labels:
-    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/instance: nrdot-plus-collector
     app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: nr-k8s-otel-collector
+    app.kubernetes.io/name: nrdot-plus-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.9.9
+    helm.sh/chart: nrdot-plus-collector-0.9.9
 spec:
   replicas: 1
   minReadySeconds: 5
   selector:
     matchLabels:
-      app.kubernetes.io/instance: nr-k8s-otel-collector
-      app.kubernetes.io/name: nr-k8s-otel-collector
+      app.kubernetes.io/instance: nrdot-plus-collector
+      app.kubernetes.io/name: nrdot-plus-collector
       component: deployment
   template:
     metadata:
       labels:
-        app.kubernetes.io/instance: nr-k8s-otel-collector
-        app.kubernetes.io/name: nr-k8s-otel-collector
+        app.kubernetes.io/instance: nrdot-plus-collector
+        app.kubernetes.io/name: nrdot-plus-collector
         component: deployment
       annotations:
-        checksum/config: 2f01dd6845efb74a26a98c5273e8c4f5ec9e35d88ac9eee5af25be780ac98f8e
+        checksum/config: 64730e00dcadce598694a7bba3e159eab308757b5aad69edad7fb847f745551b
     spec:
-      serviceAccountName: nr-k8s-otel-collector
+      serviceAccountName: nrdot-plus-collector
       containers:
         - name: otel-collector-deployment
           securityContext:
@@ -40,7 +40,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "docker.io/newrelic/nrdot-collector-k8s:1.5.0"
+          image: "docker.io/gmanandhar321/nrdot-collector-host:2.13"
           imagePullPolicy: IfNotPresent
           args:
             - --config
@@ -61,7 +61,7 @@ spec:
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: nr-k8s-otel-collector-license
+                  name: nrdot-plus-collector-license
                   key: licenseKey
           ports:
             - name: http
@@ -76,4 +76,4 @@ spec:
       volumes:
         - name: deployment-config
           configMap:
-            name: nr-k8s-otel-collector-deployment-config
+            name: nrdot-plus-collector-deployment-config
