@@ -809,7 +809,7 @@ data:
                 exporter:
                   otlp:
                     protocol: http/protobuf
-                    endpoint: {{ .Values.collectorObservability.endpoint }}
+                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
                     headers:
                       api-key: ${env:NR_LICENSE_KEY}
         {{- end }}
