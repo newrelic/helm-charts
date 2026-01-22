@@ -7,7 +7,7 @@
 
 # Helm installation
 
-Download and Update config [here](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/values.yaml#L20-L24) to add a cluster name, and New Relic Ingest - License key
+Download and Update config [here](https://github.com/newrelic/helm-charts/tree/master/charts/nrdot-plus-collector/values.yaml#L20-L24) to add a cluster name, and New Relic Ingest - License key
 
 Example:
 ```
@@ -19,7 +19,7 @@ You can install this chart using directly this Helm repository:
 
 ```shell
 helm repo add newrelic https://helm-charts.newrelic.com
-helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
+helm upgrade nrdot-plus-collector newrelic/nrdot-plus-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
 {{ template "chart.sourcesSection" . }}
@@ -52,7 +52,7 @@ FROM Log SELECT * WHERE k8s.cluster.name='<CLUSTER_NAME>'
 Run the following command.
 
 ```
-helm uninstall nr-k8s-otel-collector -n newrelic
+helm uninstall nrdot-plus-collector -n newrelic
 ```
 
 ## Values managed globally
@@ -127,8 +127,8 @@ to export data to this connector which can then be connected to the New Relic ma
 
 ## Metrics
 
-* [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
-* [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
+* [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nrdot-plus-collector/docs/metrics-full.md)
+* [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nrdot-plus-collector/docs/metrics-lowDataMode.md)
 
 ## Common Errors
 

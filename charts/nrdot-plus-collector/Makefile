@@ -1,6 +1,6 @@
 .PHONY: generate-examples
 install-helm-dependencies:
-	echo 'Installing Helm Dependencies nr-k8s-otel-collector-> prometheus-community...'; \
+	echo 'Installing Helm Dependencies nrdot-plus-collector-> prometheus-community...'; \
 	helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 
 NEWRELIC_E2E ?= go run github.com/newrelic/newrelic-integration-e2e-action@latest

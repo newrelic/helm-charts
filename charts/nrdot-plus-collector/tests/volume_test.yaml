@@ -18,7 +18,7 @@ tests:
           value:
             - name: deployment-config
               configMap:
-                name: my-release-nr-k8s-otel-collector-deployment-config
+                name: my-release-nrdot-plus-collector-deployment-config
         template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].volumeMounts
@@ -38,7 +38,7 @@ tests:
             - emptyDir: {}
               name: final-daemonset-config
             - configMap:
-                name: my-release-nr-k8s-otel-collector-daemonset-config
+                name: my-release-nrdot-plus-collector-daemonset-config
               name: daemonset-config
         template: templates/daemonset.yaml
       - equal:
@@ -71,7 +71,7 @@ tests:
           value:
             - name: deployment-config
               configMap:
-                name: my-release-nr-k8s-otel-collector-deployment-config
+                name: my-release-nrdot-plus-collector-deployment-config
             - name: extra-deployment-volume
               emptyDir: { }
         template: templates/deployment.yaml
@@ -108,7 +108,7 @@ tests:
             - emptyDir: {}
               name: final-daemonset-config
             - configMap:
-                name: my-release-nr-k8s-otel-collector-daemonset-config
+                name: my-release-nrdot-plus-collector-daemonset-config
               name: daemonset-config
             - emptyDir: { }
               name: extra-daemonset-volume
