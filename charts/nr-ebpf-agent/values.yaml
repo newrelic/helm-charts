@@ -136,6 +136,14 @@ protocols:
       enabled: true
       samplingLatency: "p50"
 
+# Configuration to apply on the eBPF agent init container
+init:
+  image:
+    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+    # -- The tag for eBPF agent init container image.
+    tag: ""
+
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
   image:

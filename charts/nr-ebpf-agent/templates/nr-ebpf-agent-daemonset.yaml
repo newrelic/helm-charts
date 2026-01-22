@@ -42,8 +42,8 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: {{ .Values.ebpfAgent.image.repository }}:agent-base-image-latest
-        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.init.image.tag | default "agent-base-image-latest" }}
+        imagePullPolicy: {{ .Values.init.image.pullPolicy }}
         command: ["/scripts/install-headers.sh"]
         securityContext:
           privileged: true
