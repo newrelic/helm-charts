@@ -1,0 +1,87 @@
+suite: lowdatamode
+templates:
+  - templates/deployment-configmap.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: lowDataMode is set by default
+    set:
+      cluster: test
+      global:
+        lowDataMode: ~
+      lowDataMode: ~
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/daemonset-configmap.yaml
+
+  - it: lowDataMode set to true at global level is honored
+    set:
+      cluster: test
+      global:
+        lowDataMode: true
+      lowDataMode: ~
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/daemonset-configmap.yaml
+
+  - it: lowDataMode set to false at global level is honored
+    set:
+      cluster: test
+      global:
+        lowDataMode: false
+      lowDataMode: ~
+    asserts:
+      - notMatchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/deployment-configmap.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/daemonset-configmap.yaml
+
+  - it: lowDataMode set to true at local level is honored
+    set:
+      cluster: test
+      global:
+        lowDataMode: false
+      lowDataMode: true
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/daemonset-configmap.yaml
+
+  - it: lowDataMode set to false at local level is honored
+    set:
+      cluster: test
+      global:
+        lowDataMode: true
+      lowDataMode: false
+    asserts:
+      - notMatchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/deployment-configmap.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: " +- filter/exclude_metrics_low_data_mode"
+        template: templates/daemonset-configmap.yaml

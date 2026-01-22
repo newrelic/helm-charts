@@ -1,0 +1,190 @@
+{{- if .Values.daemonset.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nrKubernetesOtel.daemonset.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+      component: daemonset
+  template:
+    metadata:
+      labels:
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+        component: daemonset
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
+        {{- with .Values.daemonset.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.images.pullSecrets) "context" .) }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      {{- with include "nrKubernetesOtel.daemonset.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      initContainers:
+        - name: get-cpu-allocatable
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.images.kubectl "context" .) }}
+          imagePullPolicy: {{ .Values.images.kubectl.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              NODE_NAME=$(echo $KUBE_NODE_NAME)
+              echo "Node Name: $KUBE_NODE_NAME"
+
+              export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+              if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              # Convert milliCPU values to plain CPU values
+              if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
+                # Strip the 'm' and convert the milliCPUs to CPUs
+                export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+              fi
+
+              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | numfmt --from=auto)
+
+              if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+              echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
+              cp /temp-config/daemonset-config.yaml /final-config
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              cat /final-config/daemonset-config.yaml
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          resources:
+            {{- toYaml .Values.daemonset.resources | nindent 12 }}
+          volumeMounts:
+            - name: daemonset-config
+              mountPath: /temp-config
+            - name: final-daemonset-config
+              mountPath: /final-config
+      containers:
+        - name: otel-collector-daemonset
+          {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
+          image: {{ include "nrKubernetesOtel.images.collector.image" . }}
+          imagePullPolicy: {{ include "nrKubernetesOtel.images.collector.imagePullPolicy" . }}
+          args:
+            {{- include "nrKubernetesOtel.daemonset.args" . | nindent 12 }}
+          resources:
+            {{- toYaml .Values.daemonset.resources | nindent 12 }}
+          {{- with .Values.daemonset.envsFrom }}
+          envFrom:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: POD_UID
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.uid
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            {{- if include "newrelic.common.openShift" . }}
+            # probably fixed on newer version hostmetrics receiver
+            # Work around for open /mounts error: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/35990
+            - name: HOST_PROC_MOUNTINFO
+              value: ""
+            {{- end }}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
+          {{- if include "newrelic.common.proxy" . }}
+            - name: http_proxy
+              value: "{{- include "newrelic.common.proxy" . }}"
+            - name: https_proxy
+              value: "{{- include "newrelic.common.proxy" . }}"
+          {{- end }}
+            {{- with .Values.daemonset.envs }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+          volumeMounts:
+            {{- if not ( include "newrelic.common.gkeAutopilot" . ) }}
+            - name: host-fs
+              mountPath: /hostfs
+              readOnly: true
+            {{- end }}
+            - name: varlogpods
+              mountPath: /var/log/pods
+              readOnly: true
+            - name: final-daemonset-config
+              mountPath: /config
+            {{- with .Values.daemonset.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        - name: host-fs
+          hostPath:
+            path: /
+        {{- end }}
+        - name: varlogpods
+          hostPath:
+            path: /var/log/pods
+        - name: final-daemonset-config
+          emptyDir: {}
+        - name: daemonset-config
+          configMap:
+            name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+        {{- with .Values.daemonset.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}
