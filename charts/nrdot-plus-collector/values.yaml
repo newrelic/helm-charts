@@ -2,6 +2,10 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering
+atp:
+  enabled: true
+
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
 # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -51,11 +55,11 @@ images:
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
   # - name: regsecret
-  # -- Image for the OpenTelemetry Collector.
+  # -- Image for the OpenTelemetry Collector (New Relic NRDOT Plus collector with ATP).
   collector:
-    registry: ""
-    repository: newrelic/nrdot-collector-k8s
-    tag: "1.5.0"
+    registry: "docker.io"
+    repository: gmanandhar321/nrdot-collector-host
+    tag: "2.13"
     pullPolicy: IfNotPresent
   # -- Image for the initContainer that retrieves node allocatable resources.
   kubectl:
