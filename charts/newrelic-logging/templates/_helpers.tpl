@@ -277,9 +277,9 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- define "newrelic-logging.extraEnv" -}}
 {{- if .Values.fluentBit }}
   {{- if .Values.fluentBit.additionalEnvVariables }}
-    {{- toYaml .Values.fluentBit.additionalEnvVariables -}}
+    {{- tpl (toYaml .Values.fluentBit.additionalEnvVariables) . -}}
   {{- else if .Values.fluentBit.extraEnv }}
-    {{- toYaml .Values.fluentBit.extraEnv  -}}
+    {{- tpl (toYaml .Values.fluentBit.extraEnv) . -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}
