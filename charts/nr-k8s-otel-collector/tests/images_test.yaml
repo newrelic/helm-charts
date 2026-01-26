@@ -140,11 +140,11 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: global.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+          value: global.registry.io/newrelic/nrdot-collector-k8s:1.8.0
         template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: global.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+          value: global.registry.io/newrelic/nrdot-collector-k8s:1.8.0
         template: templates/daemonset.yaml
   - it: local registry overrides global registry
     set:
@@ -159,9 +159,9 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: local.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+          value: local.registry.io/newrelic/nrdot-collector-k8s:1.8.0
         template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: local.registry.io/newrelic/nrdot-collector-k8s:1.5.0
+          value: local.registry.io/newrelic/nrdot-collector-k8s:1.8.0
         template: templates/daemonset.yaml
