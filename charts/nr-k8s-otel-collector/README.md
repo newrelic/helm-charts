@@ -123,6 +123,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
+| atp | object | `{"enabled":false}` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. Note: Requires collector image version with ATP support. |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
 | collectorObservability.enabled | bool | `false` | Specifies whether the collector reports its own metrics |
 | collectorObservability.scrapeIntervalMs | int | `60000` | Specifies the interval at which the collector reports its metrics (in milliseconds) |
