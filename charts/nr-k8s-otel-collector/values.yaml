@@ -2,6 +2,13 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
+# When disabled (default), ATP processors are not included in the pipeline.
+# When enabled, activates ATP with opinionated process metrics collection.
+# Note: Requires collector image version with ATP support.
+atp:
+  enabled: false
+
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
 # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -54,8 +61,8 @@ images:
   # -- Image for the OpenTelemetry Collector.
   collector:
     registry: ""
-    repository: newrelic/nrdot-collector-k8s
-    tag: "1.8.0"
+    repository: gmanandhar321/nrdot-collector-host
+    tag: "2.13"
     pullPolicy: IfNotPresent
   # -- Image for the initContainer that retrieves node allocatable resources.
   kubectl:
