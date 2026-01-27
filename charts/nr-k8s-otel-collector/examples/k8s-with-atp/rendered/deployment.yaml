@@ -1,0 +1,79 @@
+---
+# Source: nr-k8s-otel-collector/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nr-k8s-otel-collector-deployment
+  namespace: newrelic
+  labels:
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nr-k8s-otel-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nr-k8s-otel-collector-0.10.0
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nr-k8s-otel-collector
+      app.kubernetes.io/name: nr-k8s-otel-collector
+      component: deployment
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: nr-k8s-otel-collector
+        app.kubernetes.io/name: nr-k8s-otel-collector
+        component: deployment
+      annotations:
+        checksum/config: a018553d827fbc96e40d0ad04ff2fe370b8dd0258794d4e4c1435ea9d2d814b4
+    spec:
+      serviceAccountName: nr-k8s-otel-collector
+      containers:
+        - name: otel-collector-deployment
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+          image: "docker.io/newrelic/nrdot-collector-k8s:1.8.0"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config
+            - /config/deployment-config.yaml
+          resources:
+            {}
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nr-k8s-otel-collector-license
+                  key: licenseKey
+          ports:
+            - name: http
+              containerPort: 4318
+              protocol: TCP
+            - name: grpc
+              containerPort: 4317
+              protocol: TCP
+          volumeMounts:
+            - name: deployment-config
+              mountPath: /config
+      volumes:
+        - name: deployment-config
+          configMap:
+            name: nr-k8s-otel-collector-deployment-config

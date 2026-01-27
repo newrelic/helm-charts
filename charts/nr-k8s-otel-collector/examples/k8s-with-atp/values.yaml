@@ -1,0 +1,31 @@
+# Example values for deploying nr-k8s-otel-collector with ATP (Adaptive Telemetry Processor) enabled
+#
+# This file contains only ATP-specific overrides.
+# Helm automatically merges these values with the base chart values (../../values.yaml).
+#
+# All base configuration options (346 lines) are automatically included.
+# Only the values specified below override the defaults.
+#
+# For a complete list of all available configuration options, see: ../../values.yaml
+
+# Enable ATP for intelligent process metrics filtering
+# This activates:
+# - Full process metrics collection (cpu, memory, disk, network, threads, etc.)
+# - ATP processors in the metrics pipeline
+# - Persistent storage volume for ATP state
+atp:
+  enabled: true
+
+# Add any other overrides here as needed. Examples:
+#
+# cluster: "my-atp-cluster"
+# licenseKey: "your-license-key"
+#
+# images:
+#   collector:
+#     tag: "latest"
+#
+# receivers:
+#   hostmetrics:
+#     scrapeInterval: 30s
+

@@ -1,0 +1,29 @@
+---
+# Source: nr-k8s-otel-collector/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nr-k8s-otel-collector-gateway
+  namespace: newrelic
+  labels:
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nr-k8s-otel-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nr-k8s-otel-collector-0.10.0
+spec:
+  type: ClusterIP
+  ports:
+    - name: otlp-http # Default endpoint for OpenTelemetry HTTP receiver.
+      port: 4318
+      protocol: TCP
+      targetPort: 4318
+    - name: otlp-grpc
+      port: 4317
+      protocol: TCP
+      targetPort: 4317
+  selector:
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/name: nr-k8s-otel-collector
+    component: deployment
+  internalTrafficPolicy: Cluster
