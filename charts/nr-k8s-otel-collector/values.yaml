@@ -5,9 +5,16 @@
 # -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
 # When disabled (default), ATP processors are not included in the pipeline.
 # When enabled, activates ATP with opinionated process metrics collection.
-# Note: Requires collector image version with ATP support.
+# Note: When enabled, automatically uses ATP-capable collector image.
 atp:
   enabled: false
+  # -- Image configuration for ATP-enabled collector (only used when atp.enabled=true)
+  # TODO: Once a version of nrdot-collector with ATP is published, update the tag
+  image:
+    registry: ""
+    repository: newrelic/nrdot-collector
+    tag: "1.8.0"
+    pullPolicy: IfNotPresent
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
