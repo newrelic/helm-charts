@@ -1,5 +1,5 @@
 TMP_DIRECTORY = ./tmp
-CHARTS ?= nr-k8s-otel-collector
+CHARTS ?= nr-k8s-otel-collector nrdot-plus-collector
 
 .PHONY: generate-examples
 generate-examples:

@@ -1,0 +1,35 @@
+{{- if include "newrelic.common.openShift" . }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-scc
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+rules:
+  - verbs:
+      - use
+    apiGroups:
+      - security.openshift.io
+    resources:
+      - securitycontextconstraints
+    resourceNames:
+      - privileged
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-scc
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "newrelic.common.serviceAccount.name" . }}
+    namespace: {{ .Release.Namespace }}
+  - kind: ServiceAccount
+    name: {{ include "newrelic.common.serviceAccount.name" . }}-kube-state-metrics
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ include "newrelic.common.naming.fullname" . }}-scc
+{{- end }}
