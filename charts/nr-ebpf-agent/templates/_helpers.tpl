@@ -196,3 +196,99 @@ Generate environment variables for protocols configuration including enabled/dis
 {{- end }}
 {{- end }}
 {{- end }}
+
+{{/*
+Return the image reference for kernel header installer with global.images.registry support
+Precedence:
+  1. Chart-level custom repository (if explicitly set to non-default)
+  2. Global images.registry override (applied to default repository only)
+  3. Default repository
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
+{{- $repository := .Values.ebpfAgent.kernelHeaderInstaller.image.repository -}}
+{{- $defaultRepo := "docker.io/newrelic/newrelic-ebpf-agent" -}}
+{{- $imageTag := .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
+{{- if ne $repository $defaultRepo }}
+  {{- printf "%s:%s" $repository $imageTag -}}
+{{- else }}
+  {{- $globalRegistry := "" -}}
+  {{- if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "registry") .Values.global.images.registry }}
+    {{- $globalRegistry = .Values.global.images.registry -}}
+  {{- end }}
+  {{- if $globalRegistry }}
+    {{- printf "%s/%s:%s" $globalRegistry "newrelic/newrelic-ebpf-agent" $imageTag -}}
+  {{- else }}
+    {{- printf "%s:%s" $repository $imageTag -}}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the image reference for eBPF agent with global.images.registry support
+Precedence:
+  1. Chart-level custom repository (if explicitly set to non-default)
+  2. Global images.registry override (applied to default repository only)
+  3. Default repository
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.image" -}}
+{{- $repository := .Values.ebpfAgent.image.repository -}}
+{{- $defaultRepo := "docker.io/newrelic/newrelic-ebpf-agent" -}}
+{{- $imageTag := include "nr-ebpf-agent.imageTag" . -}}
+{{- if ne $repository $defaultRepo }}
+  {{- printf "%s:%s" $repository $imageTag -}}
+{{- else }}
+  {{- $globalRegistry := "" -}}
+  {{- if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "registry") .Values.global.images.registry }}
+    {{- $globalRegistry = .Values.global.images.registry -}}
+  {{- end }}
+  {{- if $globalRegistry }}
+    {{- printf "%s/%s:%s" $globalRegistry "newrelic/newrelic-ebpf-agent" $imageTag -}}
+  {{- else }}
+    {{- printf "%s:%s" $repository $imageTag -}}
+  {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for kernel header installer
+Precedence: chart-level (ebpfAgent.kernelHeaderInstaller.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" -}}
+{{- if .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy }}
+  {{- .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for eBPF agent
+Precedence: chart-level (ebpfAgent.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.imagePullPolicy" -}}
+{{- if .Values.ebpfAgent.image.pullPolicy }}
+  {{- .Values.ebpfAgent.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Render imagePullSecrets
+Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
+*/}}
+{{- define "nr-ebpf-agent.imagePullSecrets" -}}
+{{- if .Values.imagePullSecrets }}
+  {{- range .Values.imagePullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullSecrets") .Values.global.images.pullSecrets }}
+  {{- range .Values.global.images.pullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
+{{- end }}
+{{- end }}
