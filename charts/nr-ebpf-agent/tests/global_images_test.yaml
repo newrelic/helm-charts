@@ -1,0 +1,249 @@
+suite: global images support
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  # ========================================
+  # PHASE 1: IMAGE REGISTRY SUPPORT
+  # ========================================
+
+  - it: uses default docker.io registry when no global registry set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: uses global.images.registry for both images when set and no local override
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: prefers local custom repository over global registry for kernel header installer
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+      ebpfAgent:
+        kernelHeaderInstaller:
+          image:
+            repository: my.custom.registry.com/my-org/my-image
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.custom.registry.com/my-org/my-image:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: prefers local custom repository over global registry for main container
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+      ebpfAgent:
+        image:
+          repository: my.custom.registry.com/my-org/ebpf-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my.custom.registry.com/my-org/ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: supports air-gapped registry with only global registry configured
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: registry.internal.company.com
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  # ========================================
+  # PHASE 2: PULLSECRETS SUPPORT
+  # ========================================
+
+  - it: renders no imagePullSecrets when neither chart-level nor global pullSecrets are set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: uses global.images.pullSecrets when set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-secret
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: supports multiple global pullSecrets
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullSecrets:
+            - name: secret1
+            - name: secret2
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: secret1
+            - name: secret2
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  # ========================================
+  # PHASE 3: PULLPOLICY SUPPORT
+  # ========================================
+
+  - it: uses default IfNotPresent pullPolicy when neither chart-level nor global is set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: IfNotPresent
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: uses global.images.pullPolicy for both images when set and no chart-level override
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  # ========================================
+  # COMBINED SCENARIOS
+  # ========================================
+
+  - it: supports all three phases together - registry + pullSecrets + pullPolicy from global
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+          pullSecrets:
+            - name: global-secret
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-secret
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: validates precedence - local custom repository beats global registry
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: global.registry.com
+          pullPolicy: Always
+          pullSecrets:
+            - name: global-secret
+      ebpfAgent:
+        image:
+          repository: custom.registry.com/ebpf-agent
+        kernelHeaderInstaller:
+          image:
+            repository: custom.registry.com/header-installer
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: custom.registry.com/header-installer:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry.com/ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-secret
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml

@@ -1,0 +1,600 @@
+suite: comprehensive global value inheritance and image support
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/nr-ebpf-agent-service-account.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  # =============================================================================
+  # CLUSTER NAME TESTS
+  # =============================================================================
+  - it: should use local cluster value
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[7].value
+          value: test-cluster
+
+  # =============================================================================
+  # LICENSE KEY TESTS (via common-library)
+  # =============================================================================
+  - it: should create secret with license key
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - template: templates/secrets.yaml
+        documentIndex: 0
+        equal:
+          path: data.NEW_RELIC_LICENSE_KEY
+          value: dGVzdC1saWNlbnNlLWtleQ==  # base64 of "test-license-key"
+
+  # =============================================================================
+  # LABELS TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.labels on ebpf-agent daemonset
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        labels:
+          global-label: global-value
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: metadata.labels["global-label"]
+          value: global-value
+
+  # =============================================================================
+  # POD LABELS TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.podLabels on ebpf-agent pods
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        podLabels:
+          global-pod-label: global-value
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.metadata.labels["global-pod-label"]
+          value: global-value
+
+  # =============================================================================
+  # IMAGE REGISTRY TESTS (PHASE 1)
+  # =============================================================================
+  - it: uses default docker.io registry when no global registry set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: docker.io/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: should use global.images.registry for ebpfAgent image
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          registry: harbor.corp.net
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
+
+  - it: should use global.images.registry for kernel header installer image
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          registry: harbor.corp.net
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        matchRegex:
+          path: spec.template.spec.initContainers[0].image
+          pattern: "^harbor.corp.net/newrelic/newrelic-ebpf-agent:"
+
+  - it: uses global.images.registry for both images when set and no local override
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: prefers local custom repository over global registry for kernel header installer
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+      ebpfAgent:
+        kernelHeaderInstaller:
+          image:
+            repository: my.custom.registry.com/my-org/my-image
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.custom.registry.com/my-org/my-image:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: prefers local custom repository over global registry for main container
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+      ebpfAgent:
+        image:
+          repository: my.custom.registry.com/my-org/ebpf-agent
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my.custom.registry.com/my-org/ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: supports air-gapped registry with only global registry configured
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: registry.internal.company.com
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  # =============================================================================
+  # IMAGE PULL SECRETS TESTS (PHASE 2)
+  # =============================================================================
+  - it: renders no imagePullSecrets when neither chart-level nor global pullSecrets are set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: should inherit global.images.pullSecrets on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        images:
+          pullSecrets:
+            - name: global-pull-secret
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.imagePullSecrets[0].name
+          value: global-pull-secret
+
+  - it: supports multiple global pullSecrets
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullSecrets:
+            - name: secret1
+            - name: secret2
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: secret1
+            - name: secret2
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  # =============================================================================
+  # IMAGE PULL POLICY TESTS (PHASE 3)
+  # =============================================================================
+  - it: uses default IfNotPresent pullPolicy when neither chart-level nor global is set
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: IfNotPresent
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: uses global.images.pullPolicy for both images when set and no chart-level override
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  # =============================================================================
+  # DNS CONFIG TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.dnsConfig on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        dnsConfig:
+          nameservers:
+            - 8.8.8.8
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.dnsConfig.nameservers[0]
+          value: 8.8.8.8
+
+  # =============================================================================
+  # PRIORITY CLASS NAME TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.priorityClassName on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        priorityClassName: high-priority
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+
+  # =============================================================================
+  # NODE SELECTOR TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.nodeSelector on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nodeSelector:
+          global-key: global-value
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.nodeSelector["global-key"]
+          value: global-value
+
+  # =============================================================================
+  # TOLERATIONS TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.tolerations on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        tolerations:
+          - key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.tolerations[0].key
+          value: monitoring-taint
+
+  # =============================================================================
+  # AFFINITY TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.affinity on ebpf-agent
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node-role.kubernetes.io/monitoring
+                      operator: In
+                      values:
+                        - "true"
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: node-role.kubernetes.io/monitoring
+
+  # =============================================================================
+  # PRIVILEGED MODE TESTS (eBPF requirement)
+  # =============================================================================
+  - it: should have privileged mode enabled for ebpf-agent (eBPF requirement)
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+
+
+  # =============================================================================
+  # VERBOSE LOG TESTS (log level override)
+  # =============================================================================
+  - it: should set log level to DEBUG when global.verboseLog is true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        verboseLog: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[3].name
+          value: NEW_RELIC_LOG_LEVEL
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[3].value
+          value: DEBUG
+
+  - it: should use default log level when global.verboseLog is false
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        verboseLog: false
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[3].name
+          value: NEW_RELIC_LOG_LEVEL
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[3].value
+          value: INFO
+
+  # =============================================================================
+  # CUSTOM SECRET TESTS (via common-library)
+  # =============================================================================
+  - it: should use custom secret name when global.customSecretName is set
+    set:
+      cluster: test-cluster
+      region: US
+      global:
+        customSecretName: my-custom-secret
+        customSecretLicenseKey: MY_KEY
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.name
+          value: my-custom-secret
+
+  - it: should use custom secret key when global.customSecretLicenseKey is set
+    set:
+      cluster: test-cluster
+      region: US
+      global:
+        customSecretName: my-custom-secret
+        customSecretLicenseKey: CUSTOM_KEY_NAME
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[5].valueFrom.secretKeyRef.key
+          value: CUSTOM_KEY_NAME
+
+  # =============================================================================
+  # SERVICE ACCOUNT TESTS (via common-library)
+  # =============================================================================
+  - it: should create service account with global labels
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        labels:
+          service-account-label: test-value
+    asserts:
+      - template: templates/nr-ebpf-agent-service-account.yaml
+        equal:
+          path: metadata.labels.service-account-label
+          value: test-value
+
+  - it: should apply service account annotations
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      ebpfAgent:
+        serviceAccount:
+          annotations:
+            custom-annotation: custom-value
+    asserts:
+      - template: templates/nr-ebpf-agent-service-account.yaml
+        equal:
+          path: metadata.annotations.custom-annotation
+          value: custom-value
+
+  # =============================================================================
+  # POD SECURITY CONTEXT TESTS (via common-library)
+  # =============================================================================
+  - it: should inherit global.podSecurityContext when set
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        podSecurityContext:
+          runAsUser: 1000
+          runAsGroup: 3000
+          fsGroup: 2000
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.runAsUser
+          value: 1000
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+
+  # =============================================================================
+  # REGION/ENDPOINT TESTS (nrStaging, fedramp.enabled, eu)
+  # =============================================================================
+  - it: should use staging endpoint when global.nrStaging is true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nrStaging: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: OTLP_ENDPOINT
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[9].value
+          value: staging-otlp.nr-data.net:443
+
+  - it: should use EU endpoint when global.eu is true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        eu: true
+      region: EU
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: OTLP_ENDPOINT
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[9].value
+          value: otlp.eu01.nr-data.net:443
+
+  - it: should use default endpoint by default
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[9].name
+          value: OTLP_ENDPOINT
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].env[9].value
+          value: otlp.nr-data.net:443
+
+  # =============================================================================
+  # COMBINED SCENARIOS (IMAGE SUPPORT)
+  # =============================================================================
+  - it: supports all three phases together - registry + pullSecrets + pullPolicy from global
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: my.private.registry.com
+          pullSecrets:
+            - name: global-secret
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-secret
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: validates precedence - custom repositories beat global registry
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          registry: global.registry.com
+          pullPolicy: Always
+          pullSecrets:
+            - name: global-secret
+      ebpfAgent:
+        image:
+          repository: custom.registry.com/ebpf-agent
+        kernelHeaderInstaller:
+          image:
+            repository: custom.registry.com/header-installer
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: custom.registry.com/header-installer:agent-base-image-latest
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: custom.registry.com/ebpf-agent:1.2.0
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: global-secret
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
