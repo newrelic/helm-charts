@@ -122,6 +122,7 @@
 | KubeStateMetrics    | Prometheus Receiver   | kube_pod_labels                                            | Gauge   | Kubernetes labels attached to Pods (requires metricLabelsAllowlist).                  |
 | KubeStateMetrics    | Prometheus Receiver   | kube_pod_annotations                                       | Gauge   | Kubernetes annotations attached to Pods (requires metricAnnotationsAllowList).        |
 | KubeStateMetrics    | Prometheus Receiver   | kube_replicaset_owner                                      | Gauge   | Owner information of the ReplicaSet.                                                  |
+| KubeStateMetrics    | Prometheus Receiver   | kube_replicaset_created                                    | Gauge   | Creation timestamp of the ReplicaSet.                                                 |
 | KubeStateMetrics    | Prometheus Receiver   | kube_resourcequota                                         | Gauge   | Resource quotas applied.                                                              |
 | KubeStateMetrics    | Prometheus Receiver   | kube_resourcequota_created                                 | Gauge   | Creation timestamp of the ResourceQuota.                                              |
 | KubeStateMetrics    | Prometheus Receiver   | kube_service_created                                       | Gauge   | Creation timestamp of the Service.                                                    |

@@ -28,14 +28,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: helm/chart-testing-action@v2.8.0
       - uses: azure/setup-helm@v4
         with:
           version: 'v3.19.2'
 
       - name: Set up helm-unittest
-        run: helm plugin install https://github.com/helm-unittest/helm-unittest
+        # workaround for https://github.com/helm-unittest/helm-unittest/issues/790
+        run: helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.0.2
 
       - name: Lint charts
         run: ct lint --config .github/ct-lint.yaml
@@ -72,7 +73,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
       - uses: helm/chart-testing-action@v2.8.0
       - uses: azure/setup-helm@v4
         with:

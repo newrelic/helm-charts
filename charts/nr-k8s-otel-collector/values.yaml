@@ -46,13 +46,23 @@ kube-state-metrics:
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
 provider: ""
 
-image:
-  # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nrdot-collector-k8s
-  # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
-  pullPolicy: IfNotPresent
-  # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.5.0"
+# -- Images used by the chart.
+images:
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+  # -- Image for the OpenTelemetry Collector.
+  collector:
+    registry: ""
+    repository: newrelic/nrdot-collector-k8s
+    tag: "1.8.0"
+    pullPolicy: IfNotPresent
+  # -- Image for the initContainer that retrieves node allocatable resources.
+  kubectl:
+    registry: ""
+    repository: bitnami/kubectl
+    tag: latest
+    pullPolicy: IfNotPresent
 
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
@@ -305,6 +315,8 @@ receivers:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
     enabled: true
+
+  # DEPRECATED 1/21/26: Please configure values under `collectorObservability` instead
   collectorMetrics:
     # -- (bool) Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled.
     # @default -- `false`
@@ -312,6 +324,15 @@ receivers:
     # -- Sets the scrape interval for metrics scraped from the deployment collector
     # @default -- `1m`
     scrapeInterval: 1m
+
+# Modern method for enabling the collector to report its own metrics (replaces `receivers.collectorMetrics`)
+collectorObservability:
+  # -- (bool) Specifies whether the collector reports its own metrics
+  # @default -- `false`
+  enabled: false
+  # -- Specifies the interval at which the collector reports its metrics (in milliseconds)
+  # @default -- `60000`
+  scrapeIntervalMs: 60000
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
