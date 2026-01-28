@@ -466,7 +466,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_(replicaset_owner)
+          - include: kube_replicaset_(owner|created)
             action: update
             match_type: regexp
             operations:
@@ -788,20 +788,30 @@ data:
             pipelines: [metrics/nr_controlplane]
 
     service:
-      {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
+        {{- if include "newrelic.common.verboseLog" . }}
         logs:
           level: "debug"
-        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        {{- end }}
         metrics:
           readers:
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - pull:
                 exporter:
                   prometheus:
                     host: '0.0.0.0'
                     port: 8888
-        {{- end }}
-      {{- end }}
+            {{- end }}
+            {{- if .Values.collectorObservability.enabled }}
+            - periodic:
+                interval: {{ .Values.collectorObservability.scrapeIntervalSeconds }}
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+                    headers:
+                      api-key: ${env:NR_LICENSE_KEY}
+            {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
 

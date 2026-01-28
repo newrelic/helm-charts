@@ -19,7 +19,7 @@ tests:
         template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].args
-          value: [ "--config", "/config/daemonset-config.yaml", "--feature-gates", "receiver.kubeletstats.enableCPUUsageMetrics,metricsgeneration.MatchAttributes" ]
+          value: [ "--config", "/config/daemonset-config.yaml", "--feature-gates", "metricsgeneration.MatchAttributes" ]
         template: templates/daemonset.yaml
   - it: has default args and extra args in deployment
     set:
@@ -41,5 +41,5 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].args
-          value: [ "--config", "/config/daemonset-config.yaml", "--feature-gates", "receiver.kubeletstats.enableCPUUsageMetrics,metricsgeneration.MatchAttributes", "--some-dae-param", "dae1" ]
+          value: [ "--config", "/config/daemonset-config.yaml", "--feature-gates", "metricsgeneration.MatchAttributes", "--some-dae-param", "dae1" ]
         template: templates/daemonset.yaml

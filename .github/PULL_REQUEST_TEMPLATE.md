@@ -23,8 +23,6 @@ will run across your changes and do some initial checks and linting. These check
 very quickly. Please check the results. We would like these checks to pass before we
 even continue reviewing your changes.
 -->
-#### Is this a new chart
-
 #### What this PR does / why we need it:
 
 #### Which issue this PR fixes

@@ -16,6 +16,10 @@ kube-state-metrics:
   # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
   # your Kubernetes clusters.
   enabled: false
+
+  # -- Sets resources for kube-state-metrics.
+  resources: {}
+
   # kube-state-metrics.metricLabelsAllowlist -- List of Kubernetes label keys that will be used in the resources' labels metric.
   # By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels
   # should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]".
@@ -49,8 +53,8 @@ newrelic-pixie:
   # newrelic-pixie.enabled -- Install the [`newrelic-pixie`](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie)
   enabled: false
 
-newrelic-eapm-agent:
-  # newrelic-eapm-agent.enabled -- Install the [`nr-eapm-agent`](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent)
+nr-ebpf-agent:
+  # nr-ebpf-agent.enabled -- Install the [`nr-ebpf-agent`](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent)
   enabled: false
 
 k8s-agents-operator:
@@ -89,7 +93,8 @@ global:
   customSecretName: ""
   # -- Key in the Secret object where the license key is stored
   customSecretLicenseKey: ""
-
+  # -- The provider that hosts your cluster. Sub charts may have support for specific providers and will automatically set config constraints for them.
+  provider:
   # -- Additional labels for chart objects
   labels: {}
   # -- Additional labels for chart pods
