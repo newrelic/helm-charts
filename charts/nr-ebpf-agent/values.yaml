@@ -143,6 +143,8 @@ ebpfAgent:
     repository: docker.io/newrelic/newrelic-ebpf-agent
     # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
     tag: ""
+    # -- Image pull policy. Overrides `global.images.pullPolicy`
+    pullPolicy: ""
   # -- Configuration for the kernel header installer init container
   kernelHeaderInstaller:
     image:
@@ -150,6 +152,8 @@ ebpfAgent:
       repository: docker.io/newrelic/newrelic-ebpf-agent
       # -- The tag of the kernel header installer image. Defaults to agent-base-image-latest
       tag: agent-base-image-latest
+      # -- Image pull policy for kernel header installer. Overrides `global.images.pullPolicy`
+      pullPolicy: ""
   resources:
     limits:
       # -- Max memory allocated to the container.
@@ -178,6 +182,8 @@ ebpfAgent:
   # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
+# -- Image pull secrets. Overrides `global.images.pullSecrets`
+imagePullSecrets: []
 
 # -- Additional labels for chart pods.
 podLabels: {}

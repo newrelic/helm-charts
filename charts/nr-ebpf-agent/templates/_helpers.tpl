@@ -251,10 +251,12 @@ Precedence:
 
 {{/*
 Return the imagePullPolicy for kernel header installer
-Uses global.images.pullPolicy from common-library, defaults to IfNotPresent
+Precedence: chart-level (ebpfAgent.kernelHeaderInstaller.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
 */}}
 {{- define "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" -}}
-{{- if and .Values.global .Values.global.images .Values.global.images.pullPolicy }}
+{{- if .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy }}
+  {{- .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
   {{- .Values.global.images.pullPolicy -}}
 {{- else }}
   {{- "IfNotPresent" -}}
@@ -263,10 +265,12 @@ Uses global.images.pullPolicy from common-library, defaults to IfNotPresent
 
 {{/*
 Return the imagePullPolicy for eBPF agent
-Uses global.images.pullPolicy from common-library, defaults to IfNotPresent
+Precedence: chart-level (ebpfAgent.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
 */}}
 {{- define "nr-ebpf-agent.ebpfAgent.imagePullPolicy" -}}
-{{- if and .Values.global .Values.global.images .Values.global.images.pullPolicy }}
+{{- if .Values.ebpfAgent.image.pullPolicy }}
+  {{- .Values.ebpfAgent.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
   {{- .Values.global.images.pullPolicy -}}
 {{- else }}
   {{- "IfNotPresent" -}}
@@ -274,11 +278,15 @@ Uses global.images.pullPolicy from common-library, defaults to IfNotPresent
 {{- end }}
 
 {{/*
-Render imagePullSecrets from global.images.pullSecrets
-Uses common-library global value, renders nothing if not set
+Render imagePullSecrets
+Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
 */}}
 {{- define "nr-ebpf-agent.imagePullSecrets" -}}
-{{- if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullSecrets") .Values.global.images.pullSecrets }}
+{{- if .Values.imagePullSecrets }}
+  {{- range .Values.imagePullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullSecrets") .Values.global.images.pullSecrets }}
   {{- range .Values.global.images.pullSecrets }}
     {{- printf "- name: %s" .name | nindent 2 }}
   {{- end }}

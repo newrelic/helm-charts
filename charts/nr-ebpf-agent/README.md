@@ -116,8 +116,11 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
 | ebpfAgent.affinity | object | `{}` | Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity` |
+| imagePullSecrets | list | `[]` | Image pull secrets. Overrides `global.images.pullSecrets` |
 | ebpfAgent.image.repository | string | `"docker.io/newrelic/newrelic-ebpf-agent"` | eBPF agent image to be deployed. |
 | ebpfAgent.image.tag | string | `"agent-nr-ebpf-agent_0.0.9"` | The tag of the eBPF agent image to be deployed. |
+| ebpfAgent.image.pullPolicy | string | `""` | Image pull policy. Overrides `global.images.pullPolicy` |
+| ebpfAgent.kernelHeaderInstaller.image.pullPolicy | string | `""` | Image pull policy for kernel header installer. Overrides `global.images.pullPolicy` |
 | ebpfAgent.podAnnotations | object | `{}` | Sets ebpfAgent pod Annotations. Overrides `podAnnotations` and `global.podAnnotations` |
 | ebpfAgent.podSecurityContext | object | `{}` | Sets ebpfAgent pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod` |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocated to the container. |

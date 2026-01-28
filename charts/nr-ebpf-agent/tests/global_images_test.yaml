@@ -137,6 +137,38 @@ tests:
             - name: secret2
         template: templates/nr-ebpf-agent-daemonset.yaml
 
+  - it: prefers chart-level pullSecrets over global.images.pullSecrets
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+      imagePullSecrets:
+        - name: chart-secret
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: chart-secret
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: supports multiple chart-level pullSecrets
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      imagePullSecrets:
+        - name: chart-secret1
+        - name: chart-secret2
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: chart-secret1
+            - name: chart-secret2
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
   # ========================================
   # PHASE 3: PULLPOLICY SUPPORT
   # ========================================
@@ -170,6 +202,39 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].imagePullPolicy
           value: Always
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: prefers chart-level pullPolicy over global.images.pullPolicy for main container
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullPolicy: Always
+      ebpfAgent:
+        image:
+          pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: prefers chart-level pullPolicy over global.images.pullPolicy for kernel header installer
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      global:
+        images:
+          pullPolicy: Always
+      ebpfAgent:
+        kernelHeaderInstaller:
+          image:
+            pullPolicy: Never
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Never
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   # ========================================
