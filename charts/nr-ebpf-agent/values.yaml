@@ -23,6 +23,8 @@ apmDataReporting: true
 # -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics
 # RENAMED from 'tcpStatsReporting' for clarity. The old name is deprecated but still supported for backward compatibility.
 networkMetricsReporting: true
+# -- Enable log reporting. When enabled, the agent collects and reports logs from entities.
+logReporting: true
 
 # -- All data drop filters configuration
 # Configure filters to drop all types of data (Network Metrics and APM data) based on config provided
@@ -69,6 +71,21 @@ networkMetricsDataFilter:
   # -- This config bypasses dropEntityName filter.
   keepEntityName: []
 
+# -- Log data filters configuration
+# Configure filters to drop/keep Log data based on config provided
+logDataFilters:
+  # -- Application/entities log reporting filters
+  applicationLogReporting:
+    # -- Enable logs collection from the entities matching the filters below
+    enabled: true
+    # -- Regex to match log file names to include.
+    fileRegex: ".*\\.log$"
+    # -- Maximum number of log samples to collect per minute from an entity. Default is 10000 per minute.
+    maxSamplePerMinute: 10000
+    # -- Regex to match entity names to keep logs from stdout and stderr.
+    keepStdEntityRegex: ".*"
+    # -- Regex to match entity names to keep logs from log files.
+    keepFileEntityRegex: ".*"
 
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.

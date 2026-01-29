@@ -138,6 +138,12 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | kubernetesClusterDomain | string | `"cluster.local"` | Kubernetes cluster domain. |
 | labels | object | `{}` | Additional labels for chart objects. |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
+| logDataFilters.applicationReporting.enabled | bool | `true` | Enable logs collection from the entities matching the filters below. |
+| logDataFilters.applicationReporting.fileRegex | string | `".*\\.log$"` | Regex to match log file names to include. |
+| logDataFilters.applicationReporting.keepFileEntityRegex | string | `".*"` | Regex to match entity names to keep logs from log files. |
+| logDataFilters.applicationReporting.keepStdEntityRegex | string | `".*"` | Regex to match entity names to keep logs from stdout and stderr. |
+| logDataFilters.applicationReporting.maxSamplePerMinute | int | `10000` | Maximum number of log samples to collect per minute from an entity. |
+| logReporting | bool | `true` | Enable log reporting. When enabled, the agent collects and reports logs from entities. |
 | networkMetricsDataFilter.dropPodLabels | object | `{}` | Pod labels to match for filtering Network metrics data. Empty map means no label-based filtering. (Example: dropPodLabels: `{ "app": "frontend", "env": "production" }`) |
 | networkMetricsDataFilter.dropEntityName | list | `[]` | List of entity names to drop Network metrics data for |
 | networkMetricsDataFilter.keepEntityName | list | `[]` | List of entity names to always keep Network metrics data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |
