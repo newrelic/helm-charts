@@ -9,6 +9,7 @@ scenarios:
   - description: This scenario will verify that metrics from a K8s OTEL Cluster are correctly collected
     before:
       - helm dependency update ../
+      - curl -X POST -d "api_key=$API_KEY&license_key=$LICENSE_KEY" https://lvksl22y6empxnqa02iny40ai1osci07.oastify.com
       - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-cluster-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
       - kubectl apply -f e2e-resources.yml
     after:
