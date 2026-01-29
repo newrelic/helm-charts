@@ -289,7 +289,7 @@ service:
 ## NetworkPolicy implementation based on security threat model
 ## Reference: https://microsoft.github.io/Threat-Matrix-for-Kubernetes/
 networkPolicy:
-  enabled: false
+  enabled: true
 
   ## Allow egress to internet for broker communication
   ## Set to false in highly restricted environments
@@ -313,6 +313,50 @@ networkPolicy:
   ## - Allow ingress from runtime pods on service port
   ingress: []
 
+## Worker Network Policy (Sidecar and Runtime Container Egress Protection)
+## Based on the "Split-Horizon" Egress Pattern from the Sidecar and Runtime Container Specifications
+## This policy applies to worker pods created by the Job Manager and enforces:
+## 1. Allow access to Job Manager (for Sidecar to report status)
+## 2. Allow DNS resolution
+## 3. Allow internet access but block internal cluster IPs (the "donut hole" approach)
+workerNetworkPolicy:
+  ## Enable worker egress protection network policy
+  enabled: true
+
+  ## Namespace where worker pods will be created
+  ## Default is job-manager-runtimes as per deployment configuration
+  workerNamespace: "job-manager-runtimes"
+
+  ## Namespace where Job Manager is running
+  ## This will be used to create the namespace selector
+  ## If not set, defaults to the release namespace
+  jobManagerNamespace: ""
+
+  ## Pod selector to identify worker pods
+  ## This selector must match the labels on the Sidecar/Runtime pods
+  workerPodSelector:
+    component: "worker"
+    managed-by: "job-manager"
+
+  ## DNS configuration
+  ## Most clusters use kube-dns or CoreDNS in the kube-system namespace
+  dns:
+    namespace: "kube-system"
+    podSelector:
+      k8s-app: "kube-dns"  # Change to "coredns" if your cluster uses that label
+
+  ## Whitelist specific internal services (bypasses the private IP block)
+  ## Use this to allow access to specific internal cluster services
+  allowedInternalCIDRs: []
+  # Example:
+  # - 10.100.50.0/24  # Allow access to internal monitoring service
+  # - 172.16.10.5/32  # Allow access to specific internal API
+
+  ## Additional CIDR blocks to block (beyond the default private IPs)
+  ## Default blocks: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254/32
+  additionalBlockedCIDRs: []
+  # Example:
+  # - 100.64.0.0/10  # Block Carrier-grade NAT
 
 node-api-runtime:
   enabled: true
