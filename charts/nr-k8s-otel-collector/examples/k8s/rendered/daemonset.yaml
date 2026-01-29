@@ -52,10 +52,10 @@ spec:
               fi
 
               export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
-                /Ki$/ {printf "%d\n", $1 * 1024; next}
-                /Mi$/ {printf "%d\n", $1 * 1024^2; next}
-                /Gi$/ {printf "%d\n", $1 * 1024^3; next}
-                /m$/  {printf "%d\n", $1 / 1000; next}
+                /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+                /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+                /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+                /m$/  {printf "%.0f\n", $1 / 1000; next}
                 {print $1}
               ')
 
