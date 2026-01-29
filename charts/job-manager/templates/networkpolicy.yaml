@@ -68,28 +68,29 @@ spec:
     {{- end }}
 {{- end }}
 ---
-# Worker NetworkPolicy - Egress protection for worker pods (sidecar + runtime containers)
-{{- if .Values.workerNetworkPolicy.enabled -}}
+# Runtime Pod NetworkPolicy - Egress protection for runtime pods (sidecar + runtime containers)
+{{- if .Values.runtimePodNetworkPolicy.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "job-manager.fullname" . }}-worker-egress-protection
-  namespace: {{ .Values.workerNetworkPolicy.workerNamespace | default .Release.Namespace }}
+  name: {{ include "job-manager.fullname" . }}-runtime-pod-egress-protection
+  namespace: {{ .Values.runtimePodNetworkPolicy.runtimePodNamespace | default .Release.Namespace }}
   labels:
     {{- include "job-manager.labels" . | nindent 4 }}
-    app.kubernetes.io/component: worker-network-policy
+    app.kubernetes.io/component: runtime-pod-network-policy
 spec:
   podSelector:
     matchLabels:
-      {{- toYaml .Values.workerNetworkPolicy.workerPodSelector | nindent 6 }}
+      {{- toYaml .Values.runtimePodNetworkPolicy.runtimePodSelector | nindent 6 }}
   policyTypes:
     - Egress
   egress:
-    # 1. THE EXCEPTION: Allow access to the Job Manager (Control Plane)
+    # 1. Allow access to the Job Manager (Control Plane)
+    # Runtime pods (sidecar) report job results to Job Manager
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ .Values.workerNetworkPolicy.jobManagerNamespace | default .Release.Namespace | quote }}
+              kubernetes.io/metadata.name: {{ .Values.runtimePodNetworkPolicy.jobManagerNamespace | default .Release.Namespace | quote }}
           podSelector:
             matchLabels:
               {{- include "job-manager.selectorLabels" . | nindent 14 }}
@@ -103,11 +104,11 @@ spec:
     - to:
         - namespaceSelector:
             matchLabels:
-              kubernetes.io/metadata.name: {{ .Values.workerNetworkPolicy.dns.namespace | default "kube-system" | quote }}
+              kubernetes.io/metadata.name: {{ .Values.runtimePodNetworkPolicy.dns.namespace | default "kube-system" | quote }}
           podSelector:
             matchLabels:
-              {{- if .Values.workerNetworkPolicy.dns.podSelector }}
-              {{- toYaml .Values.workerNetworkPolicy.dns.podSelector | nindent 14 }}
+              {{- if .Values.runtimePodNetworkPolicy.dns.podSelector }}
+              {{- toYaml .Values.runtimePodNetworkPolicy.dns.podSelector | nindent 14 }}
               {{- else }}
               k8s-app: kube-dns
               {{- end }}
@@ -131,13 +132,14 @@ spec:
     {{- end }}
 
     # 4. Allow whitelisted internal services (if any)
-    {{- range .Values.workerNetworkPolicy.allowedInternalCIDRs }}
+    # Runtime pods can access specific internal services configured in allowedInternalCIDRs
+    {{- range .Values.runtimePodNetworkPolicy.allowedInternalCIDRs }}
     - to:
         - ipBlock:
             cidr: {{ . }}
     {{- end }}
 
-    # 5. THE RULE: Allow Internet, but BLOCK Internal Cluster IPs
+    # 5. Allow Internet, but BLOCK Internal Cluster IPs ("donut hole" pattern)
     # Exceptions above (rules 1-4) take precedence over this block
     - to:
         - ipBlock:
@@ -147,7 +149,7 @@ spec:
               - 172.16.0.0/12         # Block Private Cluster Network B
               - 192.168.0.0/16        # Block Private Cluster Network C
               - 169.254.169.254/32    # Block Cloud Metadata API
-              {{- with .Values.workerNetworkPolicy.additionalBlockedCIDRs }}
+              {{- with .Values.runtimePodNetworkPolicy.additionalBlockedCIDRs }}
               {{- toYaml . | nindent 14 }}
               {{- end }}
 {{- end }}

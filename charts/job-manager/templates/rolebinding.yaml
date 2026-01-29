@@ -1,3 +1,4 @@
+# Job Manager RoleBinding
 {{- if .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -14,4 +15,24 @@ subjects:
   - kind: ServiceAccount
     name: {{ include "job-manager.serviceAccountName" . }}
     namespace: {{ .Release.Namespace }}
+{{- end }}
+---
+# Runtime Pod RoleBinding
+{{- if .Values.runtimePodRbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: runtime-pod-binding
+  namespace: {{ .Values.runtimePodNetworkPolicy.runtimePodNamespace | default .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime-pod-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: runtime-pod-role
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "job-manager.runtimePodServiceAccountName" . }}
+    namespace: {{ .Values.runtimePodNetworkPolicy.runtimePodNamespace | default .Release.Namespace }}
 {{- end }}

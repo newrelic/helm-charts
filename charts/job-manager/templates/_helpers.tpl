@@ -386,3 +386,14 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+Create the name of the runtime-pod service account to use
+*/}}
+{{- define "job-manager.runtimePodServiceAccountName" -}}
+{{- if .Values.runtimePodServiceAccount.create }}
+{{- default "runtime-pod" .Values.runtimePodServiceAccount.name }}
+{{- else }}
+{{- default "default" .Values.runtimePodServiceAccount.name }}
+{{- end }}
+{{- end }}
