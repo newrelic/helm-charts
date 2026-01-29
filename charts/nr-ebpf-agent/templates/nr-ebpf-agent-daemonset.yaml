@@ -156,6 +156,8 @@ spec:
             value: "{{ .Values.apmDataFilters.dropEntityName | join "," }}"
           - name: KEEP_APM_DATA_FOR_ENTITY_NAME
             value: "{{ .Values.apmDataFilters.keepEntityName | join "," }}"
+          - name: JVM_METRICS_REPORTING
+            value: "{{ if hasKey .Values.apmDataFilters "jvmMetricsReporting" }}{{ .Values.apmDataFilters.jvmMetricsReporting }}{{ else }}true{{ end }}"
           {{- end }}
 
           # Network metrics data filtering configuration
