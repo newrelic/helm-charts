@@ -61,32 +61,13 @@ data:
           processes:
           process:
             metrics:
-              process.cpu.time:
-                enabled: true
               process.cpu.utilization:
                 enabled: true
-              process.memory.usage: # Physical memory
+              process.memory.utilization:
                 enabled: true
-              process.memory.virtual: # Virtual memory
+              process.memory.usage:
                 enabled: true
-              process.disk.io: # Bytes read/written
-                enabled: true
-              process.disk.operations: # Number of read/write operations
-                enabled: true
-              process.threads: # Number of threads (replaces process.thread.count)
-                enabled: true
-              process.open_file_descriptors: # Number of open file descriptors (replaces process.open_file_descriptor.count)
-                enabled: true
-              process.paging.faults:
-                enabled: true
-              process.context_switches:
-                enabled: true
-              process.uptime:
-                enabled: true
-              # Platform-specific metrics (enable if on the respective OS, might be ignored or cause errors on others)
-              process.handles: # Windows-specific: Number of open handles
-                enabled: false
-              process.signals_pending: # Linux-specific: Number of pending signals for the process
+              process.memory.virtual:
                 enabled: true
             mute_process_name_error: true
             mute_process_exe_error: true
@@ -251,51 +232,12 @@ data:
       {{- if .Values.atp.enabled }}
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
-      attributes/atp_identifier:
-        include:
-          match_type: regexp
-          metric_names:
-            - ".*"
-        actions:
-          - key: telemetry.atp.env
-            value: "atp-customer-zero"
-            action: insert
-
       adaptivetelemetryprocessor:
         storage_path: "/var/lib/nrdot-collector/adaptivetelemetry.db"
         retention_minutes: 30
-        include_process_list:
-          - "stress-ng"
         metric_thresholds:
-          process.cpu.utilization: 0.0005
-          process.memory.utilization: 0.0005 # How is this working, when the right metric is process.memory.usage???
-          process.memory.virtual: 20971520 # 20 MB. Isn't it too less??
-          process.threads: 16
-          process.open_file_descriptors: 30
-          process.disk.io: 204800 # 200KB
-          process.disk.operations: 300
-          process.context_switches: 8
-          process.paging.faults: 50
-          process.cpu.time: 0.01
-          # process.uptime: 10. # Graph is an overlapping, increasing single line. How to set threshold in this case??
-          # process.signals_pending: 0 # Same problem as process.uptime. Overalapping single line at 0. How to set threshold in this case?
-        enable_dynamic_thresholds: true
-        dynamic_smoothing_factor: 0.1
-        min_thresholds:
-          process.cpu.utilization: 0.0005
-          process.memory.utilization: 0.0005
-        max_thresholds:
-          process.cpu.utilization: 0.30
-          process.memory.utilization: 0.30
-        enable_multi_metric: true
-        composite_threshold: 0.8
-        weights:
-          process.cpu.utilization: 0.5
-          process.memory.utilization: 0.5
-        enable_anomaly_detection: true
-        anomaly_history_size: 15
-        anomaly_change_threshold: 50.0
-        anomaly_min_data_points: 3
+          process.cpu.utilization: 0.05 # This means 5%
+          process.memory.utilization: 0.05 # This means 5%
       {{- end }}
 
       transform/ksm:
@@ -942,7 +884,6 @@ data:
             {{- if .Values.atp.enabled }}
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
-            - attributes/atp_identifier
             - adaptivetelemetryprocessor
             {{- end }}
             - metricstransform/k8s_cluster_info
