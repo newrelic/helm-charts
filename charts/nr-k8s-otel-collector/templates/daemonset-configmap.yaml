@@ -73,20 +73,6 @@ data:
             mute_process_exe_error: true
             mute_process_io_error: true
             mute_process_user_error: true
-          {{- else }}
-          # Uncomment to enable process metrics, which can be noisy but valuable.
-          # For intelligent process metric filtering, consider enabling ATP (atp.enabled: true).
-          # processes:
-          # process:
-          #   metrics:
-          #     process.cpu.utilization:
-          #       enabled: true
-          #     process.cpu.time:
-          #       enabled: false
-          #   mute_process_name_error: true
-          #   mute_process_exe_error: true
-          #   mute_process_io_error: true
-          #   mute_process_user_error: true
           {{- end }}
 
       kubeletstats:
@@ -233,7 +219,7 @@ data:
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
       adaptivetelemetryprocessor:
-        storage_path: "/var/lib/nrdot-collector/adaptivetelemetry.db"
+        storage_path: "/var/lib/nrdot-collector/adaptiveprocess.db"
         retention_minutes: 30
         metric_thresholds:
           process.cpu.utilization: 0.05 # This means 5%
@@ -813,15 +799,12 @@ data:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
             pipelines: [metrics/nr]
-          {{- if .Values.atp.enabled }}
-          # Route process and processes metrics to metrics/nr pipeline only when ATP is enabled.
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
             pipelines: [metrics/nr]
-          {{- end }}
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]

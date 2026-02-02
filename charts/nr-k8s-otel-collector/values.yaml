@@ -2,6 +2,11 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
+# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
+cluster: ""
+# -- This set this license key to use. Can be configured also with `global.licenseKey`
+licenseKey: ""
+
 # -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
 # When disabled (default), ATP processors are not included in the pipeline.
 # When enabled, activates ATP with opinionated process metrics collection.
@@ -15,11 +20,6 @@ atp:
     repository: newrelic/nrdot-collector
     tag: "1.8.0"
     pullPolicy: IfNotPresent
-
-# -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
-cluster: ""
-# -- This set this license key to use. Can be configured also with `global.licenseKey`
-licenseKey: ""
 
 kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository.
