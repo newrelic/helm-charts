@@ -98,6 +98,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
+| allDataFilters.dropApmAgentEnabledEntity | boolean | `false` | Drop all data for applications or entities that have New Relic or OTEL APM agents running. |
 | allDataFilters.dropNewRelicBundle | boolean | `true` | Drop data from the newrelic namespace and newrelic-bundle services. (RENAMED from `dropDataNewRelic` for clarity. The old name is deprecated but still supported for backward compatibility). |
 | allDataFilters.dropNamespaces | list | `["kube-system"]` | List of Kubernetes namespaces for which all data should be dropped by the agent. (RENAMED from `dropDataForNamespaces` for clarity. The old name is deprecated but still supported for backward compatibility). |
 | allDataFilters.dropServiceNameRegex | string | `""` | Define a regex to match k8s service names to drop. Example `"kube-dns\|otel-collector\|\\bblah\\b"`. (RENAMED from `dropDataServiceNameRegex` for clarity. The old name is deprecated but still supported for backward compatibility). |
@@ -108,7 +109,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | apmDataFilters.dropEntityName | list | `[]` | List of entity names to drop ebpf APM data.|
 | apmDataFilters.keepEntityName | list | `[]` | List of entity names to always keep APM data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |
 | cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
-| containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in your values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
 | logLevel | string | `INFO` | To configure the log level in increasing order of verboseness. OFF, FATAL, ERROR, WARNING, INFO, DEBUG |
@@ -116,10 +116,11 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | dropAPMEnabledPods | bool | `false` | Drop data from pods that are monitored by New Relic APM via auto attach. |
 | ebpfAgent.affinity | object | `{}` | Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity` |
-| ebpfAgent.containerSecurityContext | object | `{}` | Sets ebpfAgent pod containerSecurityContext. Overrides `containerSecurityContext` and `global.securityContext.container` |
-| ebpfAgent.image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
+| imagePullSecrets | list | `[]` | Image pull secrets. Overrides `global.images.pullSecrets` |
 | ebpfAgent.image.repository | string | `"docker.io/newrelic/newrelic-ebpf-agent"` | eBPF agent image to be deployed. |
 | ebpfAgent.image.tag | string | `"agent-nr-ebpf-agent_0.0.9"` | The tag of the eBPF agent image to be deployed. |
+| ebpfAgent.image.pullPolicy | string | `""` | Image pull policy. Overrides `global.images.pullPolicy` |
+| ebpfAgent.kernelHeaderInstaller.image.pullPolicy | string | `""` | Image pull policy for kernel header installer. Overrides `global.images.pullPolicy` |
 | ebpfAgent.podAnnotations | object | `{}` | Sets ebpfAgent pod Annotations. Overrides `podAnnotations` and `global.podAnnotations` |
 | ebpfAgent.podSecurityContext | object | `{}` | Sets ebpfAgent pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod` |
 | ebpfAgent.resources.limits.memory | string | `"2Gi"` | Max memory allocated to the container. |
