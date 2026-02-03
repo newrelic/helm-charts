@@ -1,0 +1,35 @@
+suite: gkeAutopilot
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: gkeAutopilot true
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      gkeAutopilot: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: false
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
+  - it: gkeAutopilot false
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: false
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
