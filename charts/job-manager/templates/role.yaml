@@ -1,3 +1,4 @@
+# Job Manager Role - Permissions to manage worker resources
 {{- if .Values.rbac.create -}}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
@@ -48,4 +49,31 @@ rules:
   - apiGroups: [""]
     resources: ["events"]
     verbs: ["get", "list"]
+{{- end }}
+---
+# Runtime Pod Role - Minimal read-only permissions for runtime pods (sidecar + runtime)
+{{- if .Values.runtimePodRbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: runtime-pod-role
+  namespace: {{ .Values.runtimePodNetworkPolicy.runtimePodNamespace | default .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime-pod-role
+rules:
+  # Allow sidecar to watch and get its own pod
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+
+  # Allow sidecar to read pod logs
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+
+  # Allow sidecar to read pod status
+  - apiGroups: [""]
+    resources: ["pods/status"]
+    verbs: ["get"]
 {{- end }}

@@ -1,3 +1,4 @@
+# Job Manager NetworkPolicy - Controls ingress/egress for Job Manager pods
 {{- if .Values.networkPolicy.enabled -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
@@ -65,4 +66,90 @@ spec:
               - 169.254.169.254/32
     {{- end }}
     {{- end }}
+{{- end }}
+---
+# Runtime Pod NetworkPolicy - Egress protection for runtime pods (sidecar + runtime containers)
+{{- if .Values.runtimePodNetworkPolicy.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "job-manager.fullname" . }}-runtime-pod-egress-protection
+  namespace: {{ .Values.runtimePodNetworkPolicy.runtimePodNamespace | default .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime-pod-network-policy
+spec:
+  podSelector:
+    matchLabels:
+      {{- toYaml .Values.runtimePodNetworkPolicy.runtimePodSelector | nindent 6 }}
+  policyTypes:
+    - Egress
+  egress:
+    # 1. Allow access to the Job Manager (Control Plane)
+    # Runtime pods (sidecar) report job results to Job Manager
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.runtimePodNetworkPolicy.jobManagerNamespace | default .Release.Namespace | quote }}
+          podSelector:
+            matchLabels:
+              {{- include "job-manager.selectorLabels" . | nindent 14 }}
+      ports:
+        - protocol: TCP
+          port: {{ .Values.service.port | default 8080 }}
+
+    # 2. Allow DNS resolution
+    # DNS server IPs (e.g., 10.96.0.10) fall in blocked private ranges.
+    # Without this exception, domain name resolution fails for all services and external URLs.
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: {{ .Values.runtimePodNetworkPolicy.dns.namespace | default "kube-system" | quote }}
+          podSelector:
+            matchLabels:
+              {{- if .Values.runtimePodNetworkPolicy.dns.podSelector }}
+              {{- toYaml .Values.runtimePodNetworkPolicy.dns.podSelector | nindent 14 }}
+              {{- else }}
+              k8s-app: kube-dns
+              {{- end }}
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+
+    # 3. Allow access to Kubernetes API server (automatically detected)
+    {{- $kubernetesService := lookup "v1" "Service" "default" "kubernetes" }}
+    {{- if $kubernetesService }}
+    - to:
+        - ipBlock:
+            cidr: {{ $kubernetesService.spec.clusterIP }}/32
+      ports:
+        - protocol: TCP
+          port: 443
+    {{- else }}
+    {{- fail "Cannot automatically detect Kubernetes API server IP. Ensure 'kubernetes' service exists in 'default' namespace." }}
+    {{- end }}
+
+    # 4. Allow whitelisted internal services (if any)
+    # Runtime pods can access specific internal services configured in allowedInternalCIDRs
+    {{- range .Values.runtimePodNetworkPolicy.allowedInternalCIDRs }}
+    - to:
+        - ipBlock:
+            cidr: {{ . }}
+    {{- end }}
+
+    # 5. Allow Internet, but BLOCK Internal Cluster IPs ("donut hole" pattern)
+    # Exceptions above (rules 1-4) take precedence over this block
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0           # Allow All Public IPs
+            except:
+              - 10.0.0.0/8            # Block Private Cluster Network A
+              - 172.16.0.0/12         # Block Private Cluster Network B
+              - 192.168.0.0/16        # Block Private Cluster Network C
+              - 169.254.169.254/32    # Block Cloud Metadata API
+              {{- with .Values.runtimePodNetworkPolicy.additionalBlockedCIDRs }}
+              {{- toYaml . | nindent 14 }}
+              {{- end }}
 {{- end }}
