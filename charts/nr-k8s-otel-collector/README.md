@@ -124,6 +124,8 @@ to export data to this connector which can then be connected to the New Relic ma
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
+| collectorObservability.enabled | bool | `false` | Specifies whether the collector reports its own metrics |
+| collectorObservability.scrapeIntervalMs | int | `60000` | Specifies the interval at which the collector reports its metrics (in milliseconds) |
 | containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
@@ -161,8 +163,8 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
-| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.5.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
-| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.5.0"}` | Image for the OpenTelemetry Collector. |
+| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. |
 | images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
 | images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | kube-state-metrics.enableResourceQuotaSamples | bool | `false` | Enable resource quota data exporting |
