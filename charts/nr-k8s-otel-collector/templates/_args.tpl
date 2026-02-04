@@ -14,7 +14,8 @@ A helper to return the args to pass into the deployment.
 A helper to return the args to pass into the daemonset.
 */ -}}
 {{- define "nrKubernetesOtel.daemonset.args" -}}
-{{- $defaultDaemonsetArgs := list "--config" "/config/daemonset-config.yaml" "--feature-gates" "metricsgeneration.MatchAttributes" }}
+{{- /* Disable resource detection error propagation to restore v0.135.0 behavior where detection failures are logged but non-fatal */ -}}
+{{- $defaultDaemonsetArgs := list "--config" "/config/daemonset-config.yaml" "--feature-gates" "metricsgeneration.MatchAttributes,-processor.resourcedetection.propagateerrors" }}
 {{- if .Values.daemonset.extraArgs -}}
     {{- toYaml (concat $defaultDaemonsetArgs .Values.daemonset.extraArgs) }}
 {{- else -}}
