@@ -54,7 +54,7 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
-          {{- if .Values.atp.enabled }}
+          {{- if .Values.enable_atp }}
           # ATP (Adaptive Telemetry Processor) intelligently filters process-level metrics
           # These metrics can generate high data volume, so they're only enabled when ATP is explicitly activated.
           # When ATP is disabled, only a subset of process metrics are collected (see metricstransform/hostmetrics).
@@ -215,7 +215,7 @@ data:
           - node
           - namespace
 
-      {{- if .Values.atp.enabled }}
+      {{- if .Values.enable_atp }}
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
       adaptivetelemetryprocessor:
@@ -436,7 +436,7 @@ data:
 
       metricstransform/hostmetrics:
         transforms:
-          {{- if .Values.atp.enabled }}
+          {{- if .Values.enable_atp }}
           # When ATP is enabled: all the processes will be ingested, and ATP will filter them
           - include: process\..*
             action: update
@@ -864,7 +864,7 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            {{- if .Values.atp.enabled }}
+            {{- if .Values.enable_atp }}
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
             - adaptivetelemetryprocessor

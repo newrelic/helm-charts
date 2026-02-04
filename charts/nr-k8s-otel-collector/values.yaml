@@ -7,20 +7,6 @@ cluster: ""
 # -- This set this license key to use. Can be configured also with `global.licenseKey`
 licenseKey: ""
 
-# -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
-# When disabled (default), ATP processors are not included in the pipeline.
-# When enabled, activates ATP with opinionated process metrics collection.
-# Note: When enabled, automatically uses ATP-capable collector image.
-atp:
-  enabled: false
-  # -- Image configuration for ATP-enabled collector (only used when atp.enabled=true)
-  # TODO: Once a version of nrdot-collector with ATP is published, update the tag
-  image:
-    registry: ""
-    repository: newrelic/nrdot-collector
-    tag: "1.8.0"
-    pullPolicy: IfNotPresent
-
 kube-state-metrics:
   # kube-state-metrics.enabled -- Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository.
   # This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations
@@ -66,6 +52,8 @@ images:
   pullSecrets: []
   # - name: regsecret
   # -- Image for the OpenTelemetry Collector.
+  # To use experimental features, you must use the image newrelic/nrdot-collector.
+  # See below for experimental features.
   collector:
     registry: ""
     repository: newrelic/nrdot-collector-k8s
@@ -351,3 +339,17 @@ collectorObservability:
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
 lowDataMode:
+
+################################################################################
+# Experimental Features
+################################################################################
+# WARNING: The features in this section are experimental and may change or be
+# removed in future releases. To use these features, you must set the collector
+# image to newrelic/nrdot-collector (see images.collector.repository above).
+
+# -- (bool) Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
+# When disabled (default), ATP processors are not included in the pipeline.
+# When enabled, activates ATP with opinionated process metrics collection.
+# IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector
+# @default -- `false`
+enable_atp: false

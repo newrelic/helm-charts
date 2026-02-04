@@ -118,13 +118,50 @@ propagated to the respective configmap.
 The pipelines maintained by New Relic accept metrics through the `routing/nr_pipelines` connector. Additional pipelines added in `Values.yaml` can be configured
 to export data to this connector which can then be connected to the New Relic maintained pipelines.
 
+## Experimental Features
+
+**⚠️ WARNING: Experimental features may change or be removed in future releases.**
+
+Some features in this chart are marked as experimental and require using a different collector image. To use experimental features:
+
+1. Set the collector image to `newrelic/nrdot-collector`:
+   ```yaml
+   images:
+     collector:
+       repository: newrelic/nrdot-collector
+       tag: "1.8.0"  # Use the appropriate version
+   ```
+
+2. Enable the experimental feature(s) at the bottom of your values.yaml file under the "Experimental Features" section.
+
+### Adaptive Telemetry Processor (ATP)
+
+ATP intelligently filters process-level metrics in your Kubernetes cluster. It dynamically identifies and includes only the processes that exceed configured thresholds for CPU and memory utilization, reducing data volume while maintaining visibility into important processes.
+
+**Configuration:**
+```yaml
+# In values.yaml
+images:
+  collector:
+    repository: newrelic/nrdot-collector  # Required for ATP
+    tag: "1.8.0"
+
+# At the bottom of values.yaml, under Experimental Features
+enable_atp: true
+```
+
+**What ATP does:**
+- Monitors all processes on cluster nodes
+- Applies dynamic thresholds (default: 5% for CPU and memory utilization)
+- Sends only the process metrics that exceed thresholds to New Relic
+- Maintains state across pod restarts for consistent filtering
+
+
 ## Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
-| atp | object | `{"enabled":false,"image":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.8.0"}}` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. Note: When enabled, automatically uses ATP-capable collector image. |
-| atp.image | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.8.0"}` | Image configuration for ATP-enabled collector (only used when atp.enabled=true) TODO: Once a version of nrdot-collector with ATP is published, update the tag |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
 | collectorObservability.enabled | bool | `false` | Specifies whether the collector reports its own metrics |
 | collectorObservability.scrapeIntervalMs | int | `60000` | Specifies the interval at which the collector reports its metrics (in milliseconds) |
@@ -164,6 +201,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| enable_atp | bool | `false` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
 | images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
 | images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. |

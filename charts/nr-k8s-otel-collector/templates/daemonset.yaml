@@ -155,7 +155,7 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
-            {{- if .Values.atp.enabled }}
+            {{- if .Values.enable_atp }}
             # ATP requires persistent storage to maintain state across restarts (thresholds, history).
             # This hostPath volume ensures ATP data survives pod restarts on the same node.
             - name: nrdot-data-storage
@@ -178,7 +178,7 @@ spec:
         - name: daemonset-config
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
-        {{- if .Values.atp.enabled }}
+        {{- if .Values.enable_atp }}
         # ATP storage volume: Uses hostPath to persist adaptive telemetry processor state.
         # DirectoryOrCreate ensures the directory is created if it doesn't exist.
         # Data persists across pod restarts but is node-specific (DaemonSet behavior).

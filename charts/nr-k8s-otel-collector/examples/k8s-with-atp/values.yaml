@@ -2,13 +2,6 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# -- Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
-# When disabled (default), ATP processors are not included in the pipeline.
-# When enabled, activates ATP with opinionated process metrics collection.
-# Note: Requires collector image version with ATP support.
-atp:
-  enabled: true
-
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
 # -- This set this license key to use. Can be configured also with `global.licenseKey`
@@ -59,6 +52,9 @@ images:
   pullSecrets: []
   # - name: regsecret
   # -- Image for the OpenTelemetry Collector.
+  # To use experimental features like ATP, you must manually change this to:
+  #   repository: newrelic/nrdot-collector
+  # See the Experimental Features section in the README for details.
   collector:
     registry: ""
     repository: newrelic/nrdot-collector-k8s
@@ -344,3 +340,17 @@ collectorObservability:
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
 lowDataMode:
+
+################################################################################
+# Experimental Features
+################################################################################
+# WARNING: The features in this section are experimental and may change or be
+# removed in future releases. To use these features, you must set the collector
+# image to newrelic/nrdot-collector (see images.collector.repository above).
+
+# -- (bool) Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering.
+# When disabled (default), ATP processors are not included in the pipeline.
+# When enabled, activates ATP with opinionated process metrics collection.
+# IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector
+# @default -- `false`
+enable_atp: true
