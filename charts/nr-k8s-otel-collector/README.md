@@ -118,45 +118,6 @@ propagated to the respective configmap.
 The pipelines maintained by New Relic accept metrics through the `routing/nr_pipelines` connector. Additional pipelines added in `Values.yaml` can be configured
 to export data to this connector which can then be connected to the New Relic maintained pipelines.
 
-## Experimental Features
-
-**⚠️ WARNING: Experimental features may change or be removed in future releases.**
-
-Some features in this chart are marked as experimental and require using a different collector image. To use experimental features:
-
-1. Set the collector image to `newrelic/nrdot-collector`:
-   ```yaml
-   images:
-     collector:
-       repository: newrelic/nrdot-collector
-       tag: "1.8.0"  # Use the appropriate version
-   ```
-
-2. Enable the experimental feature(s) at the bottom of your values.yaml file under the "Experimental Features" section.
-
-### Adaptive Telemetry Processor (ATP)
-
-ATP intelligently filters process-level metrics in your Kubernetes cluster. It dynamically identifies and includes only the processes that exceed configured thresholds for CPU and memory utilization, reducing data volume while maintaining visibility into important processes.
-
-**Configuration:**
-```yaml
-# In values.yaml
-images:
-  collector:
-    repository: newrelic/nrdot-collector  # Required for ATP
-    tag: "1.8.0"
-
-# At the bottom of values.yaml, under Experimental Features
-enable_atp: true
-```
-
-**What ATP does:**
-- Monitors all processes on cluster nodes
-- Applies dynamic thresholds (default: 5% for CPU and memory utilization)
-- Sends only the process metrics that exceed thresholds to New Relic
-- Maintains state across pod restarts for consistent filtering
-
-
 ## Values
 
 | Key | Type | Default | Description |
@@ -204,7 +165,7 @@ enable_atp: true
 | enable_atp | bool | `false` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
 | images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
-| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
 | images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
 | images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | kube-state-metrics.enableResourceQuotaSamples | bool | `false` | Enable resource quota data exporting |
