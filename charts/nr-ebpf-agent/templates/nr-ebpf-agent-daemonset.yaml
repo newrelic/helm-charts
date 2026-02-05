@@ -122,6 +122,13 @@ spec:
             value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
           {{- end }}
           {{- end }}
+          {{- if (hasKey .Values.protocols.thrift "spans") }}
+          {{- if .Values.protocols.thrift.spans.samplingErrorRate}}
+          {{- include "validate.samplingErrorRate" (dict "protocol" "thrift" "errorRate" .Values.protocols.thrift.spans.samplingErrorRate) }}
+          - name: PROTOCOLS_THRIFT_SPANS_SAMPLING_ERROR_RATE
+            value: "{{ .Values.protocols.thrift.spans.samplingErrorRate | default "0"}}"
+          {{- end }}
+          {{- end }}
           - name: NAMESPACE
             value: {{ .Release.Namespace }}
           - name: AGENT_SERVICE_NAME
