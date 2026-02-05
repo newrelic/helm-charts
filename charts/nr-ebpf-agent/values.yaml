@@ -56,6 +56,8 @@ apmDataFilters:
   # -- List of entity names to always keep APM data. By default all entities are kept/enabled
   # -- This config bypasses dropEntityName filter.
   keepEntityName: []
+  # -- Enable JVM metrics reporting. When enabled, the agent collects and reports JVM metrics for Java applications
+  jvmMetricsReporting: true
 
 # -- Network metrics Data filter / TCP stats filters
 # Configure filters to drop/keep Network metrics data based on config provided
@@ -105,6 +107,12 @@ protocols:
       samplingLatency: "p50"
       # -- samplingErrorRate represents the error rate threshold for an HTTP route where surpassing it would mean the corresponds spans of the route are exported.
       # Options: 1-100
+      samplingErrorRate: ""
+  thrift:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
       samplingErrorRate: ""
   mysql:
     enabled: true
@@ -156,6 +164,14 @@ protocols:
     spans:
       enabled: true
       samplingLatency: "p50"
+
+# Configuration to apply on the eBPF agent init container
+init:
+  image:
+    # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+    # -- The tag for eBPF agent init container image.
+    tag: ""
 
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:

@@ -42,8 +42,8 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: {{ .Values.ebpfAgent.image.repository }}:agent-base-image-latest
-        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ .Values.init.image.tag | default "agent-base-image-latest" }}
+        imagePullPolicy: {{ .Values.init.image.pullPolicy }}
         command: ["/scripts/install-headers.sh"]
         securityContext:
           privileged: true
@@ -122,6 +122,13 @@ spec:
             value: "{{ .Values.protocols.http.spans.samplingErrorRate | default "0"}}"
           {{- end }}
           {{- end }}
+          {{- if (hasKey .Values.protocols.thrift "spans") }}
+          {{- if .Values.protocols.thrift.spans.samplingErrorRate}}
+          {{- include "validate.samplingErrorRate" (dict "protocol" "thrift" "errorRate" .Values.protocols.thrift.spans.samplingErrorRate) }}
+          - name: PROTOCOLS_THRIFT_SPANS_SAMPLING_ERROR_RATE
+            value: "{{ .Values.protocols.thrift.spans.samplingErrorRate | default "0"}}"
+          {{- end }}
+          {{- end }}
           - name: NAMESPACE
             value: {{ .Release.Namespace }}
           - name: AGENT_SERVICE_NAME
@@ -158,6 +165,8 @@ spec:
             value: "{{ .Values.apmDataFilters.dropEntityName | join "," }}"
           - name: KEEP_APM_DATA_FOR_ENTITY_NAME
             value: "{{ .Values.apmDataFilters.keepEntityName | join "," }}"
+          - name: JVM_METRICS_REPORTING
+            value: "{{ if hasKey .Values.apmDataFilters "jvmMetricsReporting" }}{{ .Values.apmDataFilters.jvmMetricsReporting }}{{ else }}true{{ end }}"
           {{- end }}
 
           # Network metrics data filtering configuration
