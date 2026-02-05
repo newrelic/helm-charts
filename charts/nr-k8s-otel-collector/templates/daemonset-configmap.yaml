@@ -531,25 +531,6 @@ data:
                 aggregation_type: sum
 
       # following system.% metrics reduce metrics reported by hostmetrics receiver
-      filter/exclude_cpu_utilization:
-        metrics:
-          datapoint:
-            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "interrupt"'
-            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "nice"'
-            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "softirq"'
-      filter/exclude_memory_utilization:
-        metrics:
-          datapoint:
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_unreclaimable"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "inactive"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "cached"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "buffered"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_reclaimable"'
-      filter/exclude_memory_usage:
-        metrics:
-          datapoint:
-            - 'metric.name == "system.memory.usage" and attributes["state"] == "slab_unreclaimable"'
-            - 'metric.name == "system.memory.usage" and attributes["state"] == "inactive"'
       filter/exclude_filesystem_utilization:
         metrics:
           datapoint:
@@ -616,9 +597,11 @@ data:
     {{- end }}
 
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, ec2, aks, azure]
+        detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
         timeout: 2s
         override: false
+        eks:
+          node_from_env_var: KUBE_NODE_NAME
 
       resource/newrelic:
         attributes:
@@ -764,20 +747,30 @@ data:
             pipelines: [metrics/nr]
 
     service:
-      {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
+        {{- if include "newrelic.common.verboseLog" . }}
         logs:
           level: "debug"
-        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        {{- end }}
         metrics:
           readers:
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - pull:
                 exporter:
                   prometheus:
                     host: '0.0.0.0'
                     port: 8888
-        {{- end }}
-      {{- end }}
+            {{- end }}
+            {{- if .Values.collectorObservability.enabled }}
+            - periodic:
+                interval: {{ .Values.collectorObservability.scrapeIntervalSeconds }}
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+                    headers:
+                      api-key: ${env:NR_LICENSE_KEY}
+            {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
@@ -817,9 +810,6 @@ data:
             {{- end }}
             - metricstransform/hostmetrics_cpu
             - transform/truncate
-            - filter/exclude_cpu_utilization
-            - filter/exclude_memory_utilization
-            - filter/exclude_memory_usage
             - filter/exclude_filesystem_utilization
             - filter/exclude_filesystem_usage
             - filter/exclude_filesystem_inodes_usage
