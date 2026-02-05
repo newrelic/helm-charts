@@ -107,6 +107,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | apmDataFilters.dropPodLabels | object | `{}` | Pod labels to match for filtering APM data. Empty map means no label-based filtering. (Example: dropPodLabels: `{ "app": "frontend", "env": "production" }`) |
 | apmDataFilters.dropEntityName | list | `[]` | List of entity names to drop ebpf APM data.|
 | apmDataFilters.keepEntityName | list | `[]` | List of entity names to always keep APM data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |
+| apmDataFilters.jvmMetricsReporting | bool | `true` | Enable JVM Metrics Reporting. |
 | cluster | string | `""` | Name of the Kubernetes cluster to be monitored. Mandatory. Can be configured with `global.cluster` |
 | containerSecurityContext | object | `{}` | Sets all pods' containerSecurityContext. Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
