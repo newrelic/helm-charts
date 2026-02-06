@@ -1,0 +1,79 @@
+# Job Manager Role - Permissions to manage worker resources
+{{- if .Values.rbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "job-manager.fullname" . }}-runtime
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+rules:
+  # Ephemeral Job Management: Create and manage K8s Jobs for job execution
+  # - create: Create new jobs for incoming work
+  # - get/list/watch: Monitor job status and progress
+  # - delete: Prune completed/failed/timed-out jobs (via lease holder)
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "watch", "delete"]
+
+  # Pod Monitoring: Read-only access to pods created by jobs
+  # Jobs automatically create pods; job manager only monitors them
+  # - get/list/watch: Monitor pod status, readiness, and failures
+  # - delete: Cleanup orphaned pods when jobs are pruned
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+
+  # Ephemeral ConfigMap Management: Job-specific configuration
+  # - create: Create configmaps for job-specific config/scripts
+  # - get: Verify configmap creation
+  # - delete: Cleanup configmaps after job completion
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["create", "get", "delete"]
+
+  # Distributed Coordination: K8s Leases for leader election and coordination
+  # - create: Create lease resources if they don't exist
+  # - get: Check current lease holder
+  # - update: Acquire/renew lease (for runtime-pruning coordination)
+  - apiGroups: ["coordination.k8s.io"]
+    resources: ["leases"]
+    verbs: ["create", "get", "update"]
+
+  # Debugging: Read access to pod logs for troubleshooting
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+
+  # Monitoring: Read access to K8s events for observability
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list"]
+{{- end }}
+---
+# Runtime Pod Role - Minimal read-only permissions for runtime pods (sidecar + runtime)
+{{- if .Values.runtimePodRbac.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: runtime-pod-role
+  namespace: {{ .Values.runtimePodNetworkPolicy.runtimePodNamespace | default .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+    app.kubernetes.io/component: runtime-pod-role
+rules:
+  # Allow sidecar to watch and get its own pod
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "watch", "list"]
+
+  # Allow sidecar to read pod logs
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
+
+  # Allow sidecar to read pod status
+  - apiGroups: [""]
+    resources: ["pods/status"]
+    verbs: ["get"]
+{{- end }}
