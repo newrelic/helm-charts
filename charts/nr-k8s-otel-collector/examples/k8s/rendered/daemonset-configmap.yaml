@@ -464,14 +464,18 @@ data:
             operation: divide
           - name: node.cpu.usage.percentage
             type: scale
-            metric1: k8s.node.cpu.usage
+            metric1: container.cpu.usage
+            aggregation: sum
             scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
             operation: divide
+            group_by: k8s.node.name
           - name: node.memory.usage.percentage
             type: scale
-            metric1: k8s.node.memory.working_set
+            metric1: container_memory_working_set_bytes
+            aggregation: sum
             scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
             operation: divide
+            group_by: k8s.node.name
 
 
       transform/tag_generated_metrics_ldm:
