@@ -185,7 +185,7 @@ spec:
           {{- if .Values.logDataFilters }}
           {{- if .Values.logDataFilters.applicationLogReporting }}
           - name: APPLICATION_LOG_REPORTING_ENABLED
-            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled }}"
+            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default true }}"
           - name: APPLICATION_LOG_FILE_REGEX
             value: "{{ .Values.logDataFilters.applicationLogReporting.fileRegex }}"
           - name: MAX_LOG_SAMPLES_PER_MINUTE
