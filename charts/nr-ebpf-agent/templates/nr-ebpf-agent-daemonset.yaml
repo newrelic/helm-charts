@@ -187,13 +187,13 @@ spec:
           - name: APPLICATION_LOG_REPORTING_ENABLED
             value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default true }}"
           - name: APPLICATION_LOG_FILE_REGEX
-            value: "{{ .Values.logDataFilters.applicationLogReporting.fileRegex }}"
+            value: {{ .Values.logDataFilters.applicationLogReporting.fileRegex }}
           - name: MAX_LOG_SAMPLES_PER_MINUTE
             value: "{{ .Values.logDataFilters.applicationLogReporting.maxSamplesPerMinute | default 10000 }}"
           - name: KEEP_STDSTREAM_LOG_FOR_ENTITY_REGEX
-            value: "{{ .Values.logDataFilters.applicationLogReporting.keepStdStreamEntityRegex }}"
+            value: {{ .Values.logDataFilters.applicationLogReporting.keepStdStreamEntityRegex }}
           - name: KEEP_FILE_LOG_FOR_ENTITY_REGEX
-            value: "{{ .Values.logDataFilters.applicationLogReporting.keepFileEntityRegex }}"
+            value: {{ .Values.logDataFilters.applicationLogReporting.keepFileEntityRegex }}
           {{- end }}
           {{- end }}
 
