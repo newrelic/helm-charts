@@ -76,6 +76,31 @@ If using OpenShift, please set the following configuration in your values.yaml f
 provider: "OPEN_SHIFT"
 ```
 
+## Oracle Kubernetes Engine (OKE)
+
+When running on Oracle Kubernetes Engine (OKE) with the default non-root security context, you may encounter permission denied errors in the logs:
+
+```
+Error scraping metrics: failed to read usage at /hostfs/var/lib/containers/storage/overlay: permission denied
+```
+
+This occurs because OKE uses CRI-O as the container runtime, and the collector's non-root user (UID 1001) cannot access overlay filesystem mount points on OKE nodes.
+
+While the hostmetrics receiver supports `exclude_mount_points` and `exclude_fs_types` configuration to filter out specific filesystems, these exclusions only prevent metrics collection—they do not suppress error logging. The filesystem scraper attempts to stat each mount point discovered in `/proc/mounts` before checking exclusions. When stat fails due to permissions, the error is logged even though the mount point would have been excluded anyway.
+
+**Workaround**: To receive storage metrics for the overlay filesystem (and stop this error from logging), you may run the DaemonsSet as root:
+
+```yaml
+daemonset:
+  containerSecurityContext:
+    runAsNonRoot: false
+    runAsUser: 0
+```
+
+**Note**: This workaround reduces security isolation.
+
+OpenShift also uses CRI-O but does not encounter this issue because the chart automatically grants the privileged Security Context Constraint (SCC) on OpenShift, which provides the necessary permissions to access these paths.
+
 ## Helmless installation
 In the event that you cannot use helm to install this chart we have provided rendered files for you.
 The rendered files can be found under [examples/k8s/rendered](examples/k8s/rendered).
