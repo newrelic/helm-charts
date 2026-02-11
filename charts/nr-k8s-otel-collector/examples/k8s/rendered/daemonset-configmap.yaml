@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.3
+    helm.sh/chart: nr-k8s-otel-collector-0.10.4
 data:
   daemonset-config.yaml: |
     receivers:
@@ -464,14 +464,18 @@ data:
             operation: divide
           - name: node.cpu.usage.percentage
             type: scale
-            metric1: k8s.node.cpu.usage
+            metric1: container.cpu.usage
+            aggregation: sum
             scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
             operation: divide
+            group_by: k8s.node.name
           - name: node.memory.usage.percentage
             type: scale
-            metric1: k8s.node.memory.working_set
+            metric1: container_memory_working_set_bytes
+            aggregation: sum
             scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
             operation: divide
+            group_by: k8s.node.name
 
 
       transform/tag_generated_metrics_ldm:
@@ -588,7 +592,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.3
+            value: 0.10.4
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
