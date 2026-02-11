@@ -137,6 +137,8 @@ spec:
             value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: NETWORK_METRICS_REPORTING
             value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
+          - name: LOG_REPORTING
+            value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}true{{ end }}"
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
@@ -177,6 +179,22 @@ spec:
             value: "{{ .Values.networkMetricsDataFilter.dropEntityName | join "," }}"
           - name: KEEP_NETWORK_METRICS_DATA_FOR_ENTITY_NAME
             value: "{{ .Values.networkMetricsDataFilter.keepEntityName | join "," }}"
+          {{- end }}
+
+          # Log data filtering configuration
+          {{- if .Values.logDataFilters }}
+          {{- if .Values.logDataFilters.applicationLogReporting }}
+          - name: APPLICATION_LOG_REPORTING_ENABLED
+            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default true }}"
+          - name: APPLICATION_LOG_FILE_REGEX
+            value: {{ .Values.logDataFilters.applicationLogReporting.fileRegex | quote }}
+          - name: MAX_LOG_SAMPLES_PER_MINUTE
+            value: "{{ .Values.logDataFilters.applicationLogReporting.maxSamplesPerMinute | default 10000 }}"
+          - name: KEEP_STDSTREAM_LOG_FOR_ENTITY_REGEX
+            value: {{ .Values.logDataFilters.applicationLogReporting.keepStdStreamEntityRegex | quote }}
+          - name: KEEP_FILE_LOG_FOR_ENTITY_REGEX
+            value: {{ .Values.logDataFilters.applicationLogReporting.keepFileEntityRegex | quote }}
+          {{- end }}
           {{- end }}
 
           # DEPRECATED: The following environment variables are deprecated and kept for backward compatibility.

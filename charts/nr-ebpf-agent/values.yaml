@@ -21,6 +21,8 @@ apmDataReporting: true
 # -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics
 # RENAMED from 'tcpStatsReporting' for clarity. The old name is deprecated but still supported for backward compatibility.
 networkMetricsReporting: true
+# -- Enable log reporting. When enabled, the agent collects and reports logs.
+logReporting: true
 
 # -- All data drop filters configuration
 # Configure filters to drop all types of data (Network Metrics and APM data) based on config provided
@@ -69,6 +71,29 @@ networkMetricsDataFilter:
   # -- This config bypasses dropEntityName filter.
   keepEntityName: []
 
+# -- Log data filters configuration
+# Configure filters to drop/keep log data based on the config provided
+logDataFilters:
+  # -- Application/entity log reporting filters
+  applicationLogReporting:
+    # -- Enable log reporting for entity monitored by eBPF Agent
+    enabled: true
+    # -- Regex to match log file path to include for entity log reporting
+    fileRegex: ".*.log$"
+    # -- Maximum number of log samples to collect per minute from an entity.
+    # The internal maxSamplesStored is calculated proportionally based on the harvest cycle (5 seconds):
+    # maxSamplesStored = maxSamplesPerMinute / (60 / 5) = maxSamplesPerMinute / 12
+    # For the default value of 10000, this results in ~833 samples stored per harvest cycle.
+    # Once this limit is reached, events are sampled to maintain an even distribution across the harvest cycle.
+    maxSamplesPerMinute: 10000
+    # -- The eBPF agent collects and reports STDOUT/STDERR STREAM logs to New Relic for entities that match this regex. 
+    # The entities are identified by their "NEW_RELIC_APP_NAME" (if provided) or their Kubernetes service name.
+    # To forward logs for all entities, use the regex .*
+    keepStdStreamEntityRegex: ".*"
+    # -- The eBPF agent collects and reports FILE logs to New Relic for entities that match this regex. 
+    # The entities are identified by their "NEW_RELIC_APP_NAME" (if provided) or their Kubernetes service name.
+    # To forward logs for all entities, use the regex .*
+    keepFileEntityRegex: ".*"
 
 # The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
 # Each protocol has the flexibility to selectively enable the type of OTLP data to export.
