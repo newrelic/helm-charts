@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.4
+    helm.sh/chart: nr-k8s-otel-collector-0.10.5
 data:
   daemonset-config.yaml: |
     receivers:
@@ -43,6 +43,12 @@ data:
             metrics:
               system.filesystem.utilization:
                 enabled: true
+            # Exclude container storage overlay mount to avoid permission errors when running as non-root
+            # This is only relevant for CRI-O container runtime (used by OKE, OpenShift, etc.)
+            exclude_mount_points:
+              mount_points:
+                - ^/var/lib/containers/storage/overlay$
+              match_type: regexp
           disk:
             metrics:
               system.disk.merged:
@@ -607,7 +613,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.4
+            value: 0.10.5
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
