@@ -42,6 +42,14 @@ data:
             metrics:
               system.filesystem.utilization:
                 enabled: true
+            {{- if include "nrKubernetesOtel.daemonset.excludeContainerStorageOverlay" . }}
+            # Exclude container storage overlay mount to avoid permission errors when running as non-root
+            # This is only relevant for CRI-O container runtime (used by OKE, OpenShift, etc.)
+            exclude_mount_points:
+              mount_points:
+                - ^/var/lib/containers/storage/overlay$
+              match_type: regexp
+            {{- end }}
           disk:
             metrics:
               system.disk.merged:
