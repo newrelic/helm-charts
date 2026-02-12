@@ -1,0 +1,82 @@
+name: Post-Release Agent Metadata Update
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  update-agent-metadata:
+    name: Update metadata for ${{ matrix.chart }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - chart: nr-ebpf-agent
+            agent-type: NReBPFAgent
+            config-directory: charts/nr-ebpf-agent/.fleetControl
+          - chart: nri-bundle
+            agent-type: NRInfra
+            config-directory: charts/nri-bundle/.fleetControl
+          - chart: nr-k8s-otel-collector
+            agent-type: NRDOT
+            config-directory: charts/nr-k8s-otel-collector/.fleetControl
+          - chart: newrelic-logging
+            agent-type: FluentBit
+            config-directory: charts/newrelic-logging/.fleetControl
+          - chart: pipeline-control-gateway
+            agent-type: PipelineControlGateway
+            config-directory: charts/pipeline-control-gateway/.fleetControl
+      fail-fast: false
+
+    steps:
+      - name: Check if release matches chart
+        id: should-run
+        run: |
+          TAG="${{ github.event.release.tag_name }}"
+          CHART="${{ matrix.chart }}"
+          if [[ "$TAG" == "$CHART-"* ]]; then
+            echo "match=true" >> $GITHUB_OUTPUT
+            echo "✓ Release tag $TAG matches chart $CHART"
+          else
+            echo "match=false" >> $GITHUB_OUTPUT
+            echo "⊘ Release tag $TAG does not match chart $CHART - skipping"
+          fi
+
+      - name: Checkout repository
+        if: steps.should-run.outputs.match == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Extract version from release tag
+        if: steps.should-run.outputs.match == 'true'
+        id: version
+        run: |
+          VERSION="${{ github.event.release.tag_name }}"
+          VERSION="${VERSION#${{ matrix.chart }}-}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION for chart ${{ matrix.chart }}"
+
+      - name: Check .fleetControl directory
+        if: steps.should-run.outputs.match == 'true'
+        id: check-config
+        run: |
+          if [ -d "${{ matrix.config-directory }}" ] && [ "$(ls -A ${{ matrix.config-directory }})" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "✓ Directory ${{ matrix.config-directory }} exists and contains files"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::warning::Directory ${{ matrix.config-directory }} does not exist or is empty. Skipping agent metadata update for ${{ matrix.chart }}."
+          fi
+
+      - name: Upload to Agent Metadata
+        if: steps.should-run.outputs.match == 'true' && steps.check-config.outputs.exists == 'true'
+        uses: newrelic/agent-metadata-action@feat/allow-multiple-configs
+        with:
+          newrelic-client-id: ${{ secrets.NEWRELIC_CLIENT_ID }}
+          newrelic-private-key: ${{ secrets.NEWRELIC_PRIVATE_KEY }}
+          agent-type: ${{ matrix.agent-type }}
+          version: ${{ steps.version.outputs.version }}
+          git-ref: ${{ github.event.release.tag_name }}
+          config-directory: ${{ matrix.config-directory }}
+          apm-control-nr-license-key: ${{ secrets.APM_CONTROL_NR_LICENSE_KEY_STAGING }}
