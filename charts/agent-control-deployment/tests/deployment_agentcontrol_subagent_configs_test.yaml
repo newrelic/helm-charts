@@ -16,12 +16,10 @@ tests:
           path: spec.template.spec.containers[0].volumeMounts
           value:
             - name: agent-control-config
-              mountPath: /etc/newrelic-agent-control/config.yaml
+              mountPath: /etc/newrelic-agent-control/local-data/agent-control/local_config.yaml
               readOnly: true
               subPath: config.yaml
-            - mountPath: /etc/newrelic-agent-control/keys
-              name: auth-secret-private-key
-              readOnly: true
+
       - template: templates/deployment-agentcontrol.yaml
         equal:
           path: spec.template.spec.volumes
@@ -34,9 +32,3 @@ tests:
                     path: config.yaml
             - name: var-lib-newrelic-agent-control
               emptyDir: {}
-            - name: auth-secret-private-key
-              secret:
-                secretName: agent-control-auth
-                items:
-                  - key: private_key
-                    path: from-secret.key

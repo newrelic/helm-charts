@@ -314,7 +314,7 @@ spec:
         kubernetes.io/os: linux
       containers:
         - name: compute-pi-digits
-          image: perl:5.34.0
+          image: docker.io/perl:5.34.0
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -352,7 +352,7 @@ metadata:
 spec:
   containers:
     - name: alpine
-      image: alpine:latest
+      image: docker.io/alpine:latest
       resources:
         limits:
           # Force a 'CreateContainerError':
@@ -373,7 +373,7 @@ metadata:
 spec:
   containers:
     - name: alpine
-      image: alpine:latest
+      image: docker.io/alpine:latest
   nodeSelector:
     not-existing: not-existing
 ---
@@ -470,7 +470,7 @@ spec:
     spec:
       containers:
         - name: compute-pi-digits
-          image: perl:5.34.0
+          image: docker.io/perl:5.34.0
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -564,7 +564,7 @@ spec:
     spec:
       containers:
         - name: compute-pi-digits
-          image: perl:5.34.0
+          image: docker.io/perl:5.34.0
           imagePullPolicy: IfNotPresent
           resources:
             requests:
@@ -639,7 +639,7 @@ spec:
         spec:
           containers:
             - name: compute-pi-digits
-              image: perl:5.34.0
+              image: docker.io/perl:5.34.0
               imagePullPolicy: IfNotPresent
               resources:
                 requests:
@@ -661,3 +661,12 @@ spec:
             - name: storage
               emptyDir:
                 sizeLimit: 30Mi
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: e2e-resource-quota
+  namespace: default
+spec:
+  hard:
+    secrets: "100"

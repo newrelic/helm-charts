@@ -124,6 +124,8 @@ to export data to this connector which can then be connected to the New Relic ma
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
+| collectorObservability.enabled | bool | `false` | Specifies whether the collector reports its own metrics |
+| collectorObservability.scrapeIntervalMs | int | `60000` | Specifies the interval at which the collector reports its metrics (in milliseconds) |
 | containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
@@ -161,11 +163,16 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
-| image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| image.repository | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
-| image.tag | string | `"1.2.0"` | Overrides the image tag whose default is the chart appVersion. |
+| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. |
+| images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
+| images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| kube-state-metrics.enableResourceQuotaSamples | bool | `false` | Enable resource quota data exporting |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
+| kube-state-metrics.metricAnnotationsAllowList | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes annotation keys that will be used in the resources' annotations metric. By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]". Use "*" to include all annotations for a resource type. Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"] |
+| kube-state-metrics.metricLabelsAllowlist | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes label keys that will be used in the resources' labels metric. By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]". Use "*" to include all labels for a resource type. Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"] |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
+| kube-state-metrics.resources | object | `{}` | Sets resources for kube-state-metrics. |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
@@ -197,6 +204,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
 | receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubeletstats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
+| receivers.prometheus.ksmSelector | string | `app.kubernetes.io/name=kube-state-metrics` | Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster. |
 | receivers.prometheus.scrapeInterval | string | `1m` | Sets the scrape interval for the `prometheus` receiver |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |

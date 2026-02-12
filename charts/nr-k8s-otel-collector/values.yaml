@@ -13,20 +13,56 @@ kube-state-metrics:
   # metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in
   # your Kubernetes clusters.
   enabled: true
+
+  # -- Sets resources for kube-state-metrics.
+  resources: {}
+
   # -- Disable prometheus from auto-discovering KSM and potentially scraping duplicated data
   prometheusScrape: false
+  # -- Enable resource quota data exporting
+  enableResourceQuotaSamples: false
+  # kube-state-metrics.metricLabelsAllowlist -- List of Kubernetes label keys that will be used in the resources' labels metric.
+  # By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels
+  # should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]".
+  # Use "*" to include all labels for a resource type.
+  # Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"]
+  # @default -- `["pods=[*]", "namespaces=[*]", "deployments=[*]"]`
+  metricLabelsAllowlist:
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
+  # kube-state-metrics.metricAnnotationsAllowList -- List of Kubernetes annotation keys that will be used in the resources' annotations metric.
+  # By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations
+  # should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]".
+  # Use "*" to include all annotations for a resource type.
+  # Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"]
+  # @default -- `["pods=[*]", "namespaces=[*]", "deployments=[*]"]`
+  metricAnnotationsAllowList:
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
 
 # This chart has support for OpenShift and GKE Autopilot.
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
 provider: ""
 
-image:
-  # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/nrdot-collector-k8s
-  # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
-  pullPolicy: IfNotPresent
-  # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.2.0"
+# -- Images used by the chart.
+images:
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+  # -- Image for the OpenTelemetry Collector.
+  collector:
+    registry: ""
+    repository: newrelic/nrdot-collector-k8s
+    tag: "1.8.0"
+    pullPolicy: IfNotPresent
+  # -- Image for the initContainer that retrieves node allocatable resources.
+  kubectl:
+    registry: ""
+    repository: bitnami/kubectl
+    tag: latest
+    pullPolicy: IfNotPresent
 
 # -- In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName`
 customSecretName: ""
@@ -254,6 +290,9 @@ receivers:
     # -- Sets the scrape interval for the `prometheus` receiver
     # @default -- `1m`
     scrapeInterval: 1m
+    # -- Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster.
+    # @default -- `app.kubernetes.io/name=kube-state-metrics`
+    ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
   k8sEvents:
     # -- (bool) Specifies whether the `k8s_events` receiver is enabled
     # @default -- `true`
@@ -276,6 +315,8 @@ receivers:
     # -- (bool) Specifies whether the `filelog` receiver is enabled
     # @default -- `true`
     enabled: true
+
+  # DEPRECATED 1/21/26: Please configure values under `collectorObservability` instead
   collectorMetrics:
     # -- (bool) Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled.
     # @default -- `false`
@@ -283,6 +324,15 @@ receivers:
     # -- Sets the scrape interval for metrics scraped from the deployment collector
     # @default -- `1m`
     scrapeInterval: 1m
+
+# Modern method for enabling the collector to report its own metrics (replaces `receivers.collectorMetrics`)
+collectorObservability:
+  # -- (bool) Specifies whether the collector reports its own metrics
+  # @default -- `false`
+  enabled: false
+  # -- Specifies the interval at which the collector reports its metrics (in milliseconds)
+  # @default -- `60000`
+  scrapeIntervalMs: 60000
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`

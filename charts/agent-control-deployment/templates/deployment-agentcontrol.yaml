@@ -108,14 +108,9 @@ spec:
 
           volumeMounts:
             - name: agent-control-config
-              mountPath: /etc/newrelic-agent-control/config.yaml
+              mountPath: /etc/newrelic-agent-control/local-data/agent-control/local_config.yaml
               readOnly: true
               subPath: config.yaml
-            {{- if ((.Values.config).fleet_control).enabled }}
-            - name: auth-secret-private-key
-              mountPath: "/etc/newrelic-agent-control/keys"
-              readOnly: true
-            {{- end }}
             {{- with .Values.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -145,14 +140,6 @@ spec:
                 path: config.yaml
         - name: var-lib-newrelic-agent-control
           emptyDir: {}
-        {{- if ((.Values.config).fleet_control).enabled }}
-        - name: auth-secret-private-key
-          secret:
-            secretName: {{ include "newrelic-agent-control.auth.secret.name" . }}
-            items:
-              - key: private_key
-                path: from-secret.key
-        {{- end }}
         {{- with .Values.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

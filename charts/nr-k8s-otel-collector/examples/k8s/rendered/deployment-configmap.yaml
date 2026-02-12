@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.48
+    helm.sh/chart: nr-k8s-otel-collector-0.10.5
 data:
   deployment-config.yaml: |
     receivers:
@@ -19,6 +19,8 @@ data:
         protocols:
           http:
             endpoint: ${env:MY_POD_IP}:4318
+          grpc:
+            endpoint: ${env:MY_POD_IP}:4317
       k8s_events:
       prometheus/ksm:
         config:
@@ -303,6 +305,14 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/convert_timestamp:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(metric.name, "kube_pod_container_status_last_terminated_timestamp")
+            statements:
+              - set(datapoint.attributes["kube_pod_container_status_last_terminated_timestamp_formatted"], FormatTime(Unix(Int(datapoint.value_double)), "%Y-%m-%dT%H:%M:%SZ"))
+
       metricstransform/ksm:
         transforms:
           - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
@@ -323,7 +333,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated))
+          - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated)|labels|annotations)
             action: update
             match_type: regexp
             operations:
@@ -359,6 +369,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: ^kube_namespace_(labels|annotations|status_phase|created)$$
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
           - include: kube_persistentvolume_(capacity_bytes|created|info|status_phase)
             action: update
             match_type: regexp
@@ -377,7 +396,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason))
+          - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason|last_terminated_timestamp|last_terminated_exitcode|last_terminated_reason))
             action: update
             match_type: regexp
             operations:
@@ -386,7 +405,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time)$$
+          - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time|deletion_timestamp|labels|annotations)$$
             action: update
             match_type: regexp
             operations:
@@ -413,7 +432,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-          - include: kube_(replicaset_owner)
+          - include: kube_replicaset_(owner|created)
             action: update
             match_type: regexp
             operations:
@@ -497,7 +516,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.48
+            value: 0.10.5
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -515,7 +534,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.8.48
+            value: 0.10.5
 
       transform/events:
         log_statements:
@@ -718,6 +737,9 @@ data:
             pipelines: [metrics/nr_controlplane]
 
     service:
+      telemetry:
+        metrics:
+          readers:
       pipelines:
         
         metrics/ingress:
@@ -740,6 +762,7 @@ data:
             - filter/exclude_zero_value_kube_node_status_condition
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
+            - transform/convert_timestamp
             - metricstransform/ldm
             - metricstransform/k8s_cluster_info_ldm
             - metricstransform/ksm

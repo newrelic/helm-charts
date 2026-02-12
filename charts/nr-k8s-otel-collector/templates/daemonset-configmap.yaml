@@ -25,6 +25,8 @@ data:
                 enabled: false
               system.cpu.utilization:
                 enabled: true
+              system.cpu.logical.count:
+                enabled: true
           load:
           memory:
             metrics:
@@ -40,6 +42,14 @@ data:
             metrics:
               system.filesystem.utilization:
                 enabled: true
+            {{- if include "nrKubernetesOtel.daemonset.excludeContainerStorageOverlay" . }}
+            # Exclude container storage overlay mount to avoid permission errors when running as non-root
+            # This is only relevant for CRI-O container runtime (used by OKE, OpenShift, etc.)
+            exclude_mount_points:
+              mount_points:
+                - ^/var/lib/containers/storage/overlay$
+              match_type: regexp
+            {{- end }}
           disk:
             metrics:
               system.disk.merged:
@@ -86,8 +96,6 @@ data:
             enabled: true
           k8s.pod.memory_request_utilization:
             enabled: true
-
-
 
       prometheus:
         config:
@@ -317,6 +325,15 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
 
 
       transform/collector:
@@ -454,6 +471,44 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
+      metricsgeneration/calculate_percentage:
+        rules:
+            # Ratio of Requested Resources to Limits
+            # request_limit_ratio = Limit_Utilization / Request_Utilization
+            # = (usage / limit) / (usage / request) = (usage / limit) * (request / usage) = request / limit
+          - name: k8s.pod.memory_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.memory_limit_utilization
+            metric2: k8s.pod.memory_request_utilization
+            operation: divide
+          - name: k8s.pod.cpu_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.cpu_limit_utilization
+            metric2: k8s.pod.cpu_request_utilization
+            operation: divide
+          - name: node.cpu.usage.percentage
+            type: scale
+            metric1: k8s.node.cpu.usage
+            scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+          - name: node.memory.usage.percentage
+            type: scale
+            metric1: k8s.node.memory.working_set
+            scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+
+
+      transform/tag_generated_metrics_ldm:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - metric.name == "k8s.pod.cpu_request_limit_ratio"
+              - metric.name == "k8s.pod.memory_request_limit_ratio"
+              - metric.name == "node.cpu.usage.percentage"
+              - metric.name == "node.memory.usage.percentage"
+            statements:
+              - set(attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -569,9 +624,11 @@ data:
     {{- end }}
 
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, ec2, aks, azure]
+        detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
         timeout: 2s
         override: false
+        eks:
+          node_from_env_var: KUBE_NODE_NAME
 
       resource/newrelic:
         attributes:
@@ -717,20 +774,30 @@ data:
             pipelines: [metrics/nr]
 
     service:
-      {{- if include "newrelic.common.verboseLog" . }}
       telemetry:
+        {{- if include "newrelic.common.verboseLog" . }}
         logs:
           level: "debug"
-        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        {{- end }}
         metrics:
           readers:
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - pull:
                 exporter:
                   prometheus:
                     host: '0.0.0.0'
                     port: 8888
-        {{- end }}
-      {{- end }}
+            {{- end }}
+            {{- if .Values.collectorObservability.enabled }}
+            - periodic:
+                interval: {{ .Values.collectorObservability.scrapeIntervalSeconds }}
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+                    headers:
+                      api-key: ${env:NR_LICENSE_KEY}
+            {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
@@ -747,6 +814,7 @@ data:
             - prometheus
             {{- end }}
           processors:
+            - metricsgeneration/calculate_percentage
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
@@ -760,6 +828,7 @@ data:
             - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
+            - transform/tag_generated_metrics_ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
             - metricstransform/kubelet

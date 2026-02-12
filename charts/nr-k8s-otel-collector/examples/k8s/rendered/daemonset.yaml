@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.8.48
+    helm.sh/chart: nr-k8s-otel-collector-0.10.5
 spec:
   selector:
     matchLabels:
@@ -24,9 +24,65 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: d90199f495c7821113c7271bf9cd42ad91128449c9bd6ac537cdbbcd9204a290
+        checksum/config: 6c5ce1a6f82c834eb8b42383bd1fb5181cea24c7ccdbd725ce105076e2cb1094
     spec:
       serviceAccountName: nr-k8s-otel-collector
+      initContainers:
+        - name: get-cpu-allocatable
+          image: "docker.io/bitnami/kubectl:latest"
+          imagePullPolicy: IfNotPresent
+          command:
+            - sh
+            - -c
+            - |
+              NODE_NAME=$(echo $KUBE_NODE_NAME)
+              echo "Node Name: $KUBE_NODE_NAME"
+
+              export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+              if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              # Convert milliCPU values to plain CPU values
+              if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
+                # Strip the 'm' and convert the milliCPUs to CPUs
+                export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+              fi
+
+              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
+                /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+                /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+                /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+                /m$/  {printf "%.0f\n", $1 / 1000; next}
+                {print $1}
+              ')
+
+              if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+              echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
+              cp /temp-config/daemonset-config.yaml /final-config
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              cat /final-config/daemonset-config.yaml
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          resources:
+            {}
+          volumeMounts:
+            - name: daemonset-config
+              mountPath: /temp-config
+            - name: final-daemonset-config
+              mountPath: /final-config
       containers:
         - name: otel-collector-daemonset
           securityContext:
@@ -38,13 +94,13 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "newrelic/nrdot-collector-k8s:1.2.0"
+          image: "docker.io/newrelic/nrdot-collector-k8s:1.8.0"
           imagePullPolicy: IfNotPresent
           args:
             - --config
             - /config/daemonset-config.yaml
             - --feature-gates
-            - receiver.kubeletstats.enableCPUUsageMetrics
+            - metricsgeneration.MatchAttributes,-processor.resourcedetection.propagateerrors
           resources:
             {}
           env:
@@ -52,8 +108,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
-            - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://$(HOST_IP):55680"
             - name: POD_NAME
               valueFrom:
                 fieldRef:
@@ -81,7 +135,7 @@ spec:
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
-            - name: daemonset-config
+            - name: final-daemonset-config
               mountPath: /config
       volumes:
         - name: host-fs
@@ -90,6 +144,8 @@ spec:
         - name: varlogpods
           hostPath:
             path: /var/log/pods
+        - name: final-daemonset-config
+          emptyDir: {}
         - name: daemonset-config
           configMap:
             name: nr-k8s-otel-collector-daemonset-config

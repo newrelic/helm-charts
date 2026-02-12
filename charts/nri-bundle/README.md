@@ -4,9 +4,6 @@ Groups together the individual charts for the New Relic Kubernetes solution for 
 
 **Homepage:** <https://github.com/newrelic/helm-charts>
 
-## v6 Release
-`v6` of the `nri-bundle`, bundles `v2` of the [newrelic-prometheus-configurator](https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent). This release contains breaking changes if you've created a custom configuration for the `newrelic-prometheus-configurator`. For migration details, please check the chart's [README](https://github.com/newrelic/newrelic-prometheus-configurator?tab=readme-ov-file#v2-release).
-
 ## Bundled charts
 
 This chart does not deploy anything by itself but has many charts as dependencies. This allows you to easily install and upgrade the New Relic
@@ -28,7 +25,7 @@ here is a list of components that this chart installs and where you can find mor
 | [newrelic-prometheus-configurator](https://github.com/newrelic/newrelic-prometheus-configurator/tree/master/charts/newrelic-prometheus-agent) |  | Configures instances of Prometheus in Agent mode to send metrics to the New Relic Prometheus endpoint. |
 | [newrelic-pixie](https://github.com/newrelic/helm-charts/tree/master/charts/newrelic-pixie) |  | Connects to the Pixie API and enables the New Relic plugin in Pixie. The plugin allows you to export data from Pixie to New Relic for long-term data retention. |
 | [Pixie](https://docs.pixielabs.ai/installing-pixie/install-schemes/helm/#3.-deploy) |  | Is an open source observability tool for Kubernetes applications that uses eBPF to automatically capture telemetry data without the need for manual instrumentation. |
-| [newrelic-eAPM-agent](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) | | Configures instances of the New Relic eAPM agent to automatically capture telemetry data without the need for manual instrumentation. |
+| [nr-ebpf-agent](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) | | Configures instances of the New Relic eBPF agent to automatically capture telemetry data without the need for manual instrumentation. |
 | [k8s-agents-operator](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) | | Streamlines full-stack observability for Kubernetes environments by automating APM instrumentation alongside Kubernetes agent deployment. |
 
 ## Configure components
@@ -186,7 +183,9 @@ Note, the value table below is automatically generated from `values.yaml` by `he
 | global.verboseLog | bool | false | Sets the debug logs to this integration or all integrations if it is set globally |
 | k8s-agents-operator.enabled | bool | `false` | Install the [`k8s-agents-operator` chart](https://github.com/newrelic/k8s-agents-operator/tree/main/charts/k8s-agents-operator) |
 | kube-state-metrics.enabled | bool | `false` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
-| newrelic-eapm-agent.enabled | bool | `false` | Install the [`nr-eapm-agent`](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) |
+| kube-state-metrics.metricAnnotationsAllowList | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes annotation keys that will be used in the resources' annotations metric. By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]". Use "*" to include all annotations for a resource type. Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"] |
+| kube-state-metrics.metricLabelsAllowlist | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes label keys that will be used in the resources' labels metric. By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]". Use "*" to include all labels for a resource type. Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"] |
+| nr-ebpf-agent.enabled | bool | `false` | Install the [`nr-ebpf-agent`](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent) |
 | newrelic-infra-operator.enabled | bool | `false` | Install the [`newrelic-infra-operator` chart](https://github.com/newrelic/newrelic-infra-operator/tree/main/charts/newrelic-infra-operator) (Beta) |
 | newrelic-infrastructure.enabled | bool | `true` | Install the [`newrelic-infrastructure` chart](https://github.com/newrelic/nri-kubernetes/tree/main/charts/newrelic-infrastructure) |
 | newrelic-k8s-metrics-adapter.enabled | bool | `false` | Install the [`newrelic-k8s-metrics-adapter.` chart](https://github.com/newrelic/newrelic-k8s-metrics-adapter/tree/main/charts/newrelic-k8s-metrics-adapter) (Beta) |
