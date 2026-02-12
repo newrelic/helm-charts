@@ -14,7 +14,7 @@ data:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
         root_path: /hostfs
         {{- end }}
         collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -77,14 +77,22 @@ data:
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+
+        {{- if include "newrelic.common.openShift" . }}
+        endpoint: "${HOST_IP}:10250"
+        {{- else if not (include "newrelic.common.gkeAutopilot" .) }}
         endpoint: "${KUBE_NODE_NAME}:10250"
+        {{- else }}
+        endpoint: "${KUBE_NODE_NAME}:10255"
+        {{- end }}
+        
+        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         auth_type: "serviceAccount"
         insecure_skip_verify: true
         {{- else }}
-        endpoint: "${KUBE_NODE_NAME}:10255"
         auth_type: "none"
         {{- end }}
+        
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
