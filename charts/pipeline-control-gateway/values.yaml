@@ -164,7 +164,7 @@ generated:
           - job_name: 'pipeline-gateway-monitoring'
             scrape_interval: 15s
             static_configs:
-              - targets: [ '0.0.0.0:8888' ]
+              - targets: ['0.0.0.0:8888']
                 labels:
                   version: "1.2.0"
                   podName: "${env:MY_POD_NAME}"
@@ -173,7 +173,7 @@ generated:
             metric_relabel_configs:
               - action: labeldrop
                 regex: 'service_version|service_name|service_instance_id'
-              - source_labels: [ __name__ ]
+              - source_labels: [__name__]
                 regex: 'godebug_.*'
                 action: drop
   processors:
@@ -203,16 +203,16 @@ generated:
       encoding: json
       nr_license_key: "${env:NEW_RELIC_LICENSE_KEY}"
   service:
-    extensions: [ healthcheckv2 ]
+    extensions: [healthcheckv2]
     pipelines:
       "logs/nr":
         receivers: [nrproprietaryreceiver]
         processors: [filter/Logs]
         exporters: [nrcollectorexporter]
       "logs/otlp":
-        receivers: [ otlp/receiver ]
+        receivers: [otlp/receiver]
         processors: [filter/Logs]
-        exporters: [ otlp/exporter ]
+        exporters: [otlp/exporter]
       "metrics/nr":
         receivers: [nrproprietaryreceiver]
         processors: [filter/Metrics]
@@ -224,11 +224,11 @@ generated:
       "traces/otlp":
         receivers: [otlp/receiver]
         processors: [filter/Traces]
-        exporters: [ otlp/exporter ]
+        exporters: [otlp/exporter]
       "traces/nr":
-        receivers: [ nrproprietaryreceiver ]
+        receivers: [nrproprietaryreceiver]
         processors: [filter/Traces]
-        exporters: [ nrcollectorexporter ]
+        exporters: [nrcollectorexporter]
       "metrics/monitoring":
         receivers: ["prometheus/monitoring"]
         processors: []
