@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.2
+    helm.sh/chart: nr-k8s-otel-collector-0.10.6
 data:
   daemonset-config.yaml: |
     receivers:
@@ -43,6 +43,12 @@ data:
             metrics:
               system.filesystem.utilization:
                 enabled: true
+            # Exclude container storage overlay mount to avoid permission errors when running as non-root
+            # This is only relevant for CRI-O container runtime (used by OKE, OpenShift, etc.)
+            exclude_mount_points:
+              mount_points:
+                - ^/var/lib/containers/storage/overlay$
+              match_type: regexp
           disk:
             metrics:
               system.disk.merged:
@@ -198,11 +204,11 @@ data:
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
       adaptivetelemetryprocessor:
-        storage_path: "/var/lib/nrdot-collector/adaptiveprocess.db"
+        enable_storage: true
         retention_minutes: 30
         metric_thresholds:
-          process.cpu.utilization: 0.05 # This means 5%
-          process.memory.utilization: 0.05 # This means 5%
+          process.cpu.utilization: 0.10 # This means 10%
+          process.memory.utilization: 0.10 # This means 10%
 
       transform/ksm:
         metric_statements:
@@ -631,7 +637,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.2
+            value: 0.10.6
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"

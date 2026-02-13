@@ -227,11 +227,11 @@ data:
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
       adaptivetelemetryprocessor:
-        storage_path: "/var/lib/nrdot-collector/adaptiveprocess.db"
+        enable_storage: true
         retention_minutes: 30
         metric_thresholds:
-          process.cpu.utilization: 0.05 # This means 5%
-          process.memory.utilization: 0.05 # This means 5%
+          process.cpu.utilization: 0.10 # This means 10%
+          process.memory.utilization: 0.10 # This means 10%
       {{- end }}
 
       transform/ksm:
