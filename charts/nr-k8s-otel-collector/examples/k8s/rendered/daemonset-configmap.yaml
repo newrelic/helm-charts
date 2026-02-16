@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.5
+    helm.sh/chart: nr-k8s-otel-collector-0.10.6
 data:
   daemonset-config.yaml: |
     receivers:
@@ -61,18 +61,6 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
-          # Uncomment to enable process metrics, which can be noisy but valuable.
-          # processes:
-          # process:
-          #   metrics:
-          #     process.cpu.utilization:
-          #       enabled: true
-          #     process.cpu.time:
-          #       enabled: false
-          #   mute_process_name_error: true
-          #   mute_process_exe_error: true
-          #   mute_process_io_error: true
-          #   mute_process_user_error: true
 
       kubeletstats:
         collection_interval: 1m
@@ -406,6 +394,8 @@ data:
 
       metricstransform/hostmetrics:
         transforms:
+          # When ATP is disabled: Only include a limited subset of process metrics.
+          # This matches the original behavior before ATP was introduced.
           - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
             action: update
             match_type: regexp
@@ -613,7 +603,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.5
+            value: 0.10.6
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -740,6 +730,12 @@ data:
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
             pipelines: [metrics/nr]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
