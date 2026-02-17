@@ -226,7 +226,7 @@ data:
       {{- if .Values.enable_atp }}
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
-      adaptivetelemetryprocessor:
+      adaptivetelemetry:
         enable_storage: true
         retention_minutes: 30
         metric_thresholds:
@@ -877,7 +877,7 @@ data:
             {{- if .Values.enable_atp }}
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
-            - adaptivetelemetryprocessor
+            - adaptivetelemetry
             {{- end }}
             - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}

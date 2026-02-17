@@ -203,7 +203,7 @@ data:
           - namespace
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
-      adaptivetelemetryprocessor:
+      adaptivetelemetry:
         enable_storage: true
         retention_minutes: 30
         metric_thresholds:
@@ -803,7 +803,7 @@ data:
             - memory_limiter
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
-            - adaptivetelemetryprocessor
+            - adaptivetelemetry
             - metricstransform/k8s_cluster_info
             - metricstransform/ldm
             - transform/tag_generated_metrics_ldm
