@@ -52,8 +52,9 @@ images:
   pullSecrets: []
   # - name: regsecret
   # -- Image for the OpenTelemetry Collector.
-  # To use experimental features, you must use the image newrelic/nrdot-collector.
-  # See below for experimental features.
+  # To use experimental features like ATP, you must manually change this to:
+  #   repository: newrelic/nrdot-collector
+  # See the Experimental Features section in the README for details.
   collector:
     registry: ""
     repository: newrelic/nrdot-collector-k8s
@@ -352,4 +353,4 @@ lowDataMode:
 # When enabled, activates ATP with opinionated process metrics collection.
 # IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector
 # @default -- `false`
-enable_atp: false
+enable_atp: true

@@ -1,47 +1,36 @@
-{{- if .Values.daemonset.enabled }}
+---
+# Source: nr-k8s-otel-collector/templates/daemonset.yaml
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
-  name: {{ include "nrKubernetesOtel.daemonset.fullname" . }}
-  namespace: {{ .Release.Namespace }}
+  name: nr-k8s-otel-collector-daemonset
+  namespace: newrelic
   labels:
-    {{- include "newrelic.common.labels" . | nindent 4 }}
+    app.kubernetes.io/instance: nr-k8s-otel-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nr-k8s-otel-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nr-k8s-otel-collector-0.10.6
 spec:
   selector:
     matchLabels:
-      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+      app.kubernetes.io/instance: nr-k8s-otel-collector
+      app.kubernetes.io/name: nr-k8s-otel-collector
       component: daemonset
   template:
     metadata:
       labels:
-        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+        app.kubernetes.io/instance: nr-k8s-otel-collector
+        app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
-        {{- with .Values.daemonset.podAnnotations }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
+        checksum/config: b5e790e6f36f1e5b5826aa91e71a1fae8c56d4f4497e1dcbe53906a7dba9283e
     spec:
-      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.images.pullSecrets) "context" .) }}
-      imagePullSecrets:
-        {{- . | nindent 8 }}
-      {{- end }}
-      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
-      {{- with include "nrKubernetesOtel.daemonset.securityContext.pod" . }}
-      securityContext:
-        {{- . | nindent 8 }}
-      {{- end }}
-      {{- with include "newrelic.common.priorityClassName" . }}
-      priorityClassName: {{ . }}
-      {{- end }}
-      {{- with include "newrelic.common.dnsConfig" . }}
-      dnsConfig:
-        {{- . | nindent 8 }}
-      {{- end }}
+      serviceAccountName: nr-k8s-otel-collector
       initContainers:
         - name: get-cpu-allocatable
-          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.images.kubectl "context" .) }}
-          imagePullPolicy: {{ .Values.images.kubectl.pullPolicy }}
+          image: "docker.io/bitnami/kubectl:latest"
+          imagePullPolicy: IfNotPresent
           command:
             - sh
             - -c
@@ -88,7 +77,7 @@ spec:
                   apiVersion: v1
                   fieldPath: spec.nodeName
           resources:
-            {{- toYaml .Values.daemonset.resources | nindent 12 }}
+            {}
           volumeMounts:
             - name: daemonset-config
               mountPath: /temp-config
@@ -96,20 +85,24 @@ spec:
               mountPath: /final-config
       containers:
         - name: otel-collector-daemonset
-          {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
           securityContext:
-            {{- . | nindent 12 }}
-          {{- end }}
-          image: {{ include "nrKubernetesOtel.images.collector.image" . }}
-          imagePullPolicy: {{ include "nrKubernetesOtel.images.collector.imagePullPolicy" . }}
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+          image: "docker.io/newrelic/nrdot-collector-k8s:1.8.0"
+          imagePullPolicy: IfNotPresent
           args:
-            {{- include "nrKubernetesOtel.daemonset.args" . | nindent 12 }}
+            - --config
+            - /config/daemonset-config.yaml
+            - --feature-gates
+            - metricsgeneration.MatchAttributes,-processor.resourcedetection.propagateerrors
           resources:
-            {{- toYaml .Values.daemonset.resources | nindent 12 }}
-          {{- with .Values.daemonset.envsFrom }}
-          envFrom:
-            {{- . | toYaml | nindent 12 }}
-          {{- end }}
+            {}
           env:
             - name: HOST_IP
               valueFrom:
@@ -128,54 +121,30 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
-            {{- if include "newrelic.common.openShift" . }}
-            # probably fixed on newer version hostmetrics receiver
-            # Work around for open /mounts error: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/35990
-            - name: HOST_PROC_MOUNTINFO
-              value: ""
-            {{- end }}
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
             - name: NR_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "newrelic.common.license.secretName" . }}
-                  key: {{ include "newrelic.common.license.secretKeyName" . }}
-          {{- if include "newrelic.common.proxy" . }}
-            - name: http_proxy
-              value: "{{- include "newrelic.common.proxy" . }}"
-            - name: https_proxy
-              value: "{{- include "newrelic.common.proxy" . }}"
-          {{- end }}
-            {{- with .Values.daemonset.envs }}
-            {{- . | toYaml | nindent 12 }}
-            {{- end }}
+                  name: nr-k8s-otel-collector-license
+                  key: licenseKey
           volumeMounts:
-            {{- if not ( include "newrelic.common.gkeAutopilot" . ) }}
             - name: host-fs
               mountPath: /hostfs
               readOnly: true
-            {{- end }}
             - name: varlogpods
               mountPath: /var/log/pods
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
-            {{- if .Values.enable_atp }}
             # ATP requires persistent storage to maintain state across restarts (thresholds, history).
             # This hostPath volume ensures ATP data survives pod restarts on the same node.
             - name: nrdot-data-storage
               mountPath: /var/lib/nrdot-collector
-            {{- end }}
-            {{- with .Values.daemonset.extraVolumeMounts }}
-            {{- toYaml . | nindent 12 }}
-            {{- end }}
       volumes:
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         - name: host-fs
           hostPath:
             path: /
-        {{- end }}
         - name: varlogpods
           hostPath:
             path: /var/log/pods
@@ -183,8 +152,7 @@ spec:
           emptyDir: {}
         - name: daemonset-config
           configMap:
-            name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
-        {{- if .Values.enable_atp }}
+            name: nr-k8s-otel-collector-daemonset-config
         # ATP storage volume: Uses hostPath to persist adaptive telemetry processor state.
         # DirectoryOrCreate ensures the directory is created if it doesn't exist.
         # Data persists across pod restarts but is node-specific (DaemonSet behavior).
@@ -192,20 +160,3 @@ spec:
           hostPath:
             path: /var/lib/nrdot-collector
             type: DirectoryOrCreate
-        {{- end }}
-        {{- with .Values.daemonset.extraVolumes }}
-        {{- toYaml . | nindent 8 }}
-        {{- end }}
-      {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
-      nodeSelector:
-        {{- . | nindent 8 }}
-      {{- end }}
-      {{- with include "nrKubernetesOtel.daemonset.affinity" . }}
-      affinity:
-        {{- . | nindent 8 }}
-      {{- end }}
-      {{- with include "nrKubernetesOtel.daemonset.tolerations" . }}
-      tolerations:
-        {{- . | nindent 8 }}
-      {{- end }}
-{{- end }}

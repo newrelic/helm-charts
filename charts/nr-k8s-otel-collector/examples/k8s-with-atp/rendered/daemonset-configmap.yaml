@@ -61,6 +61,24 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
+          # ATP (Adaptive Telemetry Processor) intelligently filters process-level metrics
+          # These metrics can generate high data volume, so they're only enabled when ATP is explicitly activated.
+          # When ATP is disabled, only a subset of process metrics are collected (see metricstransform/hostmetrics).
+          processes:
+          process:
+            metrics:
+              process.cpu.utilization:
+                enabled: true
+              process.memory.utilization:
+                enabled: true
+              process.memory.usage:
+                enabled: true
+              process.memory.virtual:
+                enabled: true
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
 
       kubeletstats:
         collection_interval: 1m
@@ -183,6 +201,14 @@ data:
           - resourcequota
           - node
           - namespace
+      # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
+      # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
+      adaptivetelemetryprocessor:
+        enable_storage: true
+        retention_minutes: 30
+        metric_thresholds:
+          process.cpu.utilization: 0.10 # This means 10%
+          process.memory.utilization: 0.10 # This means 10%
 
       transform/ksm:
         metric_statements:
@@ -394,9 +420,17 @@ data:
 
       metricstransform/hostmetrics:
         transforms:
-          # When ATP is disabled: Only include a limited subset of process metrics.
-          # This matches the original behavior before ATP was introduced.
-          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+          # When ATP is enabled: all the processes will be ingested, and ATP will filter them
+          - include: process\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: processes\..*
             action: update
             match_type: regexp
             operations:
@@ -748,6 +782,9 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
+            # This reduces data volume and processing cost by dropping low-value metrics intelligently.
+            - adaptivetelemetryprocessor
             - metricstransform/k8s_cluster_info
             - metricstransform/ldm
             - transform/tag_generated_metrics_ldm
