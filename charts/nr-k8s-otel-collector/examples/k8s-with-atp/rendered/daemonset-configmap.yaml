@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.7
+    helm.sh/chart: nr-k8s-otel-collector-0.10.8
 data:
   daemonset-config.yaml: |
     receivers:
@@ -203,7 +203,7 @@ data:
           - namespace
       # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
       # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
-      adaptivetelemetryprocessor:
+      adaptivetelemetry:
         enable_storage: true
         retention_minutes: 30
         metric_thresholds:
@@ -618,7 +618,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.7
+            value: 0.10.8
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -784,7 +784,7 @@ data:
             - memory_limiter
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
-            - adaptivetelemetryprocessor
+            - adaptivetelemetry
             - metricstransform/k8s_cluster_info
             - metricstransform/ldm
             - transform/tag_generated_metrics_ldm
