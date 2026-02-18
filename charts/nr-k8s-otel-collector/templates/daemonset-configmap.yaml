@@ -127,6 +127,16 @@ data:
                 - source_labels: [__meta_kubernetes_node_name]
                   regex: ${KUBE_NODE_NAME}
                   action: keep
+              metric_relabel_configs:
+                - source_labels: [container]
+                  regex: '^$'
+                  action: drop
+                - source_labels: [image]
+                  regex: '^$'
+                  action: drop
+                - source_labels: [name]
+                  regex: '^$'
+                  action: drop
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
