@@ -29,15 +29,15 @@ spec:
           {{- toYaml .Values.podAnnotations | nindent 8 }}
         {{- end }}
     spec:
-      {{- if .Values.image.pullSecrets }}
+      {{- if (include "newrelic-pixie.imagePullSecrets" .) }}
       imagePullSecrets:
-        {{- toYaml .Values.image.pullSecrets | nindent 8 }}
+        {{- include "newrelic-pixie.imagePullSecrets" . | nindent 8 }}
       {{- end }}
       restartPolicy: Never
       initContainers:
       - name: cluster-registration-wait
-        image: "{{ (.Values.clusterRegistrationWaitImage).repository | default "gcr.io/pixie-oss/pixie-dev-public/curl" }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
-        imagePullPolicy: "{{ (.Values.clusterRegistrationWaitImage).pullPolicy | default "IfNotPresent" }}"
+        image: "{{ include "newrelic-pixie.clusterRegistrationWaitImage" . }}:{{ (.Values.clusterRegistrationWaitImage).tag | default "1.0" }}"
+        imagePullPolicy: {{ include "newrelic-pixie.clusterWaitImagePullPolicy" . }}
         command: ['sh', '-c', 'set -x;
           URL="https://${SERVICE_NAME}:${SERVICE_PORT}/readyz";
           until [ $(curl -m 0.5 -s -o /dev/null -w "%{http_code}" -k ${URL}) -eq 200 ]; do
@@ -53,8 +53,8 @@ spec:
           value: "50800"
       containers:
       - name: {{ template "newrelic-pixie.name" . }}
-        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
-        imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+        image: "{{ include "newrelic-pixie.image" . }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ include "newrelic-pixie.imagePullPolicy" . }}
         env:
         - name: CLUSTER_NAME
           value: {{ template "newrelic-pixie.cluster" . }}
