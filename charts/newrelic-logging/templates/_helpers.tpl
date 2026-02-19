@@ -63,14 +63,12 @@ Return the licenseKey
 Return the cluster name
 */}}
 {{- define "newrelic-logging.cluster" -}}
-{{- if .Values.global}}
+{{- if .Values.cluster }}
+  {{- .Values.cluster -}}
+{{- else if .Values.global }}
   {{- if .Values.global.cluster }}
     {{- .Values.global.cluster -}}
-  {{- else -}}
-    {{- .Values.cluster | default "" -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.cluster | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -78,14 +76,12 @@ Return the cluster name
 Return the customSecretName
 */}}
 {{- define "newrelic-logging.customSecretName" -}}
-{{- if .Values.global }}
+{{- if .Values.customSecretName }}
+  {{- .Values.customSecretName -}}
+{{- else if .Values.global }}
   {{- if .Values.global.customSecretName }}
-      {{- .Values.global.customSecretName -}}
-  {{- else -}}
-      {{- .Values.customSecretName | default "" -}}
+    {{- .Values.global.customSecretName -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretName | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -93,21 +89,15 @@ Return the customSecretName
 Return the customSecretLicenseKey
 */}}
 {{- define "newrelic-logging.customSecretKey" -}}
-{{- if .Values.global }}
+{{- if .Values.customSecretLicenseKey }}
+  {{- .Values.customSecretLicenseKey -}}
+{{- else if .Values.customSecretKey }}
+  {{- .Values.customSecretKey -}}
+{{- else if .Values.global }}
   {{- if .Values.global.customSecretLicenseKey }}
-      {{- .Values.global.customSecretLicenseKey -}}
-  {{- else -}}
-    {{- if .Values.global.customSecretKey }}
-        {{- .Values.global.customSecretKey -}}
-    {{- else -}}
-        {{- .Values.customSecretKey | default "" -}}
-    {{- end -}}
-  {{- end -}}
-{{- else -}}
-  {{- if .Values.customSecretLicenseKey }}
-      {{- .Values.customSecretLicenseKey -}}
-  {{- else -}}
-      {{- .Values.customSecretKey | default "" -}}
+    {{- .Values.global.customSecretLicenseKey -}}
+  {{- else if .Values.global.customSecretKey }}
+    {{- .Values.global.customSecretKey -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}

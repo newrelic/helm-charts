@@ -1,0 +1,991 @@
+suite: global value inheritance
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+  - templates/serviceaccount.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  # ====================
+  # Proxy Tests (3)
+  # ====================
+  - it: proxy not set when neither global nor local provided
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTP_PROXY
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTPS_PROXY
+        template: templates/daemonset.yaml
+
+  - it: uses global.proxy when set
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        proxy: http://global-proxy.corp.net:3128
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTP_PROXY
+            value: http://global-proxy.corp.net:3128
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTPS_PROXY
+            value: http://global-proxy.corp.net:3128
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTP_PROXY
+            value: http://global-proxy.corp.net:3128
+        template: templates/daemonset-windows.yaml
+
+  - it: local proxy overrides global.proxy
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        proxy: http://global-proxy.corp.net:3128
+      proxy: http://local-proxy.corp.net:8080
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTP_PROXY
+            value: http://local-proxy.corp.net:8080
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTPS_PROXY
+            value: http://local-proxy.corp.net:8080
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HTTP_PROXY
+            value: http://local-proxy.corp.net:8080
+        template: templates/daemonset-windows.yaml
+
+  # ====================
+  # PriorityClassName Tests (3)
+  # ====================
+  - it: priorityClassName not set when neither global nor local provided
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - notExists:
+          path: spec.template.spec.priorityClassName
+        template: templates/daemonset.yaml
+
+  - it: uses global.priorityClassName when set
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        priorityClassName: high-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: high-priority
+        template: templates/daemonset-windows.yaml
+
+  - it: local priorityClassName overrides global
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        priorityClassName: high-priority
+      priorityClassName: critical-priority
+    asserts:
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: critical-priority
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.priorityClassName
+          value: critical-priority
+        template: templates/daemonset-windows.yaml
+
+  # ====================
+  # NodeSelector Tests (3)
+  # ====================
+  - it: nodeSelector inherits global when no local provided
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        nodeSelector:
+          node.role/monitoring: "true"
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            node.role/monitoring: "true"
+            kubernetes.io/os: linux
+        template: templates/daemonset.yaml
+      - isSubset:
+          path: spec.template.spec.nodeSelector
+          content:
+            node.role/monitoring: "true"
+        template: templates/daemonset-windows.yaml
+
+  - it: local nodeSelector overrides global
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        nodeSelector:
+          node.role/monitoring: "true"
+      nodeSelector:
+        node.role/logging: "true"
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            kubernetes.io/os: linux
+            node.role/logging: "true"
+        template: templates/daemonset.yaml
+
+  - it: nodeSelector not set when neither global nor local provided and Windows disabled
+    set:
+      licenseKey: nr_license_key
+      enableWindows: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+        template: templates/daemonset.yaml
+
+  # ====================
+  # Tolerations Tests (3)
+  # ====================
+  - it: tolerations inherit global when no local provided
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      tolerations: []
+      global:
+        tolerations:
+          - key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+        template: templates/daemonset-windows.yaml
+
+  - it: local tolerations override global
+    set:
+      licenseKey: nr_license_key
+      global:
+        tolerations:
+          - key: global-taint
+            operator: Exists
+      tolerations:
+        - key: local-taint
+          operator: Exists
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            key: local-taint
+            operator: Exists
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.tolerations
+          content:
+            key: global-taint
+        template: templates/daemonset.yaml
+
+  - it: default tolerations apply when neither global nor local provided
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            operator: Exists
+            effect: NoSchedule
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.tolerations
+          content:
+            operator: Exists
+            effect: NoExecute
+        template: templates/daemonset.yaml
+
+  # ====================
+  # Affinity Tests (4)
+  # ====================
+  - it: affinity not set when neither global nor local provided
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - notExists:
+          path: spec.template.spec.affinity
+        template: templates/daemonset.yaml
+
+  - it: uses global.affinity when set
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: node.type
+                      operator: In
+                      values:
+                        - logging
+    asserts:
+      - isSubset:
+          path: spec.template.spec.affinity
+          content:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node.type
+                        operator: In
+                        values:
+                          - logging
+        template: templates/daemonset.yaml
+      - isSubset:
+          path: spec.template.spec.affinity
+          content:
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                  - matchExpressions:
+                      - key: node.type
+                        operator: In
+                        values:
+                          - logging
+        template: templates/daemonset-windows.yaml
+
+  - it: local nodeAffinity overrides global.affinity
+    set:
+      licenseKey: nr_license_key
+      global:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: global.key
+                      operator: In
+                      values:
+                        - global
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: local.key
+                  operator: In
+                  values:
+                    - local
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity
+          value:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: local.key
+                      operator: In
+                      values:
+                        - local
+        template: templates/daemonset.yaml
+
+  - it: Fargate exclusion affinity applies when global.fargate is true
+    set:
+      licenseKey: nr_license_key
+      global:
+        fargate: true
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity
+          value:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: eks.amazonaws.com/compute-type
+                      operator: NotIn
+                      values:
+                        - fargate
+        template: templates/daemonset.yaml
+
+  # ====================
+  # HostNetwork Tests (4)
+  # ====================
+  - it: hostNetwork not set when neither global nor local provided
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset.yaml
+
+  - it: hostNetwork not set when explicitly false
+    set:
+      licenseKey: nr_license_key
+      hostNetwork: false
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset.yaml
+
+  - it: uses global.hostNetwork when set to true
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset-windows.yaml
+
+  - it: local hostNetwork overrides global
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        hostNetwork: false
+      hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset-windows.yaml
+
+  # ====================
+  # VerboseLog Tests (4)
+  # ====================
+  - it: uses default log level when neither global.verboseLog nor local provided
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            value: "info"
+        template: templates/daemonset.yaml
+
+  - it: sets LOG_LEVEL to debug when global.verboseLog is true
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      fluentBit:
+        logLevel: null
+      global:
+        verboseLog: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            value: "debug"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            value: "debug"
+        template: templates/daemonset-windows.yaml
+
+  - it: local fluentBit.logLevel overrides global.verboseLog
+    set:
+      licenseKey: nr_license_key
+      global:
+        verboseLog: true
+      fluentBit:
+        logLevel: warn
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            value: "warn"
+        template: templates/daemonset.yaml
+
+  - it: global.verboseLog false does not override local logLevel
+    set:
+      licenseKey: nr_license_key
+      global:
+        verboseLog: false
+      fluentBit:
+        logLevel: error
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOG_LEVEL
+            value: "error"
+        template: templates/daemonset.yaml
+
+  # ====================
+  # LowDataMode Tests (3)
+  # ====================
+  - it: lowDataMode defaults to false when not set
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "false"
+        template: templates/daemonset.yaml
+
+  - it: uses global.lowDataMode when set
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      global:
+        lowDataMode: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "true"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "true"
+        template: templates/daemonset-windows.yaml
+
+  - it: local lowDataMode overrides global
+    set:
+      licenseKey: nr_license_key
+      global:
+        lowDataMode: true
+      lowDataMode: false
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "false"
+        template: templates/daemonset.yaml
+
+  # ====================
+  # NrStaging Tests (2)
+  # ====================
+  - it: uses prod endpoint when nrStaging not set
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: https://log-api.newrelic.com/log/v1
+        template: templates/daemonset.yaml
+
+  - it: uses staging endpoint when global.nrStaging is true
+    set:
+      licenseKey: nr_license_key
+      global:
+        nrStaging: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: https://staging-log-api.newrelic.com/log/v1
+        template: templates/daemonset.yaml
+
+  # ====================
+  # Cluster Tests (2)
+  # ====================
+  - it: uses global.cluster when set
+    set:
+      licenseKey: nr_license_key
+      global:
+        cluster: global-cluster-01
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CLUSTER_NAME
+            value: global-cluster-01
+        template: templates/daemonset.yaml
+
+  - it: local cluster overrides global.cluster
+    set:
+      licenseKey: nr_license_key
+      global:
+        cluster: global-cluster-01
+      cluster: local-cluster-02
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: CLUSTER_NAME
+            value: local-cluster-02
+        template: templates/daemonset.yaml
+
+  # ====================
+  # LicenseKey Tests (2)
+  # ====================
+  - it: uses global.licenseKey when set
+    set:
+      global:
+        licenseKey: global-license-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: my-release-newrelic-logging-config
+        template: templates/daemonset.yaml
+
+  - it: local licenseKey overrides global.licenseKey
+    set:
+      global:
+        licenseKey: global-license-key
+      licenseKey: local-license-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: my-release-newrelic-logging-config
+        template: templates/daemonset.yaml
+
+  # ====================
+  # DnsConfig Tests (2)
+  # ====================
+  - it: dnsConfig inherits from global
+    set:
+      licenseKey: nr_license_key
+      global:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: "1"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].name
+          value: ndots
+        template: templates/daemonset.yaml
+
+  - it: local dnsConfig overrides global
+    set:
+      licenseKey: nr_license_key
+      global:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: "1"
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "2"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].value
+          value: "2"
+        template: templates/daemonset.yaml
+
+  # ====================
+  # PodLabels Tests (2)
+  # ====================
+  - it: pod inherits global.podLabels
+    set:
+      licenseKey: nr_license_key
+      global:
+        podLabels:
+          global-label: global-value
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            global-label: global-value
+        template: templates/daemonset.yaml
+
+  - it: local podLabels merge with global
+    set:
+      licenseKey: nr_license_key
+      global:
+        podLabels:
+          global-label: global-value
+      podLabels:
+        local-label: local-value
+    asserts:
+      - isSubset:
+          path: spec.template.metadata.labels
+          content:
+            global-label: global-value
+            local-label: local-value
+        template: templates/daemonset.yaml
+
+  # ====================
+  # Labels Tests (2)
+  # ====================
+  - it: resource inherits global.labels
+    set:
+      licenseKey: nr_license_key
+      global:
+        labels:
+          global-resource-label: global-value
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            global-resource-label: global-value
+        template: templates/daemonset.yaml
+
+  - it: resource labels are applied
+    set:
+      licenseKey: nr_license_key
+      global:
+        labels:
+          team: platform
+    asserts:
+      - isSubset:
+          path: metadata.labels
+          content:
+            team: platform
+        template: templates/daemonset.yaml
+
+  # ====================
+  # ServiceAccount Tests (3)
+  # ====================
+  - it: uses global serviceAccount name when set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          name: global-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: global-sa
+        template: templates/daemonset.yaml
+
+  - it: local serviceAccount name overrides global
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          name: global-sa
+      serviceAccount:
+        name: local-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: local-sa
+        template: templates/daemonset.yaml
+
+  - it: serviceAccount create is honored
+    set:
+      licenseKey: nr_license_key
+      serviceAccount:
+        create: true
+        name: custom-sa
+    asserts:
+      - equal:
+          path: spec.template.spec.serviceAccountName
+          value: custom-sa
+        template: templates/daemonset.yaml
+
+  # ====================
+  # PodSecurityContext Tests (2)
+  # ====================
+  - it: pod inherits global.podSecurityContext
+    set:
+      licenseKey: nr_license_key
+      global:
+        podSecurityContext:
+          runAsUser: 1000
+          fsGroup: 2000
+    asserts:
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsUser: 1000
+            fsGroup: 2000
+        template: templates/daemonset.yaml
+
+  - it: local podSecurityContext overrides global
+    set:
+      licenseKey: nr_license_key
+      global:
+        podSecurityContext:
+          runAsUser: 1000
+      podSecurityContext:
+        runAsUser: 3000
+    asserts:
+      - isSubset:
+          path: spec.template.spec.securityContext
+          content:
+            runAsUser: 3000
+        template: templates/daemonset.yaml
+
+  # ====================
+  # ContainerSecurityContext Tests (2)
+  # ====================
+  - it: container inherits global.containerSecurityContext
+    set:
+      licenseKey: nr_license_key
+      global:
+        containerSecurityContext:
+          readOnlyRootFilesystem: true
+          allowPrivilegeEscalation: false
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+        template: templates/daemonset.yaml
+
+  - it: local containerSecurityContext overrides global
+    set:
+      licenseKey: nr_license_key
+      global:
+        containerSecurityContext:
+          readOnlyRootFilesystem: true
+      containerSecurityContext:
+        readOnlyRootFilesystem: false
+    asserts:
+      - isSubset:
+          path: spec.template.spec.containers[0].securityContext
+          content:
+            readOnlyRootFilesystem: false
+        template: templates/daemonset.yaml
+
+  # ====================
+  # images.registry Tests (2)
+  # ====================
+  - it: should inherit global.images.registry when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          registry: global-registry.io
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^global-registry\.io/
+        template: templates/daemonset.yaml
+
+  - it: should use local image.registry when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          registry: global-registry.io
+      image:
+        registry: local-registry.io
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ^local-registry\.io/
+        template: templates/daemonset.yaml
+
+  # ====================
+  # images.pullSecrets Tests (2)
+  # ====================
+  - it: should inherit global.images.pullSecrets when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: global-secret
+        template: templates/daemonset.yaml
+
+  - it: should use local image.pullSecrets when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+      image:
+        pullSecrets:
+          - name: local-secret
+    asserts:
+      - contains:
+          path: spec.template.spec.imagePullSecrets
+          content:
+            name: local-secret
+        template: templates/daemonset.yaml
+
+  # ====================
+  # serviceAccount.create Tests (2)
+  # ====================
+  - it: should inherit global.serviceAccount.create when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          create: false
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/serviceaccount.yaml
+
+  - it: should use local serviceAccount.create when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          create: false
+      serviceAccount:
+        create: true
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/serviceaccount.yaml
+
+  # ====================
+  # serviceAccount.annotations Tests (2)
+  # ====================
+  - it: should inherit global.serviceAccount.annotations when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          annotations:
+            global-annotation: global-value
+    asserts:
+      - equal:
+          path: metadata.annotations.global-annotation
+          value: global-value
+        template: templates/serviceaccount.yaml
+
+  - it: should use local serviceAccount.annotations when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        serviceAccount:
+          annotations:
+            global-annotation: global-value
+      serviceAccount:
+        annotations:
+          local-annotation: local-value
+    asserts:
+      - equal:
+          path: metadata.annotations.local-annotation
+          value: local-value
+        template: templates/serviceaccount.yaml
+
+  # ====================
+  # customSecretName Tests (2)
+  # ====================
+  - it: should inherit global.customSecretName when local not set
+    set:
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: global-secret
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.key
+          value: global-key
+        template: templates/daemonset.yaml
+
+  - it: should use local customSecretName when both global and local are set
+    set:
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+      customSecretName: local-secret
+      customSecretLicenseKey: local-key
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: local-secret
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.key
+          value: local-key
+        template: templates/daemonset.yaml
+
+  # ====================
+  # dnsConfig Tests (2)
+  # ====================
+  - it: should inherit global.dnsConfig when local not set
+    set:
+      licenseKey: nr_license_key
+      global:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: "1"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].name
+          value: ndots
+        template: templates/daemonset.yaml
+
+  - it: should use local dnsConfig when both global and local are set
+    set:
+      licenseKey: nr_license_key
+      global:
+        dnsConfig:
+          options:
+            - name: ndots
+              value: "1"
+      dnsConfig:
+        options:
+          - name: ndots
+            value: "2"
+    asserts:
+      - equal:
+          path: spec.template.spec.dnsConfig.options[0].value
+          value: "2"
+        template: templates/daemonset.yaml
