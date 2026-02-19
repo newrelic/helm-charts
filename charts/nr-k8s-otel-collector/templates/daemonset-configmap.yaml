@@ -128,15 +128,30 @@ data:
                   regex: ${KUBE_NODE_NAME}
                   action: keep
               metric_relabel_configs:
-                - source_labels: [container]
-                  regex: '^$'
+                # Init temporary label is_network_metric for all metrics
+                - source_labels: [__name__]
+                  regex: '.*'
+                  target_label: "is_network_metric"
+                  replacement: "false"
+                - source_labels: [__name__]
+                  regex: '^container_network_.*'
+                  target_label: "is_network_metric"
+                  replacement: "true"
+
+                # Drop metrics without container/image/name for non-network metrics
+                - source_labels: [is_network_metric, container]
+                  regex: '^false;$'
                   action: drop
-                - source_labels: [image]
-                  regex: '^$'
+                - source_labels: [is_network_metric, image]
+                  regex: '^false;$'
                   action: drop
-                - source_labels: [name]
-                  regex: '^$'
+                - source_labels: [is_network_metric, name]
+                  regex: '^false;$'
                   action: drop
+
+                # Remove temporary label
+                - regex: 'is_network_metric'
+                  action: labeldrop
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
