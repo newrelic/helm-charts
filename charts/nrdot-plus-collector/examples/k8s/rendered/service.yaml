@@ -1,0 +1,29 @@
+---
+# Source: nrdot-plus-collector/templates/service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: nrdot-plus-collector-gateway
+  namespace: newrelic
+  labels:
+    app.kubernetes.io/instance: nrdot-plus-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nrdot-plus-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nrdot-plus-collector-0.9.9
+spec:
+  type: ClusterIP
+  ports:
+    - name: otlp-http # Default endpoint for OpenTelemetry HTTP receiver.
+      port: 4318
+      protocol: TCP
+      targetPort: 4318
+    - name: otlp-grpc
+      port: 4317
+      protocol: TCP
+      targetPort: 4317
+  selector:
+    app.kubernetes.io/instance: nrdot-plus-collector
+    app.kubernetes.io/name: nrdot-plus-collector
+    component: deployment
+  internalTrafficPolicy: Cluster

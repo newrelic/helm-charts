@@ -1,0 +1,89 @@
+{{- if .Values.rbac.create }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+rules:
+{{- if include "newrelic.common.openShift" . }}
+  # required for openshift resource detection
+  - apiGroups: ["config.openshift.io"]
+    resources: ["infrastructures", "infrastructures/status"]
+    verbs: ["get", "watch", "list"]
+{{- end }}
+  - apiGroups:
+    - ""
+    resources:
+    # following required for k8s_events, k8s_cluster receiver
+    - events
+    # following required for k8s_cluster receiver
+    - namespaces
+    # following required for prometheus, k8s_cluster receiver
+    - nodes
+    - nodes/metrics
+    - pods
+    - pods/status
+    - services
+    - endpoints
+    verbs:
+    - get
+    - list
+    - watch
+  - apiGroups:
+    - ""
+    resources:
+    # following required for hostmetrics, prometheus receiver
+    - nodes/spec
+    - nodes/stats
+    - nodes/proxy
+    # following required for filelog receiver
+    - pods/logs
+  {{- if include "newrelic.common.openShift" . }}
+    # following required for resourcedetection
+    - configmaps
+  {{- end }}
+    verbs:
+    - get
+  # following required for prometheus receiver
+  - apiGroups:
+    - ""
+    resources:
+    - replicationcontrollers
+    - resourcequotas
+    verbs:
+    - list
+    - watch
+  # following required for prometheus receiver
+  - apiGroups:
+    - apps
+    resources:
+    - daemonsets
+    - deployments
+    - replicasets
+    - statefulsets
+    verbs:
+    - get
+    - list
+    - watch
+  # following required for prometheus receiver
+  - apiGroups:
+    - batch
+    resources:
+    - jobs
+    - cronjobs
+    verbs:
+    - list
+    - watch
+  # following required for prometheus receiver
+  - apiGroups:
+    - autoscaling
+    resources:
+    - horizontalpodautoscalers
+    verbs:
+    - list
+    - watch
+  # following required for prometheus receiver
+  - nonResourceURLs: ["/metrics"]
+    verbs: ["get"]
+{{- end -}}

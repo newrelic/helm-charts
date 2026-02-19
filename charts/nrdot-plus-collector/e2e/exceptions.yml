@@ -1,0 +1,10 @@
+# These metrics are not present in Minikube or are not collected due to the nature of the test environment
+except_metrics: [
+  "container_network_receive_errors_total", # Not collected since we remove 0-values and we do not create errors in the test
+  "container_network_transmit_errors_total", # Not collected since we remove 0-values and we do not create errors in the test
+  "system.disk.io", # Unknown why this is missing
+  "kube_pod_container_status_restarts_total", # This metric seems to have issues with `AggregationTemporality: Unspecified`
+  "kube_service_status_load_balancer_ingress", # This test environment does not have a load balancer
+  "container.memory.usage", # Missing in CI
+  "k8s.pod.network.io" # Missing in CI
+]

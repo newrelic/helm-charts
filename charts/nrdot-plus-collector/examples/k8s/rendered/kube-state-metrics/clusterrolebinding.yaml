@@ -1,0 +1,22 @@
+---
+# Source: nrdot-plus-collector/charts/kube-state-metrics/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  labels:    
+    helm.sh/chart: kube-state-metrics-6.1.5
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/component: metrics
+    app.kubernetes.io/part-of: kube-state-metrics
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: nrdot-plus-collector
+    app.kubernetes.io/version: "2.16.0"
+  name: nrdot-plus-collector-kube-state-metrics
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nrdot-plus-collector-kube-state-metrics
+subjects:
+- kind: ServiceAccount
+  name: nrdot-plus-collector-kube-state-metrics
+  namespace: newrelic
