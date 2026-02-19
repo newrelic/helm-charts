@@ -1,0 +1,517 @@
+# This is a YAML-formatted file that contains default values for job-manager and associated runtime charts.
+# Declare variables to be passed into your templates.
+
+# The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+imagePullSecrets: []
+
+# The nameOverride replaces the name of the chart in the Chart.yaml file.
+nameOverride: ""
+
+# By default, fullname uses '-. This overrides that and uses the given string instead.
+fullnameOverride: ""
+
+# The appVersionOverride overrides the current app version.
+appVersionOverride: ""
+
+global:
+  # The hostnameOverride overrides the default DNS service name for job-manager
+  hostnameOverride: ""
+
+  # The internalApiKey is a key used for restricting communication between job-manager and runtime
+  # pods. The default value is empty but this is required.
+  internalApiKey: "default"
+
+  # internalApiKeySecretName expects a Kubernetes Secret to exist that includes the key internalApiKey
+  internalApiKeySecretName: ""
+
+  ## The checkTimeout represents the maximum amount of seconds that your jobs are allowed to run.
+  ## The minimum allowed value for this parameter is 1 second and the maximum allowed value for this parameter is 900 seconds.
+  ## The default is 180 seconds.
+  checkTimeout: "180"
+
+  ## For users who are mounting a volume in order to provide a JSON file of user-defined variables or custom node modules,
+  ## provide one of the following
+  ## * an existing PersistentVolumeClaim resource
+  ## * an existing PersistentVolume resource, storageClass (optional), & size (optional)
+  persistence:
+    ## The name of the PersistentVolumeClaim to use
+    existingClaimName: ""
+
+    ## If the volume exists but no claim exists we'll create the claim
+    # existingVolumeName: ""
+
+    ## Indicate the storage class of your existing volume. If an existingVolumeName is provided and no storageClass, Kubernetes
+    ## will use the default storage class.
+    # storageClass: ""
+
+    ## Set the size to be used for the claim. Default is 2Gi
+    # size: ""
+
+  # Users may include a package.json file in their persistent volume to install custom node modules for their scripted jobs
+  # Example: add "modules" if the package.json file is in the modules folder.
+  customNodeModules:
+    ## Path on the Persistent Volume to the package.json file. Requires that the user set up a PersistentVolume
+    ## and include the package.json file before installing Helm Chart.
+    customNodeModulesPath: ""
+
+jobManager:
+  ## ComputeLocation Configuration (aligned with NGEP schema)
+  ## This section defines the NR-HOSTED PUBLIC serverless location where jobs will be executed
+  ## NOTE: This chart is ONLY for public NR-hosted multi-tenant locations
+  location:
+    ## Identity and Authentication (REQUIRED)
+    ## The locationKey is a key generated when creating a ComputeLocation in NGEP
+    ## Use keySecretName (recommended) for production deployments
+    key: ""
+    keySecretName: ""  # Kubernetes Secret containing key 'locationKey'
+
+    ## Location Identity (REQUIRED)
+    ## Must match the ComputeLocation name in NGEP
+    name: ""  # Example: "us-east-1-public", "eu-west-1-public"
+
+    ## Location ID from NGEP (OPTIONAL but recommended)
+    ## This is the NGEP entity ID for the ComputeLocation
+    id: ""  # Example: "d9b2d63d-a233-4123-847a-8a1f3b4d6b25"
+
+    ## Location Description (OPTIONAL)
+    description: ""
+
+    ## Tags for routing and filtering (REQUIRED for production)
+    tags:
+      region: ""       # Example: "us-east-1", "eu-west-1"
+      provider: ""     # Example: "AWS", "Azure", "GCP"
+      environment: ""  # Example: "production", "staging", "development"
+
+    ## Associated Workload Definitions from NGEP (REQUIRED)
+    ## Must match ServerlessJobDefinitions configured in NGEP for this location
+    ## Serverless PUBLIC locations support ONLY: node-api-runtime and node-browser-runtime
+    ## NO ping-runtime support in serverless architecture
+    associatedWorkloads:
+      - "node-api-runtime_v1"
+      - "node-browser-runtime_v1"
+
+  ## Multi-Tenant Configuration (REQUIRED - always enabled for public locations)
+  multiTenant:
+    ## Account Validation
+    accountValidation:
+      enabled: true
+      ## Validation endpoint to verify account permissions
+      validationEndpoint: "https://auth.newrelic.com/validate"
+
+    ## Capacity Management
+    capacity:
+      ## Maximum concurrent jobs across all accounts
+      maxConcurrentJobs: 1000
+      ## Default quota per account
+      perAccountQuota: 50
+
+    ## Isolation Configuration
+    isolation:
+      ## Enable network policies for account-level isolation
+      networkPolicies: true
+      ## Enable resource quotas per account
+      resourceQuotas: true
+
+  # The logLevel is defaulted to INFO, which report about normal operations, but they provide the skeleton of what happened.
+  # Other Options:
+  # 1. DEBUG: These messages report detailed diagnostic information and more information than you'd want in normal production situations.
+  # 2. TRACE: These messages capture every detail you possibly care about
+  logLevel: "INFO"
+
+  ## For US-based accounts, the endpoint is: https://compute-broker.nr-data.net.
+  ## For EU-based accounts, the endpoint is: https://compute-broker.eu01.nr-data.net/
+  brokerApiEndpoint: "https://compute-broker.nr-data.net"
+
+  ## Users have 3 different options when providing user-defined variables to their job manager -
+  userDefinedVariables:
+    ## The userDefinedVariables defines the locally hosted set of user-defined key value pairs.
+    ## eg: '{"key":"value","key2":"value2"}'
+    userDefinedJson: ''
+
+    ## The userDefinedVariable file contents, set using --set-file when installing the Helm Chart. Just uncomment
+    ## and leave the value as-is
+    # userDefinedFile: "{}"
+
+    ## Path on the Persistent Volume to the user-defined variables file. Requires that the user set up a PersistentVolume
+    ## and include user_defined_variables.json file before installing Helm Chart. Example: add "variables" if the
+    ## user_defined_variables.json file is in the variables folder.
+    # userDefinedPath: ""
+
+  ## If set, enables verified script execution and uses this value as a passphrase.
+  vsePassphrase: ""
+
+  ## If set, enables verified script execution and uses this value from this Kubernetes Secret as a passphrase. Expects a key named `vsePassphrase`.
+  #  vsePassphraseSecretName: ""
+
+  ## Enables the use of a proxy when communicating with New Relic to fetch and process jobs. If set, `apiProxyPort` should also be set.
+  #  apiProxyHost: ""
+
+  ## Enables the use of a proxy when communicating with New Relic to fetch and process jobs. If set, `apiProxyHost` should also be set.
+  #  apiProxyPort: ""
+
+  ## If set, the accepted values are: true, 1, or yes.
+  #  brokerApiProxySelfSignedCert: ""
+
+  ## If set, the format is: "username" and "password". Support HTTP Basic Authentication and additional authentication protocols supported by Chrome.
+  #  brokerApiProxyUsername: ""
+  #  brokerApiProxyPw: ""
+
+  ## The jvmOpts passes command line options to the internal JVM.
+  ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
+  #  jvmOpts: "-XX:-UsePerfData"
+
+  ## A job-manager is not healthy if it cannot connect to the public internet. Set this value to true to bypass this health check.
+  #  networkHealthCheckDisabled: "false"
+
+  ## Configuration for Horizontal Pod Autoscaler based on queue depth from orchestrator platform
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 10
+    ## Custom external metrics for scaling based on pending jobs queue depth
+    ## The orchestrator platform exposes an authenticated endpoint implementing
+    ## K8s custom external metrics interface providing pending job counts and age
+    ## This requires external metrics adapter (e.g., kube-metrics-adapter) to be configured
+    customMetrics:
+      # Name of the custom metric exposed by orchestrator platform
+      queueDepthMetricName: "serverless_queue_depth"
+      # Target value for queue depth per replica
+      targetValue: "100"
+      # Optional metric selector labels to identify the specific metric endpoint
+      # Example: endpoint: "https://orchestrator.nr-data.net/metrics"
+      metricSelector: {}
+    ## Enable CPU-based scaling as fallback or supplement to custom metrics
+    enableCPUMetric: false
+    cpuTargetUtilization: 70
+
+  ## Configuration for sidecar container that acts as egress proxy and communication agent
+  ## The sidecar is deployed alongside runtime pods (both persistent and ephemeral) as an init container
+  ## with restartPolicy: Always, making it a long-running sidecar container.
+  ## It handles all EGRESS traffic from runtime pods and communicates job results back to the job manager.
+  ##
+  ## Note: Runtime pods are dynamically created by the job manager application. This configuration
+  ## defines the sidecar image and resources that will be used in those runtime pod templates.
+  sidecar:
+    enabled: true
+    image:
+      repository: newrelic/serverless-sidecar
+      tag: "latest"
+      pullPolicy: IfNotPresent
+    # Port for sidecar health check and communication
+    port: 8081
+    # Resources for sidecar container in runtime pods
+    resources:
+      requests:
+        cpu: "100m"
+        memory: "128Mi"
+      limits:
+        cpu: "200m"
+        memory: "256Mi"
+
+  ## K8s Leases for distributed coordination between job manager pods
+  ## runtime-pruning: Coordinates unresponsive job deletion
+  leases:
+    enabled: true
+    # Duration in seconds for which a lease holder can hold the lease
+    leaseDurationSeconds: 5
+
+image:
+  # This parameter determines what container the pod will run as.
+  repository: newrelic/job-manager
+  # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+  pullPolicy: IfNotPresent
+
+## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+# appArmorProfileName: ""
+
+# The number of times the startup probe should retry before giving up.
+startupProbeFailureThreshold: 60
+
+# How often (in seconds) to perform the startup probe.
+startupProbePeriodSeconds: 10
+
+# The number of times the liveness probe should retry before giving up
+livenessProbeFailureThreshold: 1
+
+# How often (in seconds) to perform the liveness probe.
+livenessProbePeriodSeconds: 10
+
+# Number of seconds after which the liveness probe times out.
+livenessProbeTimeoutSeconds: 10
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "800Mi"
+  limits:
+    cpu: "750m"
+    memory: "1600Mi"
+
+podAnnotations: {}
+
+podSecurityContext: {}
+
+securityContext: {}
+
+labels: {}
+
+annotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+# Service Account configuration for Job Manager
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Service Account configuration for Runtime Pods (sidecar + runtime containers)
+runtimePodServiceAccount:
+  # Specifies whether a service account should be created for runtime pods
+  create: true
+  # Annotations to add to the runtime-pod service account
+  annotations: {}
+  # The name of the service account to use for runtime pods
+  # If not set and create is true, defaults to "runtime-pod"
+  name: ""
+
+# RBAC configuration for Job Manager to manage workload resources
+rbac:
+  # Specifies whether RBAC resources should be created
+  create: true
+
+# RBAC configuration for Runtime Pods (sidecar + runtime containers)
+runtimePodRbac:
+  # Specifies whether RBAC resources should be created for runtime pods
+  create: true
+  # Runtime pods have minimal read-only permissions for:
+  # - pods: get, watch, list (sidecar monitors its own pod)
+  # - pods/log: get (sidecar reads runtime container logs)
+  # - pods/status: get (sidecar checks pod health and readiness)
+
+# Service configuration for Job Manager
+service:
+  # Port for the job manager service
+  port: 8080
+  # Admin port for health checks and metrics
+  adminPort: 8082
+
+# Network policies for security and isolation
+## NetworkPolicy implementation based on security threat model
+## Reference: https://microsoft.github.io/Threat-Matrix-for-Kubernetes/
+networkPolicy:
+  enabled: true
+
+  ## Allow egress to internet for broker communication
+  ## Set to false in highly restricted environments
+  allowEgressToInternet: true
+
+  ## Default selector for runtime namespace(s) that job manager communicates with
+  ## Runtime pods send job results to the job manager
+  defaultRuntimeNamespaceSelector:
+    newrelic.com/runtime-namespace: "true"
+
+  ## Custom egress rules (overrides defaults if specified)
+  ## Leave empty to use secure defaults:
+  ## - Allow K8s API server access for resource management
+  ## - Allow DNS resolution
+  ## - Allow broker/orchestrator platform communication
+  ## - Block cloud metadata APIs (169.254.169.254)
+  egress: []
+
+  ## Custom ingress rules (overrides defaults if specified)
+  ## Leave empty to use secure defaults:
+  ## - Allow ingress from runtime pods on service port
+  ingress: []
+
+## Runtime Pod Network Policy (Sidecar and Runtime Container Egress Protection)
+## Based on the "Split-Horizon" Egress Pattern from the Sidecar and Runtime Container Specifications
+## This policy applies to runtime pods created by the Job Manager and enforces:
+## 1. Allow access to Job Manager (for Sidecar to report status)
+## 2. Allow DNS resolution
+## 3. Allow internet access but block internal cluster IPs (the "donut hole" approach)
+runtimePodNetworkPolicy:
+  ## Enable runtime pod egress protection network policy
+  enabled: true
+
+  ## Namespace where runtime pods will be created
+  ## Default is job-manager-runtimes as per deployment configuration
+  runtimePodNamespace: "job-manager-runtimes"
+
+  ## Namespace where Job Manager is running
+  ## This will be used to create the namespace selector
+  ## If not set, defaults to the release namespace
+  jobManagerNamespace: ""
+
+  ## Pod selector to identify runtime pods
+  ## This selector must match the labels on the Sidecar/Runtime pods
+  runtimePodSelector:
+    component: "worker"
+    managed-by: "job-manager"
+
+  ## DNS configuration
+  ## Most clusters use kube-dns or CoreDNS in the kube-system namespace
+  dns:
+    namespace: "kube-system"
+    podSelector:
+      k8s-app: "kube-dns"  # Change to "coredns" if your cluster uses that label
+
+  ## Whitelist specific internal services (bypasses the private IP block)
+  ## Use this to allow runtime pods to access specific internal cluster services
+  allowedInternalCIDRs: []
+  # Example:
+  # - 10.100.50.0/24  # Allow access to internal monitoring service
+  # - 172.16.10.5/32  # Allow access to specific internal API
+
+  ## Additional CIDR blocks to block (beyond the default private IPs)
+  ## Default blocks: 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.169.254/32
+  additionalBlockedCIDRs: []
+  # Example:
+  # - 100.64.0.0/10  # Block Carrier-grade NAT
+
+node-api-runtime:
+  enabled: true
+
+  # Set this to the maximum number of node-api-runtime jobs you want to run in parallel
+  parallelism: 1
+
+  # Set this to the maximum number of node-api-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
+
+  # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+  imagePullSecrets: []
+
+  # The nameOverride replaces the name of the chart in the Chart.yaml file.
+  nameOverride: ""
+
+  # By default, fullname uses '-. This overrides that and uses the given string instead.
+  fullnameOverride: ""
+
+  # The appVersionOverride overrides the current app version.
+  appVersionOverride: ""
+
+  image:
+    # This parameter determines what container the pod will run as.
+    repository: newrelic/synthetics-node-api-runtime
+    # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+
+  ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+  # appArmorProfileName: ""
+
+  # The number of times the startup probe should retry before giving up.
+  startupProbeFailureThreshold: 60
+
+  # How often (in seconds) to perform the startup probe.
+  startupProbePeriodSeconds: 10
+
+  # The number of times the liveness probe should retry before giving up
+  livenessProbeFailureThreshold: 1
+
+  # How often (in seconds) to perform the liveness probe.
+  livenessProbePeriodSeconds: 10
+
+  # Number of seconds after which the liveness probe times out.
+  livenessProbeTimeoutSeconds: 10
+
+  resources:
+    requests:
+      cpu: "500m"
+      memory: "1250Mi"
+    limits:
+      cpu: "750m"
+      memory: "2500Mi"
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  labels: {}
+
+  annotations: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}
+
+
+node-browser-runtime:
+  enabled: true
+
+  # Set this to the maximum number of node-browser-runtime jobs you want to run in parallel
+  parallelism: 1
+
+  # Set this to the maximum number of node-browser-runtime jobs you expect to execute per minute (multiplied by the value of `parallelism` above)
+  completions: 6
+
+  # The imagePullSecrets stores Docker credentials that are used for accessing a registry.
+  imagePullSecrets: []
+
+  # The nameOverride replaces the name of the chart in the Chart.yaml file.
+  nameOverride: ""
+
+  # By default, fullname uses '-. This overrides that and uses the given string instead.
+  fullnameOverride: ""
+
+  # The appVersionOverride overrides the current app version.
+  appVersionOverride: ""
+
+  image:
+    # This parameter determines what container the pod will run as.
+    repository: newrelic/synthetics-node-browser-runtime
+    # The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
+    pullPolicy: IfNotPresent
+
+  ## The AppArmor profile name that will be applied to the pods. If set, then the AppArmor profile must exist on the Kubernetes node(s) for this to work.
+  # appArmorProfileName: ""
+
+  # The number of times the startup probe should retry before giving up.
+  startupProbeFailureThreshold: 60
+
+  # How often (in seconds) to perform the startup probe.
+  startupProbePeriodSeconds: 10
+
+  # The number of times the liveness probe should retry before giving up
+  livenessProbeFailureThreshold: 1
+
+  # How often (in seconds) to perform the liveness probe.
+  livenessProbePeriodSeconds: 10
+
+  # Number of seconds after which the liveness probe times out.
+  livenessProbeTimeoutSeconds: 10
+
+  resources:
+    requests:
+      cpu: "1000m"
+      memory: "2000Mi"
+    limits:
+      cpu: "1500m"
+      memory: "3000Mi"
+
+  podAnnotations: {}
+
+  podSecurityContext: {}
+
+  securityContext: {}
+
+  labels: {}
+
+  annotations: {}
+
+  nodeSelector: {}
+
+  tolerations: []
+
+  affinity: {}

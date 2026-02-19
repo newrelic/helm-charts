@@ -1,0 +1,78 @@
+# CI/CD test values for job-manager chart (Public NR-hosted location)
+
+jobManager:
+  ## ComputeLocation Configuration
+  location:
+    key: "test-public-location-key-for-ci"
+    name: "ci-test-public-location"
+    id: "test-ci-location-id-123"
+    hostedBy: "newrelic"
+    visibility: "public"
+    scope:
+      type: "ORGANIZATION"
+    description: "CI test public serverless location"
+    tags:
+      region: "us-east-1"
+      provider: "AWS"
+      environment: "ci"
+    associatedWorkloads:
+      - "node-api-runtime_v1"
+      - "node-browser-runtime_v1"
+
+  ## Multi-tenant enabled for public locations
+  multiTenant:
+    enabled: true
+    accountValidation:
+      enabled: false  # Disabled for CI
+    capacity:
+      maxConcurrentJobs: 100
+      perAccountQuota: 10
+    isolation:
+      networkPolicies: false  # Disabled for CI
+      resourceQuotas: false   # Disabled for CI
+
+  logLevel: "INFO"
+  brokerApiEndpoint: "https://compute-broker.nr-data.net"
+
+  hpa:
+    enabled: true
+    minReplicas: 1
+    maxReplicas: 3
+    customMetrics:
+      queueDepthMetricName: "serverless_queue_depth"
+      targetValue: "100"
+
+  sidecar:
+    enabled: true
+
+global:
+  internalApiKey: "test-internal-api-key-for-ci"
+  checkTimeout: "180"
+
+image:
+  repository: newrelic/serverless-job-manager
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "800Mi"
+  limits:
+    cpu: "750m"
+    memory: "1600Mi"
+
+serviceAccount:
+  create: true
+
+rbac:
+  create: true
+
+node-api-runtime:
+  enabled: true
+  parallelism: 1
+  completions: 6
+
+node-browser-runtime:
+  enabled: true
+  parallelism: 1
+  completions: 6

@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "job-manager.hostname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "job-manager.labels" . | nindent 4 }}
+      {{- with .Values.labels -}}
+      {{ toYaml . | nindent 4 }}
+      {{- end }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+    - name: admin
+      port: {{ .Values.service.adminPort }}
+      targetPort: admin
+      protocol: TCP
+  selector:
+    {{- include "job-manager.selectorLabels" . | nindent 4 }}
