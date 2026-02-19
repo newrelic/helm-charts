@@ -517,6 +517,9 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+
+
+
       filter/exclude_metrics_low_data_mode:
         metrics:
           metric:
@@ -618,6 +621,32 @@ data:
           metrics:
             - 'kube_pod_container_status_restarts_total'
           match_type: strict
+
+          
+      filter/cpu_requests_only:
+        metrics:
+          datapoint:
+            - 'metric.name == "kube_pod_container_resource_requests"  and IsMatch(attributes["resource"],  "cpu") == true'
+
+      
+      # The metricstransform processor performs the aggregation.
+      metricstransform/sum-container-cpu:
+        transforms:
+          - include: kube_pod_container_resource_requests
+            match_type: strict
+            action: insert
+            new_name: k8s.custom.node.requests
+            # 'aggregate_labels' with an aggregation_type of 'sum' will sum the values
+            # of all metrics that have the same name and attributes after grouping.
+            # The 'label_set' should contain the attribute we grouped by.
+            operations:
+              - action: aggregate_labels
+                label_set: [k8s.node.name]
+                aggregation_type: sum
+          
+      
+
+
 
       k8sattributes/ksm:
         # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
@@ -746,6 +775,11 @@ data:
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
+      debug:
+        verbosity: detailed
+        sampling_initial: 5
+        sampling_thereafter: 200
+
     connectors:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
@@ -859,9 +893,13 @@ data:
             - transform/ksm
             - transform/ksm_datapoints
             - k8sattributes/ksm
+            - filter/cpu_requests_only
+            - metricstransform/sum-container-cpu
             - cumulativetodelta
+
           exporters:
             - routing/metrics_egress
+            - debug
         metrics/nr_controlplane:
           receivers:
             - routing/nr_metrics_pipelines
