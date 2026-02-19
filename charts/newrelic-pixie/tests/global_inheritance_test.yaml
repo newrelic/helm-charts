@@ -1,0 +1,653 @@
+suite: test global value inheritance
+templates:
+  - templates/job.yaml
+tests:
+  # ================================================================================
+  # CLUSTER & IDENTITY (Global propagation)
+  # ================================================================================
+  - it: Cluster name from global value
+    set:
+      global:
+        cluster: "global-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env[0]"
+          value:
+            name: CLUSTER_NAME
+            value: global-cluster
+
+  - it: Cluster name local override takes precedence over global
+    set:
+      cluster: "local-cluster"
+      global:
+        cluster: "global-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env[0].value"
+          value: local-cluster
+
+  # ================================================================================
+  # PROXY (Global propagation)
+  # ================================================================================
+  - it: Proxy from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        proxy: "http://proxy.example.com:3128"
+    asserts:
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: HTTP_PROXY
+            value: "http://proxy.example.com:3128"
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: HTTPS_PROXY
+            value: "http://proxy.example.com:3128"
+
+  - it: Proxy local override takes precedence over global
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      proxy: "http://local-proxy.example.com:8080"
+      global:
+        proxy: "http://global-proxy.example.com:3128"
+    asserts:
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: HTTP_PROXY
+            value: "http://local-proxy.example.com:8080"
+
+  - it: No proxy when neither global nor local set
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - notContains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: HTTP_PROXY
+
+  # ================================================================================
+  # IMAGE REGISTRY & PULLSECRETS (Global propagation for air-gapped)
+  # ================================================================================
+  - it: Image registry from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          registry: "quay.io"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^quay.io/newrelic/newrelic-pixie-integration"
+
+  - it: Image registry local override takes precedence
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      image:
+        registry: "gcr.io"
+      global:
+        images:
+          registry: "quay.io"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^gcr.io/newrelic/newrelic-pixie-integration"
+
+  - it: ClusterRegistrationWaitImage respects global registry
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          registry: "quay.io"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.initContainers[0].image"
+          pattern: "^quay.io/"
+
+  - it: Image pull policy defaults to IfNotPresent when not set
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].imagePullPolicy"
+          value: "IfNotPresent"
+      - equal:
+          path: "spec.template.spec.initContainers[0].imagePullPolicy"
+          value: "IfNotPresent"
+
+  - it: Image pull secrets from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          pullSecrets:
+            - name: my-registry-secret
+    asserts:
+      - isNotNull:
+          path: "spec.template.spec.imagePullSecrets"
+
+  # ================================================================================
+  # SCHEDULING CONSTRAINTS (Global propagation)
+  # ================================================================================
+  - it: NodeSelector from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        nodeSelector:
+          node.role/monitoring: "true"
+    asserts:
+      - equal:
+          path: "spec.template.spec.nodeSelector"
+          value:
+            node.role/monitoring: "true"
+
+  - it: NodeSelector local override takes precedence
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      nodeSelector:
+        disktype: ssd
+      global:
+        nodeSelector:
+          node.role/monitoring: "true"
+    asserts:
+      - equal:
+          path: "spec.template.spec.nodeSelector.disktype"
+          value: ssd
+
+  - it: Tolerations from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        tolerations:
+          - key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+    asserts:
+      - isNotNull:
+          path: "spec.template.spec.tolerations"
+
+  - it: Affinity from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: kubernetes.io/hostname
+                      operator: In
+                      values:
+                        - node-1
+    asserts:
+      - equal:
+          path: "spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key"
+          value: kubernetes.io/hostname
+      - equal:
+          path: "spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator"
+          value: In
+      - contains:
+          path: "spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values"
+          content: node-1
+
+  - it: Priority class name from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        priorityClassName: high-priority
+    asserts:
+      - equal:
+          path: "spec.template.spec.priorityClassName"
+          value: high-priority
+
+  - it: Priority class name local override takes precedence over global
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      priorityClassName: custom-priority
+      global:
+        priorityClassName: high-priority
+    asserts:
+      - equal:
+          path: "spec.template.spec.priorityClassName"
+          value: custom-priority
+
+  # ================================================================================
+  # SECURITY CONTEXT (Global propagation)
+  # ================================================================================
+  - it: Pod security context from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        podSecurityContext:
+          runAsUser: 1000
+          fsGroup: 2000
+    asserts:
+      - equal:
+          path: "spec.template.spec.securityContext.runAsUser"
+          value: 1000
+      - equal:
+          path: "spec.template.spec.securityContext.fsGroup"
+          value: 2000
+
+  - it: Container security context from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation"
+          value: false
+
+  - it: Container security context local override takes precedence
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        containerSecurityContext:
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation"
+          value: false
+
+  # ================================================================================
+  # NETWORKING (Global propagation)
+  # ================================================================================
+  - it: DNS config from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        dnsConfig:
+          nameservers:
+            - 8.8.8.8
+            - 8.8.4.4
+    asserts:
+      - contains:
+          path: "spec.template.spec.dnsConfig.nameservers"
+          content: 8.8.8.8
+      - contains:
+          path: "spec.template.spec.dnsConfig.nameservers"
+          content: 8.8.4.4
+
+  - it: Host network from global value (true)
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        hostNetwork: true
+    asserts:
+      - equal:
+          path: "spec.template.spec.hostNetwork"
+          value: true
+
+  - it: Host network respects false value from global
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        hostNetwork: false
+    asserts:
+      - equal:
+          path: "spec.template.spec.hostNetwork"
+          value: false
+
+  # ================================================================================
+  # LABELS (Global propagation & merge)
+  # ================================================================================
+  - it: Labels from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        labels:
+          environment: prod
+          team: platform
+    asserts:
+      - equal:
+          path: "metadata.labels.environment"
+          value: prod
+      - equal:
+          path: "metadata.labels.team"
+          value: platform
+
+  - it: Labels local override takes precedence over global
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      job:
+        labels:
+          custom-label: "local-value"
+      global:
+        labels:
+          environment: prod
+    asserts:
+      - equal:
+          path: "metadata.labels.custom-label"
+          value: "local-value"
+
+  - it: Pod labels from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        podLabels:
+          monitoring: enabled
+    asserts:
+      - equal:
+          path: "spec.template.metadata.labels.monitoring"
+          value: enabled
+
+  - it: Pod labels local override takes precedence
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      podLabels:
+        local-label: "true"
+      global:
+        podLabels:
+          global-label: "true"
+    asserts:
+      - equal:
+          path: "spec.template.metadata.labels.local-label"
+          value: "true"
+
+  # ================================================================================
+  # COMPREHENSIVE SCENARIOS (Multiple globals together)
+  # ================================================================================
+  - it: All global values work together
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        proxy: "http://proxy.example.com:3128"
+        nodeSelector:
+          node.role/monitoring: "true"
+        tolerations:
+          - key: monitoring-taint
+            operator: Equal
+            value: "true"
+            effect: NoSchedule
+        podSecurityContext:
+          runAsUser: 1000
+        labels:
+          environment: prod
+        priorityClassName: high-priority
+        images:
+          registry: "quay.io"
+          pullPolicy: "IfNotPresent"
+    asserts:
+      - equal:
+          path: "metadata.labels.environment"
+          value: prod
+      - equal:
+          path: "spec.template.spec.priorityClassName"
+          value: high-priority
+      - isNotNull:
+          path: "spec.template.spec.nodeSelector"
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: HTTP_PROXY
+            value: "http://proxy.example.com:3128"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^quay.io/"
+
+  - it: Local overrides take precedence over all globals
+    set:
+      cluster: "local-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      proxy: "http://local-proxy.example.com:8080"
+      nodeSelector:
+        disktype: ssd
+      podLabels:
+        local-label: "override"
+      image:
+        registry: "gcr.io"
+      global:
+        cluster: "global-cluster"
+        proxy: "http://global-proxy.example.com:3128"
+        nodeSelector:
+          node.role/monitoring: "true"
+        podLabels:
+          local-label: "global-value"
+        images:
+          registry: "quay.io"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env[0].value"
+          value: local-cluster
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: HTTP_PROXY
+            value: "http://local-proxy.example.com:8080"
+      - equal:
+          path: "spec.template.spec.nodeSelector.disktype"
+          value: ssd
+      - equal:
+          path: "spec.template.metadata.labels.local-label"
+          value: "override"
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^gcr.io/"
+
+  # ================================================================================
+  # LICENSE KEY & CUSTOM SECRETS (Authentication)
+  # ================================================================================
+  - it: License key propagates to NR_LICENSE_KEY environment variable
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env[1].name"
+          value: NR_LICENSE_KEY
+      - equal:
+          path: "spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key"
+          value: newrelicLicenseKey
+
+  - it: Custom secret name from global value
+    set:
+      cluster: "test-cluster"
+      customSecretApiKeyKey: pixie-api-key-field
+      global:
+        customSecretName: my-nr-secret
+        customSecretLicenseKey: nr-license-key
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name"
+          value: my-nr-secret
+      - equal:
+          path: "spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key"
+          value: nr-license-key
+
+  - it: Custom secret name local override takes precedence over global
+    set:
+      cluster: "test-cluster"
+      customSecretName: local-secret
+      customSecretLicenseKey: local-key
+      customSecretApiKeyKey: local-api-key-field
+      global:
+        customSecretName: global-secret
+        customSecretLicenseKey: global-key
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.name"
+          value: local-secret
+      - equal:
+          path: "spec.template.spec.containers[0].env[1].valueFrom.secretKeyRef.key"
+          value: local-key
+
+  # ================================================================================
+  # STAGING & DEBUG (Feature toggles)
+  # ================================================================================
+  - it: NrStaging enabled in environment
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        nrStaging: true
+    asserts:
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: NR_OTLP_HOST
+            value: "staging-otlp.nr-data.net:4317"
+
+  - it: NrStaging local override takes precedence
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      nrStaging: false
+      global:
+        nrStaging: true
+    asserts:
+      - notContains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: NR_OTLP_HOST
+
+  - it: Verbose logging from local values
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      verbose: true
+    asserts:
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: VERBOSE
+            value: "true"
+
+  # ================================================================================
+  # FIXED LIMITATIONS (Previously blocked by defaults in values.yaml)
+  # ================================================================================
+  - it: Image pull policy NOW propagates from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        images:
+          pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].imagePullPolicy"
+          value: "Always"
+      - equal:
+          path: "spec.template.spec.initContainers[0].imagePullPolicy"
+          value: "Always"
+
+  - it: VerboseLog NOW propagates from global value
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        verboseLog: true
+    asserts:
+      - contains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: VERBOSE
+            value: "true"
+
+  - it: NrStaging NOW respects local override (precedence fix)
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      nrStaging: false
+      global:
+        nrStaging: true
+    asserts:
+      - notContains:
+          path: "spec.template.spec.containers[0].env"
+          content:
+            name: NR_OTLP_HOST
+
+  # ================================================================================
+  # NOT APPLICABLE (These should not cause errors)
+  # ================================================================================
+  - it: Unsupported global values do not cause errors (provider)
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        provider: "eks"
+    asserts:
+      - isKind:
+          of: Job
+
+  - it: Unsupported global values do not cause errors (customAttributes)
+    set:
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+      global:
+        customAttributes:
+          some-attr: "some-value"
+    asserts:
+      - isKind:
+          of: Job
