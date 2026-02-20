@@ -18,11 +18,11 @@ ports:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: newrelic/pipeline-control-gateway
+  repository: kprasanthi137/pcg-test
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "2.0.1"
+  tag: "multi-fleet-testing"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -111,6 +111,11 @@ verboseLog:
 # @default -- `false`
 nrStaging:
 
+#  -- The unique identifier for the gateway fleet associated with the Pipeline Control Gateway (PCG) agent. Can be configured also with `fleet_id`
+# @default -- `""`
+fleet_id: ""
+
+
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
 # @default -- `false`
 lowDataMode:
@@ -136,6 +141,7 @@ generated:
           path: "/health/config"
   receivers:
     nrproprietaryreceiver:
+      fleet_id: ${env:FLEET_ID:-""}
       proxy: false
       enable_runtime_metrics: true
       server:
