@@ -18,11 +18,11 @@ ports:
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
-  repository: cf-registry.nr-ops.net/pipeline-control/pipeline-control-gateway
+  repository: kprasanthi137/pcg-test
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "pullrequest-445"
+  tag: "multi-fleet-testing"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -141,6 +141,7 @@ generated:
           path: "/health/config"
   receivers:
     nrproprietaryreceiver:
+      fleet_id: ${env:FLEET_ID:-""}
       proxy: false
       enable_runtime_metrics: true
       server:
