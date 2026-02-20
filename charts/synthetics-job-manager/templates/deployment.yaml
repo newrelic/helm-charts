@@ -71,6 +71,10 @@ spec:
             {{- end }}
             - name: HEAVYWEIGHT_WORKERS
               value: {{ include "synthetics-job-manager.runtimeParallelism" . | quote }}
+            {{- if .Values.synthetics.enableWasm }}
+            - name: ENABLE_WASM
+              value: {{ .Values.synthetics.enableWasm | quote }}
+            {{- end }}
 
           {{- /*
           TODO - The following are not yet implemented
