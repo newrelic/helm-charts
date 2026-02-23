@@ -535,23 +535,16 @@ data:
       filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses:
         metrics:
           datapoint:
-            - metric.name == "kube_pod_status_phase" and value_double < 0.5
-            - metric.name == "kube_pod_status_ready" and value_double < 0.5
-            - metric.name == "kube_pod_status_scheduled" and value_double < 0.5
-            - metric.name == "kube_pod_container_status_ready" and value_double < 0.5
-            - metric.name == "kube_pod_container_status_phase" and value_double < 0.5
-            - metric.name == "kube_pod_container_status_restarts_total" and value_double < 0.5
-            - metric.name == "kube_deployment_status_condition" and value_double < 0.5
-            - metric.name == "kube_pod_container_status_waiting_reason" and value_double < 0.5
+            - metric.name == "kube_pod_status_phase" and value_double == 0.0
+            - metric.name == "kube_pod_status_ready" and value_double == 0.0
+            - metric.name == "kube_pod_status_scheduled" and value_double == 0.0
+            - metric.name == "kube_pod_container_status_phase" and value_double == 0.0
+            - metric.name == "kube_deployment_status_condition" and value_double == 0.0
 
       filter/nr_exclude_zero_value_kube_jobs:
         metrics:
           datapoint:
-            - metric.name == "kube_job_complete" and value_double < 0.5
-            - metric.name == "kube_job_spec_parallelism" and value_double < 0.5
-            - metric.name == "kube_job_status_failed" and value_double < 0.5
-            - metric.name == "kube_job_status_active" and value_double < 0.5
-            - metric.name == "kube_job_status_succeeded" and value_double < 0.5
+            - metric.name == "kube_job_complete" and value_double == 0.0
 
     {{- if include "newrelic.common.openShift" . }}
       resourcedetection/openshift:

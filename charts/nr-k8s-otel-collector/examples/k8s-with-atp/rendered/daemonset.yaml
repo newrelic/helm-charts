@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: dd2aa97c7203e68a7b6decb3e9f0c7cf832b32a87aa602a6213cf98faaffa7e8
+        checksum/config: 9d8a8ceef13cb092a0bfc43f872282da5fc66f13eef72da60ebaeaa8e8b9ce7c
     spec:
       serviceAccountName: nr-k8s-otel-collector
       initContainers:
@@ -137,6 +137,10 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
+            # ATP requires persistent storage to maintain state across restarts (thresholds, history).
+            # This hostPath volume ensures ATP data survives pod restarts on the same node.
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
       volumes:
         - name: host-fs
           hostPath:
@@ -149,3 +153,10 @@ spec:
         - name: daemonset-config
           configMap:
             name: nr-k8s-otel-collector-daemonset-config
+        # ATP storage volume: Uses hostPath to persist adaptive telemetry processor state.
+        # DirectoryOrCreate ensures the directory is created if it doesn't exist.
+        # Data persists across pod restarts but is node-specific (DaemonSet behavior).
+        - name: nrdot-data-storage
+          hostPath:
+            path: /var/lib/nrdot-collector
+            type: DirectoryOrCreate
