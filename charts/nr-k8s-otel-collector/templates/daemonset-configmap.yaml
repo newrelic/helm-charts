@@ -77,22 +77,14 @@ data:
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
-
-        {{- if include "newrelic.common.openShift" . }}
-        endpoint: "${HOST_IP}:10250"
-        {{- else if not (include "newrelic.common.gkeAutopilot" .) }}
-        endpoint: "${KUBE_NODE_NAME}:10250"
-        {{- else }}
-        endpoint: "${KUBE_NODE_NAME}:10255"
-        {{- end }}
-        
         {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
         {{- else }}
+        endpoint: "${KUBE_NODE_NAME}:10255"
         auth_type: "none"
         {{- end }}
-        
         metrics:
           k8s.container.cpu_limit_utilization:
             enabled: true
