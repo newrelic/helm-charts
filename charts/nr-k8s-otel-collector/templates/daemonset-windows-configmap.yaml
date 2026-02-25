@@ -1,0 +1,573 @@
+{{- if .Values.windows.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nrKubernetesOtel.daemonset.windows.configMap.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  daemonset-config.yaml: |
+    {{- with include "nrKubernetesOtel.windows.configMap.overrideConfig" . }}
+    {{- . | nindent 4 }}
+    {{- else }}
+    receivers:
+      {{- include "nrKubernetesOtel.windows.configMap.extraConfig.receivers" . | nindent 6 }}
+
+      hostmetrics:
+        # No root_path: Windows does not use /hostfs
+        collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.time:
+                enabled: false
+              system.cpu.utilization:
+                enabled: true
+              system.cpu.logical.count:
+                enabled: true
+          # No load scraper: load average is not supported on Windows
+          memory:
+            metrics:
+              system.memory.utilization:
+                enabled: true
+          paging:
+            metrics:
+              system.paging.utilization:
+                enabled: false
+              system.paging.faults:
+                enabled: false
+          filesystem:
+            metrics:
+              system.filesystem.utilization:
+                enabled: true
+            # No exclude_mount_points: CRI-O overlay exclusion is not applicable on Windows
+          disk:
+            metrics:
+              system.disk.merged:
+                enabled: false
+              system.disk.pending_operations:
+                enabled: false
+              system.disk.weighted_io_time:
+                enabled: false
+          network:
+            metrics:
+              system.network.connections:
+                enabled: false
+          {{- if .Values.enable_atp }}
+          processes:
+          process:
+            metrics:
+              process.cpu.utilization:
+                enabled: true
+              process.memory.utilization:
+                enabled: true
+              process.memory.usage:
+                enabled: true
+              process.memory.virtual:
+                enabled: true
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
+          {{- end }}
+
+      {{- if .Values.receivers.kubeletstats.enabled }}
+      kubeletstats:
+        collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
+        endpoint: "${KUBE_NODE_NAME}:10250"
+        auth_type: "serviceAccount"
+        insecure_skip_verify: true
+        metrics:
+          k8s.container.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
+      {{- end }}
+
+      filelog:
+        include:
+          - C:\var\log\pods\*\*\*.log
+        exclude:
+          - C:\var\log\pods\*\otel-collector-daemonset\*.log
+          - C:\var\log\pods\*\otel-collector-deployment\*.log
+          - C:\var\log\pods\*\*\*-exec.log
+        include_file_path: true
+        include_file_name: true
+        operators:
+        - id: container-parser
+          type: container
+
+
+    processors:
+      {{- include "nrKubernetesOtel.windows.configMap.extraConfig.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
+
+      transform/extract_runtime:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - IsMatch(attributes["container_id"], ".*://.*")
+            statements:
+              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
+              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
+
+      metricstransform/ldm:
+        transforms:
+          - include: .*
+            match_type: regexp
+            action: update
+            operations:
+            - action: add_label
+              new_label: low.data.mode
+              new_value: 'false'
+
+      metricstransform/kubeletstats:
+        transforms:
+          - include: container\.(cpu\.usage|filesystem\.(available|capacity|usage)|memory\.usage)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      {{- if .Values.enable_atp }}
+      adaptivetelemetry:
+        enable_storage: true
+        retention_minutes: 30
+        metric_thresholds:
+          process.cpu.utilization: 0.10
+          process.memory.utilization: 0.10
+      {{- end }}
+
+      metricstransform/hostmetrics:
+        transforms:
+          {{- if .Values.enable_atp }}
+          - include: process\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: processes\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          {{- else }}
+          - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          {{- end }}
+          - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.disk\.(io_time|operation_time|operations)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.(filesystem|memory)\.(usage|utilization)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: system\.network\.(errors|io|packets)
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+
+      # group system.cpu metrics by cpu
+      metricstransform/hostmetrics_cpu:
+        transforms:
+          - include: system.cpu.utilization
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ state ]
+                aggregation_type: mean
+          - include: system.paging.operations
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ direction ]
+                aggregation_type: sum
+
+      metricstransform/k8s_cluster_info:
+        transforms:
+          - include: kubernetes_build_info
+            action: update
+            new_name: k8s.cluster.info
+
+      filter/exclude_metrics_low_data_mode:
+        metrics:
+          metric:
+            - 'HasAttrOnDatapoint("low.data.mode", "false")'
+
+      transform/truncate:
+        log_statements:
+          - context: log
+            statements:
+              - truncate_all(log.attributes, 4095)
+              - truncate_all(resource.attributes, 4095)
+
+      resourcedetection/env:
+        detectors: ["env", "system"]
+        override: false
+        system:
+          hostname_sources: ["os"]
+          resource_attributes:
+            host.name:
+              enabled: false
+            host.id:
+              enabled: true
+
+      resourcedetection/cloudproviders:
+        detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
+        timeout: 2s
+        override: false
+        eks:
+          node_from_env_var: KUBE_NODE_NAME
+
+      resource/newrelic:
+        attributes:
+          - key: k8s.cluster.name
+            action: upsert
+            value: {{ include "newrelic.common.cluster" . }}
+          - key: "newrelic.chart.version"
+            action: upsert
+            value: {{ .Chart.Version }}
+          - key: newrelic.entity.type
+            action: upsert
+            value: "k8s"
+
+      transform/low_data_mode_inator:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(metric.description, "")
+              - set(metric.unit, "")
+          - context: datapoint
+            statements:
+              - delete_key(datapoint.attributes, "id")
+              - delete_key(datapoint.attributes, "name")
+              - delete_key(datapoint.attributes, "interface")
+              - delete_key(datapoint.attributes, "cpu")
+
+      resource/low_data_mode_inator:
+        attributes:
+          - key: http.scheme
+            action: delete
+          - key: net.host.name
+            action: delete
+          - key: net.host.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: server.address
+            action: delete
+
+      k8sattributes/ksm:
+        auth_type: "serviceAccount"
+        passthrough: false
+        filter:
+          node_from_env_var: KUBE_NODE_NAME
+        extract:
+          metadata:
+            - k8s.deployment.name
+            - k8s.daemonset.name
+            - k8s.namespace.name
+            - k8s.node.name
+            - k8s.pod.start_time
+            - k8s.replicaset.name
+            - k8s.statefulset.name
+            - k8s.cronjob.name
+            - k8s.job.name
+        pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.uid
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+
+      filter/exclude_network:
+        metrics:
+          datapoint:
+            - 'IsMatch(metric.name, "^system.network.*") == true and IsMatch(attributes["device"], "^Loopback.*") == true'
+
+      memory_limiter:
+         check_interval: 1s
+         limit_percentage: 80
+         spike_limit_percentage: 25
+
+      cumulativetodelta:
+
+      batch:
+        send_batch_max_size: 1000
+        timeout: 30s
+        send_batch_size : 800
+
+    exporters:
+      {{- include "nrKubernetesOtel.windows.configMap.extraConfig.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
+
+      otlphttp/newrelic:
+        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+        headers:
+          api-key: ${env:NR_LICENSE_KEY}
+
+    connectors:
+      {{- include "nrKubernetesOtel.windows.configMap.extraConfig.connectors" . | nindent 6 }}
+
+      routing/nr_logs_pipelines:
+        default_pipelines: [logs/pipeline]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/pipeline]
+
+      routing/logs_egress:
+        default_pipelines: [logs/egress]
+        table:
+          - context: datapoint
+            condition: "true"
+            pipelines: [logs/egress]
+
+      routing/metrics_egress:
+        default_pipelines: [metrics/egress]
+        table:
+          - context: metric
+            condition: "true"
+            pipelines: [metrics/egress]
+
+      routing/nr_metrics_pipelines:
+        default_pipelines: [metrics/default]
+        error_mode: propagate
+        table:
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/networkscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/diskscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/memoryscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/cpuscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/filesystemscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
+            pipelines: [metrics/nr]
+
+    service:
+      telemetry:
+        {{- if include "newrelic.common.verboseLog" . }}
+        logs:
+          level: "debug"
+        {{- end }}
+        metrics:
+          readers:
+            {{- if .Values.collectorObservability.enabled }}
+            - periodic:
+                interval: {{ .Values.collectorObservability.scrapeIntervalMs }}
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+                    headers:
+                      api-key: ${env:NR_LICENSE_KEY}
+            {{- end }}
+      pipelines:
+        {{- include "nrKubernetesOtel.windows.configMap.extraConfig.pipelines" . | nindent 8 }}
+
+        {{- if or .Values.receivers.hostmetrics.enabled .Values.receivers.kubeletstats.enabled }}
+        metrics/ingress:
+          receivers:
+            {{- if .Values.receivers.hostmetrics.enabled }}
+            - hostmetrics
+            {{- end }}
+            {{- if .Values.receivers.kubeletstats.enabled }}
+            - kubeletstats
+            {{- end }}
+          processors:
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
+          exporters:
+            - routing/nr_metrics_pipelines
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
+        metrics/nr:
+          receivers:
+            - routing/nr_metrics_pipelines
+          processors:
+            - memory_limiter
+            {{- if .Values.enable_atp }}
+            - adaptivetelemetry
+            {{- end }}
+            - metricstransform/k8s_cluster_info
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
+            - metricstransform/ldm
+            - metricstransform/kubeletstats
+            - metricstransform/hostmetrics
+            - filter/exclude_metrics_low_data_mode
+            {{- end }}
+            - metricstransform/hostmetrics_cpu
+            - transform/truncate
+            - filter/exclude_network
+            - resourcedetection/env
+            - resourcedetection/cloudproviders
+            - resource/newrelic
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
+            - transform/low_data_mode_inator
+            - resource/low_data_mode_inator
+            {{- end }}
+            - k8sattributes/ksm
+            - cumulativetodelta
+          exporters:
+            - routing/metrics_egress
+        {{- end }}
+
+        metrics/default:
+          receivers:
+            - routing/nr_metrics_pipelines
+          processors:
+            - memory_limiter
+            - resource/newrelic
+            - cumulativetodelta
+          exporters:
+            - routing/metrics_egress
+
+        metrics/egress:
+          receivers:
+            - routing/metrics_egress
+          processors:
+            - transform/extract_runtime
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
+            - batch
+          exporters:
+            - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
+
+        {{- if .Values.receivers.filelog.enabled }}
+        logs/ingress:
+          receivers:
+            - filelog
+          processors:
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.processors" . | nindent 12 }}
+          exporters:
+            - routing/nr_logs_pipelines
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.exporters" . | nindent 12 }}
+
+        logs/pipeline:
+          receivers:
+            - routing/nr_logs_pipelines
+          processors:
+            - memory_limiter
+            - transform/truncate
+            - resource/newrelic
+            - k8sattributes/ksm
+          exporters:
+            - routing/logs_egress
+
+        logs/egress:
+          receivers:
+            - routing/logs_egress
+          processors:
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . | nindent 12 }}
+            - batch
+          exporters:
+            - otlphttp/newrelic
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . | nindent 12 }}
+        {{- end }}
+    {{- end }}
+{{- end }}

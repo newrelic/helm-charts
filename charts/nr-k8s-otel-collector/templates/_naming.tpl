@@ -14,3 +14,7 @@
 {{- define "nrKubernetesOtel.daemonset.configMap.fullname" -}}
 {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "daemonset-config") -}}
 {{- end -}}
+
+{{- define "nrKubernetesOtel.daemonset.windows.configMap.fullname" -}}
+{{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "daemonset-windows-config") -}}
+{{- end -}}

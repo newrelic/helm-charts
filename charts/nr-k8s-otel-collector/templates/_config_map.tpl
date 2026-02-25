@@ -141,6 +141,77 @@
 {{- end -}}
 {{- end -}}
 
+{{- /* Defines if the windows daemonset config map has to be created or not */ -}}
+{{- define "nrKubernetesOtel.windows.configMap.overrideConfig" -}}
+
+{{- if get .Values.windows "configMap" | kindIs "map" -}}
+    {{- if .Values.windows.configMap.overrideConfig -}}
+        {{- toYaml .Values.windows.configMap.overrideConfig -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the windows daemonset receivers have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.windows.configMap.extraConfig.receivers" -}}
+
+{{- if get .Values.windows "configMap" | kindIs "map" -}}
+    {{- if .Values.windows.configMap.extraConfig -}}
+        {{- if .Values.windows.configMap.extraConfig.receivers -}}
+            {{- toYaml .Values.windows.configMap.extraConfig.receivers -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the windows daemonset processors have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.windows.configMap.extraConfig.processors" -}}
+
+{{- if get .Values.windows "configMap" | kindIs "map" -}}
+    {{- if .Values.windows.configMap.extraConfig -}}
+        {{- if .Values.windows.configMap.extraConfig.processors -}}
+            {{- toYaml .Values.windows.configMap.extraConfig.processors -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the windows daemonset exporters have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.windows.configMap.extraConfig.exporters" -}}
+
+{{- if get .Values.windows "configMap" | kindIs "map" -}}
+    {{- if .Values.windows.configMap.extraConfig -}}
+        {{- if .Values.windows.configMap.extraConfig.exporters -}}
+            {{- toYaml .Values.windows.configMap.extraConfig.exporters -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the windows daemonset connectors have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.windows.configMap.extraConfig.connectors" -}}
+
+{{- if get .Values.windows "configMap" | kindIs "map" -}}
+    {{- if .Values.windows.configMap.extraConfig -}}
+        {{- if .Values.windows.configMap.extraConfig.connectors -}}
+            {{- toYaml .Values.windows.configMap.extraConfig.connectors -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the windows daemonset pipelines have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.windows.configMap.extraConfig.pipelines" -}}
+
+{{- if get .Values.windows "configMap" | kindIs "map" -}}
+    {{- if .Values.windows.configMap.extraConfig -}}
+        {{- if .Values.windows.configMap.extraConfig.pipelines -}}
+            {{- toYaml .Values.windows.configMap.extraConfig.pipelines -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+
 {{- /* Defines if custom otel processors will be added to the config */ -}}
 {{- define "nrKubernetesOtel.custom.processors" -}}
     {{- if .Values.processors -}}
