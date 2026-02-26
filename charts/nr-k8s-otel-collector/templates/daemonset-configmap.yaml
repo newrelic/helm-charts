@@ -827,6 +827,11 @@ data:
                     endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
                     headers:
                       api-key: ${env:NR_LICENSE_KEY}
+        resource:
+          k8s.cluster.name: {{ include "newrelic.common.cluster" . }}
+          {{- range $k, $v := .Values.collectorObservability.resource }}
+          {{ $k }}: {{ $v }}
+          {{- end }}
             {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}

@@ -335,6 +335,15 @@ collectorObservability:
   # -- Specifies the interval at which the collector reports its metrics (in seconds)
   # @default -- `60`
   scrapeIntervalSeconds: 60
+  # -- Additional resource attributes to attach to its internal metrics.
+  # k8s.cluster.name is automatically populated from the cluster value.
+  # Useful for adding attributes such as env to distinguish between environments
+  # in multi-cluster deployments.
+  # Example:
+  # resource:
+  #   env: production
+  # @default -- `{}`
+  resource: {}
 
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI
 # @default -- `true`
