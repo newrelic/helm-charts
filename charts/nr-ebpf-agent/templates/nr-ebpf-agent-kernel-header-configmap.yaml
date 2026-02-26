@@ -13,7 +13,111 @@ data:
     # Detect OS and install kernel headers accordingly
     if [ -f /host/etc/os-release ]; then
       . /host/etc/os-release
-      if [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
+      if [[ $ID == 'rhcos' || $VARIANT_ID == 'coreos' ]]; then
+        echo 'Detected Red Hat CoreOS (OpenShift). Checking for kernel headers...'
+
+        KERNEL_VERSION=$(uname -r)
+        HEADERS_FOUND=false
+
+        # 1. Check if kernel headers are already present on the host.
+        for HEADER_PATH in \
+          "/host/usr/src/kernels/${KERNEL_VERSION}" \
+          "/host/lib/modules/${KERNEL_VERSION}/build"; do
+          if [ -d "$HEADER_PATH" ] && [ -f "$HEADER_PATH/Makefile" ]; then
+            echo "Found pre-existing kernel headers at: ${HEADER_PATH}"
+            mkdir -p /kernel-headers
+            cp -r "$HEADER_PATH"/* /kernel-headers/
+            HEADERS_FOUND=true
+            break
+          fi
+        done
+
+        # 2. Try installing via host package managers (for RHSM-registered systems).
+        if [ "$HEADERS_FOUND" = false ]; then
+          echo "Kernel headers not found on host. Attempting install via host package managers..."
+          chroot /host /bin/bash -c "dnf install -y kernel-devel-${KERNEL_VERSION}" 2>/dev/null \
+            || chroot /host /bin/bash -c "rpm-ostree install kernel-devel-${KERNEL_VERSION} --apply-live" 2>/dev/null \
+            || echo "Host package managers failed (no enabled repos or RHSM subscription)."
+
+          if [ -d "/host/usr/src/kernels/${KERNEL_VERSION}" ] && [ -f "/host/usr/src/kernels/${KERNEL_VERSION}/Makefile" ]; then
+            mkdir -p /kernel-headers
+            cp -r "/host/usr/src/kernels/${KERNEL_VERSION}"/* /kernel-headers/
+            HEADERS_FOUND=true
+          fi
+        fi
+
+        # 3. Download kernel-devel RPM from public RHEL-compatible mirrors and extract.
+        if [ "$HEADERS_FOUND" = false ]; then
+          echo "Attempting to download kernel-devel from public mirrors..."
+
+          TEMP_DIR=$(mktemp -d)
+          ARCH=$(uname -m)
+          RPM_DOWNLOADED=false
+
+          for MIRROR_URL in \
+            "https://dl.rockylinux.org/pub/rocky/${VERSION_ID}/BaseOS/${ARCH}/os/Packages/k/kernel-devel-${KERNEL_VERSION}.rpm" \
+            "https://dl.rockylinux.org/vault/rocky/${VERSION_ID}/BaseOS/${ARCH}/os/Packages/k/kernel-devel-${KERNEL_VERSION}.rpm"; do
+            echo "Trying: ${MIRROR_URL}"
+            if curl -f -L -o "${TEMP_DIR}/kernel-devel.rpm" "$MIRROR_URL" 2>/dev/null; then
+              echo "Downloaded kernel-devel RPM successfully"
+              RPM_DOWNLOADED=true
+              break
+            fi
+          done
+
+          if [ "$RPM_DOWNLOADED" = true ]; then
+            if ! command -v rpm2cpio >/dev/null 2>&1; then
+              echo "Installing rpm2cpio for RPM extraction..."
+              apt-get update -qq && apt-get install -y rpm2cpio 2>/dev/null \
+                || yum install -y rpm2cpio 2>/dev/null \
+                || true
+            fi
+
+            EXTRACT_DIR="${TEMP_DIR}/extract"
+            mkdir -p "$EXTRACT_DIR"
+            cd "$EXTRACT_DIR"
+
+            if command -v rpm2cpio >/dev/null 2>&1; then
+              rpm2cpio "${TEMP_DIR}/kernel-devel.rpm" | cpio -idm 2>/dev/null
+            elif command -v bsdtar >/dev/null 2>&1; then
+              bsdtar -xf "${TEMP_DIR}/kernel-devel.rpm" 2>/dev/null
+            else
+              echo "WARNING: Neither rpm2cpio nor bsdtar available for RPM extraction"
+            fi
+
+            if [ -d "${EXTRACT_DIR}/usr/src/kernels/${KERNEL_VERSION}" ]; then
+              mkdir -p /kernel-headers
+              cp -r "${EXTRACT_DIR}/usr/src/kernels/${KERNEL_VERSION}"/* /kernel-headers/
+              HEADERS_FOUND=true
+              echo "Kernel headers extracted from downloaded RPM"
+            fi
+            cd /
+          fi
+
+          rm -rf "$TEMP_DIR"
+        fi
+
+        # Handle result
+        if [ "$HEADERS_FOUND" = true ]; then
+          echo "Writing kernel headers path to /host/tmp/kernel-headers-path.txt"
+          if ERROR_MSG=$(echo "/kernel-headers" > /host/tmp/kernel-headers-path.txt 2>&1); then
+            echo "Successfully wrote kernel headers path: /kernel-headers"
+          else
+            echo "ERROR: Failed to write kernel headers path to /host/tmp/kernel-headers-path.txt"
+            echo "Reason: ${ERROR_MSG}"
+            echo "This may cause issues with kernel header detection"
+          fi
+        else
+          echo "WARNING: Could not obtain kernel headers for RHCOS"
+          if [ -f "/host/sys/kernel/btf/vmlinux" ]; then
+            echo "BTF data is available at /sys/kernel/btf/vmlinux — the agent may use CO-RE as a fallback."
+          fi
+          echo "To pre-install kernel headers on RHCOS, either:"
+          echo "  1. Register the host with RHSM (subscription-manager register)"
+          echo "  2. Install kernel-devel via a MachineConfig"
+          echo "Proceeding without kernel headers."
+        fi
+      elif [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
         echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
         chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
       elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
