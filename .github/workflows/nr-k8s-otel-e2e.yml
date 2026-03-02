@@ -32,6 +32,7 @@ jobs:
           kubernetes version: ${{ env.LATEST_K8S_VERSION }}
           # default driver doesn't support 'eval $$(minikube docker-env)'.
           driver: docker
+          container runtime: containerd
           github token: ${{ secrets.GITHUB_TOKEN }}
       - name: Run e2e-test
         uses: newrelic/newrelic-integration-e2e-action@v1
