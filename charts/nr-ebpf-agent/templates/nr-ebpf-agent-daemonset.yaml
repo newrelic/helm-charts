@@ -138,7 +138,7 @@ spec:
           - name: NETWORK_METRICS_REPORTING
             value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
           - name: LOG_REPORTING
-            value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}true{{ end }}"
+            value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
@@ -185,7 +185,7 @@ spec:
           {{- if .Values.logDataFilters }}
           {{- if .Values.logDataFilters.applicationLogReporting }}
           - name: APPLICATION_LOG_REPORTING_ENABLED
-            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default true }}"
+            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default false }}"
           - name: APPLICATION_LOG_FILE_REGEX
             value: {{ .Values.logDataFilters.applicationLogReporting.fileRegex | quote }}
           - name: MAX_LOG_SAMPLES_PER_MINUTE
