@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "fixer.fullname" . }}-script
+  labels:
+    {{- include "fixer.labels" . | nindent 4 }}
+data:
+  script.sh: |
+{{ .Values.script | indent 4 }}

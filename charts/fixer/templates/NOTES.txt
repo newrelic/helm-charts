@@ -1,0 +1,17 @@
+Thank you for installing {{ .Chart.Name }}.
+
+Your release is named {{ .Release.Name }}.
+
+A Job has been created to execute your fixer script.
+
+To check the status of the Job:
+
+  kubectl get job {{ include "fixer.fullname" . }} -n {{ .Release.Namespace }}
+
+To view the logs:
+
+  kubectl logs -n {{ .Release.Namespace }} job/{{ include "fixer.fullname" . }}
+
+To check the status of pods created by the Job:
+
+  kubectl get pods -n {{ .Release.Namespace }} -l app.kubernetes.io/name={{ include "fixer.name" . }}
