@@ -1,0 +1,20 @@
+---
+# Source: nrdot-plus-collector/templates/clusterrolebinding.yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nrdot-plus-collector
+  labels:
+    app.kubernetes.io/instance: nrdot-plus-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nrdot-plus-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nrdot-plus-collector-0.9.9
+subjects:
+  - kind: ServiceAccount
+    name: nrdot-plus-collector
+    namespace: newrelic
+roleRef:
+  kind: ClusterRole
+  name: nrdot-plus-collector
+  apiGroup: rbac.authorization.k8s.io

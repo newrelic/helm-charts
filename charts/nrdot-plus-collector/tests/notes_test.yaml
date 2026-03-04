@@ -1,0 +1,38 @@
+suite: images
+templates:
+  - templates/NOTES.txt
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: is empty by default
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - equalRaw:
+          value: ""
+  - it: is shows deprecation warning for 'image.repository'
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image.repository: "somerepo"
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: 'image.repository' is deprecated and will be removed in a future release. Please use 'images.collector.repository' instead."
+  - it: is shows deprecation warning for 'image.tag'
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image.tag: "1.2.3"
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: 'image.tag' is deprecated and will be removed in a future release. Please use 'images.collector.tag' instead."
+  - it: is shows deprecation warning for 'image.pullPolicy'
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image.pullPolicy: "Never"
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: 'image.pullPolicy' is deprecated and will be removed in a future release. Please use 'images.collector.pullPolicy' instead."

@@ -1,0 +1,138 @@
+suite: nodeSelector
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets nodeSelector to default when no values provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notExists:
+          path: spec.template.spec.nodeSelector
+        template: templates/deployment.yaml
+      - notExists:
+          path: spec.template.spec.nodeSelector
+        template: templates/daemonset.yaml
+  - it: sets nodeSelector from global by common-library
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      global:
+        nodeSelector:
+          globalKey: globalValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            globalKey: globalValue
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            globalKey: globalValue
+        template: templates/daemonset.yaml
+  - it: sets nodeSelector from values by common-library
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      nodeSelector:
+        topLevelKey: topLevelValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            topLevelKey: topLevelValue
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            topLevelKey: topLevelValue
+        template: templates/daemonset.yaml
+  - it: sets nodeSelector from values by common-library overriding global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      nodeSelector:
+        topLevelKey: topLevelValue
+      global:
+        nodeSelector:
+          globalKey: globalValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            topLevelKey: topLevelValue
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            topLevelKey: topLevelValue
+        template: templates/daemonset.yaml
+  - it: sets nodeSelector from deployment values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      deployment:
+        nodeSelector:
+          deploymentKey: deploymentValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            deploymentKey: deploymentValue
+        template: templates/deployment.yaml
+  - it: sets nodeSelector from daemonset values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      daemonset:
+        nodeSelector:
+          daemonsetKey: daemonsetValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            daemonsetKey: daemonsetValue
+        template: templates/daemonset.yaml
+  - it: sets nodeSelector from deployment values overriding top level and global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      deployment:
+        nodeSelector:
+          deploymentKey: deploymentValue
+      nodeSelector:
+        topLevelKey: topLevelValue
+      global:
+        nodeSelector:
+          globalKey: globalValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            deploymentKey: deploymentValue
+        template: templates/deployment.yaml
+  - it: sets nodeSelector from daemonset values overriding top level and global values
+    set:
+      cluster: test-cluster
+      licenseKey: us-whatever
+      daemonset:
+        nodeSelector:
+          daemonsetKey: daemonsetValue
+      nodeSelector:
+        topLevelKey: topLevelValue
+      global:
+        nodeSelector:
+          globalKey: globalValue
+    asserts:
+      - equal:
+          path: spec.template.spec.nodeSelector
+          value:
+            daemonsetKey: daemonsetValue
+        template: templates/daemonset.yaml
