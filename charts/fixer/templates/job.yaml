@@ -10,9 +10,6 @@ metadata:
   {{- end }}
 spec:
   backoffLimit: {{ .Values.job.backoffLimit | default 3 }}
-  {{- if .Values.job.ttlSecondsAfterFinished }}
-  ttlSecondsAfterFinished: {{ .Values.job.ttlSecondsAfterFinished }}
-  {{- end }}
   template:
     metadata:
       {{- with .Values.podAnnotations }}
