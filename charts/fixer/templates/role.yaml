@@ -1,0 +1,18 @@
+{{- if .Values.serviceAccount.create -}}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "fixer.fullname" . }}
+  labels:
+    {{- include "fixer.labels" . | nindent 4 }}
+rules:
+- apiGroups: [""]
+  resources: ["pods"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods/log"]
+  verbs: ["*"]
+- apiGroups: [""]
+  resources: ["pods/status"]
+  verbs: ["*"]
+{{- end }}
