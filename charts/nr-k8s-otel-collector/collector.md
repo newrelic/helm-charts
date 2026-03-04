@@ -18,6 +18,7 @@ In most production environments, you'll use both patterns together.
 - OpenTelemetry Collector
 - Service Account with appropriate RBAC permissions to read pod/node metrics
 - New Relic License Key for authentication
+- **[Kube-State-Metrics (KSM)](https://github.com/kubernetes/kube-state-metrics)** — required for the Deployment pattern to collect Kubernetes object state metrics (pods, deployments, etc.)
 
 ---
 
