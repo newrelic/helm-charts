@@ -175,6 +175,11 @@ ebpfAgent:
   # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
+  kernelHeaderInstaller:
+    # -- Override the init container image used for kernel header installation.
+    # On OpenShift, set this to the driver-toolkit image for your cluster version.
+    # To find the image: oc adm release info --image-for=driver-toolkit
+    image: ""
 
 # -- The secrets that are needed to pull images from a custom registry.
 pullSecrets: []

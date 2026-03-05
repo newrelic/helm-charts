@@ -121,6 +121,34 @@ Extracts version from image tag and compares using semver
 {{- end -}}
 
 {{/*
+Select the init container image for kernel header installation.
+Priority: explicit override > OpenShift driver-toolkit (auto-detected) > agent base image.
+On OpenShift, the driver-toolkit ImageStream in the openshift namespace contains pre-built
+kernel headers matching the cluster's RHCOS kernel. The lookup returns empty on non-OpenShift
+clusters (API group doesn't exist) and during helm template (no cluster connection).
+*/}}
+{{- define "nr-ebpf-agent.initContainerImage" -}}
+{{- if .Values.ebpfAgent.kernelHeaderInstaller.image -}}
+  {{- .Values.ebpfAgent.kernelHeaderInstaller.image -}}
+{{- else -}}
+  {{- $dtkImage := "" -}}
+  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+  {{- if $is -}}
+    {{- range $is.spec.tags -}}
+      {{- if eq .name "latest" -}}
+        {{- $dtkImage = .from.name -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+  {{- if $dtkImage -}}
+    {{- $dtkImage -}}
+  {{- else -}}
+    {{- printf "%s:agent-base-image-latest" .Values.ebpfAgent.image.repository -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Validate the user inputted quantile when sampling by latency.
 */}}
 {{- define "validate.samplingLatency" -}}

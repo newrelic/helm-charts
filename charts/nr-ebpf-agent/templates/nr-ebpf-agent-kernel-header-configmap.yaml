@@ -19,8 +19,9 @@ data:
         KERNEL_VERSION=$(uname -r)
         HEADERS_FOUND=false
 
-        # 1. Check if kernel headers are already present on the host.
+        # 1. Check for kernel headers in the container (e.g. driver-toolkit image) and on the host.
         for HEADER_PATH in \
+          "/usr/src/kernels/${KERNEL_VERSION}" \
           "/host/usr/src/kernels/${KERNEL_VERSION}" \
           "/host/lib/modules/${KERNEL_VERSION}/build"; do
           if [ -d "$HEADER_PATH" ] && [ -f "$HEADER_PATH/Makefile" ]; then
@@ -54,9 +55,16 @@ data:
           ARCH=$(uname -m)
           RPM_DOWNLOADED=false
 
+          RHEL_MAJOR=$(echo "$VERSION_ID" | cut -d. -f1)
+
+          # kernel-devel is in AppStream (not BaseOS).
+          # Rocky uses Packages/k/ subdirectory, AlmaLinux uses flat Packages/.
+          # pub/ hosts the current minor release, vault/ hosts archived ones.
           for MIRROR_URL in \
-            "https://dl.rockylinux.org/pub/rocky/${VERSION_ID}/BaseOS/${ARCH}/os/Packages/k/kernel-devel-${KERNEL_VERSION}.rpm" \
-            "https://dl.rockylinux.org/vault/rocky/${VERSION_ID}/BaseOS/${ARCH}/os/Packages/k/kernel-devel-${KERNEL_VERSION}.rpm"; do
+            "https://dl.rockylinux.org/pub/rocky/${RHEL_MAJOR}/AppStream/${ARCH}/os/Packages/k/kernel-devel-${KERNEL_VERSION}.rpm" \
+            "https://dl.rockylinux.org/vault/rocky/${VERSION_ID}/AppStream/${ARCH}/os/Packages/k/kernel-devel-${KERNEL_VERSION}.rpm" \
+            "https://repo.almalinux.org/almalinux/${RHEL_MAJOR}/AppStream/${ARCH}/os/Packages/kernel-devel-${KERNEL_VERSION}.rpm" \
+            "https://vault.almalinux.org/${VERSION_ID}/AppStream/${ARCH}/os/Packages/kernel-devel-${KERNEL_VERSION}.rpm"; do
             echo "Trying: ${MIRROR_URL}"
             if curl -f -L -o "${TEMP_DIR}/kernel-devel.rpm" "$MIRROR_URL" 2>/dev/null; then
               echo "Downloaded kernel-devel RPM successfully"
