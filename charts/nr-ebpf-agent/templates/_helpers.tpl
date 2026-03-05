@@ -122,10 +122,8 @@ Extracts version from image tag and compares using semver
 
 {{/*
 Select the init container image for kernel header installation.
-Priority: explicit override > OpenShift driver-toolkit (auto-detected) > agent base image.
 On OpenShift, the driver-toolkit ImageStream in the openshift namespace contains pre-built
-kernel headers matching the cluster's RHCOS kernel. The lookup returns empty on non-OpenShift
-clusters (API group doesn't exist) and during helm template (no cluster connection).
+kernel headers matching the cluster's RHCOS kernel.
 */}}
 {{- define "nr-ebpf-agent.initContainerImage" -}}
 {{- if .Values.ebpfAgent.kernelHeaderInstaller.image -}}
