@@ -842,12 +842,12 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-            - resource/newrelic
             {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
             # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
             # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
             {{- end }}
+            - resource/newrelic
             - groupbyattrs
             - transform/ksm
             - transform/ksm_datapoints
