@@ -467,6 +467,25 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      metricstransform/aggregate_node_metrics:
+        transforms:
+          - include: container.cpu.usage
+            action: insert
+            new_name: node.container.cpu.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - k8s.node.name
+                aggregation_type: sum
+          - include: container_memory_working_set_bytes
+            action: insert
+            new_name: node.container.memory.working_set.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - k8s.node.name
+                aggregation_type: sum
+
       # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
       metricsgeneration/calculate_percentage:
         rules:
@@ -485,12 +504,12 @@ data:
             operation: divide
           - name: node.cpu.usage.percentage
             type: scale
-            metric1: k8s.node.cpu.usage
+            metric1: node.container.cpu.usage.sum
             scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
             operation: divide
           - name: node.memory.usage.percentage
             type: scale
-            metric1: k8s.node.memory.working_set
+            metric1: node.container.memory.working_set.sum
             scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
             operation: divide
 
@@ -575,6 +594,11 @@ data:
             - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
             - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
 
+      filter/exclude_intermediate_node_metrics:
+        metrics:
+          metric:
+            - 'metric.name == "node.container.cpu.usage.sum"'
+            - 'metric.name == "node.container.memory.working_set.sum"'
 
       attributes/exclude_system_paging:
         include:
@@ -762,8 +786,9 @@ data:
             - kubeletstats
             - prometheus
           processors:
+            - metricstransform/aggregate_node_metrics
             - metricsgeneration/calculate_percentage
-            
+
           exporters:
             - routing/nr_metrics_pipelines
             
@@ -811,6 +836,7 @@ data:
             - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
+            - filter/exclude_intermediate_node_metrics
             - transform/truncate
             - resourcedetection/env
             - resourcedetection/cloudproviders
