@@ -37,14 +37,14 @@ A helper to return the container security context to apply to the daemonset.
 {{- define "nrKubernetesOtel.daemonset.securityContext.container" -}}
 {{- if .Values.daemonset.containerSecurityContext -}}
   {{if include "newrelic.common.gkeAutopilot" .}}
-    {{- toYaml .Values.daemonset.containerSecurityContext | replace "privileged: true" "privileged: false" -}}
+      {{- toYaml .Values.daemonset.containerSecurityContext | replace "privileged: true" "privileged: false" -}}
   {{else if include "newrelic.common.openShift" .}}
-    {{- $ctx := deepCopy .Values.daemonset.containerSecurityContext -}}
-    {{- $_ := set $ctx "privileged" true -}}
-    {{- $_ := set $ctx "allowPrivilegeEscalation" true -}}
-    {{- $ctx | toYaml -}}
+      {{- $ctx := deepCopy .Values.daemonset.containerSecurityContext -}}
+      {{- $_ := set $ctx "privileged" true -}}
+      {{- $_ := set $ctx "allowPrivilegeEscalation" true -}}
+      {{- $ctx | toYaml -}}
   {{else}}
-    {{- toYaml .Values.daemonset.containerSecurityContext -}}
+      {{- toYaml .Values.daemonset.containerSecurityContext -}}
   {{end}}
 {{- else if include "newrelic.common.securityContext.container" . -}}
   {{if .Values.gkeAutopilot}}
