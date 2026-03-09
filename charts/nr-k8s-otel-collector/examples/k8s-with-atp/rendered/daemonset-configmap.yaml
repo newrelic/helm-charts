@@ -511,9 +511,9 @@ data:
                 label_set:
                   - k8s.node.name
                 aggregation_type: sum
-          - include: container_memory_working_set_bytes
+          - include: container.memory.usage
             action: insert
-            new_name: node.container.memory.working_set.sum
+            new_name: node.container.memory.usage.sum
             operations:
               - action: aggregate_labels
                 label_set:
@@ -543,7 +543,7 @@ data:
             operation: divide
           - name: node.memory.usage.percentage
             type: scale
-            metric1: node.container.memory.working_set.sum
+            metric1: node.container.memory.usage.sum
             scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
             operation: divide
 
@@ -632,7 +632,7 @@ data:
         metrics:
           metric:
             - 'metric.name == "node.container.cpu.usage.sum"'
-            - 'metric.name == "node.container.memory.working_set.sum"'
+            - 'metric.name == "node.container.memory.usage.sum"'
 
       attributes/exclude_system_paging:
         include:
