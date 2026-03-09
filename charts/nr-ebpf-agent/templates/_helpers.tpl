@@ -122,27 +122,25 @@ Extracts version from image tag and compares using semver
 
 {{/*
 Select the init container image for kernel header installation.
-On OpenShift, the driver-toolkit ImageStream in the openshift namespace contains pre-built
-kernel headers matching the cluster's RHCOS kernel.
+On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
+which contains pre-built kernel headers matching the RHCOS kernel.
+The lookup returns empty on non-OpenShift clusters (API group doesn't exist)
+and during helm template (no cluster connection), falling back to the agent base image.
 */}}
 {{- define "nr-ebpf-agent.initContainerImage" -}}
-{{- if .Values.ebpfAgent.kernelHeaderInstaller.image -}}
-  {{- .Values.ebpfAgent.kernelHeaderInstaller.image -}}
-{{- else -}}
-  {{- $dtkImage := "" -}}
-  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
-  {{- if $is -}}
-    {{- range $is.spec.tags -}}
-      {{- if eq .name "latest" -}}
-        {{- $dtkImage = .from.name -}}
-      {{- end -}}
+{{- $dtkImage := "" -}}
+{{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+{{- if $is -}}
+  {{- range $is.spec.tags -}}
+    {{- if eq .name "latest" -}}
+      {{- $dtkImage = .from.name -}}
     {{- end -}}
   {{- end -}}
-  {{- if $dtkImage -}}
-    {{- $dtkImage -}}
-  {{- else -}}
-    {{- printf "%s:agent-base-image-latest" .Values.ebpfAgent.image.repository -}}
-  {{- end -}}
+{{- end -}}
+{{- if $dtkImage -}}
+  {{- $dtkImage -}}
+{{- else -}}
+  {{- printf "%s:agent-base-image-latest" .Values.ebpfAgent.image.repository -}}
 {{- end -}}
 {{- end -}}
 
