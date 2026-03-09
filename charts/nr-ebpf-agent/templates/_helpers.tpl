@@ -127,11 +127,13 @@ which contains pre-built kernel headers matching the RHCOS kernel.
 */}}
 {{- define "nr-ebpf-agent.initContainerImage" -}}
 {{- $dtkImage := "" -}}
-{{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
-{{- if $is -}}
-  {{- range $is.spec.tags -}}
-    {{- if eq .name "latest" -}}
-      {{- $dtkImage = .from.name -}}
+{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" -}}
+  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+  {{- if $is -}}
+    {{- range $is.spec.tags -}}
+      {{- if eq .name "latest" -}}
+        {{- $dtkImage = .from.name -}}
+      {{- end -}}
     {{- end -}}
   {{- end -}}
 {{- end -}}
