@@ -124,8 +124,6 @@ Extracts version from image tag and compares using semver
 Select the init container image for kernel header installation.
 On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
 which contains pre-built kernel headers matching the RHCOS kernel.
-The lookup returns empty on non-OpenShift clusters (API group doesn't exist)
-and during helm template (no cluster connection), falling back to the agent base image.
 */}}
 {{- define "nr-ebpf-agent.initContainerImage" -}}
 {{- $dtkImage := "" -}}
