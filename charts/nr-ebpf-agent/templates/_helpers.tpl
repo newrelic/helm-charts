@@ -121,6 +121,30 @@ Extracts version from image tag and compares using semver
 {{- end -}}
 
 {{/*
+Select the init container image for kernel header installation.
+On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
+which contains pre-built kernel headers matching the RHCOS kernel.
+*/}}
+{{- define "nr-ebpf-agent.initContainerImage" -}}
+{{- $dtkImage := "" -}}
+{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" -}}
+  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+  {{- if $is -}}
+    {{- range $is.spec.tags -}}
+      {{- if eq .name "latest" -}}
+        {{- $dtkImage = .from.name -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $dtkImage -}}
+  {{- $dtkImage -}}
+{{- else -}}
+  {{- printf "%s:agent-base-image-latest" .Values.ebpfAgent.image.repository -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Validate the user inputted quantile when sampling by latency.
 */}}
 {{- define "validate.samplingLatency" -}}
