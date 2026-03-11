@@ -52,8 +52,11 @@ podAnnotations: {}
 podLabels: {}
 
 # -- Resource limits to be added to all pods created by the integration.
-# @default -- `{}`
-resources: {}
+resources:
+  requests:
+    memory: "15Mi"
+  limits:
+    memory: "100Mi"
 
 # -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
 priorityClassName: ""
