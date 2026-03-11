@@ -17,7 +17,7 @@ tests:
   # =============================================================================
 
   - it: global.cluster propagates to ConfigMap in deployment
-    set:
+    set: &cluster-global-set
       global:
         cluster: global-test-cluster
         licenseKey: test-license-key
@@ -28,10 +28,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: global.cluster propagates to ConfigMap in daemonset
-    set:
-      global:
-        cluster: global-test-cluster
-        licenseKey: test-license-key
+    set: *cluster-global-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -39,7 +36,7 @@ tests:
         template: templates/daemonset-configmap.yaml
 
   - it: local cluster overrides global.cluster in deployment ConfigMap
-    set:
+    set: &cluster-local-set
       global:
         cluster: global-cluster
         licenseKey: test-license-key
@@ -51,11 +48,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: local cluster overrides global.cluster in daemonset ConfigMap
-    set:
-      global:
-        cluster: global-cluster
-        licenseKey: test-license-key
-      cluster: local-cluster
+    set: *cluster-local-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -123,7 +116,7 @@ tests:
         template: templates/secret.yaml
 
   - it: global.customSecretName propagates to deployment
-    set:
+    set: &custom-secret-global-set
       cluster: test-cluster
       global:
         customSecretName: global-secret-name
@@ -131,7 +124,7 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &custom-secret-global-content
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -140,24 +133,15 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.customSecretName propagates to daemonset
-    set:
-      cluster: test-cluster
-      global:
-        customSecretName: global-secret-name
-        customSecretLicenseKey: global-secret-key
+    set: *custom-secret-global-set
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: NR_LICENSE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: global-secret-name
-                key: global-secret-key
+          content: *custom-secret-global-content
         template: templates/daemonset.yaml
 
   - it: local customSecretName overrides global in deployment
-    set:
+    set: &custom-secret-local-set
       cluster: test-cluster
       global:
         customSecretName: global-secret
@@ -167,7 +151,7 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &custom-secret-local-content
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -176,22 +160,11 @@ tests:
         template: templates/deployment.yaml
 
   - it: local customSecretName overrides global in daemonset
-    set:
-      cluster: test-cluster
-      global:
-        customSecretName: global-secret
-        customSecretLicenseKey: global-key
-      customSecretName: local-secret
-      customSecretLicenseKey: local-key
+    set: *custom-secret-local-set
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: NR_LICENSE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: local-secret
-                key: local-key
+          content: *custom-secret-local-content
         template: templates/daemonset.yaml
 
   # =============================================================================
@@ -199,7 +172,7 @@ tests:
   # =============================================================================
 
   - it: global.proxy propagates to http_proxy and https_proxy env vars in deployment
-    set:
+    set: &proxy-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -207,39 +180,31 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &http-proxy-global-content
             name: http_proxy
             value: http://global-proxy.example.com:3128
         template: templates/deployment.yaml
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &https-proxy-global-content
             name: https_proxy
             value: http://global-proxy.example.com:3128
         template: templates/deployment.yaml
 
   - it: global.proxy propagates to http_proxy and https_proxy env vars in daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        proxy: http://global-proxy.example.com:3128
+    set: *proxy-global-set
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: http_proxy
-            value: http://global-proxy.example.com:3128
+          content: *http-proxy-global-content
         template: templates/daemonset.yaml
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: https_proxy
-            value: http://global-proxy.example.com:3128
+          content: *https-proxy-global-content
         template: templates/daemonset.yaml
 
   - it: local proxy overrides global.proxy in deployment
-    set:
+    set: &proxy-local-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -248,36 +213,27 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &http-proxy-local-content
             name: http_proxy
             value: http://local-proxy.example.com:8080
         template: templates/deployment.yaml
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &https-proxy-local-content
             name: https_proxy
             value: http://local-proxy.example.com:8080
         template: templates/deployment.yaml
 
   - it: local proxy overrides global.proxy in daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        proxy: http://global-proxy.example.com:3128
-      proxy: http://local-proxy.example.com:8080
+    set: *proxy-local-set
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: http_proxy
-            value: http://local-proxy.example.com:8080
+          content: *http-proxy-local-content
         template: templates/daemonset.yaml
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: https_proxy
-            value: http://local-proxy.example.com:8080
+          content: *https-proxy-local-content
         template: templates/daemonset.yaml
 
   # =============================================================================
@@ -285,7 +241,7 @@ tests:
   # =============================================================================
 
   - it: global.labels propagates to deployment metadata
-    set:
+    set: &labels-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -303,13 +259,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.labels propagates to daemonset metadata
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        labels:
-          team: platform
-          environment: production
+    set: *labels-global-set
     asserts:
       - equal:
           path: metadata.labels.team
@@ -321,13 +271,7 @@ tests:
         template: templates/daemonset.yaml
 
   - it: global.labels propagates to serviceaccount metadata
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        labels:
-          team: platform
-          environment: production
+    set: *labels-global-set
     asserts:
       - equal:
           path: metadata.labels.team
@@ -358,7 +302,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.podLabels propagates to deployment pod template
-    set:
+    set: &podlabels-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -376,13 +320,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.podLabels propagates to daemonset pod template
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        podLabels:
-          pod-team: platform
-          pod-env: production
+    set: *podlabels-global-set
     asserts:
       - equal:
           path: spec.template.metadata.labels.pod-team
@@ -514,7 +452,7 @@ tests:
   # =============================================================================
 
   - it: global.serviceAccount.name propagates to deployment
-    set:
+    set: &sa-name-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -528,13 +466,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.serviceAccount.name propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        serviceAccount:
-          create: false
-          name: global-service-account
+    set: *sa-name-global-set
     asserts:
       - equal:
           path: spec.template.spec.serviceAccountName
@@ -606,7 +538,7 @@ tests:
   # =============================================================================
 
   - it: global.priorityClassName propagates to deployment
-    set:
+    set: &priority-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -618,11 +550,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.priorityClassName propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        priorityClassName: system-node-critical
+    set: *priority-global-set
     asserts:
       - equal:
           path: spec.template.spec.priorityClassName
@@ -711,7 +639,7 @@ tests:
   # =============================================================================
 
   - it: global.lowDataMode propagates to deployment configmap
-    set:
+    set: &lowdatamode-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -723,11 +651,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: global.lowDataMode propagates to daemonset configmap
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        lowDataMode: true
+    set: *lowdatamode-global-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -748,7 +672,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: global.nrStaging propagates to deployment configmap endpoint
-    set:
+    set: &nrstaging-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -760,11 +684,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: global.nrStaging propagates to daemonset configmap endpoint
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        nrStaging: true
+    set: *nrstaging-global-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -772,7 +692,7 @@ tests:
         template: templates/daemonset-configmap.yaml
 
   - it: local nrStaging overrides global in deployment configmap
-    set:
+    set: &nrstaging-local-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -785,12 +705,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: local nrStaging overrides global in daemonset configmap
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        nrStaging: false
-      nrStaging: true
+    set: *nrstaging-local-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -798,7 +713,7 @@ tests:
         template: templates/daemonset-configmap.yaml
 
   - it: global.fedramp.enabled propagates to deployment configmap endpoint
-    set:
+    set: &fedramp-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -811,12 +726,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: global.fedramp.enabled propagates to daemonset configmap endpoint
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        fedramp:
-          enabled: true
+    set: *fedramp-global-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -841,7 +751,7 @@ tests:
 
 
   - it: local verboseLog overrides global in deployment configmap
-    set:
+    set: &verboselog-local-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -854,12 +764,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: local verboseLog overrides global in daemonset configmap
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        verboseLog: false
-      verboseLog: true
+    set: *verboselog-local-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -867,7 +772,7 @@ tests:
         template: templates/daemonset-configmap.yaml
 
   - it: global.verboseLog propagates to deployment configmap log level
-    set:
+    set: &verboselog-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -879,11 +784,7 @@ tests:
         template: templates/deployment-configmap.yaml
 
   - it: global.verboseLog propagates to daemonset configmap log level
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        verboseLog: true
+    set: *verboselog-global-set
     asserts:
       - matchRegex:
           path: data["daemonset-config.yaml"]
@@ -972,7 +873,7 @@ tests:
         template: templates/daemonset.yaml
 
   - it: global.images.pullSecrets propagates to deployment
-    set:
+    set: &pullsecrets-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -982,23 +883,16 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.imagePullSecrets
-          content:
+          content: &pull-secret-content
             name: global-pull-secret
         template: templates/deployment.yaml
 
   - it: global.images.pullSecrets propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        images:
-          pullSecrets:
-            - name: global-pull-secret
+    set: *pullsecrets-global-set
     asserts:
       - contains:
           path: spec.template.spec.imagePullSecrets
-          content:
-            name: global-pull-secret
+          content: *pull-secret-content
         template: templates/daemonset.yaml
 
   - it: local images.pullSecrets merge with global.images.pullSecrets in deployment
@@ -1029,7 +923,7 @@ tests:
   # =============================================================================
 
   - it: global.nodeSelector propagates to deployment
-    set:
+    set: &nodeselector-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -1047,13 +941,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.nodeSelector propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        nodeSelector:
-          node.role/monitoring: "true"
-          environment: production
+    set: *nodeselector-global-set
     asserts:
       - equal:
           path: spec.template.spec.nodeSelector["node.role/monitoring"]
@@ -1131,7 +1019,7 @@ tests:
         template: templates/daemonset.yaml
 
   - it: global.tolerations propagates to deployment
-    set:
+    set: &tolerations-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -1143,7 +1031,7 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.tolerations
-          content:
+          content: &monitoring-taint
             key: monitoring-taint
             operator: Equal
             value: "true"
@@ -1151,23 +1039,11 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.tolerations propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        tolerations:
-          - key: monitoring-taint
-            operator: Equal
-            value: "true"
-            effect: NoSchedule
+    set: *tolerations-global-set
     asserts:
       - contains:
           path: spec.template.spec.tolerations
-          content:
-            key: monitoring-taint
-            operator: Equal
-            value: "true"
-            effect: NoSchedule
+          content: *monitoring-taint
         template: templates/daemonset.yaml
 
   - it: chart-level tolerations override global.tolerations in deployment
@@ -1251,7 +1127,7 @@ tests:
         template: templates/daemonset.yaml
 
   - it: global.affinity propagates to deployment
-    set:
+    set: &affinity-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -1275,19 +1151,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.affinity propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        affinity:
-          nodeAffinity:
-            requiredDuringSchedulingIgnoredDuringExecution:
-              nodeSelectorTerms:
-                - matchExpressions:
-                    - key: node.kubernetes.io/instance-type
-                      operator: In
-                      values:
-                        - m5.large
+    set: *affinity-global-set
     asserts:
       - equal:
           path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
@@ -1380,7 +1244,7 @@ tests:
   # =============================================================================
 
   - it: global.podSecurityContext propagates to deployment
-    set:
+    set: &pod-sec-ctx-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -1403,14 +1267,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.podSecurityContext propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        podSecurityContext:
-          runAsUser: 2000
-          runAsGroup: 3000
-          fsGroup: 4000
+    set: *pod-sec-ctx-global-set
     asserts:
       - equal:
           path: spec.template.spec.securityContext.runAsUser
@@ -1477,7 +1334,7 @@ tests:
         template: templates/daemonset.yaml
 
   - it: global.containerSecurityContext propagates to deployment
-    set:
+    set: &container-sec-ctx-global-set
       cluster: test-cluster
       licenseKey: test-key
       global:
@@ -1500,14 +1357,7 @@ tests:
         template: templates/deployment.yaml
 
   - it: global.containerSecurityContext propagates to daemonset
-    set:
-      cluster: test-cluster
-      licenseKey: test-key
-      global:
-        containerSecurityContext:
-          runAsNonRoot: true
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
+    set: *container-sec-ctx-global-set
     asserts:
       - equal:
           path: spec.template.spec.containers[0].securityContext.runAsNonRoot
