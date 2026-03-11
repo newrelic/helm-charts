@@ -76,7 +76,7 @@ spec:
             {{- . | nindent 12 }}
           {{- end }}
           image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.image "context" .) }}
-          imagePullPolicy: "{{ .Values.image.pullPolicy }}"
+          imagePullPolicy: {{ include "newrelic-logging.imagePullPolicy" . }}
           env:
             - name: ENDPOINT
               value: {{ include "newrelic-logging.logsEndpoint" . | quote }}

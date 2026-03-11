@@ -285,30 +285,50 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 
 {{/*
-Returns the pull policy for main image, respecting global.images.pullPolicy
+Returns the image for the persistence init container.
+Precedence: chart-specific repository > global.images.registry + default > chart default (busybox)
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImage" -}}
+{{- $repository := .Values.fluentBit.persistenceInitContainerImage.repository -}}
+{{- $defaultRepository := "busybox" -}}
+{{- $registry := "" -}}
+{{- if .Values.global }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $repository $defaultRepository) -}}
+  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- else -}}
+  {{- $repository -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for main image.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
 */}}
 {{- define "newrelic-logging.imagePullPolicy" -}}
 {{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
 {{- $chartPullPolicy := .Values.image.pullPolicy | default "" -}}
-{{- if $globalPullPolicy -}}
-  {{- $globalPullPolicy -}}
-{{- else if $chartPullPolicy -}}
+{{- if $chartPullPolicy -}}
   {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
 {{- else -}}
   IfNotPresent
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the pull policy for persistence init container, respecting global.images.pullPolicy
+Returns the pull policy for persistence init container.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
 */}}
 {{- define "newrelic-logging.persistenceInitContainerImagePullPolicy" -}}
 {{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
 {{- $chartPullPolicy := .Values.fluentBit.persistenceInitContainerImage.pullPolicy | default "" -}}
-{{- if $globalPullPolicy -}}
-  {{- $globalPullPolicy -}}
-{{- else if $chartPullPolicy -}}
+{{- if $chartPullPolicy -}}
   {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
 {{- else -}}
   IfNotPresent
 {{- end -}}
