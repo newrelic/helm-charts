@@ -159,13 +159,14 @@ Return the customSecretApiKeyKey
 
 {{- define "newrelic-pixie.clusterRegistrationWaitImage" -}}
 {{- $waitRepository := .Values.clusterRegistrationWaitImage.repository -}}
-{{- $defaultRepository := "pixie-oss/curl" -}}
+{{- $defaultFullPath := "gcr.io/pixie-oss/pixie-dev-public/curl" -}}
+{{- $defaultPathSuffix := "pixie-oss/pixie-dev-public/curl" -}}
 {{- $registry := "" -}}
 {{- if .Values.global }}
   {{- $registry = .Values.global.images.registry | default "" -}}
 {{- end -}}
-{{- if and $registry (eq $waitRepository $defaultRepository) -}}
-  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- if and $registry (eq $waitRepository $defaultFullPath) -}}
+  {{- printf "%s/%s" $registry $defaultPathSuffix -}}
 {{- else -}}
   {{- $waitRepository -}}
 {{- end -}}
@@ -197,41 +198,32 @@ Returns imagePullSecrets combining global and chart-level settings
 {{- end -}}
 
 {{/*
-Returns imagePullSecrets for cluster wait init container
-*/}}
-{{- define "newrelic-pixie.clusterWaitImagePullSecrets" -}}
-{{- $globalPullSecrets := .Values.global.images.pullSecrets | default list }}
-{{- $chartPullSecrets := .Values.image.pullSecrets | default list }}
-{{- if or $globalPullSecrets $chartPullSecrets }}
-  {{- concat $globalPullSecrets $chartPullSecrets | toYaml }}
-{{- end }}
-{{- end -}}
-
-{{/*
-Returns the pull policy for cluster registration wait image, respecting global.images.pullPolicy
+Returns the pull policy for cluster registration wait image.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
 */}}
 {{- define "newrelic-pixie.clusterWaitImagePullPolicy" -}}
 {{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
 {{- $chartPullPolicy := .Values.clusterRegistrationWaitImage.pullPolicy | default "" -}}
-{{- if $globalPullPolicy -}}
-  {{- $globalPullPolicy -}}
-{{- else if $chartPullPolicy -}}
+{{- if $chartPullPolicy -}}
   {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
 {{- else -}}
   IfNotPresent
 {{- end -}}
 {{- end -}}
 
 {{/*
-Returns the pull policy for main image, respecting global.images.pullPolicy
+Returns the pull policy for main image.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
 */}}
 {{- define "newrelic-pixie.imagePullPolicy" -}}
 {{- $globalPullPolicy := .Values.global.images.pullPolicy | default "" -}}
 {{- $chartPullPolicy := .Values.image.pullPolicy | default "" -}}
-{{- if $globalPullPolicy -}}
-  {{- $globalPullPolicy -}}
-{{- else if $chartPullPolicy -}}
+{{- if $chartPullPolicy -}}
   {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
 {{- else -}}
   IfNotPresent
 {{- end -}}
