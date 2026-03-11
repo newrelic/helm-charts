@@ -12,7 +12,7 @@ tests:
   # Proxy Tests (3)
   # ====================
   - it: proxy not set when neither global nor local provided
-    set:
+    set: &base
       licenseKey: nr_license_key
     asserts:
       - notContains:
@@ -28,7 +28,7 @@ tests:
 
   - it: uses global.proxy when set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         proxy: http://global-proxy.corp.net:3128
@@ -54,7 +54,7 @@ tests:
 
   - it: local proxy overrides global.proxy
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         proxy: http://global-proxy.corp.net:3128
@@ -84,7 +84,7 @@ tests:
   # ====================
   - it: priorityClassName not set when neither global nor local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - notExists:
           path: spec.template.spec.priorityClassName
@@ -92,7 +92,7 @@ tests:
 
   - it: uses global.priorityClassName when set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         priorityClassName: high-priority
@@ -108,7 +108,7 @@ tests:
 
   - it: local priorityClassName overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         priorityClassName: high-priority
@@ -128,7 +128,7 @@ tests:
   # ====================
   - it: nodeSelector inherits global when no local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         nodeSelector:
@@ -148,7 +148,7 @@ tests:
 
   - it: local nodeSelector overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         nodeSelector:
@@ -165,7 +165,7 @@ tests:
 
   - it: nodeSelector not set when neither global nor local provided and Windows disabled
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: false
     asserts:
       - notExists:
@@ -177,7 +177,7 @@ tests:
   # ====================
   - it: tolerations inherit global when no local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       tolerations: []
       global:
@@ -206,7 +206,7 @@ tests:
 
   - it: local tolerations override global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         tolerations:
           - key: global-taint
@@ -229,7 +229,7 @@ tests:
 
   - it: default tolerations apply when neither global nor local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - contains:
           path: spec.template.spec.tolerations
@@ -249,7 +249,7 @@ tests:
   # ====================
   - it: affinity not set when neither global nor local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - notExists:
           path: spec.template.spec.affinity
@@ -257,7 +257,7 @@ tests:
 
   - it: uses global.affinity when set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         affinity:
@@ -297,7 +297,7 @@ tests:
 
   - it: local nodeAffinity overrides global.affinity
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         affinity:
           nodeAffinity:
@@ -331,7 +331,7 @@ tests:
 
   - it: Fargate exclusion affinity applies when global.fargate is true
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         fargate: true
     asserts:
@@ -352,7 +352,7 @@ tests:
   # ====================
   - it: hostNetwork not set when neither global nor local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - notExists:
           path: spec.template.spec.hostNetwork
@@ -360,7 +360,7 @@ tests:
 
   - it: hostNetwork not set when explicitly false
     set:
-      licenseKey: nr_license_key
+      <<: *base
       hostNetwork: false
     asserts:
       - notExists:
@@ -369,7 +369,7 @@ tests:
 
   - it: uses global.hostNetwork when set to true
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         hostNetwork: true
@@ -385,7 +385,7 @@ tests:
 
   - it: local hostNetwork overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         hostNetwork: false
@@ -405,7 +405,7 @@ tests:
   # ====================
   - it: uses default log level when neither global.verboseLog nor local provided
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -416,7 +416,7 @@ tests:
 
   - it: sets LOG_LEVEL to debug when global.verboseLog is true
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       fluentBit:
         logLevel: null
@@ -438,7 +438,7 @@ tests:
 
   - it: local fluentBit.logLevel overrides global.verboseLog
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         verboseLog: true
       fluentBit:
@@ -453,7 +453,7 @@ tests:
 
   - it: global.verboseLog false does not override local logLevel
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         verboseLog: false
       fluentBit:
@@ -471,7 +471,7 @@ tests:
   # ====================
   - it: lowDataMode defaults to false when not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -482,7 +482,7 @@ tests:
 
   - it: uses global.lowDataMode when set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       enableWindows: true
       global:
         lowDataMode: true
@@ -502,7 +502,7 @@ tests:
 
   - it: local lowDataMode overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         lowDataMode: true
       lowDataMode: false
@@ -519,7 +519,7 @@ tests:
   # ====================
   - it: uses prod endpoint when nrStaging not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
@@ -530,7 +530,7 @@ tests:
 
   - it: uses staging endpoint when global.nrStaging is true
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         nrStaging: true
     asserts:
@@ -546,7 +546,7 @@ tests:
   # ====================
   - it: uses global.cluster when set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         cluster: global-cluster-01
     asserts:
@@ -559,7 +559,7 @@ tests:
 
   - it: local cluster overrides global.cluster
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         cluster: global-cluster-01
       cluster: local-cluster-02
@@ -600,7 +600,7 @@ tests:
   # ====================
   - it: dnsConfig inherits from global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         dnsConfig:
           options:
@@ -614,7 +614,7 @@ tests:
 
   - it: local dnsConfig overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         dnsConfig:
           options:
@@ -635,7 +635,7 @@ tests:
   # ====================
   - it: pod inherits global.podLabels
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         podLabels:
           global-label: global-value
@@ -648,7 +648,7 @@ tests:
 
   - it: local podLabels merge with global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         podLabels:
           global-label: global-value
@@ -667,7 +667,7 @@ tests:
   # ====================
   - it: resource inherits global.labels
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         labels:
           global-resource-label: global-value
@@ -680,7 +680,7 @@ tests:
 
   - it: resource labels are applied
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         labels:
           team: platform
@@ -696,7 +696,7 @@ tests:
   # ====================
   - it: uses global serviceAccount name when set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         serviceAccount:
           name: global-sa
@@ -708,7 +708,7 @@ tests:
 
   - it: local serviceAccount name overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         serviceAccount:
           name: global-sa
@@ -722,7 +722,7 @@ tests:
 
   - it: serviceAccount create is honored
     set:
-      licenseKey: nr_license_key
+      <<: *base
       serviceAccount:
         create: true
         name: custom-sa
@@ -737,7 +737,7 @@ tests:
   # ====================
   - it: pod inherits global.podSecurityContext
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         podSecurityContext:
           runAsUser: 1000
@@ -752,7 +752,7 @@ tests:
 
   - it: local podSecurityContext overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         podSecurityContext:
           runAsUser: 1000
@@ -770,7 +770,7 @@ tests:
   # ====================
   - it: container inherits global.containerSecurityContext
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         containerSecurityContext:
           readOnlyRootFilesystem: true
@@ -785,7 +785,7 @@ tests:
 
   - it: local containerSecurityContext overrides global
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         containerSecurityContext:
           readOnlyRootFilesystem: true
@@ -803,7 +803,7 @@ tests:
   # ====================
   - it: should inherit global.images.registry when local not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         images:
           registry: global-registry.io
@@ -815,7 +815,7 @@ tests:
 
   - it: should use local image.registry when both global and local are set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         images:
           registry: global-registry.io
@@ -832,7 +832,7 @@ tests:
   # ====================
   - it: should inherit global.images.pullSecrets when local not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         images:
           pullSecrets:
@@ -846,7 +846,7 @@ tests:
 
   - it: should use local image.pullSecrets when both global and local are set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         images:
           pullSecrets:
@@ -866,7 +866,7 @@ tests:
   # ====================
   - it: should inherit global.serviceAccount.create when local not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         serviceAccount:
           create: false
@@ -877,7 +877,7 @@ tests:
 
   - it: should use local serviceAccount.create when both global and local are set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         serviceAccount:
           create: false
@@ -893,7 +893,7 @@ tests:
   # ====================
   - it: should inherit global.serviceAccount.annotations when local not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         serviceAccount:
           annotations:
@@ -906,7 +906,7 @@ tests:
 
   - it: should use local serviceAccount.annotations when both global and local are set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         serviceAccount:
           annotations:
@@ -960,7 +960,7 @@ tests:
   # ====================
   - it: should inherit global.dnsConfig when local not set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         dnsConfig:
           options:
@@ -974,7 +974,7 @@ tests:
 
   - it: should use local dnsConfig when both global and local are set
     set:
-      licenseKey: nr_license_key
+      <<: *base
       global:
         dnsConfig:
           options:
