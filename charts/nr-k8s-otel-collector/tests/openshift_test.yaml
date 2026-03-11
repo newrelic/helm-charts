@@ -1,0 +1,43 @@
+suite: openshift
+templates:
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: openShift true
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      openShift: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
+  - it: openShift false
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: false
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: false
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:\s\/hostfs(\n|$)
+        template: templates/daemonset-configmap.yaml
