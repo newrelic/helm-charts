@@ -68,7 +68,7 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
         template: templates/daemonset-configmap.yaml
-  - it: provider openshift with only global non-default containerSecurityContext
+  - it: provider openshift with only chart-level non-default containerSecurityContext
     set:
       cluster: my-cluster
       licenseKey: us-whatever
@@ -96,7 +96,7 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
         template: templates/daemonset-configmap.yaml
-  - it: provider openshift with different global and daemonset containerSecurityContexts
+  - it: provider openshift with different chart-level and daemonset containerSecurityContexts
     set:
       cluster: my-cluster
       licenseKey: us-whatever
