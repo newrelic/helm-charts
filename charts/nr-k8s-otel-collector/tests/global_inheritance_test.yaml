@@ -5,6 +5,7 @@ templates:
   - templates/serviceaccount.yaml
   - templates/deployment-configmap.yaml
   - templates/daemonset-configmap.yaml
+  - templates/secret.yaml
 release:
   name: my-release
   namespace: my-namespace
@@ -62,39 +63,39 @@ tests:
         template: templates/daemonset-configmap.yaml
 
   - it: global.licenseKey propagates via Secret reference in deployment
-    set:
+    set: &licensekey-global-set
       cluster: test-cluster
       global:
         licenseKey: global-license-key-value
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
+          content: &licensekey-secret-ref
             name: NR_LICENSE_KEY
             valueFrom:
               secretKeyRef:
                 name: my-release-nr-k8s-otel-collector-license
                 key: licenseKey
         template: templates/deployment.yaml
+      - equal:
+          path: data.licenseKey
+          value: Z2xvYmFsLWxpY2Vuc2Uta2V5LXZhbHVl  # base64("global-license-key-value")
+        template: templates/secret.yaml
 
   - it: global.licenseKey propagates via Secret reference in daemonset
-    set:
-      cluster: test-cluster
-      global:
-        licenseKey: global-license-key-value
+    set: *licensekey-global-set
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: NR_LICENSE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: my-release-nr-k8s-otel-collector-license
-                key: licenseKey
+          content: *licensekey-secret-ref
         template: templates/daemonset.yaml
+      - equal:
+          path: data.licenseKey
+          value: Z2xvYmFsLWxpY2Vuc2Uta2V5LXZhbHVl  # base64("global-license-key-value")
+        template: templates/secret.yaml
 
   - it: local licenseKey overrides global.licenseKey in deployment
-    set:
+    set: &licensekey-local-override-set
       cluster: test-cluster
       global:
         licenseKey: global-license-key
@@ -102,30 +103,24 @@ tests:
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: NR_LICENSE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: my-release-nr-k8s-otel-collector-license
-                key: licenseKey
+          content: *licensekey-secret-ref
         template: templates/deployment.yaml
+      - equal:
+          path: data.licenseKey
+          value: bG9jYWwtbGljZW5zZS1rZXk=  # base64("local-license-key")
+        template: templates/secret.yaml
 
   - it: local licenseKey overrides global.licenseKey in daemonset
-    set:
-      cluster: test-cluster
-      global:
-        licenseKey: global-license-key
-      licenseKey: local-license-key
+    set: *licensekey-local-override-set
     asserts:
       - contains:
           path: spec.template.spec.containers[0].env
-          content:
-            name: NR_LICENSE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: my-release-nr-k8s-otel-collector-license
-                key: licenseKey
+          content: *licensekey-secret-ref
         template: templates/daemonset.yaml
+      - equal:
+          path: data.licenseKey
+          value: bG9jYWwtbGljZW5zZS1rZXk=  # base64("local-license-key")
+        template: templates/secret.yaml
 
   - it: global.customSecretName propagates to deployment
     set:
