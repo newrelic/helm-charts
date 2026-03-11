@@ -1,4 +1,4 @@
-{{- if .Values.agentControlCd.enabled }}
+{{- if and .Values.agentControlCd.enabled (not .Values.rbac.useMinimalPermissions) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:

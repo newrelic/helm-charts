@@ -104,3 +104,13 @@ agentControlCd:
   # -- Optional name of the secret containing TLS certificates for the Helm repository.
   # Ref.: https://fluxcd.io/flux/components/source/helmrepositories/#cert-secret-reference
   repositoryCertificateSecretReferenceName:
+
+# -- RBAC minimal permissions configuration
+# When enabled, uses minimal required permissions instead of cluster-admin
+# @default -- See `values.yaml`
+rbac:
+  # -- Use minimal permissions instead of cluster-admin
+  # When true, installation jobs will use a restricted ClusterRole with only
+  # the permissions required for Flux and Agent Control to function
+  # @default -- false
+  useMinimalPermissions: false
