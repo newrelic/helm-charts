@@ -6,11 +6,11 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: openShift true
+  - it: provider openshift with default containerSecurityContext
     set:
       cluster: my-cluster
       licenseKey: us-whatever
-      openShift: true
+      provider: OPEN_SHIFT
     asserts:
       - equal:
           path: spec.template.spec.containers[0].securityContext.privileged
@@ -24,7 +24,7 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
         template: templates/daemonset-configmap.yaml
-  - it: openShift false
+  - it: provider not specified with default containerSecurityContext
     set:
       cluster: my-cluster
       licenseKey: us-whatever
@@ -40,4 +40,90 @@ tests:
       - matchRegex:
           path: data["daemonset-config.yaml"]
           pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:\s\/hostfs(\n|$)
+        template: templates/daemonset-configmap.yaml
+  - it: provider openshift with non-default daemonset containerSecurityContext
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: OPEN_SHIFT
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: false
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: false
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
+  - it: provider openshift with only global non-default containerSecurityContext
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: OPEN_SHIFT
+      containerSecurityContext:
+        privileged: false
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+      daemonset:
+        containerSecurityContext:
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: false
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
+  - it: provider openshift with different global and daemonset containerSecurityContexts
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: OPEN_SHIFT
+      containerSecurityContext:
+        privileged: false
+        runAsNonRoot: false
+        allowPrivilegeEscalation: false
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.runAsNonRoot
+          value: true
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation
+          value: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*hostmetrics:[\S\s]*root_path:[\S\s]*$
         template: templates/daemonset-configmap.yaml
