@@ -207,7 +207,7 @@ Return image pull secrets from global or local values, merging both
 {{- end -}}
 {{- $merged := concat $globalPullSecrets $localPullSecrets -}}
 {{- if $merged }}
-{{- toJson $merged -}}
+{{- toYaml $merged | trim -}}
 {{- end -}}
 {{- end -}}
 
@@ -229,10 +229,10 @@ Return tolerations from global or local values
 */}}
 {{- define "newrelic-pixie.tolerations" -}}
 {{- if .Values.tolerations }}
-  {{- toJson .Values.tolerations -}}
+  {{- toYaml .Values.tolerations | trim -}}
 {{- else if .Values.global }}
   {{- if .Values.global.tolerations }}
-    {{- toJson .Values.global.tolerations -}}
+    {{- toYaml .Values.global.tolerations | trim -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}

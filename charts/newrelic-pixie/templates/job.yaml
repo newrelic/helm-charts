@@ -37,7 +37,7 @@ spec:
       {{- $pullSecrets := include "newrelic-pixie.image.pullSecrets" . }}
       {{- if $pullSecrets }}
       imagePullSecrets:
-        {{- $pullSecrets | fromJson | toYaml | nindent 8 }}
+        {{- $pullSecrets | nindent 8 }}
       {{- end }}
       restartPolicy: Never
       initContainers:
@@ -195,7 +195,7 @@ spec:
       {{- $tolerations := include "newrelic-pixie.tolerations" . }}
       {{- if $tolerations }}
       tolerations:
-        {{- $tolerations | fromJson | toYaml | nindent 8 }}
+        {{- $tolerations | nindent 8 }}
       {{- end }}
       {{- $affinity := include "newrelic-pixie.affinity" . }}
       {{- if $affinity }}
