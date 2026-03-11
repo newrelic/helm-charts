@@ -134,9 +134,9 @@ spec:
           - name: AGENT_SERVICE_NAME
             value: {{ include "nr-ebpf-agent.service.name" . }}
           - name: APM_DATA_REPORTING
-            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
+            value: "{{ .Values.apmDataReporting }}"
           - name: NETWORK_METRICS_REPORTING
-            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
+            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
           - name: LOG_REPORTING
             value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration
@@ -152,7 +152,7 @@ spec:
           - name: DROP_ALL_DATA_FOR_APM_AGENT_ENABLED_ENTITY
             value: "{{ if hasKey .Values.allDataFilters "dropApmAgentEnabledEntity" }}{{ .Values.allDataFilters.dropApmAgentEnabledEntity }}{{ else }}false{{ end }}"
           {{- end }}
-          
+
           # APM data filtering configuration
           {{- if .Values.apmDataFilters }}
           - name: DROP_APM_DATA_FOR_APM_AGENT_ENABLED_ENTITY
