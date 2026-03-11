@@ -25,8 +25,15 @@
 #
 # endpoint: https://log-api.newrelic.com/log/v1
 # metricsEndpoint: metric-api.newrelic.com
+
+# -- HTTP/HTTPS proxy URL for Fluent Bit to reach New Relic. Can be configured also with `global.proxy`
+proxy: ""
+
 fluentBit:
-  logLevel: "info"
+  # logLevel: Set the log level for Fluent Bit (trace, debug, info, warn, error, off)
+  # When empty, defaults to "info" unless global.verboseLog is true (then "debug")
+  # Override this to explicitly set a log level, which takes precedence over global.verboseLog
+  logLevel: ""
   path: "/var/log/containers/*.log"
   linuxMountPath: /var
   windowsPath: "C:\\var\\log\\containers\\*.log"
