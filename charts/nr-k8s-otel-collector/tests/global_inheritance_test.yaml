@@ -771,6 +771,32 @@ tests:
           pattern: "staging-otlp.nr-data.net"
         template: templates/daemonset-configmap.yaml
 
+  - it: local nrStaging overrides global in deployment configmap
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nrStaging: false
+      nrStaging: true
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "staging-otlp.nr-data.net"
+        template: templates/deployment-configmap.yaml
+
+  - it: local nrStaging overrides global in daemonset configmap
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        nrStaging: false
+      nrStaging: true
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "staging-otlp.nr-data.net"
+        template: templates/daemonset-configmap.yaml
+
   - it: global.fedramp.enabled propagates to deployment configmap endpoint
     set:
       cluster: test-cluster
@@ -813,6 +839,32 @@ tests:
         template: templates/deployment-configmap.yaml
 
 
+
+  - it: local verboseLog overrides global in deployment configmap
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        verboseLog: false
+      verboseLog: true
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: "level.*debug"
+        template: templates/deployment-configmap.yaml
+
+  - it: local verboseLog overrides global in daemonset configmap
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        verboseLog: false
+      verboseLog: true
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: "level.*debug"
+        template: templates/daemonset-configmap.yaml
 
   - it: global.verboseLog propagates to deployment configmap log level
     set:
