@@ -136,3 +136,208 @@ tests:
             name: scripts
             configMap:
               name: myconfigmap
+
+  # ---------------------------------------------------------------------------
+  # global.images.registry — main image
+  # Precedence: chart-specific value > global > chart default
+  # ---------------------------------------------------------------------------
+  - it: Main image uses chart default when no global registry set
+    set: &global_images_base
+      cluster: "test-cluster"
+      licenseKey: "license123"
+      apiKey: "api123"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^newrelic/newrelic-pixie-integration:"
+
+  - it: Main image uses global registry when set and repository is default
+    set:
+      <<: *global_images_base
+      global:
+        images:
+          registry: "my-registry.com"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^my-registry.com/newrelic/newrelic-pixie-integration:"
+
+  - it: Main image chart-specific repository overrides global registry
+    set:
+      <<: *global_images_base
+      global:
+        images:
+          registry: "my-registry.com"
+      image:
+        repository: "custom-repo.com/my-custom/pixie-integration"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.containers[0].image"
+          pattern: "^custom-repo.com/my-custom/pixie-integration:"
+
+  # ---------------------------------------------------------------------------
+  # global.images.registry — init container (clusterRegistrationWaitImage)
+  # ---------------------------------------------------------------------------
+  - it: Init container uses chart default when no global registry set
+    set:
+      <<: *global_images_base
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.initContainers[0].image"
+          pattern: "^gcr.io/pixie-oss/pixie-dev-public/curl:"
+
+  - it: Init container uses global registry when set and repository is default
+    set:
+      <<: *global_images_base
+      global:
+        images:
+          registry: "my-registry.com"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.initContainers[0].image"
+          pattern: "^my-registry.com/pixie-oss/pixie-dev-public/curl:"
+
+  - it: Init container chart-specific repository overrides global registry
+    set:
+      <<: *global_images_base
+      global:
+        images:
+          registry: "my-registry.com"
+      clusterRegistrationWaitImage:
+        repository: "my-mirror.com/pixie-oss/curl"
+    asserts:
+      - matchRegex:
+          path: "spec.template.spec.initContainers[0].image"
+          pattern: "^my-mirror.com/pixie-oss/curl:"
+
+  # ---------------------------------------------------------------------------
+  # global.images.pullPolicy — main image
+  # Precedence: chart-specific value > global > default (IfNotPresent)
+  # ---------------------------------------------------------------------------
+  - it: Main image pullPolicy defaults to IfNotPresent when nothing set
+    set:
+      <<: *global_images_base
+      image:
+        pullPolicy: ""
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].imagePullPolicy"
+          value: "IfNotPresent"
+
+  - it: Main image pullPolicy uses global when no chart-specific value
+    set:
+      <<: *global_images_base
+      image:
+        pullPolicy: ""
+      global:
+        images:
+          pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].imagePullPolicy"
+          value: "Always"
+
+  - it: Main image chart-specific pullPolicy overrides global pullPolicy
+    set:
+      <<: *global_images_base
+      image:
+        pullPolicy: "Never"
+      global:
+        images:
+          pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: "spec.template.spec.containers[0].imagePullPolicy"
+          value: "Never"
+
+  # ---------------------------------------------------------------------------
+  # global.images.pullPolicy — init container
+  # Precedence: chart-specific value > global > default (IfNotPresent)
+  # ---------------------------------------------------------------------------
+  - it: Init container pullPolicy defaults to IfNotPresent when nothing set
+    set:
+      <<: *global_images_base
+      clusterRegistrationWaitImage:
+        pullPolicy: ""
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].imagePullPolicy"
+          value: "IfNotPresent"
+
+  - it: Init container pullPolicy uses global when no chart-specific value
+    set:
+      <<: *global_images_base
+      clusterRegistrationWaitImage:
+        pullPolicy: ""
+      global:
+        images:
+          pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].imagePullPolicy"
+          value: "Always"
+
+  - it: Init container chart-specific pullPolicy overrides global pullPolicy
+    set:
+      <<: *global_images_base
+      clusterRegistrationWaitImage:
+        pullPolicy: "Never"
+      global:
+        images:
+          pullPolicy: "Always"
+    asserts:
+      - equal:
+          path: "spec.template.spec.initContainers[0].imagePullPolicy"
+          value: "Never"
+
+  # ---------------------------------------------------------------------------
+  # global.images.pullSecrets
+  # ---------------------------------------------------------------------------
+  - it: No imagePullSecrets section when none configured
+    set:
+      <<: *global_images_base
+    asserts:
+      - notExists:
+          path: "spec.template.spec.imagePullSecrets"
+
+  - it: imagePullSecrets uses global pullSecrets only
+    set:
+      <<: *global_images_base
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+    asserts:
+      - equal:
+          path: "spec.template.spec.imagePullSecrets"
+          value:
+            - name: global-secret
+
+  - it: imagePullSecrets uses chart-level pullSecrets only
+    set:
+      <<: *global_images_base
+      image:
+        pullSecrets:
+          - name: chart-secret
+    asserts:
+      - equal:
+          path: "spec.template.spec.imagePullSecrets"
+          value:
+            - name: chart-secret
+
+  - it: imagePullSecrets concatenates global then chart pullSecrets
+    set:
+      <<: *global_images_base
+      global:
+        images:
+          pullSecrets:
+            - name: global-secret
+      image:
+        pullSecrets:
+          - name: chart-secret
+    asserts:
+      - equal:
+          path: "spec.template.spec.imagePullSecrets"
+          value:
+            - name: global-secret
+            - name: chart-secret
