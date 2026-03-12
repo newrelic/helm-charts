@@ -68,12 +68,25 @@ If using GKE Autopilot, please set the following configuration in your values.ya
 provider: "GKE_AUTOPILOT"
 ```
 
+If provider is set to `GKE_AUTOPILOT`, the values in `daemonset.containerSecurityContext` are automatically overriden with the following updates upon chart installation since the daemonset does not require privileged containerSecurityContext in clusters in GKE Autopilot.
+
+```
+privileged: false
+```
+
 ## OpenShift
 
 If using OpenShift, please set the following configuration in your values.yaml file in order for the agent to work with OpenShift.
 
 ```
 provider: "OPEN_SHIFT"
+```
+
+If provider is set to `OPEN_SHIFT` and the `filelog` receiver is enabled, the values in `daemonset.containerSecurityContext` are automatically overriden with the following updates upon chart installation in order to enable logging to work in OpenShift:
+
+```
+privileged: true
+allowPrivilegeEscalation: true
 ```
 
 ## Helmless installation
