@@ -9,7 +9,7 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
     agent-control.newrelic.com/minimal-permissions: "true"
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-minimal") }}
+  name: newrelic-ac-minimal
 rules:
   # Namespaces - Required to create Flux namespace and agents namespace
   - apiGroups: [""]
@@ -147,14 +147,14 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
     agent-control.newrelic.com/minimal-permissions: "true"
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-minimal") }}
+  name: newrelic-ac-minimal
 subjects:
   - kind: ServiceAccount
     name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-minimal") }}
+  name: newrelic-ac-minimal
   apiGroup: rbac.authorization.k8s.io
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -167,7 +167,7 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
     agent-control.newrelic.com/minimal-permissions: "true"
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-minimal") }}
+  name: newrelic-agent-control-flux-uninstall-minimal
 rules:
   # Permissions for cleanup during uninstall
   - apiGroups:
@@ -214,13 +214,13 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
     agent-control.newrelic.com/minimal-permissions: "true"
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-minimal") }}
+  name: newrelic-agent-control-flux-uninstall-minimal
 subjects:
   - kind: ServiceAccount
     name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-minimal") }}
+  name: newrelic-agent-control-flux-uninstall-minimal
   apiGroup: rbac.authorization.k8s.io
 {{- end }}
