@@ -1,0 +1,422 @@
+namespace: newrelic
+name: com.newrelic.ebpf
+version: 0.1.0
+variables:
+  k8s:
+    chart_values:
+      nr-ebpf-agent:
+        description: "Newrelic nr-ebpf-agent chart values"
+        type: yaml
+        required: false
+        default: { }
+      global:
+        description: "Global chart values"
+        type: yaml
+        required: false
+        default: { }
+    chart_version:
+      description: "nr-ebpf-agent chart version"
+      type: string
+      required: true
+    chart_name:
+      description: "nr-ebpf-agent chart name"
+      type: string
+      required: false
+      default: "nr-ebpf-agent"
+    chart_repository:
+      url:
+        description: "chart repository url"
+        type: string
+        required: false
+        default: "https://helm-charts.newrelic.com"
+        variants:
+          ac_config_field: "chart_repository_urls"
+          values: [ "https://helm-charts.newrelic.com" ]
+      secret_reference:
+        description: "HelmRepository secret reference (secretRef)"
+        type: yaml
+        required: false
+        default: null
+      certificate_secret_reference:
+        description: "HelmRepository certificate secret reference (certSecretRef)"
+        type: yaml
+        required: false
+        default: null
+  linux:
+    config_agent:
+      DEPLOYMENT_NAME:
+        description: "Unique name for the deployment to identify data posting via eBPF Agent."
+        type: string
+        required: true
+      OTLP_ENDPOINT:
+        description: "Endpoint to export data to Newrelic."
+        type: string
+        required: false
+        default: otlp.nr-data.net:4317
+      LOG_LEVEL:
+        description: "To configure the log level in increasing order of verboseness."
+        type: string
+        required: false
+        default: INFO
+      LOG_FILE_PATH:
+        description: "To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout."
+        type: string
+        required: false
+        default: ""
+      DROP_DATA_FOR_ENTITY:
+        description: "Comma separated string of identifiers to exclude from process monitoring."
+        type: string
+        required: false
+        default: ""
+      TLS_ENABLED:
+        description: "Enable TLS communication between the eBPF client and agent."
+        type: string
+        required: false
+        default: "true"
+      TLS_AUTOGENERATE_CERT_ENABLED:
+        description: "This must be enabled to create a self-signed cert and secret for you."
+        type: string
+        required: false
+        default: "true"
+      TLS_CERT_PATH:
+        description: "Certificates path."
+        type: string
+        required: false
+        default: "/etc/newrelic-ebpf-agent/certs/"
+      TLS_CERT_FILE:
+        description: "Path to your own PEM-encoded certificate."
+        type: string
+        required: false
+        default: ""
+      TLS_KEY_FILE:
+        description: "Path to your own PEM-encoded private key."
+        type: string
+        required: false
+        default: ""
+      TLS_CA_FILE:
+        description: "Path to the CA cert."
+        type: string
+        required: false
+        default: ""
+      TABLE_STORE_DATA_LIMIT_MB:
+        description: "The primary lever to control RAM use of the eBPF agent. Specified in MiB."
+        type: string
+        required: false
+        default: "250"
+      PROTOCOLS_HTTP_ENABLED:
+        description: "To Enable/Disable the metrics, spans, sampling of latency and error rate of HTTP"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_HTTP_SPANS_ENABLED:
+        description: "Enable HTTP spans"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_HTTP_SPANS_SAMPLING_LATENCY:
+        description: "HTTP spans sampling latency threshold [p1, p10, p50, p90, p99]"
+        type: string
+        required: false
+        default: "p50"
+      PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE:
+        description: "HTTP error rate threshold for span export [1-100]"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_MYSQL_ENABLED:
+        description: "To Enable/Disable the metrics, spans, sampling latency rate of MySQL DB"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_MYSQL_SPANS_ENABLED:
+        description: "Enable MySQL spans"
+        type: string
+        required: false
+        default: "false"
+      PROTOCOLS_MYSQL_SPANS_SAMPLING_LATENCY:
+        description: "MySQL spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_PGSQL_ENABLED:
+        description: "To Enable/Disable the metrics, spans, sampling latency rate of PostgreSQL DB"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_PGSQL_SPANS_ENABLED:
+        description: "Enable PostgreSQL spans"
+        type: string
+        required: false
+        default: "false"
+      PROTOCOLS_PGSQL_SPANS_SAMPLING_LATENCY:
+        description: "PostgreSQL spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_CASS_ENABLED:
+        description: "To Enable/Disable the metrics, spans, sampling latency rate of Cassandra DB"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_CASS_SPANS_ENABLED:
+        description: "Enable Cassandra spans"
+        type: string
+        required: false
+        default: "false"
+      PROTOCOLS_CASS_SPANS_SAMPLING_LATENCY:
+        description: "Cassandra spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_REDIS_ENABLED:
+        description: "To Enable/Disable the metrics, spans, sampling latency rate of Redis DB"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_REDIS_SPANS_ENABLED:
+        description: "Enable Redis spans"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_REDIS_SPANS_SAMPLING_LATENCY:
+        description: "Redis spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_MONGODB_ENABLED:
+        description: "To Enable/Disable the metrics, spans, sampling latency rate of MongoDB"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_MONGODB_SPANS_ENABLED:
+        description: "Enable MongoDB spans"
+        type: string
+        required: false
+        default: "false"
+      PROTOCOLS_MONGODB_SPANS_SAMPLING_LATENCY:
+        description: "MongoDB spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_KAFKA_SPANS_ENABLED:
+        description: "Enable Kafka spans"
+        type: string
+        required: false
+        default: "false"
+      PROTOCOLS_KAFKA_SPANS_SAMPLING_LATENCY:
+        description: "Kafka spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_AMQP_SPANS_ENABLED:
+        description: "Enable AMQP spans"
+        type: string
+        required: false
+        default: "false"
+      PROTOCOLS_AMQP_SPANS_SAMPLING_LATENCY:
+        description: "AMQP spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+      PROTOCOLS_DNS_ENABLED:
+        description: "To Enable/Disable DNS protocol"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_DNS_SPANS_ENABLED:
+        description: "Enable DNS spans"
+        type: string
+        required: false
+        default: "true"
+      PROTOCOLS_DNS_SPANS_SAMPLING_LATENCY:
+        description: "DNS spans sampling latency threshold"
+        type: string
+        required: false
+        default: ""
+    backoff_delay:
+      description: "seconds until next retry if agent fails to start"
+      type: string
+      required: false
+      default: 20s
+    enable_file_logging:
+      description: "enable logging the on host executables' logs to files"
+      type: bool
+      required: false
+      default: false
+deployment:
+  linux:
+    enable_file_logging: ${nr-var:enable_file_logging}
+    version:
+      path: /usr/bin/nr-ebpf-agent-client
+      args:
+        - --version
+      regex: \d+\.\d+\.\d+
+    executables:
+      - id: nr-ebpf-agent-client
+        path: /usr/bin/nr-ebpf-agent-client
+        env:
+          NEW_RELIC_LICENSE_KEY: "${nr-env:NEW_RELIC_LICENSE_KEY}"
+          DEPLOYMENT_NAME: "${nr-var:config_agent.DEPLOYMENT_NAME}"
+          OTLP_ENDPOINT: "${nr-var:config_agent.OTLP_ENDPOINT}"
+          NEW_RELIC_LOG_LEVEL: "${nr-var:config_agent.LOG_LEVEL}"
+          NEW_RELIC_LOG_FILE_PATH: "${nr-var:config_agent.LOG_FILE_PATH}"
+          DROP_DATA_FOR_ENTITY: "${nr-var:config_agent.DROP_DATA_FOR_ENTITY}"
+          TLS_ENABLED: "${nr-var:config_agent.TLS_ENABLED}"
+          TLS_AUTOGENERATE_CERT_ENABLED: "${nr-var:config_agent.TLS_AUTOGENERATE_CERT_ENABLED}"
+          TLS_CERT_PATH: "${nr-var:config_agent.TLS_CERT_PATH}"
+          TLS_CERT_FILE: "${nr-var:config_agent.TLS_CERT_FILE}"
+          TLS_KEY_FILE: "${nr-var:config_agent.TLS_KEY_FILE}"
+          TLS_CA_FILE: "${nr-var:config_agent.TLS_CA_FILE}"
+          TABLE_STORE_DATA_LIMIT_MB: "${nr-var:config_agent.TABLE_STORE_DATA_LIMIT_MB}"
+          PROTOCOLS_HTTP_ENABLED: "${nr-var:config_agent.PROTOCOLS_HTTP_ENABLED}"
+          PROTOCOLS_HTTP_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_HTTP_SPANS_ENABLED}"
+          PROTOCOLS_HTTP_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_HTTP_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE: "${nr-var:config_agent.PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE}"
+          PROTOCOLS_MYSQL_ENABLED: "${nr-var:config_agent.PROTOCOLS_MYSQL_ENABLED}"
+          PROTOCOLS_MYSQL_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_MYSQL_SPANS_ENABLED}"
+          PROTOCOLS_MYSQL_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_MYSQL_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_PGSQL_ENABLED: "${nr-var:config_agent.PROTOCOLS_PGSQL_ENABLED}"
+          PROTOCOLS_PGSQL_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_PGSQL_SPANS_ENABLED}"
+          PROTOCOLS_PGSQL_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_PGSQL_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_CASS_ENABLED: "${nr-var:config_agent.PROTOCOLS_CASS_ENABLED}"
+          PROTOCOLS_CASS_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_CASS_SPANS_ENABLED}"
+          PROTOCOLS_CASS_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_CASS_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_REDIS_ENABLED: "${nr-var:config_agent.PROTOCOLS_REDIS_ENABLED}"
+          PROTOCOLS_REDIS_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_REDIS_SPANS_ENABLED}"
+          PROTOCOLS_REDIS_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_REDIS_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_MONGODB_ENABLED: "${nr-var:config_agent.PROTOCOLS_MONGODB_ENABLED}"
+          PROTOCOLS_MONGODB_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_MONGODB_SPANS_ENABLED}"
+          PROTOCOLS_MONGODB_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_MONGODB_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_KAFKA_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_KAFKA_SPANS_ENABLED}"
+          PROTOCOLS_KAFKA_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_KAFKA_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_AMQP_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_AMQP_SPANS_ENABLED}"
+          PROTOCOLS_AMQP_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_AMQP_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_DNS_ENABLED: "${nr-var:config_agent.PROTOCOLS_DNS_ENABLED}"
+          PROTOCOLS_DNS_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_DNS_SPANS_ENABLED}"
+          PROTOCOLS_DNS_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_DNS_SPANS_SAMPLING_LATENCY}"
+        restart_policy:
+          backoff_strategy:
+            type: fixed
+            backoff_delay: ${nr-var:backoff_delay}
+      - id: nr-ebpf-agent
+        path: /usr/bin/nr-ebpf-agent
+        env:
+          NEW_RELIC_LICENSE_KEY: "${nr-env:NEW_RELIC_LICENSE_KEY}"
+          DEPLOYMENT_NAME: "${nr-var:config_agent.DEPLOYMENT_NAME}"
+          OTLP_ENDPOINT: "${nr-var:config_agent.OTLP_ENDPOINT}"
+          NEW_RELIC_LOG_LEVEL: "${nr-var:config_agent.LOG_LEVEL}"
+          NEW_RELIC_LOG_FILE_PATH: "${nr-var:config_agent.LOG_FILE_PATH}"
+          DROP_DATA_FOR_ENTITY: "${nr-var:config_agent.DROP_DATA_FOR_ENTITY}"
+          TLS_ENABLED: "${nr-var:config_agent.TLS_ENABLED}"
+          TLS_AUTOGENERATE_CERT_ENABLED: "${nr-var:config_agent.TLS_AUTOGENERATE_CERT_ENABLED}"
+          TLS_CERT_PATH: "${nr-var:config_agent.TLS_CERT_PATH}"
+          TLS_CERT_FILE: "${nr-var:config_agent.TLS_CERT_FILE}"
+          TLS_KEY_FILE: "${nr-var:config_agent.TLS_KEY_FILE}"
+          TLS_CA_FILE: "${nr-var:config_agent.TLS_CA_FILE}"
+          TABLE_STORE_DATA_LIMIT_MB: "${nr-var:config_agent.TABLE_STORE_DATA_LIMIT_MB}"
+          PROTOCOLS_HTTP_ENABLED: "${nr-var:config_agent.PROTOCOLS_HTTP_ENABLED}"
+          PROTOCOLS_HTTP_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_HTTP_SPANS_ENABLED}"
+          PROTOCOLS_HTTP_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_HTTP_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE: "${nr-var:config_agent.PROTOCOLS_HTTP_SPANS_SAMPLING_ERROR_RATE}"
+          PROTOCOLS_MYSQL_ENABLED: "${nr-var:config_agent.PROTOCOLS_MYSQL_ENABLED}"
+          PROTOCOLS_MYSQL_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_MYSQL_SPANS_ENABLED}"
+          PROTOCOLS_MYSQL_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_MYSQL_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_PGSQL_ENABLED: "${nr-var:config_agent.PROTOCOLS_PGSQL_ENABLED}"
+          PROTOCOLS_PGSQL_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_PGSQL_SPANS_ENABLED}"
+          PROTOCOLS_PGSQL_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_PGSQL_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_CASS_ENABLED: "${nr-var:config_agent.PROTOCOLS_CASS_ENABLED}"
+          PROTOCOLS_CASS_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_CASS_SPANS_ENABLED}"
+          PROTOCOLS_CASS_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_CASS_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_REDIS_ENABLED: "${nr-var:config_agent.PROTOCOLS_REDIS_ENABLED}"
+          PROTOCOLS_REDIS_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_REDIS_SPANS_ENABLED}"
+          PROTOCOLS_REDIS_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_REDIS_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_MONGODB_ENABLED: "${nr-var:config_agent.PROTOCOLS_MONGODB_ENABLED}"
+          PROTOCOLS_MONGODB_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_MONGODB_SPANS_ENABLED}"
+          PROTOCOLS_MONGODB_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_MONGODB_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_KAFKA_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_KAFKA_SPANS_ENABLED}"
+          PROTOCOLS_KAFKA_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_KAFKA_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_AMQP_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_AMQP_SPANS_ENABLED}"
+          PROTOCOLS_AMQP_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_AMQP_SPANS_SAMPLING_LATENCY}"
+          PROTOCOLS_DNS_ENABLED: "${nr-var:config_agent.PROTOCOLS_DNS_ENABLED}"
+          PROTOCOLS_DNS_SPANS_ENABLED: "${nr-var:config_agent.PROTOCOLS_DNS_SPANS_ENABLED}"
+          PROTOCOLS_DNS_SPANS_SAMPLING_LATENCY: "${nr-var:config_agent.PROTOCOLS_DNS_SPANS_SAMPLING_LATENCY}"
+        restart_policy:
+          backoff_strategy:
+            type: fixed
+            backoff_delay: ${nr-var:backoff_delay}
+  # See com.newrelic.infrastructure Agent type for description of fields.
+  k8s:
+    health:
+      interval: 30s
+      initial_delay: 30s
+    objects:
+      repository:
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: HelmRepository
+        metadata:
+          name: ${nr-sub:agent_id}
+          namespace: ${nr-ac:namespace}
+        spec:
+          interval: 30m
+          provider: generic
+          url: ${nr-var:chart_repository.url}
+          secretRef: ${nr-var:chart_repository.secret_reference}
+          certSecretRef: ${nr-var:chart_repository.certificate_secret_reference}
+      values:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: values-${nr-sub:agent_id}
+          namespace: ${nr-ac:namespace}
+        stringData:
+          default.yaml: |
+            global:
+              licenseKey: ${nr-env:NR_LICENSE_KEY}
+              cluster: ${nr-env:NR_CLUSTER_NAME}
+              nrStaging: ${nr-env:NR_STAGING}
+              verboseLog: ${nr-env:NR_VERBOSE_LOG}
+          values.yaml: |
+            ${nr-var:chart_values.nr-ebpf-agent}
+          global.yaml: |
+            global:
+              ${nr-var:chart_values.global | indent 2}
+      release:
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        metadata:
+          name: ${nr-sub:agent_id}
+          namespace: ${nr-ac:namespace}
+        spec:
+          targetNamespace: ${nr-ac:namespace_agents}
+          releaseName: ${nr-sub:agent_id}
+          interval: 30s
+          chart:
+            spec:
+              chart: ${nr-var:chart_name}
+              version: ${nr-var:chart_version}
+              reconcileStrategy: ChartVersion
+              sourceRef:
+                kind: HelmRepository
+                name: ${nr-sub:agent_id}
+                namespace: ${nr-ac:namespace}
+              interval: 3m
+          install:
+            disableWait: true
+            disableWaitForJobs: true
+            disableTakeOwnership: true
+            createNamespace: true
+          upgrade:
+            disableWait: true
+            disableWaitForJobs: true
+            disableTakeOwnership: true
+            cleanupOnFail: true
+          valuesFrom:
+            - kind: Secret
+              name: values-${nr-sub:agent_id}
+              valuesKey: default.yaml
+            - kind: Secret
+              name: values-${nr-sub:agent_id}
+              valuesKey: values.yaml
+            - kind: Secret
+              name: values-${nr-sub:agent_id}
+              valuesKey: global.yaml
