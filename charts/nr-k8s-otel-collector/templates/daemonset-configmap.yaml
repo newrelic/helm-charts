@@ -862,7 +862,16 @@ data:
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
 
+    {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.extensions" . }}
+    extensions:
+      {{- . | nindent 6 }}
+    {{- end }}
+
     service:
+      {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.service.extensions" . }}
+      extensions:
+        {{- . | nindent 8 }}
+      {{- end }}
       telemetry:
         {{- if include "newrelic.common.verboseLog" . }}
         logs:
