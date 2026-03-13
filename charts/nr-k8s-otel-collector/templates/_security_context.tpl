@@ -43,7 +43,7 @@ A helper to return the container security context to apply to the daemonset.
 {{- end -}}
 {{- if include "newrelic.common.gkeAutopilot" . -}}
   {{- $_ := set $containerSecurityContext "privileged" false -}}
-{{- else if include "newrelic.common.openShift" . -}}
+{{- else if and .Values.receivers.filelog.enabled (include "newrelic.common.openShift" .) -}}
   {{- $_ := set $containerSecurityContext "privileged" true -}}
   {{- $_ := set $containerSecurityContext "allowPrivilegeEscalation" true -}}
 {{- end -}}
