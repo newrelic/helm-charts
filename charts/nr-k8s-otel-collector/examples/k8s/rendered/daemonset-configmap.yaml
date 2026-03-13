@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.13
+    helm.sh/chart: nr-k8s-otel-collector-0.10.14
 data:
   daemonset-config.yaml: |
     receivers:
@@ -467,6 +467,35 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/strip_all_labels_except_for_node:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - keep_keys(resource.attributes, ["node"]) where metric.name == "container.cpu.usage"
+
+      groupbyattrs/node:
+        keys:
+          - node
+
+      metricstransform/sum_container_metrics_per_node:
+        transforms:
+          - include: container.cpu.usage
+            action: insert
+            new_name: node.container.cpu.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - node
+                aggregation_type: sum
+          - include: container.memory.usage
+            action: insert
+            new_name: node.container.memory.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - node
+                aggregation_type: sum
+
       # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
       metricsgeneration/calculate_percentage:
         rules:
@@ -485,12 +514,12 @@ data:
             operation: divide
           - name: node.cpu.usage.percentage
             type: scale
-            metric1: k8s.node.cpu.usage
+            metric1: node.container.cpu.usage.sum
             scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
             operation: divide
           - name: node.memory.usage.percentage
             type: scale
-            metric1: k8s.node.memory.working_set
+            metric1: node.container.memory.usage.sum
             scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
             operation: divide
 
@@ -575,6 +604,11 @@ data:
             - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
             - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
 
+      filter/exclude_intermediate_node_metrics:
+        metrics:
+          metric:
+            - 'metric.name == "node.container.cpu.usage.sum"'
+            - 'metric.name == "node.container.memory.usage.sum"'
 
       attributes/exclude_system_paging:
         include:
@@ -609,7 +643,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.13
+            value: 0.10.14
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -762,7 +796,11 @@ data:
             - kubeletstats
             - prometheus
           processors:
+            - transform/strip_all_labels_except_for_node
+            - groupbyattrs/node
+            - metricstransform/sum_container_metrics_per_node
             - metricsgeneration/calculate_percentage
+            - filter/exclude_intermediate_node_metrics
             
           exporters:
             - routing/nr_metrics_pipelines
