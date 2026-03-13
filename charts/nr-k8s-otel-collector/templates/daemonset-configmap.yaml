@@ -539,7 +539,17 @@ data:
               - value: 'false'
                 new_value: 'true'
 
-      metricstransform/aggregate_node_metrics:
+      transform/strip_all_labels_except_for_node:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - keep_keys(resource.attributes, ["node"]) where metric.name == "container.cpu.usage"
+
+      groupbyattrs/node:
+        keys:
+          - node
+
+      metricstransform/sum_container_metrics_per_node:
         transforms:
           - include: container.cpu.usage
             action: insert
@@ -547,7 +557,7 @@ data:
             operations:
               - action: aggregate_labels
                 label_set:
-                  - k8s.node.name
+                  - node
                 aggregation_type: sum
           - include: container.memory.usage
             action: insert
@@ -555,7 +565,7 @@ data:
             operations:
               - action: aggregate_labels
                 label_set:
-                  - k8s.node.name
+                  - node
                 aggregation_type: sum
 
       # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
@@ -893,8 +903,11 @@ data:
             - prometheus
             {{- end }}
           processors:
-            - metricstransform/aggregate_node_metrics
+            - transform/strip_all_labels_except_for_node
+            - groupbyattrs/node
+            - metricstransform/sum_container_metrics_per_node
             - metricsgeneration/calculate_percentage
+            - filter/exclude_intermediate_node_metrics
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
@@ -958,7 +971,6 @@ data:
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             {{- end }}
-            - filter/exclude_intermediate_node_metrics
             - transform/truncate
             - resourcedetection/env
             {{- if include "newrelic.common.openShift" . }}
