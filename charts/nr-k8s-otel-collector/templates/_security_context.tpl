@@ -35,18 +35,20 @@ A helper to return the pod security context to apply to the daemonset.
 A helper to return the container security context to apply to the daemonset.
 */ -}}
 {{- define "nrKubernetesOtel.daemonset.securityContext.container" -}}
+{{- $containerSecurityContext := dict -}}
 {{- if .Values.daemonset.containerSecurityContext -}}
-  {{if include "newrelic.common.gkeAutopilot" .}}
-      {{- toYaml .Values.daemonset.containerSecurityContext | replace "privileged: true" "privileged: false" -}}
-  {{else}}
-      {{- toYaml .Values.daemonset.containerSecurityContext -}}
-  {{end}}
+  {{- $containerSecurityContext = .Values.daemonset.containerSecurityContext | deepCopy -}}
 {{- else if include "newrelic.common.securityContext.container" . -}}
-  {{if .Values.gkeAutopilot}}
-    {{- include "newrelic.common.securityContext.container" . | replace "privileged: true" "privileged: false" -}}
-  {{else}}
-    {{- include "newrelic.common.securityContext.container" . -}}
-  {{end}}
+  {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
+{{- end -}}
+{{- if include "newrelic.common.gkeAutopilot" . -}}
+  {{- $_ := set $containerSecurityContext "privileged" false -}}
+{{- else if and .Values.receivers.filelog.enabled (include "newrelic.common.openShift" .) -}}
+  {{- $_ := set $containerSecurityContext "privileged" true -}}
+  {{- $_ := set $containerSecurityContext "allowPrivilegeEscalation" true -}}
+{{- end -}}
+{{- if not (empty $containerSecurityContext) -}}
+  {{- toYaml $containerSecurityContext -}}
 {{- end -}}
 {{- end -}}
 

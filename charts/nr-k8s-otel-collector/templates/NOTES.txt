@@ -7,3 +7,36 @@ WARNING: 'image.tag' is deprecated and will be removed in a future release. Plea
 {{- if (.Values.image).pullPolicy }}
 WARNING: 'image.pullPolicy' is deprecated and will be removed in a future release. Please use 'images.collector.pullPolicy' instead.
 {{- end }}
+
+{{- if (include "newrelic.common.gkeAutopilot" .) -}}
+  {{- $containerSecurityContext := dict -}}
+  {{- if .Values.daemonset.containerSecurityContext -}}
+    {{- $containerSecurityContext = .Values.daemonset.containerSecurityContext | deepCopy -}}
+  {{- else if include "newrelic.common.securityContext.container" . -}}
+    {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
+  {{- end -}}
+  {{- if (eq $containerSecurityContext.privileged true) }}
+INFO: The following update has been made to daemonset.containerSecurityContext
+to revert custom configuration that is not necessary in GKE Autopilot.
+privileged: false
+  {{- end -}}
+{{- end -}}
+
+{{- if and (include "newrelic.common.openShift" .) .Values.receivers.filelog.enabled -}}
+  {{- $containerSecurityContext := dict -}}
+  {{- if .Values.daemonset.containerSecurityContext -}}
+    {{- $containerSecurityContext = .Values.daemonset.containerSecurityContext | deepCopy -}}
+  {{- else if include "newrelic.common.securityContext.container" . -}}
+    {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
+  {{- end -}}
+  {{- if or (eq $containerSecurityContext.privileged false) (eq $containerSecurityContext.allowPrivilegeEscalation false) }}
+WARNING: The following updates have been made to daemonset.containerSecurityContext
+to ensure compatibility with OpenShift.
+    {{- if (eq $containerSecurityContext.privileged false) }}
+privileged: true
+    {{- end -}}
+    {{- if (eq $containerSecurityContext.allowPrivilegeEscalation false) }}
+allowPrivilegeEscalation: true
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
