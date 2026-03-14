@@ -82,7 +82,7 @@ If using OpenShift, please set the following configuration in your values.yaml f
 provider: "OPEN_SHIFT"
 ```
 
-If provider is set to `OPEN_SHIFT` and the `filelog` receiver is enabled, the values in `daemonset.containerSecurityContext` are automatically overriden with the following updates upon chart installation in order to enable logging to work in OpenShift:
+If `provider` is set to `OPEN_SHIFT` and `receivers.filelog` is enabled, the following updates will be made to `daemonset.containerSecurityContext` to ensure compatibility with OpenShift:
 
 ```
 privileged: true

@@ -9,7 +9,6 @@ tests:
   - it: provider openshift with default containerSecurityContext
     set:
       cluster: my-cluster
-      licenseKey: us-whatever
       provider: OPEN_SHIFT
     asserts:
       - equal:
@@ -27,7 +26,7 @@ tests:
   - it: provider not specified with default containerSecurityContext
     set:
       cluster: my-cluster
-      licenseKey: us-whatever
+      provider:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].securityContext.privileged
@@ -44,7 +43,6 @@ tests:
   - it: provider openshift with non-default daemonset containerSecurityContext
     set:
       cluster: my-cluster
-      licenseKey: us-whatever
       provider: OPEN_SHIFT
       daemonset:
         containerSecurityContext:
@@ -71,7 +69,6 @@ tests:
   - it: provider openshift with only chart-level non-default containerSecurityContext
     set:
       cluster: my-cluster
-      licenseKey: us-whatever
       provider: OPEN_SHIFT
       containerSecurityContext:
         privileged: false
@@ -99,7 +96,6 @@ tests:
   - it: provider openshift with different chart-level and daemonset containerSecurityContexts
     set:
       cluster: my-cluster
-      licenseKey: us-whatever
       provider: OPEN_SHIFT
       containerSecurityContext:
         privileged: false
