@@ -16,9 +16,10 @@ WARNING: 'image.pullPolicy' is deprecated and will be removed in a future releas
     {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
   {{- end -}}
   {{- if (eq $containerSecurityContext.privileged true) }}
-INFO: The following update has been made to daemonset.containerSecurityContext
-to revert custom configuration that is not necessary in GKE Autopilot.
-privileged: false
+WARNING: The following custom value has been detected in daemonset.containerSecurityContext which is not necessary for compatibility
+with GKE Autopilot:
+privileged: true
+Feel free to revert this value to the default (false).
   {{- end -}}
 {{- end -}}
 
@@ -30,8 +31,8 @@ privileged: false
     {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
   {{- end -}}
   {{- if or (eq $containerSecurityContext.privileged false) (eq $containerSecurityContext.allowPrivilegeEscalation false) }}
-WARNING: The following updates have been made to daemonset.containerSecurityContext
-to ensure compatibility with OpenShift.
+WARNING: The daemonset has insufficient privileges to operate the filelog receiver in OpenShift. Please update the following values
+in daemonset.containerSecurityContext to enable compatibility:
     {{- if (eq $containerSecurityContext.privileged false) }}
 privileged: true
     {{- end -}}
