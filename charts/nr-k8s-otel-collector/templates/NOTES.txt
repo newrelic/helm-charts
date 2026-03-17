@@ -29,7 +29,7 @@ WARNING: 'privileged: true' is not supported in GKE Autopilot. Please update 'da
   {{- end -}}
   {{- if or (eq $containerSecurityContext.privileged false) (eq $containerSecurityContext.allowPrivilegeEscalation false) }}
 WARNING: The daemonset has insufficient privileges to operate the filelog receiver in OpenShift. Please update the following values
-in daemonset.containerSecurityContext to enable compatibility:
+in 'daemonset.containerSecurityContext':
     {{- if (eq $containerSecurityContext.privileged false) }}
 privileged: true
     {{- end -}}
