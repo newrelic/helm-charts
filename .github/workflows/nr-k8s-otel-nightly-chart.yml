@@ -4,6 +4,13 @@ on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
+  # TODO: REMOVE BEFORE MERGING - temporary PR trigger for testing
+  pull_request:
+    branches:
+      - master
+    paths:
+      - 'charts/nr-k8s-otel-collector/**'
+      - '.github/workflows/nr-k8s-otel-nightly-chart.yml'
 
 concurrency: nr-k8s-otel-nightly-build
 
