@@ -4,7 +4,7 @@ on:
   schedule:
     - cron: "0 4 * * *"
   workflow_dispatch:
-  # TODO: REMOVE BEFORE MERGING - temporary PR trigger for testing
+  # TODO: REMOVE BEFORE MERGING - temporary PR trigger for testing from otelChangeRelease branch only
   pull_request:
     branches:
       - master
@@ -27,7 +27,8 @@ permissions:
 jobs:
   build-and-publish-nightly:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/otelChangeRelease' || github.event_name == 'schedule'
+    # TODO: REMOVE PR condition before merging - only for testing from otelChangeRelease branch
+    if: github.ref == 'refs/heads/master' || github.event_name == 'schedule' || (github.event_name == 'pull_request' && github.head_ref == 'otelChangeRelease')
     steps:
       - name: Checkout
         uses: actions/checkout@v4
