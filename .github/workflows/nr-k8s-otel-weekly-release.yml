@@ -1,13 +1,10 @@
 name: Weekly Release (nr-k8s-otel-collector)
 
 on:
-  # Weekly release every Monday at 12pm UTC (5am PT)
   schedule:
     - cron: "0 12 * * 1"
-  # Allow manual trigger for hotfix releases
   workflow_dispatch:
 
-# Prevent concurrent releases
 concurrency: nr-k8s-otel-weekly-release
 
 env:
@@ -15,7 +12,6 @@ env:
   CHART_PATH: charts/nr-k8s-otel-collector
 
 jobs:
-  # Reuse the same validation from main release workflow
   validate-gh-pages-index:
     runs-on: ubuntu-latest
     steps:
@@ -70,7 +66,6 @@ jobs:
             echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            # Calculate version based on commits
             NEW_VERSION=$(./scripts/calculate-chart-version.sh ${CHART_PATH} ${{ steps.last_tag.outputs.tag }})
             CURRENT_VERSION=$(yq '.version' ${CHART_PATH}/Chart.yaml)
 
@@ -82,6 +77,20 @@ jobs:
               echo "version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
               echo "has_changes=false" >> $GITHUB_OUTPUT
             else
+              # Validate version format (semver)
+              if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                echo "❌ Invalid version format: $NEW_VERSION (expected: X.Y.Z)"
+                exit 1
+              fi
+
+              # Validate version numbers are reasonable (prevent version bombing)
+              IFS='.' read -r major minor patch <<< "$NEW_VERSION"
+              if [ "$major" -gt 100 ] || [ "$minor" -gt 100 ] || [ "$patch" -gt 100 ]; then
+                echo "❌ Suspicious version numbers: $NEW_VERSION (components should be < 100)"
+                exit 1
+              fi
+
+              echo "Version validation passed: $NEW_VERSION"
               echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
               echo "has_changes=true" >> $GITHUB_OUTPUT
             fi
@@ -94,7 +103,6 @@ jobs:
           echo "Updating Chart.yaml to version $NEW_VERSION"
           yq -i ".version = \"$NEW_VERSION\"" ${CHART_PATH}/Chart.yaml
 
-          # Show the change
           git diff ${CHART_PATH}/Chart.yaml
 
       - name: Commit version bump
@@ -107,26 +115,20 @@ jobs:
 
       - name: Add helm repositories
         run: |
-          helm repo add newrelic-helm-charts https://newrelic.github.io/helm-charts
-          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
-          helm repo add newrelic-infrastructure https://newrelic.github.io/nri-kubernetes
-          helm repo add nri-prometheus https://newrelic.github.io/nri-prometheus
-          helm repo add newrelic-prometheus-configurator https://newrelic.github.io/newrelic-prometheus-configurator
-          helm repo add nri-metadata-injection https://newrelic.github.io/k8s-metadata-injection
-          helm repo add newrelic-k8s-metrics-adapter https://newrelic.github.io/newrelic-k8s-metrics-adapter
-          helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
-          helm repo add nri-kube-events https://newrelic.github.io/nri-kube-events
-          helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
-          helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add flux2 https://fluxcd-community.github.io/helm-charts
-          helm repo add k8s-agents-operator https://newrelic.github.io/k8s-agents-operator
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
+
+      - name: Prepare chart for release
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          mkdir -p .cr-release-packages
+          cp -r charts/nr-k8s-otel-collector .cr-release-packages/
 
       - name: Release nr-k8s-otel-collector chart
         if: steps.next_version.outputs.has_changes == 'true'
         uses: helm/chart-releaser-action@v1.7.0
         with:
-          charts_dir: charts
+          charts_dir: .cr-release-packages
         env:
           # Use bot token to allow triggering post-release workflow
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
@@ -135,11 +137,12 @@ jobs:
       - name: No changes to release
         if: steps.next_version.outputs.has_changes == 'false'
         run: |
-          echo "ℹ️ No relevant commits since last release. Skipping release."
+          echo "No relevant commits since last release. Skipping release."
           echo "To trigger a release, merge PRs with conventional commit messages:"
           echo "  - feat: for minor version bump"
           echo "  - fix: or chore: for patch version bump"
-          echo "  - BREAKING CHANGE: for major version bump"
+          echo "  - feat!: for major version bump"
+          echo "  - fix!: for major version bump"
 
   notify-failure:
     if: ${{ always() && failure() }}

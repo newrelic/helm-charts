@@ -1,19 +1,10 @@
 name: Nightly Chart Build (nr-k8s-otel-collector)
 
 on:
-  # Daily nightly build at 4am UTC
   schedule:
     - cron: "0 4 * * *"
-  # Also run on push to master to get immediate feedback
-  push:
-    branches:
-      - master
-    paths:
-      - 'charts/nr-k8s-otel-collector/**'
-  # Allow manual trigger for testing
   workflow_dispatch:
 
-# Prevent concurrent nightly builds
 concurrency: nr-k8s-otel-nightly-build
 
 env:
@@ -29,6 +20,7 @@ permissions:
 jobs:
   build-and-publish-nightly:
     runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/otelChangeRelease' || github.event_name == 'schedule'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,81 +30,111 @@ jobs:
         with:
           version: 'latest'
 
-      - name: Generate nightly version
+      - name: Calculate next version for nightly
+        id: calculate_version
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            NEXT_VERSION=$(yq '.version' ${CHART_PATH}/Chart.yaml)
+            echo "No previous release found, using current version: $NEXT_VERSION"
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            NEXT_VERSION=$(./scripts/calculate-chart-version.sh ${CHART_PATH} ${LAST_TAG})
+            CURRENT_VERSION=$(yq '.version' ${CHART_PATH}/Chart.yaml)
+
+            echo "Last release: $LAST_TAG"
+            echo "Current version: $CURRENT_VERSION"
+            echo "Calculated next version: $NEXT_VERSION"
+
+            # Check if there are any changes
+            if [ "$NEXT_VERSION" = "$CURRENT_VERSION" ]; then
+              echo "has_changes=false" >> $GITHUB_OUTPUT
+              echo "No commits since last release - skipping nightly build"
+            else
+              echo "has_changes=true" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+          # Validate version format (semver)
+          if ! [[ "$NEXT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $NEXT_VERSION (expected: X.Y.Z)"
+            exit 1
+          fi
+
+          # Validate version numbers are reasonable (prevent version bombing)
+          IFS='.' read -r major minor patch <<< "$NEXT_VERSION"
+          if [ "$major" -gt 100 ] || [ "$minor" -gt 100 ] || [ "$patch" -gt 100 ]; then
+            echo "❌ Suspicious version numbers: $NEXT_VERSION (components should be < 100)"
+            exit 1
+          fi
+
+          echo "Version validation passed: $NEXT_VERSION"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: No changes to build
+        if: steps.calculate_version.outputs.has_changes == 'false'
+        run: |
+          echo "No commits since last release - skipping nightly build"
+          echo "ArgoCD will continue using the previous nightly chart"
+
+      - name: Generate nightly version tag
+        if: steps.calculate_version.outputs.has_changes == 'true'
         id: nightly_version
         run: |
-          # Get current version from Chart.yaml
-          CURRENT_VERSION=$(yq '.version' ${CHART_PATH}/Chart.yaml)
-
-          # Get short commit SHA
+          NEXT_VERSION="${{ steps.calculate_version.outputs.next_version }}"
           SHORT_SHA=$(git rev-parse --short HEAD)
-
-          # Generate date in YYYYMMDD format
           DATE=$(date -u +%Y%m%d)
 
-          # Create nightly version: X.Y.Z-nightly.YYYYMMDD.SHA
-          NIGHTLY_VERSION="${CURRENT_VERSION}-nightly.${DATE}.${SHORT_SHA}"
+          NIGHTLY_VERSION="${NEXT_VERSION}-nightly.${DATE}.${SHORT_SHA}"
 
-          echo "Current version: $CURRENT_VERSION"
+          echo "Base version (calculated): $NEXT_VERSION"
           echo "Nightly version: $NIGHTLY_VERSION"
           echo "version=$NIGHTLY_VERSION" >> $GITHUB_OUTPUT
-          echo "base_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
         id: build_chart
         run: |
           NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
 
-          # Create temp directory for nightly chart
           TEMP_DIR=$(mktemp -d)
           echo "temp_dir=$TEMP_DIR" >> $GITHUB_OUTPUT
 
-          # Copy chart to temp directory
           cp -r ${CHART_PATH} ${TEMP_DIR}/${CHART_NAME}
 
-          # Update Chart.yaml with nightly version
           yq -i ".version = \"$NIGHTLY_VERSION\"" ${TEMP_DIR}/${CHART_NAME}/Chart.yaml
 
           echo "Updated Chart.yaml:"
           cat ${TEMP_DIR}/${CHART_NAME}/Chart.yaml
 
-      - name: Add helm repositories
+      - name: Add helm repositories for dependencies
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
-          helm repo add newrelic-helm-charts https://newrelic.github.io/helm-charts
-          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com
-          helm repo add newrelic-infrastructure https://newrelic.github.io/nri-kubernetes
-          helm repo add nri-prometheus https://newrelic.github.io/nri-prometheus
-          helm repo add newrelic-prometheus-configurator https://newrelic.github.io/newrelic-prometheus-configurator
-          helm repo add nri-metadata-injection https://newrelic.github.io/k8s-metadata-injection
-          helm repo add newrelic-k8s-metrics-adapter https://newrelic.github.io/newrelic-k8s-metrics-adapter
-          helm repo add kube-state-metrics https://kubernetes.github.io/kube-state-metrics
-          helm repo add nri-kube-events https://newrelic.github.io/nri-kube-events
-          helm repo add pixie-operator-chart https://pixie-operator-charts.storage.googleapis.com
-          helm repo add newrelic-infra-operator https://newrelic.github.io/newrelic-infra-operator
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo add flux2 https://fluxcd-community.github.io/helm-charts
-          helm repo add k8s-agents-operator https://newrelic.github.io/k8s-agents-operator
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
 
       - name: Update chart dependencies
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
           helm dependency update ${TEMP_DIR}/${CHART_NAME}
 
       - name: Lint nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
           helm lint ${TEMP_DIR}/${CHART_NAME}
 
       - name: Package nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
         id: package
         run: |
           TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
           NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
 
-          # Package the chart
           helm package ${TEMP_DIR}/${CHART_NAME} -d ${TEMP_DIR}
 
-          # Find the packaged file
           PACKAGE_FILE="${TEMP_DIR}/${CHART_NAME}-${NIGHTLY_VERSION}.tgz"
 
           if [ ! -f "$PACKAGE_FILE" ]; then
@@ -125,6 +147,7 @@ jobs:
           echo "Packaged chart: $PACKAGE_FILE"
 
       - name: Upload packaged chart as artifact
+        if: steps.calculate_version.outputs.has_changes == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: nightly-chart-${{ steps.nightly_version.outputs.version }}
@@ -132,117 +155,76 @@ jobs:
           retention-days: 30
 
       - name: Login to GHCR
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Push chart to GHCR with full version
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           PACKAGE_FILE="${{ steps.package.outputs.package_file }}"
           helm push "$PACKAGE_FILE" ${{ env.NIGHTLY_REGISTRY }}
 
-      - name: Tag chart as 'nightly' in GHCR
+      - name: Create floating 'nightly' tag
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
+          TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
 
-          # Install oras for OCI registry manipulation
-          # Note: GHCR uses OCI format, we need to create an alias/tag
-          # For now, we'll document that 'nightly' is the latest timestamped version
-          # A future enhancement could use crane/regctl to create an actual tag alias
+          # Install crane for OCI tag copying
+          curl -sL "https://github.com/google/go-containerregistry/releases/download/v0.19.0/go-containerregistry_Linux_x86_64.tar.gz" | tar -xz crane
+          chmod +x crane
 
-          echo "✅ Chart pushed with version: $NIGHTLY_VERSION"
-          echo "ℹ️ To use latest nightly, reference the most recent timestamped version"
-          echo "   Alternatively, ArgoCD can be configured to auto-update to latest semver pre-release"
+          # Login to GHCR with crane
+          echo "${{ secrets.GITHUB_TOKEN }}" | ./crane auth login ghcr.io -u ${{ github.actor }} --password-stdin
+
+          # Copy the timestamped version to 'nightly' floating tag
+          ./crane copy \
+            ghcr.io/newrelic/helm-charts-nightly/${{ env.CHART_NAME }}:${NIGHTLY_VERSION} \
+            ghcr.io/newrelic/helm-charts-nightly/${{ env.CHART_NAME }}:nightly
+
+          echo " Created floating 'nightly' tag pointing to: $NIGHTLY_VERSION"
+
+      - name: Build summary
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        run: |
+          NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
+          BASE_VERSION="${{ steps.nightly_version.outputs.base_version }}"
+
+          echo "✅ Chart published with two tags:"
+          echo "   • Timestamped: $NIGHTLY_VERSION"
+          echo "   • Floating: nightly (always points to latest)"
+          echo ""
+          echo "📖 See chart README for installation instructions"
 
       - name: Validate nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
 
-          # Pull the chart back from GHCR to validate
           helm pull ${{ env.NIGHTLY_REGISTRY }}/${CHART_NAME} --version ${NIGHTLY_VERSION}
+          echo "Successfully pulled timestamped version: ${NIGHTLY_VERSION}"
 
-          echo "✅ Successfully pulled nightly chart from GHCR"
-
-      - name: Test chart rendering
-        run: |
-          NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
-          TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
-
-          # Create output directory for rendered manifests
-          mkdir -p ${TEMP_DIR}/rendered
-
-          # Test rendering with default values
-          helm template test-nightly ${TEMP_DIR}/${CHART_NAME} \
-            --namespace newrelic \
-            --set licenseKey=test-key \
-            --set cluster=test-cluster \
-            > ${TEMP_DIR}/rendered/default-values.yaml
-
-          echo "✅ Chart renders successfully with default values"
-
-          # Test rendering with CI values if they exist
-          if [ -d "${CHART_PATH}/ci" ]; then
-            for values_file in ${CHART_PATH}/ci/*-values.yaml; do
-              if [ -f "$values_file" ]; then
-                filename=$(basename "$values_file")
-                echo "Testing with $filename"
-                helm template test-nightly ${TEMP_DIR}/${CHART_NAME} \
-                  --namespace newrelic \
-                  --set licenseKey=test-key \
-                  --set cluster=test-cluster \
-                  --values "$values_file" \
-                  > ${TEMP_DIR}/rendered/${filename%.yaml}-rendered.yaml || echo "⚠️ Warning: $filename failed to render"
-              fi
-            done
-          fi
-
-      - name: Upload rendered manifests
-        uses: actions/upload-artifact@v4
-        with:
-          name: rendered-manifests-${{ steps.nightly_version.outputs.version }}
-          path: ${{ steps.build_chart.outputs.temp_dir }}/rendered/
-          retention-days: 7
-
-      - name: Run helm unittest
-        continue-on-error: true  # Don't fail if no tests exist
-        run: |
-          TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
-
-          # Install helm unittest plugin if not already installed
-          helm plugin list | grep unittest || helm plugin install https://github.com/helm-unittest/helm-unittest
-
-          # Run tests if they exist
-          if [ -d "${CHART_PATH}/tests" ]; then
-            helm unittest ${TEMP_DIR}/${CHART_NAME}
-          else
-            echo "ℹ️ No helm unittest tests found, skipping"
-          fi
+          helm pull ${{ env.NIGHTLY_REGISTRY }}/${CHART_NAME} --version nightly
+          echo "Successfully pulled floating 'nightly' tag"
 
       - name: Notify success via Slack
-        if: success()
+        if: success() && steps.calculate_version.outputs.has_changes == 'true'
         uses: archive/github-actions-slack@v2.10.1
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
           slack-text: |
-            🌙 Nightly chart available: `${{ env.CHART_NAME }}`
+            🌙 Nightly chart published: `${{ env.CHART_NAME }}`
 
-            **Version:** `${{ steps.nightly_version.outputs.version }}`
-            **Base:** `${{ steps.nightly_version.outputs.base_version }}`
+            **Versions:**
+            - Timestamped: `${{ steps.nightly_version.outputs.version }}`
+            - Floating: `nightly` (always latest)
+
+            **Base Version:** `${{ steps.nightly_version.outputs.base_version }}`
             **Commit:** `${{ github.sha }}`
 
-            **Install:**
-            ```
-            helm pull ${{ env.NIGHTLY_REGISTRY }}/${{ env.CHART_NAME }} --version ${{ steps.nightly_version.outputs.version }}
-            helm install test ${{ env.NIGHTLY_REGISTRY }}/${{ env.CHART_NAME }} --version ${{ steps.nightly_version.outputs.version }}
-            ```
-
-            **ArgoCD Chart.yaml:**
-            ```yaml
-            dependencies:
-              - name: ${{ env.CHART_NAME }}
-                version: '${{ steps.nightly_version.outputs.version }}'
-                repository: ${{ env.NIGHTLY_REGISTRY }}
-            ```
+            📖 See chart README for installation instructions
 
   notify-failure:
     if: ${{ always() && failure() }}

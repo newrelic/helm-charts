@@ -21,6 +21,87 @@ helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
+## Release Schedule
+
+This chart follows a **weekly release cadence** with automatic version bumping based on conventional commits:
+
+- **Stable Releases**: Published every Monday at 12pm UTC (4am PT)
+- **Version Bumping**: Automatic based on commit types since last release
+  - `feat:` → Minor version bump (e.g., 0.10.13 → 0.11.0)
+  - `fix:` or `chore:` → Patch version bump (e.g., 0.10.13 → 0.10.14)
+  - `feat!:` or `fix!:` → Major version bump (e.g., 0.10.13 → 1.0.0)
+- **Nightly Builds**: Available daily for testing (see below)
+
+## Nightly Chart Builds
+
+For testing and early access to features, nightly chart builds are published daily at 4am UTC (8pm PT) to GitHub Container Registry.
+  **Note:** Nightly builds are experimental and intended for testing only. Use stable releases for production environments.
+
+### Nightly Version Format
+
+Nightly versions follow the pattern: `X.Y.Z-nightly.YYYYMMDD.SHA`
+
+Example: `0.10.14-nightly.20260317.a1b2c3d`
+
+- `X.Y.Z`: The calculated next version based on commits
+- `YYYYMMDD`: Build date
+- `SHA`: Short commit hash for traceability
+
+### Installing Nightly Charts
+
+**Option A: Always use latest nightly (floating tag)**
+```yaml
+dependencies:
+  - name: nr-k8s-otel-collector
+    version: 'nightly'
+    repository: oci://ghcr.io/newrelic/helm-charts-nightly
+```
+
+**Option B: Auto-update within base version**
+```yaml
+dependencies:
+  - name: nr-k8s-otel-collector
+    version: '0.10.*-nightly.*'
+    repository: oci://ghcr.io/newrelic/helm-charts-nightly
+```
+
+**Option C: Pin to specific nightly for reproducible testing**
+```yaml
+dependencies:
+  - name: nr-k8s-otel-collector
+    version: '0.10.14-nightly.20260317.a1b2c3d'
+    repository: oci://ghcr.io/newrelic/helm-charts-nightly
+```
+
+### Quick Install (Helm CLI)
+
+```shell
+# Pull chart for inspection
+helm pull oci://ghcr.io/newrelic/helm-charts-nightly/nr-k8s-otel-collector --version nightly
+
+# Install latest nightly (requires license key and cluster name)
+helm install test-nr-k8s-otel-collector \
+  oci://ghcr.io/newrelic/helm-charts-nightly/nr-k8s-otel-collector \
+  --version nightly \
+  --set licenseKey='<YOUR_LICENSE_KEY>' \
+  --set cluster='<YOUR_CLUSTER_NAME>' \
+  -n newrelic --create-namespace
+
+# Install specific nightly version
+helm install test-nr-k8s-otel-collector \
+  oci://ghcr.io/newrelic/helm-charts-nightly/nr-k8s-otel-collector \
+  --version 0.10.14-nightly.20260317.a1b2c3d \
+  --set licenseKey='<YOUR_LICENSE_KEY>' \
+  --set cluster='<YOUR_CLUSTER_NAME>' \
+  -n newrelic --create-namespace
+```
+
+### Nightly Build Behavior
+
+- **No Changes = No Build**: If there are no commits since the last release, the nightly build is skipped
+- **ArgoCD Compatible**: Nightly charts work seamlessly with ArgoCD for automated testing in staging/canary environments
+- **Retention**: Nightly builds are stored as GitHub Actions artifacts for 30 days
+
 ## Confirm installation
 ### Watch pods spin up:
 
