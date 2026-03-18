@@ -143,6 +143,8 @@ spec:
             value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
           - name: LOG_REPORTING
             value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
+          - name: AI_MONITORING
+            value: "{{ if hasKey .Values "aiMonitoring" }}{{ .Values.aiMonitoring }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
