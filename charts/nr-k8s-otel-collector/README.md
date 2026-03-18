@@ -35,7 +35,8 @@ This chart follows a **weekly release cadence** with automatic version bumping b
 ## Nightly Chart Builds
 
 For testing and early access to features, nightly chart builds are published daily at 4am UTC (8pm PT) to GitHub Container Registry.
-  **Note:** Nightly builds are experimental and intended for testing only. Use stable releases for production environments.
+
+**Note:** Nightly builds are experimental and intended for testing only. Use stable releases for production environments.
 
 ### Nightly Version Format
 
