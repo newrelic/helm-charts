@@ -23,7 +23,7 @@ helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom
 
 ## Release Schedule
 
-This chart follows a **weekly release cadence** with automatic version bumping based on conventional commits:
+This chart follows a **weekly release cadence** with automatic version bumping based on conventional commits
 
 - **Stable Releases**: Published every Monday at 12pm UTC (4am PT)
 - **Version Bumping**: Automatic based on commit types since last release
