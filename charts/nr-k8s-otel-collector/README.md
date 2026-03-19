@@ -34,9 +34,11 @@ This chart follows a **weekly release cadence** with automatic version bumping b
 
 ## Nightly Chart Builds
 
-For testing and early access to features, nightly chart builds are published daily at 4am UTC (8pm PT) to GitHub Container Registry.
+For testing and early access to features, nightly chart builds are published daily at 4am UTC (8pm PT).
 
 **Note:** Nightly builds are experimental and intended for testing only. Use stable releases for production environments.
+
+**Nightly Repository:** `https://newrelic.github.io/helm-charts/nightly/`
 
 ### Nightly Version Format
 
@@ -51,7 +53,6 @@ Example: `0.10.14-nightly.20260317.a1b2c3d`
 ### Nightly Build Behavior
 
 - **No Changes = No Build**: If there are no commits since the last release, the nightly build is skipped
-- **ArgoCD Compatible**: Nightly charts work seamlessly with ArgoCD for automated testing in staging/canary environments
 - **Retention**: Nightly builds are stored as GitHub Actions artifacts for 30 days
 
 ## Confirm installation

@@ -18,11 +18,10 @@ env:
   ORIGINAL_REPO_NAME: ${{ github.event.repository.full_name }}
   CHART_PATH: charts/nr-k8s-otel-collector
   CHART_NAME: nr-k8s-otel-collector
-  NIGHTLY_REGISTRY: oci://ghcr.io/newrelic/helm-charts-nightly
+  NIGHTLY_REPO_URL: https://newrelic.github.io/helm-charts/nightly/
 
 permissions:
-  contents: read
-  packages: write  # Required for pushing to GHCR
+  contents: write  # Required for pushing to gh-pages branch
 
 jobs:
   build-and-publish-nightly:
@@ -154,46 +153,55 @@ jobs:
           echo "package_file=$PACKAGE_FILE" >> $GITHUB_OUTPUT
           echo "Packaged chart: $PACKAGE_FILE"
 
-      - name: Upload packaged chart as artifact
+      - name: Checkout gh-pages branch
         if: steps.calculate_version.outputs.has_changes == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/checkout@v4
         with:
-          name: nightly-chart-${{ steps.nightly_version.outputs.version }}
-          path: ${{ steps.package.outputs.package_file }}
-          retention-days: 30
+          ref: gh-pages
+          path: gh-pages-repo
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
 
-      - name: Login to GHCR
-        if: steps.calculate_version.outputs.has_changes == 'true'
-        run: |
-          echo "${{ secrets.GITHUB_TOKEN }}" | helm registry login ghcr.io -u ${{ github.actor }} --password-stdin
-
-      - name: Push chart to GHCR
+      - name: Publish to GitHub Pages
         if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           PACKAGE_FILE="${{ steps.package.outputs.package_file }}"
-          helm push "$PACKAGE_FILE" ${{ env.NIGHTLY_REGISTRY }}
-          echo "Published nightly chart to GHCR"
-
-      - name: Build summary
-        if: steps.calculate_version.outputs.has_changes == 'true'
-        run: |
           NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
-          BASE_VERSION="${{ steps.nightly_version.outputs.base_version }}"
 
-          echo "Nightly chart published"
-          echo " Version: $NIGHTLY_VERSION"
-          echo " Base: $BASE_VERSION"
-          echo " Registry: ${{ env.NIGHTLY_REGISTRY }}"
-          echo ""
-          echo "See chart README for ArgoCD integration"
+          cd gh-pages-repo
+          mkdir -p nightly
+
+          cp "$PACKAGE_FILE" nightly/
+          echo "Copied chart to nightly directory"
+
+          helm repo index nightly/ --url https://newrelic.github.io/helm-charts/nightly/
+          echo "Generated nightly index.yaml"
+
+          # Cleanup old nightlies (keep last 30 days)
+          find nightly/ -name "*-nightly.*.tgz" -mtime +30 -delete 2>/dev/null || true
+
+          if [ -n "$(git status --porcelain nightly/)" ]; then
+            helm repo index nightly/ --url https://newrelic.github.io/helm-charts/nightly/
+            echo "Cleaned up old nightlies and regenerated index"
+          fi
+
+          git config user.name "k8s-agents-bot"
+          git config user.email "k8s-agents-bot@users.noreply.github.com"
+
+          git add nightly/
+          git commit -m "chore: publish nightly chart ${NIGHTLY_VERSION}" || echo "No changes to commit"
+          git push origin gh-pages
+
+          echo "Published nightly chart to GitHub Pages"
 
       - name: Validate nightly chart
         if: steps.calculate_version.outputs.has_changes == 'true'
         run: |
           NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
-
-          helm pull ${{ env.NIGHTLY_REGISTRY }}/${CHART_NAME} --version ${NIGHTLY_VERSION}
-          echo "Successfully validated nightly chart: ${NIGHTLY_VERSION}"
+          sleep 10
+          helm repo add newrelic-nightly https://newrelic.github.io/helm-charts/nightly/ --force-update
+          helm repo update
+          helm search repo newrelic-nightly/nr-k8s-otel-collector --version ${NIGHTLY_VERSION}
+          echo "Successfully validated nightly chart on GitHub Pages"
 
       - name: Notify success via Slack
         if: success() && steps.calculate_version.outputs.has_changes == 'true'
@@ -207,6 +215,7 @@ jobs:
             **Version:** `${{ steps.nightly_version.outputs.version }}`
             **Base Version:** `${{ steps.nightly_version.outputs.base_version }}`
             **Commit:** `${{ github.sha }}`
+            **Repo:** `${{ env.NIGHTLY_REPO_URL }}`
 
 
   notify-failure:
