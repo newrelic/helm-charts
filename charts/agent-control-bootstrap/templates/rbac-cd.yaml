@@ -16,28 +16,25 @@ rules:
     verbs: [ get, list, create, patch, update ]
 
   # CRDs - Required to install Flux CRDs
+  # Note: 'delete' removed as installation job only creates/updates CRDs, never deletes them.
+  # Uninstall job has separate permissions for deletion.
   - apiGroups: [ apiextensions.k8s.io ]
     resources: [ customresourcedefinitions ]
-    verbs: [ get, list, create, update, patch, delete ]
+    verbs: [ get, list, create, update, patch ]
 
-  # Flux Resources - Required for Flux to manage Helm releases
+  # Flux Resources - Required for Agent Control to create HelmRepository and HelmRelease
+  # Note: Only helmrepositories and helmreleases are needed. The installation job creates these
+  # resources via newrelic-agent-control-cli (create-cd-resources and install-agent-control commands).
+  # Other Flux resources (helmcharts, gitrepositories, kustomizations, etc.) are not used by Agent Control.
+  # 'delete' removed as installation job only creates/updates these resources, never deletes them.
+  # Uninstall job has separate permissions for deletion.
   - apiGroups:
       - source.toolkit.fluxcd.io
       - helm.toolkit.fluxcd.io
-      - kustomize.toolkit.fluxcd.io
-      - notification.toolkit.fluxcd.io
     resources:
       - helmrepositories
       - helmreleases
-      - helmcharts
-      - gitrepositories
-      - buckets
-      - ocirepositories
-      - kustomizations
-      - alerts
-      - providers
-      - receivers
-    verbs: [ get, list, watch, create, update, patch, delete ]
+    verbs: [ get, list, watch, create, update, patch ]
 
   # RBAC - Required to create ClusterRoles for Flux controllers
   # Security Note: The 'bind' and 'escalate' verbs are required for bootstrapping Flux.
@@ -47,18 +44,13 @@ rules:
   # Mitigation: This job is temporary (deleted after success via hook-delete-policy: hook-succeeded)
   # and only runs during post-install/post-upgrade hooks, minimizing the attack surface.
   # Reference: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
+  # Note: 'delete' removed as installation job only creates/updates RBAC, never deletes.
+  # Uninstall job has separate permissions for deletion.
   - apiGroups: [ rbac.authorization.k8s.io ]
     resources:
       - clusterroles
       - clusterrolebindings
-    verbs: [ get, list, create, update, patch, delete, bind, escalate ]
-
-  # New Relic Custom Resources - Required for Agent Control
-  - apiGroups: [ newrelic.com ]
-    resources:
-      - instrumentations
-      - instrumentations/status
-    verbs: [ get, list, watch, create, update, patch, delete ]
+    verbs: [ get, list, create, update, patch, bind, escalate ]
 
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -227,7 +219,6 @@ rules:
     resources:
       - instrumentations
     verbs: [ get, list, delete, deletecollection ]
-
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
