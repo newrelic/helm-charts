@@ -17,6 +17,8 @@ permissions:
 jobs:
   validate-gh-pages-index:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # Only needs to read gh-pages branch
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -151,6 +153,8 @@ jobs:
     if: ${{ always() && failure() }}
     needs: [validate-gh-pages-index, calculate-and-release]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read  # No write permissions needed for notifications
     steps:
       - name: Notify failure via Slack
         uses: archive/github-actions-slack@v2.10.1
