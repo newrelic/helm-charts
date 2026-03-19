@@ -30,7 +30,7 @@ This chart follows a **weekly release cadence** with automatic version bumping b
 - **Version Bumping**: Automatic based on commit types since last release
   - `feat:` → Minor version bump (e.g., 0.10.13 → 0.11.0)
   - `fix:` or `chore:` → Patch version bump (e.g., 0.10.13 → 0.10.14)
-  - `feat!:` or `fix!:` → Major version bump (e.g., 0.10.13 → 1.0.0)
+  - `feat!:`, `fix!:`, or `BREAKING CHANGE:` → Major version bump (e.g., 0.10.13 → 1.0.0)
 - **Nightly Builds**: Available daily for testing (see below)
 
 ## Nightly Chart Builds
@@ -55,7 +55,7 @@ Example: `0.10.14-nightly.20260317.a1b2c3d`
 ### Nightly Build Behavior
 
 - **No Changes = No Build**: If there are no commits since the last release, the nightly build is skipped
-- **Retention**: Nightly builds are stored as GitHub Actions artifacts for 30 days
+- **Retention**: Nightly builds are kept for 14 days
 
 {{ template "chart.sourcesSection" . }}
 

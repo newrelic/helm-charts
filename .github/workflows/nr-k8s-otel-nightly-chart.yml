@@ -156,16 +156,13 @@ jobs:
           cp "$PACKAGE_FILE" nightly/
           echo "Copied chart to nightly directory"
 
+          # Cleanup old nightlies (keep last 14 days)
+          find nightly/ -name "*-nightly.*.tgz" -mtime +14 -delete 2>/dev/null || true
+          echo "Cleaned up old nightly charts (14+ days)"
+
+          # Generate index from remaining charts only (no merge)
           helm repo index nightly/ --url https://newrelic.github.io/helm-charts/nightly/
           echo "Generated nightly index.yaml"
-
-          # Cleanup old nightlies (keep last 30 days)
-          find nightly/ -name "*-nightly.*.tgz" -mtime +30 -delete 2>/dev/null || true
-
-          if [ -n "$(git status --porcelain nightly/)" ]; then
-            helm repo index nightly/ --url https://newrelic.github.io/helm-charts/nightly/
-            echo "Cleaned up old nightlies and regenerated index"
-          fi
 
           git config user.name "k8s-agents-bot"
           git config user.email "k8s-agents-bot@users.noreply.github.com"
