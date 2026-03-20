@@ -786,7 +786,16 @@ data:
             condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
+    {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.extensions" . }}
+    extensions:
+      {{- . | nindent 6 }}
+    {{- end }}
+
     service:
+      {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.service.extensions" . }}
+      extensions:
+        {{- . | nindent 8 }}
+      {{- end }}
       telemetry:
         {{- if include "newrelic.common.verboseLog" . }}
         logs:

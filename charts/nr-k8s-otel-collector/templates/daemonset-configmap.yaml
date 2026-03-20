@@ -14,7 +14,7 @@ data:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
         root_path: /hostfs
         {{- end }}
         collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -834,7 +834,16 @@ data:
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
 
+    {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.extensions" . }}
+    extensions:
+      {{- . | nindent 6 }}
+    {{- end }}
+
     service:
+      {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.service.extensions" . }}
+      extensions:
+        {{- . | nindent 8 }}
+      {{- end }}
       telemetry:
         {{- if include "newrelic.common.verboseLog" . }}
         logs:
