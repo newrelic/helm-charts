@@ -10,8 +10,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install Renovate config validator
-        run: npm install --global renovate
-
       - name: Test that the config is valid
-        run: renovate-config-validator
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/.github/renovate.json5:/usr/src/app/renovate.json5" \
+            ghcr.io/renovatebot/renovate:latest \
+            renovate-config-validator renovate.json5
