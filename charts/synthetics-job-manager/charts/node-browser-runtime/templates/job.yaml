@@ -9,7 +9,7 @@ metadata:
       {{ toYaml . | nindent 4 }}
       {{- end }}
 spec:
-  schedule: "* * * * *"
+  schedule: {{ .Values.schedule | quote }}
   concurrencyPolicy: Forbid
   jobTemplate:
     spec:
