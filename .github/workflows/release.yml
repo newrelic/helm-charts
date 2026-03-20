@@ -92,6 +92,10 @@ jobs:
         run: |
           rm ./library/CHART-TEMPLATE/Chart.yaml
 
+      - name: Remove nr-k8s-otel-collector from automatic release
+        run: |
+          rm ./charts/nr-k8s-otel-collector/Chart.yaml
+
       - name: Release library charts
         uses: helm/chart-releaser-action@v1.7.0
         with:
