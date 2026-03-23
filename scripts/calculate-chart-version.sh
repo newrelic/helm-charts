@@ -16,10 +16,15 @@
 set -e
 
 CHART_PATH="${1:?Chart path is required}"
-LAST_TAG="${2:?Last tag is required}"
+LAST_TAG="${2:-}"  # Allow empty tag (means no previous release)
 
 # Get commits since last release for the specific chart
-commits=$(git log ${LAST_TAG}..HEAD --format=%s -- ${CHART_PATH})
+# If no last tag, get all commits for the chart
+if [ -z "$LAST_TAG" ]; then
+  commits=$(git log --format=%s -- ${CHART_PATH})
+else
+  commits=$(git log ${LAST_TAG}..HEAD --format=%s -- ${CHART_PATH})
+fi
 
 # If no commits, keep current version
 if [ -z "$commits" ]; then
