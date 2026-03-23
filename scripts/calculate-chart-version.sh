@@ -1,0 +1,70 @@
+#!/bin/bash
+#
+# Calculate next chart version based on conventional commits since last release
+#
+# Usage: ./calculate-chart-version.sh <CHART_PATH> <LAST_TAG>
+#
+# Example: ./calculate-chart-version.sh charts/nr-k8s-otel-collector nr-k8s-otel-collector-0.10.13
+#
+# This script analyzes conventional commit messages and determines the appropriate
+# semantic version bump:
+#   - BREAKING CHANGE: or feat!: -> MAJOR bump (1.0.0 -> 2.0.0)
+#   - feat: -> MINOR bump (1.0.0 -> 1.1.0)
+#   - fix: or chore: -> PATCH bump (1.0.0 -> 1.0.1)
+#
+
+set -e
+
+CHART_PATH="${1:?Chart path is required}"
+LAST_TAG="${2:?Last tag is required}"
+
+# Get commits since last release for the specific chart
+commits=$(git log ${LAST_TAG}..HEAD --format=%s -- ${CHART_PATH})
+
+# If no commits, keep current version
+if [ -z "$commits" ]; then
+  current_version=$(yq '.version' ${CHART_PATH}/Chart.yaml)
+  echo "$current_version"
+  exit 0
+fi
+
+# Analyze commit types
+has_breaking=false
+has_feat=false
+has_fix=false
+
+while IFS= read -r commit; do
+  # Check for BREAKING CHANGE in commit message or ! in type
+  if [[ "$commit" =~ "BREAKING CHANGE:" ]] || [[ "$commit" =~ ^[a-z]+\!: ]]; then
+    has_breaking=true
+  # Check for feat: prefix (with or without [chart-name] prefix)
+  elif [[ "$commit" =~ ^feat: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]feat: ]] || [[ "$commit" =~ ^feat\( ]]; then
+    has_feat=true
+  # Check for fix: or chore: prefix (with or without [chart-name] prefix)
+  elif [[ "$commit" =~ ^fix: ]] || [[ "$commit" =~ ^chore: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]fix: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]chore: ]]; then
+    has_fix=true
+  fi
+done <<< "$commits"
+
+# Get current version from Chart.yaml
+current_version=$(yq '.version' ${CHART_PATH}/Chart.yaml)
+IFS='.' read -r major minor patch <<< "$current_version"
+
+# Calculate version bump based on commit types
+if [[ "$has_breaking" == true ]]; then
+  major=$((major + 1))
+  minor=0
+  patch=0
+elif [[ "$has_feat" == true ]]; then
+  minor=$((minor + 1))
+  patch=0
+elif [[ "$has_fix" == true ]]; then
+  patch=$((patch + 1))
+else
+  # No relevant commits, keep current version
+  echo "$current_version"
+  exit 0
+fi
+
+NEW_VERSION="${major}.${minor}.${patch}"
+echo "$NEW_VERSION"

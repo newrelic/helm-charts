@@ -1,0 +1,213 @@
+name: Nightly Chart Build (nr-k8s-otel-collector)
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+
+concurrency: nr-k8s-otel-nightly-build
+
+env:
+  ORIGINAL_REPO_NAME: ${{ github.event.repository.full_name }}
+  CHART_PATH: charts/nr-k8s-otel-collector
+  CHART_NAME: nr-k8s-otel-collector
+  NIGHTLY_REPO_URL: https://newrelic.github.io/helm-charts/nightly/
+
+permissions:
+  contents: write  # Required for pushing nightlies to gh-pages branch 
+
+jobs:
+  build-and-publish-nightly:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master' || github.event_name == 'schedule'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'latest'
+      - name: Calculate next version for nightly
+        id: calculate_version
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' 2>/dev/null || echo "")
+          NEXT_VERSION=$(./scripts/calculate-chart-version.sh ${CHART_PATH} ${LAST_TAG})
+          CURRENT_VERSION=$(yq '.version' ${CHART_PATH}/Chart.yaml)
+
+          echo "Last release: $LAST_TAG"
+          echo "Current version: $CURRENT_VERSION"
+          echo "Calculated next version: $NEXT_VERSION"
+
+          # Check if there are any changes
+          if [ "$NEXT_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No commits since last release - skipping nightly build"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
+
+          # Validate version format (semver)
+          if ! [[ "$NEXT_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Invalid version format: $NEXT_VERSION (expected: X.Y.Z)"
+            exit 1
+          fi
+
+          # Validate version numbers are reasonable (prevent version bombing)
+          IFS='.' read -r major minor patch <<< "$NEXT_VERSION"
+          if [ "$major" -gt 100 ] || [ "$minor" -gt 100 ] || [ "$patch" -gt 100 ]; then
+            echo "❌ Suspicious version numbers: $NEXT_VERSION (components should be < 100)"
+            exit 1
+          fi
+
+          echo "Version validation passed: $NEXT_VERSION"
+          echo "next_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: No changes to build
+        if: steps.calculate_version.outputs.has_changes == 'false'
+        run: |
+          echo "No commits since last release - skipping nightly build"
+          echo "ArgoCD will continue using the previous nightly chart"
+
+      - name: Generate nightly version tag
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        id: nightly_version
+        run: |
+          NEXT_VERSION="${{ steps.calculate_version.outputs.next_version }}"
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          DATE=$(date -u +%Y%m%d)
+          NIGHTLY_VERSION="${NEXT_VERSION}-nightly.${DATE}.${SHORT_SHA}"
+
+          echo "Base version (calculated): $NEXT_VERSION"
+          echo "Nightly version: $NIGHTLY_VERSION"
+          echo "version=$NIGHTLY_VERSION" >> $GITHUB_OUTPUT
+          echo "base_version=$NEXT_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Copy chart and update version to nightly
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        id: build_chart
+        run: |
+          NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
+
+          TEMP_DIR=$(mktemp -d)
+          echo "temp_dir=$TEMP_DIR" >> $GITHUB_OUTPUT
+
+          cp -r ${CHART_PATH} ${TEMP_DIR}/${CHART_NAME}
+
+          yq -i ".version = \"$NIGHTLY_VERSION\"" ${TEMP_DIR}/${CHART_NAME}/Chart.yaml
+
+          echo "Updated Chart.yaml:"
+          cat ${TEMP_DIR}/${CHART_NAME}/Chart.yaml
+
+      - name: Add helm repositories for dependencies
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        run: |
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
+
+      - name: Update chart dependencies
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        run: |
+          TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
+          helm dependency update ${TEMP_DIR}/${CHART_NAME}
+
+      - name: Lint nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        run: |
+          TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
+          helm lint ${TEMP_DIR}/${CHART_NAME}
+
+      - name: Package nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        id: package
+        run: |
+          TEMP_DIR="${{ steps.build_chart.outputs.temp_dir }}"
+          NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
+
+          helm package ${TEMP_DIR}/${CHART_NAME} -d ${TEMP_DIR}
+
+          PACKAGE_FILE="${TEMP_DIR}/${CHART_NAME}-${NIGHTLY_VERSION}.tgz"
+
+          if [ ! -f "$PACKAGE_FILE" ]; then
+            echo "Error: Package file not found at $PACKAGE_FILE"
+            ls -la ${TEMP_DIR}/
+            exit 1
+          fi
+
+          echo "package_file=$PACKAGE_FILE" >> $GITHUB_OUTPUT
+          echo "Packaged chart: $PACKAGE_FILE"
+
+      - name: Checkout gh-pages branch
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages-repo
+          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}
+
+      - name: Publish to GitHub Pages in Nightly Directory
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        run: |
+          PACKAGE_FILE="${{ steps.package.outputs.package_file }}"
+          NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
+
+          cd gh-pages-repo
+          mkdir -p nightly
+
+          cp "$PACKAGE_FILE" nightly/
+          echo "Copied chart to nightly directory"
+
+          # Cleanup old nightlies (keep last 14 days)
+          find nightly/ -name "*-nightly.*.tgz" -mtime +14 -delete 2>/dev/null || true
+          echo "Cleaned up old nightly charts (14+ days)"
+
+          # Generate index from remaining charts only (no merge)
+          helm repo index nightly/ --url https://newrelic.github.io/helm-charts/nightly/
+          echo "Generated nightly index.yaml"
+
+          git config user.name "k8s-agents-bot"
+          git config user.email "k8s-agents-bot@users.noreply.github.com"
+
+          git add nightly/
+          git commit -m "chore: publish nightly chart ${NIGHTLY_VERSION}" || echo "No changes to commit"
+          git push origin gh-pages
+
+          echo "Published nightly chart to GitHub Pages"
+
+      - name: Validate nightly chart
+        if: steps.calculate_version.outputs.has_changes == 'true'
+        run: |
+          NIGHTLY_VERSION="${{ steps.nightly_version.outputs.version }}"
+          sleep 10
+          helm repo add newrelic-nightly https://newrelic.github.io/helm-charts/nightly/ --force-update
+          helm repo update
+          helm search repo newrelic-nightly/nr-k8s-otel-collector --version ${NIGHTLY_VERSION}
+          echo "Successfully validated nightly chart on GitHub Pages"
+
+      - name: Notify success via Slack
+        if: success() && steps.calculate_version.outputs.has_changes == 'true'
+        uses: archive/github-actions-slack@v2.10.1
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
+          slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
+          slack-text: |
+            Nightly chart published: `${{ env.CHART_NAME }}`
+
+            **Version:** `${{ steps.nightly_version.outputs.version }}`
+            **Base Version:** `${{ steps.nightly_version.outputs.base_version }}`
+            **Commit:** `${{ github.sha }}`
+            **Repo:** `${{ env.NIGHTLY_REPO_URL }}`
+
+
+  notify-failure:
+    if: ${{ always() && failure() }}
+    needs: [build-and-publish-nightly]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read  # No write permissions needed for notifications
+    steps:
+      - name: Notify failure via Slack
+        uses: archive/github-actions-slack@v2.10.1
+        with:
+          slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
+          slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}
+          slack-text: "❌ `${{ env.ORIGINAL_REPO_NAME }}`: <${{ github.server_url }}/${{ env.ORIGINAL_REPO_NAME }}/actions/runs/${{ github.run_id }}|'Nightly Chart Build (nr-k8s-otel-collector)' failed>."
