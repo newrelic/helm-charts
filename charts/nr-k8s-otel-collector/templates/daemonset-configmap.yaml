@@ -570,7 +570,7 @@ data:
                 aggregation_type: sum
 
       # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
-      metricsgeneration/calculate_percentage:
+      metricsgeneration/calculate_percentage_for_pods:
         rules:
             # Ratio of Requested Resources to Limits
             # request_limit_ratio = Limit_Utilization / Request_Utilization
@@ -586,7 +586,7 @@ data:
             metric2: k8s.pod.cpu_request_utilization
             operation: divide
 
-      metricsgeneration/calculate_percentage_aggregation:
+      metricsgeneration/calculate_percentage:
         rules:
           - name: node.cpu.usage.percentage
             type: scale
@@ -918,7 +918,7 @@ data:
             - prometheus
             {{- end }}
           processors:
-            - metricsgeneration/calculate_percentage
+            - metricsgeneration/calculate_percentage_for_pods
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
@@ -931,7 +931,7 @@ data:
             - transform/strip_labels_for_per_node_aggregation
             - groupbyattrs/node
             - metricstransform/sum_container_metrics_per_node
-            - metricsgeneration/calculate_percentage_aggregation
+            - metricsgeneration/calculate_percentage
             - filter/keep_only_generated_metrics
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
