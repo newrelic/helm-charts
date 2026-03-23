@@ -186,39 +186,97 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
 rules:
-  # Permissions for cleanup during uninstall
-  - apiGroups:
-      - source.toolkit.fluxcd.io
-      - helm.toolkit.fluxcd.io
-      - kustomize.toolkit.fluxcd.io
-      - notification.toolkit.fluxcd.io
-    resources: [ "*" ]
-    verbs: [ get, list, delete, deletecollection ]
-
+  # Namespaces - Required to delete agent-control namespace
   - apiGroups: [ "" ]
-    resources: [ namespaces, secrets, configmaps, serviceaccounts, services, endpoints ]
-    verbs: [ get, list, delete, deletecollection ]
-
-  - apiGroups: [ apps ]
-    resources: [ deployments, daemonsets, statefulsets, replicasets ]
-    verbs: [ get, list, delete, deletecollection ]
-
-  - apiGroups: [ batch ]
-    resources: [ jobs ]
-    verbs: [ get, list, delete, deletecollection ]
-
-  - apiGroups: [ rbac.authorization.k8s.io ]
-    resources: [ clusterroles, clusterrolebindings, roles, rolebindings ]
+    resources: [ namespaces ]
     verbs: [ get, list, delete ]
 
+  # CRDs - Required to clean up Flux CRDs created during installation
   - apiGroups: [ apiextensions.k8s.io ]
     resources: [ customresourcedefinitions ]
     verbs: [ get, list, delete ]
 
-  - apiGroups: [ newrelic.com ]
+  # Flux Resources - Required to clean up HelmRepository and HelmRelease
+  # Note: Limited to only the resource types that the installation job creates
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
     resources:
-      - instrumentations
-    verbs: [ get, list, delete, deletecollection ]
+      - helmrepositories
+      - helmreleases
+    verbs: [ get, list, delete ]
+
+  # RBAC - Required to clean up ClusterRoles and ClusterRoleBindings for Flux controllers
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources:
+      - clusterroles
+      - clusterrolebindings
+    verbs: [ get, list, delete ]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-20"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  # Secrets - Required to clean up Flux and Agent Control credentials
+  - apiGroups: [ "" ]
+    resources: [ secrets ]
+    verbs: [ get, list, delete ]
+
+  # ConfigMaps - Required to clean up Flux and Agent Control configuration
+  - apiGroups: [ "" ]
+    resources: [ configmaps ]
+    verbs: [ get, list, delete ]
+
+  # ServiceAccounts - Required to clean up Flux controller service accounts
+  - apiGroups: [ "" ]
+    resources: [ serviceaccounts ]
+    verbs: [ get, list, delete ]
+
+  # RBAC - Required to clean up Roles and RoleBindings for Flux controllers (namespace-scoped)
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources:
+      - roles
+      - rolebindings
+    verbs: [ get, list, delete ]
+
+  # Deployments - Required to clean up Flux controllers and agent workloads
+  - apiGroups: [ apps ]
+    resources: [ deployments, daemonsets, statefulsets ]
+    verbs: [ get, list, delete ]
+
+  # ReplicaSets - Required to clean up Flux controllers
+  - apiGroups: [ apps ]
+    resources: [ replicasets ]
+    verbs: [ get, list ]
+
+  # Jobs - Required to clean up Bootstrap installation jobs
+  - apiGroups: [ batch ]
+    resources: [ jobs ]
+    verbs: [ get, list, delete ]
+
+  # Services - Required to clean up Flux notification webhook
+  - apiGroups: [ "" ]
+    resources: [ services ]
+    verbs: [ get, list, delete ]
+
+  # Endpoints - Required for cleanup
+  - apiGroups: [ "" ]
+    resources: [ endpoints ]
+    verbs: [ get, list ]
+
+  # Leases - Required to clean up Flux leader election leases
+  - apiGroups: [ coordination.k8s.io ]
+    resources: [ leases ]
+    verbs: [ get, list, delete ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -237,6 +295,26 @@ subjects:
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-19"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
   apiGroup: rbac.authorization.k8s.io
 {{- end -}}
