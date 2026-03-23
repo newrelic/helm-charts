@@ -585,6 +585,9 @@ data:
             metric1: k8s.pod.cpu_limit_utilization
             metric2: k8s.pod.cpu_request_utilization
             operation: divide
+
+      metricsgeneration/calculate_percentage_aggregation:
+        rules:
           - name: node.cpu.usage.percentage
             type: scale
             metric1: node.container.cpu.usage.sum
@@ -915,6 +918,7 @@ data:
             - prometheus
             {{- end }}
           processors:
+            - metricsgeneration/calculate_percentage
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
@@ -927,7 +931,7 @@ data:
             - transform/strip_labels_for_per_node_aggregation
             - groupbyattrs/node
             - metricstransform/sum_container_metrics_per_node
-            - metricsgeneration/calculate_percentage
+            - metricsgeneration/calculate_percentage_aggregation
             - filter/keep_only_generated_metrics
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
