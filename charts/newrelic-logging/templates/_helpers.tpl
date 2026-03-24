@@ -48,14 +48,12 @@ Create the name of the fluent bit config
 Return the licenseKey
 */}}
 {{- define "newrelic-logging.licenseKey" -}}
-{{- if .Values.global}}
+{{- if .Values.licenseKey }}
+  {{- .Values.licenseKey -}}
+{{- else if .Values.global }}
   {{- if .Values.global.licenseKey }}
-      {{- .Values.global.licenseKey -}}
-  {{- else -}}
-      {{- .Values.licenseKey | default "" -}}
+    {{- .Values.global.licenseKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.licenseKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -106,12 +104,12 @@ Return the customSecretLicenseKey
 Returns nrStaging
 */}}
 {{- define "newrelic.nrStaging" -}}
-{{- if .Values.global }}
+{{- if .Values.nrStaging }}
+  {{- .Values.nrStaging -}}
+{{- else if .Values.global }}
   {{- if .Values.global.nrStaging }}
     {{- .Values.global.nrStaging -}}
   {{- end -}}
-{{- else if .Values.nrStaging }}
-  {{- .Values.nrStaging -}}
 {{- end -}}
 {{- end -}}
 
@@ -119,12 +117,12 @@ Returns nrStaging
 Returns fargate
 */}}
 {{- define "newrelic.fargate" -}}
-{{- if .Values.global }}
+{{- if .Values.fargate }}
+  {{- .Values.fargate -}}
+{{- else if .Values.global }}
   {{- if .Values.global.fargate }}
     {{- .Values.global.fargate -}}
   {{- end -}}
-{{- else if .Values.fargate }}
-  {{- .Values.fargate -}}
 {{- end -}}
 {{- end -}}
 

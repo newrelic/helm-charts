@@ -989,3 +989,88 @@ tests:
           path: spec.template.spec.dnsConfig.options[0].value
           value: "2"
         template: templates/daemonset.yaml
+
+  # ====================
+  # nrStaging Tests (2)
+  # ====================
+  - it: local nrStaging uses staging endpoint
+    set:
+      licenseKey: nr_license_key
+      nrStaging: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: https://staging-log-api.newrelic.com/log/v1
+        template: templates/daemonset.yaml
+
+  - it: local nrStaging works alongside global values
+    set:
+      global:
+        licenseKey: eu_global_license_key
+      nrStaging: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: https://staging-log-api.newrelic.com/log/v1
+        template: templates/daemonset.yaml
+
+  # ====================
+  # fargate Tests (2)
+  # ====================
+  - it: local fargate applies fargate exclusion affinity
+    set:
+      <<: *base
+      fargate: true
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity
+          value:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - key: eks.amazonaws.com/compute-type
+                      operator: NotIn
+                      values:
+                        - fargate
+        template: templates/daemonset.yaml
+
+  - it: local fargate works when no global fargate set
+    set:
+      <<: *base
+      fargate: true
+    asserts:
+      - exists:
+          path: spec.template.spec.affinity
+        template: templates/daemonset.yaml
+
+  # ====================
+  # licenseKey Endpoint Tests (2)
+  # ====================
+  - it: local licenseKey EU prefix selects EU endpoint even when global key is non-EU
+    set:
+      global:
+        licenseKey: us_global_license_key
+      licenseKey: eu_local_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: https://log-api.eu.newrelic.com/log/v1
+        template: templates/daemonset.yaml
+
+  - it: global licenseKey EU prefix selects EU endpoint when no local key
+    set:
+      global:
+        licenseKey: eu_global_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: https://log-api.eu.newrelic.com/log/v1
+        template: templates/daemonset.yaml
