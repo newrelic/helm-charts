@@ -564,6 +564,12 @@ data:
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
 
       resource/events:
         attributes:
@@ -780,7 +786,16 @@ data:
             condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
+    {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.extensions" . }}
+    extensions:
+      {{- . | nindent 6 }}
+    {{- end }}
+
     service:
+      {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.service.extensions" . }}
+      extensions:
+        {{- . | nindent 8 }}
+      {{- end }}
       telemetry:
         {{- if include "newrelic.common.verboseLog" . }}
         logs:
