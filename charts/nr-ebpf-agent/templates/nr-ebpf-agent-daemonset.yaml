@@ -133,10 +133,10 @@ spec:
             value: {{ .Release.Namespace }}
           - name: AGENT_SERVICE_NAME
             value: {{ include "nr-ebpf-agent.service.name" . }}
-          - name: APM_DATA_REPORTING
-            value: "{{ .Values.apmDataReporting }}"
-          - name: NETWORK_METRICS_REPORTING
-            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
+          - name: REPORT_APM_DATA
+            value: "{{ .Values.reportApmData }}"
+          - name: REPORT_NETWORK_METRICS
+            value: "{{ .Values.reportNetworkMetrics }}"
           - name: LOG_REPORTING
             value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration

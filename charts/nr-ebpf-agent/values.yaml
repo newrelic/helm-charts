@@ -17,10 +17,10 @@ logFilePath: ""
 # -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
 tableStoreDataLimitMB: "250"
 # -- Enable APM data reporting. When enabled, the agent collects and reports application performance monitoring data. Controls APM data reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
-apmDataReporting: "auto"
-# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics
-# RENAMED from 'tcpStatsReporting' for clarity. The old name is deprecated but still supported for backward compatibility.
-networkMetricsReporting: true
+reportApmData: "auto"
+# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics. Controls network metrics reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto'
+reportNetworkMetrics: "auto"
+
 # -- Enable log reporting. When enabled, the agent collects and reports logs.
 logReporting: false
 
@@ -46,6 +46,8 @@ allDataFilters:
 # -- APM data filters configuration
 # Configure filters to drop ebpf APM data based on config provided
 apmDataFilters:
+  # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running
+  dropEapmForApmEnabledEntity: true
   # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
   dropPodLabels: {}
