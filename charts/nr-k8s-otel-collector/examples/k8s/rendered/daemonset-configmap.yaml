@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.11
+    helm.sh/chart: nr-k8s-otel-collector-0.10.15
 data:
   daemonset-config.yaml: |
     receivers:
@@ -467,8 +467,38 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/strip_labels_for_per_node_aggregation:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - keep_keys(resource.attributes, ["node"]) where metric.name == "container.cpu.usage"
+              - keep_keys(resource.attributes, ["node"]) where metric.name == "container.memory.usage"
+
+      groupbyattrs/node:
+        keys:
+          - node
+
+      metricstransform/sum_container_metrics_per_node:
+        transforms:
+          - include: container.cpu.usage
+            action: insert
+            new_name: node.container.cpu.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - node
+                aggregation_type: sum
+          - include: container.memory.usage
+            action: insert
+            new_name: node.container.memory.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - node
+                aggregation_type: sum
+
       # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
-      metricsgeneration/calculate_percentage:
+      metricsgeneration/calculate_percentage_for_pods:
         rules:
             # Ratio of Requested Resources to Limits
             # request_limit_ratio = Limit_Utilization / Request_Utilization
@@ -483,14 +513,17 @@ data:
             metric1: k8s.pod.cpu_limit_utilization
             metric2: k8s.pod.cpu_request_utilization
             operation: divide
+
+      metricsgeneration/calculate_percentage:
+        rules:
           - name: node.cpu.usage.percentage
             type: scale
-            metric1: k8s.node.cpu.usage
+            metric1: node.container.cpu.usage.sum
             scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
             operation: divide
           - name: node.memory.usage.percentage
             type: scale
-            metric1: k8s.node.memory.working_set
+            metric1: node.container.memory.usage.sum
             scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
             operation: divide
 
@@ -575,6 +608,13 @@ data:
             - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
             - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
 
+      filter/keep_only_generated_metrics:
+        metrics:
+          include:
+            match_type: strict
+            metric_names:
+              - node.cpu.usage.percentage
+              - node.memory.usage.percentage
 
       attributes/exclude_system_paging:
         include:
@@ -609,7 +649,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.11
+            value: 0.10.15
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -762,7 +802,19 @@ data:
             - kubeletstats
             - prometheus
           processors:
+            - metricsgeneration/calculate_percentage_for_pods
+            
+          exporters:
+            - routing/nr_metrics_pipelines
+            
+        metrics/ingress_aggregation:
+          receivers: [kubeletstats]
+          processors:
+            - transform/strip_labels_for_per_node_aggregation
+            - groupbyattrs/node
+            - metricstransform/sum_container_metrics_per_node
             - metricsgeneration/calculate_percentage
+            - filter/keep_only_generated_metrics
             
           exporters:
             - routing/nr_metrics_pipelines
