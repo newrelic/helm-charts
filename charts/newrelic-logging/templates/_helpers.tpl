@@ -274,4 +274,60 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 {{- end -}}
 
+{{/*
+Returns the image for the persistence init container.
+Precedence: chart-specific repository > global.images.registry + default > chart default (busybox)
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImage" -}}
+{{- $repository := .Values.fluentBit.persistenceInitContainerImage.repository -}}
+{{- $defaultRepository := "busybox" -}}
+{{- $registry := "" -}}
+{{- if and .Values.global .Values.global.images }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $repository $defaultRepository) -}}
+  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- else -}}
+  {{- $repository -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for main image.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
+*/}}
+{{- define "newrelic-logging.imagePullPolicy" -}}
+{{- $globalPullPolicy := "" -}}
+{{- if and .Values.global .Values.global.images -}}
+  {{- $globalPullPolicy = .Values.global.images.pullPolicy | default "" -}}
+{{- end -}}
+{{- $chartPullPolicy := .Values.image.pullPolicy | default "" -}}
+{{- if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for persistence init container.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImagePullPolicy" -}}
+{{- $globalPullPolicy := "" -}}
+{{- if and .Values.global .Values.global.images -}}
+  {{- $globalPullPolicy = .Values.global.images.pullPolicy | default "" -}}
+{{- end -}}
+{{- $chartPullPolicy := .Values.fluentBit.persistenceInitContainerImage.pullPolicy | default "" -}}
+{{- if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
+
 
