@@ -7,3 +7,34 @@ WARNING: 'image.tag' is deprecated and will be removed in a future release. Plea
 {{- if (.Values.image).pullPolicy }}
 WARNING: 'image.pullPolicy' is deprecated and will be removed in a future release. Please use 'images.collector.pullPolicy' instead.
 {{- end }}
+
+{{- if (include "newrelic.common.gkeAutopilot" .) -}}
+  {{- $containerSecurityContext := dict -}}
+  {{- if .Values.daemonset.containerSecurityContext -}}
+    {{- $containerSecurityContext = .Values.daemonset.containerSecurityContext | deepCopy -}}
+  {{- else if include "newrelic.common.securityContext.container" . -}}
+    {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
+  {{- end -}}
+  {{- if (eq $containerSecurityContext.privileged true) }}
+WARNING: 'privileged: true' is not supported in GKE Autopilot. Please update 'daemonset.containerSecurityContext'.
+  {{- end -}}
+{{- end -}}
+
+{{- if and (include "newrelic.common.openShift" .) .Values.receivers.filelog.enabled -}}
+  {{- $containerSecurityContext := dict -}}
+  {{- if .Values.daemonset.containerSecurityContext -}}
+    {{- $containerSecurityContext = .Values.daemonset.containerSecurityContext | deepCopy -}}
+  {{- else if include "newrelic.common.securityContext.container" . -}}
+    {{- $containerSecurityContext = (include "newrelic.common.securityContext.container" . | fromYaml) -}}
+  {{- end -}}
+  {{- if or (eq $containerSecurityContext.privileged false) (eq $containerSecurityContext.allowPrivilegeEscalation false) }}
+WARNING: The daemonset has insufficient privileges to operate the filelog receiver in OpenShift. Please update the following values
+in 'daemonset.containerSecurityContext':
+    {{- if (eq $containerSecurityContext.privileged false) }}
+'privileged: true'
+    {{- end -}}
+    {{- if (eq $containerSecurityContext.allowPrivilegeEscalation false) }}
+'allowPrivilegeEscalation: true'
+    {{- end -}}
+  {{- end -}}
+{{- end -}}

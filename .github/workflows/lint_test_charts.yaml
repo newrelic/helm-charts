@@ -39,7 +39,27 @@ jobs:
         run: helm plugin install https://github.com/helm-unittest/helm-unittest --version 1.0.2
 
       - name: Lint charts
-        run: ct lint --config .github/ct-lint.yaml
+        run: |
+          changed_charts=$(ct list-changed --config .github/ct-lint.yaml)
+
+          if [ -z "$changed_charts" ]; then
+            echo "No charts changed"
+            exit 0
+          fi
+
+          other_charts=$(echo "$changed_charts" | grep -v "charts/nr-k8s-otel-collector" || true)
+          otel_chart=$(echo "$changed_charts" | grep "charts/nr-k8s-otel-collector" || true)
+
+          if [ -n "$other_charts" ]; then
+            echo "Linting charts with version check:"
+            echo "$other_charts"
+            echo "$other_charts" | xargs -n 1 ct lint --config .github/ct-lint.yaml --charts
+          fi
+
+          if [ -n "$otel_chart" ]; then
+            echo "Linting nr-k8s-otel-collector without version check (managed by weekly release):"
+            ct lint --config .github/ct-lint.yaml --charts charts/nr-k8s-otel-collector --check-version-increment=false
+          fi
 
       - name: Run unit tests
         run: |
@@ -80,7 +100,7 @@ jobs:
           version: 'v3.19.2'
 
       - name: Install Minikube
-        uses: manusa/actions-setup-minikube@v2.14.0
+        uses: manusa/actions-setup-minikube@v2.16.1
         with:
           minikube version: 'v1.37.0'
           kubernetes version: 'v1.34.0'
