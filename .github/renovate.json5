@@ -3,9 +3,38 @@
     "github>newrelic/k8s-agents-automation:renovate-base.json5"
   ],
   "bumpVersion": "patch",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update agent-control-deployment appVersion from GitHub releases",
+      "managerFilePatterns": [
+        "/^charts/agent-control-deployment/Chart\\.yaml$/"
+      ],
+      "matchStrings": [
+        "appVersion:\\s*\"(?<currentValue>[^\"]+)\""
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "newrelic-agent-control-deployment",
+      "packageNameTemplate": "newrelic/newrelic-agent-control",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    },
+    {
+      "customType": "regex",
+      "description": "Update agent-control-bootstrap appVersion from published helm chart",
+      "managerFilePatterns": [
+        "/^charts/agent-control-bootstrap/Chart\\.yaml$/"
+      ],
+      "matchStrings": [
+        "appVersion:\\s*(?<currentValue>\\d+\\.\\d+\\.\\d+)"
+      ],
+      "datasourceTemplate": "helm",
+      "depNameTemplate": "agent-control-deployment",
+      "packageNameTemplate": "agent-control-deployment"
+    }
+  ],
   "packageRules": [
     // This is a shared repository where it is not clear that generic rules apply
-    // Making rules per folders or properties runs the risk that future 
+    // Making rules per folders or properties runs the risk that future
     // projects get accidentally automerged because they are not covered in old presets
     {
       "matchUpdateTypes": ["major", "minor", "patch", "pin", "digest", "pinDigest"],
@@ -69,11 +98,28 @@
       ]
     },
     {
-      "matchFileNames": [
-        "charts/agent-control-deployment/**",
-        "charts/agent-control-bootstrap/**"
-      ],
-      "groupName": "agent-control release"
+      // PR 1: Update agent-control-deployment from GitHub releases (binary version)
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["newrelic-agent-control-deployment"],
+      "groupName": "agent-control-deployment appVersion",
+      "commitMessageTopic": "agent-control-deployment",
+      "commitMessageExtra": "to {{newVersion}}",
+      "addLabels": ["dependencies", "agent-control", "agent-control-deployment"],
+      "semanticCommits": "enabled",
+      "automerge": false
+    },
+    {
+      // PR 2: Update agent-control-bootstrap from helm registry (chart version)
+      "matchManagers": ["custom.regex"],
+      "matchDepNames": ["agent-control-deployment"],
+      "matchFileNames": ["charts/agent-control-bootstrap/Chart.yaml"],
+      "registryUrls": ["https://helm-charts.newrelic.com"],
+      "groupName": "agent-control-bootstrap appVersion",
+      "commitMessageTopic": "agent-control-bootstrap",
+      "commitMessageExtra": "to {{newVersion}}",
+      "addLabels": ["dependencies", "agent-control", "agent-control-bootstrap"],
+      "semanticCommits": "enabled",
+      "automerge": false
     }
   ]
 }
