@@ -69,7 +69,7 @@ spec:
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ if and .Values.global .Values.global.verboseLog }}DEBUG{{ else }}{{ .Values.logLevel }}{{ end }}"
+            value: "{{ include "nr-ebpf-agent.logLevel" . }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
           - name: NEW_RELIC_LICENSE_KEY

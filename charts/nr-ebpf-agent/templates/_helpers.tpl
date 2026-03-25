@@ -179,6 +179,20 @@ Validate that receiverPort is not less than 1024 (privileged port range).
 {{- end -}}
 
 {{/*
+Return the log level.
+Precedence: local (logLevel) > global (global.verboseLog → DEBUG) > default (INFO)
+*/}}
+{{- define "nr-ebpf-agent.logLevel" -}}
+{{- if .Values.logLevel -}}
+  {{- .Values.logLevel -}}
+{{- else if and .Values.global .Values.global.verboseLog -}}
+  {{- "DEBUG" -}}
+{{- else -}}
+  {{- "INFO" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Pass environment variables to the agent container if tracing a specific protocol is to be disabled.
 */}}
 {{- define "generateTracingEnvVars" -}}
