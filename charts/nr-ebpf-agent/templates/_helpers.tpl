@@ -236,55 +236,35 @@ Generate environment variables for protocols configuration including enabled/dis
 {{- end }}
 
 {{/*
-Return the image reference for kernel header installer with global.images.registry support
-Precedence:
-  1. Chart-level custom repository (if explicitly set to non-default)
-  2. Global images.registry override (applied to default repository only)
-  3. Default repository
+Return the image reference for kernel header installer.
+Precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
 */}}
 {{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
-{{- $repository := .Values.ebpfAgent.kernelHeaderInstaller.image.repository -}}
-{{- $defaultRepo := "docker.io/newrelic/newrelic-ebpf-agent" -}}
-{{- $imageTag := .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
-{{- if ne $repository $defaultRepo }}
-  {{- printf "%s:%s" $repository $imageTag -}}
-{{- else }}
-  {{- $globalRegistry := "" -}}
-  {{- if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "registry") .Values.global.images.registry }}
-    {{- $globalRegistry = .Values.global.images.registry -}}
-  {{- end }}
-  {{- if $globalRegistry }}
-    {{- printf "%s/%s:%s" $globalRegistry "newrelic/newrelic-ebpf-agent" $imageTag -}}
-  {{- else }}
-    {{- printf "%s:%s" $repository $imageTag -}}
-  {{- end }}
-{{- end }}
+{{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
 {{- end }}
 
 {{/*
-Return the image reference for eBPF agent with global.images.registry support
-Precedence:
-  1. Chart-level custom repository (if explicitly set to non-default)
-  2. Global images.registry override (applied to default repository only)
-  3. Default repository
+Return the image reference for eBPF agent.
+Precedence: local registry (ebpfAgent.image.registry) > global (global.images.registry) > default (docker.io)
 */}}
 {{- define "nr-ebpf-agent.ebpfAgent.image" -}}
-{{- $repository := .Values.ebpfAgent.image.repository -}}
-{{- $defaultRepo := "docker.io/newrelic/newrelic-ebpf-agent" -}}
-{{- $imageTag := include "nr-ebpf-agent.imageTag" . -}}
-{{- if ne $repository $defaultRepo }}
-  {{- printf "%s:%s" $repository $imageTag -}}
-{{- else }}
-  {{- $globalRegistry := "" -}}
-  {{- if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "registry") .Values.global.images.registry }}
-    {{- $globalRegistry = .Values.global.images.registry -}}
-  {{- end }}
-  {{- if $globalRegistry }}
-    {{- printf "%s/%s:%s" $globalRegistry "newrelic/newrelic-ebpf-agent" $imageTag -}}
-  {{- else }}
-    {{- printf "%s:%s" $repository $imageTag -}}
-  {{- end }}
-{{- end }}
+{{- $registry := .Values.ebpfAgent.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.image.repository (include "nr-ebpf-agent.imageTag" .) -}}
 {{- end }}
 
 {{/*

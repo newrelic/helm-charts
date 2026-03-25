@@ -172,8 +172,10 @@ protocols:
 # Configuration to apply on the eBPF agent daemonset.
 ebpfAgent:
   image:
-    # -- eBPF agent image to be deployed.
-    repository: docker.io/newrelic/newrelic-ebpf-agent
+    # -- eBPF agent image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- eBPF agent image repository (path only, no registry prefix).
+    repository: newrelic/newrelic-ebpf-agent
     # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
     tag: ""
     # -- Image pull policy. Overrides `global.images.pullPolicy`
@@ -181,8 +183,10 @@ ebpfAgent:
   # -- Configuration for the kernel header installer init container
   kernelHeaderInstaller:
     image:
-      # -- Kernel header installer image repository. Can be overridden with `global.images.registry`
-      repository: docker.io/newrelic/newrelic-ebpf-agent
+      # -- Kernel header installer image registry. Overrides `global.images.registry`. Defaults to docker.io
+      registry: ""
+      # -- Kernel header installer image repository (path only, no registry prefix).
+      repository: newrelic/newrelic-ebpf-agent
       # -- The tag of the kernel header installer image. Defaults to agent-base-image-latest
       tag: agent-base-image-latest
       # -- Image pull policy for kernel header installer. Overrides `global.images.pullPolicy`

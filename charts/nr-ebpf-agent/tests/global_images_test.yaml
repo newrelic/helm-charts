@@ -41,7 +41,7 @@ tests:
           value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.3.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
-  - it: prefers local custom repository over global registry for kernel header installer
+  - it: prefers local registry over global registry for kernel header installer
     set:
       <<: *base
       global:
@@ -50,14 +50,15 @@ tests:
       ebpfAgent:
         kernelHeaderInstaller:
           image:
-            repository: my.custom.registry.com/my-org/my-image
+            registry: my.local.registry.com
+            repository: my-org/my-image
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].image
-          value: my.custom.registry.com/my-org/my-image:agent-base-image-latest
+          value: my.local.registry.com/my-org/my-image:agent-base-image-latest
         template: templates/nr-ebpf-agent-daemonset.yaml
 
-  - it: prefers local custom repository over global registry for main container
+  - it: prefers local registry over global registry for main container
     set:
       <<: *base
       global:
@@ -65,11 +66,12 @@ tests:
           registry: my.private.registry.com
       ebpfAgent:
         image:
-          repository: my.custom.registry.com/my-org/ebpf-agent
+          registry: my.local.registry.com
+          repository: my-org/ebpf-agent
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.custom.registry.com/my-org/ebpf-agent:1.3.0
+          value: my.local.registry.com/my-org/ebpf-agent:1.3.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: supports air-gapped registry with only global registry configured
@@ -260,7 +262,7 @@ tests:
           value: Always
         template: templates/nr-ebpf-agent-daemonset.yaml
 
-  - it: validates precedence - local custom repository beats global registry
+  - it: validates precedence - local registry beats global registry
     set:
       <<: *base
       global:
@@ -271,18 +273,20 @@ tests:
             - name: global-secret
       ebpfAgent:
         image:
-          repository: custom.registry.com/ebpf-agent
+          registry: local.registry.com
+          repository: my-org/ebpf-agent
         kernelHeaderInstaller:
           image:
-            repository: custom.registry.com/header-installer
+            registry: local.registry.com
+            repository: my-org/header-installer
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].image
-          value: custom.registry.com/header-installer:agent-base-image-latest
+          value: local.registry.com/my-org/header-installer:agent-base-image-latest
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: custom.registry.com/ebpf-agent:1.3.0
+          value: local.registry.com/my-org/ebpf-agent:1.3.0
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.imagePullSecrets
