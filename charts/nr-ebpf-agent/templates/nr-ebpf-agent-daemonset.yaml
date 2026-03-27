@@ -207,6 +207,8 @@ spec:
           # If you are using an older configuration file with a newer Helm chart version, these settings will still work.
           # However, please update your configuration to use the new filtering mechanisms.
           # These variables will be removed in a future release.
+          - name: APM_DATA_REPORTING
+            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
             value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
           - name: DROP_DATA_NEW_RELIC
