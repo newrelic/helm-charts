@@ -1,43 +1,10 @@
-{{- /*
-A helper to return the pod security context  apply to the ebpf daemonset.
-*/ -}}
+{{/*
+Return pod security context - precedence: local (ebpfAgent.podSecurityContext) > global (global.podSecurityContext) > default (empty)
+*/}}
 {{- define "nrEbpfAgent.ebpfAgent.securityContext.pod" -}}
-{{- if .Values.ebpfAgent.podSecurityContext -}}
-    {{- toYaml .Values.ebpfAgent.podSecurityContext -}}
-{{- else if include "newrelic.common.securityContext.pod" . -}}
-    {{- include "newrelic.common.securityContext.pod" . -}}
-{{- end -}}
-{{- end -}}
-
-{{- /*
-A helper to return the pod security context  apply to the Otel daemonset.
-*/ -}}
-{{- define "nrEbpfAgent.otelCollector.securityContext.pod" -}}
-{{- if .Values.otelCollector.podSecurityContext -}}
-    {{- toYaml .Values.otelCollector.podSecurityContext -}}
-{{- else if include "newrelic.common.securityContext.pod" . -}}
-    {{- include "newrelic.common.securityContext.pod" . -}}
-{{- end -}}
-{{- end -}}
-
-{{- /*
-A helper to return the container security context  apply to the ebpf daemonset.
-*/ -}}
-{{- define "nrEbpfAgent.ebpfAgent.securityContext.container" -}}
-{{- if .Values.ebpfAgent.containerSecurityContext -}}
-    {{- toYaml .Values.ebpfAgent.containerSecurityContext -}}
-{{- else if include "newrelic.common.securityContext.container" . -}}
-    {{- include "newrelic.common.securityContext.container" . -}}
-{{- end -}}
-{{- end -}}
-
-{{- /*
-A helper to return the container security context  apply to the Otel daemonset.
-*/ -}}
-{{- define "nrEbpfAgent.otelCollector.securityContext.container" -}}
-{{- if .Values.otelCollector.containerSecurityContext -}}
-    {{- toYaml .Values.otelCollector.containerSecurityContext -}}
-{{- else if include "newrelic.common.securityContext.container" . -}}
-    {{- include "newrelic.common.securityContext.container" . -}}
-{{- end -}}
+{{- if .Values.ebpfAgent.podSecurityContext }}
+  {{- .Values.ebpfAgent.podSecurityContext | toYaml }}
+{{- else if and .Values.global (hasKey .Values.global "podSecurityContext") .Values.global.podSecurityContext }}
+  {{- .Values.global.podSecurityContext | toYaml }}
+{{- end }}
 {{- end -}}
