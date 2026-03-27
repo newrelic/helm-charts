@@ -429,6 +429,24 @@ proxy:
 			<td>Sets pod's tolerations to node taints. Can be configured also with `global.tolerations`</td>
 		</tr>
 		<tr>
+			<td>toolkitImage</td>
+			<td>object</td>
+			<td>See <a href="values.yaml">values.yaml</a></td>
+			<td>The image that contains the necessary tools to setup Agent Control</td>
+		</tr>
+		<tr>
+			<td>toolkitImage.pullSecrets</td>
+			<td>list</td>
+			<td>`[]`</td>
+			<td>The secrets that are needed to pull images from a custom registry.</td>
+		</tr>
+		<tr>
+			<td>toolkitImage.tag</td>
+			<td>string</td>
+			<td>`"1.11.0"`</td>
+			<td>Should be aligned with `image.tag`</td>
+		</tr>
+		<tr>
 			<td>verboseLog</td>
 			<td>bool</td>
 			<td>`false`</td>
