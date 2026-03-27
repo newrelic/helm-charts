@@ -29,6 +29,9 @@ jobs:
           - chart: pipeline-control-gateway
             agent-type: PipelineControlGateway
             config-directory: charts/pipeline-control-gateway/.fleetControl
+          - chart: agent-control-deployment
+            agent-type: NRAgentControl
+            config-directory: charts/agent-control-deployment/.fleetControl
       fail-fast: false
 
     steps:
@@ -51,14 +54,20 @@ jobs:
         with:
           ref: ${{ github.event.release.tag_name }}
 
-      - name: Extract version from release tag
+      - name: Extract version from release tag or Chart.yaml
         if: steps.should-run.outputs.match == 'true'
         id: version
         run: |
-          VERSION="${{ github.event.release.tag_name }}"
-          VERSION="${VERSION#${{ matrix.chart }}-}"
+          if [[ "${{ matrix.chart }}" == "agent-control-deployment" ]]; then
+            VERSION=$(yq '.appVersion' charts/${{ matrix.chart }}/Chart.yaml | tr -d '"')
+            echo "Extracted version from Chart.yaml appVersion: $VERSION"
+          else
+            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${VERSION#${{ matrix.chart }}-}"
+            echo "Extracted version from tag: $VERSION"
+          fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Extracted version: $VERSION for chart ${{ matrix.chart }}"
+          echo "Final version: $VERSION for chart ${{ matrix.chart }}"
 
       - name: Check .fleetControl directory
         if: steps.should-run.outputs.match == 'true'
