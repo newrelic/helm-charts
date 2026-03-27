@@ -1,4 +1,7 @@
 ---
+{{- if and (not .Values.customOtlpEndpoint) (ne (toString .Values.customOtlpEndpointTlsEnabled) "") }}
+  {{- fail "customOtlpEndpointTlsEnabled is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or unset customOtlpEndpointTlsEnabled." }}
+{{- end }}
 {{- $region := include "newrelic.common.region" . }}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -105,12 +108,20 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: OTLP_ENDPOINT
-        {{- if eq $region "Staging" }}
+        {{- if .Values.customOtlpEndpoint }}
+            value: "{{ .Values.customOtlpEndpoint }}"
+        {{- else if eq $region "Staging" }}
             value: "staging-otlp.nr-data.net:443"
         {{- else if eq $region "EU" }}
             value: "otlp.eu01.nr-data.net:443"
         {{- else }}
             value: "otlp.nr-data.net:443"
+        {{- end }}
+          - name: TLS_ENABLED
+        {{- if and .Values.customOtlpEndpoint (ne (toString .Values.customOtlpEndpointTlsEnabled) "") }}
+            value: "{{ .Values.customOtlpEndpointTlsEnabled }}"
+        {{- else }}
+            value: "true"
         {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{- if .Values.protocols.global }}
