@@ -25,6 +25,18 @@ image:
   pullSecrets: []
   # - name: regsecret
 
+# -- The image that contains the necessary tools to setup Agent Control
+# @default -- See <a href="values.yaml">values.yaml</a>
+toolkitImage:
+  registry:
+  repository: newrelic/newrelic-agent-control-cli
+  # -- Should be aligned with `image.tag`
+  tag: "1.11.0"
+  pullPolicy: IfNotPresent
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+
 # -- Add user environment variables to the agent
 extraEnv: []
 # -- Add user environment from configMaps or secrets as variables to the agent
@@ -263,11 +275,6 @@ systemIdentity:
 
   # -- Organization ID used to create the system identity.
   organizationId: ""
-
-  image:
-    repository: newrelic/agent-control-system-identity-registration
-    tag: "0.2.0"
-    pullPolicy: IfNotPresent
 
   # -- Configuration for the parent identity
   # You can either authenticate via ClientId/ClientSecret or pass directly an `AuthToken` and manage locally the authentication.
