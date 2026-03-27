@@ -1,0 +1,406 @@
+suite: configMap
+templates:
+  - templates/deployment-configmap.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: sets configMap to default when no values provided
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*$
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
+  - it: overrides deployment configMap when value set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment.configMap.overrideConfig:
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: localhost:4318
+        processors:
+          transform/low_data_mode_inator:
+            metric_statements:
+              - context: metric
+                statements:
+                  - set(description, "")
+                  - set(unit, "")
+        exporters:
+          otlphttp/newrelic:
+            endpoint: 343
+            headers:
+              api-key: ${env:NR_LICENSE_KEY}
+        service:
+          pipelines:
+            logs/events:
+              receivers:
+                - otlp
+              processors: [ transform/low_data_mode_inator ]
+              exporters:
+                - otlphttp/newrelic
+    asserts:
+      - equal:
+          path: data["deployment-config.yaml"]
+          value: |
+            exporters:
+              otlphttp/newrelic:
+                endpoint: 343
+                headers:
+                  api-key: ${env:NR_LICENSE_KEY}
+            processors:
+              transform/low_data_mode_inator:
+                metric_statements:
+                - context: metric
+                  statements:
+                  - set(description, "")
+                  - set(unit, "")
+            receivers:
+              otlp:
+                protocols:
+                  http:
+                    endpoint: localhost:4318
+            service:
+              pipelines:
+                logs/events:
+                  exporters:
+                  - otlphttp/newrelic
+                  processors:
+                  - transform/low_data_mode_inator
+                  receivers:
+                  - otlp
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*$
+        template: templates/daemonset-configmap.yaml
+  - it: overrides daemonset configMap when value set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset.configMap.overrideConfig:
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: localhost:4318
+        processors:
+          transform/low_data_mode_inator:
+            metric_statements:
+              - context: metric
+                statements:
+                  - set(description, "")
+                  - set(unit, "")
+        exporters:
+          otlphttp/newrelic:
+            endpoint: 343
+            headers:
+              api-key: ${env:NR_LICENSE_KEY}
+        service:
+          pipelines:
+            logs/events:
+              receivers:
+                - otlp
+              processors: [ transform/low_data_mode_inator ]
+              exporters:
+                - otlphttp/newrelic
+    asserts:
+      - equal:
+          path: data["daemonset-config.yaml"]
+          value: |
+            exporters:
+              otlphttp/newrelic:
+                endpoint: 343
+                headers:
+                  api-key: ${env:NR_LICENSE_KEY}
+            processors:
+              transform/low_data_mode_inator:
+                metric_statements:
+                - context: metric
+                  statements:
+                  - set(description, "")
+                  - set(unit, "")
+            receivers:
+              otlp:
+                protocols:
+                  http:
+                    endpoint: localhost:4318
+            service:
+              pipelines:
+                logs/events:
+                  exporters:
+                  - otlphttp/newrelic
+                  processors:
+                  - transform/low_data_mode_inator
+                  receivers:
+                  - otlp
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*$
+        template: templates/deployment-configmap.yaml
+  - it: overrides both configMap when value both set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset.configMap.overrideConfig:
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: daemonset:4318
+        processors:
+          transform/daemonset_inator:
+            metric_statements:
+              - context: metric
+                statements:
+                  - set(description, "daemonset")
+                  - set(unit, "daemonset")
+        exporters:
+          otlphttp/newrelic:
+            endpoint: 343
+            headers:
+              api-key: daemonset-key
+        service:
+          pipelines:
+            logs/daemonset:
+              receivers:
+                - otlp
+              processors: [ transform/daemonset_inator ]
+              exporters:
+                - otlphttp/newrelic
+      deployment.configMap.overrideConfig:
+        receivers:
+          otlp:
+            protocols:
+              http:
+                endpoint: deployment:4318
+        processors:
+          transform/deployment_inator:
+            metric_statements:
+              - context: metric
+                statements:
+                  - set(description, "deployment")
+                  - set(unit, "deployment")
+        exporters:
+          otlphttp/newrelic:
+            endpoint: 343
+            headers:
+              api-key: deployment-key
+        service:
+          pipelines:
+            logs/deployment:
+              receivers:
+                - otlp
+              processors: [ transform/deployment_inator ]
+              exporters:
+                - otlphttp/newrelic
+    asserts:
+      - equal:
+          path: data["daemonset-config.yaml"]
+          value: |
+            exporters:
+              otlphttp/newrelic:
+                endpoint: 343
+                headers:
+                  api-key: daemonset-key
+            processors:
+              transform/daemonset_inator:
+                metric_statements:
+                - context: metric
+                  statements:
+                  - set(description, "daemonset")
+                  - set(unit, "daemonset")
+            receivers:
+              otlp:
+                protocols:
+                  http:
+                    endpoint: daemonset:4318
+            service:
+              pipelines:
+                logs/daemonset:
+                  exporters:
+                  - otlphttp/newrelic
+                  processors:
+                  - transform/daemonset_inator
+                  receivers:
+                  - otlp
+        template: templates/daemonset-configmap.yaml
+      - equal:
+          path: data["deployment-config.yaml"]
+          value: |
+            exporters:
+              otlphttp/newrelic:
+                endpoint: 343
+                headers:
+                  api-key: deployment-key
+            processors:
+              transform/deployment_inator:
+                metric_statements:
+                - context: metric
+                  statements:
+                  - set(description, "deployment")
+                  - set(unit, "deployment")
+            receivers:
+              otlp:
+                protocols:
+                  http:
+                    endpoint: deployment:4318
+            service:
+              pipelines:
+                logs/deployment:
+                  exporters:
+                  - otlphttp/newrelic
+                  processors:
+                  - transform/deployment_inator
+                  receivers:
+                  - otlp
+        template: templates/deployment-configmap.yaml
+
+  - it: Adds extra configuration to deployment and daemonset configMap
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment.configMap.extraConfig.receivers: extraReceiver
+      deployment.configMap.extraConfig.processors: extraProcessor
+      deployment.configMap.extraConfig.exporters: extraExporter
+      deployment.configMap.extraConfig.connectors: extraConnector
+      deployment.configMap.extraConfig.pipelines: extraPipeline
+      daemonset.configMap.extraConfig.receivers: extraReceiver
+      daemonset.configMap.extraConfig.processors: extraProcessor
+      daemonset.configMap.extraConfig.exporters: extraExporter
+      daemonset.configMap.extraConfig.connectors: extraConnector
+      daemonset.configMap.extraConfig.pipelines: extraPipeline
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*extraReceiver[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*extraConnector[\S\s]*service:[\S\s]*pipelines:[\S\s]*extraPipeline[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*extraReceiver[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*extraConnector[\S\s]*service:[\S\s]*pipelines:[\S\s]*extraPipeline[\S\s]*
+        template: templates/daemonset-configmap.yaml
+
+
+  - it: Adds custom Processors and Exporters to both the deployment and daemonset
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+
+      processors: extraProcessor
+      exporters: extraExporter
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*
+        template: templates/daemonset-configmap.yaml
+
+  - it: Adds Processors and Exporters to metric preprocessor pipelines for both the deployment and daemonset
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+
+      metricsPipeline.collectorIngress.processors: extraProcessor
+      metricsPipeline.collectorIngress.exporters: extraExporter
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/daemonset-configmap.yaml
+
+  - it: Adds processors and Exporters to metric postprocessor pipelines for both the deployment and daemonset
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+
+      metricsPipeline.collectorEgress.processors: extraProcessor
+      metricsPipeline.collectorEgress.exporters: extraExporter
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*metrics/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/daemonset-configmap.yaml
+
+  - it: Adds Processors and Exporters to logs preprocessor pipelines for both the deployment and daemonset
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+
+      logsPipeline.collectorIngress.processors: extraProcessor
+      logsPipeline.collectorIngress.exporters: extraExporter
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/daemonset-configmap.yaml
+
+  - it: Adds processors and Exporters to logs postprocessor pipelines for both the deployment and daemonset
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+
+      logsPipeline.collectorEgress.processors: extraProcessor
+      logsPipeline.collectorEgress.exporters: extraExporter
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
+        template: templates/daemonset-configmap.yaml
+  - it: uses default KSM selector when not specified
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: kube-state-metrics\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+

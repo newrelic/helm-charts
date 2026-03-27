@@ -1,0 +1,79 @@
+---
+# Source: nrdot-plus-collector/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nrdot-plus-collector-deployment
+  namespace: newrelic
+  labels:
+    app.kubernetes.io/instance: nrdot-plus-collector
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: nrdot-plus-collector
+    app.kubernetes.io/version: 1.2.0
+    helm.sh/chart: nrdot-plus-collector-0.9.9
+spec:
+  replicas: 1
+  minReadySeconds: 5
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: nrdot-plus-collector
+      app.kubernetes.io/name: nrdot-plus-collector
+      component: deployment
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/instance: nrdot-plus-collector
+        app.kubernetes.io/name: nrdot-plus-collector
+        component: deployment
+      annotations:
+        checksum/config: 64730e00dcadce598694a7bba3e159eab308757b5aad69edad7fb847f745551b
+    spec:
+      serviceAccountName: nrdot-plus-collector
+      containers:
+        - name: otel-collector-deployment
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+              - ALL
+            privileged: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1001
+          image: "docker.io/gmanandhar321/nrdot-collector-host:2.13"
+          imagePullPolicy: IfNotPresent
+          args:
+            - --config
+            - /config/deployment-config.yaml
+          resources:
+            {}
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: NR_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: nrdot-plus-collector-license
+                  key: licenseKey
+          ports:
+            - name: http
+              containerPort: 4318
+              protocol: TCP
+            - name: grpc
+              containerPort: 4317
+              protocol: TCP
+          volumeMounts:
+            - name: deployment-config
+              mountPath: /config
+      volumes:
+        - name: deployment-config
+          configMap:
+            name: nrdot-plus-collector-deployment-config

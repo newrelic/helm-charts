@@ -1,0 +1,45 @@
+suite: images
+templates:
+  - templates/deployment.yaml
+  - templates/deployment-configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: has default args
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [ "--config", "/config/deployment-config.yaml" ]
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [ "--config", "/config/daemonset-config.yaml", "--feature-gates", "metricsgeneration.MatchAttributes" ]
+        template: templates/daemonset.yaml
+  - it: has default args and extra args in deployment
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment:
+        extraArgs: [ "--some-dep-param", "dep1" ]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [ "--config", "/config/deployment-config.yaml", "--some-dep-param", "dep1" ]
+        template: templates/deployment.yaml
+  - it: has default args and extra args in daemonset
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        extraArgs: [ "--some-dae-param", "dae1" ]
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].args
+          value: [ "--config", "/config/daemonset-config.yaml", "--feature-gates", "metricsgeneration.MatchAttributes", "--some-dae-param", "dae1" ]
+        template: templates/daemonset.yaml
