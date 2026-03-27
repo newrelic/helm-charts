@@ -192,6 +192,8 @@ spec:
             value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default false }}"
           - name: APPLICATION_LOG_FILE_REGEX
             value: {{ .Values.logDataFilters.applicationLogReporting.fileRegex | quote }}
+          - name: APPLICATION_LOG_LEVEL_THRESHOLD
+            value: "{{ .Values.logDataFilters.applicationLogReporting.logLevelThreshold | default "INFO" }}"
           - name: MAX_LOG_SAMPLES_PER_MINUTE
             value: "{{ .Values.logDataFilters.applicationLogReporting.maxSamplesPerMinute | default 10000 }}"
           - name: KEEP_STDSTREAM_LOG_FOR_ENTITY_REGEX
