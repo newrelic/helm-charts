@@ -48,14 +48,12 @@ Create the name of the fluent bit config
 Return the licenseKey
 */}}
 {{- define "newrelic-logging.licenseKey" -}}
-{{- if .Values.global}}
+{{- if .Values.licenseKey }}
+  {{- .Values.licenseKey -}}
+{{- else if .Values.global }}
   {{- if .Values.global.licenseKey }}
-      {{- .Values.global.licenseKey -}}
-  {{- else -}}
-      {{- .Values.licenseKey | default "" -}}
+    {{- .Values.global.licenseKey -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.licenseKey | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -63,14 +61,12 @@ Return the licenseKey
 Return the cluster name
 */}}
 {{- define "newrelic-logging.cluster" -}}
-{{- if .Values.global}}
+{{- if .Values.cluster }}
+  {{- .Values.cluster -}}
+{{- else if .Values.global }}
   {{- if .Values.global.cluster }}
     {{- .Values.global.cluster -}}
-  {{- else -}}
-    {{- .Values.cluster | default "" -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.cluster | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -78,14 +74,12 @@ Return the cluster name
 Return the customSecretName
 */}}
 {{- define "newrelic-logging.customSecretName" -}}
-{{- if .Values.global }}
+{{- if .Values.customSecretName }}
+  {{- .Values.customSecretName -}}
+{{- else if .Values.global }}
   {{- if .Values.global.customSecretName }}
-      {{- .Values.global.customSecretName -}}
-  {{- else -}}
-      {{- .Values.customSecretName | default "" -}}
+    {{- .Values.global.customSecretName -}}
   {{- end -}}
-{{- else -}}
-    {{- .Values.customSecretName | default "" -}}
 {{- end -}}
 {{- end -}}
 
@@ -93,21 +87,15 @@ Return the customSecretName
 Return the customSecretLicenseKey
 */}}
 {{- define "newrelic-logging.customSecretKey" -}}
-{{- if .Values.global }}
+{{- if .Values.customSecretLicenseKey }}
+  {{- .Values.customSecretLicenseKey -}}
+{{- else if .Values.customSecretKey }}
+  {{- .Values.customSecretKey -}}
+{{- else if .Values.global }}
   {{- if .Values.global.customSecretLicenseKey }}
-      {{- .Values.global.customSecretLicenseKey -}}
-  {{- else -}}
-    {{- if .Values.global.customSecretKey }}
-        {{- .Values.global.customSecretKey -}}
-    {{- else -}}
-        {{- .Values.customSecretKey | default "" -}}
-    {{- end -}}
-  {{- end -}}
-{{- else -}}
-  {{- if .Values.customSecretLicenseKey }}
-      {{- .Values.customSecretLicenseKey -}}
-  {{- else -}}
-      {{- .Values.customSecretKey | default "" -}}
+    {{- .Values.global.customSecretLicenseKey -}}
+  {{- else if .Values.global.customSecretKey }}
+    {{- .Values.global.customSecretKey -}}
   {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -116,12 +104,12 @@ Return the customSecretLicenseKey
 Returns nrStaging
 */}}
 {{- define "newrelic.nrStaging" -}}
-{{- if .Values.global }}
+{{- if .Values.nrStaging }}
+  {{- .Values.nrStaging -}}
+{{- else if .Values.global }}
   {{- if .Values.global.nrStaging }}
     {{- .Values.global.nrStaging -}}
   {{- end -}}
-{{- else if .Values.nrStaging }}
-  {{- .Values.nrStaging -}}
 {{- end -}}
 {{- end -}}
 
@@ -129,12 +117,12 @@ Returns nrStaging
 Returns fargate
 */}}
 {{- define "newrelic.fargate" -}}
-{{- if .Values.global }}
+{{- if .Values.fargate }}
+  {{- .Values.fargate -}}
+{{- else if .Values.global }}
   {{- if .Values.global.fargate }}
     {{- .Values.global.fargate -}}
   {{- end -}}
-{{- else if .Values.fargate }}
-  {{- .Values.fargate -}}
 {{- end -}}
 {{- end -}}
 
@@ -281,6 +269,62 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
   {{- else if .Values.fluentBit.extraEnv }}
     {{- tpl (toYaml .Values.fluentBit.extraEnv) . -}}
   {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the image for the persistence init container.
+Precedence: chart-specific repository > global.images.registry + default > chart default (busybox)
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImage" -}}
+{{- $repository := .Values.fluentBit.persistenceInitContainerImage.repository -}}
+{{- $defaultRepository := "busybox" -}}
+{{- $registry := "" -}}
+{{- if and .Values.global .Values.global.images }}
+  {{- $registry = .Values.global.images.registry | default "" -}}
+{{- end -}}
+{{- if and $registry (eq $repository $defaultRepository) -}}
+  {{- printf "%s/%s" $registry $defaultRepository -}}
+{{- else -}}
+  {{- $repository -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for main image.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
+*/}}
+{{- define "newrelic-logging.imagePullPolicy" -}}
+{{- $globalPullPolicy := "" -}}
+{{- if and .Values.global .Values.global.images -}}
+  {{- $globalPullPolicy = .Values.global.images.pullPolicy | default "" -}}
+{{- end -}}
+{{- $chartPullPolicy := .Values.image.pullPolicy | default "" -}}
+{{- if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else -}}
+  IfNotPresent
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the pull policy for persistence init container.
+Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
+*/}}
+{{- define "newrelic-logging.persistenceInitContainerImagePullPolicy" -}}
+{{- $globalPullPolicy := "" -}}
+{{- if and .Values.global .Values.global.images -}}
+  {{- $globalPullPolicy = .Values.global.images.pullPolicy | default "" -}}
+{{- end -}}
+{{- $chartPullPolicy := .Values.fluentBit.persistenceInitContainerImage.pullPolicy | default "" -}}
+{{- if $chartPullPolicy -}}
+  {{- $chartPullPolicy -}}
+{{- else if $globalPullPolicy -}}
+  {{- $globalPullPolicy -}}
+{{- else -}}
+  IfNotPresent
 {{- end -}}
 {{- end -}}
 
