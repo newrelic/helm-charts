@@ -72,6 +72,10 @@ spec:
             value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
+          {{- if .Values.entityLabels }}
+          - name: NEW_RELIC_LABELS
+            value: "{{- $labels := list -}}{{- range $key, $value := .Values.entityLabels -}}{{- $labels = append $labels (printf "%s:%s" $key $value) -}}{{- end -}}{{ join ";" $labels }}"
+          {{- end }}
           - name: NEW_RELIC_LICENSE_KEY
             valueFrom:
               secretKeyRef:
