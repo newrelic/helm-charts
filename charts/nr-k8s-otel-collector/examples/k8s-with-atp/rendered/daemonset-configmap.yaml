@@ -82,6 +82,7 @@ data:
 
       kubeletstats:
         collection_interval: 1m
+        metric_groups: [node, pod, container, volume]
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
@@ -95,6 +96,8 @@ data:
           k8s.pod.memory_limit_utilization:
             enabled: true
           k8s.pod.memory_request_utilization:
+            enabled: true
+          k8s.pod.volume.usage:
             enabled: true
 
       prometheus:
@@ -335,7 +338,6 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-
           - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
             action: update
             match_type: regexp
@@ -354,6 +356,24 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: ^k8s\.pod\.volume\.usage$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+          - include: ^k8s\.volume\.(available|capacity|inodes|(inodes\.(used)))$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
 
       transform/collector:
