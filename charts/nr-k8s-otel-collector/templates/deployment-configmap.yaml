@@ -8,10 +8,10 @@ metadata:
 data:
   deployment-config.yaml: |
     {{- with include "nrKubernetesOtel.deployment.configMap.overrideConfig" . }}
-    {{- . | nindent 4 }}
+    {{- . }}
     {{- else }}
     receivers:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" . }}
       otlp:
         protocols:
           http:
@@ -179,8 +179,8 @@ data:
       {{- end }}
 
     processors:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . }}
+      {{- include "nrKubernetesOtel.custom.processors" . }}
 
       transform/promote_job_label:
         metric_statements:
@@ -738,15 +738,15 @@ data:
         send_batch_size : 800
 
     exporters:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . }}
+      {{- include "nrKubernetesOtel.custom.exporters" . }}
       otlphttp/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
     connectors:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . }}
 
       routing/nr_logs_pipelines:
         default_pipelines: [logs/pipeline]
@@ -788,13 +788,13 @@ data:
 
     {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.extensions" . }}
     extensions:
-      {{- . | nindent 6 }}
+      {{- . }}
     {{- end }}
 
     service:
       {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.service.extensions" . }}
       extensions:
-        {{- . | nindent 8 }}
+        {{- . }}
       {{- end }}
       telemetry:
         {{- if include "newrelic.common.verboseLog" . }}
@@ -821,7 +821,7 @@ data:
                       api-key: ${env:NR_LICENSE_KEY}
             {{- end }}
       pipelines:
-        {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . | nindent 8 }}
+        {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.pipelines" . }}
 
         {{- if .Values.receivers.prometheus.enabled }}
         metrics/ingress:
@@ -832,11 +832,11 @@ data:
             - prometheus/collector
             {{- end }}
           processors:
-            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . }}
             - transform/promote_job_label
           exporters:
             - routing/nr_metrics_pipelines
-            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . }}
 
         metrics/nr_ksm:
           receivers:
@@ -905,11 +905,11 @@ data:
           processors:
             - transform/remove_routing_metadata
             - transform/extract_runtime
-            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . }}
             - batch
           exporters:
             - otlphttp/newrelic
-            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . }}
 
 
         {{- if .Values.receivers.k8sEvents.enabled }}
@@ -917,10 +917,10 @@ data:
           receivers:
             - k8s_events
           processors:
-            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.processors" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.processors" . }}
           exporters:
             - routing/nr_logs_pipelines
-            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.logsPipeline.collectorIngress.exporters" . }}
         logs/pipeline:
           receivers:
             - routing/nr_logs_pipelines
@@ -935,10 +935,10 @@ data:
           receivers:
             - routing/logs_egress
           processors:
-            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . }}
             - batch
           exporters:
             - otlphttp/newrelic
-            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . | nindent 12 }}
+            {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . }}
         {{- end }}
     {{- end }}
