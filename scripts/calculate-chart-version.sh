@@ -42,11 +42,11 @@ while IFS= read -r commit; do
   # Check for BREAKING CHANGE in commit message or ! in type
   if [[ "$commit" =~ "BREAKING CHANGE:" ]] || [[ "$commit" =~ ^[a-z]+\!: ]]; then
     has_breaking=true
-  # Check for feat: prefix (with or without [chart-name] prefix)
+  # Check for feat: prefix (with or without [chart-name] prefix or scope)
   elif [[ "$commit" =~ ^feat: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]feat: ]] || [[ "$commit" =~ ^feat\( ]]; then
     has_feat=true
-  # Check for fix: or chore: prefix (with or without [chart-name] prefix)
-  elif [[ "$commit" =~ ^fix: ]] || [[ "$commit" =~ ^chore: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]fix: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]chore: ]]; then
+  # Check for fix: or chore: prefix (with or without [chart-name] prefix or scope)
+  elif [[ "$commit" =~ ^fix: ]] || [[ "$commit" =~ ^fix\( ]] || [[ "$commit" =~ ^chore: ]] || [[ "$commit" =~ ^chore\( ]] || [[ "$commit" =~ ^\[.*\][[:space:]]fix: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]chore: ]]; then
     has_fix=true
   fi
 done <<< "$commits"
