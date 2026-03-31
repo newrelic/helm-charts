@@ -165,6 +165,50 @@ to export data to this connector which can then be connected to the New Relic ma
 * [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
 * [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
 
+## KSM CRD Metrics (Advanced Use Case)
+
+The New Relic OTEL agent supports scraping custom CRD metrics from `kube-state-metrics`.
+If you have custom resources in your cluster and want to monitor them, and they do not expose a metrics endpoint, you can leverage this feature to scrape metrics about those resources using `kube-state-metrics` and send them to New Relic.
+You should not be using this feature if your custom resource already exposes a metrics endpoint that the OpenTelemetry Collector can scrape directly using the `prometheus` receiver.
+This feature is meant to be used as a workaround for custom resources that do not expose a metrics endpoint, and you want to monitor them using the OpenTelemetry Collector.
+To enable this feature, you need to specify which CRD metrics you want to be scraped by using `kube-state-metrics.customResourceState.config` options in your `values.yaml` file.
+By default, collecting these metrics is disabled. When enabled in `kube-state-metrics.customResourceState.enabled`, you can specify which CRD metrics to be scraped by providing a list of custom resources and their associated labels in `kube-state-metrics.customResourceState.config`.
+
+For example:
+
+```yaml
+kube-state-metrics:
+  customResourceState:
+    enabled: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: karpenter.sh
+              version: v1
+              kind: NodePool
+            labelsFromPath:
+              name: [ metadata, name ]
+              # Inherit all labels from metadata
+              "*": [ metadata, labels ]
+            metrics:
+              - name: "nodepool_nodes_count"
+                help: "Number of nodes managed by this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, nodes ]
+              - name: "nodepool_pods_count"
+                help: "Number of pods on nodes from this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, pods ]
+```
+
+For the complete list of options and more details on how to configure this feature, please refer to the [KSM documentation](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md).
+
 ## Common Errors
 
 ### Exporting Errors
