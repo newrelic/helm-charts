@@ -119,9 +119,9 @@ spec:
         {{- end }}
           - name: TLS_ENABLED
         {{- if and .Values.customOtlpEndpoint (ne (toString .Values.customOtlpEndpointTlsEnabled) "") }}
-            value: "{{ .Values.customOtlpEndpointTlsEnabled }}"
+            value: {{ .Values.customOtlpEndpointTlsEnabled }}
         {{- else }}
-            value: "true"
+            value: true
         {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{- if .Values.protocols.global }}
