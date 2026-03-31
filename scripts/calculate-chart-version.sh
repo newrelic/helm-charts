@@ -39,6 +39,9 @@ has_feat=false
 has_fix=false
 
 while IFS= read -r commit; do
+  # Strip leading/trailing whitespace
+  commit=$(echo "$commit" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+
   # Check for BREAKING CHANGE in commit message or ! in type
   if [[ "$commit" =~ "BREAKING CHANGE:" ]] || [[ "$commit" =~ ^[a-z]+\!: ]]; then
     has_breaking=true
