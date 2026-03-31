@@ -110,11 +110,16 @@ jobs:
 
           git diff ${CHART_PATH}/Chart.yaml
 
-      - name: Commit version bump
+      - name: Regenerate examples with new version
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          make generate-examples
+
+      - name: Commit version bump and regenerated examples
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.next_version.outputs.version }}"
-          git add ${CHART_PATH}/Chart.yaml
+          git add ${CHART_PATH}/Chart.yaml ${CHART_PATH}/examples/
           git commit -m "chore(nr-k8s-otel-collector): bump version to $NEW_VERSION"
           git push origin master
 
@@ -128,17 +133,18 @@ jobs:
         run: |
           helm dependency update ${CHART_PATH}
 
-      - name: Prepare chart for release
+      - name: Package chart manually
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
           mkdir -p .cr-release-packages
-          cp -r charts/nr-k8s-otel-collector .cr-release-packages/
+          helm package ${CHART_PATH} -d .cr-release-packages/
 
       - name: Release nr-k8s-otel-collector chart
         if: steps.next_version.outputs.has_changes == 'true'
         uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: .cr-release-packages
+          skip_packaging: true
         env:
           # Use bot token to allow triggering post-release workflow
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
