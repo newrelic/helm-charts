@@ -123,6 +123,11 @@ jobs:
           helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
 
+      - name: Update chart dependencies
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          helm dependency update ${CHART_PATH}
+
       - name: Prepare chart for release
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
