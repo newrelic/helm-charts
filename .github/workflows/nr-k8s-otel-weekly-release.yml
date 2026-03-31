@@ -110,11 +110,16 @@ jobs:
 
           git diff ${CHART_PATH}/Chart.yaml
 
-      - name: Commit version bump
+      - name: Regenerate examples with new version
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          make generate-examples
+
+      - name: Commit version bump and regenerated examples
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.next_version.outputs.version }}"
-          git add ${CHART_PATH}/Chart.yaml
+          git add ${CHART_PATH}/Chart.yaml ${CHART_PATH}/examples/
           git commit -m "chore(nr-k8s-otel-collector): bump version to $NEW_VERSION"
           git push origin master
 
