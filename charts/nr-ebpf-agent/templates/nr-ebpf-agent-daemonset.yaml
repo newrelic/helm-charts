@@ -142,7 +142,7 @@ spec:
           - name: REPORT_NETWORK_METRICS
             value: "{{ .Values.reportNetworkMetrics }}"
           - name: LOG_REPORTING
-            value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
+            value: "{{ if hasKey .Values "reportLogs" }}{{ .Values.reportLogs }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
