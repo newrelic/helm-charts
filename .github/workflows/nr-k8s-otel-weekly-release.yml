@@ -149,6 +149,9 @@ jobs:
           # Use bot token to allow triggering post-release workflow
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
           CR_SKIP_EXISTING: true
+          # Workaround for chart-releaser-action bug: set latest_tag to prevent
+          # "unbound variable" error at line 111 of cr.sh when skip_packaging=true
+          latest_tag: ${{ steps.last_tag.outputs.tag }}
 
       - name: No changes to release
         if: steps.next_version.outputs.has_changes == 'false'
