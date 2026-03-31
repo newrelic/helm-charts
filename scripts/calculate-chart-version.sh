@@ -42,18 +42,27 @@ while IFS= read -r commit; do
   # Check for BREAKING CHANGE in commit message or ! in type
   if [[ "$commit" =~ "BREAKING CHANGE:" ]] || [[ "$commit" =~ ^[a-z]+\!: ]]; then
     has_breaking=true
-  # Check for feat: prefix (with or without [chart-name] prefix)
+  # Check for feat: prefix (with or without [chart-name] prefix or scope)
   elif [[ "$commit" =~ ^feat: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]feat: ]] || [[ "$commit" =~ ^feat\( ]]; then
     has_feat=true
-  # Check for fix: or chore: prefix (with or without [chart-name] prefix)
-  elif [[ "$commit" =~ ^fix: ]] || [[ "$commit" =~ ^chore: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]fix: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]chore: ]]; then
+  # Check for fix: or chore: prefix (with or without [chart-name] prefix or scope)
+  elif [[ "$commit" =~ ^fix: ]] || [[ "$commit" =~ ^fix\( ]] || [[ "$commit" =~ ^chore: ]] || [[ "$commit" =~ ^chore\( ]] || [[ "$commit" =~ ^\[.*\][[:space:]]fix: ]] || [[ "$commit" =~ ^\[.*\][[:space:]]chore: ]]; then
     has_fix=true
   fi
 done <<< "$commits"
 
-# Get current version from Chart.yaml
-current_version=$(yq '.version' ${CHART_PATH}/Chart.yaml)
-IFS='.' read -r major minor patch <<< "$current_version"
+# Get base version to bump from
+# For weekly releases, we calculate the bump from the last released version (tag),
+# not from the current Chart.yaml version (which may have been bumped but not released)
+if [ -z "$LAST_TAG" ]; then
+  # No previous release, use current Chart.yaml version as base
+  base_version=$(yq '.version' ${CHART_PATH}/Chart.yaml)
+else
+  # Extract version from tag (e.g., "nr-k8s-otel-collector-0.10.14" -> "0.10.14")
+  base_version=$(echo "$LAST_TAG" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+$')
+fi
+
+IFS='.' read -r major minor patch <<< "$base_version"
 
 # Calculate version bump based on commit types
 if [[ "$has_breaking" == true ]]; then
@@ -66,8 +75,8 @@ elif [[ "$has_feat" == true ]]; then
 elif [[ "$has_fix" == true ]]; then
   patch=$((patch + 1))
 else
-  # No relevant commits, keep current version
-  echo "$current_version"
+  # No relevant commits, keep base version
+  echo "$base_version"
   exit 0
 fi
 
