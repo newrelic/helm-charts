@@ -145,6 +145,8 @@ spec:
             value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
           - name: REPORT_AI_METRICS
             value: "{{ if hasKey .Values "reportAiMetrics" }}{{ .Values.reportAiMetrics }}{{ else }}false{{ end }}"
+          - name: GENAI_CAPTURE_MESSAGE_CONTENT
+            value: "{{ if hasKey .Values "genAICaptureMessageContent" }}{{ .Values.genAICaptureMessageContent }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
