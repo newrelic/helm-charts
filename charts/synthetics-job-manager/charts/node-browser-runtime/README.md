@@ -8,6 +8,7 @@
 |-----------------------|----------------------------------------------------------------------------------------------------------------------------|--------------------------------------------|
 | `parallelism`         | Number of node-browser-runtime jobs to execute in parallel                                                                 | `1`                                        |
 | `completions`         | Number of node-browser-runtime jobs that you expect to execute per minute (multiplied by the value of `parallelism` above) | `6`                                        |
+| `schedule`            | Cron expression for the CronJob that polls for work ([Kubernetes cron syntax](https://kubernetes.io/docs/concepts/workloads/controllers/cron-jobs/#schedule-syntax)) | `* * * * *`                                |
 | `imagePullSecrets`    | The name of a Secret object used to pull an image from a specified container registry                                      |                                            |
 | `nameOverride`        | The nameOverride replaces the name of the chart in the Chart.yaml file.                                                    |                                            |
 | `fullnameOverride`    | Name override used for your installation in place of the default                                                           |                                            |
