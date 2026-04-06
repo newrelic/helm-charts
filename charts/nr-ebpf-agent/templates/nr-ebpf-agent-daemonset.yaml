@@ -2,6 +2,12 @@
 {{- if and (not .Values.customOtlpEndpoint) (ne (toString .Values.customOtlpEndpointTlsEnabled) "") }}
   {{- fail "customOtlpEndpointTlsEnabled is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or unset customOtlpEndpointTlsEnabled." }}
 {{- end }}
+{{- if or (and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpointTlsCertSecretKey)) (and (not .Values.customOtlpEndpointTlsCertSecret) .Values.customOtlpEndpointTlsCertSecretKey) }}
+  {{- fail "Both customOtlpEndpointTlsCertSecret and customOtlpEndpointTlsCertSecretKey must be provided together." }}
+{{- end }}
+{{- if and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpoint) }}
+  {{- fail "customOtlpEndpointTlsCertSecret is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or remove the TLS cert configuration." }}
+{{- end }}
 {{- $region := include "newrelic.common.region" . }}
 apiVersion: apps/v1
 kind: DaemonSet
@@ -123,6 +129,10 @@ spec:
         {{- else }}
             value: "true"
         {{- end }}
+        {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
+          - name: TLS_CERT_PATH
+            value: "/etc/otlp-tls/{{ .Values.customOtlpEndpointTlsCertSecretKey }}"
+        {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{- if .Values.protocols.global }}
           {{- if (hasKey .Values.protocols.global "max_unlinked_spans") }}
@@ -240,6 +250,11 @@ spec:
           - name: kernel-headers-volume
             mountPath: /kernel-headers
             readOnly: true
+          {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
+          - name: otlp-tls-cert
+            mountPath: /etc/otlp-tls
+            readOnly: true
+          {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -260,6 +275,14 @@ spec:
           type: Directory
       - name: kernel-headers-volume
         emptyDir: {}
+      {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
+      - name: otlp-tls-cert
+        secret:
+          secretName: {{ .Values.customOtlpEndpointTlsCertSecret }}
+          items:
+          - key: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
+            path: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
+      {{- end }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 -}}
