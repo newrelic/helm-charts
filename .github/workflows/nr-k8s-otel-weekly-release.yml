@@ -101,6 +101,16 @@ jobs:
             fi
           fi
 
+      - name: Add helm repositories
+        run: |
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
+
+      - name: Update chart dependencies
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          helm dependency update ${CHART_PATH}
+
       - name: Update Chart.yaml version
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
@@ -122,16 +132,6 @@ jobs:
           git add ${CHART_PATH}/Chart.yaml ${CHART_PATH}/examples/
           git commit -m "chore(nr-k8s-otel-collector): bump version to $NEW_VERSION"
           git push origin master
-
-      - name: Add helm repositories
-        run: |
-          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
-
-      - name: Update chart dependencies
-        if: steps.next_version.outputs.has_changes == 'true'
-        run: |
-          helm dependency update ${CHART_PATH}
 
       - name: Package chart manually
         if: steps.next_version.outputs.has_changes == 'true'
