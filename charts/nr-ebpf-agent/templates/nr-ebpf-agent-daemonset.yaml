@@ -72,6 +72,10 @@ spec:
             value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
+          {{- if .Values.entityLabels }}
+          - name: NEW_RELIC_LABELS
+            value: "{{- $labels := list -}}{{- range $key, $value := .Values.entityLabels -}}{{- $labels = append $labels (printf "%s:%s" $key $value) -}}{{- end -}}{{ join ";" $labels }}"
+          {{- end }}
           - name: NEW_RELIC_LICENSE_KEY
             valueFrom:
               secretKeyRef:
@@ -133,10 +137,10 @@ spec:
             value: {{ .Release.Namespace }}
           - name: AGENT_SERVICE_NAME
             value: {{ include "nr-ebpf-agent.service.name" . }}
-          - name: APM_DATA_REPORTING
-            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
-          - name: NETWORK_METRICS_REPORTING
-            value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"  
+          - name: REPORT_APM_DATA
+            value: "{{ .Values.reportApmData }}"
+          - name: REPORT_NETWORK_METRICS
+            value: "{{ .Values.reportNetworkMetrics }}"
           - name: LOG_REPORTING
             value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
           # ALL Data filtering configuration
@@ -145,6 +149,12 @@ spec:
             value: "{{ if hasKey .Values.allDataFilters "dropNewRelicBundle" }}{{ .Values.allDataFilters.dropNewRelicBundle }}{{ else }}true{{ end }}"
           - name: DROP_ALL_DATA_FOR_NAMESPACES
             value: "{{ .Values.allDataFilters.dropNamespaces | join "," }}"
+          - name: KEEP_ALL_DATA_FOR_NAMESPACES
+            value: "{{ .Values.allDataFilters.keepNamespaces | join "," }}"
+          - name: DROP_ALL_DATA_FOR_POD_LABELS
+            value: "{{ range $key, $value := .Values.allDataFilters.dropPodLabels }}{{ $key }}={{ $value }},{{ end }}"
+          - name: KEEP_ALL_DATA_FOR_POD_LABELS
+            value: "{{ range $key, $value := .Values.allDataFilters.keepPodLabels }}{{ $key }}={{ $value }},{{ end }}"
           - name: DROP_ALL_DATA_FOR_SERVICE_NAME_REGEX
             value: {{ .Values.allDataFilters.dropServiceNameRegex }}
           - name: KEEP_ALL_DATA_FOR_SERVICE_NAME_REGEX
@@ -152,7 +162,7 @@ spec:
           - name: DROP_ALL_DATA_FOR_APM_AGENT_ENABLED_ENTITY
             value: "{{ if hasKey .Values.allDataFilters "dropApmAgentEnabledEntity" }}{{ .Values.allDataFilters.dropApmAgentEnabledEntity }}{{ else }}false{{ end }}"
           {{- end }}
-          
+
           # APM data filtering configuration
           {{- if .Values.apmDataFilters }}
           - name: DROP_APM_DATA_FOR_APM_AGENT_ENABLED_ENTITY
@@ -201,6 +211,8 @@ spec:
           # If you are using an older configuration file with a newer Helm chart version, these settings will still work.
           # However, please update your configuration to use the new filtering mechanisms.
           # These variables will be removed in a future release.
+          - name: APM_DATA_REPORTING
+            value: "{{ if hasKey .Values "apmDataReporting" }}{{ .Values.apmDataReporting }}{{ else }}true{{ end }}"
           - name: TCP_STATS_REPORTING
             value: "{{ if hasKey .Values "networkMetricsReporting" }}{{ .Values.networkMetricsReporting }}{{ else if hasKey .Values "tcpStatsReporting" }}{{ .Values.tcpStatsReporting }}{{ else }}true{{ end }}"
           - name: DROP_DATA_NEW_RELIC
