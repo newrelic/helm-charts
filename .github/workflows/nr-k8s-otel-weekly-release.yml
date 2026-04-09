@@ -21,7 +21,7 @@ jobs:
       contents: read  # Only needs to read gh-pages branch
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
       - name: Download remote index file and check equality
@@ -39,7 +39,7 @@ jobs:
       contents: write  # Needed to push version bump commit and create releases
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Need full history for git log and chart-releaser
           token: ${{ secrets.K8S_AGENTS_BOT_TOKEN }}  # Use bot token to allow triggering other workflows
