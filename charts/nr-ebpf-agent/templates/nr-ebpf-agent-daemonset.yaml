@@ -141,8 +141,14 @@ spec:
             value: "{{ .Values.reportApmData }}"
           - name: REPORT_NETWORK_METRICS
             value: "{{ .Values.reportNetworkMetrics }}"
-          - name: LOG_REPORTING
-            value: "{{ if hasKey .Values "logReporting" }}{{ .Values.logReporting }}{{ else }}false{{ end }}"
+          - name: REPORT_LOGS
+          {{- if hasKey .Values "reportLogs" }}
+            value: "{{ .Values.reportLogs }}"
+          {{- else if hasKey .Values "logReporting" }}
+            value: "{{ .Values.logReporting }}"
+          {{- else }}
+            value: "false"
+          {{- end }}
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}
           - name: DROP_ALL_DATA_FOR_NEW_RELIC
@@ -195,9 +201,11 @@ spec:
           {{- if .Values.logDataFilters }}
           {{- if .Values.logDataFilters.applicationLogReporting }}
           - name: APPLICATION_LOG_REPORTING_ENABLED
-            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default false }}"
+            value: "{{ .Values.logDataFilters.applicationLogReporting.enabled | default true }}"
           - name: APPLICATION_LOG_FILE_REGEX
             value: {{ .Values.logDataFilters.applicationLogReporting.fileRegex | quote }}
+          - name: APPLICATION_LOG_LEVEL_THRESHOLD
+            value: "{{ .Values.logDataFilters.applicationLogReporting.logLevelThreshold | default "INFO" }}"
           - name: MAX_LOG_SAMPLES_PER_MINUTE
             value: "{{ .Values.logDataFilters.applicationLogReporting.maxSamplesPerMinute | default 10000 }}"
           - name: KEEP_STDSTREAM_LOG_FOR_ENTITY_REGEX

@@ -20,9 +20,8 @@ tableStoreDataLimitMB: "250"
 reportApmData: "auto"
 # -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics. Controls network metrics reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto'
 reportNetworkMetrics: "auto"
-
-# -- Enable log reporting. When enabled, the agent collects and reports logs.
-logReporting: false
+# -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto' (send only when APM is not attached)
+reportLogs: "false"
 
 # -- Custom labels to be added to all entities reported by the eBPF agent.
 # These labels are sent as the NEW_RELIC_LABELS environment variable in the format "key1:value1;key2:value2".
@@ -93,9 +92,11 @@ logDataFilters:
   # -- Application/entity log reporting filters
   applicationLogReporting:
     # -- Enable log reporting for entity monitored by eBPF Agent
-    enabled: false
+    enabled: "true"
     # -- Regex to match log file path to include for entity log reporting
     fileRegex: ".*.log$"
+    # -- Minimum log level to report (e.g., TRACE, DEBUG, INFO, WARN, ERROR). Default: INFO
+    logLevelThreshold: "INFO"
     # -- Maximum number of log samples to collect per minute from an entity.
     # The internal maxSamplesStored is calculated proportionally based on the harvest cycle (5 seconds):
     # maxSamplesStored = maxSamplesPerMinute / (60 / 5) = maxSamplesPerMinute / 12
