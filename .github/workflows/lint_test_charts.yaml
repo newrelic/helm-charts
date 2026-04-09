@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - uses: codespell-project/actions-codespell@master
         with:
           check_filenames: true
@@ -24,7 +24,7 @@ jobs:
       bundle-changed: ${{ steps.changed.outputs.bundle }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -89,7 +89,7 @@ jobs:
     needs: [ lint-test ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -127,7 +127,7 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: azure/setup-helm@v5
         with:
           version: 'v3.19.2'
@@ -175,7 +175,7 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
       - uses: azure/setup-helm@v5
         with:
           version: 'v3.19.2'

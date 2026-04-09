@@ -22,7 +22,7 @@ jobs:
     if: github.ref == 'refs/heads/master' || github.event_name == 'schedule'
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0  # Fetch all history including tags
       - name: Set up Helm
@@ -140,7 +140,7 @@ jobs:
 
       - name: Checkout gh-pages branch
         if: steps.calculate_version.outputs.has_changes == 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: gh-pages
           path: gh-pages-repo
