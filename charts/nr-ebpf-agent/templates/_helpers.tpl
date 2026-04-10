@@ -237,18 +237,35 @@ Generate environment variables for protocols configuration including enabled/dis
 
 {{/*
 Return the image reference for kernel header installer.
-Precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
+On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
+which contains pre-built kernel headers matching the RHCOS kernel.
+Fallback precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
 */}}
 {{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
-{{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
-{{- if not $registry -}}
-  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
-    {{- $registry = .Values.global.images.registry -}}
-  {{- else -}}
-    {{- $registry = "docker.io" -}}
+{{- $dtkImage := "" -}}
+{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" -}}
+  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+  {{- if $is -}}
+    {{- range $is.spec.tags -}}
+      {{- if eq .name "latest" -}}
+        {{- $dtkImage = .from.name -}}
+      {{- end -}}
+    {{- end -}}
   {{- end -}}
 {{- end -}}
-{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
+{{- if $dtkImage -}}
+  {{- $dtkImage -}}
+{{- else -}}
+  {{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
+  {{- if not $registry -}}
+    {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+      {{- $registry = .Values.global.images.registry -}}
+    {{- else -}}
+      {{- $registry = "docker.io" -}}
+    {{- end -}}
+  {{- end -}}
+  {{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
+{{- end -}}
 {{- end }}
 
 {{/*
