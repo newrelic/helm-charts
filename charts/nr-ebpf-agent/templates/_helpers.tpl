@@ -179,6 +179,20 @@ Validate that receiverPort is not less than 1024 (privileged port range).
 {{- end -}}
 
 {{/*
+Return the log level.
+Precedence: local (logLevel) > global (global.verboseLog → DEBUG) > default (INFO)
+*/}}
+{{- define "nr-ebpf-agent.logLevel" -}}
+{{- if .Values.logLevel -}}
+  {{- .Values.logLevel -}}
+{{- else if and .Values.global .Values.global.verboseLog -}}
+  {{- "DEBUG" -}}
+{{- else -}}
+  {{- "INFO" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Pass environment variables to the agent container if tracing a specific protocol is to be disabled.
 */}}
 {{- define "generateTracingEnvVars" -}}
@@ -218,5 +232,98 @@ Generate environment variables for protocols configuration including enabled/dis
   {{- end }}
   {{- end }}
 {{- end }}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the image reference for kernel header installer.
+On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
+which contains pre-built kernel headers matching the RHCOS kernel.
+Fallback precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
+{{- $dtkImage := "" -}}
+{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" -}}
+  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+  {{- if $is -}}
+    {{- range $is.spec.tags -}}
+      {{- if eq .name "latest" -}}
+        {{- $dtkImage = .from.name -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $dtkImage -}}
+  {{- $dtkImage -}}
+{{- else -}}
+  {{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
+  {{- if not $registry -}}
+    {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+      {{- $registry = .Values.global.images.registry -}}
+    {{- else -}}
+      {{- $registry = "docker.io" -}}
+    {{- end -}}
+  {{- end -}}
+  {{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
+{{- end -}}
+{{- end }}
+
+{{/*
+Return the image reference for eBPF agent.
+Precedence: local registry (ebpfAgent.image.registry) > global (global.images.registry) > default (docker.io)
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.image" -}}
+{{- $registry := .Values.ebpfAgent.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.image.repository (include "nr-ebpf-agent.imageTag" .) -}}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for kernel header installer
+Precedence: chart-level (ebpfAgent.kernelHeaderInstaller.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" -}}
+{{- if .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy }}
+  {{- .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for eBPF agent
+Precedence: chart-level (ebpfAgent.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.imagePullPolicy" -}}
+{{- if .Values.ebpfAgent.image.pullPolicy }}
+  {{- .Values.ebpfAgent.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Render imagePullSecrets
+Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
+*/}}
+{{- define "nr-ebpf-agent.imagePullSecrets" -}}
+{{- if .Values.imagePullSecrets }}
+  {{- range .Values.imagePullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullSecrets") .Values.global.images.pullSecrets }}
+  {{- range .Values.global.images.pullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
 {{- end }}
 {{- end }}
