@@ -32,7 +32,7 @@ spec:
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
-      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      {{- with include "newrelic.common.images.renderPullSecrets" ( dict "pullSecrets" (list .Values.pullSecrets) "context" .) }}
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
@@ -42,8 +42,8 @@ spec:
       {{- end }}
       initContainers:
       - name: kernel-header-installer
-        image: {{ include "nr-ebpf-agent.kernelHeaderInstaller.image" . }}
-        imagePullPolicy: {{ include "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" . }}
+        image: {{ include "nr-ebpf-agent.initContainerImage" . }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         command: ["/scripts/install-headers.sh"]
         securityContext:
           privileged: true
@@ -58,8 +58,8 @@ spec:
 
       containers:
       - name: nr-ebpf-agent
-        image: {{ include "nr-ebpf-agent.ebpfAgent.image" . }}
-        imagePullPolicy: {{ include "nr-ebpf-agent.ebpfAgent.imagePullPolicy" . }}
+        image: {{ .Values.ebpfAgent.image.repository }}:{{ include "nr-ebpf-agent.imageTag" . }}
+        imagePullPolicy: {{ .Values.ebpfAgent.image.pullPolicy }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         env:
           - name: PL_HOST_PATH
@@ -69,7 +69,7 @@ spec:
           - name: KUBERNETES_CLUSTER_DOMAIN
             value: "cluster.local"
           - name: NEW_RELIC_LOG_LEVEL
-            value: "{{ include "nr-ebpf-agent.logLevel" . }}"
+            value: "{{ .Values.logLevel }}"
           - name: NEW_RELIC_LOG_FILE_PATH
             value: "{{ .Values.logFilePath }}"
           - name: NEW_RELIC_LICENSE_KEY
