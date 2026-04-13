@@ -104,20 +104,21 @@ spec:
                   --username $HELM_REPO_USERNAME \
                   --password $HELM_REPO_PASSWORD
               {{- end }}
-                echo "Installing agent-control-cd..."
+                echo "Executing helm upgrade --install for the 'agent-control-cd' chart..."
                 helm upgrade --install {{ .Values.agentControlCd.releaseName }} newrelic-agent-control-cd/{{ .Values.agentControlCd.chartName }} \
                   --version {{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
                   --namespace {{ .Release.Namespace }} \
                   -f /tmp/flux-values/agent-control-flux.yaml
+                if [ $? -ne 0 ]; then echo "Failed to install agent-control-cd."; exit 1; fi
               else
-                echo "agent-control-cd HelmRelease already exists, skipping installation, performing upgrade."
+                echo "agent-control-cd HelmRelease already exists, skipping installation, performing upgrade through managed resources."
               fi
 {{- end }}
 {{- /* Create or update resources owned by Agent Control to handle agent-control-cd and agent-control-deployment installations */}}
 {{- if .Values.agentControlDeployment.enabled }}
            {{- /* Create or update resources to handle agent-control-cd release */}}
            {{- if .Values.agentControlCd.enabled }}
-              echo "Creating agent-control-cd resources owned by Agent Control..."
+              echo "Creating resources to allow Agent Control manage the 'agent-control-cd' lifecycle..."
               newrelic-agent-control-cli create-cd-resources \
                 --chart-version={{ .Values.agentControlCd.chartVersion | default .Chart.Annotations.agentControlCdVersion }} \
                 --secrets={{ $cdSecretName }}=agent-control-flux.yaml \
@@ -132,7 +133,7 @@ spec:
             {{- end }}
                 --chart-name={{ .Values.agentControlCd.chartName }} \
                 --release-name={{ .Values.agentControlCd.releaseName }}
-              if [ $? -ne 0 ]; then echo "Failed to create agent-control-cd resources owned by Agent Control."; exit 1; fi
+              if [ $? -ne 0 ]; then echo "Failed to create resources to manage 'agent-control-cd' lifecycle."; exit 1; fi
             {{- end }}
 
 
