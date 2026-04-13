@@ -140,7 +140,7 @@ which contains pre-built kernel headers matching the RHCOS kernel.
 {{- if $dtkImage -}}
   {{- $dtkImage -}}
 {{- else -}}
-  {{- printf "%s:agent-base-image-latest" .Values.ebpfAgent.image.repository -}}
+  {{- include "nr-ebpf-agent.kernelHeaderInstaller.image" . -}}
 {{- end -}}
 {{- end -}}
 
@@ -237,35 +237,19 @@ Generate environment variables for protocols configuration including enabled/dis
 
 {{/*
 Return the image reference for kernel header installer.
-On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
-which contains pre-built kernel headers matching the RHCOS kernel.
-Fallback precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
+Precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
+Note: OpenShift driver-toolkit resolution is handled by initContainerImage which calls this as fallback.
 */}}
 {{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
-{{- $dtkImage := "" -}}
-{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" -}}
-  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
-  {{- if $is -}}
-    {{- range $is.spec.tags -}}
-      {{- if eq .name "latest" -}}
-        {{- $dtkImage = .from.name -}}
-      {{- end -}}
-    {{- end -}}
+{{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
   {{- end -}}
 {{- end -}}
-{{- if $dtkImage -}}
-  {{- $dtkImage -}}
-{{- else -}}
-  {{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
-  {{- if not $registry -}}
-    {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
-      {{- $registry = .Values.global.images.registry -}}
-    {{- else -}}
-      {{- $registry = "docker.io" -}}
-    {{- end -}}
-  {{- end -}}
-  {{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
-{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
 {{- end }}
 
 {{/*
