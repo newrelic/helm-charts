@@ -86,8 +86,11 @@ spec:
                 key: {{ include "newrelic.common.license._customSecretKey" . }}
                 name: {{ include "newrelic.common.license._customSecretName" . }}
                 {{- end }}
+
+          {{- if .Values.tableStoreDataLimitMB }}
           - name: TABLE_STORE_DATA_LIMIT_MB
             value: "{{ .Values.tableStoreDataLimitMB }}"
+          {{- end }}
 
           {{- if .Values.ebpfAgent.downloadedPackagedHeadersPath }}
           - name: DOWNLOADED_PACKAGED_HEADERS_PATH
