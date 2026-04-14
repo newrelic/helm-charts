@@ -9,6 +9,17 @@ customSecretName: ""
 customSecretLicenseKey: ""
 # -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
 region: ""
+# -- Custom OTLP endpoint URL. When set, this takes precedence over the region-based static endpoints.
+customOtlpEndpoint: ""
+# -- Whether TLS is enabled on the OTLP endpoint. Defaults to true.
+# Only overridden when both customOtlpEndpoint and this field are explicitly set.
+customOtlpEndpointTlsEnabled: ""
+# -- Name of the Kubernetes secret containing the CA certificate for the custom OTLP endpoint.
+# Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecretKey.
+customOtlpEndpointTlsCertSecret: ""
+# -- Key within the secret that contains the CA certificate.
+# Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecret.
+customOtlpEndpointTlsCertSecretKey: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: "INFO"
