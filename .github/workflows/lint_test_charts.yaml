@@ -143,6 +143,9 @@ jobs:
       - name: Build nri-bundle dependencies
         run: helm dependency update ./charts/nri-bundle
 
+      - name: Validate Chart.lock is in sync with Chart.yaml
+        run: git diff --exit-code charts/nri-bundle/Chart.lock
+
       - name: Decompress nri-bundle and all its dependencies recursively
         run: |
           while [ `find charts/nri-bundle -name \*.tgz -or -name \*.tar.gz | wc -l` -gt 0 ]; do
