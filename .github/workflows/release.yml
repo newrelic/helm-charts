@@ -106,10 +106,6 @@ jobs:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_SKIP_EXISTING: true
 
-      - name: Update nri-bundle chart dependencies
-        run: |
-          helm dependency update charts/nri-bundle
-
       - name: Release workload charts
         uses: helm/chart-releaser-action@v1.7.0
         env:
