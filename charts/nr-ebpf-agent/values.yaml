@@ -9,20 +9,28 @@ customSecretName: ""
 customSecretLicenseKey: ""
 # -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
 region: ""
+# -- Custom OTLP endpoint URL. When set, this takes precedence over the region-based static endpoints.
+customOtlpEndpoint: ""
+# -- Whether TLS is enabled on the OTLP endpoint. Defaults to true.
+# Only overridden when both customOtlpEndpoint and this field are explicitly set.
+customOtlpEndpointTlsEnabled: true
+# -- Name of the Kubernetes secret containing the CA certificate for the custom OTLP endpoint.
+# Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecretKey.
+customOtlpEndpointTlsCertSecret: ""
+# -- Key within the secret that contains the CA certificate.
+# Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecret.
+customOtlpEndpointTlsCertSecretKey: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: "INFO"
 # -- To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout.
 logFilePath: ""
-# -- The primary lever to control RAM use of the eBPF agent. Specified in MiB.
-tableStoreDataLimitMB: "250"
-# -- Enable APM data reporting. When enabled, the agent collects and reports application performance monitoring data
-apmDataReporting: true
-# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics
-# RENAMED from 'tcpStatsReporting' for clarity. The old name is deprecated but still supported for backward compatibility.
-networkMetricsReporting: true
-# -- Enable log reporting. When enabled, the agent collects and reports logs.
-logReporting: false
+# -- Enable APM data reporting. When enabled, the agent collects and reports application performance monitoring data. Controls APM data reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
+reportApmData: "auto"
+# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics. Controls network metrics reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto'
+reportNetworkMetrics: "auto"
+# -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto' (send only when APM is not attached)
+reportLogs: "false"
 # -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data.
 reportAiMetrics: "false"
 # -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
@@ -47,6 +55,14 @@ allDataFilters:
   # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
   # RENAMED from 'dropDataForNamespaces' for clarity. The old name is deprecated but still supported for backward compatibility.
   dropNamespaces: ["kube-system"]
+  # -- List of Kubernetes namespaces for which all data should be sent by the agent.
+  keepNamespaces: []
+  # -- Pod labels to match for filtering all data. Empty map means no label-based filtering
+  # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  dropPodLabels: {}
+  # -- Pod labels to match for keeping all data. Empty map means no label-based filtering
+  # Example: keepPodLabels: { "app": "frontend", "env": "production" }
+  keepPodLabels: {}
   # -- Define a regex to match k8s service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
   # RENAMED from 'dropServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
   dropServiceNameRegex: ""
@@ -60,8 +76,6 @@ allDataFilters:
 # -- APM data filters configuration
 # Configure filters to drop ebpf APM data based on config provided
 apmDataFilters:
-  # -- Drop eBPF APM data for applications/entities that have NewRelic APM/OTel agents running
-  dropEapmForApmEnabledEntity: true
   # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
   dropPodLabels: {}
@@ -91,9 +105,11 @@ logDataFilters:
   # -- Application/entity log reporting filters
   applicationLogReporting:
     # -- Enable log reporting for entity monitored by eBPF Agent
-    enabled: false
+    enabled: true
     # -- Regex to match log file path to include for entity log reporting
     fileRegex: ".*.log$"
+    # -- Minimum log level to report (e.g., TRACE, DEBUG, INFO, WARN, ERROR). Default: INFO
+    logLevelThreshold: "INFO"
     # -- Maximum number of log samples to collect per minute from an entity.
     # The internal maxSamplesStored is calculated proportionally based on the harvest cycle (5 seconds):
     # maxSamplesStored = maxSamplesPerMinute / (60 / 5) = maxSamplesPerMinute / 12
@@ -118,6 +134,8 @@ protocols:
   global:
     # Controls maximum unlinked spans reported per protocol. Set to 0 to disable limit
     max_unlinked_spans: "100"
+    # Reserves a configurable percentage of the unlinked span quota for error spans, ensuring error visibility even when normal spans arrive first.
+    unlinked_spans_error_quota_percentage: "30"
   http:
     enabled: true
     spans:
