@@ -1,7 +1,4 @@
 ---
-{{- if and (not .Values.customOtlpEndpoint) (ne (toString .Values.customOtlpEndpointTlsEnabled) "") }}
-  {{- fail "customOtlpEndpointTlsEnabled is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or unset customOtlpEndpointTlsEnabled." }}
-{{- end }}
 {{- if or (and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpointTlsCertSecretKey)) (and (not .Values.customOtlpEndpointTlsCertSecret) .Values.customOtlpEndpointTlsCertSecretKey) }}
   {{- fail "Both customOtlpEndpointTlsCertSecret and customOtlpEndpointTlsCertSecretKey must be provided together." }}
 {{- end }}
@@ -127,11 +124,7 @@ spec:
             value: "otlp.nr-data.net:443"
         {{- end }}
           - name: TLS_ENABLED
-        {{- if and .Values.customOtlpEndpoint (ne (toString .Values.customOtlpEndpointTlsEnabled) "") }}
             value: "{{ .Values.customOtlpEndpointTlsEnabled }}"
-        {{- else }}
-            value: "true"
-        {{- end }}
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
           - name: TLS_CERT_PATH
             value: "/etc/otlp-tls/{{ .Values.customOtlpEndpointTlsCertSecretKey }}"
