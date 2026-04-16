@@ -486,6 +486,17 @@ data:
                   - value: 'false'
                     new_value: 'true'
         {{- end }}
+        {{- if (index .Values "kube-state-metrics").enableCustomResourceSamples }}
+          - include: ^kube_customresource_.+$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+        {{- end }}
 
       metricstransform/apiserver:
         transforms:

@@ -101,6 +101,16 @@ jobs:
             fi
           fi
 
+      - name: Add helm repositories
+        run: |
+          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
+
+      - name: Update chart dependencies
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          helm dependency update ${CHART_PATH}
+
       - name: Update Chart.yaml version
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
@@ -110,34 +120,38 @@ jobs:
 
           git diff ${CHART_PATH}/Chart.yaml
 
-      - name: Commit version bump
+      - name: Regenerate examples with new version
+        if: steps.next_version.outputs.has_changes == 'true'
+        run: |
+          make generate-examples
+
+      - name: Commit version bump and regenerated examples
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
           NEW_VERSION="${{ steps.next_version.outputs.version }}"
-          git add ${CHART_PATH}/Chart.yaml
+          git add ${CHART_PATH}/Chart.yaml ${CHART_PATH}/examples/
           git commit -m "chore(nr-k8s-otel-collector): bump version to $NEW_VERSION"
           git push origin master
 
-      - name: Add helm repositories
-        run: |
-          helm repo add newrelic-cdn-helm-charts https://helm-charts.newrelic.com  # for common-library
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts  # for kube-state-metrics
-
-      - name: Prepare chart for release
+      - name: Package chart manually
         if: steps.next_version.outputs.has_changes == 'true'
         run: |
           mkdir -p .cr-release-packages
-          cp -r charts/nr-k8s-otel-collector .cr-release-packages/
+          helm package ${CHART_PATH} -d .cr-release-packages/
 
       - name: Release nr-k8s-otel-collector chart
         if: steps.next_version.outputs.has_changes == 'true'
         uses: helm/chart-releaser-action@v1.7.0
         with:
           charts_dir: .cr-release-packages
+          skip_packaging: true
         env:
           # Use bot token to allow triggering post-release workflow
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
           CR_SKIP_EXISTING: true
+          # Workaround for chart-releaser-action bug: set latest_tag to prevent
+          # "unbound variable" error at line 111 of cr.sh when skip_packaging=true
+          latest_tag: ${{ steps.last_tag.outputs.tag }}
 
       - name: No changes to release
         if: steps.next_version.outputs.has_changes == 'false'
@@ -157,7 +171,7 @@ jobs:
       contents: read  # No write permissions needed for notifications
     steps:
       - name: Notify failure via Slack
-        uses: archive/github-actions-slack@v2.10.1
+        uses: archive/github-actions-slack@v3.1.0
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}

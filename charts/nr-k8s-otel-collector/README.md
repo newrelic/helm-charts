@@ -202,6 +202,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
 | images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
 | images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| kube-state-metrics.enableCustomResourceSamples | bool | `false` | Enable custom KSM-based CRD metrics |
 | kube-state-metrics.enableResourceQuotaSamples | bool | `false` | Enable resource quota data exporting |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
 | kube-state-metrics.metricAnnotationsAllowList | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes annotation keys that will be used in the resources' annotations metric. By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]". Use "*" to include all annotations for a resource type. Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"] |
@@ -252,6 +253,50 @@ to export data to this connector which can then be connected to the New Relic ma
 
 * [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
 * [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
+
+## KSM CRD Metrics (Advanced Use Case)
+
+The New Relic OTEL agent supports scraping custom CRD metrics from `kube-state-metrics`.
+If you have custom resources in your cluster and want to monitor them, and they do not expose a metrics endpoint, you can leverage this feature to scrape metrics about those resources using `kube-state-metrics` and send them to New Relic.
+You should not be using this feature if your custom resource already exposes a metrics endpoint that the OpenTelemetry Collector can scrape directly using the `prometheus` receiver.
+This feature is meant to be used as a workaround for custom resources that do not expose a metrics endpoint, and you want to monitor them using the OpenTelemetry Collector.
+To enable this feature, you need to specify which CRD metrics you want to be scraped by using `kube-state-metrics.customResourceState.config` options in your `values.yaml` file.
+By default, collecting these metrics is disabled. When enabled in `kube-state-metrics.customResourceState.enabled`, you can specify which CRD metrics to be scraped by providing a list of custom resources and their associated labels in `kube-state-metrics.customResourceState.config`.
+
+For example:
+
+```yaml
+kube-state-metrics:
+  customResourceState:
+    enabled: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: karpenter.sh
+              version: v1
+              kind: NodePool
+            labelsFromPath:
+              name: [ metadata, name ]
+              # Inherit all labels from metadata
+              "*": [ metadata, labels ]
+            metrics:
+              - name: "nodepool_nodes_count"
+                help: "Number of nodes managed by this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, nodes ]
+              - name: "nodepool_pods_count"
+                help: "Number of pods on nodes from this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, pods ]
+```
+
+For the complete list of options and more details on how to configure this feature, please refer to the [KSM documentation](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md).
 
 ## Common Errors
 
