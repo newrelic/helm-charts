@@ -135,7 +135,7 @@ spec:
               POD_NAME="${MY_POD_NAME}"
 
               echo "Config watcher started. Monitoring ConfigMap: ${CONFIGMAP_NAME}"
-              echo "Will restart pod: ${POD_NAME} in namespace: ${NAMESPACE}"
+              echo "Will restart pod: ${POD_NAME} in namespace: ${NAMESPACE} when a configuration update is detected"
 
               # Get initial resource version
               LAST_VERSION=$(kubectl get configmap ${CONFIGMAP_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.resourceVersion}')
