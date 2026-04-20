@@ -120,10 +120,69 @@ spec:
           volumeMounts:
             - name: deployment-config
               mountPath: /config
+        {{- if .Values.deployment.externalConfigMap.enabled }}
+        - name: config-watcher
+          image: bitnami/kubectl:latest
+          imagePullPolicy: IfNotPresent
+          command:
+            - /bin/bash
+            - -c
+            - |
+              set -e
+
+              CONFIGMAP_NAME="{{ .Values.deployment.externalConfigMap.name }}"
+              NAMESPACE="{{ .Release.Namespace }}"
+              POD_NAME="${MY_POD_NAME}"
+
+              echo "Config watcher started. Monitoring ConfigMap: ${CONFIGMAP_NAME}"
+              echo "Will restart pod: ${POD_NAME} in namespace: ${NAMESPACE}"
+
+              # Get initial resource version
+              LAST_VERSION=$(kubectl get configmap ${CONFIGMAP_NAME} -n ${NAMESPACE} -o jsonpath='{.metadata.resourceVersion}')
+              echo "Initial ConfigMap resourceVersion: ${LAST_VERSION}"
+
+              # Watch for changes - use --watch instead of --watch-only to get immediate events
+              kubectl get configmap ${CONFIGMAP_NAME} -n ${NAMESPACE} --watch -o jsonpath='{.metadata.resourceVersion}{"\n"}' | while read -r CURRENT_VERSION; do
+                if [ -z "$CURRENT_VERSION" ]; then
+                  continue
+                fi
+
+                echo "Event received. ResourceVersion: ${CURRENT_VERSION}"
+
+                if [ "$CURRENT_VERSION" != "$LAST_VERSION" ]; then
+                  echo "ConfigMap change detected! ResourceVersion changed from ${LAST_VERSION} to ${CURRENT_VERSION}"
+                  echo "Deleting pod ${POD_NAME} to trigger restart..."
+
+                  kubectl delete pod ${POD_NAME} -n ${NAMESPACE} --grace-period=30
+
+                  echo "Pod deletion initiated. Kubernetes will recreate the pod with new config."
+                  exit 0
+                fi
+
+                LAST_VERSION=$CURRENT_VERSION
+              done
+          env:
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            limits:
+              cpu: 100m
+              memory: 128Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+        {{- end }}
       volumes:
         - name: deployment-config
+          {{- if .Values.deployment.externalConfigMap.enabled }}
           configMap:
-            name: {{ include "nrKubernetesOtel.deployment.configMap.fullname" . }}
+            name: {{ .Values.deployment.externalConfigMap.name }}
+          {{- else }}
+          configMap:
+            name: {{ include "nrKubernetesOtel.deployment.fullname" . }}-config
+          {{- end }}
       {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
