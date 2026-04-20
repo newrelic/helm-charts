@@ -120,10 +120,10 @@ spec:
           volumeMounts:
             - name: deployment-config
               mountPath: /config
-        {{- if .Values.deployment.customConfigMap }}
+        {{- if and .Values.deployment.customConfigMap .Values.deployment.configWatcher.enabled }}
         - name: config-watcher
-          image: bitnami/kubectl:latest
-          imagePullPolicy: IfNotPresent
+          image: {{ .Values.deployment.configWatcher.image }}
+          imagePullPolicy: {{ .Values.deployment.configWatcher.imagePullPolicy }}
           command:
             - /bin/bash
             - -c
