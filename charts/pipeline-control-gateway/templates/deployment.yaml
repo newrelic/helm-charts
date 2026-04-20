@@ -120,7 +120,7 @@ spec:
           volumeMounts:
             - name: deployment-config
               mountPath: /config
-        {{- if .Values.deployment.externalConfigMap.enabled }}
+        {{- if .Values.deployment.customConfigMap }}
         - name: config-watcher
           image: bitnami/kubectl:latest
           imagePullPolicy: IfNotPresent
@@ -130,7 +130,7 @@ spec:
             - |
               set -e
 
-              CONFIGMAP_NAME="{{ .Values.deployment.externalConfigMap.name }}"
+              CONFIGMAP_NAME="{{ .Values.deployment.customConfigMap }}"
               NAMESPACE="{{ .Release.Namespace }}"
               POD_NAME="${MY_POD_NAME}"
 
@@ -176,9 +176,9 @@ spec:
         {{- end }}
       volumes:
         - name: deployment-config
-          {{- if .Values.deployment.externalConfigMap.enabled }}
+          {{- if .Values.deployment.customConfigMap }}
           configMap:
-            name: {{ .Values.deployment.externalConfigMap.name }}
+            name: {{ .Values.deployment.customConfigMap }}
           {{- else }}
           configMap:
             name: {{ include "nrKubernetesOtel.deployment.fullname" . }}-config

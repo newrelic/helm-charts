@@ -76,13 +76,9 @@ deployment:
   configMap:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
-  # -- External ConfigMap watcher settings
-  # @default -- See `values.yaml`
-  externalConfigMap:
-    # -- Enable the config watcher sidecar that monitors external ConfigMap changes and restarts the pod
-    enabled: false
-    # -- Name of the external ConfigMap to watch for changes
-    name: "pipeline-control-gateway-config"
+  # -- Custom external ConfigMap name to watch for changes. When set, deploys a config-watcher sidecar that monitors this ConfigMap and restarts the pod on changes. Leave empty to disable.
+  # @default -- `""`
+  customConfigMap: ""
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
