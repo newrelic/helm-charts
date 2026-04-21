@@ -59,6 +59,8 @@ jobs:
         id: version
         run: |
           if [[ "${{ matrix.chart }}" == "agent-control-deployment" ]]; then
+            ## agent-control we use the version of agent-control under the hood instead of the helm version
+            ## cause we need the version  to setup requirements that the agent is supported by the agent-control
             VERSION=$(yq '.image.tag' charts/${{ matrix.chart }}/values.yaml | tr -d '"')
             echo "Extracted version from '.image.tag' in values.yaml: $VERSION"
           else
