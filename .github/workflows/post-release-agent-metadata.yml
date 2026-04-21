@@ -60,7 +60,7 @@ jobs:
         run: |
           if [[ "${{ matrix.chart }}" == "agent-control-deployment" ]]; then
             VERSION=$(yq '.image.tag' charts/${{ matrix.chart }}/values.yaml | tr -d '"')
-            echo "Extracted version from Chart.yaml appVersion: $VERSION"
+            echo "Extracted version from '.image.tag' in values.yaml: $VERSION"
           else
             VERSION="${{ github.event.release.tag_name }}"
             VERSION="${VERSION#${{ matrix.chart }}-}"
