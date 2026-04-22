@@ -76,6 +76,18 @@ deployment:
   configMap:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
+  # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
+  # @default -- `""`
+  customConfigMap: ""
+  # -- Config watcher sidecar settings. Only applies when customConfigMap is set.
+  # @default -- See `values.yaml`
+  configWatcher:
+    # -- Enable the config-watcher sidecar that monitors the custom ConfigMap and restarts the pod on changes
+    enabled: true
+    # -- Config watcher image repository and tag
+    image: bitnami/kubectl:latest
+    # -- Config watcher image pull policy
+    imagePullPolicy: IfNotPresent
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
