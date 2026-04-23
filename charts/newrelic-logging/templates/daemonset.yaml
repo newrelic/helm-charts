@@ -159,6 +159,11 @@ spec:
             - name: fb-db-pvc
               mountPath: /db
             {{- end }}
+            {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
+            - name: lua-scripts
+              mountPath: /fluent-bit/scripts
+              readOnly: true
+            {{- end }}
           {{- if .Values.extraVolumeMounts }}
               {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
           {{- end }}
@@ -166,12 +171,6 @@ spec:
           ports: {{ toYaml .Values.exposedPorts | nindent 12 }}
           {{- end }}
           {{- if .Values.resources }}
-            {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
-
-            - name: lua-scripts
-              mountPath: /fluent-bit/scripts
-              readOnly: true
-            {{- end }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
           {{- end }}
