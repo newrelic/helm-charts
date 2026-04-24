@@ -29,9 +29,9 @@ logFilePath: ""
 reportApmData: "auto"
 # -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics. Controls network metrics reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto'
 reportNetworkMetrics: "auto"
-# -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto' (send only when APM is not attached)
+# -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
 reportLogs: "false"
-# -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data.
+# -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
 reportAiMetrics: "false"
 # -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
 genAICaptureMessageContent: false
@@ -177,9 +177,9 @@ protocols:
       enabled: true
       samplingLatency: "p50"
   kafka:
-    enabled: true
+    enabled: false
     spans:
-      enabled: true
+      enabled: false
       samplingLatency: "p50"
   amqp:
     enabled: true
