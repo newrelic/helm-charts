@@ -53,21 +53,27 @@ allDataFilters:
   # RENAMED from 'dropDataNewRelic' for clarity. The old name is deprecated but still supported for backward compatibility.
   dropNewRelicBundle: true
   # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
-  # RENAMED from 'dropDataForNamespaces' for clarity. The old name is deprecated but still supported for backward compatibility.
+  # Use either dropNamespaces or keepNamespaces to filter namespaces, not both. If both are provided, keepNamespaces takes precedence.
   dropNamespaces: ["kube-system"]
   # -- List of Kubernetes namespaces for which all data should be sent by the agent.
+  # Use either dropNamespaces or keepNamespaces to filter namespaces, not both. If both are provided, keepNamespaces takes precedence.
   keepNamespaces: []
   # -- Pod labels to match for filtering all data. Empty map means no label-based filtering
   # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  # Use either dropPodLabels or keepPodLabels to filter based on pod labels, not both. If both are provided, keepPodLabels takes precedence.
   dropPodLabels: {}
   # -- Pod labels to match for keeping all data. Empty map means no label-based filtering
   # Example: keepPodLabels: { "app": "frontend", "env": "production" }
+  # Use either dropPodLabels or keepPodLabels to filter based on pod labels, not both. If both are provided, keepPodLabels takes precedence.
   keepPodLabels: {}
   # -- Define a regex to match k8s service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
-  # RENAMED from 'dropServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
+  # Use either dropServiceNameRegex or keepServiceNameRegex to filter service names, not both.
+  # If both are provided, keepServiceNameRegex takes precedence.
   dropServiceNameRegex: ""
   # -- This config acts as a bypass for the dropServiceNameRegex config.
   # Service names that match this regex will not have their data dropped by the dropServiceNameRegex.
+  # Use either dropServiceNameRegex or keepServiceNameRegex to filter service names, not both.
+  # If both are provided, keepServiceNameRegex takes precedence.
   # RENAMED from 'allowServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
   keepServiceNameRegex: ""
   # -- Drop all data for applications/entities that have NewRelic/OTEL APM agents running
@@ -177,9 +183,9 @@ protocols:
       enabled: true
       samplingLatency: "p50"
   kafka:
-    enabled: false
+    enabled: true
     spans:
-      enabled: false
+      enabled: true
       samplingLatency: "p50"
   amqp:
     enabled: true
