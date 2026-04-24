@@ -131,12 +131,13 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | kubernetesClusterDomain | string | `"cluster.local"` | Kubernetes cluster domain. |
 | labels | object | `{}` | Additional labels for chart objects. |
 | licenseKey | string | `""` | The license key to use. Can be configured with `global.licenseKey` |
-| logDataFilters.applicationReporting.enabled | bool | `true` | Enable logs collection from the entities matching the filters below. |
-| logDataFilters.applicationReporting.fileRegex | string | `".*\\.log$"` | Regex to match log file names to include. |
-| logDataFilters.applicationReporting.keepFileEntityRegex | string | `".*"` | Regex to match entity names to keep logs from log files. |
-| logDataFilters.applicationReporting.keepStdEntityRegex | string | `".*"` | Regex to match entity names to keep logs from stdout and stderr. |
-| logDataFilters.applicationReporting.maxSamplePerMinute | int | `10000` | Maximum number of log samples to collect per minute from an entity. |
-| logReporting | bool | `true` | Enable log reporting. When enabled, the agent collects and reports logs from entities. |
+| reportLogs | string | `false` | Enable log reporting. When enabled, the agent collects and reports logs from entities. Accepted values: 'true' (always send), 'false' (never send) and 'auto' (send only when APM is not attached)|
+| logDataFilters.applicationLogReporting.enabled | string | `true` | Enable logs collection from the entities matching the filters below. |
+| logDataFilters.applicationLogReporting.fileRegex | string | `".*\\.log$"` | Regex to match log file names to include. |
+| logDataFilters.applicationLogReporting.logLevelThreshold | string | "INFO | Minimum log level to report (e.g., TRACE, DEBUG, INFO, WARN, ERROR). Default: INFO |
+| logDataFilters.applicationLogReporting.keepFileEntityRegex | string | `".*"` | Regex to match entity names to keep logs from log files. |
+| logDataFilters.applicationLogReporting.keepStdEntityRegex | string | `".*"` | Regex to match entity names to keep logs from stdout and stderr. |
+| logDataFilters.applicationLogReporting.maxSamplePerMinute | int | `10000` | Maximum number of log samples to collect per minute from an entity. |
 | networkMetricsDataFilter.dropPodLabels | object | `{}` | Pod labels to match for filtering Network metrics data. Empty map means no label-based filtering. (Example: dropPodLabels: `{ "app": "frontend", "env": "production" }`) |
 | networkMetricsDataFilter.dropEntityName | list | `[]` | List of entity names to drop Network metrics data for |
 | networkMetricsDataFilter.keepEntityName | list | `[]` | List of entity names to always keep Network metrics data. By default all entities are kept/enabled. This config bypasses `dropEntityName` filter. |
@@ -175,7 +176,6 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | protocols.redis.spans.enabled | bool | `false` |  |
 | protocols.redis.spans.samplingLatency | string | `""` |  |
 | stirlingSources | string | `"socket_tracer,tcp_stats"` | The source connectors (and data export scripts) to enable. Note that socket_tracer tracks http, mysql, redis, mongodb, amqp, cassandra, dns, and postgresql while tcp_stats tracks TCP metrics. |
-| tableStoreDataLimitMB | string | `"250"` | The primary lever to control RAM use of the eBPF agent. Specified in MiB. |
 | tolerations | list | `[]` | Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations` |
 
 ## Common Errors
