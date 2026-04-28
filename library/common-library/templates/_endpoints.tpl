@@ -1,5 +1,5 @@
 {{/*Endpoint Lookup
-This funcion provides a region awear lookup for new relic endpoints.
+This function provides a region awear lookup for new relic endpoints.
 It first checks for an endpoint override in the following order:
 1. .Values.<key>
 2. .Values.global.<key>
