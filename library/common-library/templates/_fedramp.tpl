@@ -4,7 +4,6 @@
 {{- end -}}
 
 
-
 {{- /* Return FedRAMP value directly ready to be templated */ -}}
 {{- define "newrelic.common.fedramp.enabled.value" -}}
   {{- include "newrelic.common.fedramp.enabled" . | default "false" -}}
