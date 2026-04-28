@@ -21,13 +21,17 @@ example:
 
   {{- $val := $root -}}
   {{- range $keys -}}
-    {{- if $val -}}
+    {{- if or ($val) (kindIs "bool" $val) -}}
       {{- $val = index $val . -}}
+    {{- else -}}
+      {{- $val = "" -}}
     {{- end -}}
   {{- end -}}
 
-  {{- if $val -}}
+  {{- if or ($val) -}}
     {{- $val -}}
+  {{- else if (kindIs "bool" $val) -}}
+    {{/* If we get here, we know $val is a falsy bool, so let's return a falsy statement */}}
   {{- else if $root.global -}}
     {{- include "newrelic.common.resolve" (dict "ctx" $root.global "key" .key) -}}
   {{- end -}}
