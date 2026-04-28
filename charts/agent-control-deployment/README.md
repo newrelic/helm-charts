@@ -103,6 +103,12 @@ agents:
 			<td>The name of the Kubernetes Secret resource containing the credentials.</td>
 		</tr>
 		<tr>
+			<td>config.cdEnabled</td>
+			<td>bool</td>
+			<td>true</td>
+			<td>If disabled agentControl will assume that no CD is available. I.e. no flux object will be created and flux will not be upgraded or monitored.</td>
+		</tr>
+		<tr>
 			<td>config.cdReleaseName</td>
 			<td>string</td>
 			<td>agent-control-cd</td>

@@ -72,6 +72,7 @@ cluster name, licenses, and custom attributes
 {{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
 {{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.config.acRemoteUpdate "cd_remote_update" .Values.config.cdRemoteUpdate) -}}
 {{- $k8s = mustMerge $k8s (dict "ac_release_name" .Release.Name "cd_release_name" .Values.config.cdReleaseName) -}}
+{{- $k8s = mustMerge $k8s (dict "cd_enabled" .Values.config.cdEnabled) -}}
 {{- $authSecret := .Values.config.authSecret | default dict -}}
 {{- $sName := $authSecret.secretName | default "agent-control-auth" -}}
 {{- $sKey  := $authSecret.secretKeyName | default "private_key" -}}
