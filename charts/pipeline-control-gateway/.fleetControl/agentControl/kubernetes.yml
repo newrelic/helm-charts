@@ -1,0 +1,122 @@
+namespace: newrelic
+name: com.newrelic.pipeline_control_gateway
+version: 0.1.0
+variables:
+  k8s:
+    chart_values:
+      gateway:
+        description: "Gateway chart values"
+        type: yaml
+        required: false
+        default: { }
+      global:
+        description: "Global values for the chart"
+        type: yaml
+        required: false
+        default: { }
+    chart_version:
+      description: "gateway chart version"
+      type: string
+      required: true
+    chart_name:
+      description: "pipeline-control-gateway chart name"
+      type: string
+      required: false
+      default: "pipeline-control-gateway"
+    chart_repository:
+      url:
+        description: "chart repository url"
+        type: string
+        required: false
+        default: "https://helm-charts.newrelic.com"
+        variants:
+          ac_config_field: "chart_repository_urls"
+          values: ["https://helm-charts.newrelic.com"]
+      secret_reference:
+        description: "HelmRepository secret reference (secretRef)"
+        type: yaml
+        required: false
+        default: null
+      certificate_secret_reference:
+        description: "HelmRepository certificate secret reference (certSecretRef)"
+        type: yaml
+        required: false
+        default: null
+deployment:
+  # See com.newrelic.infrastructure Agent type for description of fields.
+  k8s:
+    health:
+      interval: 30s
+      initial_delay: 30s
+    objects:
+      repository:
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: HelmRepository
+        metadata:
+          name: ${nr-sub:agent_id}
+          namespace: ${nr-ac:namespace}
+        spec:
+          interval: 30m
+          provider: generic
+          url: ${nr-var:chart_repository.url}
+          secretRef: ${nr-var:chart_repository.secret_reference}
+          certSecretRef: ${nr-var:chart_repository.certificate_secret_reference}
+      values:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: values-${nr-sub:agent_id}
+          namespace: ${nr-ac:namespace}
+        stringData:
+          default.yaml: |
+            global:
+              licenseKey: ${nr-env:NR_LICENSE_KEY}
+              cluster: ${nr-env:NR_CLUSTER_NAME}
+              nrStaging: ${nr-env:NR_STAGING}
+              lowDataMode: ${nr-env:NR_LOW_DATA_MODE}
+              verboseLog: ${nr-env:NR_VERBOSE_LOG}
+          values.yaml: |
+            ${nr-var:chart_values.gateway}
+          global.yaml: |
+            global:
+              ${nr-var:chart_values.global | indent 2}
+      release:
+        apiVersion: helm.toolkit.fluxcd.io/v2
+        kind: HelmRelease
+        metadata:
+          name: ${nr-sub:agent_id}
+          namespace: ${nr-ac:namespace}
+        spec:
+          targetNamespace: ${nr-ac:namespace_agents}
+          releaseName: ${nr-sub:agent_id}
+          interval: 30s
+          chart:
+            spec:
+              chart: ${nr-var:chart_name}
+              version: ${nr-var:chart_version}
+              reconcileStrategy: ChartVersion
+              sourceRef:
+                kind: HelmRepository
+                name: ${nr-sub:agent_id}
+                namespace: ${nr-ac:namespace}
+              interval: 3m
+          install:
+            disableWait: true
+            disableWaitForJobs: true
+            disableTakeOwnership: true
+            createNamespace: true
+          upgrade:
+            disableWait: true
+            disableWaitForJobs: true
+            disableTakeOwnership: true
+            cleanupOnFail: true
+          valuesFrom:
+            - kind: Secret
+              name: values-${nr-sub:agent_id}
+              valuesKey: default.yaml
+            - kind: Secret
+              name: values-${nr-sub:agent_id}
+              valuesKey: values.yaml
+            - kind: Secret
+              name: values-${nr-sub:agent_id}
+              valuesKey: global.yaml

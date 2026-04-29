@@ -1,11 +1,147 @@
 {{- if .Values.agentControlCd.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
+kind: ClusterRole
 metadata:
   annotations:
     helm.sh/hook: post-install,post-upgrade
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
     helm.sh/hook-weight: "10"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job") }}
+rules:
+  # Namespaces - Required to create Flux namespace and agents namespace
+  - apiGroups: [ "" ]
+    resources: [ namespaces ]
+    verbs: [ get, list, create, patch, update ]
+
+  # CRDs - Required to install Flux CRDs
+  # Note: 'delete' removed as installation job only creates/updates CRDs, never deletes them.
+  # Uninstall job has separate permissions for deletion.
+  - apiGroups: [ apiextensions.k8s.io ]
+    resources: [ customresourcedefinitions ]
+    verbs: [ get, list, create, update, patch ]
+
+  # Flux Resources - Required for Agent Control to create HelmRepository and HelmRelease
+  # Note: Only helmrepositories and helmreleases are needed. The installation job creates these
+  # resources via newrelic-agent-control-cli (create-cd-resources and install-agent-control commands).
+  # Other Flux resources (helmcharts, gitrepositories, kustomizations, etc.) are not used by Agent Control.
+  # 'delete' removed as installation job only creates/updates these resources, never deletes them.
+  # Uninstall job has separate permissions for deletion.
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+    resources:
+      - helmrepositories
+      - helmreleases
+    verbs: [ get, list, watch, create, update, patch ]
+
+  # RBAC - Required to create ClusterRoles for Flux controllers
+  # Security Note: The 'bind' and 'escalate' verbs are required for bootstrapping Flux.
+  # These permissions allow the installation job to create ClusterRoles and ClusterRoleBindings
+  # for Flux controllers (helm-controller, source-controller) when installing the agent-control-cd
+  # chart via 'helm install'. This is a known security trade-off in Kubernetes bootstrapping scenarios.
+  # Mitigation: This job is temporary (deleted after success via hook-delete-policy: hook-succeeded)
+  # and only runs during post-install/post-upgrade hooks, minimizing the attack surface.
+  # Reference: https://kubernetes.io/docs/reference/access-authn-authz/rbac/#privilege-escalation-prevention-and-bootstrapping
+  # Note: 'delete' removed as installation job only creates/updates RBAC, never deletes.
+  # Uninstall job has separate permissions for deletion.
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources:
+      - clusterroles
+      - clusterrolebindings
+    verbs: [ get, list, create, update, patch, bind, escalate ]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "10"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job") }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  # Secrets - Required for Flux and Agent Control to store credentials
+  # Keeping get, list, watch as Flux needs to check if secrets exist before creating
+  - apiGroups: [ "" ]
+    resources: [ secrets ]
+    verbs: [ get, list, watch, create, update, patch, delete ]
+
+  # ConfigMaps - Required for Flux and Agent Control configuration
+  - apiGroups: [ "" ]
+    resources: [ configmaps ]
+    verbs: [ get, list, watch, create, update, patch, delete ]
+
+  # ServiceAccounts - Required to create Flux controller service accounts
+  - apiGroups: [ "" ]
+    resources: [ serviceaccounts ]
+    verbs: [ get, list, create, update, patch, delete ]
+
+  # RBAC - Required to create Roles for Flux controllers (namespace-scoped)
+  # Security Note: The 'bind' and 'escalate' verbs are required for bootstrapping Flux.
+  # These permissions allow the installation job to create Roles and RoleBindings for Flux
+  # controllers within the release namespace when installing the agent-control-cd chart.
+  # This is a known security trade-off in Kubernetes bootstrapping scenarios.
+  # Mitigation: Scope is limited to the release namespace only (not cluster-wide).
+  # The job is temporary and deleted after success (hook-delete-policy: hook-succeeded).
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources:
+      - roles
+      - rolebindings
+    verbs: [ get, list, create, update, patch, delete, bind, escalate ]
+
+  # Deployments - Required for Flux controllers and agent workloads
+  - apiGroups: [ apps ]
+    resources: [ deployments, daemonsets, statefulsets ]
+    verbs: [ get, list, watch, create, update, patch, delete ]
+
+  # ReplicaSets - Required for Flux controllers
+  - apiGroups: [ apps ]
+    resources: [ replicasets ]
+    verbs: [ get, list, watch ]
+
+  # Pods - Required to monitor Flux controllers and agents
+  - apiGroups: [ "" ]
+    resources: [ pods, pods/log ]
+    verbs: [ get, list, watch ]
+
+  # Jobs - Required for Bootstrap installation/uninstallation jobs
+  - apiGroups: [ batch ]
+    resources: [ jobs ]
+    verbs: [ get, list, watch, create, update, patch, delete ]
+
+  # Endpoints - Required for Flux service endpoint discovery
+  - apiGroups: [ "" ]
+    resources: [ endpoints ]
+    verbs: [ get, list, watch ]
+
+  # Services - Required for Flux notification webhook
+  - apiGroups: [ "" ]
+    resources: [ services ]
+    verbs: [ get, list, create, update, patch, delete ]
+
+  # Events - Required for Flux to emit events
+  - apiGroups: [ "" ]
+    resources: [ events ]
+    verbs: [ get, list, watch, create, patch ]
+
+  # Leases - Required for Flux leader election
+  - apiGroups: [ coordination.k8s.io ]
+    resources: [ leases ]
+    verbs: [ get, list, create, update, patch, delete ]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "11"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job") }}
@@ -16,8 +152,131 @@ subjects:
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: cluster-admin
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job") }}
   apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "11"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job") }}
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "install-job") }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-install-job") }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-20"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+rules:
+  # Namespaces - Required to delete agent-control namespace
+  - apiGroups: [ "" ]
+    resources: [ namespaces ]
+    verbs: [ get, list, delete ]
+
+  # CRDs - Required to clean up Flux CRDs created during installation
+  - apiGroups: [ apiextensions.k8s.io ]
+    resources: [ customresourcedefinitions ]
+    verbs: [ get, list, delete ]
+
+  # Flux Resources - Required to clean up HelmRepository and HelmRelease
+  # Note: Limited to only the resource types that the installation job creates
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+    resources:
+      - helmrepositories
+      - helmreleases
+    verbs: [ get, list, delete ]
+
+  # RBAC - Required to clean up ClusterRoles and ClusterRoleBindings for Flux controllers
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources:
+      - clusterroles
+      - clusterrolebindings
+    verbs: [ get, list, delete ]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-20"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+  namespace: {{ .Release.Namespace }}
+rules:
+  # Secrets - Required to clean up Flux and Agent Control credentials
+  - apiGroups: [ "" ]
+    resources: [ secrets ]
+    verbs: [ get, list, delete ]
+
+  # ConfigMaps - Required to clean up Flux and Agent Control configuration
+  - apiGroups: [ "" ]
+    resources: [ configmaps ]
+    verbs: [ get, list, delete ]
+
+  # ServiceAccounts - Required to clean up Flux controller service accounts
+  - apiGroups: [ "" ]
+    resources: [ serviceaccounts ]
+    verbs: [ get, list, delete ]
+
+  # RBAC - Required to clean up Roles and RoleBindings for Flux controllers (namespace-scoped)
+  - apiGroups: [ rbac.authorization.k8s.io ]
+    resources:
+      - roles
+      - rolebindings
+    verbs: [ get, list, delete ]
+
+  # Deployments - Required to clean up Flux controllers and agent workloads
+  - apiGroups: [ apps ]
+    resources: [ deployments, daemonsets, statefulsets ]
+    verbs: [ get, list, delete ]
+
+  # ReplicaSets - Required to clean up Flux controllers
+  - apiGroups: [ apps ]
+    resources: [ replicasets ]
+    verbs: [ get, list ]
+
+  # Jobs - Required to clean up Bootstrap installation jobs
+  - apiGroups: [ batch ]
+    resources: [ jobs ]
+    verbs: [ get, list, delete ]
+
+  # Services - Required to clean up Flux notification webhook
+  - apiGroups: [ "" ]
+    resources: [ services ]
+    verbs: [ get, list, delete ]
+
+  # Endpoints - Required for cleanup
+  - apiGroups: [ "" ]
+    resources: [ endpoints ]
+    verbs: [ get, list ]
+
+  # Leases - Required to clean up Flux leader election leases
+  - apiGroups: [ coordination.k8s.io ]
+    resources: [ leases ]
+    verbs: [ get, list, delete ]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
@@ -25,7 +284,7 @@ metadata:
   annotations:
     helm.sh/hook: pre-delete
     helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
-    helm.sh/hook-weight: "-20"
+    helm.sh/hook-weight: "-19"
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
@@ -36,6 +295,26 @@ subjects:
     namespace: {{ .Release.Namespace }}
 roleRef:
   kind: ClusterRole
-  name: cluster-admin
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  annotations:
+    helm.sh/hook: pre-delete
+    helm.sh/hook-delete-policy: before-hook-creation,hook-succeeded
+    helm.sh/hook-weight: "-19"
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
+  namespace: {{ .Release.Namespace }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" .Release.Name "suffix" "uninstall-job") }}
+    namespace: {{ .Release.Namespace }}
+roleRef:
+  kind: Role
+  name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "flux-uninstall-job") }}
   apiGroup: rbac.authorization.k8s.io
 {{- end -}}

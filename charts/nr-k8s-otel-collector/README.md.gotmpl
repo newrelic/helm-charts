@@ -22,6 +22,41 @@ helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
+## Release Schedule
+
+This chart follows a **weekly release cadence** with automatic version bumping based on conventional commits
+
+- **Stable Releases**: Published every Monday at 12pm UTC (4am PT)
+- **Version Bumping**: Automatic based on commit types since last release
+  - `feat:` → Minor version bump (e.g., 0.10.13 → 0.11.0)
+  - `fix:` or `chore:` → Patch version bump (e.g., 0.10.13 → 0.10.14)
+  - `feat!:`, `fix!:`, or `BREAKING CHANGE:` → Major version bump (e.g., 0.10.13 → 1.0.0)
+- **Nightly Builds**: Available daily for testing (see below)
+
+## Nightly Chart Builds
+
+For testing and early access to features, nightly chart builds are published daily at 4am UTC (8pm PT).
+
+**Note:** Nightly builds are experimental and intended for testing only. Use stable releases for production environments.
+
+**Nightly Repository:** `https://newrelic.github.io/helm-charts/nightly/`
+
+### Nightly Version Format
+
+Nightly versions follow the pattern: `X.Y.Z-nightly.YYYYMMDD.SHA`
+
+Example: `0.10.14-nightly.20260317.a1b2c3d`
+
+- `X.Y.Z`: The calculated next version based on commits
+- `YYYYMMDD`: Build date
+- `SHA`: Short commit hash for traceability
+
+
+### Nightly Build Behavior
+
+- **No Changes = No Build**: If there are no commits since the last release, the nightly build is skipped
+- **Retention**: Nightly builds are kept for 14 days
+
 {{ template "chart.sourcesSection" . }}
 
 ## Confirm installation
@@ -129,6 +164,50 @@ to export data to this connector which can then be connected to the New Relic ma
 
 * [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
 * [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
+
+## KSM CRD Metrics (Advanced Use Case)
+
+The New Relic OTEL agent supports scraping custom CRD metrics from `kube-state-metrics`.
+If you have custom resources in your cluster and want to monitor them, and they do not expose a metrics endpoint, you can leverage this feature to scrape metrics about those resources using `kube-state-metrics` and send them to New Relic.
+You should not be using this feature if your custom resource already exposes a metrics endpoint that the OpenTelemetry Collector can scrape directly using the `prometheus` receiver.
+This feature is meant to be used as a workaround for custom resources that do not expose a metrics endpoint, and you want to monitor them using the OpenTelemetry Collector.
+To enable this feature, you need to specify which CRD metrics you want to be scraped by using `kube-state-metrics.customResourceState.config` options in your `values.yaml` file.
+By default, collecting these metrics is disabled. When enabled in `kube-state-metrics.customResourceState.enabled`, you can specify which CRD metrics to be scraped by providing a list of custom resources and their associated labels in `kube-state-metrics.customResourceState.config`.
+
+For example:
+
+```yaml
+kube-state-metrics:
+  customResourceState:
+    enabled: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: karpenter.sh
+              version: v1
+              kind: NodePool
+            labelsFromPath:
+              name: [ metadata, name ]
+              # Inherit all labels from metadata
+              "*": [ metadata, labels ]
+            metrics:
+              - name: "nodepool_nodes_count"
+                help: "Number of nodes managed by this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, nodes ]
+              - name: "nodepool_pods_count"
+                help: "Number of pods on nodes from this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, pods ]
+```
+
+For the complete list of options and more details on how to configure this feature, please refer to the [KSM documentation](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md).
 
 ## Common Errors
 

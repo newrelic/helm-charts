@@ -1,0 +1,70 @@
+# Validates that the toolkitImage tag value in agent-control-bootstrap matches
+# the image tag value in agent-control-deployment version
+name: Agent Control Version check
+
+on:
+  pull_request:
+    paths:
+      - 'charts/agent-control-bootstrap/**'
+      - '.github/workflows/agent-control-version-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  agent-control-version-check:
+    name: AC version check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get agent-control-bootstrap appVersion
+        id: bootstrap-version
+        run: |
+          APP_VERSION=$(yq eval '.appVersion' charts/agent-control-bootstrap/Chart.yaml)
+          echo "Agent Control Bootstrap appVersion: ${APP_VERSION}"
+          echo "app_version=${APP_VERSION}" >> $GITHUB_OUTPUT
+          
+      - name: Get toolkitImage tag from bootstrap
+        id: toolkit-tag
+        run: |
+          TOOLKIT_TAG=$(yq eval '.toolkitImage.tag' charts/agent-control-bootstrap/values.yaml)
+          echo "Toolkit Image tag from bootstrap: ${TOOLKIT_TAG}"
+          echo "toolkit_tag=${TOOLKIT_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Checkout agent-control-deployment tag
+        run: |
+          TAG_NAME="agent-control-deployment-${{ steps.bootstrap-version.outputs.app_version }}"
+          echo "Checking out tag: ${TAG_NAME}"
+          git fetch --tags
+          git checkout "tags/${TAG_NAME}"
+
+      - name: Get image tag from deployment
+        id: deployment-tag
+        run: |
+          DEPLOYMENT_TAG=$(yq eval '.image.tag' charts/agent-control-deployment/values.yaml)
+          echo "Image tag from deployment: ${DEPLOYMENT_TAG}"
+          echo "deployment_tag=${DEPLOYMENT_TAG}" >> $GITHUB_OUTPUT
+
+      - name: Validate version consistency
+        run: |
+          TOOLKIT_TAG="${{ steps.toolkit-tag.outputs.toolkit_tag }}"
+          DEPLOYMENT_TAG="${{ steps.deployment-tag.outputs.deployment_tag }}"
+
+          # Remove quotes if present
+          TOOLKIT_TAG=$(echo "${TOOLKIT_TAG}" | tr -d '"')
+          DEPLOYMENT_TAG=$(echo "${DEPLOYMENT_TAG}" | tr -d '"')
+
+          echo "Comparing versions:"
+          echo "  Toolkit tag (bootstrap):  ${TOOLKIT_TAG}"
+          echo "  Image tag (deployment):   ${DEPLOYMENT_TAG}"
+
+          if [ "${TOOLKIT_TAG}" != "${DEPLOYMENT_TAG}" ]; then
+            echo "❌ ERROR: Version mismatch detected!"
+            echo "The toolkitImage.tag in agent-control-bootstrap (${TOOLKIT_TAG}) does not match"
+            echo "the image.tag in agent-control-deployment-${{ steps.bootstrap-version.outputs.app_version }} (${DEPLOYMENT_TAG})"
+            exit 1
+          fi
+
+          echo "✅ SUCCESS: Versions match (${TOOLKIT_TAG})"
