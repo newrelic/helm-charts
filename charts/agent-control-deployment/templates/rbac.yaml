@@ -6,6 +6,8 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "resources") }}
 rules:
+  ###
+  # AC uses config-maps to handle internal state and also supports them as resources that can be part of an Agent Type
   - apiGroups: [ "" ]
     resources: [ "configmaps" ]
     verbs:
@@ -16,6 +18,7 @@ rules:
       - deletecollection
       - patch
       - update
+      - watch
   - apiGroups: [ "" ]
     resources: [ "namespaces" ]
     verbs:
