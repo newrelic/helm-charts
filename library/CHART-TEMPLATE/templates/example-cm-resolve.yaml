@@ -7,7 +7,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 data:
   {{/* Using lookup With Default  */}}
-  custom: {{ include "newrelic.common.resolve_or" (dict "ctx" . "key" "custom"  "default" "myDefaultData") -}}
+  custom: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "custom"  "default" "myDefaultData") -}}
 
   {{/* Look up only will return nothing if value not found */}}
   proxy: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "proxy") -}}
@@ -22,7 +22,7 @@ data:
   nested_three_deep: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "nested.secondLevel.value") -}}
 
   {{/* Example of using lookup with default with a nested path */}}
-  nested_two_deep_with_default: {{ include "newrelic.common.resolve_or" (dict "ctx" . "key" "nested.value" "default" "defaultNestedValue") -}}
+  nested_two_deep_with_default: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "nested.value" "default" "defaultNestedValue") -}}
 
   {{/* Example of looking up a nested path that doesn't exist... (Test that this doesn't cause errors) */}}
   nested_value_DNE: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "nested.blah.value.DNE") -}}

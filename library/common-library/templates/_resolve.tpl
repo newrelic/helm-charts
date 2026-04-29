@@ -8,10 +8,12 @@ and to enforce a consistent override pattern across the charts.
 Hierarchy should be: values → global values → defaults.
 
 use:
-{{- include "newrelic.common.resolve" (dict "ctx" . "key" "myKey") -}}
+{{- include "newrelic.common.resolve" (dict "ctx" . "key" "myKey" ) -}}
+{{- include "newrelic.common.resolve" (dict "ctx" . "key" "myKey" "default" "defaulValue" ) -}}
 
-example:
+examples:
 {{- include "newrelic.common.resolve" (dict "ctx" . "key" "collector_endpoint") -}}
+{{- include "newrelic.common.resolve" (dict "ctx" . "key" "collector_endpoint" "default" "some value") -}}
 */}}
 
 {{- define "newrelic.common.resolve" -}}
@@ -19,25 +21,22 @@ example:
   {{- $keys := splitList "." .key -}}
   {{- $root := $ctx.Values | default $ctx -}}
 
-  {{- $val := $root -}}
+  {{- $value := $root -}}
   {{- range $keys -}}
-    {{- if or ($val) (kindIs "bool" $val) -}}
-      {{- $val = index $val . -}}
+    {{- if ($value) -}}
+      {{- $value = index $value . -}}
     {{- else -}}
-      {{- $val = "" -}}
+      {{- $value = "" -}}
     {{- end -}}
   {{- end -}}
 
-  {{- if or ($val) -}}
-    {{- $val -}}
-  {{- else if (kindIs "bool" $val) -}}
-    {{/* If we get here, we know $val is a falsy bool, so let's return a falsy statement */}}
+  {{- if ($value) -}}
+    {{- $value -}}
+  {{- else if (kindIs "bool" $value) -}}
+    {{/* If we get here, we know $value is a falsy bool, so let's return a falsy statement */}}
   {{- else if $root.global -}}
     {{- include "newrelic.common.resolve" (dict "ctx" $root.global "key" .key) -}}
+  {{- else if .default -}}
+    .default
   {{- end -}}
-{{- end -}}
-
-
-{{- define "newrelic.common.resolve_or" -}}
-  {{- include "newrelic.common.resolve" (dict "ctx" .ctx "key" .key) | default .default -}}
 {{- end -}}

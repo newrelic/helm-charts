@@ -125,23 +125,15 @@ tests:
         region: US
     asserts:
       - equal:
-          path: data.is_us
-          value: Yes
-      - equal:
-          path: data.is_eu
-          value: NO
-      - equal:
-          path: data.is_jp
-          value: NO
-      - equal:
-          path: data.is_gov
-          value: NO
-      - equal:
-          path: data.is_stg
-          value: NO
-      - equal:
-          path: data.is_dev
-          value: NO
+          path: data
+          value:
+            region: US
+            is_us: Yes
+            is_eu: NO
+            is_jp: NO
+            is_gov: NO
+            is_stg: NO
+            is_dev: NO
 
 
 
@@ -151,23 +143,15 @@ tests:
         region: EU
     asserts:
       - equal:
-          path: data.is_us
-          value: NO
-      - equal:
-          path: data.is_eu
-          value: Yes
-      - equal:
-          path: data.is_jp
-          value: NO
-      - equal:
-          path: data.is_gov
-          value: NO
-      - equal:
-          path: data.is_stg
-          value: NO
-      - equal:
-          path: data.is_dev
-          value: NO
+          path: data
+          value:
+            region: EU
+            is_us: NO
+            is_eu: Yes
+            is_jp: NO
+            is_gov: NO
+            is_stg: NO
+            is_dev: NO
 
   - it: Convenience Functions work for JP
     set:
@@ -175,23 +159,15 @@ tests:
         region: JP
     asserts:
       - equal:
-          path: data.is_us
-          value: NO
-      - equal:
-          path: data.is_eu
-          value: NO
-      - equal:
-          path: data.is_jp
-          value: Yes
-      - equal:
-          path: data.is_gov
-          value: NO
-      - equal:
-          path: data.is_stg
-          value: NO
-      - equal:
-          path: data.is_dev
-          value: NO
+          path: data
+          value:
+            region: JP
+            is_us: NO
+            is_eu: NO
+            is_jp: Yes
+            is_gov: NO
+            is_stg: NO
+            is_dev: NO
 
   - it: Convenience Functions work for Gov
     set:
@@ -199,23 +175,15 @@ tests:
         enabled: true
     asserts:
       - equal:
-          path: data.is_us
-          value: NO
-      - equal:
-          path: data.is_eu
-          value: NO
-      - equal:
-          path: data.is_jp
-          value: NO
-      - equal:
-          path: data.is_gov
-          value: Yes
-      - equal:
-          path: data.is_stg
-          value: NO
-      - equal:
-          path: data.is_dev
-          value: NO
+          path: data
+          value:
+            region: GOV
+            is_us: NO
+            is_eu: NO
+            is_jp: NO
+            is_gov: Yes
+            is_stg: NO
+            is_dev: NO
 
   - it: Convenience Functions work for STG
     set:
@@ -223,43 +191,27 @@ tests:
         nrStaging: true
     asserts:
       - equal:
-          path: data.is_us
-          value: NO
-      - equal:
-          path: data.is_eu
-          value: NO
-      - equal:
-          path: data.is_jp
-          value: NO
-      - equal:
-          path: data.is_gov
-          value: NO
-      - equal:
-          path: data.is_stg
-          value: Yes
-      - equal:
-          path: data.is_dev
-          value: NO
+          path: data
+          value:
+            region: STG
+            is_us: NO
+            is_eu: NO
+            is_jp: NO
+            is_gov: NO
+            is_stg: Yes
+            is_dev: NO
 
   - it: Convenience Functions work for Dev
     set:
       region: dev
     asserts:
       - equal:
-          path: data.is_us
-          value: NO
-      - equal:
-          path: data.is_eu
-          value: NO
-      - equal:
-          path: data.is_jp
-          value: NO
-      - equal:
-          path: data.is_gov
-          value: NO
-      - equal:
-          path: data.is_stg
-          value: NO
-      - equal:
-          path: data.is_dev
-          value: Yes
+          path: data
+          value:
+            region: DEV
+            is_us: NO
+            is_eu: NO
+            is_jp: NO
+            is_gov: NO
+            is_stg: NO
+            is_dev: Yes

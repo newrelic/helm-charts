@@ -503,34 +503,34 @@ Simply put, the functions in this tpl check to see if a value is set at the root
 
 ### `newrelic.common.resolve`
 Looks up the supplied path/value at the root level of the values.yaml, and then at the global level. 
-If none can be found returns nothing. 
+If nothing is found, the function will either return nothing which can be used as a falsy condition, or will return a default value if one was supplied. 
 
-the `key` field of the dict is the path to the value that you wish to lookup. 
+The `key` field of the dict is the path to the value that you wish to lookup. 
 It can be a single key like `proxy` or a nested path like `some.nested.value`.
 Due to this function's built in null check, it doesn't matter if the full path exists in the values.yaml or not, it will not throw an error.
+However, if the path resolves to a non-indexable type before the end of the path is reached, it will throw an error.
 
 usage: Non-nested value
+this will search for `.Values.proxy` and `.Values.global.proxy`.
 ```mustache
 proxy: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "proxy") -}}
 ```
-this will search for `.Values.proxy` and `.Values.global.proxy`.
 
 usage: Nested value
+this will search for `.Values.some.nested.value` and `.Values.global.some.nested.value`
 ```mustache
 my_value: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "some.nested.value") -}}
 ```
-this will search for `.Values.some.nested.value` and `.Values.global.some.nested.value`
 
-### `newrelic.common.resolve_or`
-This function behaves exactly the same as `newrelic.common.resolve` but it returns a default value if the key is not found at the root or global level.
-The following two examples are equivalent, the only difference is that the second one uses `newrelic.common.resolve_or` to return a default value instead of an empty string when the key is not found.
+usage: With default value
+The following two examples are equivalent, the only difference is that the second one uses `newrelic.common.resolve` to return a default value instead of an empty string when the key is not found.
+```mustache
+my_value: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "custom"  "default" "myDefaultData") -}}
+``` 
 
 ```mustache
 my_value: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "custom.value") | default "inline-default" -}}
 ```
-```mustache
-my_value: {{ include "newrelic.common.resolve_or" (dict "ctx" . "key" "custom"  "default" "myDefaultData") -}}
-``` 
 
 ## _insights.tpl
 ### `newrelic.common.insightsKey.secretName` and ### `newrelic.common.insightsKey.secretKeyName`
