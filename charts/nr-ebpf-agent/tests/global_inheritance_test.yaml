@@ -18,7 +18,7 @@ tests:
     asserts:
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[7].value
+          path: spec.template.spec.containers[0].env[6].value
           value: test-cluster
 
   # =============================================================================
@@ -79,7 +79,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/newrelic/newrelic-ebpf-agent:1.3.0
+          value: docker.io/newrelic/newrelic-ebpf-agent:1.4.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: should use global.images.registry for ebpfAgent image
@@ -120,7 +120,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.3.0
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.4.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: prefers local registry over global registry for kernel header installer
@@ -155,7 +155,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.local.registry.com/my-org/ebpf-agent:1.3.0
+          value: my.local.registry.com/my-org/ebpf-agent:1.4.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: supports air-gapped registry with only global registry configured
@@ -172,7 +172,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:1.3.0
+          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:1.4.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   # =============================================================================
@@ -479,11 +479,11 @@ tests:
     asserts:
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[9].name
+          path: spec.template.spec.containers[0].env[8].name
           value: OTLP_ENDPOINT
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[9].value
+          path: spec.template.spec.containers[0].env[8].value
           value: staging-otlp.nr-data.net:443
 
   - it: should use EU endpoint when global.eu is true
@@ -495,11 +495,11 @@ tests:
     asserts:
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[9].name
+          path: spec.template.spec.containers[0].env[8].name
           value: OTLP_ENDPOINT
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[9].value
+          path: spec.template.spec.containers[0].env[8].value
           value: otlp.eu01.nr-data.net:443
 
   - it: should use default endpoint by default
@@ -508,11 +508,11 @@ tests:
     asserts:
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[9].name
+          path: spec.template.spec.containers[0].env[8].name
           value: OTLP_ENDPOINT
       - template: templates/nr-ebpf-agent-daemonset.yaml
         equal:
-          path: spec.template.spec.containers[0].env[9].value
+          path: spec.template.spec.containers[0].env[8].value
           value: otlp.nr-data.net:443
 
   # =============================================================================
@@ -535,7 +535,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.3.0
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.4.0
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.imagePullSecrets
@@ -576,7 +576,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: local.registry.com/my-org/ebpf-agent:1.3.0
+          value: local.registry.com/my-org/ebpf-agent:1.4.0
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.imagePullSecrets
