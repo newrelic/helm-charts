@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-example-cm-endpoint-lookup
+  namespace: {{ .Release.Namespace }}
+data:
+  {{/* Otel has endpoints for US, EU, JP, GOV, and STG  */}}
+  otel: "{{- include "newrelic.common.otlp_endpoint" . -}}"
+
+  {{/* Some usecases require more than a domain, here's an example where we look up the base domain and append a path to it */}}
+  endpoint_with_path: "{{- include "newrelic.common.otlp_endpoint" . -}}/v1/supplementary/path"

@@ -5,4 +5,11 @@ metadata:
   name: {{ include "newrelic.common.naming.fullname" . }}-examples-region
   namespace: {{ .Release.Namespace }}
 data:
-  region: {{ include "newrelic.common.region" . }}
+  region: "{{ include "newrelic.common.region" . }}"
+
+  is_us: "{{ if include "newrelic.common.region.is_us" . }}Yes{{ else }}NO{{ end }}"
+  is_eu: "{{ if include "newrelic.common.region.is_eu" . }}Yes{{ else }}NO{{ end }}"
+  is_jp: "{{ if include "newrelic.common.region.is_jp" . }}Yes{{ else }}NO{{ end }}"
+  is_gov: "{{ if include "newrelic.common.region.is_gov" . }}Yes{{ else }}NO{{ end }}"
+  is_stg: "{{ if include "newrelic.common.region.is_stg" . }}Yes{{ else }}NO{{ end }}"
+  is_dev: "{{ if include "newrelic.common.region.is_dev" . }}Yes{{ else }}NO{{ end }}"
