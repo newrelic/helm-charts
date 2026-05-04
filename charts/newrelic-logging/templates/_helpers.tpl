@@ -173,6 +173,8 @@ https://staging-log-api.newrelic.com/log/v1
 {{ .Values.endpoint -}}
 {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "eu" -}}
 https://log-api.eu.newrelic.com/log/v1
+{{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "jp" -}}
+https://log-api.jp.newrelic.com/log/v1
 {{- else -}}
 https://log-api.newrelic.com/log/v1
 {{- end -}}
@@ -256,6 +258,8 @@ staging-metric-api.newrelic.com
 {{ .Values.metricsEndpoint -}}
 {{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "eu" -}}
 metric-api.eu.newrelic.com
+{{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "jp" -}}
+metric-api.jp.newrelic.com
 {{- else -}}
 metric-api.newrelic.com
 {{- end -}}
