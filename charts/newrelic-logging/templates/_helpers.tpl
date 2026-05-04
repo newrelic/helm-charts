@@ -27,6 +27,7 @@ chart: {{ .Chart.Name }}-{{ .Chart.Version | replace "+" "_" }}
 heritage: {{.Release.Service }}
 release: {{.Release.Name }}
 app.kubernetes.io/name: {{ template "newrelic-logging.name" . }}
+helm.sh/chart: {{ include "newrelic-logging.chart" . }}
 {{- end }}
 
 {{/*
