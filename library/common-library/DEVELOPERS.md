@@ -398,6 +398,41 @@ data:
 ```
 
 
+## _endpoints.tpl
+### `newrelic.common.<endpointName>Endpoint`
+This is a collection of functions that returns the correct endpoint based on the region that the chart is being deployed to.
+It will first check if the user has set a customer endpoint in their chart, if not it will check the region and return the correct endpoint for that region.
+If no endpoint can be found it will call `fail` and abort the installation.
+
+Each function has a corresponding value that it checks to be used as an override for the endpoint.
+For example `insights_collector_endpoint` will check the following value in the values.yaml:
+```yaml
+insightsCollectorEndpoint: "https://custom-endpoint.com"  
+global:
+  insightsCollectorEndpoint: "https://custom-endpoint.com"
+```
+
+Usage:
+```mustache
+otlphttp/newrelic:
+  endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
+```
+
+| Available Functions                              | values.yaml value             |
+|--------------------------------------------------|-------------------------------|
+| `newrelic.common.collector_endpoint`             | `collectorEndpoint`           |
+| `newrelic.common.infra_api_endpoint`             | `infraApiEndpoint`            |
+| `newrelic.common.insights_collector_endpoint`    | `insightsCollectorEndpoint`   |
+| `newrelic.common.log_api_endpoint`               | `logApiEndpoint`              |
+| `newrelic.common.metric_api_endpoint`            | `metricApiEndpoint`           |
+| `newrelic.common.opamp_endpoint`                 | `opampEndpoint`               |
+| `newrelic.common.otlp_endpoint`                  | `otlpEndpoint`                |
+| `newrelic.common.public_keys_endpoint`           | `publicKeysEndpoint`          |
+| `newrelic.common.system_identity_oauth_endpoint` | `systemIdentityOauthEndpoint` |
+| `newrelic.common.synthetics_horde_endpoint`      | `syntheticsHordeEndpoint`     |
+| `newrelic.common.trace_api_endpoint`             | `traceApiEndpoint`            |
+
+
 
 ## _fedramp.tpl
 ### `newrelic.common.fedramp.enabled`
@@ -460,7 +495,42 @@ You just must have a template with these two lines:
 {{- include "newrelic.common.license.secret" . -}}
 ```
 
+## _resolve.tpl
+This file was created out of necessity. Every Helm chart in this repo has at least one instance of writing their own logic of this function.
+Most charts rewrite this logic multiple times throughout their templates. 
+By taking advantage of this helper function, we can avoid bloat and make our charts easier to read and maintain.
+Simply put, the functions in this tpl check to see if a value is set at the root level of the values.yaml, and at the global level, and does so in the correct order.
 
+### `newrelic.common.resolve`
+Looks up the supplied path/value at the root level of the values.yaml, and then at the global level. 
+If nothing is found, the function will either return nothing which can be used as a falsy condition, or will return a default value if one was supplied. 
+
+The `key` field of the dict is the path to the value that you wish to lookup. 
+It can be a single key like `proxy` or a nested path like `some.nested.value`.
+Due to this function's built in null check, it doesn't matter if the full path exists in the values.yaml or not, it will not throw an error.
+However, if the path resolves to a non-indexable type before the end of the path is reached, it will throw an error.
+
+usage: Non-nested value
+this will search for `.Values.proxy` and `.Values.global.proxy`.
+```mustache
+proxy: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "proxy") -}}
+```
+
+usage: Nested value
+this will search for `.Values.some.nested.value` and `.Values.global.some.nested.value`
+```mustache
+my_value: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "some.nested.value") -}}
+```
+
+usage: With default value
+The following two examples are equivalent, the only difference is that the second one uses `newrelic.common.resolve` to return a default value instead of an empty string when the key is not found.
+```mustache
+my_value: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "custom"  "default" "myDefaultData") -}}
+``` 
+
+```mustache
+my_value: {{ include "newrelic.common.resolve" (dict "ctx" . "key" "custom.value") | default "inline-default" -}}
+```
 
 ## _insights.tpl
 ### `newrelic.common.insightsKey.secretName` and ### `newrelic.common.insightsKey.secretKeyName`
@@ -548,23 +618,15 @@ You just must have a template with these two lines:
 
 
 
-## _region.tpl
-### `newrelic.common.region.validate`
-Given a string, return a normalized name for the region if valid.
-
-This function does not need the context of the chart, only the value to be validated. The region returned
-honors the region [definition of the newrelic-client-go implementation](https://github.com/newrelic/newrelic-client-go/blob/cbe3e4cf2b95fd37095bf2ffdc5d61cffaec17e2/pkg/region/region_constants.go#L8-L21)
-so (as of 2024/09/14) it returns the region as "US", "EU", "Staging", or "Local".
-
-In case the region provided does not match these 4, the helper calls `fail` and abort the templating.
-
-Usage:
-```mustache
-{{ include "newrelic.common.region.validate" "us" }}
-```
+## _region.tpl 
+Odds are that you should not be using any of the functions in this TPL.
+Only use the functions in this TPL if you need to do something other than changing an endpoint URL based on the region.
+If you only need to know the region to update an endpoint see the documentation for `_endpoints.tpl` instead.
 
 ### `newrelic.common.region`
-It reads global and local variables for `region`:
+Consider using the convenience functions newrelic.common.region.is_<region> instead of pulling the region directly.
+
+`newrelic.common.region` reads global and local variables for `region`:
 ```yaml
 global:
   region:  # Note that this can be empty (nil) or "" (empty string)
@@ -578,15 +640,46 @@ This function gives protection so it enforces users to give the license key as a
 `values.yaml` or specify a global or local `region` value. To understand how the `region` value
 works, read the documentation of `newrelic.common.region.validate`.
 
-The function will change the region from US, EU or Staging based of the license key and the
-`nrStaging` toggle. Whichever region is computed from the license/toggle can be overridden by
-the `region` value.
+The function will change the region from US, EU, JP, GOV, STG, or DEV based of the license key, the
+`nrStaging` toggle and the `fedramp.enabled` toggle. Whichever region is computed from the license/toggles can be overridden by `region` or `global.region`.
 
 Usage:
 ```mustache
 {{ include "newrelic.common.region" . }}
 ```
 
+### `newrelic.common.region.validate`
+> You should not have a use case where you need to call this function directly
+
+Given a string, return a normalized name for the region if valid.
+
+This function does not need the context of the chart, only the value to be validated. The region returned will be one of `US`, `EU`, `JP`, `GOV`, `STG` or `DEV`.
+
+In case the region provided does not match these 4, the helper calls `fail` and abort the templating.
+
+Usage:
+```mustache
+{{ include "newrelic.common.region.validate" "us" }}
+```
+
+### `newrelic.common.region.is_<region>` (e.g. `newrelic.common.region.is_us`, `newrelic.common.region.is_`, etc.)
+This TPL has a number of helper functions to help you check if you're in a specific region.
+* `newrelic.common.region.is_us` -> checks if the region is for the United States
+* `newrelic.common.region.is_eu` -> checks if the region is for the European Union
+* `newrelic.common.region.is_jp` -> checks if the region is for Japan
+* `newrelic.common.region.is_gov` -> checks if the region is for a fedramp enabled account
+* `newrelic.common.region.is_stg` -> checks if the region is Staging
+* `newrelic.common.region.is_dev` -> checks if the region is for development
+
+These helper functions prevent us from having to copy and paste the same conditionals across all of our charts. 
+Usage:
+```mustache
+{{ if include "newrelic.common.region.is_us" . }}
+  {{/* Do Something. */}}
+{{ else }}
+  {{/* Do something else. */}}
+{{ end }}
+```
 
 
 ## _low-data-mode.tpl
@@ -607,7 +700,6 @@ Usage:
 ```mustache
 {{ include "newrelic.common.lowDataMode" . }}
 ```
-
 
 
 ## _privileged.tpl

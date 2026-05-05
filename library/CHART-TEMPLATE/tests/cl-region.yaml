@@ -20,7 +20,7 @@ tests:
           path: data.region
           value: US
 
-  - it: Detects an EU license key
+  - it: Detects EU license key
     set:
       global: null
       region: null
@@ -29,6 +29,16 @@ tests:
       - equal:
           path: data.region
           value: EU
+
+  - it: Detects Japan license key
+    set:
+      global: null
+      region: null
+      licenseKey: jpxNotARelLicenceKeyFFFFNRAL
+    asserts:
+      - equal:
+          path: data.region
+          value: JP
 
   - it: Set region (globally)
     set:
@@ -47,15 +57,32 @@ tests:
           path: data.region
           value: EU
 
+  - it: Set Japan region (globally)
+    set:
+      global:
+        region: JP
+    asserts:
+      - equal:
+          path: data.region
+          value: JP
+
+  - it: Set Japan region (locally)
+    set:
+      region: JP
+    asserts:
+      - equal:
+          path: data.region
+          value: JP
+
   - it: Overrides global region with the local one
     set:
       global:
         region: EU
-      region: local
+      region: DEV
     asserts:
       - equal:
           path: data.region
-          value: Local
+          value: DEV
 
   - it: Honors staging flag
     set:
@@ -63,4 +90,128 @@ tests:
     asserts:
       - equal:
           path: data.region
-          value: Staging
+          value: STG
+
+  - it: Honors global staging flag
+    set:
+      global.nrStaging: true
+    asserts:
+      - equal:
+          path: data.region
+          value: STG
+
+  - it: Honors fedramp flag
+    set:
+      fedramp:
+        enabled: true
+    asserts:
+      - equal:
+          path: data.region
+          value: GOV
+
+  - it: Honors global fedramp flag
+    set:
+      global:
+        fedramp:
+          enabled: true
+    asserts:
+      - equal:
+          path: data.region
+          value: GOV
+
+  - it: Convenience Functions work for US
+    set:
+      global:
+        region: US
+    asserts:
+      - equal:
+          path: data
+          value:
+            region: US
+            is_us: Yes
+            is_eu: NO
+            is_jp: NO
+            is_gov: NO
+            is_stg: NO
+            is_dev: NO
+
+
+
+  - it: Convenience Functions work for EU
+    set:
+      global:
+        region: EU
+    asserts:
+      - equal:
+          path: data
+          value:
+            region: EU
+            is_us: NO
+            is_eu: Yes
+            is_jp: NO
+            is_gov: NO
+            is_stg: NO
+            is_dev: NO
+
+  - it: Convenience Functions work for JP
+    set:
+      global:
+        region: JP
+    asserts:
+      - equal:
+          path: data
+          value:
+            region: JP
+            is_us: NO
+            is_eu: NO
+            is_jp: Yes
+            is_gov: NO
+            is_stg: NO
+            is_dev: NO
+
+  - it: Convenience Functions work for Gov
+    set:
+      fedramp:
+        enabled: true
+    asserts:
+      - equal:
+          path: data
+          value:
+            region: GOV
+            is_us: NO
+            is_eu: NO
+            is_jp: NO
+            is_gov: Yes
+            is_stg: NO
+            is_dev: NO
+
+  - it: Convenience Functions work for STG
+    set:
+      global:
+        nrStaging: true
+    asserts:
+      - equal:
+          path: data
+          value:
+            region: STG
+            is_us: NO
+            is_eu: NO
+            is_jp: NO
+            is_gov: NO
+            is_stg: Yes
+            is_dev: NO
+
+  - it: Convenience Functions work for Dev
+    set:
+      region: dev
+    asserts:
+      - equal:
+          path: data
+          value:
+            region: DEV
+            is_us: NO
+            is_eu: NO
+            is_jp: NO
+            is_gov: NO
+            is_stg: NO
+            is_dev: Yes

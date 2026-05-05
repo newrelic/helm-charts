@@ -1,0 +1,68 @@
+suite: test endpoints tpl
+templates:
+  - templates/example-cm-endpoint-lookup.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Should return US endpoint by default
+    asserts:
+      - equal:
+          path: data.otel
+          value: https://otlp.nr-data.net
+
+  - it: Should append path to endpoint
+    asserts:
+      - equal:
+          path: data.endpoint_with_path
+          value: https://otlp.nr-data.net/v1/supplementary/path
+
+  - it: Should return EU endpoint
+    set:
+      licenseKey: eu01NotARelLicenceKeyFFFFNRAL
+    asserts:
+      - equal:
+          path: data.otel
+          value: https://otlp.eu01.nr-data.net
+
+  - it: Should return Japan endpoint
+    set:
+      licenseKey: jpx1NotARelLicenceKeyFFFFNRAL
+    asserts:
+      - equal:
+          path: data.otel
+          value: https://otlp.jp.nr-data.net
+
+  - it: Should return Gov endpoint
+    set:
+      fedramp:
+        enabled: true
+    asserts:
+      - equal:
+          path: data.otel
+          value: https://gov-otlp.nr-data.net
+
+  - it: Should return staging endpoint
+    set:
+      nrStaging: true
+    asserts:
+      - equal:
+          path: data.otel
+          value: https://staging-otlp.nr-data.net
+
+  - it: Should should fail if region supplied that doesn't have an endpoint
+    set:
+      region: dev
+    asserts:
+      - failedTemplate:
+          errorMessage: "This chart does not have support for the region provided 'DEV'. Please either supply an override URL via .Values.otlpEndpoint or .Values.global.otlpEndpoint, or set a different region."
+
+
+  - it: Should use override endpoint if provided even if region doesn't have a supported endpoint
+    set:
+      otlpEndpoint: https://my-custom-endpoint.com
+      region: dev
+    asserts:
+      - equal:
+          path: data.otel
+          value: https://my-custom-endpoint.com
