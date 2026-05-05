@@ -910,3 +910,35 @@ Usage:
 ```mustache
 {{ include "newrelic.common.verboseLog.valueAsInt" . }}
 ```
+
+
+## _notes.tpl
+These templates provide reusable messages that parent charts can include in their NOTES.txt files when using this chart as a subchart.
+Since Helm only displays the parent chart's NOTES.txt file, these templates allow the common library to provide important messages
+to end users through parent chart notes.
+
+### `newrelic.common.notes.all`
+Returns both warning and informational messages in a formatted output.
+This is a convenience function that combines both `warnings` and `info` sections.
+
+Usage:
+```mustache
+{{- /* In parent chart NOTES.txt */}}
+Thank you for installing {{ .Chart.Name }}.
+
+{{- include "newrelic.common.notes.all" . }}
+```
+
+### `newrelic.common.notes.warnings`
+Returns warning messages about configuration issues that users should be aware of after installation.
+This includes warnings about region computation failures, missing configuration, and other potential issues.
+
+The function checks multiple conditions and returns formatted warning messages only when issues are detected.
+
+Usage:
+```mustache
+{{- /* In parent chart NOTES.txt */}}
+Thank you for installing {{ .Chart.Name }}.
+
+{{- include "newrelic.common.notes.warnings" . }}
+```
