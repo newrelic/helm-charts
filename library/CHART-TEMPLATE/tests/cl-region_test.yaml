@@ -128,6 +128,7 @@ tests:
           path: data
           value:
             region: US
+            region_with_interposed_check: US
             is_us: Yes
             is_eu: NO
             is_jp: NO
@@ -146,6 +147,7 @@ tests:
           path: data
           value:
             region: EU
+            region_with_interposed_check: EU
             is_us: NO
             is_eu: Yes
             is_jp: NO
@@ -162,6 +164,7 @@ tests:
           path: data
           value:
             region: JP
+            region_with_interposed_check: JP
             is_us: NO
             is_eu: NO
             is_jp: Yes
@@ -178,6 +181,7 @@ tests:
           path: data
           value:
             region: GOV
+            region_with_interposed_check: GOV
             is_us: NO
             is_eu: NO
             is_jp: NO
@@ -194,6 +198,7 @@ tests:
           path: data
           value:
             region: STG
+            region_with_interposed_check: STG
             is_us: NO
             is_eu: NO
             is_jp: NO
@@ -209,9 +214,29 @@ tests:
           path: data
           value:
             region: DEV
+            region_with_interposed_check: DEV
             is_us: NO
             is_eu: NO
             is_jp: NO
             is_gov: NO
             is_stg: NO
             is_dev: Yes
+
+  - it: Should should fail if region can not be resolved
+    set:
+      customSecretLicenseKey: my-secret-license-key
+    asserts:
+      - failedTemplate:
+          errorMessage: "This Helm Chart is not able to compute the region. You must specify a .global.region or .region if the license is set using a custom secret."
+
+  - it: Field with fail_if_unresolvable should resolve to same value as field without it
+    set:
+      global:
+        region: JP
+    asserts:
+      - equal:
+          path: data.region
+          value: JP
+      - equal:
+          path: data.region_with_interposed_check
+          value: JP

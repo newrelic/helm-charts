@@ -648,6 +648,25 @@ Usage:
 {{ include "newrelic.common.region" . }}
 ```
 
+### `newrelic.common.region.or_us`
+Is exactly the same as `newrelic.common.region` except it won't throw if the user is using custom secrets for license keys. 
+If the user is using custom secrets and has not set a region, this function will default to returning "US".
+
+Usage:
+```mustache
+{{ include "newrelic.common.region.or_us" . }}
+```
+
+### `newrelic.common.region.fail_if_unresolvable`
+This is the function that `newrelic.common.region` uses to enforce resolvability of the region. 
+This function throws if the user is using a custom secret for the license key has not set region or `global.region` and is not using `nrStaging` or `fedramp.enabled` toggles.
+If you have a use-case where you want to fail installation due to being unsure what the region is, you can call this function directly. 
+
+Usage:
+```mustache
+otlpEndpoint: {{- include "newrelic.common.region.fail_if_unresolvable" . -}}{{- include "newrelic.common.otlp_endpoint" . -}}
+```
+
 ### `newrelic.common.region.validate`
 > You should not have a use case where you need to call this function directly
 

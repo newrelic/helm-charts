@@ -5,10 +5,7 @@ metadata:
   name: {{ include "newrelic.common.naming.fullname" . }}-examples-region
   namespace: {{ .Release.Namespace }}
 data:
-  region: "{{ include "newrelic.common.region" . }}"
-
-  {{/*This is to show an example of using region.fail_if_unresolvable */}}
-  region_with_interposed_check: "{{ include "newrelic.common.region.fail_if_unresolvable" . }}{{ include "newrelic.common.region" . }}"
+  region: "{{ include "newrelic.common.region.or_us" . }}"
 
   is_us: "{{ if include "newrelic.common.region.is_us" . }}Yes{{ else }}NO{{ end }}"
   is_eu: "{{ if include "newrelic.common.region.is_eu" . }}Yes{{ else }}NO{{ end }}"
