@@ -167,14 +167,10 @@ Returns lowDataMode
 Returns logsEndpoint
 */}}
 {{- define "newrelic-logging.logsEndpoint" -}}
-{{- if (include "newrelic.nrStaging" .) -}}
-https://staging-log-api.newrelic.com/log/v1
-{{- else if .Values.endpoint -}}
+{{- if .Values.endpoint -}}
 {{ .Values.endpoint -}}
-{{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "eu" -}}
-https://log-api.eu.newrelic.com/log/v1
 {{- else -}}
-https://log-api.newrelic.com/log/v1
+{{ include "newrelic.common.log_api_endpoint" . }}/log/v1
 {{- end -}}
 {{- end -}}
 
@@ -250,14 +246,10 @@ Returns fluentbit config to collect and forward its metrics to New Relic
 Returns metricsHost
 */}}
 {{- define "newrelic-logging.metricsHost" -}}
-{{- if (include "newrelic.nrStaging" .) -}}
-staging-metric-api.newrelic.com
-{{- else if .Values.metricsEndpoint -}}
+{{- if .Values.metricsEndpoint -}}
 {{ .Values.metricsEndpoint -}}
-{{- else if eq (substr 0 2 (include "newrelic-logging.licenseKey" .)) "eu" -}}
-metric-api.eu.newrelic.com
 {{- else -}}
-metric-api.newrelic.com
+{{- include "newrelic.common.metric_api_endpoint" . -}}
 {{- end -}}
 {{- end -}}
 
