@@ -4,6 +4,8 @@ on:
   push:
     branches:
       - master
+    paths-ignore:
+      - 'charts/nr-k8s-otel-collector/**'
   # Weekly nri-bundle release
   schedule:
     - cron: "0 12 * * 2" # Tuesday at 12pm UTC or 5am PT
@@ -92,6 +94,10 @@ jobs:
         run: |
           rm ./library/CHART-TEMPLATE/Chart.yaml
 
+      - name: Remove nr-k8s-otel-collector from automatic release
+        run: |
+          rm ./charts/nr-k8s-otel-collector/Chart.yaml
+
       - name: Release library charts
         uses: helm/chart-releaser-action@v1.7.0
         with:
@@ -115,7 +121,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Notify failure via Slack
-        uses: archive/github-actions-slack@v2.10.1
+        uses: archive/github-actions-slack@v3.1.0
         with:
           slack-bot-user-oauth-access-token: ${{ secrets.K8S_AGENTS_SLACK_TOKEN }}
           slack-channel: ${{ secrets.K8S_AGENTS_SLACK_CHANNEL }}

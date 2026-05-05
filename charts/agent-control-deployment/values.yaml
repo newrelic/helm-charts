@@ -19,8 +19,7 @@ subAgentsNamespace: "newrelic"
 image:
   registry:
   repository: newrelic/newrelic-agent-control
-  # @default It defaults to `appVersion` in `Chart.yaml`.
-  tag: ""
+  tag: "1.12.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
@@ -52,8 +51,11 @@ podAnnotations: {}
 podLabels: {}
 
 # -- Resource limits to be added to all pods created by the integration.
-# @default -- `{}`
-resources: {}
+resources:
+  requests:
+    memory: "15Mi"
+  limits:
+    memory: "100Mi"
 
 # -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
 priorityClassName: ""
@@ -159,6 +161,14 @@ config:
   # -- The name of the release for the CD chart.
   # @default -- agent-control-cd
   cdReleaseName: agent-control-cd
+  # -- Configuration for the authentication secret needed for OpAMP connection.
+  authSecret:
+    # -- (string) The name of the Kubernetes Secret resource containing the credentials.
+    # @default -- "agent-control-auth"
+    secretName: agent-control-auth
+    # -- (string) The specific key within the Secret data map that holds the actual private key content.
+    # @default -- "private_key"
+    secretKeyName: private_key
 
   # -- List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories.
   #
@@ -172,6 +182,42 @@ config:
     enabled: true
     # -- Specify a fleet_id to automatically connect the Agent Control to an existing fleet.
     fleet_id: ""
+
+  # -- List of external secrets providers configurations.
+  #
+  # Agent Control supports the following external secrets providers types:
+  # - vault
+  # @raw
+  # k8s secrets and env vars are used by default.
+  #
+  # ```yaml
+  # secretsProviders:
+  #   # -- External secret provider type
+  #   vault:
+  #     # -- List of sources from where to get secrets
+  #     sources:
+  #       # -- Source name (chosen by the user)
+  #       sourceA:
+  #         # -- URL of the vault server
+  #         url: urlA
+  #         # -- Token to access the vault
+  #         token: tokenA
+  #         # -- Vault engine version
+  #         engine: kv1
+  #       sourceB:
+  #         url: urlB
+  #         token: tokenB
+  #         engine: kv2
+  #     # -- Client timeout for requests to the vault
+  #     client_timeout: 10s
+  #     # -- Proxy settings for the vault
+  #     # -- See `proxy` value in that same file
+  #     proxy:
+  #       ...
+  # ```
+  #
+  # @default -- `{}` (See <a href="values.yaml">values.yaml</a>)
+  secretsProviders: {}
 
   # -- Overrides the configuration that has been created automatically by the chart.
   # This configuration here will be **MERGED** with the configuration specified above.
@@ -218,7 +264,7 @@ systemIdentity:
 
   image:
     repository: newrelic/agent-control-system-identity-registration
-    tag: "0.0.10"
+    tag: "0.4.0"
     pullPolicy: IfNotPresent
 
   # -- Configuration for the parent identity

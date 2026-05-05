@@ -14,7 +14,7 @@ data:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       hostmetrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
         root_path: /hostfs
         {{- end }}
         collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
@@ -24,6 +24,8 @@ data:
               system.cpu.time:
                 enabled: false
               system.cpu.utilization:
+                enabled: true
+              system.cpu.logical.count:
                 enabled: true
           load:
           memory:
@@ -40,6 +42,14 @@ data:
             metrics:
               system.filesystem.utilization:
                 enabled: true
+            {{- if include "nrKubernetesOtel.daemonset.excludeContainerStorageOverlay" . }}
+            # Exclude container storage overlay mount to avoid permission errors when running as non-root
+            # This is only relevant for CRI-O container runtime (used by OKE, OpenShift, etc.)
+            exclude_mount_points:
+              mount_points:
+                - ^/var/lib/containers/storage/overlay$
+              match_type: regexp
+            {{- end }}
           disk:
             metrics:
               system.disk.merged:
@@ -52,21 +62,30 @@ data:
             metrics:
               system.network.connections:
                 enabled: false
-          # Uncomment to enable process metrics, which can be noisy but valuable.
-          # processes:
-          # process:
-          #   metrics:
-          #     process.cpu.utilization:
-          #       enabled: true
-          #     process.cpu.time:
-          #       enabled: false
-          #   mute_process_name_error: true
-          #   mute_process_exe_error: true
-          #   mute_process_io_error: true
-          #   mute_process_user_error: true
+          {{- if .Values.enable_atp }}
+          # ATP (Adaptive Telemetry Processor) intelligently filters process-level metrics
+          # These metrics can generate high data volume, so they're only enabled when ATP is explicitly activated.
+          # When ATP is disabled, only a subset of process metrics are collected (see metricstransform/hostmetrics).
+          processes:
+          process:
+            metrics:
+              process.cpu.utilization:
+                enabled: true
+              process.memory.utilization:
+                enabled: true
+              process.memory.usage:
+                enabled: true
+              process.memory.virtual:
+                enabled: true
+            mute_process_name_error: true
+            mute_process_exe_error: true
+            mute_process_io_error: true
+            mute_process_user_error: true
+          {{- end }}
 
       kubeletstats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
+        metric_groups: [node, pod, container, volume]
         {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
@@ -86,8 +105,8 @@ data:
             enabled: true
           k8s.pod.memory_request_utilization:
             enabled: true
-
-
+          k8s.pod.volume.usage:
+            enabled: true
 
       prometheus:
         config:
@@ -111,6 +130,31 @@ data:
                 - source_labels: [__meta_kubernetes_node_name]
                   regex: ${KUBE_NODE_NAME}
                   action: keep
+              metric_relabel_configs:
+                # Init temporary label is_network_metric for all metrics
+                - source_labels: [__name__]
+                  regex: '.*'
+                  target_label: "is_network_metric"
+                  replacement: "false"
+                - source_labels: [__name__]
+                  regex: '^container_network_.*'
+                  target_label: "is_network_metric"
+                  replacement: "true"
+
+                # Drop metrics without container/image/name for non-network metrics
+                - source_labels: [is_network_metric, container]
+                  regex: '^false;$'
+                  action: drop
+                - source_labels: [is_network_metric, image]
+                  regex: '^false;$'
+                  action: drop
+                - source_labels: [is_network_metric, name]
+                  regex: '^false;$'
+                  action: drop
+
+                # Remove temporary label
+                - regex: 'is_network_metric'
+                  action: labeldrop
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
@@ -206,6 +250,17 @@ data:
           - resourcequota
           - node
           - namespace
+
+      {{- if .Values.enable_atp }}
+      # ATP (Adaptive Telemetry Processor) configuration - only included when explicitly enabled.
+      # This processor intelligently filters process metrics based on dynamic thresholds and anomaly detection.
+      adaptivetelemetry:
+        enable_storage: true
+        retention_minutes: 30
+        metric_thresholds:
+          process.cpu.utilization: 0.10 # This means 10%
+          process.memory.utilization: 0.10 # This means 10%
+      {{- end }}
 
       transform/ksm:
         metric_statements:
@@ -307,7 +362,6 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-
           - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
             action: update
             match_type: regexp
@@ -317,6 +371,33 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: ^k8s\.pod\.volume\.usage$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+          - include: ^k8s\.volume\.(available|capacity|inodes|(inodes\.(used)))$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
 
       transform/collector:
@@ -408,6 +489,29 @@ data:
 
       metricstransform/hostmetrics:
         transforms:
+          {{- if .Values.enable_atp }}
+          # When ATP is enabled: all the processes will be ingested, and ATP will filter them
+          - include: process\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          - include: processes\..*
+            action: update
+            match_type: regexp
+            operations:
+            - action: update_label
+              label: low.data.mode
+              value_actions:
+              - value: 'false'
+                new_value: 'true'
+          {{- else }}
+          # When ATP is disabled: Only include a limited subset of process metrics.
+          # This matches the original behavior before ATP was introduced.
           - include: process\.(cpu\.utilization|disk\.io|memory\.(usage|virtual))
             action: update
             match_type: regexp
@@ -417,6 +521,7 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          {{- end }}
           - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
             action: update
             match_type: regexp
@@ -454,6 +559,77 @@ data:
               - value: 'false'
                 new_value: 'true'
 
+      transform/strip_labels_for_per_node_aggregation:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - keep_keys(resource.attributes, ["node"]) where metric.name == "container.cpu.usage"
+              - keep_keys(resource.attributes, ["node"]) where metric.name == "container.memory.usage"
+
+      groupbyattrs/node:
+        keys:
+          - node
+
+      metricstransform/sum_container_metrics_per_node:
+        transforms:
+          - include: container.cpu.usage
+            action: insert
+            new_name: node.container.cpu.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - node
+                aggregation_type: sum
+          - include: container.memory.usage
+            action: insert
+            new_name: node.container.memory.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set:
+                  - node
+                aggregation_type: sum
+
+      # The metricsgeneration processor does not support operating on a metric that it previously made in the same processor
+      metricsgeneration/calculate_percentage_for_pods:
+        rules:
+            # Ratio of Requested Resources to Limits
+            # request_limit_ratio = Limit_Utilization / Request_Utilization
+            # = (usage / limit) / (usage / request) = (usage / limit) * (request / usage) = request / limit
+          - name: k8s.pod.memory_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.memory_limit_utilization
+            metric2: k8s.pod.memory_request_utilization
+            operation: divide
+          - name: k8s.pod.cpu_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.cpu_limit_utilization
+            metric2: k8s.pod.cpu_request_utilization
+            operation: divide
+
+      metricsgeneration/calculate_percentage:
+        rules:
+          - name: node.cpu.usage.percentage
+            type: scale
+            metric1: node.container.cpu.usage.sum
+            scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+          - name: node.memory.usage.percentage
+            type: scale
+            metric1: node.container.memory.usage.sum
+            scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+
+
+      transform/tag_generated_metrics_ldm:
+        metric_statements:
+          - context: datapoint
+            conditions:
+              - metric.name == "k8s.pod.cpu_request_limit_ratio"
+              - metric.name == "k8s.pod.memory_request_limit_ratio"
+              - metric.name == "node.cpu.usage.percentage"
+              - metric.name == "node.memory.usage.percentage"
+            statements:
+              - set(attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -484,25 +660,6 @@ data:
                 aggregation_type: sum
 
       # following system.% metrics reduce metrics reported by hostmetrics receiver
-      filter/exclude_cpu_utilization:
-        metrics:
-          datapoint:
-            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "interrupt"'
-            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "nice"'
-            - 'metric.name == "system.cpu.utilization" and attributes["state"] == "softirq"'
-      filter/exclude_memory_utilization:
-        metrics:
-          datapoint:
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_unreclaimable"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "inactive"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "cached"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "buffered"'
-            - 'metric.name == "system.memory.utilization" and attributes["state"] == "slab_reclaimable"'
-      filter/exclude_memory_usage:
-        metrics:
-          datapoint:
-            - 'metric.name == "system.memory.usage" and attributes["state"] == "slab_unreclaimable"'
-            - 'metric.name == "system.memory.usage" and attributes["state"] == "inactive"'
       filter/exclude_filesystem_utilization:
         metrics:
           datapoint:
@@ -543,6 +700,13 @@ data:
             - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
             - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
 
+      filter/keep_only_generated_metrics:
+        metrics:
+          include:
+            match_type: strict
+            metric_names:
+              - node.cpu.usage.percentage
+              - node.memory.usage.percentage
 
       attributes/exclude_system_paging:
         include:
@@ -569,9 +733,11 @@ data:
     {{- end }}
 
       resourcedetection/cloudproviders:
-        detectors: [gcp, eks, ec2, aks, azure]
+        detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
         timeout: 2s
         override: false
+        eks:
+          node_from_env_var: KUBE_NODE_NAME
 
       resource/newrelic:
         attributes:
@@ -585,6 +751,12 @@ data:
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
 
       transform/low_data_mode_inator:
         metric_statements:
@@ -710,27 +882,52 @@ data:
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/pagingscraper"
             pipelines: [metrics/nr]
           - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processscraper"
+            pipelines: [metrics/nr]
+          - context: metric
+            condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/processesscraper"
+            pipelines: [metrics/nr]
+          - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/prometheusreceiver"
             pipelines: [metrics/nr_prometheus_cadv_kubelet]
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
 
+    {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.extensions" . }}
+    extensions:
+      {{- . | nindent 6 }}
+    {{- end }}
+
     service:
-      {{- if include "newrelic.common.verboseLog" . }}
+      {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.service.extensions" . }}
+      extensions:
+        {{- . | nindent 8 }}
+      {{- end }}
       telemetry:
+        {{- if include "newrelic.common.verboseLog" . }}
         logs:
           level: "debug"
-        {{- if (((.Values.receivers).collectorMetrics).enabled) }}
+        {{- end }}
         metrics:
           readers:
+            {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - pull:
                 exporter:
                   prometheus:
                     host: '0.0.0.0'
                     port: 8888
-        {{- end }}
-      {{- end }}
+            {{- end }}
+            {{- if .Values.collectorObservability.enabled }}
+            - periodic:
+                interval: {{ .Values.collectorObservability.scrapeIntervalSeconds }}
+                exporter:
+                  otlp:
+                    protocol: http/protobuf
+                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+                    headers:
+                      api-key: ${env:NR_LICENSE_KEY}
+            {{- end }}
       pipelines:
         {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.pipelines" . | nindent 8 }}
 
@@ -747,19 +944,41 @@ data:
             - prometheus
             {{- end }}
           processors:
+            - metricsgeneration/calculate_percentage_for_pods
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
           exporters:
             - routing/nr_metrics_pipelines
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+        
+        {{- if .Values.receivers.kubeletstats.enabled }}
+        metrics/ingress_aggregation:
+          receivers: [kubeletstats]
+          processors:
+            - transform/strip_labels_for_per_node_aggregation
+            - groupbyattrs/node
+            - metricstransform/sum_container_metrics_per_node
+            - metricsgeneration/calculate_percentage
+            - filter/keep_only_generated_metrics
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
+          exporters:
+            - routing/nr_metrics_pipelines
+            {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.exporters" . | nindent 12 }}
+        {{- end }}
 
         metrics/nr:
           receivers:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
+            {{- if .Values.enable_atp }}
+            # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
+            # This reduces data volume and processing cost by dropping low-value metrics intelligently.
+            - adaptivetelemetry
+            {{- end }}
             - metricstransform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
+            - transform/tag_generated_metrics_ldm
             - metricstransform/kubeletstats
             - metricstransform/cadvisor
             - metricstransform/kubelet
@@ -768,9 +987,6 @@ data:
             {{- end }}
             - metricstransform/hostmetrics_cpu
             - transform/truncate
-            - filter/exclude_cpu_utilization
-            - filter/exclude_memory_utilization
-            - filter/exclude_memory_usage
             - filter/exclude_filesystem_utilization
             - filter/exclude_filesystem_usage
             - filter/exclude_filesystem_inodes_usage

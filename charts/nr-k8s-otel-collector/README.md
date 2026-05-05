@@ -21,6 +21,40 @@ helm repo add newrelic https://helm-charts.newrelic.com
 helm upgrade nr-k8s-otel-collector newrelic/nr-k8s-otel-collector -f your-custom-values.yaml -n newrelic --create-namespace --install
 ```
 
+## Release Schedule
+
+This chart follows a **weekly release cadence** with automatic version bumping based on conventional commits
+
+- **Stable Releases**: Published every Monday at 12pm UTC (4am PT)
+- **Version Bumping**: Automatic based on commit types since last release
+  - `feat:` → Minor version bump (e.g., 0.10.13 → 0.11.0)
+  - `fix:` or `chore:` → Patch version bump (e.g., 0.10.13 → 0.10.14)
+  - `feat!:`, `fix!:`, or `BREAKING CHANGE:` → Major version bump (e.g., 0.10.13 → 1.0.0)
+- **Nightly Builds**: Available daily for testing (see below)
+
+## Nightly Chart Builds
+
+For testing and early access to features, nightly chart builds are published daily at 4am UTC (8pm PT).
+
+**Note:** Nightly builds are experimental and intended for testing only. Use stable releases for production environments.
+
+**Nightly Repository:** `https://newrelic.github.io/helm-charts/nightly/`
+
+### Nightly Version Format
+
+Nightly versions follow the pattern: `X.Y.Z-nightly.YYYYMMDD.SHA`
+
+Example: `0.10.14-nightly.20260317.a1b2c3d`
+
+- `X.Y.Z`: The calculated next version based on commits
+- `YYYYMMDD`: Build date
+- `SHA`: Short commit hash for traceability
+
+### Nightly Build Behavior
+
+- **No Changes = No Build**: If there are no commits since the last release, the nightly build is skipped
+- **Retention**: Nightly builds are kept for 14 days
+
 ## Confirm installation
 ### Watch pods spin up:
 
@@ -124,6 +158,8 @@ to export data to this connector which can then be connected to the New Relic ma
 |-----|------|---------|-------------|
 | affinity | object | `{}` | Sets all pods' affinities. Can be configured also with `global.affinity` |
 | cluster | string | `""` | Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster` |
+| collectorObservability.enabled | bool | `false` | Specifies whether the collector reports its own metrics |
+| collectorObservability.scrapeIntervalMs | int | `60000` | Specifies the interval at which the collector reports its metrics (in milliseconds) |
 | containerSecurityContext | object | `{"allowPrivilegeEscalation":false,"capabilities":{"drop":["ALL"]},"privileged":false,"readOnlyRootFilesystem":true,"runAsNonRoot":true,"runAsUser":1001}` | Sets all security context (at container level). Can be configured also with `global.securityContext.container` |
 | customSecretLicenseKey | string | `""` | In case you don't want to have the license key in you values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey` |
 | customSecretName | string | `""` | In case you don't want to have the license key in you values, this allows you to point to a user created secret to get the key from there. Can be configured also with `global.customSecretName` |
@@ -160,13 +196,19 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.resources | object | `{}` | Sets resources for the deployment. |
 | deployment.tolerations | list | `[]` | Sets deployment pod tolerations. Overrides `tolerations` and `global.tolerations` |
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
+| enable_atp | bool | `false` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
-| image.pullPolicy | string | `"IfNotPresent"` | The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always. |
-| image.repository | string | `"newrelic/nrdot-collector-k8s"` | OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below. |
-| image.tag | string | `"1.2.0"` | Overrides the image tag whose default is the chart appVersion. |
+| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
+| images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
+| images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
+| kube-state-metrics.enableCustomResourceSamples | bool | `false` | Enable custom KSM-based CRD metrics |
 | kube-state-metrics.enableResourceQuotaSamples | bool | `false` | Enable resource quota data exporting |
 | kube-state-metrics.enabled | bool | `true` | Install the [`kube-state-metrics` chart](https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics) from the stable helm charts repository. This is mandatory if `infrastructure.enabled` is set to `true` and the user does not provide its own instance of KSM version >=1.8 and <=2.0. Note, kube-state-metrics v2+ disables labels/annotations metrics by default. You can enable the target labels/annotations metrics to be monitored by using the metricLabelsAllowlist/metricAnnotationsAllowList options described [here](https://github.com/prometheus-community/helm-charts/blob/159cd8e4fb89b8b107dcc100287504bb91bf30e0/charts/kube-state-metrics/values.yaml#L274) in your Kubernetes clusters. |
+| kube-state-metrics.metricAnnotationsAllowList | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes annotation keys that will be used in the resources' annotations metric. By default, kube-state-metrics v2+ does not expose annotations as metric labels. This option allows you to specify which annotations should be exposed as metric dimensions. Each entry is formatted as "resource=[annotation1,annotation2,...]". Use "*" to include all annotations for a resource type. Example: ["pods=[description,owner]", "namespaces=[description]", "deployments=[change-id,jira-ticket]"] |
+| kube-state-metrics.metricLabelsAllowlist | list | `["pods=[*]", "namespaces=[*]", "deployments=[*]"]` | List of Kubernetes label keys that will be used in the resources' labels metric. By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]". Use "*" to include all labels for a resource type. Example: ["pods=[app,environment,team]", "namespaces=[environment]", "deployments=[app,version]"] |
 | kube-state-metrics.prometheusScrape | bool | `false` | Disable prometheus from auto-discovering KSM and potentially scraping duplicated data |
+| kube-state-metrics.resources | object | `{}` | Sets resources for kube-state-metrics. |
 | labels | object | `{}` | Additional labels for chart objects |
 | licenseKey | string | `""` | This set this license key to use. Can be configured also with `global.licenseKey` |
 | logsPipeline | object | `{"collectorEgress":{"exporters":null,"processors":null},"collectorIngress":{"exporters":null,"processors":null}}` | Edit how the NR Logs pipeline handles your Logs |
@@ -198,6 +240,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
 | receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubeletstats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
+| receivers.prometheus.ksmSelector | string | `app.kubernetes.io/name=kube-state-metrics` | Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster. |
 | receivers.prometheus.scrapeInterval | string | `1m` | Sets the scrape interval for the `prometheus` receiver |
 | serviceAccount | object | See `values.yaml` | Settings controlling ServiceAccount creation |
 | serviceAccount.create | bool | `true` | Specifies whether a ServiceAccount should be created |
@@ -210,6 +253,50 @@ to export data to this connector which can then be connected to the New Relic ma
 
 * [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
 * [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
+
+## KSM CRD Metrics (Advanced Use Case)
+
+The New Relic OTEL agent supports scraping custom CRD metrics from `kube-state-metrics`.
+If you have custom resources in your cluster and want to monitor them, and they do not expose a metrics endpoint, you can leverage this feature to scrape metrics about those resources using `kube-state-metrics` and send them to New Relic.
+You should not be using this feature if your custom resource already exposes a metrics endpoint that the OpenTelemetry Collector can scrape directly using the `prometheus` receiver.
+This feature is meant to be used as a workaround for custom resources that do not expose a metrics endpoint, and you want to monitor them using the OpenTelemetry Collector.
+To enable this feature, you need to specify which CRD metrics you want to be scraped by using `kube-state-metrics.customResourceState.config` options in your `values.yaml` file.
+By default, collecting these metrics is disabled. When enabled in `kube-state-metrics.customResourceState.enabled`, you can specify which CRD metrics to be scraped by providing a list of custom resources and their associated labels in `kube-state-metrics.customResourceState.config`.
+
+For example:
+
+```yaml
+kube-state-metrics:
+  customResourceState:
+    enabled: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: karpenter.sh
+              version: v1
+              kind: NodePool
+            labelsFromPath:
+              name: [ metadata, name ]
+              # Inherit all labels from metadata
+              "*": [ metadata, labels ]
+            metrics:
+              - name: "nodepool_nodes_count"
+                help: "Number of nodes managed by this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, nodes ]
+              - name: "nodepool_pods_count"
+                help: "Number of pods on nodes from this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, pods ]
+```
+
+For the complete list of options and more details on how to configure this feature, please refer to the [KSM documentation](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md).
 
 ## Common Errors
 

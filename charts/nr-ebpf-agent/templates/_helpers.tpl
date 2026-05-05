@@ -59,8 +59,90 @@ Return the cluster name
 Create otel collector receiver endpoint
 */}}
 {{- define "nr-otel-collector-receiver.endpoint" -}}
-{{- printf "dns:///%s.%s.svc.%s:4317" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain }}
+{{- printf "dns:///%s.%s.svc.%s:%v" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain .Values.otelCollector.receiverPort }}
 {{- end }}
+
+{{/*
+Validates that user-provided tags don't contain "agent-" prefix for chart version >= 0.4.0
+Also validates agent version compatibility for chart version >= 1.0.0
+*/}}
+{{- define "nr-ebpf-agent.imageTag" -}}
+{{- $imageTag := "" -}}
+{{- if .Values.ebpfAgent.image.tag -}}
+  {{- if semverCompare ">=0.4.0" .Chart.Version -}}
+    {{- if hasPrefix "agent-" .Values.ebpfAgent.image.tag -}}
+      {{- fail (printf "Error: For chart version %s (>=0.4.0), the ebpfAgent.image.tag should not contain 'agent-' prefix. Please use image tags that do not contain the prefix." .Chart.Version) -}}
+    {{- end -}}
+    {{- $imageTag = .Values.ebpfAgent.image.tag -}}
+  {{- else -}}
+    {{- $imageTag = .Values.ebpfAgent.image.tag -}}
+  {{- end -}}
+{{- else -}}
+  {{- if semverCompare ">=0.4.0" .Chart.Version -}}
+    {{- $imageTag = .Chart.AppVersion -}}
+  {{- else -}}
+    {{- $imageTag = printf "agent-%s" .Chart.AppVersion -}}
+  {{- end -}}
+{{- end -}}
+{{- if and (semverCompare ">=1.0.0" .Chart.Version) (not .Values.skipVersionValidation) -}}
+  {{- include "nr-ebpf-agent.validateVersion" (dict "tag" $imageTag "chartVersion" .Chart.Version "appVersion" .Chart.AppVersion) -}}
+{{- end -}}
+{{- $imageTag -}}
+{{- end -}}
+
+{{/*
+Validate agent version compatibility at template rendering time
+For chart version >= 1.0.0, ensure agent version >= 1.0.0
+Extracts version from image tag and compares using semver
+*/}}
+{{- define "nr-ebpf-agent.validateVersion" -}}
+{{- $tag := .tag -}}
+{{- $chartVersion := .chartVersion -}}
+{{- $appVersion := .appVersion -}}
+{{- $minVersion := "1.0.0" -}}
+{{- $agentVersion := "" -}}
+
+{{- /* Try to extract semantic version from tag */ -}}
+{{- if regexMatch "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag -}}
+  {{- /* Extract X.Y.Z from patterns like "0.5.0", "v0.5.0", "0.5.0-beta", etc */ -}}
+  {{- $agentVersion = regexFind "^v?([0-9]+\\.[0-9]+\\.[0-9]+)" $tag | trimPrefix "v" -}}
+{{- else if eq $tag $appVersion -}}
+  {{- /* If tag equals appVersion, use appVersion directly */ -}}
+  {{- $agentVersion = $appVersion -}}
+{{- else -}}
+  {{- /* Cannot parse version from custom tag - fail with helpful message */ -}}
+  {{- fail (printf "\nError: Chart version %s requires agent version >= %s.\n\nCannot determine agent version from image tag '%s'.\n\nRESOLUTION:\n  1. Use a semantic version tag (e.g., '1.0.0', '0.7.0')\n  2. Remove the image tag to use Chart.AppVersion (%s)\n\nFor more information:\n  https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent\n" $chartVersion $minVersion $tag $appVersion) -}}
+{{- end -}}
+
+{{- /* Validate extracted version is >= minimum required version */ -}}
+{{- if not (semverCompare (printf ">=%s" $minVersion) $agentVersion) -}}
+  {{- fail (printf "\n================================================================================\nERROR: INCOMPATIBLE AGENT VERSION\n================================================================================\n\nChart Version:    %s\nAgent Version:    %s (from tag: %s)\nRequired Version: >= %s\n\nChart version %s removed OpenTelemetry collector support and requires\nagent version >= %s.\n\nRESOLUTION:\n  1. Update ebpfAgent.image.tag to version >= %s\n     OR\n  2. Remove custom image tag to use Chart.AppVersion (%s)\n\nFor more information:\n  https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent\n\n================================================================================\n" $chartVersion $agentVersion $tag $minVersion $chartVersion $minVersion $minVersion $appVersion) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Select the init container image for kernel header installation.
+On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
+which contains pre-built kernel headers matching the RHCOS kernel.
+*/}}
+{{- define "nr-ebpf-agent.initContainerImage" -}}
+{{- $dtkImage := "" -}}
+{{- if .Capabilities.APIVersions.Has "image.openshift.io/v1" -}}
+  {{- $is := (lookup "image.openshift.io/v1" "ImageStream" "openshift" "driver-toolkit") -}}
+  {{- if $is -}}
+    {{- range $is.spec.tags -}}
+      {{- if eq .name "latest" -}}
+        {{- $dtkImage = .from.name -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- if $dtkImage -}}
+  {{- $dtkImage -}}
+{{- else -}}
+  {{- include "nr-ebpf-agent.kernelHeaderInstaller.image" . -}}
+{{- end -}}
+{{- end -}}
 
 {{/*
 Validate the user inputted quantile when sampling by latency.
@@ -87,6 +169,30 @@ Validate the user inputted value when sampling by error rate.
 {{- end -}}
 
 {{/*
+Validate that receiverPort is not less than 1024 (privileged port range).
+*/}}
+{{- define "validate.receiverPort" -}}
+{{- $port := .Values.otelCollector.receiverPort | int -}}
+{{- if lt $port 1025 -}}
+{{- fail (printf "Error: receiverPort must be > 1024 (got %d). Ports below 1024 are privileged ports and should not be used." $port) -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Return the log level.
+Precedence: local (logLevel) > global (global.verboseLog → DEBUG) > default (INFO)
+*/}}
+{{- define "nr-ebpf-agent.logLevel" -}}
+{{- if .Values.logLevel -}}
+  {{- .Values.logLevel -}}
+{{- else if and .Values.global .Values.global.verboseLog -}}
+  {{- "DEBUG" -}}
+{{- else -}}
+  {{- "INFO" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Pass environment variables to the agent container if tracing a specific protocol is to be disabled.
 */}}
 {{- define "generateTracingEnvVars" -}}
@@ -103,31 +209,105 @@ Pass environment variables to the agent container if tracing a specific protocol
 {{- end -}}
 
 {{/*
-Generate environment variables for disabling protocols and setting sampling latency.
+Generate environment variables for protocols configuration including enabled/disabled state and sampling latency.
 */}}
 {{- define "generateClientScriptEnvVars" -}}
 {{- if .Values.protocols }}
 {{- range $protocol, $config := .Values.protocols }}
+  {{- if ne $protocol "global" }}
   {{- if (hasKey $config "enabled") }}
-    {{- if eq $config.enabled false }}
 - name: PROTOCOLS_{{ upper $protocol }}_ENABLED
-  value: "false"
+  value: "{{ $config.enabled }}"
+  {{- end }}
+  {{- if (hasKey $config "spans") }}
+    {{- if (hasKey $config.spans "enabled") }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
-  value: "false"
-    {{- else if eq $config.enabled true }}
-      {{- if (hasKey $config "spans") }}
-        {{- if (eq $config.spans.enabled false) }}
-- name: PROTOCOLS_{{ upper $protocol }}_SPANS_ENABLED
-  value: "false"
-        {{- end }}  
-      {{- if (eq $config.spans.enabled true) }}
+  value: "{{ $config.spans.enabled }}"
+    {{- end }}
+    {{- if and (eq $config.spans.enabled true) (hasKey $config.spans "samplingLatency") }}
       {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_SAMPLING_LATENCY
   value: "{{ $config.spans.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.spans.samplingLatency "" }}"
-      {{- end }}
     {{- end }}
-  {{- end }} 
+  {{- end }}
+  {{- end }}
 {{- end }}
 {{- end }}
+{{- end }}
+
+{{/*
+Return the image reference for kernel header installer.
+Precedence: local registry (ebpfAgent.kernelHeaderInstaller.image.registry) > global (global.images.registry) > default (docker.io)
+Note: OpenShift driver-toolkit resolution is handled by initContainerImage which calls this as fallback.
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.image" -}}
+{{- $registry := .Values.ebpfAgent.kernelHeaderInstaller.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.kernelHeaderInstaller.image.repository .Values.ebpfAgent.kernelHeaderInstaller.image.tag -}}
+{{- end }}
+
+{{/*
+Return the image reference for eBPF agent.
+Precedence: local registry (ebpfAgent.image.registry) > global (global.images.registry) > default (docker.io)
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.image" -}}
+{{- $registry := .Values.ebpfAgent.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.ebpfAgent.image.repository (include "nr-ebpf-agent.imageTag" .) -}}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for kernel header installer
+Precedence: chart-level (ebpfAgent.kernelHeaderInstaller.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" -}}
+{{- if .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy }}
+  {{- .Values.ebpfAgent.kernelHeaderInstaller.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for eBPF agent
+Precedence: chart-level (ebpfAgent.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.ebpfAgent.imagePullPolicy" -}}
+{{- if .Values.ebpfAgent.image.pullPolicy }}
+  {{- .Values.ebpfAgent.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+Render imagePullSecrets
+Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
+*/}}
+{{- define "nr-ebpf-agent.imagePullSecrets" -}}
+{{- if .Values.imagePullSecrets }}
+  {{- range .Values.imagePullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullSecrets") .Values.global.images.pullSecrets }}
+  {{- range .Values.global.images.pullSecrets }}
+    {{- printf "- name: %s" .name | nindent 2 }}
+  {{- end }}
 {{- end }}
 {{- end }}

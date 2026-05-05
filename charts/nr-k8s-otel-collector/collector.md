@@ -395,5 +395,3 @@ EU
             headers:
             api-key: <<NR api key>
 ```
-
-

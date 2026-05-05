@@ -69,6 +69,32 @@
 {{- end -}}
 {{- end -}}
 
+{{- /* Defines if the deployment extensions have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.deployment.configMap.extraConfig.extensions" -}}
+
+{{- if get .Values.deployment "configMap" | kindIs "map" -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.extensions -}}
+            {{- toYaml .Values.deployment.configMap.extraConfig.extensions -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the deployment service extensions have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.deployment.configMap.extraConfig.service.extensions" -}}
+
+{{- if get .Values.deployment "configMap" | kindIs "map" -}}
+    {{- if .Values.deployment.configMap.extraConfig -}}
+        {{- if .Values.deployment.configMap.extraConfig.service -}}
+            {{- if .Values.deployment.configMap.extraConfig.service.extensions -}}
+                {{- toYaml .Values.deployment.configMap.extraConfig.service.extensions -}}
+            {{- end -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
 
 {{- /* Defines if the daemonset config map has to be created or not */ -}}
 {{- define "nrKubernetesOtel.daemonset.configMap.overrideConfig" -}}
@@ -136,6 +162,32 @@
     {{- if .Values.daemonset.configMap.extraConfig -}}
         {{- if .Values.daemonset.configMap.extraConfig.pipelines -}}
             {{- toYaml .Values.daemonset.configMap.extraConfig.pipelines -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the daemonset extensions have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.extensions" -}}
+
+{{- if get .Values.daemonset "configMap" | kindIs "map" -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.extensions -}}
+            {{- toYaml .Values.daemonset.configMap.extraConfig.extensions -}}
+        {{- end -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}
+
+{{- /* Defines if the daemonset service extensions have to be added to the config */ -}}
+{{- define "nrKubernetesOtel.daemonset.configMap.extraConfig.service.extensions" -}}
+
+{{- if get .Values.daemonset "configMap" | kindIs "map" -}}
+    {{- if .Values.daemonset.configMap.extraConfig -}}
+        {{- if .Values.daemonset.configMap.extraConfig.service -}}
+            {{- if .Values.daemonset.configMap.extraConfig.service.extensions -}}
+                {{- toYaml .Values.daemonset.configMap.extraConfig.service.extensions -}}
+            {{- end -}}
         {{- end -}}
     {{- end -}}
 {{- end -}}
@@ -241,4 +293,18 @@
         {{- end -}}
       {{- end -}}
     {{- end -}}
+{{- end -}}
+
+{{- /* Parse KSM selector and return the Prometheus label key */ -}}
+{{- define "nrKubernetesOtel.receivers.prometheus.ksmSelector.labelKey" -}}
+    {{- $ksmSelector := .Values.receivers.prometheus.ksmSelector | default "app.kubernetes.io/name=kube-state-metrics" -}}
+    {{- $parts := split "=" $ksmSelector -}}
+    {{- mustRegexReplaceAll "[^a-zA-Z0-9_-]" $parts._0 "_" -}}
+{{- end -}}
+
+{{- /* Parse KSM selector and return the label value */ -}}
+{{- define "nrKubernetesOtel.receivers.prometheus.ksmSelector.labelValue" -}}
+    {{- $ksmSelector := .Values.receivers.prometheus.ksmSelector | default "app.kubernetes.io/name=kube-state-metrics" -}}
+    {{- $parts := split "=" $ksmSelector -}}
+    {{- $parts._1 -}}
 {{- end -}}

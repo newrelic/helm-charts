@@ -1,0 +1,99 @@
+suite: images
+templates:
+  - templates/NOTES.txt
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: is empty by default
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - equalRaw:
+          value: ""
+  - it: is shows deprecation warning for 'image.repository'
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image.repository: "somerepo"
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: 'image.repository' is deprecated and will be removed in a future release. Please use 'images.collector.repository' instead."
+  - it: is shows deprecation warning for 'image.tag'
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image.tag: "1.2.3"
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: 'image.tag' is deprecated and will be removed in a future release. Please use 'images.collector.tag' instead."
+  - it: is shows deprecation warning for 'image.pullPolicy'
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      image.pullPolicy: "Never"
+    asserts:
+      - matchRegexRaw:
+          pattern: "WARNING: 'image.pullPolicy' is deprecated and will be removed in a future release. Please use 'images.collector.pullPolicy' instead."
+  
+  - it: provider gke autopilot
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+    asserts:
+      - equalRaw:
+          value: ""
+  - it: provider gke autopilot with privileged daemonset.containerSecurityContext
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+      daemonset:
+        containerSecurityContext:
+          privileged: true
+    asserts:
+      - matchRegexRaw:
+          pattern: |-
+            WARNING: 'privileged: true' is not supported in GKE Autopilot. Please update 'daemonset.containerSecurityContext'.
+
+  - it: provider openshift with default containerSecurityContext
+    set:
+      cluster: my-cluster
+      provider: OPEN_SHIFT
+    asserts:
+      - matchRegexRaw:
+          pattern: |-
+            WARNING: The daemonset has insufficient privileges to operate the filelog receiver in OpenShift. Please update the following values
+            in 'daemonset.containerSecurityContext':
+            'privileged: true'
+            'allowPrivilegeEscalation: true'
+  - it: provider openshift with privileged but non-escalatable daemonset containerSecurityContext
+    set:
+      cluster: my-cluster
+      provider: OPEN_SHIFT
+      daemonset:
+        containerSecurityContext:
+          privileged: true
+          allowPrivilegeEscalation: false
+    asserts:
+      - matchRegexRaw:
+          pattern: |-
+            WARNING: The daemonset has insufficient privileges to operate the filelog receiver in OpenShift. Please update the following values
+            in 'daemonset.containerSecurityContext':
+            'allowPrivilegeEscalation: true'
+  - it: provider openshift with non-privileged but escalatable daemonset containerSecurityContext
+    set:
+      cluster: my-cluster
+      provider: OPEN_SHIFT
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          allowPrivilegeEscalation: true
+    asserts:
+      - matchRegexRaw:
+          pattern: |-
+            WARNING: The daemonset has insufficient privileges to operate the filelog receiver in OpenShift. Please update the following values
+            in 'daemonset.containerSecurityContext':
+            'privileged: true'

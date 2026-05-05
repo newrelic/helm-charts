@@ -85,6 +85,24 @@ agents:
 			<td>List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories.  `(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"])</td>
 		</tr>
 		<tr>
+			<td>config.authSecret</td>
+			<td>object</td>
+			<td>`{"secretKeyName":"private_key","secretName":"agent-control-auth"}`</td>
+			<td>Configuration for the authentication secret needed for OpAMP connection.</td>
+		</tr>
+		<tr>
+			<td>config.authSecret.secretKeyName</td>
+			<td>string</td>
+			<td>"private_key"</td>
+			<td>The specific key within the Secret data map that holds the actual private key content.</td>
+		</tr>
+		<tr>
+			<td>config.authSecret.secretName</td>
+			<td>string</td>
+			<td>"agent-control-auth"</td>
+			<td>The name of the Kubernetes Secret resource containing the credentials.</td>
+		</tr>
+		<tr>
 			<td>config.cdReleaseName</td>
 			<td>string</td>
 			<td>agent-control-cd</td>
@@ -129,6 +147,40 @@ log:
 			<td>object</td>
 			<td>`{}`</td>
 			<td>Overrides the configuration that has been created automatically by the chart. This configuration here will be **MERGED** with the configuration specified above.</td>
+		</tr>
+		<tr>
+			<td>config.secretsProviders</td>
+			<td>object</td>
+			<td>`{}` (See <a href="values.yaml">values.yaml</a>)</td>
+			<td>List of external secrets providers configurations.  Agent Control supports the following external secrets providers types: - vault
+k8s secrets and env vars are used by default.
+
+```yaml
+secretsProviders:
+  # -- External secret provider type
+  vault:
+    # -- List of sources from where to get secrets
+    sources:
+      # -- Source name (chosen by the user)
+      sourceA:
+        # -- URL of the vault server
+        url: urlA
+        # -- Token to access the vault
+        token: tokenA
+        # -- Vault engine version
+        engine: kv1
+      sourceB:
+        url: urlB
+        token: tokenB
+        engine: kv2
+    # -- Client timeout for requests to the vault
+    client_timeout: 10s
+    # -- Proxy settings for the vault
+    # -- See `proxy` value in that same file
+    proxy:
+      ...
+```
+</td>
 		</tr>
 		<tr>
 			<td>config.status_server</td>
@@ -283,7 +335,7 @@ proxy:
 		<tr>
 			<td>resources</td>
 			<td>object</td>
-			<td>`{}`</td>
+			<td>`{"limits":{"memory":"100Mi"},"requests":{"memory":"15Mi"}}`</td>
 			<td>Resource limits to be added to all pods created by the integration.</td>
 		</tr>
 		<tr>

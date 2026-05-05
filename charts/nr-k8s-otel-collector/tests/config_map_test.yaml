@@ -294,6 +294,27 @@ tests:
             ^\s*receivers:[\S\s]*extraReceiver[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*connectors:[\S\s]*extraConnector[\S\s]*service:[\S\s]*pipelines:[\S\s]*extraPipeline[\S\s]*
         template: templates/daemonset-configmap.yaml
 
+  - it: Adds extra configuration to deployment and daemonset configMap
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      deployment.configMap.extraConfig.extensions: extraExtension
+      deployment.configMap.extraConfig.service.extensions: [extraExtensionInSvc]
+      daemonset.configMap.extraConfig.extensions: extraExtension
+      daemonset.configMap.extraConfig.service.extensions: [extraExtensionInSvc]
+
+    asserts:
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^[\S\s]*extensions:[\S\s]*extraExtension[\S\s]*service:[\S\s]*extensions:[\S\s]*extraExtensionInSvc[\S\s]*
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: |
+            ^[\S\s]*extensions:[\S\s]*extraExtension[\S\s]*service:[\S\s]*extensions:[\S\s]*extraExtensionInSvc[\S\s]*
+        template: templates/daemonset-configmap.yaml
+
 
   - it: Adds custom Processors and Exporters to both the deployment and daemonset
     set:
@@ -394,3 +415,13 @@ tests:
           pattern: |
             ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*connectors:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/egress:[\S\s]*processors:[\S\s]*extraProcessor[\S\s]*exporters:[\S\s]*extraExporter[\S\s]*
         template: templates/daemonset-configmap.yaml
+  - it: uses default KSM selector when not specified
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: |
+            ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: kube-state-metrics\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+

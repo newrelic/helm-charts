@@ -41,14 +41,16 @@ Allows to override the appVersion to use.
 Allows overriding of the synthetics-job-manager Service hostname
 */}}
 {{- define "synthetics-job-manager.hostname" -}}
-{{- default "synthetics-job-manager" .Values.global.hostnameOverride | trunc 63 | trimSuffix "-" }}
+{{- $name := default "synthetics-job-manager" (index .Values "global" "hostnameOverride") -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
-Allows overriding of the ping-runtime Service hostname
+Allows overriding of the ping-runtime Service hostname, making it unique per release
 */}}
 {{- define "ping-runtime.hostname" -}}
-{{- default "ping" (index .Values "global" "ping-runtime" "hostnameOverride") | trunc 63 | trimSuffix "-" }}
+{{- $name := default "ping" (index .Values "global" "ping-runtime" "hostnameOverride") -}}
+{{- printf "%s-%s" .Release.Name $name | trunc 63 | trimSuffix "-" -}}
 {{- end }}
 
 {{/*
@@ -278,6 +280,20 @@ whether they've provided an existing PV name.
 {{- define "synthetics-job-manager.generatePVC" -}}
   {{ if and (not (.Values.global.persistence).existingClaimName) (.Values.global.persistence).existingVolumeName }}
   {{ end }}
+{{- end -}}
+
+{{/*
+Validate that persistence is configured when volume mounting is required.
+This prevents the confusing "PVC not found" error by failing fast with a clear message.
+*/}}
+{{- define "synthetics-job-manager.validatePersistence" -}}
+{{- $needsMount := or (.Values.global.customNodeModules).customNodeModulesPath (.Values.synthetics.userDefinedVariables).userDefinedPath -}}
+{{- $hasExistingClaim := (.Values.global.persistence).existingClaimName -}}
+{{- $hasExistingVolume := (.Values.global.persistence).existingVolumeName -}}
+{{- $hasPersistence := or $hasExistingClaim $hasExistingVolume -}}
+{{- if and $needsMount (not $hasPersistence) -}}
+{{- fail "Error: When using global.customNodeModules.customNodeModulesPath or synthetics.userDefinedVariables.userDefinedPath, you must configure persistence. Please set either global.persistence.existingClaimName (for an existing PVC) or global.persistence.existingVolumeName (to create a PVC for an existing PV)." -}}
+{{- end -}}
 {{- end -}}
 
 {{/*
