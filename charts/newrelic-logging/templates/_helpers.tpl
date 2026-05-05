@@ -249,7 +249,7 @@ Returns metricsHost
 {{- if .Values.metricsEndpoint -}}
 {{ .Values.metricsEndpoint -}}
 {{- else -}}
-{{- include "newrelic.common.metric_api_endpoint" . -}}
+{{- include "newrelic.common.metric_api_endpoint" . | trimPrefix "https://" | trimPrefix "http://" -}}
 {{- end -}}
 {{- end -}}
 
