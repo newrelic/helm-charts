@@ -486,6 +486,17 @@ data:
                   - value: 'false'
                     new_value: 'true'
         {{- end }}
+        {{- if (index .Values "kube-state-metrics").enableCustomResourceSamples }}
+          - include: ^kube_customresource_.+$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+        {{- end }}
 
       metricstransform/apiserver:
         transforms:
@@ -564,6 +575,12 @@ data:
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
 
       resource/events:
         attributes:
@@ -780,7 +797,16 @@ data:
             condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
 
+    {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.extensions" . }}
+    extensions:
+      {{- . | nindent 6 }}
+    {{- end }}
+
     service:
+      {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.service.extensions" . }}
+      extensions:
+        {{- . | nindent 8 }}
+      {{- end }}
       telemetry:
         {{- if include "newrelic.common.verboseLog" . }}
         logs:
@@ -842,12 +868,12 @@ data:
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
             {{- end }}
-            - resource/newrelic
             {{- if include "newrelic.common.openShift" . }}
             - resourcedetection/openshift
             # TODO openshift resource detection already obtains some cloud provider details, revisit, resourcedetection/cloudproviders fails to obtain more attributes
             # https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/internal/openshift/documentation.md
             {{- end }}
+            - resource/newrelic
             - groupbyattrs
             - transform/ksm
             - transform/ksm_datapoints

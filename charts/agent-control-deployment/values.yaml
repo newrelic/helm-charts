@@ -19,8 +19,19 @@ subAgentsNamespace: "newrelic"
 image:
   registry:
   repository: newrelic/newrelic-agent-control
-  # @default It defaults to `appVersion` in `Chart.yaml`.
-  tag: ""
+  tag: "1.12.0"
+  pullPolicy: IfNotPresent
+  # -- The secrets that are needed to pull images from a custom registry.
+  pullSecrets: []
+  # - name: regsecret
+
+# -- The image that contains the necessary tools to setup Agent Control
+# The tag should be aligned with  `image.tag`.
+# @default -- See <a href="values.yaml">values.yaml</a>
+toolkitImage:
+  registry:
+  repository: newrelic/newrelic-agent-control-cli
+  tag: "1.12.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
@@ -52,8 +63,11 @@ podAnnotations: {}
 podLabels: {}
 
 # -- Resource limits to be added to all pods created by the integration.
-# @default -- `{}`
-resources: {}
+resources:
+  requests:
+    memory: "15Mi"
+  limits:
+    memory: "100Mi"
 
 # -- Sets pod's priorityClassName. Can be configured also with `global.priorityClassName`
 priorityClassName: ""
@@ -112,7 +126,6 @@ proxy:
 # You can overwrite the configFile generated with a raw one via config.override
 # @default -- See <a href="values.yaml">values.yaml</a>
 config:
-
   # -- List of managed agents that will be deployed.
   # The key represents the name of the agent that should used when defining its configuration.
   # @raw
@@ -122,7 +135,7 @@ config:
   # agents:
   #   open-telemetry:
   #     # -- Agent type <namespace>/<name>:<version>
-  #     agent_type: newrelic/io.opentelemetry.collector:0.1.0
+  #     agent_type: agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
   # ```
   #
   # @default -- `{}` (See <a href="values.yaml">values.yaml</a>)
@@ -249,7 +262,6 @@ agentsConfig: {}
 # Therefore, `Helm Upgrade` works even though the identityClientSecret or the identityClientAuthToken are expired.
 # @default -- See <a href="values.yaml">values.yaml</a>
 systemIdentity:
-
   # -- Set it to false to disable the registration of a new system identity.
   # Set this to `false` to configure a pre-existing system identity via secret.
   # The secret should be already created in the namespace having as keys "CLIENT_ID" and "private_key" of the identity to leverage.
@@ -261,11 +273,6 @@ systemIdentity:
 
   # -- Organization ID used to create the system identity.
   organizationId: ""
-
-  image:
-    repository: newrelic/agent-control-system-identity-registration
-    tag: "0.1.3"
-    pullPolicy: IfNotPresent
 
   # -- Configuration for the parent identity
   # You can either authenticate via ClientId/ClientSecret or pass directly an `AuthToken` and manage locally the authentication.

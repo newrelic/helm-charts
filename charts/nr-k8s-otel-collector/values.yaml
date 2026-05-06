@@ -21,6 +21,8 @@ kube-state-metrics:
   prometheusScrape: false
   # -- Enable resource quota data exporting
   enableResourceQuotaSamples: false
+  # -- Enable custom KSM-based CRD metrics
+  enableCustomResourceSamples: false
   # kube-state-metrics.metricLabelsAllowlist -- List of Kubernetes label keys that will be used in the resources' labels metric.
   # By default, kube-state-metrics v2+ does not expose labels as metric labels. This option allows you to specify which labels
   # should be exposed as metric dimensions. Each entry is formatted as "resource=[label1,label2,...]".
@@ -41,6 +43,35 @@ kube-state-metrics:
     - "pods=[*]"
     - "namespaces=[*]"
     - "deployments=[*]"
+
+# This is an example configuration for Karpenter's NodePool CRD, but you can configure it for any CRD in your cluster. For more information on how to configure this, refer to the README.md
+#  customResourceState:
+#    enabled: true
+#    config:
+#      kind: CustomResourceStateMetrics
+#      spec:
+#        resources:
+#          - groupVersionKind:
+#              group: karpenter.sh
+#              version: v1
+#              kind: NodePool
+#            labelsFromPath:
+#              name: [ metadata, name ]
+#              # Inherit all labels from metadata
+#              "*": [ metadata, labels ]
+#            metrics:
+#              - name: "nodepool_nodes_count"
+#                help: "Number of nodes managed by this NodePool"
+#                each:
+#                  type: Gauge
+#                  gauge:
+#                    path: [ status, resources, nodes ]
+#              - name: "nodepool_pods_count"
+#                help: "Number of pods on nodes from this NodePool"
+#                each:
+#                  type: Gauge
+#                  gauge:
+#                    path: [ status, resources, pods ]
 
 # This chart has support for OpenShift and GKE Autopilot.
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"

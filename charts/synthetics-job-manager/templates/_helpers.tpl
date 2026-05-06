@@ -283,6 +283,20 @@ whether they've provided an existing PV name.
 {{- end -}}
 
 {{/*
+Validate that persistence is configured when volume mounting is required.
+This prevents the confusing "PVC not found" error by failing fast with a clear message.
+*/}}
+{{- define "synthetics-job-manager.validatePersistence" -}}
+{{- $needsMount := or (.Values.global.customNodeModules).customNodeModulesPath (.Values.synthetics.userDefinedVariables).userDefinedPath -}}
+{{- $hasExistingClaim := (.Values.global.persistence).existingClaimName -}}
+{{- $hasExistingVolume := (.Values.global.persistence).existingVolumeName -}}
+{{- $hasPersistence := or $hasExistingClaim $hasExistingVolume -}}
+{{- if and $needsMount (not $hasPersistence) -}}
+{{- fail "Error: When using global.customNodeModules.customNodeModulesPath or synthetics.userDefinedVariables.userDefinedPath, you must configure persistence. Please set either global.persistence.existingClaimName (for an existing PVC) or global.persistence.existingVolumeName (to create a PVC for an existing PV)." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Calculates the terminationGracePeriodSeconds.
 In order to prevent data-loss the grace period should be configured to be > synthetics job timeout, which is 240s by
 default
