@@ -171,7 +171,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.enabled | bool | `true` | Specifies whether to install the DaemonSet collectors. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md |
 | daemonset.envs | list | `[]` | Sets additional environment variables for the daemonset. |
 | daemonset.envsFrom | list | `[]` | Sets additional environment variable sources for the daemonset. |
-| daemonset.extraArgs | list | `[]` | Additional args for the daemonset container https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net" |
+| daemonset.extraArgs | list | `[]` | Additional args for the daemonset container https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlp_http/newrelic::endpoint: https://otlp.eu.nr-data.net" |
 | daemonset.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the daemonset container |
 | daemonset.extraVolumes | list | `[]` | Additional volumes to be added to the daemonset pod |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
@@ -187,7 +187,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | deployment.enabled | bool | `true` | Specifies whether to install the Deployment collector. This should only be changed for advanced use cases. For more information, refer to the appropriate section in the README.md |
 | deployment.envs | list | `[]` | Sets additional environment variables for the deployment. |
 | deployment.envsFrom | list | `[]` | Sets additional environment variable sources for the deployment. |
-| deployment.extraArgs | list | `[]` | Additional args for the deployment container  https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlphttp/newrelic::endpoint: https://otlp.eu.nr-data.net" |
+| deployment.extraArgs | list | `[]` | Additional args for the deployment container  https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlp_http/newrelic::endpoint: https://otlp.eu.nr-data.net" |
 | deployment.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the deployment container |
 | deployment.extraVolumes | list | `[]` | Additional volumes to be added to the deployment pod |
 | deployment.nodeSelector | object | `{}` | Sets deployment pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
@@ -233,7 +233,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | rbac.create | bool | `true` | Specifies whether RBAC resources should be created |
 | receivers.collectorMetrics.enabled | bool | `false` | Specifies whether collector metrics are scraped from the deployment collector. Requires prometheus receiver to be enabled. |
 | receivers.collectorMetrics.scrapeInterval | string | `1m` | Sets the scrape interval for metrics scraped from the deployment collector |
-| receivers.filelog.enabled | bool | `true` | Specifies whether the `filelog` receiver is enabled |
+| receivers.filelog.enabled | bool | `true` | Specifies whether the `file_log` receiver is enabled |
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
 | receivers.hostmetrics.scrapeInterval | string | `1m` | Sets the scrape interval for the `hostmetrics` receiver |
 | receivers.k8sEvents.enabled | bool | `true` | Specifies whether the `k8s_events` receiver is enabled |
@@ -306,16 +306,16 @@ Timeout errors while starting up the collector are expected as the collector att
 These timeout errors can also pop up over time as the collector is running but are transient and expected to self-resolve. Further improvements are underway to mitigate the amount of timeout errors we're seeing from the NR1 endpoint.
 
 ```
-info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlphttp/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
+info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlp_http/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
 ```
 
 ### No such file or directory
 
-Sometimes we see failed to open file errors on the `filelog` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, sleep) and the pod or process was terminated before the collector could read the file.
+Sometimes we see failed to open file errors on the `file_log` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, sleep) and the pod or process was terminated before the collector could read the file.
 
-`filelog` error:
+`file_log` error:
 ```
-Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
+Failed to open file	{"kind": "receiver", "name": "file_log", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
 ```
 `hostmetrics` error:
 ```
