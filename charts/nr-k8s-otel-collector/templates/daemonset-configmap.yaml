@@ -1062,7 +1062,7 @@ data:
             - otlp_http/newrelic
             {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
 
-        {{- if and .Values.receivers.file_log.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
+        {{- if and .Values.receivers.filelog.enabled  (not (include "newrelic.common.gkeAutopilot" .)) }}
         logs/ingress:
           receivers:
             - file_log
