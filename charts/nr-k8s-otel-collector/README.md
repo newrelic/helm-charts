@@ -198,8 +198,8 @@ to export data to this connector which can then be connected to the New Relic ma
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | enable_atp | bool | `false` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
-| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
-| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector-k8s","tag":"1.8.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
+| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.14.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.14.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
 | images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
 | images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | kube-state-metrics.enableCustomResourceSamples | bool | `false` | Enable custom KSM-based CRD metrics |
@@ -321,6 +321,14 @@ Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs",
 ```
 Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
+
+### Failed to get instance metadata (resourcedetection)
+
+If you see the below error in your logs, it means that the resource detection processor is having trouble accessing the instance metadata.
+```
+Error: cannot start pipelines: failed to start "resourcedetection/cloudproviders" processor: failed to get instance metadata: operation error EC2: DescribeInstances, get identity: get credentials: request canceled, context deadline exceeded
+```
+This can be resolved by ensuring the IMDS hop limit is at least 2, or by using Pod Identity. For more details, see the [documentation for the resource detection processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md#amazon-eks).
 
 ## Disable Daemonset or Deployment collectors
 
