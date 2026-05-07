@@ -38,8 +38,8 @@ spec:
       serviceAccountName: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.serviceAccount.name" .) "suffix" "auth" ) }}
       containers:
         - name: register-system-identity
-          image: "{{ (.Values.systemIdentity.image).repository }}:{{ (.Values.systemIdentity.image).tag }}"
-          imagePullPolicy: {{ .Values.systemIdentity.image.pullPolicy }}
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.toolkitImage "context" .) }}
+          imagePullPolicy: {{ .Values.toolkitImage.pullPolicy }}
           securityContext:
             allowPrivilegeEscalation: false
           resources:
@@ -57,81 +57,18 @@ spec:
           args:
             - -c
             - |
-              set -euo pipefail
-
-              echo Checking if the secret '{{ include "newrelic-agent-control.auth.secret.name" . }}' is already present in the cluster
-              if kubectl get secret {{ include "newrelic-agent-control.auth.secret.name" . }}; then
-                echo System identity already exists. Exiting gracefully...
-                exit 0
-              fi
-
-              echo "Secret not present, creating a new System Identity..."
-
-              REGION={{ include "newrelic.common.region" . }}
-              echo "Authenticating with New Relic ($REGION)..."
-
-              ACCESS_TOKEN=""
-              if [ -n "$NEW_RELIC_AUTH_TOKEN" ]; then
-                echo "Access token obtained via config"
-                ACCESS_TOKEN=$NEW_RELIC_AUTH_TOKEN
-              else
-                for RETRY in 1 2 3; do
-                  
-                  ACCESS_TOKEN=$(newrelic-auth-cli {{ with .Values.proxy }} {{ with .url }} --proxy-url "{{.}}" {{ end }} {{ with .ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} {{ end }} authenticate --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" --environment "$REGION" --output-token-format Plain)
-
-                  if [ -n "$ACCESS_TOKEN" ]; then
-                    echo "Access token obtained successfully via client secret"
-                    break
-                  fi
-
-                  if [ -z $ACCESS_TOKEN ]; then
-                    echo "Network error occurred or no HTTP response was received. Retrying ($RETRY/3)..."
-                    sleep 2
-                    continue
-                  fi
-                done
-
-                if [ -z "$ACCESS_TOKEN" ]; then
-                  echo "Error getting system identity auth token"
-                  exit 99
-                fi
-                echo "Authenticated successfully"
-              fi
-
-              echo "Creating System Identity..."
-
-              ORG_ID={{ (.Values.systemIdentity).organizationId }}
-              TEMPORAL_FOLDER=/tmp/gen-folder
-              mkdir $TEMPORAL_FOLDER
-              CLIENT_ID=""
-              DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-              NAME="System Identity for $(hostname) - $DATE"
-              for RETRY in 1 2 3; do
-                OUTPUT=$(newrelic-auth-cli {{ with .Values.proxy }} {{ with .url }} --proxy-url "{{.}}" {{ end }} {{ with .ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} {{ end }} create-identity key --name "$NAME" --organization-id "$ORG_ID" --client-id "$NEW_RELIC_AUTH_CLIENT_ID" --environment "$REGION" --bearer-access-token "$ACCESS_TOKEN" --output-platform "local-file" --output-local-filepath "$TEMPORAL_FOLDER/key")
-                CLIENT_ID=$(echo "$OUTPUT" | jq -r '.client_id // empty')
-
-                if [ -n "$CLIENT_ID" ]; then
-                  echo "System identity created successfully"
-                  break
-                fi
-                if [ -z "$CLIENT_ID" ]; then
-                  echo "Network error occurred or no HTTP response was received. Retrying ($RETRY/3)..."
-                  sleep 2
-                  continue
-                fi
-              done
-              if [ -z "$CLIENT_ID" ]; then
-                echo "Error creating system identity"
-                exit 99
-              fi
-
-              echo Creating the secret '{{ include "newrelic-agent-control.auth.secret.name" . }}'...
-              kubectl create secret generic --dry-run=client -o json \
-                {{ include "newrelic-agent-control.auth.secret.name" . }} \
-                --from-literal=CLIENT_ID=$CLIENT_ID \
-                --from-file="private_key=$TEMPORAL_FOLDER/key" | \
-              jq '.metadata.labels += ({{ include "newrelic.common.labels" . | fromYaml | toJson }} + {"app.kubernetes.io/managed-by": "newrelic-agent-control"} + {"newrelic.io/agent-id": "agent-control"} )' | \
-              kubectl apply -n "{{ .Release.Namespace }}" -f -
+              set -eo pipefail
+              # Auth env vars (CLIENT_ID, CLIENT_SECRET, AUTH_TOKEN) are conditionally populated
+              # depending on the auth method configured (clientSecret vs authToken vs fromSecret).
+              # Unset variables are intentionally allowed; the CLI handles empty values.
+              newrelic-agent-control-cli register-system-identity --namespace "{{ .Release.Namespace }}" \
+                  --secret-name "{{ include "newrelic-agent-control.auth.secret.name" . }}" \
+                  --region "{{ include "newrelic.common.region" . }}" \
+                  --auth-parent-client-id "$NEW_RELIC_AUTH_CLIENT_ID" \
+                  --auth-parent-client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" \
+                  --auth-parent-token "$NEW_RELIC_AUTH_TOKEN" \
+                  --organization-id "{{ .Values.systemIdentity.organizationId }}" \
+                  --log-level "debug" {{ with .Values.proxy }} {{ with .url }} --proxy-url "{{.}}" {{ end }} {{ with .ca_bundle_dir }} --proxy-ca-dir "{{.}}" {{ end }} {{ with .ca_bundle_file }}  --proxy-ca-file "{{.}}" {{ end }} {{ end }}
           volumeMounts:
             {{- with .Values.systemIdentity.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
@@ -161,6 +98,8 @@ rules:
       - patch
       - update
       - get
+      - list
+      - watch
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
