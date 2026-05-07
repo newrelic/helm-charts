@@ -320,8 +320,8 @@ data:
             conditions:
               - IsMatch(attributes["container_id"], ".*://.*")
             statements:
-              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
-              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
+              - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
+              - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
       metricstransform/ldm:
         transforms:
@@ -629,7 +629,7 @@ data:
               - metric.name == "node.cpu.usage.percentage"
               - metric.name == "node.memory.usage.percentage"
             statements:
-              - set(attributes["low.data.mode"], "true")
+              - set(datapoint.attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
