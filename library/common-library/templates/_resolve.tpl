@@ -35,8 +35,8 @@ examples:
   {{- else if (kindIs "bool" $value) -}}
     {{/* If we get here, we know $value is a falsy bool, so let's return a falsy statement */}}
   {{- else if $root.global -}}
-    {{- include "newrelic.common.resolve" (dict "ctx" $root.global "key" .key) -}}
+    {{- include "newrelic.common.resolve" (dict "ctx" $root.global "key" .key "default" .default) -}}
   {{- else if .default -}}
-    .default
+    {{- .default -}}
   {{- end -}}
 {{- end -}}
