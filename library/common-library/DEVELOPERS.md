@@ -648,6 +648,25 @@ Usage:
 {{ include "newrelic.common.region" . }}
 ```
 
+### `newrelic.common.region.or_us`
+Is exactly the same as `newrelic.common.region` except it won't throw if the user is using custom secrets for license keys. 
+If the user is using custom secrets and has not set a region, this function will default to returning "US".
+
+Usage:
+```mustache
+{{ include "newrelic.common.region.or_us" . }}
+```
+
+### `newrelic.common.region.fail_if_unresolvable`
+This is the function that `newrelic.common.region` uses to enforce resolvability of the region. 
+This function throws if the user is using a custom secret for the license key has not set region or `global.region` and is not using `nrStaging` or `fedramp.enabled` toggles.
+If you have a use-case where you want to fail installation due to being unsure what the region is, you can call this function directly. 
+
+Usage:
+```mustache
+otlpEndpoint: {{- include "newrelic.common.region.fail_if_unresolvable" . -}}{{- include "newrelic.common.otlp_endpoint" . -}}
+```
+
 ### `newrelic.common.region.validate`
 > You should not have a use case where you need to call this function directly
 
@@ -890,4 +909,36 @@ Returns 1 if verbose is enabled or 0 if not. This is to have the verbose value r
 Usage:
 ```mustache
 {{ include "newrelic.common.verboseLog.valueAsInt" . }}
+```
+
+
+## _notes.tpl
+These templates provide reusable messages that parent charts can include in their NOTES.txt files when using this chart as a subchart.
+Since Helm only displays the parent chart's NOTES.txt file, these templates allow the common library to provide important messages
+to end users through parent chart notes.
+
+### `newrelic.common.notes.all`
+Returns both warning and informational messages in a formatted output.
+This is a convenience function that combines both `warnings` and `info` sections.
+
+Usage:
+```mustache
+{{- /* In parent chart NOTES.txt */}}
+Thank you for installing {{ .Chart.Name }}.
+
+{{- include "newrelic.common.notes.all" . }}
+```
+
+### `newrelic.common.notes.warnings`
+Returns warning messages about configuration issues that users should be aware of after installation.
+This includes warnings about region computation failures, missing configuration, and other potential issues.
+
+The function checks multiple conditions and returns formatted warning messages only when issues are detected.
+
+Usage:
+```mustache
+{{- /* In parent chart NOTES.txt */}}
+Thank you for installing {{ .Chart.Name }}.
+
+{{- include "newrelic.common.notes.warnings" . }}
 ```

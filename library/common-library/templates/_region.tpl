@@ -2,10 +2,17 @@
 Return the region that is being used by the user
 */}}
 {{- define "newrelic.common.region" -}}
+{{- include "newrelic.common.region.fail_if_unresolvable" . -}}
+{{- include "newrelic.common.region.or_us" . -}}
+{{- end -}}
+
+{{- define "newrelic.common.region.fail_if_unresolvable" -}}
 {{- if and (include "newrelic.common.license._usesCustomSecret" .) (not (include "newrelic.common.region._fromValues" .)) -}}
   {{- fail "This Helm Chart is not able to compute the region. You must specify a .global.region or .region if the license is set using a custom secret." -}}
 {{- end -}}
+{{- end -}}
 
+{{- define "newrelic.common.region.or_us" -}}
 {{- /* Defaults */ -}}
 {{- $region := "us" -}}
 {{- if include "newrelic.common.nrStaging" . -}}
@@ -17,10 +24,8 @@ Return the region that is being used by the user
 {{- else if include "newrelic.common.region._isJPLicenseKey" . -}}
   {{- $region = "jp" -}}
 {{- end -}}
-
 {{- include "newrelic.common.region.validate" (include "newrelic.common.region._fromValues" . | default $region ) -}}
 {{- end -}}
-
 
 
 {{/*
@@ -90,42 +95,42 @@ This helper is for internal use.
 
 {{/* Returns "true" if the region is US or empty string (falsehood) if not. */}}
 {{- define "newrelic.common.region.is_us" -}}
-{{- if eq (include "newrelic.common.region" .) "US" -}}
+{{- if eq (include "newrelic.common.region.or_us" .) "US" -}}
 true
 {{- end -}}
 {{- end -}}
 
 {{/* Returns "true" if the region is EU or empty string (falsehood) if not. */}}
 {{- define "newrelic.common.region.is_eu" -}}
-{{- if eq (include "newrelic.common.region" .) "EU" -}}
+{{- if eq (include "newrelic.common.region.or_us" .) "EU" -}}
 true
 {{- end -}}
 {{- end -}}
 
 {{/* Returns "true" if the region is Japan or empty string (falsehood) if not. */}}
 {{- define "newrelic.common.region.is_jp" -}}
-{{- if eq (include "newrelic.common.region" .) "JP" -}}
+{{- if eq (include "newrelic.common.region.or_us" .) "JP" -}}
 true
 {{- end -}}
 {{- end -}}
 
 {{/* Returns "true" if the region is GOV (FedRAMP) or empty string (falsehood) if not. */}}
 {{- define "newrelic.common.region.is_gov" -}}
-{{- if eq (include "newrelic.common.region" .) "GOV" -}}
+{{- if eq (include "newrelic.common.region.or_us" .) "GOV" -}}
 true
 {{- end -}}
 {{- end -}}
 
 {{/* Returns "true" if the region is STG (staging) or empty string (falsehood) if not. */}}
 {{- define "newrelic.common.region.is_stg" -}}
-{{- if eq (include "newrelic.common.region" .) "STG" -}}
+{{- if eq (include "newrelic.common.region.or_us" .) "STG" -}}
 true
 {{- end -}}
 {{- end -}}
 
 {{/* Returns "true" if the region is DEV (Development) or empty string (falsehood) if not. */}}
 {{- define "newrelic.common.region.is_dev" -}}
-{{- if eq (include "newrelic.common.region" .) "DEV" -}}
+{{- if eq (include "newrelic.common.region.or_us" .) "DEV" -}}
 true
 {{- end -}}
 {{- end -}}
