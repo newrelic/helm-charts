@@ -11,10 +11,10 @@ See below.
 */}}
 
 {{- define "newrelic.common.endpoints.resolve" -}}                                                                                                                                                                                    
-  {{- $region := include "newrelic.common.region" .ctx -}}                                                                                                                                                                            
+  {{- $region := include "newrelic.common.region.or_us" .ctx -}}
   {{- $endpoint := include "newrelic.common.resolve" (dict "ctx" .ctx "key" .key "default" (get .endpoints $region)) -}}
   {{- required (printf "This chart does not have support for the region provided '%s'. Please either supply an override URL via .Values.%s or .Values.global.%s, or set a different region." $region .key .key) $endpoint -}}
-{{- end -}}    
+{{- end -}}
 
 
 {{/*-----------------------------ENDPOINTS-----------------------------*/}}
@@ -55,6 +55,7 @@ See below.
   {{- $endpoints := dict
       "US"      "https://log-api.newrelic.com"
       "EU"      "https://log-api.eu.newrelic.com"
+      "JP"      "https://log-api.jp.newrelic.com"
       "STG"     "https://staging-log-api.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "logApiEndpoint" "endpoints" $endpoints) -}}

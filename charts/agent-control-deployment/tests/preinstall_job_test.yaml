@@ -132,34 +132,35 @@ tests:
             - secretRef:
                 name: test-client-name
 
-  - it: setting specific image for system identity registration with tag should use the provided tag
+  - it: setting specific image for CLI with tag should use the provided tag
     set:
       systemIdentity:
         parentIdentity:
           fromSecret: test-client-name
         organizationId: test  
-        image:
-          tag: 1.0.0
+      toolkitImage:
+        tag: 0.0.100
     asserts:
       - documentIndex: 0
         equal:
           path: spec.template.spec.containers[0].image
-          value: newrelic/agent-control-system-identity-registration:1.0.0
+          value: docker.io/newrelic/newrelic-agent-control-cli:0.0.100
 
-  - it: setting specific image for system identity registration with tag should use the provided data
+  - it: setting specific image for CLI should be honored
     set:
       systemIdentity:
         parentIdentity:
           fromSecret: test-client-name
         organizationId: test  
-        image:
-          repository: some_namespace/test-image
-          tag: 1.0.0
+      toolkitImage:
+        registry: some-registry
+        repository: some_namespace/test-image
+        tag: 0.0.100
     asserts:
       - documentIndex: 0
         equal:
           path: spec.template.spec.containers[0].image
-          value: some_namespace/test-image:1.0.0
+          value: some-registry/some_namespace/test-image:0.0.100
 
   - it: setting specific pullPolicy for system identity registration image should use the provided data
     set:
@@ -167,8 +168,8 @@ tests:
         parentIdentity:
           fromSecret: test-client-name
         organizationId: test  
-        image:
-          pullPolicy: Always
+      toolkitImage:
+        pullPolicy: Always
     asserts:
       - documentIndex: 0
         equal:

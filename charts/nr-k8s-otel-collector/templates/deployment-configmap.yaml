@@ -200,8 +200,8 @@ data:
             conditions:
               - IsMatch(attributes["container_id"], ".*://.*")
             statements:
-              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
-              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
+              - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
+              - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
       groupbyattrs:
         keys:
@@ -629,7 +629,7 @@ data:
             - 'kube_pod_container_status_restarts_total'
           match_type: strict
 
-      k8sattributes/ksm:
+      k8s_attributes/ksm:
         # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
         # of metrics but there are cases of metrics such as kube_node* where a uid would not be present and thus metadata would
         # not be attached. To address cases like these, metadata attributes must be annotated in a different manner
@@ -751,7 +751,7 @@ data:
     exporters:
       {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 }}
       {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
-      otlphttp/newrelic:
+      otlp_http/newrelic:
         endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
@@ -877,7 +877,7 @@ data:
             - groupbyattrs
             - transform/ksm
             - transform/ksm_datapoints
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
@@ -919,7 +919,7 @@ data:
             {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
-            - otlphttp/newrelic
+            - otlp_http/newrelic
             {{- include "nrKubernetesOtel.metricsPipeline.collectorEgress.exporters" . | nindent 12 }}
 
 
@@ -949,7 +949,7 @@ data:
             {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.processors" . | nindent 12 }}
             - batch
           exporters:
-            - otlphttp/newrelic
+            - otlp_http/newrelic
             {{- include "nrKubernetesOtel.logsPipeline.collectorEgress.exporters" . | nindent 12 }}
         {{- end }}
     {{- end }}
