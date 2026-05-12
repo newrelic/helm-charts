@@ -36,4 +36,7 @@ in 'daemonset.containerSecurityContext':
     {{- end }}
   {{- end -}}
 {{- end -}}
-{{- include "newrelic.common.notes" . -}}
+{{- $commonNotes := include "newrelic.common.notes" . | trim -}}
+{{- if $commonNotes -}}
+{{ $commonNotes }}
+{{ end -}}
