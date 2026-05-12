@@ -827,13 +827,8 @@ data:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
       {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
-<<<<<<< pbeckwith/use-endpoints-tpl
       otlphttp/newrelic:
         endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
-=======
-      otlp_http/newrelic:
-        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
->>>>>>> master
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
