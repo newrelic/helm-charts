@@ -827,7 +827,7 @@ data:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
       {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
-      otlphttp/newrelic:
+      otlp_http/newrelic:
         endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
