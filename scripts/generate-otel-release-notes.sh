@@ -66,8 +66,6 @@ function generate_changelog() {
       done <<< "$commits"
     fi
 
-    echo ""
-    echo "**Full Changelog**: https://github.com/${GITHUB_REPOSITORY:-newrelic/helm-charts}/compare/${prev_tag}...${current_tag}"
   } > "$output_file"
 
   echo "Release notes written to ${output_file}:"
