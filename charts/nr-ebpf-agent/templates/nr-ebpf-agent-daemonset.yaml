@@ -176,7 +176,7 @@ spec:
           - name: NEW_RELIC_PROXY_PORT
             value: "{{ .Values.otlpProxy.port }}"
           - name: NEW_RELIC_PROXY_SCHEME
-            value: "{{ .Values.otlpProxy.scheme }}"
+            value: "{{ .Values.otlpProxy.scheme | default "http" }}"
           {{- end }}
           {{- if .Values.otlpProxy.url }}
           - name: NEW_RELIC_PROXY_URL
