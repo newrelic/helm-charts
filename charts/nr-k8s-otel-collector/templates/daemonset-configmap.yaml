@@ -828,7 +828,7 @@ data:
       {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
       otlp_http/newrelic:
-        endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+        endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
@@ -924,7 +924,7 @@ data:
                 exporter:
                   otlp:
                     protocol: http/protobuf
-                    endpoint: {{ include "nrKubernetesOtel.endpoint" . }}
+                    endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
                     headers:
                       api-key: ${env:NR_LICENSE_KEY}
             {{- end }}
