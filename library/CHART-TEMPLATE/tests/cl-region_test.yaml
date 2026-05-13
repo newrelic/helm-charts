@@ -128,12 +128,13 @@ tests:
           path: data
           value:
             region: US
+            region_with_interposed_check: US
             is_us: Yes
-            is_eu: NO
-            is_jp: NO
-            is_gov: NO
-            is_stg: NO
-            is_dev: NO
+            is_eu: No
+            is_jp: No
+            is_gov: No
+            is_stg: No
+            is_dev: No
 
 
 
@@ -146,12 +147,13 @@ tests:
           path: data
           value:
             region: EU
-            is_us: NO
+            region_with_interposed_check: EU
+            is_us: No
             is_eu: Yes
-            is_jp: NO
-            is_gov: NO
-            is_stg: NO
-            is_dev: NO
+            is_jp: No
+            is_gov: No
+            is_stg: No
+            is_dev: No
 
   - it: Convenience Functions work for JP
     set:
@@ -162,12 +164,13 @@ tests:
           path: data
           value:
             region: JP
-            is_us: NO
-            is_eu: NO
+            region_with_interposed_check: JP
+            is_us: No
+            is_eu: No
             is_jp: Yes
-            is_gov: NO
-            is_stg: NO
-            is_dev: NO
+            is_gov: No
+            is_stg: No
+            is_dev: No
 
   - it: Convenience Functions work for Gov
     set:
@@ -178,12 +181,13 @@ tests:
           path: data
           value:
             region: GOV
-            is_us: NO
-            is_eu: NO
-            is_jp: NO
+            region_with_interposed_check: GOV
+            is_us: No
+            is_eu: No
+            is_jp: No
             is_gov: Yes
-            is_stg: NO
-            is_dev: NO
+            is_stg: No
+            is_dev: No
 
   - it: Convenience Functions work for STG
     set:
@@ -194,12 +198,13 @@ tests:
           path: data
           value:
             region: STG
-            is_us: NO
-            is_eu: NO
-            is_jp: NO
-            is_gov: NO
+            region_with_interposed_check: STG
+            is_us: No
+            is_eu: No
+            is_jp: No
+            is_gov: No
             is_stg: Yes
-            is_dev: NO
+            is_dev: No
 
   - it: Convenience Functions work for Dev
     set:
@@ -209,9 +214,29 @@ tests:
           path: data
           value:
             region: DEV
-            is_us: NO
-            is_eu: NO
-            is_jp: NO
-            is_gov: NO
-            is_stg: NO
+            region_with_interposed_check: DEV
+            is_us: No
+            is_eu: No
+            is_jp: No
+            is_gov: No
+            is_stg: No
             is_dev: Yes
+
+  - it: Should should fail if region can not be resolved
+    set:
+      customSecretLicenseKey: my-secret-license-key
+    asserts:
+      - failedTemplate:
+          errorMessage: "This Helm Chart is not able to compute the region. You must specify a .global.region or .region if the license is set using a custom secret."
+
+  - it: Field with fail_if_unresolvable should resolve to same value as field without it
+    set:
+      global:
+        region: JP
+    asserts:
+      - equal:
+          path: data.region
+          value: JP
+      - equal:
+          path: data.region_with_interposed_check
+          value: JP

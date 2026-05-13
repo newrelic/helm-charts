@@ -74,7 +74,7 @@ In the example below, open-telemetry is a managed agent that will be deployed.
 agents:
   open-telemetry:
     # -- Agent type <namespace>/<name>:<version>
-    agent_type: newrelic/io.opentelemetry.collector:0.1.0
+    agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
 ```
 </td>
 		</tr>
@@ -101,6 +101,12 @@ agents:
 			<td>string</td>
 			<td>"agent-control-auth"</td>
 			<td>The name of the Kubernetes Secret resource containing the credentials.</td>
+		</tr>
+		<tr>
+			<td>config.cdEnabled</td>
+			<td>bool</td>
+			<td>true</td>
+			<td>If disabled agentControl will assume that no CD is available. I.e. no flux object will be created and flux will not be upgraded or monitored.</td>
 		</tr>
 		<tr>
 			<td>config.cdReleaseName</td>
@@ -432,19 +438,13 @@ proxy:
 			<td>toolkitImage</td>
 			<td>object</td>
 			<td>See <a href="values.yaml">values.yaml</a></td>
-			<td>The image that contains the necessary tools to setup Agent Control</td>
+			<td>The image that contains the necessary tools to setup Agent Control The tag should be aligned with  `image.tag`.</td>
 		</tr>
 		<tr>
 			<td>toolkitImage.pullSecrets</td>
 			<td>list</td>
 			<td>`[]`</td>
 			<td>The secrets that are needed to pull images from a custom registry.</td>
-		</tr>
-		<tr>
-			<td>toolkitImage.tag</td>
-			<td>string</td>
-			<td>`"1.11.0"`</td>
-			<td>Should be aligned with `image.tag`</td>
 		</tr>
 		<tr>
 			<td>verboseLog</td>
