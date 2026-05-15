@@ -1,8 +1,8 @@
-{{- if not .Values.daemonset.enabled }}
+{{- if .Values.daemonset.enabled }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ include "nrKubernetesOtel.deployment.configMap.fullname" . }}
+  name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
   namespace: {{ .Release.Namespace }}
 data:
   gateway-config.yaml: |
@@ -10,11 +10,11 @@ data:
       Metric:
         - interval.ms
         - metricName
-  deployment-config.yaml: |
-    {{- with include "nrKubernetesOtel.deployment.configMap.config" . }}
+  daemonset-config.yaml: |
+    {{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
     {{- . | nindent 4 }}
     {{- end }}
-    {{- if not (include "nrKubernetesOtel.deployment.configMap.config" .) }}
+    {{- if not (include "nrKubernetesOtel.daemonset.configMap.config" .) }}
     {{- if .Values.generated }}
     {{- tpl (.Values.generated | toYaml) . | nindent 4 }}
     {{- else }}

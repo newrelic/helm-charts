@@ -22,5 +22,9 @@ spec:
       targetPort: {{ .Values.ports.otlpGrpc }}
   selector:
     {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
+    {{- if .Values.daemonset.enabled }}
+    component: daemonset
+    {{- else }}
     component: deployment
+    {{- end }}
   internalTrafficPolicy: Cluster
