@@ -20,6 +20,26 @@ customOtlpEndpointTlsCertSecret: ""
 # -- Key within the secret that contains the CA certificate.
 # Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecret.
 customOtlpEndpointTlsCertSecretKey: ""
+# -- HTTP/HTTPS proxy configuration for OTLP endpoint.
+# Allows routing telemetry data through corporate proxies.
+otlpProxy:
+  # -- Proxy hostname (e.g., proxy.example.com). If empty, no proxy is used.
+  host: ""
+  # -- Proxy port (e.g., 8080). Required when host is set.
+  port: ""
+  # -- Proxy URL scheme: http or https (default: http)
+  scheme: "http"
+  # -- Username for proxy Basic Authentication (optional). If empty, no authentication is used.
+  user: ""
+  # -- Password for proxy Basic Authentication (optional). Only used with user.
+  # Recommended: Use existingSecret instead for security.
+  password: ""
+  # -- Alternative: Complete proxy URL (overrides individual settings above).
+  # Format: http://[user:pass@]host:port
+  url: ""
+  # -- Name of existing Kubernetes secret containing proxy credentials.
+  # Secret must contain keys: 'proxy-user' and 'proxy-password'.
+  existingSecret: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: ""
