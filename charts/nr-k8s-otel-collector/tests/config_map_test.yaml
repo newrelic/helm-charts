@@ -37,7 +37,7 @@ tests:
                   - set(description, "")
                   - set(unit, "")
         exporters:
-          otlphttp/newrelic:
+          otlp_http/newrelic:
             endpoint: 343
             headers:
               api-key: ${env:NR_LICENSE_KEY}
@@ -48,13 +48,13 @@ tests:
                 - otlp
               processors: [ transform/low_data_mode_inator ]
               exporters:
-                - otlphttp/newrelic
+                - otlp_http/newrelic
     asserts:
       - equal:
           path: data["deployment-config.yaml"]
           value: |
             exporters:
-              otlphttp/newrelic:
+              otlp_http/newrelic:
                 endpoint: 343
                 headers:
                   api-key: ${env:NR_LICENSE_KEY}
@@ -74,7 +74,7 @@ tests:
               pipelines:
                 logs/events:
                   exporters:
-                  - otlphttp/newrelic
+                  - otlp_http/newrelic
                   processors:
                   - transform/low_data_mode_inator
                   receivers:
@@ -102,7 +102,7 @@ tests:
                   - set(description, "")
                   - set(unit, "")
         exporters:
-          otlphttp/newrelic:
+          otlp_http/newrelic:
             endpoint: 343
             headers:
               api-key: ${env:NR_LICENSE_KEY}
@@ -113,13 +113,13 @@ tests:
                 - otlp
               processors: [ transform/low_data_mode_inator ]
               exporters:
-                - otlphttp/newrelic
+                - otlp_http/newrelic
     asserts:
       - equal:
           path: data["daemonset-config.yaml"]
           value: |
             exporters:
-              otlphttp/newrelic:
+              otlp_http/newrelic:
                 endpoint: 343
                 headers:
                   api-key: ${env:NR_LICENSE_KEY}
@@ -139,7 +139,7 @@ tests:
               pipelines:
                 logs/events:
                   exporters:
-                  - otlphttp/newrelic
+                  - otlp_http/newrelic
                   processors:
                   - transform/low_data_mode_inator
                   receivers:
@@ -167,7 +167,7 @@ tests:
                   - set(description, "daemonset")
                   - set(unit, "daemonset")
         exporters:
-          otlphttp/newrelic:
+          otlp_http/newrelic:
             endpoint: 343
             headers:
               api-key: daemonset-key
@@ -178,7 +178,7 @@ tests:
                 - otlp
               processors: [ transform/daemonset_inator ]
               exporters:
-                - otlphttp/newrelic
+                - otlp_http/newrelic
       deployment.configMap.overrideConfig:
         receivers:
           otlp:
@@ -193,7 +193,7 @@ tests:
                   - set(description, "deployment")
                   - set(unit, "deployment")
         exporters:
-          otlphttp/newrelic:
+          otlp_http/newrelic:
             endpoint: 343
             headers:
               api-key: deployment-key
@@ -204,13 +204,13 @@ tests:
                 - otlp
               processors: [ transform/deployment_inator ]
               exporters:
-                - otlphttp/newrelic
+                - otlp_http/newrelic
     asserts:
       - equal:
           path: data["daemonset-config.yaml"]
           value: |
             exporters:
-              otlphttp/newrelic:
+              otlp_http/newrelic:
                 endpoint: 343
                 headers:
                   api-key: daemonset-key
@@ -230,7 +230,7 @@ tests:
               pipelines:
                 logs/daemonset:
                   exporters:
-                  - otlphttp/newrelic
+                  - otlp_http/newrelic
                   processors:
                   - transform/daemonset_inator
                   receivers:
@@ -240,7 +240,7 @@ tests:
           path: data["deployment-config.yaml"]
           value: |
             exporters:
-              otlphttp/newrelic:
+              otlp_http/newrelic:
                 endpoint: 343
                 headers:
                   api-key: deployment-key
@@ -260,7 +260,7 @@ tests:
               pipelines:
                 logs/deployment:
                   exporters:
-                  - otlphttp/newrelic
+                  - otlp_http/newrelic
                   processors:
                   - transform/deployment_inator
                   receivers:
@@ -425,3 +425,71 @@ tests:
           path: data["deployment-config.yaml"]
           pattern: |
             ^\s*receivers:[\S\s]*prometheus/ksm:\s+config:\s+scrape_configs:\s+- job_name: kube-state-metrics\s+scrape_interval: 1m\s+kubernetes_sd_configs:\s+- role: pod\s+relabel_configs:\s+- action: keep\s+regex: kube-state-metrics\s+source_labels:\s+- __meta_kubernetes_pod_label_app_kubernetes_io_name\s+- action: replace\s+target_label: job_label\s+replacement: kube-state-metrics\s+
+  - it: uses correct endpoint for US
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: endpoint:\s*https://otlp\.nr-data\.net
+      - template: templates/daemonset-configmap.yaml
+        matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: endpoint:\s*https://otlp\.nr-data\.net
+  - it: uses correct endpoint for Staging
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      nrStaging: true
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: endpoint:\s*https://staging-otlp.nr-data.net
+      - template: templates/daemonset-configmap.yaml
+        matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: endpoint:\s*https://staging-otlp.nr-data.net
+  - it: uses correct endpoint for GOV
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      fedramp:
+        enabled: true
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: endpoint:\s*https://gov-otlp.nr-data.net
+      - template: templates/daemonset-configmap.yaml
+        matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: endpoint:\s*https://gov-otlp.nr-data.net
+  - it: uses correct endpoint for EU
+    set:
+      cluster: my-cluster
+      licenseKey: eu01not-a-real-keyFFFFNRAL
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: endpoint:\s*https://otlp.eu01.nr-data.net
+      - template: templates/daemonset-configmap.yaml
+        matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: endpoint:\s*https://otlp.eu01.nr-data.net
+  - it: uses correct endpoint for Japan
+    set:
+      cluster: my-cluster
+      licenseKey: jpxnot-a-real-keyFFFFNRAL
+    asserts:
+      - template: templates/deployment-configmap.yaml
+        matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: endpoint:\s*https://otlp.jp.nr-data.net
+      - template: templates/daemonset-configmap.yaml
+        matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: endpoint:\s*https://otlp.jp.nr-data.net
