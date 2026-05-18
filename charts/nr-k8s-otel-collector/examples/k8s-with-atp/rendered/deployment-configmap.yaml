@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.12.0
+    helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   deployment-config.yaml: |
     receivers:
@@ -509,7 +509,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.12.0
+            value: 0.13.0
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -527,7 +527,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.12.0
+            value: 0.13.0
 
       transform/events:
         log_statements:
@@ -684,7 +684,7 @@ data:
       
       
       otlp_http/newrelic:
-        endpoint: "https://otlp.nr-data.net"
+        endpoint: https://otlp.nr-data.net
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
