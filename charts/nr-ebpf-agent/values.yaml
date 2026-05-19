@@ -51,10 +51,23 @@ reportApmData: "auto"
 reportNetworkMetrics: "auto"
 # -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
 reportLogs: "false"
-# -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
-reportAiMetrics: "false"
-# -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
-genAICaptureMessageContent: false
+
+ai_monitoring:
+  # -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data.
+  # Accepted values: 'true' (always send), 'false' (never send) and
+  # 'auto' (send only when neither APM nor OTel agent is attached)
+  enabled: "false"
+  # samplingLatency represents the sampling latency threshold for the spans to export.
+  # Options: p1, p10, p50, p90, p99.
+  samplingLatency: "p50"
+  # -- samplingErrorRate represents the error rate threshold
+  # for an HTTP route where surpassing it would mean the
+  # corresponding spans of the route are exported.
+  # Options: 1-100
+  samplingErrorRate: ""
+  # -- Enable GenAI capture message content. When enabled, the agent captures
+  # message content for GenAI interactions. Use with caution.
+  genAICaptureMessageContent: false
 
 # -- Custom labels to be added to all entities reported by the eBPF agent.
 # These labels are sent as the NEW_RELIC_LABELS environment variable in the format "key1:value1;key2:value2".
