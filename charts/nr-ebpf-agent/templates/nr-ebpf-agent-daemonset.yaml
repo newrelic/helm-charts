@@ -167,7 +167,7 @@ spec:
             value: "false"
           {{- end }}
           - name: AI_MONITORING_ENABLED
-            value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.enabled | default "false" }}{{ else }}false{{ end }}"
+            value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.enabled | default false }}{{ else }}false{{ end }}"
           - name: AI_MONITORING_SAMPLING_LATENCY
             value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.samplingLatency | default "p50" }}{{ else }}p50{{ end }}"
           {{- if and .Values.ai_monitoring .Values.ai_monitoring.samplingErrorRate }}
@@ -176,6 +176,10 @@ spec:
           {{- end }}
           - name: AI_MONITORING_GENAI_CAPTURE_MESSAGE_CONTENT
             value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.genAICaptureMessageContent | default false }}{{ else }}false{{ end }}"
+          {{- if .Values.httpPathNormalizationPatterns }}
+          - name: HTTP_PATH_NORMALIZATION_PATTERNS
+            value: "{{ .Values.httpPathNormalizationPatterns | join "," }}"
+          {{- end }}
 
           {{- if or .Values.otlpProxy.host .Values.otlpProxy.url }}
           {{- if .Values.otlpProxy.host }}
