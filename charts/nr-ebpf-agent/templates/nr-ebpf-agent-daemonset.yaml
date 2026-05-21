@@ -178,7 +178,7 @@ spec:
             value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.genAICaptureMessageContent | default false }}{{ else }}false{{ end }}"
           {{- if .Values.httpPathNormalizationPatterns }}
           - name: HTTP_PATH_NORMALIZATION_PATTERNS
-            value: "{{ .Values.httpPathNormalizationPatterns | join "," }}"
+            value: "{{ .Values.httpPathNormalizationPatterns | join "|" }}"
           {{- end }}
 
           {{- if or .Values.otlpProxy.host .Values.otlpProxy.url }}
