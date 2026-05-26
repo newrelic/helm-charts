@@ -24,6 +24,7 @@ See below.
   {{- $endpoints := dict
       "US"      "https://collector.newrelic.com"
       "EU"      "https://collector.eu.newrelic.com"
+      "JP"      "https://collector.jp.nr-data.net"
       "STG"     "https://staging-collector.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "collectorEndpoint" "endpoints" $endpoints) -}}
