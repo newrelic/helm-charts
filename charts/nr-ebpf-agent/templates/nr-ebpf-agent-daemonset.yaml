@@ -180,6 +180,8 @@ spec:
           - name: HTTP_PATH_NORMALIZATION_PATTERNS
             value: "{{ .Values.httpPathNormalizationPatterns | join "|" }}"
           {{- end }}
+          - name: HTTP_BODY_LIMIT_BYTES
+            value: "{{ .Values.httpBodyLimitBytes }}"
 
           {{- if or .Values.otlpProxy.host .Values.otlpProxy.url }}
           {{- if .Values.otlpProxy.host }}

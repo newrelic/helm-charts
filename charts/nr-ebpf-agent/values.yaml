@@ -79,6 +79,12 @@ ai_monitoring:
 #   - "!/health/*"
 httpPathNormalizationPatterns: []
 
+# -- Maximum number of bytes captured from an HTTP request/response body.
+# Default: 1048576 (1MB) when reportAiMetrics is 'true' or 'auto', otherwise 1024 (1KB).
+# Increase this value if AI monitoring payloads are being truncated.
+# Example: 2097152 for 2MB
+httpBodyLimitBytes: ""
+
 # -- Custom labels to be added to all entities reported by the eBPF agent.
 # These labels are sent as the NEW_RELIC_LABELS environment variable in the format "key1:value1;key2:value2".
 # Example:
