@@ -1,15 +1,16 @@
-{{- if and (include "newrelic.common.serviceAccount.create" .) .Values.deployment.customConfigMap .Values.deployment.configWatcher.enabled }}
+{{- $customConfigMap := ternary .Values.daemonset.customConfigMap .Values.deployment.customConfigMap .Values.daemonset.enabled }}
+{{- if and (include "newrelic.common.serviceAccount.create" .) $customConfigMap .Values.configWatcher.enabled }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ include "nrKubernetesOtel.deployment.fullname" . }}-config-watcher
+  name: {{ include "newrelic.common.naming.fullname" . }}-config-watcher
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ include "nrKubernetesOtel.deployment.fullname" . }}-config-watcher
+  name: {{ include "newrelic.common.naming.fullname" . }}-config-watcher
 subjects:
   - kind: ServiceAccount
     name: {{ include "newrelic.common.serviceAccount.name" . }}

@@ -127,10 +127,18 @@ spec:
           volumeMounts:
             - name: daemonset-config
               mountPath: /config
+        {{- if and .Values.daemonset.customConfigMap .Values.configWatcher.enabled }}
+        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.daemonset.customConfigMap "root" .) | nindent 8 }}
+        {{- end }}
       volumes:
         - name: daemonset-config
+          {{- if .Values.daemonset.customConfigMap }}
+          configMap:
+            name: {{ .Values.daemonset.customConfigMap }}
+          {{- else }}
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+          {{- end }}
       {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
