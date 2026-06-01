@@ -56,7 +56,7 @@ See below.
   {{- $endpoints := dict
       "US"      "https://log-api.newrelic.com"
       "EU"      "https://log-api.eu.newrelic.com"
-      "JP"      "https://log-api.jp.newrelic.com"
+      "JP"      "https://log-api.jp.nr-data.net"
       "STG"     "https://staging-log-api.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "logApiEndpoint" "endpoints" $endpoints) -}}
