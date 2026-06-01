@@ -94,6 +94,39 @@ spec:
               mountPath: /temp-config
             - name: final-daemonset-config
               mountPath: /final-config
+        {{- if .Values.enable_atp }}
+        # Fix permissions for ATP persistent storage
+        # ATP needs to write adaptiveprocess.db to /var/lib/nrdot-collector
+        # hostPath volumes are created as root:root, but main container runs as user 1001
+        - name: fix-atp-storage-permissions
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.images.kubectl "context" .) }}
+          imagePullPolicy: {{ .Values.images.kubectl.pullPolicy }}
+          securityContext:
+            runAsUser: 0  # Must run as root to chown directories
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - CHOWN  # Only capability needed
+                - DAC_OVERRIDE  # Needed to override file permissions
+          command:
+            - sh
+            - -c
+            - |
+              echo "Fixing permissions for ATP storage directory..."
+              # Ensure directory exists (idempotent)
+              mkdir -p /var/lib/nrdot-collector
+              # Change ownership to user 1001 (main container user)
+              chown -R 1001:1001 /var/lib/nrdot-collector
+              # Set appropriate permissions (owner can read/write/execute)
+              chmod -R 755 /var/lib/nrdot-collector
+              echo "Permissions fixed successfully"
+              ls -la /var/lib/ | grep nrdot-collector
+          volumeMounts:
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
+        {{- end }}
       containers:
         - name: otel-collector-daemonset
           {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
