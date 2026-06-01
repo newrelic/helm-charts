@@ -16,13 +16,25 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Create release notes
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh pr list --search "${{ github.event.release.target_commitish }}" --state merged --json title,body,number
-          scripts/get-pr-release-notes.sh ${{ github.event.release.target_commitish }} ${{ env.RELEASE_FILE }}
+          CURRENT_TAG="${{ github.event.release.tag_name }}"
+          PREV_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' "${CURRENT_TAG}~1" 2>/dev/null || echo "")
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found, skipping changelog generation"
+            echo "## 🚀 What's Changed" > ${{ env.RELEASE_FILE }}
+            echo "" >> ${{ env.RELEASE_FILE }}
+            echo "Initial release" >> ${{ env.RELEASE_FILE }}
+          else
+            scripts/generate-otel-release-notes.sh "${CURRENT_TAG}" "${PREV_TAG}" ${{ env.RELEASE_FILE }}
+          fi
+
           gh release edit ${{ github.event.release.tag_name }} \
             --notes-file ${{ env.RELEASE_FILE }}
 
