@@ -248,8 +248,8 @@ receivers:
     include_file_path: true
     include_file_name: true
     operators:
-    - id: container-parser
-      type: container
+      - id: container-parser
+        type: container
 
 processors:
   # Normalize attributes by K8s standard names
@@ -350,9 +350,9 @@ processors:
         match_type: regexp
         action: update
         operations:
-        - action: add_label
-          new_label: low.data.mode
-          new_value: 'false'
+          - action: add_label
+            new_label: low.data.mode
+            new_value: 'false'
 
   # Low data mode transforms for kubeletstats
   metricstransform/kubeletstats:
@@ -361,47 +361,47 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: ^k8s\.pod\.volume\.usage$$
         action: update
         match_type: regexp
@@ -440,47 +440,47 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: container_memory_working_set_bytes
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: container_memory_mapped_file
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: container_network_(working_set_bytes|receive_(bytes_total|errors_total)|transmit_(bytes_total|errors_total))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: container_spec_memory_limit_bytes
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
 
   # Low data mode transforms for kubelet metrics
   metricstransform/kubelet:
@@ -489,28 +489,28 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: process_resident_memory_bytes
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: k8s.cluster.info
         action: update
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-            - value: 'false'
-              new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
 
   # Low data mode transforms for hostmetrics
   metricstransform/hostmetrics:
@@ -521,47 +521,47 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: system\.disk\.(io_time|operation_time|operations)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: system\.(filesystem|memory)\.(usage|utilization)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: system\.network\.(errors|io|packets)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
 
   transform/strip_labels_for_per_node_aggregation:
     metric_statements:
@@ -1118,7 +1118,7 @@ receivers:
             - action: keep
               regex: kube-state-metrics
               source_labels:
-              - __meta_kubernetes_pod_label_app_kubernetes_io_name
+                - __meta_kubernetes_pod_label_app_kubernetes_io_name
             - action: replace
               target_label: job_label
               replacement: kube-state-metrics
@@ -1139,23 +1139,23 @@ receivers:
             insecure_skip_verify: false
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
           relabel_configs:
-          - action: keep
-            source_labels:
-            - __meta_kubernetes_namespace
-            - __meta_kubernetes_service_name
-            - __meta_kubernetes_endpoint_port_name
-            regex: default;kubernetes;https
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_namespace
-            target_label: namespace
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_service_name
-            target_label: service
-          - action: replace
-            target_label: job_label
-            replacement: apiserver
+            - action: keep
+              source_labels:
+                - __meta_kubernetes_namespace
+                - __meta_kubernetes_service_name
+                - __meta_kubernetes_endpoint_port_name
+              regex: default;kubernetes;https
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_service_name
+              target_label: service
+            - action: replace
+              target_label: job_label
+              replacement: apiserver
         # if not running on openshift, this only works if controller-manager port 10257 is exposed in the pod
         # TODO: we may want to create our own service instead to expose the endpoint and scrape it instead
         - job_name: controller-manager
@@ -1172,26 +1172,26 @@ receivers:
             insecure_skip_verify: false
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
           relabel_configs:
-          - action: keep
-            source_labels:
-            - __meta_kubernetes_pod_name
-            - __address__
-            regex: .*controller-manager.*;.*:10257$
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_namespace
-            target_label: namespace
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_pod_name
-            target_label: pod
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_service_name
-            target_label: service
-          - action: replace
-            target_label: job_label
-            replacement: controller-manager
+            - action: keep
+              source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+              regex: .*controller-manager.*;.*:10257$
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_service_name
+              target_label: service
+            - action: replace
+              target_label: job_label
+              replacement: controller-manager
         # if not running on openshift, this only works if scheduler port 10259 is exposed in the pod
         - job_name: scheduler
           scrape_interval: 1m
@@ -1207,33 +1207,33 @@ receivers:
             insecure_skip_verify: false
           bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
           relabel_configs:
-          - action: keep
-            source_labels:
-            - __meta_kubernetes_pod_name
-            - __address__
-            regex: .*scheduler.*;.*:10259$
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_namespace
-            target_label: namespace
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_pod_name
-            target_label: pod
-          - action: replace
-            source_labels:
-            - __meta_kubernetes_service_name
-            target_label: service
-          - action: replace
-            target_label: job_label
-            replacement: scheduler
+            - action: keep
+              source_labels:
+                - __meta_kubernetes_pod_name
+                - __address__
+              regex: .*scheduler.*;.*:10259$
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_service_name
+              target_label: service
+            - action: replace
+              target_label: job_label
+              replacement: scheduler
 
 processors:
   transform/promote_job_label:
     metric_statements:
-    - context: datapoint
-      statements:
-      - set(instrumentation_scope.attributes["job_label"], datapoint.attributes["job_label"]) where datapoint.attributes["job_label"] != nil
+      - context: datapoint
+        statements:
+          - set(instrumentation_scope.attributes["job_label"], datapoint.attributes["job_label"]) where datapoint.attributes["job_label"] != nil
 
   transform/remove_routing_metadata:
     metric_statements:
@@ -1350,25 +1350,25 @@ processors:
         action: update
         new_name: 'kube_pod_container_status_phase'
         operations:
-        - action: add_label
-          new_label: container_phase
-          new_value: waiting
+          - action: add_label
+            new_label: container_phase
+            new_value: waiting
       - include: 'kube_pod_container_status_running'
         match_type: strict
         action: update
         new_name: 'kube_pod_container_status_phase'
         operations:
-        - action: add_label
-          new_label: container_phase
-          new_value: running
+          - action: add_label
+            new_label: container_phase
+            new_value: running
       - include: 'kube_pod_container_status_terminated'
         match_type: strict
         action: update
         new_name: 'kube_pod_container_status_phase'
         operations:
-        - action: add_label
-          new_label: container_phase
-          new_value: terminated
+          - action: add_label
+            new_label: container_phase
+            new_value: terminated
 
   # Low data mode transforms
   metricstransform/ldm:
@@ -1377,20 +1377,20 @@ processors:
         match_type: regexp
         action: update
         operations:
-        - action: add_label
-          new_label: low.data.mode
-          new_value: 'false'
+          - action: add_label
+            new_label: low.data.mode
+            new_value: 'false'
 
   metricstransform/k8s_cluster_info_ldm:
     transforms:
       - include: k8s.cluster.info
         action: update
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
 
   transform/convert_timestamp:
     metric_statements:
@@ -1406,101 +1406,101 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_daemonset_(created|status_(current_number_scheduled|desired_number_scheduled|updated_number_scheduled)|status_number_(available|misscheduled|ready|unavailable))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_deployment_(created|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas)|status_replicas_(available|ready|unavailable|updated)|labels|annotations)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_horizontalpodautoscaler_(spec_(max_replicas|min_replicas)|status_(condition|current_replicas|desired_replicas))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_job_(owner|complete|created|failed|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_node_status_(allocatable|capacity|condition)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: ^kube_namespace_(labels|annotations|status_phase|created)$$
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_persistentvolume_(capacity_bytes|created|info|status_phase)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_persistentvolumeclaim_(created|info|resource_requests_storage_bytes|status_phase|access_mode)
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_pod_container_(info|resource_(limits|requests)|status_(phase|ready|restarts_total|waiting_reason|last_terminated_timestamp|last_terminated_exitcode|last_terminated_reason))
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: ^kube_pod_(owner|created|info|status_(phase|ready|scheduled)|start_time|deletion_timestamp|labels|annotations)$$
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: ^kube_service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)$$
         action: update
         match_type: regexp
@@ -1514,11 +1514,11 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: kube_replicaset_(owner|created)
         action: update
         match_type: regexp
@@ -1545,20 +1545,20 @@ processors:
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
       - include: process_resident_memory_bytes
         action: update
         match_type: regexp
         operations:
-        - action: update_label
-          label: low.data.mode
-          value_actions:
-          - value: 'false'
-            new_value: 'true'
+          - action: update_label
+            label: low.data.mode
+            value_actions:
+              - value: 'false'
+                new_value: 'true'
 
   # Filter for low data mode
   filter/exclude_metrics_low_data_mode:
