@@ -1038,12 +1038,6 @@ kind: ConfigMap
 metadata:
   name: nr-k8s-otel-collector-daemonset-config
   namespace: newrelic
-  labels:
-    app.kubernetes.io/instance: nr-k8s-otel-collector
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   daemonset-config.yaml: |
     # Paste the Full DaemonSet Configuration from above
@@ -1935,12 +1929,6 @@ kind: ConfigMap
 metadata:
   name: nr-k8s-otel-collector-deployment-config
   namespace: newrelic
-  labels:
-    app.kubernetes.io/instance: nr-k8s-otel-collector
-    app.kubernetes.io/managed-by: Helm
-    app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.15
 data:
   deployment-config.yaml: |
     # Paste the Full Deployment Configuration from above
