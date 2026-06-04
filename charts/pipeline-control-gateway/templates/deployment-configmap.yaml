@@ -1,3 +1,4 @@
+{{- if and (not .Values.daemonset.enabled) (not .Values.deployment.customConfigMap) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -20,3 +21,4 @@ data:
     # No configuration provided - please provide configuration via Values.generated
     {{- end }}
     {{- end }}
+{{- end }}

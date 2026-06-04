@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.10.15
+    helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   daemonset-config.yaml: |
     receivers:
@@ -82,6 +82,7 @@ data:
 
       kubeletstats:
         collection_interval: 1m
+        metric_groups: [node, pod, container, volume]
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
@@ -95,6 +96,8 @@ data:
           k8s.pod.memory_limit_utilization:
             enabled: true
           k8s.pod.memory_request_utilization:
+            enabled: true
+          k8s.pod.volume.usage:
             enabled: true
 
       prometheus:
@@ -174,18 +177,18 @@ data:
                 insecure_skip_verify: false
                 server_name: kubernetes
 
-      filelog:
+      file_log:
         include:
           - /var/log/pods/*/*/*.log
         exclude:
           # Exclude logs from opentelemetry containers
-          # filelog paths for containerd and CRI-O
+          # file_log paths for containerd and CRI-O
           - /var/log/pods/*/otel-collector-daemonset/*.log
           - /var/log/pods/*/otel-collector-deployment/*.log
           - /var/log/pods/*/containers/*-exec.log
           # konnectivity-agent is GKE specific (gke uses containerd as default)
           - /var/log/pods/*/konnectivity-agent/*.log
-          # filelog paths for docker CRI
+          # file_log paths for docker CRI
           - /var/log/container/otel-collector-daemonset/*.log
           - /var/log/container/otel-collector-deployment/*.log
           - /var/log/containers/*-exec.log
@@ -293,8 +296,8 @@ data:
             conditions:
               - IsMatch(attributes["container_id"], ".*://.*")
             statements:
-              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
-              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
+              - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
+              - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
       metricstransform/ldm:
         transforms:
@@ -335,7 +338,6 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
-
           - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
             action: update
             match_type: regexp
@@ -354,6 +356,24 @@ data:
               value_actions:
               - value: 'false'
                 new_value: 'true'
+          - include: ^k8s\.pod\.volume\.usage$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
+          - include: ^k8s\.volume\.(available|capacity|inodes|(inodes\.(used)))$$
+            action: update
+            match_type: regexp
+            operations:
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
 
       transform/collector:
@@ -571,7 +591,7 @@ data:
               - metric.name == "node.cpu.usage.percentage"
               - metric.name == "node.memory.usage.percentage"
             statements:
-              - set(attributes["low.data.mode"], "true")
+              - set(datapoint.attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -683,7 +703,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.10.15
+            value: 0.13.0
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -721,7 +741,7 @@ data:
 
       cumulativetodelta:
 
-      k8sattributes/ksm:
+      k8s_attributes/ksm:
         # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
         # of metrics but there are cases of metrics where a uid would not be present and thus metadata would
         # not be attached. To address cases like these, metadata attributes must be annotated in a different manner
@@ -757,8 +777,8 @@ data:
       
       
 
-      otlphttp/newrelic:
-        endpoint: "https://otlp.nr-data.net"
+      otlp_http/newrelic:
+        endpoint: https://otlp.nr-data.net
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
@@ -884,7 +904,7 @@ data:
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
@@ -908,7 +928,7 @@ data:
             - resource/low_data_mode_inator
             - groupbyattrs
             - transform/ksm
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
@@ -929,11 +949,11 @@ data:
             
             - batch
           exporters:
-            - otlphttp/newrelic
+            - otlp_http/newrelic
             
         logs/ingress:
           receivers:
-            - filelog
+            - file_log
           processors:
             
           exporters:
@@ -947,7 +967,7 @@ data:
             - memory_limiter
             - transform/truncate
             - resource/newrelic
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
           exporters:
             - routing/logs_egress
 
@@ -958,4 +978,4 @@ data:
             
             - batch
           exporters:
-            - otlphttp/newrelic
+            - otlp_http/newrelic

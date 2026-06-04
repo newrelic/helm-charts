@@ -165,6 +165,50 @@ to export data to this connector which can then be connected to the New Relic ma
 * [Metrics - Full list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-full.md)
 * [Metrics - LowDataMode list](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md)
 
+## KSM CRD Metrics (Advanced Use Case)
+
+The New Relic OTEL agent supports scraping custom CRD metrics from `kube-state-metrics`.
+If you have custom resources in your cluster and want to monitor them, and they do not expose a metrics endpoint, you can leverage this feature to scrape metrics about those resources using `kube-state-metrics` and send them to New Relic.
+You should not be using this feature if your custom resource already exposes a metrics endpoint that the OpenTelemetry Collector can scrape directly using the `prometheus` receiver.
+This feature is meant to be used as a workaround for custom resources that do not expose a metrics endpoint, and you want to monitor them using the OpenTelemetry Collector.
+To enable this feature, you need to specify which CRD metrics you want to be scraped by using `kube-state-metrics.customResourceState.config` options in your `values.yaml` file.
+By default, collecting these metrics is disabled. When enabled in `kube-state-metrics.customResourceState.enabled`, you can specify which CRD metrics to be scraped by providing a list of custom resources and their associated labels in `kube-state-metrics.customResourceState.config`.
+
+For example:
+
+```yaml
+kube-state-metrics:
+  customResourceState:
+    enabled: true
+    config:
+      kind: CustomResourceStateMetrics
+      spec:
+        resources:
+          - groupVersionKind:
+              group: karpenter.sh
+              version: v1
+              kind: NodePool
+            labelsFromPath:
+              name: [ metadata, name ]
+              # Inherit all labels from metadata
+              "*": [ metadata, labels ]
+            metrics:
+              - name: "nodepool_nodes_count"
+                help: "Number of nodes managed by this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, nodes ]
+              - name: "nodepool_pods_count"
+                help: "Number of pods on nodes from this NodePool"
+                each:
+                  type: Gauge
+                  gauge:
+                    path: [ status, resources, pods ]
+```
+
+For the complete list of options and more details on how to configure this feature, please refer to the [KSM documentation](https://github.com/kubernetes/kube-state-metrics/blob/main/docs/metrics/extend/customresourcestate-metrics.md).
+
 ## Common Errors
 
 ### Exporting Errors
@@ -173,21 +217,29 @@ Timeout errors while starting up the collector are expected as the collector att
 These timeout errors can also pop up over time as the collector is running but are transient and expected to self-resolve. Further improvements are underway to mitigate the amount of timeout errors we're seeing from the NR1 endpoint.
 
 ```
-info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlphttp/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
+info	exporterhelper/retry_sender.go:154	Exporting failed. Will retry the request after interval.	{"kind": "exporter", "data_type": "metrics", "name": "otlp_http/newrelic", "error": "failed to make an HTTP request: Post \"https://staging-otlp.nr-data.net/v1/metrics\": context deadline exceeded (Client.Timeout exceeded while awaiting headers)", "interval": "5.445779213s"}
 ```
 
 ### No such file or directory
 
-Sometimes we see failed to open file errors on the `filelog` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, sleep) and the pod or process was terminated before the collector could read the file.
+Sometimes we see failed to open file errors on the `file_log` and `hostmetrics` receiver because of a race condition where the file or directory no longer exists, as the pod or process was ephemeral (e.g. a cronjob, sleep) and the pod or process was terminated before the collector could read the file.
 
-`filelog` error:
+`file_log` error:
 ```
-Failed to open file	{"kind": "receiver", "name": "filelog", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
+Failed to open file	{"kind": "receiver", "name": "file_log", "data_type": "logs", "component": "fileconsumer", "error": "open /var/log/pods/<podname>/<containername>/0.log: no such file or directory"}
 ```
 `hostmetrics` error:
 ```
 Error scraping metrics	{"kind": "receiver", "name": "hostmetrics", "data_type": "metrics", "error": "error reading <metric> for process \"<process>\" (pid <PID>): open /hostfs/proc/<PID>/stat: no such file or directory; error reading <metric> info for process \"<process>\" (pid 511766): open /hostfs/proc/<PID>/<metric>: no such file or directory", "scraper": "process"}
 ```
+
+### Failed to get instance metadata (resourcedetection)
+
+If you see the below error in your logs, it means that the resource detection processor is having trouble accessing the instance metadata.
+```
+Error: cannot start pipelines: failed to start "resourcedetection/cloudproviders" processor: failed to get instance metadata: operation error EC2: DescribeInstances, get identity: get credentials: request canceled, context deadline exceeded
+```
+This can be resolved by ensuring the IMDS hop limit is at least 2, or by using Pod Identity. For more details, see the [documentation for the resource detection processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/processor/resourcedetectionprocessor/README.md#amazon-eks).
 
 ## Disable Daemonset or Deployment collectors
 
