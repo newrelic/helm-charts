@@ -7,6 +7,17 @@ licenseKey: ""
 customSecretName: ""
 # -- In case you don't want to have the license key in your values, this allows you to point to which secret key is the license key located. Can be configured also with `global.customSecretLicenseKey`
 customSecretLicenseKey: ""
+# -- Map of K8s namespace to New Relic license key for multi-account OTEL export routing.
+# -- Namespaces not in the map fall back to the global licenseKey.
+# -- Example:
+# -- namespaceLicenseKeys:
+# --   team-a: "NRAK-aaa..."
+# --   team-b: "NRAK-bbb..."
+namespaceLicenseKeys: {}
+# -- Reference to a pre-existing Kubernetes secret containing NAMESPACE_LICENSE_KEY_MAP.
+# -- Use this instead of namespaceLicenseKeys to avoid storing license keys in values.yaml.
+# -- The secret must contain a key named NAMESPACE_LICENSE_KEY_MAP with a JSON-encoded namespace-to-license-key map.
+customSecretNamespaceLicenseKeys: ""
 # -- If using a customSecretLicenseKey, you must supply your region "US"/"EU". Otherwise, leave this value as an empty string.
 region: ""
 # -- Custom OTLP endpoint URL. When set, this takes precedence over the region-based static endpoints.

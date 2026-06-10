@@ -92,6 +92,18 @@ spec:
                 key: {{ include "newrelic.common.license._customSecretKey" . }}
                 name: {{ include "newrelic.common.license._customSecretName" . }}
                 {{- end }}
+          {{- if or .Values.namespaceLicenseKeys .Values.customSecretNamespaceLicenseKeys }}
+          - name: NAMESPACE_LICENSE_KEY_MAP
+            valueFrom:
+              secretKeyRef:
+                {{- if .Values.namespaceLicenseKeys }}
+                key: NAMESPACE_LICENSE_KEY_MAP
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: NAMESPACE_LICENSE_KEY_MAP
+                name: {{ .Values.customSecretNamespaceLicenseKeys }}
+                {{- end }}
+          {{- end }}
 
           {{- if .Values.tableStoreDataLimitMB }}
           - name: TABLE_STORE_DATA_LIMIT_MB
