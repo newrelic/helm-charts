@@ -116,9 +116,9 @@ spec:
           - name: OTLP_ENDPOINT
         {{- if .Values.customOtlpEndpoint }}
             value: "{{ .Values.customOtlpEndpoint }}"
-        {{- else if eq $region "Staging" }}
+        {{- else if include "newrelic.common.region.is_stg" . }}
             value: "staging-otlp.nr-data.net:443"
-        {{- else if eq $region "EU" }}
+        {{- else if include "newrelic.common.region.is_eu" . }}
             value: "otlp.eu01.nr-data.net:443"
         {{- else }}
             value: "otlp.nr-data.net:443"
