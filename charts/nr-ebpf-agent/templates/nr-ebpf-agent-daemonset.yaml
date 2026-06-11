@@ -114,15 +114,16 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: OTLP_ENDPOINT
-        {{- if .Values.customOtlpEndpoint }}
-            value: "{{ .Values.customOtlpEndpoint }}"
-        {{- else if include "newrelic.common.region.is_stg" . }}
-            value: "staging-otlp.nr-data.net:443"
-        {{- else if include "newrelic.common.region.is_eu" . }}
-            value: "otlp.eu01.nr-data.net:443"
-        {{- else }}
-            value: "otlp.nr-data.net:443"
-        {{- end }}
+            value: {{ include "newrelic.common.otlpEndpoint" . }}
+        # {{- if .Values.customOtlpEndpoint }}
+        #     value: "{{ .Values.customOtlpEndpoint }}"
+        # {{- else if include "newrelic.common.region.is_stg" . }}
+        #     value: "staging-otlp.nr-data.net:443"
+        # {{- else if include "newrelic.common.region.is_eu" . }}
+        #     value: "otlp.eu01.nr-data.net:443"
+        # {{- else }}
+        #     value: "otlp.nr-data.net:443"
+        # {{- end }}
           - name: TLS_ENABLED
             value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
