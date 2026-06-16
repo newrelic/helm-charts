@@ -1,0 +1,265 @@
+{{- if .Values.nrOtelCollector.enabled }}
+{{- $region := include "newrelic.common.region" . }}
+{{- $cluster := include "newrelic.common.cluster" . }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-nrdot-sidecar-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    {{- if .Values.nrOtelCollector.sidecar.configOverride }}
+    {{ .Values.nrOtelCollector.sidecar.configOverride | nindent 4 }}
+    {{- else }}
+    receivers:
+      {{- if .Values.nrOtelCollector.sidecar.receivers.hostmetrics.enabled }}
+      hostmetrics:
+        root_path: /host
+        collection_interval: {{ .Values.nrOtelCollector.sidecar.receivers.hostmetrics.collectionInterval }}
+        scrapers:
+          {{- range .Values.nrOtelCollector.sidecar.receivers.hostmetrics.scrapers }}
+          {{ . }}: {}
+          {{- end }}
+      {{- end }}
+      {{- if .Values.nrOtelCollector.sidecar.receivers.kubeletstats.enabled }}
+      kubeletstats:
+        collection_interval: {{ .Values.nrOtelCollector.sidecar.receivers.kubeletstats.collectionInterval }}
+        auth_type: serviceAccount
+        endpoint: "https://${env:HOST_IP}:10250"
+        insecure_skip_verify: true
+        metric_groups:
+          - node
+          - pod
+          - container
+          - volume
+          {{- range .Values.nrOtelCollector.sidecar.receivers.kubeletstats.extraMetricGroups }}
+          - {{ . }}
+          {{- end }}
+        metrics:
+          k8s.container.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
+          k8s.pod.volume.usage:
+            enabled: true
+        extra_metadata_labels:
+          - container.id
+      {{- end }}
+      # cAdvisor — container-level CPU, memory, network, and filesystem metrics.
+      # Scraped via the Kubernetes API proxy using the existing nodes/proxy RBAC
+      # permission; no direct kubelet access or extra RBAC rules required.
+      prometheus/cadvisor:
+        config:
+          scrape_configs:
+            - job_name: cadvisor
+              scrape_interval: 30s
+              scheme: https
+              tls_config:
+                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                insecure_skip_verify: false
+                server_name: kubernetes
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: node
+              relabel_configs:
+                - replacement: kubernetes.default.svc.cluster.local:443
+                  target_label: __address__
+                - regex: (.+)
+                  replacement: /api/v1/nodes/$${1}/proxy/metrics/cadvisor
+                  source_labels: [__meta_kubernetes_node_name]
+                  target_label: __metrics_path__
+                # Only scrape the node this sidecar pod is running on.
+                - source_labels: [__meta_kubernetes_node_name]
+                  regex: ${env:K8S_NODE_NAME}
+                  action: keep
+              metric_relabel_configs:
+                # Keep container-level CPU, memory, filesystem and network metrics.
+                - source_labels: [__name__]
+                  regex: 'container_(cpu_usage_seconds_total|memory_working_set_bytes|memory_usage_bytes|network_receive_bytes_total|network_transmit_bytes_total|network_receive_errors_total|network_transmit_errors_total|fs_usage_bytes|fs_capacity_bytes|spec_memory_limit_bytes)'
+                  action: keep
+                # Network metrics are reported at the pod network-namespace level and
+                # always have an empty container label — keep them.  Drop empty-container
+                # entries only for CPU/memory/fs/spec metrics (pod-level cgroup aggregates).
+                - source_labels: [__name__, container]
+                  regex: 'container_(cpu|memory|fs|spec).*;$'
+                  action: drop
+                # Drop pause/sandbox containers.
+                - source_labels: [container]
+                  regex: 'POD'
+                  action: drop
+                # Drop loopback interface — not useful for network I/O accounting.
+                - source_labels: [interface]
+                  regex: 'lo'
+                  action: drop
+      {{- if .Values.nrOtelCollector.sidecar.receivers.k8sEvents.enabled }}
+      k8s_events:
+        auth_type: serviceAccount
+      {{- end }}
+
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 75
+        spike_limit_percentage: 25
+      batch:
+        send_batch_max_size: 1000
+        timeout: 30s
+        send_batch_size: 800
+
+      # Set cluster name and entity type on all metrics from this sidecar.
+      resource/newrelic:
+        attributes:
+          - key: k8s.cluster.name
+            value: {{ $cluster }}
+            action: upsert
+          - key: newrelic.entity.type
+            value: "k8s"
+            action: upsert
+
+      # Drop Prometheus scrape endpoint metadata attached by the cAdvisor scrape.
+      # These describe the scrape target (kubernetes API server), not the container.
+      resource/drop_scrape_meta:
+        attributes:
+          - key: service.name
+            action: delete
+          - key: service.instance.id
+            action: delete
+          - key: server.address
+            action: delete
+          - key: server.port
+            action: delete
+          - key: url.scheme
+            action: delete
+          - key: net.host.name
+            action: delete
+          - key: net.host.port
+            action: delete
+          - key: http.scheme
+            action: delete
+
+      # Promote cAdvisor Prometheus labels (pod, namespace, container, node) from
+      # datapoint attributes to resource attributes for OTel convention mapping.
+      groupbyattrs:
+        keys:
+          - pod
+          - namespace
+          - container
+          - node
+          - image
+
+      # Rename raw cAdvisor Prometheus labels to OTel semantic convention names.
+      # Must run after groupbyattrs (promotes labels to resource level).
+      transform/cadvisor_attrs:
+        metric_statements:
+          - delete_key(resource.attributes, "k8s.pod.name")
+          - delete_key(resource.attributes, "k8s.namespace.name")
+          - delete_key(resource.attributes, "k8s.container.name")
+          - delete_key(resource.attributes, "k8s.node.name")
+          - set(resource.attributes["k8s.pod.name"], resource.attributes["pod"])
+          - set(resource.attributes["k8s.namespace.name"], resource.attributes["namespace"])
+          - set(resource.attributes["k8s.container.name"], resource.attributes["container"])
+          - set(resource.attributes["k8s.node.name"], resource.attributes["node"])
+          - delete_key(resource.attributes, "pod")
+          - delete_key(resource.attributes, "namespace")
+          - delete_key(resource.attributes, "container")
+          - delete_key(resource.attributes, "node")
+
+      # For kubeletstats/hostmetrics: enrich using pod IP, pod UID, or connection.
+      k8sattributes:
+        auth_type: serviceAccount
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.pod.name
+            - k8s.pod.uid
+            - k8s.namespace.name
+            - k8s.node.name
+            - k8s.deployment.name
+            - k8s.daemonset.name
+            - k8s.statefulset.name
+            - k8s.replicaset.name
+        pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.ip
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.uid
+          - sources:
+            - from: connection
+
+      # For cAdvisor: after transform/cadvisor_attrs sets k8s.pod.name and
+      # k8s.namespace.name to the monitored container's pod, use these to look
+      # up deployment/replicaset/uid from the K8s API.
+      k8sattributes/cadvisor:
+        auth_type: serviceAccount
+        passthrough: false
+        extract:
+          metadata:
+            - k8s.pod.uid
+            - k8s.pod.start_time
+            - k8s.deployment.name
+            - k8s.daemonset.name
+            - k8s.statefulset.name
+            - k8s.replicaset.name
+        pod_association:
+          - sources:
+            - from: resource_attribute
+              name: k8s.pod.name
+            - from: resource_attribute
+              name: k8s.namespace.name
+
+      # Convert cAdvisor cumulative counters (bytes_total, seconds_total) to
+      # delta so New Relic ingest calculates rates correctly.
+      cumulativetodelta:
+
+    exporters:
+      otlphttp:
+        endpoint: https://{{ if eq $region "EU" }}otlp.eu01.nr-data.net{{ else if eq $region "Staging" }}staging-otlp.nr-data.net{{ else }}otlp.nr-data.net{{ end }}
+        headers:
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+        compression: gzip
+
+    service:
+      pipelines:
+        {{- $hasMetrics := or .Values.nrOtelCollector.sidecar.receivers.hostmetrics.enabled .Values.nrOtelCollector.sidecar.receivers.kubeletstats.enabled }}
+        {{- if $hasMetrics }}
+        metrics:
+          receivers:
+            {{- if .Values.nrOtelCollector.sidecar.receivers.hostmetrics.enabled }}
+            - hostmetrics
+            {{- end }}
+            {{- if .Values.nrOtelCollector.sidecar.receivers.kubeletstats.enabled }}
+            - kubeletstats
+            {{- end }}
+          processors: [memory_limiter, resource/newrelic, k8sattributes, batch]
+          exporters: [otlphttp]
+        {{- end }}
+        metrics/cadvisor:
+          receivers: [prometheus/cadvisor]
+          processors:
+            - memory_limiter
+            - resource/drop_scrape_meta
+            - groupbyattrs
+            - transform/cadvisor_attrs
+            - resource/newrelic
+            - k8sattributes/cadvisor
+            - cumulativetodelta
+            - batch
+          exporters: [otlphttp]
+        {{- if .Values.nrOtelCollector.sidecar.receivers.k8sEvents.enabled }}
+        logs:
+          receivers: [k8s_events]
+          processors: [memory_limiter, k8sattributes, batch]
+          exporters: [otlphttp]
+        {{- end }}
+    {{- end }}
+{{- end }}

@@ -278,6 +278,98 @@ ebpfAgent:
   # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
+# -- Embedded nr-k8s-otel-collector stack.
+# A single toggle controls both the per-node sidecar and the cluster-scoped Deployment.
+#   enabled: false  →  no sidecar, no Deployment (default — zero collector overhead)
+#   enabled: true   →  nrdot-collector sidecar added to every DaemonSet pod
+#                      + single-replica Deployment for cluster-scoped metrics
+nrOtelCollector:
+  enabled: false
+
+  # -- Shared image used by both the sidecar and the cluster-collector Deployment.
+  # nrdot-collector-k8s supports kubeletstats, k8s_events, hostmetrics, and prometheus receivers.
+  image:
+    registry: docker.io
+    repository: newrelic/nrdot-collector-k8s
+    tag: "1.12.0"
+    pullPolicy: IfNotPresent
+
+  # -- Per-node sidecar — runs inside the nr-ebpf-agent DaemonSet pod on every node.
+  sidecar:
+    # -- Override the shared image for the sidecar only.
+    # Defaults to nrOtelCollector.image when not set.
+    image:
+      registry: ""
+      repository: ""
+      tag: ""
+      pullPolicy: ""
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    receivers:
+      hostmetrics:
+        # -- The eBPF agent already reports host metrics. Enable only if you have
+        # disabled host metrics in the eBPF agent to avoid duplicate data.
+        enabled: false
+        collectionInterval: 60s
+        scrapers: [cpu, disk, filesystem, load, memory, network, paging, processes]
+      kubeletstats:
+        # -- Collect per-pod and per-container metrics from the local kubelet API.
+        enabled: true
+        collectionInterval: 30s
+        # -- Extra metric groups beyond the defaults (node, pod, container).
+        extraMetricGroups: []
+      k8sEvents:
+        # -- Collect Kubernetes events (Eviction, OOMKill, BackOff) as log records.
+        enabled: true
+
+    # -- Replaces the entire sidecar pipeline config when set.
+    configOverride: ""
+
+  # -- Single-replica Deployment — scrapes kube-state-metrics for cluster-scoped object metrics.
+  # Uses Prometheus receiver to discover and scrape KSM — no k8s_cluster receiver required.
+  clusterCollector:
+    # -- Override the shared image for the cluster-collector only.
+    # Defaults to nrOtelCollector.image when not set.
+    image:
+      registry: ""
+      repository: ""
+      tag: ""
+      pullPolicy: ""
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+
+    # -- Prometheus scrape interval for the KSM receiver.
+    scrapeInterval: 1m
+    # -- Label selector to auto-discover the kube-state-metrics pod.
+    ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
+
+    # -- Replaces the entire cluster-collector pipeline config when set.
+    configOverride: ""
+
+# -- kube-state-metrics sub-chart. Enabled automatically when nrOtelCollector.enabled is true.
+# Provides Kubernetes object state metrics (deployments, pods, replicasets, etc.)
+# scraped by the nrOtelCollector clusterCollector via the Prometheus receiver.
+kube-state-metrics:
+  enabled: false
+  prometheusScrape: false
+  metricLabelsAllowlist:
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
+  metricAnnotationsAllowList:
+    - "pods=[*]"
+    - "namespaces=[*]"
+    - "deployments=[*]"
+
 # -- Image pull secrets. Overrides `global.images.pullSecrets`
 imagePullSecrets: []
 

@@ -1,0 +1,60 @@
+{{- if .Values.nrOtelCollector.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-k8s-otel-collector
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-k8s-otel-collector
+    component: cluster-metrics
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  # Never increase above 1 — k8s_cluster produces N duplicate metric streams at N replicas.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nr-k8s-otel-collector
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-k8s-otel-collector
+        component: cluster-metrics
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/nr-k8s-otel-collector-config.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: nr-k8s-otel-collector
+        image: {{ include "nrOtelCollector.clusterCollector.image" . }}
+        imagePullPolicy: {{ .Values.nrOtelCollector.clusterCollector.image.pullPolicy | default .Values.nrOtelCollector.image.pullPolicy }}
+        args: ["--config=/etc/nr-k8s-otel/config.yaml"]
+        resources: {{ .Values.nrOtelCollector.clusterCollector.resources | toYaml | nindent 10 }}
+        env:
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
+        volumeMounts:
+          - name: k8s-otel-collector-config
+            mountPath: /etc/nr-k8s-otel
+            readOnly: true
+      volumes:
+        - name: k8s-otel-collector-config
+          configMap:
+            name: {{ include "nr-ebpf-agent.fullname" . }}-k8s-otel-collector-config
+{{- end }}

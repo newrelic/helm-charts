@@ -56,6 +56,26 @@ Return the cluster name
 
 
 {{/*
+Resolve the nrdot sidecar image — uses sidecar.image override when set, otherwise falls back to shared nrOtelCollector.image.
+*/}}
+{{- define "nrOtelCollector.sidecar.image" -}}
+{{- $reg  := .Values.nrOtelCollector.sidecar.image.registry    | default .Values.nrOtelCollector.image.registry -}}
+{{- $repo := .Values.nrOtelCollector.sidecar.image.repository  | default .Values.nrOtelCollector.image.repository -}}
+{{- $tag  := .Values.nrOtelCollector.sidecar.image.tag         | default .Values.nrOtelCollector.image.tag | default .Chart.AppVersion -}}
+{{- printf "%s/%s:%s" $reg $repo $tag -}}
+{{- end -}}
+
+{{/*
+Resolve the nrdot cluster-collector image — uses clusterCollector.image override when set, otherwise falls back to shared nrOtelCollector.image.
+*/}}
+{{- define "nrOtelCollector.clusterCollector.image" -}}
+{{- $reg  := .Values.nrOtelCollector.clusterCollector.image.registry    | default .Values.nrOtelCollector.image.registry -}}
+{{- $repo := .Values.nrOtelCollector.clusterCollector.image.repository  | default .Values.nrOtelCollector.image.repository -}}
+{{- $tag  := .Values.nrOtelCollector.clusterCollector.image.tag         | default .Values.nrOtelCollector.image.tag | default .Chart.AppVersion -}}
+{{- printf "%s/%s:%s" $reg $repo $tag -}}
+{{- end -}}
+
+{{/*
 Create otel collector receiver endpoint
 */}}
 {{- define "nr-otel-collector-receiver.endpoint" -}}

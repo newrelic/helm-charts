@@ -27,6 +27,9 @@ spec:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- if .Values.nrOtelCollector.enabled }}
+        checksum/nrdot-sidecar-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-sidecar-config.yaml") . | sha256sum }}
+        {{- end }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -306,6 +309,44 @@ spec:
             mountPath: /etc/otlp-tls
             readOnly: true
           {{- end }}
+      {{- if .Values.nrOtelCollector.enabled }}
+      - name: nrdot-collector
+        image: {{ include "nrOtelCollector.sidecar.image" . }}
+        imagePullPolicy: {{ .Values.nrOtelCollector.sidecar.image.pullPolicy | default .Values.nrOtelCollector.image.pullPolicy }}
+        args: ["--config=/etc/nrdot/config.yaml"]
+        resources: {{ .Values.nrOtelCollector.sidecar.resources | toYaml | nindent 10 }}
+        env:
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
+          - name: HOST_IP
+            valueFrom:
+              fieldRef:
+                fieldPath: status.hostIP
+          - name: K8S_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+        volumeMounts:
+          - name: nrdot-sidecar-config
+            mountPath: /etc/nrdot
+            readOnly: true
+          {{- if .Values.nrOtelCollector.sidecar.receivers.hostmetrics.enabled }}
+          - name: host-root-volume
+            mountPath: /host
+            readOnly: true
+          - name: sys-volume
+            mountPath: /sys
+            readOnly: true
+          {{- end }}
+      {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -333,6 +374,11 @@ spec:
           items:
           - key: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
             path: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
+      {{- end }}
+      {{- if .Values.nrOtelCollector.enabled }}
+      - name: nrdot-sidecar-config
+        configMap:
+          name: {{ include "nr-ebpf-agent.fullname" . }}-nrdot-sidecar-config
       {{- end }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
