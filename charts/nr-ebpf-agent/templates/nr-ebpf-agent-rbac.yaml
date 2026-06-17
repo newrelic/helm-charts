@@ -30,7 +30,11 @@ rules:
 - apiGroups: [""]
   resources: [nodes/stats, nodes/proxy]
   verbs: [get]
-# k8s_events receiver (sidecar)
+# k8s_events receiver (sidecar) — core v1 events
+- apiGroups: [""]
+  resources: [events]
+  verbs: [get, watch, list]
+# k8s_events receiver (sidecar) — events.k8s.io/v1 events
 - apiGroups: ["events.k8s.io"]
   resources: [events]
   verbs: [get, watch, list]
