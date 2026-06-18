@@ -94,7 +94,7 @@ spec:
             - name: FLEET_ID
               value: "{{ .Values.fleet_id }}"
             - name: CLUSTER_NAME
-              value: "{{ .Values.global.cluster }}"
+              value: {{ include "newrelic.common.cluster" . }}
             {{- with .Values.daemonset.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
