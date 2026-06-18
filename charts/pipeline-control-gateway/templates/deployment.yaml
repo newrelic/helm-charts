@@ -85,6 +85,8 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
             - name: FLEET_ID
               value: "{{ .Values.fleet_id }}"
+            - name: CLUSTER_NAME
+              value: "{{ .Values.global.cluster }}"
             {{- with .Values.deployment.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
