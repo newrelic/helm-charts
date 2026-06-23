@@ -27,6 +27,10 @@ spec:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- if .Values.nrdotCollector.enabled }}
+        # Roll the DaemonSet (and its nrdot sidecar) when the nrdot config changes.
+        checksum/nrdot-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config.yaml") . | sha256sum }}
+        {{- end }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -115,6 +119,23 @@ spec:
                 fieldPath: status.hostIP
           - name: OTLP_ENDPOINT
             value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
+          {{- if .Values.namespaceLicenseKeys }}
+          # Multi-account routing map (drives routing of the agent's OWN data, and
+          # of ingested nrdot data in agent egress mode).
+          - name: NAMESPACE_LICENSE_KEY_MAP
+            valueFrom:
+              secretKeyRef:
+                name: nr-ebpf-agent-secrets
+                key: NAMESPACE_LICENSE_KEY_MAP
+          {{- end }}
+          {{- if and .Values.nrdotCollector.enabled (eq .Values.nrdotCollector.egressMode "agent") }}
+          # Turn on the inbound OTLP receiver so the nrdot sidecar/Deployment can
+          # send infra telemetry through the agent (single egress).
+          - name: ENABLE_OTLP_INGEST
+            value: "true"
+          - name: OTLP_INGEST_PORT
+            value: "{{ .Values.nrdotCollector.otlpIngestPort }}"
+          {{- end }}
           - name: TLS_ENABLED
             value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
@@ -298,6 +319,42 @@ spec:
             mountPath: /etc/otlp-tls
             readOnly: true
           {{- end }}
+      {{- if .Values.nrdotCollector.enabled }}
+      # nrdot per-node collector (kubeletstats). Non-privileged container; shares
+      # the agent pod's hostNetwork (reaches the local kubelet on the node) and the
+      # agent ServiceAccount (RBAC extended for nodes/stats, nodes/proxy).
+      # Egress: agent mode -> localhost OTLP receiver; direct mode -> NR per-account.
+      - name: nrdot-collector
+        image: {{ include "nr-ebpf-agent.nrdot.image" . }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
+        args: ["--config=/etc/nrdot/pernode.yaml"]
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
+        resources: {{ .Values.nrdotCollector.sidecar.resources | toYaml | nindent 10 }}
+        livenessProbe:
+          httpGet: { path: /, port: 13133 }
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet: { path: /, port: 13133 }
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        env:
+          - name: K8S_NODE_NAME
+            valueFrom:
+              fieldRef:
+                fieldPath: spec.nodeName
+          - name: CLUSTER_NAME
+            value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+          {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "127.0.0.1:%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 10 }}
+        volumeMounts:
+          - name: nrdot-config
+            mountPath: /etc/nrdot
+            readOnly: true
+      {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -318,6 +375,11 @@ spec:
           type: Directory
       - name: kernel-headers-volume
         emptyDir: {}
+      {{- if .Values.nrdotCollector.enabled }}
+      - name: nrdot-config
+        configMap:
+          name: {{ include "nr-ebpf-agent.nrdot.configName" . }}
+      {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert
         secret:

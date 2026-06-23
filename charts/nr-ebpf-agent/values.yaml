@@ -299,3 +299,58 @@ affinity: {}
 podSecurityContext: {}
 # --  Kubernetes cluster domain.
 kubernetesClusterDomain: cluster.local
+
+# =============================================================================
+# Multi-account routing + nrdot Kubernetes-infrastructure collector
+# =============================================================================
+# -- Map of Kubernetes namespace -> New Relic license key, for routing telemetry
+# to different accounts. The customer sets this ONCE; the chart generates from it
+# both the eBPF agent's routing map (NAMESPACE_LICENSE_KEY_MAP) and, in direct
+# egress mode, the nrdot collector's per-account exporters. Namespaces not listed
+# fall back to the default `licenseKey`. Keys are stored in the chart Secret.
+# Example: namespaceLicenseKeys: { team-a: "NRAK-aaa", team-b: "NRAK-bbb" }
+namespaceLicenseKeys: {}
+
+# -- nrdot collector for Kubernetes infrastructure telemetry (kubeletstats, KSM,
+# k8s events) — the nri-kubernetes replacement half of the agent. When disabled,
+# only the eBPF agent runs (no K8s infra collection); zero added overhead.
+nrdotCollector:
+  # -- Master toggle for K8s infrastructure collection via nrdot.
+  enabled: false
+  # -- Egress mode (how nrdot's telemetry reaches New Relic):
+  #    "agent"  = nrdot -> eBPF agent inbound OTLP -> agent routes per-namespace -> NR
+  #               (single egress; the agent holds all keys; sets ENABLE_OTLP_INGEST=true).
+  #    "direct" = nrdot routes per-namespace itself (routingconnector) and sends
+  #               straight to NR (no agent relay; keys injected from namespaceLicenseKeys).
+  egressMode: direct
+  image:
+    # -- nrdot image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- nrdot image repository.
+    repository: newrelic/nrdot-collector
+    # -- nrdot image tag.
+    tag: "1.17.0"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  # -- Inbound OTLP port the agent listens on (agent mode) and that nrdot targets.
+  otlpIngestPort: 4317
+  # -- Metric collection / scrape interval.
+  collectionInterval: 30s
+  # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape.
+  ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
+  # -- Per-node (sidecar) collector resources.
+  sidecar:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  # -- Cluster (Deployment) collector resources.
+  clusterCollector:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi

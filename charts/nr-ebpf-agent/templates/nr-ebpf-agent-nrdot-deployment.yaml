@@ -1,0 +1,80 @@
+{{- if .Values.nrdotCollector.enabled }}
+# Cluster-wide nrdot collector (KSM + k8s events). Single replica is REQUIRED:
+# cluster-scoped collection must happen once, else every replica duplicates it.
+# Reuses the agent ServiceAccount (RBAC extended for events + KSM scrape). In
+# agent egress mode it sends to the node-local agent via $(HOST_IP) (the agent
+# runs hostNetwork, so it listens on the node IP); in direct mode it routes to NR.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-nrdot-cluster
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-nrdot-cluster
+    component: nrdot-cluster-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nr-ebpf-agent-nrdot-cluster
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent-nrdot-cluster
+        component: nrdot-cluster-collector
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      terminationGracePeriodSeconds: 60
+      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nrdot-collector
+          image: {{ include "nr-ebpf-agent.nrdot.image" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
+          args: ["--config=/etc/nrdot/cluster.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources: {{ .Values.nrdotCollector.clusterCollector.resources | toYaml | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /, port: 13133 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /, port: 13133 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            - name: CLUSTER_NAME
+              value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+            {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "$(HOST_IP):%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 12 }}
+          volumeMounts:
+            - name: nrdot-config
+              mountPath: /etc/nrdot
+              readOnly: true
+      volumes:
+        - name: nrdot-config
+          configMap:
+            name: {{ include "nr-ebpf-agent.nrdot.configName" . }}
+      {{- with include "newrelic.common.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}

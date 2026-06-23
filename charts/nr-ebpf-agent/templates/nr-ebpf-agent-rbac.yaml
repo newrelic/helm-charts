@@ -25,6 +25,37 @@ rules:
   - get
   - watch
   - list
+{{- if .Values.nrdotCollector.enabled }}
+# nrdot collector permissions (shared by the per-node sidecar and the cluster
+# Deployment, which both run under this ServiceAccount):
+#  - nodes/stats, nodes/proxy: kubeletstats receiver (kubelet API)
+#  - events: k8s_events receiver
+- apiGroups:
+  - ""
+  resources:
+  - nodes/stats
+  - nodes/proxy
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - "events.k8s.io"
+  resources:
+  - events
+  verbs:
+  - get
+  - list
+  - watch
+{{- end }}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
