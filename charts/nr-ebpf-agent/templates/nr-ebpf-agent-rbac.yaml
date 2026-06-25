@@ -30,6 +30,11 @@ rules:
 # Deployment, which both run under this ServiceAccount):
 #  - nodes/stats, nodes/proxy: kubeletstats receiver (kubelet API)
 #  - events: k8s_events receiver
+#  - /metrics (nonResourceURL): API server controlplane scrape (kubernetes_build_info)
+- nonResourceURLs:
+  - /metrics
+  verbs:
+  - get
 - apiGroups:
   - ""
   resources:

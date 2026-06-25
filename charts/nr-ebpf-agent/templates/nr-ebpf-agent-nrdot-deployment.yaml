@@ -77,4 +77,8 @@ spec:
       nodeSelector:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
 {{- end }}
