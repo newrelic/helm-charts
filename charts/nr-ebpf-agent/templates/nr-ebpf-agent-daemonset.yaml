@@ -181,6 +181,8 @@ spec:
           {{- end }}
           - name: REPORT_AI_METRICS
             value: "{{ if hasKey .Values "reportAiMetrics" }}{{ .Values.reportAiMetrics }}{{ else }}false{{ end }}"
+          - name: REPORT_INFRA
+            value: "{{ if hasKey .Values "reportInfra" }}{{ .Values.reportInfra }}{{ else }}false{{ end }}"
           - name: GENAI_CAPTURE_MESSAGE_CONTENT
             value: "{{ if hasKey .Values "genAICaptureMessageContent" }}{{ .Values.genAICaptureMessageContent }}{{ else }}false{{ end }}"
 
