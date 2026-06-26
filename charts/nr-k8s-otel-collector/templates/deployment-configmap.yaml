@@ -855,9 +855,11 @@ data:
           processors:
             - memory_limiter
             - metricstransform/kube_pod_container_status_phase
+            {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - filter/exclude_zero_value_kube_node_status_condition
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
+            {{- end }}
             - transform/convert_timestamp
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
             - metricstransform/ldm
