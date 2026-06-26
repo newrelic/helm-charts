@@ -26,7 +26,7 @@ spec:
         component: nrdot-cluster-collector
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-cluster.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       terminationGracePeriodSeconds: 60
@@ -72,12 +72,12 @@ spec:
       volumes:
         - name: nrdot-config
           configMap:
-            name: {{ include "nr-ebpf-agent.nrdot.configName" . }}
+            name: {{ include "nr-ebpf-agent.nrdot.configName.cluster" . }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      {{- with include "nrEbpfAgent.clusterCollector.tolerations" . }}
       tolerations:
         {{- . | nindent 8 }}
       {{- end }}

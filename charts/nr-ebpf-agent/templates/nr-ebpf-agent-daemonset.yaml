@@ -29,7 +29,7 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
         {{- if .Values.nrdotCollector.enabled }}
         # Roll the DaemonSet (and its nrdot sidecar) when the nrdot config changes.
-        checksum/nrdot-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config.yaml") . | sha256sum }}
+        checksum/nrdot-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-pernode.yaml") . | sha256sum }}
         {{- end }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -380,7 +380,7 @@ spec:
       {{- if .Values.nrdotCollector.enabled }}
       - name: nrdot-config
         configMap:
-          name: {{ include "nr-ebpf-agent.nrdot.configName" . }}
+          name: {{ include "nr-ebpf-agent.nrdot.configName.pernode" . }}
       {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert

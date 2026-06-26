@@ -58,6 +58,8 @@ reportInfra: "false"
 # -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
 genAICaptureMessageContent: false
 
+reportInfra: "false"
+
 # -- Custom labels to be added to all entities reported by the eBPF agent.
 # These labels are sent as the NEW_RELIC_LABELS environment variable in the format "key1:value1;key2:value2".
 # Example:
@@ -365,3 +367,8 @@ nrdotCollector:
       requests:
         cpu: 100m
         memory: 256Mi
+    # -- Tolerations for the cluster collector Deployment. Unlike the per-node DaemonSet
+    # (which tolerates all taints so it lands on every node), this is a single pod that
+    # only needs one schedulable node, so it does NOT inherit the tolerate-all default.
+    # Set this only if every node in your cluster is tainted (e.g. dedicated node pools).
+    tolerations: []

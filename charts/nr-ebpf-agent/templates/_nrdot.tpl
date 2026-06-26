@@ -29,10 +29,17 @@ Precedence: local (nrdotCollector.image.pullPolicy) > global (global.images.pull
 {{- end -}}
 
 {{/*
-nrdot config name.
+nrdot pernode config name (DaemonSet sidecar).
 */}}
-{{- define "nr-ebpf-agent.nrdot.configName" -}}
-{{- printf "%s-nrdot-config" (include "nr-ebpf-agent.fullname" .) -}}
+{{- define "nr-ebpf-agent.nrdot.configName.pernode" -}}
+{{- printf "%s-nrdot-pernode" (include "nr-ebpf-agent.fullname" .) -}}
+{{- end -}}
+
+{{/*
+nrdot cluster config name (Deployment).
+*/}}
+{{- define "nr-ebpf-agent.nrdot.configName.cluster" -}}
+{{- printf "%s-nrdot-cluster" (include "nr-ebpf-agent.fullname" .) -}}
 {{- end -}}
 
 {{/*
