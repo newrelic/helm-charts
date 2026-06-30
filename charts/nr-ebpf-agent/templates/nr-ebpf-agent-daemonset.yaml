@@ -65,6 +65,68 @@ spec:
           mountPath: /host
         - name: kernel-headers-volume
           mountPath: /kernel-headers
+      {{- if .Values.nrdotCollector.enabled }}
+      # Reads this node's CPU/memory allocatable from the K8s API and patches the
+      # nrdot config's metricsgeneration/calculate_percentage scale_by fields, so
+      # node.cpu.usage.percentage / node.memory.usage.percentage can be computed
+      # (these power the K8s cluster CPU/memory usage view). The collector image
+      # is locked down and can't query the API itself, and the downward API does
+      # not expose node allocatable — hence this init container (mirrors the
+      # nr-k8s-otel-collector chart's get-cpu-allocatable container).
+      - name: nrdot-get-allocatable
+        image: {{ include "nr-ebpf-agent.nrdot.kubectlImage" . }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.kubectlImagePullPolicy" . }}
+        command:
+          - sh
+          - -c
+          - |
+            NODE_NAME=$(echo $KUBE_NODE_NAME)
+            echo "Node Name: $KUBE_NODE_NAME"
+
+            export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+            if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+              echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+              exit 1
+            fi
+
+            # Convert milliCPU values to plain CPU values
+            if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
+              # Strip the 'm' and convert the milliCPUs to CPUs
+              export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+            fi
+
+            export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
+              /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+              /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+              /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+              /m$/  {printf "%.0f\n", $1 / 1000; next}
+              {print $1}
+            ')
+
+            if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+              echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+              exit 1
+            fi
+
+            echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+            echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
+            cp /temp-config/pernode.yaml /final-config
+            yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/pernode.yaml
+            yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/pernode.yaml
+            cat /final-config/pernode.yaml
+        env:
+          - name: KUBE_NODE_NAME
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: spec.nodeName
+        volumeMounts:
+          - name: nrdot-config
+            mountPath: /temp-config
+          - name: nrdot-config-final
+            mountPath: /final-config
+      {{- end }}
 
       containers:
       - name: nr-ebpf-agent
@@ -329,7 +391,9 @@ spec:
       - name: nrdot-collector
         image: {{ include "nr-ebpf-agent.nrdot.image" . }}
         imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
-        args: ["--config=/etc/nrdot/pernode.yaml"]
+        # Reads the init-container-patched config from the shared emptyDir (same
+        # path). MatchAttributes gate enables metricsgeneration `type: calculate`.
+        args: ["--config=/etc/nrdot/pernode.yaml", "--feature-gates=metricsgeneration.MatchAttributes"]
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
@@ -353,7 +417,9 @@ spec:
             value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
           {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "127.0.0.1:%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 10 }}
         volumeMounts:
-          - name: nrdot-config
+          # Patched config written by the nrdot-get-allocatable init container
+          # (the raw ConfigMap is mounted only on that init container).
+          - name: nrdot-config-final
             mountPath: /etc/nrdot
             readOnly: true
       {{- end }}
@@ -381,6 +447,10 @@ spec:
       - name: nrdot-config
         configMap:
           name: {{ include "nr-ebpf-agent.nrdot.configName.pernode" . }}
+      # Holds the config after the init container injects per-node allocatable
+      # into the metricsgeneration scale_by fields; mounted by the sidecar.
+      - name: nrdot-config-final
+        emptyDir: {}
       {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert

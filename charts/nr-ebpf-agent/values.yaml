@@ -345,6 +345,20 @@ nrdotCollector:
     tag: "1.17.0"
     # -- Image pull policy. Overrides `global.images.pullPolicy`.
     pullPolicy: ""
+  # -- Image for the `nrdot-get-allocatable` init container (needs `kubectl` + `yq`).
+  #    It reads this node's CPU/memory allocatable from the K8s API and injects it
+  #    into the collector's metricsgeneration `scale_by` fields, enabling
+  #    node.cpu.usage.percentage / node.memory.usage.percentage (the K8s cluster
+  #    CPU/memory usage gauges). Mirrors nr-k8s-otel-collector's `images.kubectl`.
+  kubectlImage:
+    # -- kubectl image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- kubectl image repository (must include `yq`).
+    repository: bitnami/kubectl
+    # -- kubectl image tag.
+    tag: "latest"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
   # -- Inbound OTLP port the agent listens on (agent mode) and that nrdot targets.
   otlpIngestPort: 4317
   # -- Metric collection / scrape interval.

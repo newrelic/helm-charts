@@ -18,6 +18,21 @@ data:
         insecure_skip_verify: true
         metric_groups: [node, pod, container, volume]
         extra_metadata_labels: [container.id]
+        # Pod/container CPU & memory utilization (vs requests/limits). Off by
+        # default in the receiver; the K8s UI's pod/container utilization views
+        # read these. kubeletstats computes them from kubelet usage + pod-spec
+        # requests/limits (no KSM, no metric generation).
+        metrics:
+          k8s.container.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_limit_utilization:
+            enabled: true
+          k8s.pod.cpu_request_utilization:
+            enabled: true
+          k8s.pod.memory_limit_utilization:
+            enabled: true
+          k8s.pod.memory_request_utilization:
+            enabled: true
       prometheus/cadvisor:
         config:
           scrape_configs:
@@ -129,6 +144,77 @@ data:
           - sources:
             - { from: resource_attribute, name: k8s.pod.name }
             - { from: resource_attribute, name: k8s.namespace.name }
+      # Pod request/limit ratio, divided from the kubeletstats utilization
+      # metrics enabled above (type: calculate needs the metricsgeneration
+      # MatchAttributes feature gate, set on the sidecar args).
+      metricsgeneration/calculate_percentage_for_pods:
+        rules:
+          - name: k8s.pod.memory_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.memory_limit_utilization
+            metric2: k8s.pod.memory_request_utilization
+            operation: divide
+          - name: k8s.pod.cpu_request_limit_ratio
+            type: calculate
+            metric1: k8s.pod.cpu_limit_utilization
+            metric2: k8s.pod.cpu_request_utilization
+            operation: divide
+      # --- Per-node CPU/memory usage % (powers the K8s cluster CPU/mem gauges) ---
+      # Sum container usage per node, then divide by the node's allocatable
+      # (injected into the scale_by placeholders below by the nrdot-get-allocatable
+      # init container). The aggregation pipeline has no k8sattributes processor,
+      # and kubeletstats doesn't stamp k8s.node.name on container metrics itself,
+      # so set it explicitly from this per-node sidecar's K8S_NODE_NAME env. Without
+      # this, all containers collapse into one node-less series (cluster total ÷
+      # one node's allocatable) and the UI can't attribute it to nodes.
+      resource/node_identity:
+        attributes:
+          - key: k8s.node.name
+            value: ${env:K8S_NODE_NAME}
+            action: upsert
+      transform/strip_labels_for_per_node_aggregation:
+        metric_statements:
+          - context: datapoint
+            statements:
+              - keep_keys(resource.attributes, ["k8s.node.name"]) where metric.name == "container.cpu.usage"
+              - keep_keys(resource.attributes, ["k8s.node.name"]) where metric.name == "container.memory.usage"
+      groupbyattrs/node:
+        keys: [k8s.node.name]
+      metricstransform/sum_container_metrics_per_node:
+        transforms:
+          - include: container.cpu.usage
+            action: insert
+            new_name: node.container.cpu.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set: [k8s.node.name]
+                aggregation_type: sum
+          - include: container.memory.usage
+            action: insert
+            new_name: node.container.memory.usage.sum
+            operations:
+              - action: aggregate_labels
+                label_set: [k8s.node.name]
+                aggregation_type: sum
+      metricsgeneration/calculate_percentage:
+        rules:
+          - name: node.cpu.usage.percentage
+            type: scale
+            metric1: node.container.cpu.usage.sum
+            scale_by: <NODE_CPU_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+          - name: node.memory.usage.percentage
+            type: scale
+            metric1: node.container.memory.usage.sum
+            scale_by: <NODE_MEMORY_ALLOCATABLE_PLACEHOLDER>
+            operation: divide
+      filter/keep_only_generated_metrics:
+        metrics:
+          include:
+            match_type: strict
+            metric_names:
+              - node.cpu.usage.percentage
+              - node.memory.usage.percentage
       cumulativetodelta: {}
       batch:
         send_batch_size: 800
@@ -166,7 +252,14 @@ data:
       pipelines:
         metrics/in:
           receivers: [kubeletstats]
-          processors: [memory_limiter, k8sattributes, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8sattributes, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+          exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
+        # Per-node CPU/memory usage % (cluster gauge). Separate copy of the
+        # kubeletstats stream; filter/keep_only_generated_metrics drops everything
+        # except the two generated percentages, so nothing here is double-counted.
+        metrics/aggregation:
+          receivers: [kubeletstats]
+          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metricstransform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
@@ -194,7 +287,12 @@ data:
       pipelines:
         metrics:
           receivers: [kubeletstats]
-          processors: [memory_limiter, k8sattributes, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8sattributes, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+          exporters: [otlp/agent]
+        # Per-node CPU/memory usage % (cluster gauge). See the direct-mode block.
+        metrics/aggregation:
+          receivers: [kubeletstats]
+          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metricstransform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, batch]
           exporters: [otlp/agent]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]

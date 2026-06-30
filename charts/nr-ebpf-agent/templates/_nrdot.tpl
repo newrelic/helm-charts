@@ -29,6 +29,36 @@ Precedence: local (nrdotCollector.image.pullPolicy) > global (global.images.pull
 {{- end -}}
 
 {{/*
+Return the kubectl image reference for the nrdot-get-allocatable init container.
+Precedence: local (nrdotCollector.kubectlImage.registry) > global > docker.io
+*/}}
+{{- define "nr-ebpf-agent.nrdot.kubectlImage" -}}
+{{- $registry := .Values.nrdotCollector.kubectlImage.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.nrdotCollector.kubectlImage.repository .Values.nrdotCollector.kubectlImage.tag -}}
+{{- end -}}
+
+{{/*
+Return the kubectl init-container imagePullPolicy.
+Precedence: local > global > IfNotPresent
+*/}}
+{{- define "nr-ebpf-agent.nrdot.kubectlImagePullPolicy" -}}
+{{- if .Values.nrdotCollector.kubectlImage.pullPolicy -}}
+  {{- .Values.nrdotCollector.kubectlImage.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy -}}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else -}}
+  {{- "IfNotPresent" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 nrdot pernode config name (DaemonSet sidecar).
 */}}
 {{- define "nr-ebpf-agent.nrdot.configName.pernode" -}}
