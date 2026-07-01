@@ -73,9 +73,7 @@ jobs:
         if: steps.should-run.outputs.match == 'true'
         uses: actions/checkout@v4
         with:
-          ref: feat/onboard-pcg-config-mode   # was: ${{ env.RELEASE_TAG }}
-        # with:
-        #   ref: ${{ env.RELEASE_TAG }}
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Extract version from release tag or values.yaml
         if: steps.should-run.outputs.match == 'true'
@@ -114,8 +112,7 @@ jobs:
           newrelic-private-key: ${{ secrets.NEWRELIC_PRIVATE_KEY }}
           agent-type: ${{ matrix.agent-type }}
           version: ${{ steps.version.outputs.version }}
-          # git-ref: ${{ env.RELEASE_TAG }}
-          git-ref: feat/onboard-pcg-config-mode  # was: ${{ env.RELEASE_TAG }}
+          git-ref: ${{ env.RELEASE_TAG }}
           config-directory: ${{ matrix.config-directory }}
           monitoring-type: ${{ matrix.monitoring-type }}
           display-name: ${{ matrix.display-name }}
