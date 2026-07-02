@@ -1,31 +1,35 @@
-{{- if not .Values.daemonset.enabled }}
+{{- if .Values.daemonset.enabled }}
 apiVersion: apps/v1
-kind: Deployment
+kind: DaemonSet
 metadata:
-  name: {{ include "nrKubernetesOtel.deployment.fullname" . }}
+  name: {{ include "nrKubernetesOtel.daemonset.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
-  replicas: 1
-  minReadySeconds: 5
   selector:
     matchLabels:
       {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
-      component: deployment
+      component: daemonset
+  updateStrategy:
+    type: {{ .Values.daemonset.updateStrategy.type }}
+    {{- if eq .Values.daemonset.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.daemonset.updateStrategy.maxUnavailable }}
+    {{- end }}
   template:
     metadata:
       labels:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
-        component: deployment
+        component: daemonset
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/deployment-configmap.yaml") . | sha256sum }}
-        {{- with .Values.deployment.podAnnotations }}
+        checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
+        {{- with .Values.daemonset.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
-      {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
+      {{- with include "nrKubernetesOtel.daemonset.securityContext.pod" . }}
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
@@ -38,16 +42,20 @@ spec:
       {{- end }}
       containers:
         - name: pipeline-control-gateway
-          {{- with include "nrKubernetesOtel.deployment.securityContext.container" . }}
+          {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
           securityContext:
             {{- . | nindent 12 }}
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.daemonset.customConfigMap }}
           args: ["./pipeline-control-gateway", "--config", "/config/deployment-config.yaml"]
+          {{- else }}
+          args: ["./pipeline-control-gateway", "--config", "/config/daemonset-config.yaml"]
+          {{- end }}
           resources:
-            {{- toYaml .Values.deployment.resources | nindent 12 }}
-          {{- with .Values.deployment.envsFrom }}
+            {{- toYaml .Values.daemonset.resources | nindent 12 }}
+          {{- with .Values.daemonset.envsFrom }}
           envFrom:
             {{- . | toYaml | nindent 12 }}
           {{- end }}
@@ -87,7 +95,7 @@ spec:
               value: "{{ .Values.fleet_id }}"
             - name: CLUSTER_NAME
               value: {{ include "newrelic.common.cluster" . }}
-            {{- with .Values.deployment.envs }}
+            {{- with .Values.daemonset.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
           ports:
@@ -123,29 +131,29 @@ spec:
             successThreshold: 1
             failureThreshold: 3
           volumeMounts:
-            - name: deployment-config
+            - name: daemonset-config
               mountPath: /config
-        {{- if and .Values.deployment.customConfigMap .Values.configWatcher.enabled }}
-        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.deployment.customConfigMap "root" .) | nindent 8 }}
+        {{- if and .Values.daemonset.customConfigMap .Values.configWatcher.enabled }}
+        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.daemonset.customConfigMap "root" .) | nindent 8 }}
         {{- end }}
       volumes:
-        - name: deployment-config
-          {{- if .Values.deployment.customConfigMap }}
+        - name: daemonset-config
+          {{- if .Values.daemonset.customConfigMap }}
           configMap:
-            name: {{ .Values.deployment.customConfigMap }}
+            name: {{ .Values.daemonset.customConfigMap }}
           {{- else }}
           configMap:
-            name: {{ include "nrKubernetesOtel.deployment.fullname" . }}-config
+            name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
           {{- end }}
-      {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
+      {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "nrKubernetesOtel.deployment.affinity" . }}
+      {{- with include "nrKubernetesOtel.daemonset.affinity" . }}
       affinity:
         {{- . | nindent 8 }}
       {{- end }}
-      {{- with include "nrKubernetesOtel.deployment.tolerations" . }}
+      {{- with include "nrKubernetesOtel.daemonset.tolerations" . }}
       tolerations:
         {{- . | nindent 8 }}
       {{- end }}

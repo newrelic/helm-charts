@@ -1,59 +1,28 @@
 {{- /*
-Return to which endpoint should the agent control connect to get fleet_control data
+Return the OpAMP endpoint the agent control connects to for fleet_control data.
+The base URL is resolved per-region by the common-library helper, which also
+honors overrides via `.Values.opampEndpoint` / `.Values.global.opampEndpoint`.
 */ -}}
 {{- define "newrelic-agent-control.config.endpoints.fleet_control" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://opamp.staging-service.newrelic.com/v1/opamp
-{{- else if eq $region "EU" -}}
-  https://opamp.service.eu.newrelic.com/v1/opamp
-{{- else if eq $region "US" -}}
-  https://opamp.service.newrelic.com/v1/opamp
-{{- else if eq $region "Local" -}}
-  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.fleet_control }}
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
-{{- end -}}
+{{ include "newrelic.common.opamp_endpoint" . }}/v1/opamp
 {{- end -}}
 
 {{- /*
-Return to which endpoint should the agent control connect to get the public key for signature validation
+Return the endpoint from which the agent control fetches the public key used
+for signature validation. Override via `.Values.publicKeysEndpoint` /
+`.Values.global.publicKeysEndpoint`.
 */ -}}
 {{- define "newrelic-agent-control.config.endpoints.public_key_server_url" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://staging-publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
-{{- else if eq $region "EU" -}}
-  https://publickeys.eu.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
-{{- else if eq $region "US" -}}
-  https://publickeys.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
+{{ include "newrelic.common.public_keys_endpoint" . }}/r/blob-management/global/agentconfiguration/jwks.json
 {{- end -}}
-{{- end -}}
-
 
 {{- /*
-Return to which endpoint should the agent control ask to renew its token
+Return the endpoint the agent control uses to renew its auth token. Override
+via `.Values.systemIdentityOauthEndpoint` /
+`.Values.global.systemIdentityOauthEndpoint`.
 */ -}}
 {{- define "newrelic-agent-control.config.endpoints.tokenRenewal" -}}
-{{- $region := include "newrelic.common.region" . -}}
-
-{{- if eq $region "Staging" -}}
-  https://system-identity-oauth.staging-service.newrelic.com/oauth2/token
-{{- else if eq $region "EU" -}}
-  https://system-identity-oauth.service.newrelic.com/oauth2/token
-{{- else if eq $region "US" -}}
-  https://system-identity-oauth.service.newrelic.com/oauth2/token
-{{- else if eq $region "Local" -}}
-  {{- /* Accessing the value directly without protection. A developer should now how to read the error. */ -}}
-  {{ .Values.development.backend.tokenRenewal }}
-{{- else -}}
-  {{- fail "Unknown/unsupported region set for this chart" -}}
-{{- end -}}
+{{ include "newrelic.common.system_identity_oauth_endpoint" . }}/oauth2/token
 {{- end -}}
 
 {{- /*
@@ -72,6 +41,7 @@ cluster name, licenses, and custom attributes
 {{- /* Add ac_remote_update and cd_remote_update to the config */ -}}
 {{- $k8s = mustMerge $k8s (dict "ac_remote_update" .Values.config.acRemoteUpdate "cd_remote_update" .Values.config.cdRemoteUpdate) -}}
 {{- $k8s = mustMerge $k8s (dict "ac_release_name" .Release.Name "cd_release_name" .Values.config.cdReleaseName) -}}
+{{- $k8s = mustMerge $k8s (dict "cd_enabled" .Values.config.cdEnabled) -}}
 {{- $authSecret := .Values.config.authSecret | default dict -}}
 {{- $sName := $authSecret.secretName | default "agent-control-auth" -}}
 {{- $sKey  := $authSecret.secretKeyName | default "private_key" -}}

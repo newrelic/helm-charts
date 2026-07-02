@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.11.1
+    helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   daemonset-config.yaml: |
     receivers:
@@ -159,26 +159,26 @@ data:
                 insecure_skip_verify: false
                 server_name: kubernetes
 
-      filelog:
+      file_log:
         include:
           - /var/log/pods/*/*/*.log
         exclude:
           # Exclude logs from opentelemetry containers
-          # filelog paths for containerd and CRI-O
+          # file_log paths for containerd and CRI-O
           - /var/log/pods/*/otel-collector-daemonset/*.log
           - /var/log/pods/*/otel-collector-deployment/*.log
           - /var/log/pods/*/containers/*-exec.log
           # konnectivity-agent is GKE specific (gke uses containerd as default)
           - /var/log/pods/*/konnectivity-agent/*.log
-          # filelog paths for docker CRI
+          # file_log paths for docker CRI
           - /var/log/container/otel-collector-daemonset/*.log
           - /var/log/container/otel-collector-deployment/*.log
           - /var/log/containers/*-exec.log
         include_file_path: true
         include_file_name: true
         operators:
-        - id: container-parser
-          type: container
+          - id: container-parser
+            type: container
 
 
     processors:
@@ -270,8 +270,8 @@ data:
             conditions:
               - IsMatch(attributes["container_id"], ".*://.*")
             statements:
-              - set(attributes["runtime"], Split(attributes["container_id"], "://")[0])
-              - set(attributes["container_id"], Split(attributes["container_id"], "://")[1])
+              - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
+              - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
       metricstransform/ldm:
         transforms:
@@ -279,9 +279,9 @@ data:
             match_type: regexp
             action: update
             operations:
-            - action: add_label
-              new_label: low.data.mode
-              new_value: 'false'
+              - action: add_label
+                new_label: low.data.mode
+                new_value: 'false'
 
       metricstransform/kubeletstats:
         transforms:
@@ -289,47 +289,47 @@ data:
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: ^k8s\.pod\.volume\.usage$$
             action: update
             match_type: regexp
@@ -366,47 +366,47 @@ data:
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_memory_working_set_bytes
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_memory_mapped_file
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_network_(working_set_bytes|receive_(bytes_total|errors_total)|transmit_(bytes_total|errors_total))
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_spec_memory_limit_bytes
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
       metricstransform/kubelet:
         transforms:
@@ -414,28 +414,28 @@ data:
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: process_resident_memory_bytes
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s.cluster.info
             action: update
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-                - value: 'false'
-                  new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
       metricstransform/hostmetrics:
         transforms:
@@ -445,47 +445,47 @@ data:
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.disk\.(io_time|operation_time|operations)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.(filesystem|memory)\.(usage|utilization)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.network\.(errors|io|packets)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
       transform/strip_labels_for_per_node_aggregation:
         metric_statements:
@@ -557,7 +557,7 @@ data:
               - metric.name == "node.cpu.usage.percentage"
               - metric.name == "node.memory.usage.percentage"
             statements:
-              - set(attributes["low.data.mode"], "true")
+              - set(datapoint.attributes["low.data.mode"], "true")
 
       filter/exclude_metrics_low_data_mode:
         metrics:
@@ -669,7 +669,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.11.1
+            value: 0.13.0
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -707,7 +707,7 @@ data:
 
       cumulativetodelta:
 
-      k8sattributes/ksm:
+      k8s_attributes/ksm:
         # Metadata attached by this processor is reliant on the uid & pod name. This would be sufficient for most types
         # of metrics but there are cases of metrics where a uid would not be present and thus metadata would
         # not be attached. To address cases like these, metadata attributes must be annotated in a different manner
@@ -743,8 +743,8 @@ data:
       
       
 
-      otlphttp/newrelic:
-        endpoint: "https://otlp.nr-data.net"
+      otlp_http/newrelic:
+        endpoint: https://otlp.nr-data.net
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
@@ -867,7 +867,7 @@ data:
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
@@ -891,7 +891,7 @@ data:
             - resource/low_data_mode_inator
             - groupbyattrs
             - transform/ksm
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
             - cumulativetodelta
           exporters:
             - routing/metrics_egress
@@ -912,11 +912,11 @@ data:
             
             - batch
           exporters:
-            - otlphttp/newrelic
+            - otlp_http/newrelic
             
         logs/ingress:
           receivers:
-            - filelog
+            - file_log
           processors:
             
           exporters:
@@ -930,7 +930,7 @@ data:
             - memory_limiter
             - transform/truncate
             - resource/newrelic
-            - k8sattributes/ksm
+            - k8s_attributes/ksm
           exporters:
             - routing/logs_egress
 
@@ -941,4 +941,4 @@ data:
             
             - batch
           exporters:
-            - otlphttp/newrelic
+            - otlp_http/newrelic

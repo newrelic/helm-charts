@@ -114,17 +114,9 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: OTLP_ENDPOINT
-        {{- if .Values.customOtlpEndpoint }}
-            value: "{{ .Values.customOtlpEndpoint }}"
-        {{- else if eq $region "Staging" }}
-            value: "staging-otlp.nr-data.net:443"
-        {{- else if eq $region "EU" }}
-            value: "otlp.eu01.nr-data.net:443"
-        {{- else }}
-            value: "otlp.nr-data.net:443"
-        {{- end }}
+            value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
           - name: TLS_ENABLED
-            value: "{{ .Values.customOtlpEndpointTlsEnabled }}"
+            value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
           - name: TLS_CERT_PATH
             value: "/etc/otlp-tls/{{ .Values.customOtlpEndpointTlsCertSecretKey }}"
@@ -170,6 +162,40 @@ spec:
             value: "{{ if hasKey .Values "reportAiMetrics" }}{{ .Values.reportAiMetrics }}{{ else }}false{{ end }}"
           - name: GENAI_CAPTURE_MESSAGE_CONTENT
             value: "{{ if hasKey .Values "genAICaptureMessageContent" }}{{ .Values.genAICaptureMessageContent }}{{ else }}false{{ end }}"
+
+          {{- if or .Values.otlpProxy.host .Values.otlpProxy.url }}
+          {{- if .Values.otlpProxy.host }}
+          - name: NEW_RELIC_PROXY_HOST
+            value: "{{ .Values.otlpProxy.host }}"
+          - name: NEW_RELIC_PROXY_PORT
+            value: "{{ .Values.otlpProxy.port }}"
+          - name: NEW_RELIC_PROXY_SCHEME
+            value: "{{ .Values.otlpProxy.scheme | default "http" }}"
+          {{- end }}
+          {{- if .Values.otlpProxy.url }}
+          - name: NEW_RELIC_PROXY_URL
+            value: "{{ .Values.otlpProxy.url }}"
+          {{- end }}
+          {{- if .Values.otlpProxy.existingSecret }}
+          - name: NEW_RELIC_PROXY_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.otlpProxy.existingSecret }}
+                key: proxy-user
+          - name: NEW_RELIC_PROXY_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.otlpProxy.existingSecret }}
+                key: proxy-password
+          {{- else if .Values.otlpProxy.user }}
+          - name: NEW_RELIC_PROXY_USER
+            value: "{{ .Values.otlpProxy.user }}"
+          {{- if .Values.otlpProxy.password }}
+          - name: NEW_RELIC_PROXY_PASS
+            value: "{{ .Values.otlpProxy.password }}"
+          {{- end }}
+          {{- end }}
+          {{- end }}
 
           # ALL Data filtering configuration
           {{- if .Values.allDataFilters }}

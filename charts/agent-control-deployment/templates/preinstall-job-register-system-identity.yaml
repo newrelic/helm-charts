@@ -63,7 +63,7 @@ spec:
               # Unset variables are intentionally allowed; the CLI handles empty values.
               newrelic-agent-control-cli register-system-identity --namespace "{{ .Release.Namespace }}" \
                   --secret-name "{{ include "newrelic-agent-control.auth.secret.name" . }}" \
-                  --region "{{ include "newrelic.common.region" . }}" \
+                  --region "{{ if include "newrelic.common.region.is_stg" . }}staging{{ else }}{{ include "newrelic.common.region" . }}{{ end }}" \
                   --auth-parent-client-id "$NEW_RELIC_AUTH_CLIENT_ID" \
                   --auth-parent-client-secret "$NEW_RELIC_AUTH_CLIENT_SECRET" \
                   --auth-parent-token "$NEW_RELIC_AUTH_TOKEN" \

@@ -24,6 +24,7 @@ See below.
   {{- $endpoints := dict
       "US"      "https://collector.newrelic.com"
       "EU"      "https://collector.eu.newrelic.com"
+      "JP"      "https://collector.jp.nr-data.net"
       "STG"     "https://staging-collector.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "collectorEndpoint" "endpoints" $endpoints) -}}
@@ -55,7 +56,9 @@ See below.
   {{- $endpoints := dict
       "US"      "https://log-api.newrelic.com"
       "EU"      "https://log-api.eu.newrelic.com"
+      "JP"      "https://log-api.jp.nr-data.net"
       "STG"     "https://staging-log-api.newrelic.com"
+      "GOV"     "https://gov-log-api.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "logApiEndpoint" "endpoints" $endpoints) -}}
 {{- end -}}
@@ -65,8 +68,9 @@ See below.
   {{- $endpoints := dict
       "US"      "https://metric-api.newrelic.com"
       "EU"      "https://metric-api.eu.newrelic.com"
-      "JP"      "https://metric-api.jp.newrelic.com"
+      "JP"      "https://metric-api.jp.nr-data.net"
       "STG"     "https://staging-metric-api.newrelic.com"
+      "GOV"     "https://gov-metric-api.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "metricApiEndpoint" "endpoints" $endpoints) -}}
 {{- end -}}
@@ -76,6 +80,7 @@ See below.
   {{- $endpoints := dict
       "US"      "https://opamp.service.newrelic.com"
       "EU"      "https://opamp.service.eu.newrelic.com"
+      "JP"      "https://opamp.service.jp.newrelic.com"
       "STG"     "https://opamp.staging-service.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "opampEndpoint" "endpoints" $endpoints) -}}
@@ -98,6 +103,7 @@ See below.
   {{- $endpoints := dict
       "US"      "https://publickeys.newrelic.com"
       "EU"      "https://publickeys.eu.newrelic.com"
+      "JP"      "https://publickeys.jp.newrelic.com"
       "STG"     "https://staging-publickeys.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "publicKeysEndpoint" "endpoints" $endpoints) -}}
@@ -178,3 +184,4 @@ See below.
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "mobileSymbolUploadEndpoint" "endpoints" $endpoints) -}}
 {{- end -}}
+

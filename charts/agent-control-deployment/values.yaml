@@ -19,7 +19,7 @@ subAgentsNamespace: "newrelic"
 image:
   registry:
   repository: newrelic/newrelic-agent-control
-  tag: "1.12.0"
+  tag: "1.17.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
@@ -31,7 +31,7 @@ image:
 toolkitImage:
   registry:
   repository: newrelic/newrelic-agent-control-cli
-  tag: "1.12.0"
+  tag: "1.17.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
@@ -135,7 +135,7 @@ config:
   # agents:
   #   open-telemetry:
   #     # -- Agent type <namespace>/<name>:<version>
-  #     agent_type: agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
+  #     agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
   # ```
   #
   # @default -- `{}` (See <a href="values.yaml">values.yaml</a>)
@@ -173,6 +173,9 @@ config:
   # -- The name of the release for the CD chart.
   # @default -- agent-control-cd
   cdReleaseName: agent-control-cd
+  # -- If disabled agentControl will assume that no CD is available. I.e. no flux object will be created and flux will not be upgraded or monitored.
+  # @default -- true
+  cdEnabled: true
   # -- Configuration for the authentication secret needed for OpAMP connection.
   authSecret:
     # -- (string) The name of the Kubernetes Secret resource containing the credentials.
