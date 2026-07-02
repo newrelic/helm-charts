@@ -3,6 +3,68 @@
 # Declare variables to be passed into your templates.
 
 fullnameOverride: "pipeline-control-gateway"
+
+daemonset:
+  # -- Set to true to deploy as a DaemonSet (one pod per node) instead of a Deployment.
+  # When enabled, the HPA and Deployment are not created.
+  enabled: false
+  # -- Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector`
+  nodeSelector: {}
+  # -- Sets daemonset pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets daemonset pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Annotations to be added to daemonset pods.
+  podAnnotations: {}
+  # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
+  podSecurityContext: {}
+  # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
+  containerSecurityContext: {}
+  # -- Sets resources for the daemonset.
+  resources:
+    requests:
+      memory: "2048Mi"
+      cpu: "1000m"
+    limits:
+      memory: "2048Mi"
+      cpu: "1000m"
+  # -- Update strategy for the daemonset.
+  updateStrategy:
+    type: RollingUpdate
+    maxUnavailable: 1
+  # -- Additional environment variables for the daemonset container.
+  envs: []
+  # -- Additional envFrom sources for the daemonset container.
+  envsFrom: []
+  # -- Settings for daemonset configmap
+  # @default -- See `values.yaml`
+  configMap:
+    # -- OpenTelemetry config for the daemonset. If set, overrides default config.
+    config: {}
+  # -- Custom external ConfigMap name for daemonset. Leave empty to use the chart-generated one.
+  # @default -- `""`
+  customConfigMap: ""
+
+# -- Config watcher sidecar settings. Applies to both deployment and daemonset when customConfigMap is set.
+# @default -- See `values.yaml`
+configWatcher:
+  # -- Enable the config-watcher sidecar that monitors the custom ConfigMap and restarts the pod on changes
+  enabled: true
+  # -- Config watcher image repository and tag
+  image: bitnami/kubectl:latest
+  # -- Config watcher image pull policy
+  imagePullPolicy: IfNotPresent
+  # -- Grace period in seconds for pod deletion when ConfigMap changes
+  gracePeriod: 30
+  # -- Resource limits and requests for the config-watcher sidecar
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
+
 autoscaling:
   minReplicas: 2
   maxReplicas: 10
@@ -15,47 +77,6 @@ ports:
   healthHttp: 13133
   prometheus: 8888
 
-prometheus:
-  ip: 0.0.0.0
-  scrape_interval: 15s
-  usage:
-    scrape_interval: 60s
-
-receivers:
-  nrproprietaryreceiver:
-    logging:
-      enable: false
-    logfilter:
-      enabled: false
-      flush_interval: 5s
-      pattern: ".*"
-      buffer_size: 262144
-    enableDefaultHost: false
-    enableRuntimeMetrics: true
-    proxy: false
-
-processors:
-  memory_limiter:
-    check_interval: 1s
-    limit_mib: 100
-  nrprocessor:
-    queries:
-
-    queue:
-      enabled: true
-      queue_size: 100
-
-nrcollectorexporter:
-  retry_on_failure:
-    enabled: true
-    initial_interval: 100ms
-    max_interval: 500ms
-    max_elapsed_time: 5s
-  timeout: 10s
-  sending_queue:
-    enabled: false
-  compression: gzip
-  encoding: json
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
@@ -63,7 +84,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "1.2.0"
+  tag: "2.2.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -117,6 +138,9 @@ deployment:
   configMap:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
+  # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
+  # @default -- `""`
+  customConfigMap: ""
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
@@ -152,6 +176,136 @@ verboseLog:
 # @default -- `false`
 nrStaging:
 
+#  -- The unique identifier for the gateway fleet associated with the Pipeline Control Gateway (PCG) agent. Can be configured also with `fleet_id`
+# @default -- `""`
+fleet_id: ""
+
+
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
 # @default -- `false`
 lowDataMode:
+
+# -- Complete OpenTelemetry pipeline configuration as YAML map. When provided, this will override all other OpenTelemetry configuration sections.
+# @default -- `{}`
+generated:
+  extensions:
+    zpages: {}
+    healthcheckv2:
+      use_v2: true
+      component_health:
+        include_permanent_errors: false
+        include_recoverable_errors: true
+        recovery_duration: 5m
+      http:
+        endpoint: "${env:MY_POD_IP}:13133"
+        status:
+          enabled: true
+          path: "/health/status"
+        config:
+          enabled: true
+          path: "/health/config"
+  receivers:
+    nrproprietaryreceiver:
+      fleet_id: ${env:FLEET_ID:-""}
+      proxy: false
+      enable_runtime_metrics: true
+      server:
+        endpoint: "0.0.0.0:80"
+      nr_host: "staging-collector.newrelic.com"
+      endpoints:
+        infra_event_api_endpoint: "https://staging-infra-api.newrelic.com"
+        log_api_endpoint: "https://staging-log-api.newrelic.com"
+        event_api_endpoint: "https://staging-insights-collector.newrelic.com"
+        traces_endpoint: "https://staging-trace-api.newrelic.com"
+        metrics_endpoint: "https://staging-metric-api.newrelic.com"
+      logfilter:
+        enabled: false
+      enable_default_host: false
+      client:
+        compression: "gzip"
+    otlp/receiver:
+      protocols:
+        http:
+          endpoint: "${env:MY_POD_IP}:4318"
+        grpc:
+          endpoint: "${env:MY_POD_IP}:4317"
+    "prometheus/monitoring":
+      config:
+        scrape_configs:
+          - job_name: 'pipeline-gateway-monitoring'
+            scrape_interval: 15s
+            static_configs:
+              - targets: ['0.0.0.0:8888']
+                labels:
+                  version: "1.2.0"
+                  podName: "${env:MY_POD_NAME}"
+                  clusterName: "${env:CLUSTER_NAME}"
+                  serviceName: 'pipeline-control-gateway'
+            metric_relabel_configs:
+              - action: labeldrop
+                regex: 'service_version|service_name|service_instance_id'
+              - source_labels: [__name__]
+                regex: 'godebug_.*'
+                action: drop
+  processors:
+    filter/Logs:
+    filter/Metrics:
+    filter/Traces:
+  exporters:
+    otlp/exporter:
+      endpoint: https://otlp.nr-data.net:443
+      headers:
+        api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+    otlphttp:
+      endpoint: https://otlp.nr-data.net/v1/traces
+      headers:
+        api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+    nrcollectorexporter:
+      endpoint: https://log-api.newrelic.com/log/v1
+      retry_on_failure:
+        enabled: true
+        initial_interval: 100ms
+        max_interval: 500ms
+        max_elapsed_time: 5s
+      timeout: 10s
+      sending_queue:
+        enabled: false
+      compression: gzip
+      encoding: json
+      nr_license_key: "${env:NEW_RELIC_LICENSE_KEY}"
+  service:
+    extensions: [healthcheckv2]
+    pipelines:
+      "logs/nr":
+        receivers: [nrproprietaryreceiver]
+        processors: [filter/Logs]
+        exporters: [nrcollectorexporter]
+      "logs/otlp":
+        receivers: [otlp/receiver]
+        processors: [filter/Logs]
+        exporters: [otlp/exporter]
+      "metrics/nr":
+        receivers: [nrproprietaryreceiver]
+        processors: [filter/Metrics]
+        exporters: [nrcollectorexporter]
+      "metrics/otlp":
+        receivers: [otlp/receiver]
+        processors: [filter/Metrics]
+        exporters: [otlp/exporter]
+      "traces/otlp":
+        receivers: [otlp/receiver]
+        processors: [filter/Traces]
+        exporters: [otlp/exporter]
+      "traces/nr":
+        receivers: [nrproprietaryreceiver]
+        processors: [filter/Traces]
+        exporters: [nrcollectorexporter]
+      "metrics/monitoring":
+        receivers: ["prometheus/monitoring"]
+        processors: []
+        exporters: [otlphttp]
+    telemetry:
+      logs:
+        level: "info"
+      metrics:
+        level: detailed

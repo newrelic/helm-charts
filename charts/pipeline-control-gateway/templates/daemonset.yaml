@@ -1,0 +1,160 @@
+{{- if .Values.daemonset.enabled }}
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nrKubernetesOtel.daemonset.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+      component: daemonset
+  updateStrategy:
+    type: {{ .Values.daemonset.updateStrategy.type }}
+    {{- if eq .Values.daemonset.updateStrategy.type "RollingUpdate" }}
+    rollingUpdate:
+      maxUnavailable: {{ .Values.daemonset.updateStrategy.maxUnavailable }}
+    {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+        component: daemonset
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
+        {{- with .Values.daemonset.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      {{- with include "nrKubernetesOtel.daemonset.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: pipeline-control-gateway
+          {{- with include "nrKubernetesOtel.daemonset.securityContext.container" . }}
+          securityContext:
+            {{- . | nindent 12 }}
+          {{- end }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.daemonset.customConfigMap }}
+          args: ["./pipeline-control-gateway", "--config", "/config/deployment-config.yaml"]
+          {{- else }}
+          args: ["./pipeline-control-gateway", "--config", "/config/daemonset-config.yaml"]
+          {{- end }}
+          resources:
+            {{- toYaml .Values.daemonset.resources | nindent 12 }}
+          {{- with .Values.daemonset.envsFrom }}
+          envFrom:
+            {{- . | toYaml | nindent 12 }}
+          {{- end }}
+          env:
+            - name: NEW_RELIC_HOST
+              value: {{ include "nrKubernetesOtel.NrHost.endpoint" . }}
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.podIP
+            - name: GATEWAY_CONFIG_FILE_PATH
+              value: /config/gateway-config.yaml
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: GOMEMLIMIT
+              valueFrom:
+                resourceFieldRef:
+                  resource: limits.memory
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "newrelic.common.license.secretName" . }}
+                  key: {{ include "newrelic.common.license.secretKeyName" . }}
+            - name: FLEET_ID
+              value: "{{ .Values.fleet_id }}"
+            - name: CLUSTER_NAME
+              value: {{ include "newrelic.common.cluster" . }}
+            {{- with .Values.daemonset.envs }}
+            {{- . | toYaml | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: otlp-http
+              containerPort: {{ .Values.ports.otlpHttp }}
+              protocol: TCP
+            - name: otlp-grpc
+              containerPort: {{ .Values.ports.otlpGrpc }}
+              protocol: TCP
+            - name: nr-http
+              containerPort: {{ .Values.ports.nrHttp }}
+              protocol: TCP
+            - name: health-http
+              containerPort: {{ .Values.ports.healthHttp }}
+              protocol: TCP
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health/status
+              port: {{ .Values.ports.healthHttp }}
+              scheme: HTTP
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            successThreshold: 1
+            timeoutSeconds: 1
+          readinessProbe:
+            httpGet:
+              path: /health/status
+              port: {{ .Values.ports.healthHttp }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 1
+            successThreshold: 1
+            failureThreshold: 3
+          volumeMounts:
+            - name: daemonset-config
+              mountPath: /config
+        {{- if and .Values.daemonset.customConfigMap .Values.configWatcher.enabled }}
+        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.daemonset.customConfigMap "root" .) | nindent 8 }}
+        {{- end }}
+      volumes:
+        - name: daemonset-config
+          {{- if .Values.daemonset.customConfigMap }}
+          configMap:
+            name: {{ .Values.daemonset.customConfigMap }}
+          {{- else }}
+          configMap:
+            name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+          {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
+      nodeSelector:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrKubernetesOtel.daemonset.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}

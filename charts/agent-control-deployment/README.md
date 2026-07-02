@@ -74,7 +74,7 @@ In the example below, open-telemetry is a managed agent that will be deployed.
 agents:
   open-telemetry:
     # -- Agent type <namespace>/<name>:<version>
-    agent_type: newrelic/io.opentelemetry.collector:0.1.0
+    agent_type: newrelic/com.newrelic.opentelemetry.collector:0.1.0
 ```
 </td>
 		</tr>
@@ -83,6 +83,30 @@ agents:
 			<td>list</td>
 			<td>`[]`</td>
 			<td>List of allowed chart repository URLs. The Agent Control will only allow to deploy agents from these repositories.  `(Only newrelic chart repositories allowed: ["https://helm-charts.newrelic.com","https://newrelic.github.io/<>"])</td>
+		</tr>
+		<tr>
+			<td>config.authSecret</td>
+			<td>object</td>
+			<td>`{"secretKeyName":"private_key","secretName":"agent-control-auth"}`</td>
+			<td>Configuration for the authentication secret needed for OpAMP connection.</td>
+		</tr>
+		<tr>
+			<td>config.authSecret.secretKeyName</td>
+			<td>string</td>
+			<td>"private_key"</td>
+			<td>The specific key within the Secret data map that holds the actual private key content.</td>
+		</tr>
+		<tr>
+			<td>config.authSecret.secretName</td>
+			<td>string</td>
+			<td>"agent-control-auth"</td>
+			<td>The name of the Kubernetes Secret resource containing the credentials.</td>
+		</tr>
+		<tr>
+			<td>config.cdEnabled</td>
+			<td>bool</td>
+			<td>true</td>
+			<td>If disabled agentControl will assume that no CD is available. I.e. no flux object will be created and flux will not be upgraded or monitored.</td>
 		</tr>
 		<tr>
 			<td>config.cdReleaseName</td>
@@ -134,7 +158,35 @@ log:
 			<td>config.secretsProviders</td>
 			<td>object</td>
 			<td>`{}` (See <a href="values.yaml">values.yaml</a>)</td>
-			<td>List of external secrets providers configurations.  Agent Control supports the following external secrets providers types: - vault  k8s secrets and env vars are used by default.  ```yaml secretsProviders:   # -- External secret provider type   vault:     # -- List of sources from where to get secrets     sources:       # -- Source name (chosen by the user)       sourceA:         # -- URL of the vault server         url: urlA         # -- Token to access the vault         token: tokenA         # -- Vault engine version         engine: kv1       sourceB:         url: urlB         token: tokenB         engine: kv2     # -- Client timeout for requests to the vault     client_timeout: 10s     # -- Proxy settings for the vault     # -- See `proxy` value in that same file     proxy:       ... ``` </td>
+			<td>List of external secrets providers configurations.  Agent Control supports the following external secrets providers types: - vault
+k8s secrets and env vars are used by default.
+
+```yaml
+secretsProviders:
+  # -- External secret provider type
+  vault:
+    # -- List of sources from where to get secrets
+    sources:
+      # -- Source name (chosen by the user)
+      sourceA:
+        # -- URL of the vault server
+        url: urlA
+        # -- Token to access the vault
+        token: tokenA
+        # -- Vault engine version
+        engine: kv1
+      sourceB:
+        url: urlB
+        token: tokenB
+        engine: kv2
+    # -- Client timeout for requests to the vault
+    client_timeout: 10s
+    # -- Proxy settings for the vault
+    # -- See `proxy` value in that same file
+    proxy:
+      ...
+```
+</td>
 		</tr>
 		<tr>
 			<td>config.status_server</td>
@@ -289,7 +341,7 @@ proxy:
 		<tr>
 			<td>resources</td>
 			<td>object</td>
-			<td>`{}`</td>
+			<td>`{"limits":{"memory":"100Mi"},"requests":{"memory":"15Mi"}}`</td>
 			<td>Resource limits to be added to all pods created by the integration.</td>
 		</tr>
 		<tr>
@@ -381,6 +433,18 @@ proxy:
 			<td>list</td>
 			<td>`[]`</td>
 			<td>Sets pod's tolerations to node taints. Can be configured also with `global.tolerations`</td>
+		</tr>
+		<tr>
+			<td>toolkitImage</td>
+			<td>object</td>
+			<td>See <a href="values.yaml">values.yaml</a></td>
+			<td>The image that contains the necessary tools to setup Agent Control The tag should be aligned with  `image.tag`.</td>
+		</tr>
+		<tr>
+			<td>toolkitImage.pullSecrets</td>
+			<td>list</td>
+			<td>`[]`</td>
+			<td>The secrets that are needed to pull images from a custom registry.</td>
 		</tr>
 		<tr>
 			<td>verboseLog</td>
