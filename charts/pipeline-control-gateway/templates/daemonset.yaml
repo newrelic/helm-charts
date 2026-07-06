@@ -48,7 +48,11 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.daemonset.customConfigMap }}
+          args: ["./pipeline-control-gateway", "--config", "/config/deployment-config.yaml"]
+          {{- else }}
           args: ["./pipeline-control-gateway", "--config", "/config/daemonset-config.yaml"]
+          {{- end }}
           resources:
             {{- toYaml .Values.daemonset.resources | nindent 12 }}
           {{- with .Values.daemonset.envsFrom }}
@@ -89,6 +93,8 @@ spec:
                   key: {{ include "newrelic.common.license.secretKeyName" . }}
             - name: FLEET_ID
               value: "{{ .Values.fleet_id }}"
+            - name: CLUSTER_NAME
+              value: {{ include "newrelic.common.cluster" . }}
             {{- with .Values.daemonset.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
@@ -127,10 +133,18 @@ spec:
           volumeMounts:
             - name: daemonset-config
               mountPath: /config
+        {{- if and .Values.daemonset.customConfigMap .Values.configWatcher.enabled }}
+        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.daemonset.customConfigMap "root" .) | nindent 8 }}
+        {{- end }}
       volumes:
         - name: daemonset-config
+          {{- if .Values.daemonset.customConfigMap }}
+          configMap:
+            name: {{ .Values.daemonset.customConfigMap }}
+          {{- else }}
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+          {{- end }}
       {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}

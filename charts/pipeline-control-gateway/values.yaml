@@ -41,6 +41,29 @@ daemonset:
   configMap:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config.
     config: {}
+  # -- Custom external ConfigMap name for daemonset. Leave empty to use the chart-generated one.
+  # @default -- `""`
+  customConfigMap: ""
+
+# -- Config watcher sidecar settings. Applies to both deployment and daemonset when customConfigMap is set.
+# @default -- See `values.yaml`
+configWatcher:
+  # -- Enable the config-watcher sidecar that monitors the custom ConfigMap and restarts the pod on changes
+  enabled: true
+  # -- Config watcher image repository and tag
+  image: bitnami/kubectl:latest
+  # -- Config watcher image pull policy
+  imagePullPolicy: IfNotPresent
+  # -- Grace period in seconds for pod deletion when ConfigMap changes
+  gracePeriod: 30
+  # -- Resource limits and requests for the config-watcher sidecar
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 10m
+      memory: 64Mi
 
 autoscaling:
   minReplicas: 2
@@ -118,25 +141,6 @@ deployment:
   # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
   # @default -- `""`
   customConfigMap: ""
-  # -- Config watcher sidecar settings. Only applies when customConfigMap is set.
-  # @default -- See `values.yaml`
-  configWatcher:
-    # -- Enable the config-watcher sidecar that monitors the custom ConfigMap and restarts the pod on changes
-    enabled: true
-    # -- Config watcher image repository and tag
-    image: bitnami/kubectl:latest
-    # -- Config watcher image pull policy
-    imagePullPolicy: IfNotPresent
-    # -- Grace period in seconds for pod deletion when ConfigMap changes
-    gracePeriod: 30
-    # -- Resource limits and requests for the config-watcher sidecar
-    resources:
-      limits:
-        cpu: 100m
-        memory: 128Mi
-      requests:
-        cpu: 10m
-        memory: 64Mi
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}

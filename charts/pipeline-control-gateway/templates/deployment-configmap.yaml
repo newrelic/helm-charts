@@ -1,4 +1,4 @@
-{{- if not .Values.daemonset.enabled }}
+{{- if and (not .Values.daemonset.enabled) (not .Values.deployment.customConfigMap) }}
 apiVersion: v1
 kind: ConfigMap
 metadata:

@@ -131,6 +131,8 @@ A helper to return the NR host endpoint for data
 {{- else -}}
     {{- if hasPrefix "eu" (include "newrelic.common.license._licenseKey" . ) -}}
         "collector.eu01.nr-data.net"
+    {{- else if hasPrefix "jp" (include "newrelic.common.license._licenseKey" . ) -}}
+        "collector.jp.nr-data.net"
     {{- else -}}
         "collector.newrelic.com"
     {{- end -}}
