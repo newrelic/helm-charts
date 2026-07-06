@@ -238,6 +238,47 @@ yaml for Custom Node Modules volume mount
 {{- end -}}
 
 {{/*
+Create the name of the volume used to mount custom certificates into the runtime pods
+*/}}
+{{- define "synthetics-job-manager.customCertificatesVolumeName" -}}
+custom-certs-volume
+{{- end -}}
+
+{{/*
+yaml for the custom certificates volume mount (mounted read-only into the runtime pods)
+*/}}
+{{- define "synthetics-job-manager.customCertificatesMount" -}}
+- mountPath: {{ (.Values.global.customCertificates).volumeMountPath | quote }}
+  name: {{ include "synthetics-job-manager.customCertificatesVolumeName" . | quote }}
+  readOnly: true
+{{- end -}}
+
+{{/*
+yaml for the custom certificates volume. The volume source is provided by the user via
+global.customCertificates.volume (typically a Secret containing the PEM file(s)).
+*/}}
+{{- define "synthetics-job-manager.customCertificatesVolume" -}}
+- name: {{ include "synthetics-job-manager.customCertificatesVolumeName" . | quote }}
+{{ toYaml (.Values.global.customCertificates).volume | indent 2 }}
+{{- end -}}
+
+{{/*
+yaml for the RUNTIME_CERT_PATH env var, pointing runtimes at the custom certificates mount path
+*/}}
+{{- define "synthetics-job-manager.customCertificatesEnv" -}}
+- name: RUNTIME_CERT_PATH
+  value: {{ (.Values.global.customCertificates).volumeMountPath | quote }}
+{{- end -}}
+
+{{/*
+Define whether to mount the custom certificates volume
+*/}}
+{{- define "synthetics-job-manager.toMountCustomCertificates" -}}
+  {{ if (.Values.global.customCertificates).enabled }}
+  {{ end }}
+{{- end -}}
+
+{{/*
 Define the optional volume mounts for the SJM
 */}}
 {{- define "synthetics-job-manager.volumeMounts" -}}
