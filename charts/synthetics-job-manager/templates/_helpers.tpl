@@ -279,6 +279,47 @@ Define whether to mount the custom certificates volume
 {{- end -}}
 
 {{/*
+Create the name of the volume used to mount the mTLS client certificate into the runtime pods
+*/}}
+{{- define "synthetics-job-manager.clientCertificateVolumeName" -}}
+client-cert-volume
+{{- end -}}
+
+{{/*
+yaml for the mTLS client certificate volume mount (mounted read-only into the runtime pods)
+*/}}
+{{- define "synthetics-job-manager.clientCertificateMount" -}}
+- mountPath: {{ (.Values.global.clientCertificate).volumeMountPath | quote }}
+  name: {{ include "synthetics-job-manager.clientCertificateVolumeName" . | quote }}
+  readOnly: true
+{{- end -}}
+
+{{/*
+yaml for the mTLS client certificate volume. The volume source is provided by the user via
+global.clientCertificate.volume (typically a Secret containing cert-map.json and the cert/key files).
+*/}}
+{{- define "synthetics-job-manager.clientCertificateVolume" -}}
+- name: {{ include "synthetics-job-manager.clientCertificateVolumeName" . | quote }}
+{{ toYaml (.Values.global.clientCertificate).volume | indent 2 }}
+{{- end -}}
+
+{{/*
+yaml for the RUNTIME_CLIENT_CERT_PATH env var, pointing runtimes at the mTLS client certificate mount path
+*/}}
+{{- define "synthetics-job-manager.clientCertificateEnv" -}}
+- name: RUNTIME_CLIENT_CERT_PATH
+  value: {{ (.Values.global.clientCertificate).volumeMountPath | quote }}
+{{- end -}}
+
+{{/*
+Define whether to mount the mTLS client certificate volume
+*/}}
+{{- define "synthetics-job-manager.toMountClientCertificate" -}}
+  {{ if (.Values.global.clientCertificate).enabled }}
+  {{ end }}
+{{- end -}}
+
+{{/*
 Define the optional volume mounts for the SJM
 */}}
 {{- define "synthetics-job-manager.volumeMounts" -}}

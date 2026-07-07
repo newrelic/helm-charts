@@ -75,6 +75,24 @@ global:
     #   secret:
     #     secretName: my-internal-ca-bundle
 
+  # Mounts a Kubernetes Secret containing an mTLS client certificate, private key, and cert-map.json into the runtime
+  # pods so they can present a client certificate to servers that enforce mutual TLS. When enabled, Helm mounts the
+  # volume read-only into the runtime pods and sets the RUNTIME_CLIENT_CERT_PATH environment variable. This is kept
+  # separate from customCertificates to distinguish inbound trust (CA certs) from outbound identity (client certs).
+  clientCertificate:
+    ## Set to true to mount the mTLS client certificate volume into the runtime pods.
+    enabled: false
+
+    ## Path inside the runtime pods where the client certificate volume is mounted. Also the value of RUNTIME_CLIENT_CERT_PATH.
+    volumeMountPath: /var/lib/newrelic/synthetics/client-cert
+
+    ## The Kubernetes volume source to mount at volumeMountPath. Must reference a Secret containing cert-map.json and the cert/key files.
+    volume: {}
+    # Example customer configuration:
+    # volume:
+    #   secret:
+    #     secretName: my-mtls-client-cert
+
 synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
   # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
