@@ -6,39 +6,60 @@ permissions:
 on:
   release:
     types: [released]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Release tag to simulate (e.g. pipeline-control-gateway-1.2.3)'
+        required: true
 
 jobs:
   update-agent-metadata:
     name: Update metadata for ${{ matrix.chart }}
     runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ github.event.release.tag_name || github.event.inputs.release_tag }}
     strategy:
       matrix:
         include:
           - chart: nr-ebpf-agent
             agent-type: NReBPFAgent
             config-directory: charts/nr-ebpf-agent/.fleetControl
+            monitoring-type: INFRA
+            display-name: "New Relic eBPF Agent"
           - chart: nri-bundle
             agent-type: NRInfra
             config-directory: charts/nri-bundle/.fleetControl
+            monitoring-type: INFRA
+            display-name: "New Relic Infrastructure"
           - chart: nr-k8s-otel-collector
             agent-type: NRDOT
             config-directory: charts/nr-k8s-otel-collector/.fleetControl
+            monitoring-type: INFRA
+            display-name: "New Relic OpenTelemetry Collector"
           - chart: newrelic-logging
             agent-type: FluentBit
             config-directory: charts/newrelic-logging/.fleetControl
+            monitoring-type: INFRA
+            display-name: "Fluent Bit"
           - chart: pipeline-control-gateway
             agent-type: PipelineControlGateway
-            config-directory: charts/pipeline-control-gateway/.fleetControl
+            config-directory: charts/pipeline-control-gateway/.fleetControl/pipeline-control
+            display-name: "Pipeline Control"
+          - chart: pipeline-control-gateway
+            agent-type: PipelineControlGatewayConfigMode
+            config-directory: charts/pipeline-control-gateway/.fleetControl/pipeline-control-config-mode
+            display-name: "Pipeline Control Gateway Config Mode"
           - chart: agent-control-deployment
             agent-type: NRAgentControl
             config-directory: charts/agent-control-deployment/.fleetControl
+            display-name: "New Relic Agent Control"
       fail-fast: false
 
     steps:
       - name: Check if release matches chart
         id: should-run
         run: |
-          TAG="${{ github.event.release.tag_name }}"
+          TAG="${{ env.RELEASE_TAG }}"
           CHART="${{ matrix.chart }}"
           if [[ "$TAG" == "$CHART-"* ]]; then
             echo "match=true" >> $GITHUB_OUTPUT
@@ -52,7 +73,7 @@ jobs:
         if: steps.should-run.outputs.match == 'true'
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.release.tag_name }}
+          ref: ${{ env.RELEASE_TAG }}
 
       - name: Extract version from release tag or values.yaml
         if: steps.should-run.outputs.match == 'true'
@@ -64,7 +85,7 @@ jobs:
             VERSION=$(yq '.image.tag' charts/${{ matrix.chart }}/values.yaml | tr -d '"')
             echo "Extracted version from '.image.tag' in values.yaml: $VERSION"
           else
-            VERSION="${{ github.event.release.tag_name }}"
+            VERSION="${{ env.RELEASE_TAG }}"
             VERSION="${VERSION#${{ matrix.chart }}-}"
             echo "Extracted version from tag: $VERSION"
           fi
@@ -91,6 +112,8 @@ jobs:
           newrelic-private-key: ${{ secrets.NEWRELIC_PRIVATE_KEY }}
           agent-type: ${{ matrix.agent-type }}
           version: ${{ steps.version.outputs.version }}
-          git-ref: ${{ github.event.release.tag_name }}
+          git-ref: ${{ env.RELEASE_TAG }}
           config-directory: ${{ matrix.config-directory }}
+          monitoring-type: ${{ matrix.monitoring-type }}
+          display-name: ${{ matrix.display-name }}
           apm-control-nr-license-key: ${{ secrets.APM_CONTROL_NR_LICENSE_KEY_STAGING }}
