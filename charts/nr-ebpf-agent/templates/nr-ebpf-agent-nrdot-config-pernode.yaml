@@ -72,7 +72,7 @@ data:
                   action: keep
               metric_relabel_configs:
                 - source_labels: [__name__]
-                  regex: 'container_(cpu_usage_seconds_total|cpu_cfs_periods_total|cpu_cfs_throttled_periods_total|memory_working_set_bytes|memory_usage_bytes|network_receive_bytes_total|network_transmit_bytes_total|network_receive_errors_total|network_transmit_errors_total|fs_usage_bytes|fs_capacity_bytes|spec_memory_limit_bytes)'
+                  regex: 'container_(cpu_usage_seconds_total|cpu_cfs_periods_total|cpu_cfs_throttled_periods_total|memory_working_set_bytes|memory_usage_bytes|memory_mapped_file|network_receive_bytes_total|network_transmit_bytes_total|network_receive_errors_total|network_transmit_errors_total|fs_usage_bytes|fs_capacity_bytes|spec_memory_limit_bytes)'
                   action: keep
                 - source_labels: [__name__, container]
                   regex: 'container_(cpu|memory|fs|spec).*;$'
@@ -83,6 +83,42 @@ data:
                 - source_labels: [interface]
                   regex: 'lo'
                   action: drop
+      # Kubelet's own /metrics Prometheus endpoint (kubelet_*, plus storage/runtime/
+      # rest_client/workqueue/go/process series). Mirrors nr-k8s-otel-collector's
+      # daemonset `kubelet` scrape job — same apiserver-proxy pattern as cadvisor, but
+      # path /metrics instead of /metrics/cadvisor. Kept UNFILTERED to match canonical
+      # (canonical trims volume via low-data-mode, which we don't run — if kubelet ingest
+      # volume needs trimming, add a metric_relabel_configs keep-filter here).
+      #
+      # TODO(anmoljain): kubelet /metrics (kubelet_*) is NOT collected by nri-bundle
+      # (neither nri-kubernetes, which uses the /stats/summary API -> K8sNodeSample, nor
+      # the newrelic-prometheus-agent, which only scrapes annotated app endpoints). It IS
+      # scraped by the canonical nrdot nr-k8s-otel-collector. So this job is canonical
+      # parity, additive vs nri-bundle. Keeping & commenting it for now (canonical is not our parity
+      # yardstick); revisit if we decide to not hold strict nri-bundle-only parity.
+    #  prometheus/kubelet:
+    #    config:
+    #      scrape_configs:
+    #        - job_name: kubelet
+    #          scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
+    #          scheme: https
+    #          tls_config:
+    #            ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    #            insecure_skip_verify: false
+    #            server_name: kubernetes
+    #          bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+    #          kubernetes_sd_configs:
+    #            - role: node
+    #          relabel_configs:
+    #            - replacement: kubernetes.default.svc.cluster.local:443
+    #              target_label: __address__
+    #            - regex: (.+)
+    #              replacement: /api/v1/nodes/$${1}/proxy/metrics
+    #              source_labels: [__meta_kubernetes_node_name]
+    #              target_label: __metrics_path__
+    #            - source_labels: [__meta_kubernetes_node_name]
+    #              regex: ${env:K8S_NODE_NAME}
+    #              action: keep
     processors:
       memory_limiter:
         check_interval: 1s
@@ -291,6 +327,16 @@ data:
           receivers: [prometheus/cadvisor]
           processors: [memory_limiter, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
+        # Kubelet /metrics (node-scoped: no pod/namespace label, so no cadvisor-style attr
+        # remap). resource/node_identity stamps k8s.node.name from $K8S_NODE_NAME (this
+        # sidecar is per-node). No namespace ⇒ routing sends it to the default account.
+        # Commented out with the prometheus/kubelet receiver above — kubelet /metrics is
+        # canonical-only (additive vs nri-bundle) and high-volume (e.g. go_gc_heap_*_by_size_bytes).
+        # Re-enable together with the receiver if strict nri-bundle parity is dropped.
+        # metrics/kubelet:
+        #   receivers: [prometheus/kubelet]
+        #   processors: [memory_limiter, resource/drop_scrape_meta, resource/node_identity, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+        #   exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         {{- if $nsKeys }}
         metrics/acct-default:
           receivers: [routing]
@@ -324,5 +370,11 @@ data:
           receivers: [prometheus/cadvisor]
           processors: [memory_limiter, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, batch]
           exporters: [otlp/agent]
+        # Kubelet /metrics — commented out with the prometheus/kubelet receiver above
+        # (canonical-only, high-volume). See the direct-mode block for rationale.
+        # metrics/kubelet:
+        #   receivers: [prometheus/kubelet]
+        #   processors: [memory_limiter, resource/drop_scrape_meta, resource/node_identity, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+        #   exporters: [otlp/agent]
     {{- end }}
 {{- end }}
