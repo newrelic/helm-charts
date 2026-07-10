@@ -245,10 +245,17 @@ custom-certs-volume
 {{- end -}}
 
 {{/*
+Mount path for the custom certificates directory (also the value of RUNTIME_CERT_PATH)
+*/}}
+{{- define "synthetics-job-manager.customCertificatesPath" -}}
+/var/lib/newrelic/synthetics/certs
+{{- end -}}
+
+{{/*
 yaml for the custom certificates volume mount (mounted read-only into the runtime pods)
 */}}
 {{- define "synthetics-job-manager.customCertificatesMount" -}}
-- mountPath: {{ (.Values.global.customCertificates).volumeMountPath | quote }}
+- mountPath: {{ include "synthetics-job-manager.customCertificatesPath" . | quote }}
   name: {{ include "synthetics-job-manager.customCertificatesVolumeName" . | quote }}
   readOnly: true
 {{- end -}}
@@ -267,14 +274,15 @@ yaml for the RUNTIME_CERT_PATH env var, pointing runtimes at the custom certific
 */}}
 {{- define "synthetics-job-manager.customCertificatesEnv" -}}
 - name: RUNTIME_CERT_PATH
-  value: {{ (.Values.global.customCertificates).volumeMountPath | quote }}
+  value: {{ include "synthetics-job-manager.customCertificatesPath" . | quote }}
 {{- end -}}
 
 {{/*
-Define whether to mount the custom certificates volume
+Define whether to mount the custom certificates volume. Activates on the presence of a volume
+(same convention as customNodeModules) - no separate enabled flag.
 */}}
 {{- define "synthetics-job-manager.toMountCustomCertificates" -}}
-  {{ if (.Values.global.customCertificates).enabled }}
+  {{ if (.Values.global.customCertificates).volume }}
   {{ end }}
 {{- end -}}
 
