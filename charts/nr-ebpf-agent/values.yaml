@@ -18,9 +18,17 @@ namespaceLicenseKeys: {}
 # -- Use this instead of namespaceLicenseKeys to avoid storing license keys in values.yaml.
 # -- The secret must contain a key named NAMESPACE_LICENSE_KEY_MAP with a JSON-encoded namespace-to-license-key map.
 customSecretNamespaceLicenseKeys: ""
-# -- If using a customSecretLicenseKey, you must supply your region "US"/"EU"/"JP". Otherwise, leave this value as an empty string.
-# -- Accepted values: "staging", "US", "EU", "JP". Leave this value as an empty string for US (default).
+# -- If using a customSecretLicenseKey, you must supply your region "US"/"EU"/"JP"/"GOV". Otherwise, leave this value as an empty string.
+# -- Accepted values: "US", "EU", "JP", "GOV", "staging". Leave this value as an empty string for US (default).
+# -- Note: Setting fedramp.enabled=true is the preferred way to enable FedRAMP compliance (equivalent to region="GOV").
 region: ""
+# -- FedRAMP compliance configuration. When enabled, routes telemetry to FedRAMP-compliant
+# -- endpoints (gov-otlp.nr-data.net). Can also be configured with `global.fedramp.enabled`.
+# -- Setting fedramp.enabled=true takes precedence over automatic region detection from license key prefix.
+fedramp:
+  # -- (bool) Set to true to enable FedRAMP-compliant endpoints.
+  # @default -- false
+  enabled:
 # -- Custom OTLP endpoint URL. When set, this takes precedence over the region-based static endpoints.
 customOtlpEndpoint: ""
 # -- Whether TLS is enabled on the OTLP endpoint. Defaults to true.
