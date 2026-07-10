@@ -12,7 +12,7 @@ data:
     {{- else }}
     receivers:
       {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
-      hostmetrics:
+      host_metrics:
         # TODO (chris): this is a linux specific configuration
         {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
         root_path: /hostfs
@@ -65,7 +65,7 @@ data:
           {{- if .Values.enable_atp }}
           # ATP (Adaptive Telemetry Processor) intelligently filters process-level metrics
           # These metrics can generate high data volume, so they're only enabled when ATP is explicitly activated.
-          # When ATP is disabled, only a subset of process metrics are collected (see metricstransform/hostmetrics).
+          # When ATP is disabled, only a subset of process metrics are collected (see metrics_transform/hostmetrics).
           processes:
           process:
             metrics:
@@ -83,7 +83,7 @@ data:
             mute_process_user_error: true
           {{- end }}
 
-      kubeletstats:
+      kubelet_stats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
         metric_groups: [node, pod, container, volume]
         {{- if not (include "newrelic.common.gkeAutopilot" .) }}
@@ -323,7 +323,7 @@ data:
               - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
               - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
-      metricstransform/ldm:
+      metrics_transform/ldm:
         transforms:
           - include: .*
             match_type: regexp
@@ -333,7 +333,7 @@ data:
                 new_label: low.data.mode
                 new_value: 'false'
 
-      metricstransform/kubeletstats:
+      metrics_transform/kubeletstats:
         transforms:
           - include: container\.(cpu\.usage|filesystem\.(available|capacity|usage)|memory\.usage)
             action: update
@@ -404,13 +404,13 @@ data:
         metric_statements:
           - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
 
-      metricstransform/k8s_cluster_info:
+      metrics_transform/k8s_cluster_info:
         transforms:
           - include: kubernetes_build_info
             action: update
             new_name: k8s.cluster.info
 
-      metricstransform/cadvisor:
+      metrics_transform/cadvisor:
         transforms:
           - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
             action: update
@@ -458,7 +458,7 @@ data:
                   - value: 'false'
                     new_value: 'true'
 
-      metricstransform/kubelet:
+      metrics_transform/kubelet:
         transforms:
           - include: go_(goroutines|threads)
             action: update
@@ -487,7 +487,7 @@ data:
                   - value: 'false'
                     new_value: 'true'
 
-      metricstransform/hostmetrics:
+      metrics_transform/hostmetrics:
         transforms:
           {{- if .Values.enable_atp }}
           # When ATP is enabled: all the processes will be ingested, and ATP will filter them
@@ -570,7 +570,7 @@ data:
         keys:
           - node
 
-      metricstransform/sum_container_metrics_per_node:
+      metrics_transform/sum_container_metrics_per_node:
         transforms:
           - include: container.cpu.usage
             action: insert
@@ -644,7 +644,7 @@ data:
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
-      metricstransform/hostmetrics_cpu:
+      metrics_transform/hostmetrics_cpu:
         transforms:
           - include: system.cpu.utilization
             action: update
@@ -659,7 +659,7 @@ data:
                 label_set: [ direction ]
                 aggregation_type: sum
 
-      # following system.% metrics reduce metrics reported by hostmetrics receiver
+      # following system.% metrics reduce metrics reported by host_metrics receiver
       filter/exclude_filesystem_utilization:
         metrics:
           datapoint:
@@ -717,7 +717,7 @@ data:
           - key: type
             action: delete
 
-      resourcedetection/env:
+      resource_detection/env:
         detectors: ["env", "system"]
         override: false
         system:
@@ -727,12 +727,12 @@ data:
               enabled: false
 
     {{- if include "newrelic.common.openShift" . }}
-      resourcedetection/openshift:
+      resource_detection/openshift:
         detectors: ["openshift"]
         override: true
     {{- end }}
 
-      resourcedetection/cloudproviders:
+      resource_detection/cloudproviders:
         detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
         timeout: 2s
         override: false
@@ -935,10 +935,10 @@ data:
         metrics/ingress:
           receivers:
             {{- if .Values.receivers.hostmetrics.enabled }}
-            - hostmetrics
+            - host_metrics
             {{- end }}
             {{- if .Values.receivers.kubeletstats.enabled }}
-            - kubeletstats
+            - kubelet_stats
             {{- end }}
             {{- if .Values.receivers.prometheus.enabled }}
             - prometheus
@@ -952,11 +952,11 @@ data:
         
         {{- if .Values.receivers.kubeletstats.enabled }}
         metrics/ingress_aggregation:
-          receivers: [kubeletstats]
+          receivers: [kubelet_stats]
           processors:
             - transform/strip_labels_for_per_node_aggregation
             - groupbyattrs/node
-            - metricstransform/sum_container_metrics_per_node
+            - metrics_transform/sum_container_metrics_per_node
             - metricsgeneration/calculate_percentage
             - filter/keep_only_generated_metrics
             {{- include "nrKubernetesOtel.metricsPipeline.collectorIngress.processors" . | nindent 12 }}
@@ -975,17 +975,17 @@ data:
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
             - adaptivetelemetry
             {{- end }}
-            - metricstransform/k8s_cluster_info
+            - metrics_transform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - metricstransform/ldm
+            - metrics_transform/ldm
             - transform/tag_generated_metrics_ldm
-            - metricstransform/kubeletstats
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
-            - metricstransform/hostmetrics
+            - metrics_transform/kubeletstats
+            - metrics_transform/cadvisor
+            - metrics_transform/kubelet
+            - metrics_transform/hostmetrics
             - filter/exclude_metrics_low_data_mode
             {{- end }}
-            - metricstransform/hostmetrics_cpu
+            - metrics_transform/hostmetrics_cpu
             - transform/truncate
             - filter/exclude_filesystem_utilization
             - filter/exclude_filesystem_usage
@@ -994,11 +994,11 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
-            - resourcedetection/env
+            - resource_detection/env
             {{- if include "newrelic.common.openShift" . }}
-            - resourcedetection/openshift
+            - resource_detection/openshift
             {{- else  }}
-            - resourcedetection/cloudproviders
+            - resource_detection/cloudproviders
             {{- end }}
             - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -1014,21 +1014,21 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - metricstransform/k8s_cluster_info
+            - metrics_transform/k8s_cluster_info
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
-            - metricstransform/ldm
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
+            - metrics_transform/ldm
+            - metrics_transform/cadvisor
+            - metrics_transform/kubelet
             - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             {{- end }}
             - transform/truncate
-            - resourcedetection/env
+            - resource_detection/env
             {{- if include "newrelic.common.openShift" . }}
-            - resourcedetection/openshift
+            - resource_detection/openshift
             {{- else  }}
-            - resourcedetection/cloudproviders
+            - resource_detection/cloudproviders
             {{- end }}
             - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
