@@ -1,0 +1,59 @@
+namespace: newrelic
+name: com.newrelic.pipeline_control_gateway_config_mode
+version: 0.1.0
+platform: kubernetes
+protocol_version: "1.0"
+variables:
+  config:
+    description: "OTel Collector configuration for the Pipeline Control Gateway"
+    type: yaml
+    required: true
+  config_map_name:
+    description: "Name of the ConfigMap that AC creates and PCG mounts as its configuration source"
+    type: string
+    required: false
+    default: "pipeline-control-gateway-custom-config"
+  deployment_name:
+    description: "Name of the Pipeline Control deployment for health-checks"
+    type: string
+    required: false
+    default: "pipeline-control-gateway"
+  daemonset_name:
+    description: "Name of the Pipeline Control daemonset for health-checks (used when PCG is deployed as a DaemonSet via daemonset.enabled=true)"
+    type: string
+    required: false
+    default: "pipeline-control-gateway-daemonset"
+
+deployment:
+  health:
+    interval: 30s
+    initial_delay: 15s
+    # Both checks coexist: PCG's chart renders either a Deployment or a DaemonSet (mutually
+    # exclusive via daemonset.enabled). The unused workload simply isn't found by name and the
+    # corresponding check is treated as healthy, so the agent reports healthy in both modes.
+    checks:
+      - namespace: ${nr-ac:namespace_agents}
+        name: ${nr-var:deployment_name}
+        kind: Deployment
+        target_namespace: ${nr-ac:namespace_agents}
+      - namespace: ${nr-ac:namespace_agents}
+        name: ${nr-var:daemonset_name}
+        kind: DaemonSet
+        target_namespace: ${nr-ac:namespace_agents}
+  objects:
+    config:
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: ${nr-var:config_map_name}
+        namespace: ${nr-ac:namespace_agents}
+      data:
+        deployment-config.yaml: |
+          ${nr-var:config}
+        # This is required as it is also defined in:
+        # https://github.com/newrelic/helm-charts/blob/8c3b88bdf03e600aec8a5d94bab80635b4eec671/charts/pipeline-control-gateway/templates/deployment-configmap.yaml#L7
+        gateway-config.yaml: |
+          reserved_melt_attributes:
+            Metric:
+              - interval.ms
+              - metricName

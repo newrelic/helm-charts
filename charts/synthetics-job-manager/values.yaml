@@ -59,16 +59,12 @@ global:
     customNodeModulesPath: ""
 
   # Mounts a Kubernetes Secret containing custom CA certificate PEM file(s) into the runtime pods so they trust
-  # internal/private Certificate Authorities. When enabled, Helm mounts the volume read-only into the runtime pods
-  # and sets the RUNTIME_CERT_PATH environment variable so the runtime cert-loading logic knows where to look.
+  # internal/private Certificate Authorities. The feature activates on the presence of a volume (same convention as
+  # customNodeModules): when volume is set, Helm mounts it read-only into the runtime pods and sets the
+  # RUNTIME_CERT_PATH environment variable so the runtime cert-loading logic knows where to look. Leave volume empty
+  # to disable (existing behavior is unchanged).
   customCertificates:
-    ## Set to true to mount the custom certificate volume into the runtime pods.
-    enabled: false
-
-    ## Path inside the runtime pods where the certificate volume is mounted. Also the value of RUNTIME_CERT_PATH.
-    volumeMountPath: /var/lib/newrelic/synthetics/certs
-
-    ## The Kubernetes volume source to mount at volumeMountPath. Typically references a Secret containing the PEM file(s).
+    ## The Kubernetes volume source to mount, typically a Secret containing the CA PEM file(s). Leave empty to disable.
     volume: {}
     # Example customer configuration:
     # volume:
@@ -76,17 +72,12 @@ global:
     #     secretName: my-internal-ca-bundle
 
   # Mounts a Kubernetes Secret containing an mTLS client certificate, private key, and cert-map.json into the runtime
-  # pods so they can present a client certificate to servers that enforce mutual TLS. When enabled, Helm mounts the
-  # volume read-only into the runtime pods and sets the RUNTIME_CLIENT_CERT_PATH environment variable. This is kept
+  # pods so they can present a client certificate to servers that enforce mutual TLS. The feature activates on the
+  # presence of a volume (same convention as customNodeModules): when volume is set, Helm mounts it read-only into the
+  # runtime pods and sets the RUNTIME_CLIENT_CERT_PATH environment variable. Leave volume empty to disable. This is kept
   # separate from customCertificates to distinguish inbound trust (CA certs) from outbound identity (client certs).
   clientCertificate:
-    ## Set to true to mount the mTLS client certificate volume into the runtime pods.
-    enabled: false
-
-    ## Path inside the runtime pods where the client certificate volume is mounted. Also the value of RUNTIME_CLIENT_CERT_PATH.
-    volumeMountPath: /var/lib/newrelic/synthetics/client-cert
-
-    ## The Kubernetes volume source to mount at volumeMountPath. Must reference a Secret containing cert-map.json and the cert/key files.
+    ## The Kubernetes volume source to mount, a Secret containing cert-map.json and the cert/key files. Leave empty to disable.
     volume: {}
     # Example customer configuration:
     # volume:
