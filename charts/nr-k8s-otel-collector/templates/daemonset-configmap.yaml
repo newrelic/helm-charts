@@ -738,6 +738,45 @@ data:
         override: false
         eks:
           node_from_env_var: KUBE_NODE_NAME
+          resource_attributes:
+            k8s.cluster.name:
+              enabled: true
+        aks:
+          resource_attributes:
+            k8s.cluster.name:
+              enabled: true
+
+      transform/create_cloud_cluster_id:
+        error_mode: ignore
+        metric_statements:
+          - context: resource
+            conditions:
+              - resource.attributes["k8s.cluster.name"] != nil
+            statements:
+              - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
+              - delete_key(resource.attributes, "k8s.cluster.name")
+          # EKS
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "aws"
+              - resource.attributes["cloud.account.id"] != nil
+              - resource.attributes["cloud.region"] != nil
+              - resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
+              # arn:aws:eks:us-west-1:246230979963:cluster/dbudziwojski-tst1
+              - set(resource.attributes["cloud.resource_id"], Concat(["arn:aws:eks:", resource.attributes["cloud.region"], ":", resource.attributes["cloud.account.id"], ":cluster/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+          # AKS
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "azure"
+              - resource.attributes["cloud.account.id"] != nil
+              - resource.attributes["azure.resourcegroup.name"] != nil
+              - resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
+              # /subscriptions/f038e9fc-3c25-459e-9bea-879af3be645e/resourceGroups/k8sAgentsUsersResourceGroup/providers/Microsoft.ContainerService/managedClusters/canary-aks-1-30
+              - set(resource.attributes["cloud.resource_id"], Concat(["/subscriptions/", resource.attributes["cloud.account.id"], "/resourceGroups/", resource.attributes["azure.resourcegroup.name"], "/providers/Microsoft.ContainerService/managedClusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
 
       resource/newrelic:
         attributes:
@@ -999,6 +1038,7 @@ data:
             - resource_detection/openshift
             {{- else  }}
             - resource_detection/cloudproviders
+            - transform/create_cloud_cluster_id
             {{- end }}
             - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
@@ -1029,6 +1069,7 @@ data:
             - resource_detection/openshift
             {{- else  }}
             - resource_detection/cloudproviders
+            - transform/create_cloud_cluster_id
             {{- end }}
             - resource/newrelic
             {{- if include "nrKubernetesOtel.lowDataMode" . }}
