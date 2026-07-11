@@ -758,10 +758,7 @@ data:
           # EKS
           - context: resource
             conditions:
-              - resource.attributes["cloud.provider"] == "aws"
-              - resource.attributes["cloud.account.id"] != nil
-              - resource.attributes["cloud.region"] != nil
-              - resource.attributes["cloud.k8s.cluster.name"] != nil
+              - resource.attributes["cloud.provider"] == "aws" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
               - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
               # arn:aws:eks:us-west-1:246230979963:cluster/dbudziwojski-tst1
@@ -769,10 +766,7 @@ data:
           # AKS
           - context: resource
             conditions:
-              - resource.attributes["cloud.provider"] == "azure"
-              - resource.attributes["cloud.account.id"] != nil
-              - resource.attributes["azure.resourcegroup.name"] != nil
-              - resource.attributes["cloud.k8s.cluster.name"] != nil
+              - resource.attributes["cloud.provider"] == "azure" and resource.attributes["cloud.account.id"] != nil and resource.attributes["azure.resourcegroup.name"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
               - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
               # /subscriptions/f038e9fc-3c25-459e-9bea-879af3be645e/resourceGroups/k8sAgentsUsersResourceGroup/providers/Microsoft.ContainerService/managedClusters/canary-aks-1-30
