@@ -9,8 +9,8 @@ metadata:
     app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.13.1
+    app.kubernetes.io/version: 1.19.0
+    helm.sh/chart: nr-k8s-otel-collector-0.13.0
 spec:
   selector:
     matchLabels:
@@ -24,7 +24,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: daemonset
       annotations:
-        checksum/config: 7f88e89a52a3987e095c85e3bd4549e298e13ce4badf0f1fdafd5e6148e8e4d7
+        checksum/config: cb2c374970c9a4bbaef2a950188bd68407baebbcfb0b1379a21ef1c305d9ea8c
     spec:
       serviceAccountName: nr-k8s-otel-collector
       initContainers:
@@ -94,7 +94,7 @@ spec:
             readOnlyRootFilesystem: true
             runAsNonRoot: true
             runAsUser: 1001
-          image: "docker.io/newrelic/nrdot-collector:1.14.0"
+          image: "docker.io/newrelic/nrdot-collector:1.19.0"
           imagePullPolicy: IfNotPresent
           args:
             - --config
@@ -149,4 +149,3 @@ spec:
         - name: daemonset-config
           configMap:
             name: nr-k8s-otel-collector-daemonset-config
-

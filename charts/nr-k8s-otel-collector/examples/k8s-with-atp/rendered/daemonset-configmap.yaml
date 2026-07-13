@@ -9,13 +9,13 @@ metadata:
     app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.2.0
-    helm.sh/chart: nr-k8s-otel-collector-0.13.1
+    app.kubernetes.io/version: 1.19.0
+    helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   daemonset-config.yaml: |
     receivers:
       
-      hostmetrics:
+      host_metrics:
         # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
         collection_interval: 1m
@@ -63,7 +63,7 @@ data:
                 enabled: false
           # ATP (Adaptive Telemetry Processor) intelligently filters process-level metrics
           # These metrics can generate high data volume, so they're only enabled when ATP is explicitly activated.
-          # When ATP is disabled, only a subset of process metrics are collected (see metricstransform/hostmetrics).
+          # When ATP is disabled, only a subset of process metrics are collected (see metrics_transform/hostmetrics).
           processes:
           process:
             metrics:
@@ -80,7 +80,7 @@ data:
             mute_process_io_error: true
             mute_process_user_error: true
 
-      kubeletstats:
+      kubelet_stats:
         collection_interval: 1m
         metric_groups: [node, pod, container, volume]
         endpoint: "${KUBE_NODE_NAME}:10250"
@@ -299,7 +299,7 @@ data:
               - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
               - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
-      metricstransform/ldm:
+      metrics_transform/ldm:
         transforms:
           - include: .*
             match_type: regexp
@@ -309,7 +309,7 @@ data:
                 new_label: low.data.mode
                 new_value: 'false'
 
-      metricstransform/kubeletstats:
+      metrics_transform/kubeletstats:
         transforms:
           - include: container\.(cpu\.usage|filesystem\.(available|capacity|usage)|memory\.usage)
             action: update
@@ -380,13 +380,13 @@ data:
         metric_statements:
           - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
 
-      metricstransform/k8s_cluster_info:
+      metrics_transform/k8s_cluster_info:
         transforms:
           - include: kubernetes_build_info
             action: update
             new_name: k8s.cluster.info
 
-      metricstransform/cadvisor:
+      metrics_transform/cadvisor:
         transforms:
           - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
             action: update
@@ -434,7 +434,7 @@ data:
                   - value: 'false'
                     new_value: 'true'
 
-      metricstransform/kubelet:
+      metrics_transform/kubelet:
         transforms:
           - include: go_(goroutines|threads)
             action: update
@@ -463,7 +463,7 @@ data:
                   - value: 'false'
                     new_value: 'true'
 
-      metricstransform/hostmetrics:
+      metrics_transform/hostmetrics:
         transforms:
           # When ATP is enabled: all the processes will be ingested, and ATP will filter them
           - include: process\..*
@@ -532,7 +532,7 @@ data:
         keys:
           - node
 
-      metricstransform/sum_container_metrics_per_node:
+      metrics_transform/sum_container_metrics_per_node:
         transforms:
           - include: container.cpu.usage
             action: insert
@@ -606,7 +606,7 @@ data:
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
-      metricstransform/hostmetrics_cpu:
+      metrics_transform/hostmetrics_cpu:
         transforms:
           - include: system.cpu.utilization
             action: update
@@ -621,7 +621,7 @@ data:
                 label_set: [ direction ]
                 aggregation_type: sum
 
-      # following system.% metrics reduce metrics reported by hostmetrics receiver
+      # following system.% metrics reduce metrics reported by host_metrics receiver
       filter/exclude_filesystem_utilization:
         metrics:
           datapoint:
@@ -679,7 +679,7 @@ data:
           - key: type
             action: delete
 
-      resourcedetection/env:
+      resource_detection/env:
         detectors: ["env", "system"]
         override: false
         system:
@@ -688,7 +688,7 @@ data:
             host.name:
               enabled: false
 
-      resourcedetection/cloudproviders:
+      resource_detection/cloudproviders:
         detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
         timeout: 2s
         override: false
@@ -703,7 +703,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.13.1
+            value: 0.13.0
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -852,8 +852,8 @@ data:
         
         metrics/ingress:
           receivers:
-            - hostmetrics
-            - kubeletstats
+            - host_metrics
+            - kubelet_stats
             - prometheus
           processors:
             - metricsgeneration/calculate_percentage_for_pods
@@ -862,11 +862,11 @@ data:
             - routing/nr_metrics_pipelines
             
         metrics/ingress_aggregation:
-          receivers: [kubeletstats]
+          receivers: [kubelet_stats]
           processors:
             - transform/strip_labels_for_per_node_aggregation
             - groupbyattrs/node
-            - metricstransform/sum_container_metrics_per_node
+            - metrics_transform/sum_container_metrics_per_node
             - metricsgeneration/calculate_percentage
             - filter/keep_only_generated_metrics
             
@@ -882,15 +882,15 @@ data:
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
             - adaptivetelemetry
-            - metricstransform/k8s_cluster_info
-            - metricstransform/ldm
+            - metrics_transform/k8s_cluster_info
+            - metrics_transform/ldm
             - transform/tag_generated_metrics_ldm
-            - metricstransform/kubeletstats
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
-            - metricstransform/hostmetrics
+            - metrics_transform/kubeletstats
+            - metrics_transform/cadvisor
+            - metrics_transform/kubelet
+            - metrics_transform/hostmetrics
             - filter/exclude_metrics_low_data_mode
-            - metricstransform/hostmetrics_cpu
+            - metrics_transform/hostmetrics_cpu
             - transform/truncate
             - filter/exclude_filesystem_utilization
             - filter/exclude_filesystem_usage
@@ -899,8 +899,8 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
-            - resourcedetection/env
-            - resourcedetection/cloudproviders
+            - resource_detection/env
+            - resource_detection/cloudproviders
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -913,16 +913,16 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - metricstransform/k8s_cluster_info
-            - metricstransform/ldm
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
+            - metrics_transform/k8s_cluster_info
+            - metrics_transform/ldm
+            - metrics_transform/cadvisor
+            - metrics_transform/kubelet
             - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             - transform/truncate
-            - resourcedetection/env
-            - resourcedetection/cloudproviders
+            - resource_detection/env
+            - resource_detection/cloudproviders
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -979,5 +979,3 @@ data:
             - batch
           exporters:
             - otlp_http/newrelic
-            
-
