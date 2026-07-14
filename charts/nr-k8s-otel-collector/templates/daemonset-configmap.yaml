@@ -761,16 +761,38 @@ data:
               - resource.attributes["cloud.provider"] == "aws" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
               - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
-              # arn:aws:eks:us-west-1:246230979963:cluster/dbudziwojski-tst1
+              # arn:aws:eks:{region}:{accountId}:cluster/{clusterName}
               - set(resource.attributes["cloud.resource_id"], Concat(["arn:aws:eks:", resource.attributes["cloud.region"], ":", resource.attributes["cloud.account.id"], ":cluster/", resource.attributes["cloud.k8s.cluster.name"]], ""))
-          # AKS
+          # AKS + Parse cluster resource group from node resource group
           - context: resource
             conditions:
               - resource.attributes["cloud.provider"] == "azure" and resource.attributes["cloud.account.id"] != nil and resource.attributes["azure.resourcegroup.name"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
-              # /subscriptions/f038e9fc-3c25-459e-9bea-879af3be645e/resourceGroups/k8sAgentsUsersResourceGroup/providers/Microsoft.ContainerService/managedClusters/canary-aks-1-30
-              - set(resource.attributes["cloud.resource_id"], Concat(["/subscriptions/", resource.attributes["cloud.account.id"], "/resourceGroups/", resource.attributes["azure.resourcegroup.name"], "/providers/Microsoft.ContainerService/managedClusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+              # Rename node resource group (from IMDS) for clarity
+              - set(resource.attributes["azure.node.resourcegroup.name"], resource.attributes["azure.resourcegroup.name"])
+              - delete_key(resource.attributes, "azure.resourcegroup.name")
+              # Parse cluster resource group from pattern: MC_{clusterResourceGroup}_{clusterName}_{region}
+              - set(resource.attributes["_parts"], Split(resource.attributes["azure.node.resourcegroup.name"], "_"))
+              # Only set cluster RG if pattern matches exactly (4 parts starting with MC)
+              - set(resource.attributes["azure.resourcegroup.name"], resource.attributes["_parts"][1]) where Len(resource.attributes["_parts"]) == 4 and resource.attributes["_parts"][0] == "MC"
+              # /subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerService/managedClusters/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["/subscriptions/", resource.attributes["cloud.account.id"], "/resourceGroups/", resource.attributes["azure.resourcegroup.name"], "/providers/Microsoft.ContainerService/managedClusters/", resource.attributes["cloud.k8s.cluster.name"]], "")) where resource.attributes["azure.resourcegroup.name"] != nil
+              # Clean up temporary attributes
+              - delete_key(resource.attributes, "_parts")
+          # GKE Regional
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              # /projects/{projectId}/locations/{location}/clusters/{clusterName};
+              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.region"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+          # GKE Zonal
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.availability_zone"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              # /projects/{projectId}/zones/{zone}/clusters/{clusterName};
+              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/zones/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
 
       resource/newrelic:
         attributes:
