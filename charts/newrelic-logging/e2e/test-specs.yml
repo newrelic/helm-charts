@@ -1,0 +1,28 @@
+description: New Relic newrelic-logging chart E2E
+
+# The e2e-action appends `WHERE <custom_test_key> = '<SCENARIO_TAG>'` to every NRQL query,
+# scoping each run to its own data. The chart records `cluster_name` from `global.cluster`,
+# which we set to ${SCENARIO_TAG} on install below — so every query is scoped to this run.
+custom_test_key: cluster_name
+
+scenarios:
+  - description: Default install forwards container logs to New Relic
+    before:
+      - helm repo add newrelic https://helm-charts.newrelic.com
+      - helm dependency update ../
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+      - kubectl apply -f e2e-resources.yml
+    after:
+      - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
+      - kubectl get pods -A -o wide || true
+      - kubectl delete -f e2e-resources.yml || true
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} || true
+      - kubectl delete namespace nr-${SCENARIO_TAG} || true
+    tests:
+      nrqls:
+        # Assert the marker lines emitted by the log-producer (e2e-resources.yml) reached NRDB.
+        # No WHERE/SINCE here: the action appends the cluster_name scope clause automatically.
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%') AS markerCount FROM Log"
+          expected_results:
+            - key: "markerCount"
+              lowerBoundedValue: 1
