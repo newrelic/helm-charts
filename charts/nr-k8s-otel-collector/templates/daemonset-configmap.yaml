@@ -760,7 +760,6 @@ data:
             conditions:
               - resource.attributes["cloud.provider"] == "aws" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
               # arn:aws:eks:{region}:{accountId}:cluster/{clusterName}
               - set(resource.attributes["cloud.resource_id"], Concat(["arn:aws:eks:", resource.attributes["cloud.region"], ":", resource.attributes["cloud.account.id"], ":cluster/", resource.attributes["cloud.k8s.cluster.name"]], ""))
           # AKS + Parse cluster resource group from node resource group
