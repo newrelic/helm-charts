@@ -783,14 +783,14 @@ data:
             conditions:
               - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              # /projects/{projectId}/locations/{location}/clusters/{clusterName};
+              # /projects/{projectId}/locations/{location}/clusters/{clusterName}
               - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.region"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
           # GKE Zonal
           - context: resource
             conditions:
               - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.availability_zone"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              # /projects/{projectId}/zones/{zone}/clusters/{clusterName};
+              # /projects/{projectId}/zones/{zone}/clusters/{clusterName}
               - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/zones/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
 
       resource/newrelic:
