@@ -32,7 +32,7 @@ jobs:
       - uses: helm/chart-testing-action@v2.8.0
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.2'
+          version: 'v3.21.3'
 
       - name: Set up helm-unittest
         # workaround for https://github.com/helm-unittest/helm-unittest/issues/790
@@ -97,13 +97,13 @@ jobs:
       - uses: helm/chart-testing-action@v2.8.0
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.2'
+          version: 'v3.21.3'
 
       - name: Install Minikube
-        uses: manusa/actions-setup-minikube@v2.16.1
+        uses: manusa/actions-setup-minikube@v2.18.0
         with:
-          minikube version: 'v1.37.0'
-          kubernetes version: 'v1.34.0'
+          minikube version: 'v1.38.1'
+          kubernetes version: 'v1.35.0'
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
@@ -130,7 +130,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.2'
+          version: 'v3.21.3'
 
       - name: Add helm repositories
         run: |
@@ -181,7 +181,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.2'
+          version: 'v3.21.3'
 
       - name: Add helm repositories
         run: |
