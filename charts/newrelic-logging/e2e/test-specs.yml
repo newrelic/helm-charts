@@ -26,3 +26,11 @@ scenarios:
           expected_results:
             - key: "markerCount"
               lowerBoundedValue: 1
+      # Unlike `after:` above, a failing command here fails the scenario.
+      # Logs can arrive fine even if the pod is crash-looping, so we
+      # check pod health too, not just that logs showed up.
+      scripts:
+        - kubectl logs -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true --tail=200 || true  # for debugging, doesn't affect pass/fail
+        - kubectl get pods -n nr-${SCENARIO_TAG} -o wide  # for debugging, doesn't affect pass/fail
+        - kubectl wait --for=condition=Ready pod -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --timeout=60s  # fails if the pod never became healthy
+        - kubectl get pods -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging -o json | jq -e '[.items[].status.containerStatuses[].restartCount] | all(. == 0)' > /dev/null  # fails if the pod restarted
