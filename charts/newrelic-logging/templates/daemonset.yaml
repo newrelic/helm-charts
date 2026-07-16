@@ -51,7 +51,7 @@ spec:
       hostNetwork: {{ .Values.hostNetwork }}
       {{- end }}
       initContainers:
-      {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
+      {{- if eq (include "newrelic.fluentBit.persistence.mode" .) "persistentVolume" }}
         - name: init
           image: busybox:1.36
           {{- with include "newrelic.common.securityContext.container" . }}
@@ -105,10 +105,10 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            {{- if or (not .Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "hostPath") }}
+            {{- if or (not .Values.fluentBit.persistence) (eq (include "newrelic.fluentBit.persistence.mode" .) "hostPath") }}
             - name: FB_DB
               value: {{ .Values.fluentBit.db | quote }}
-            {{- else if eq .Values.fluentBit.persistence.mode "persistentVolume" }}
+            {{- else if eq (include "newrelic.fluentBit.persistence.mode" .) "persistentVolume" }}
             - name: FB_DB
               value: "/db/$(NODE_NAME)-fb.db"
             {{- else }}
@@ -151,11 +151,11 @@ spec:
               mountPath: /fluent-bit/etc
             - name: logs
               # We mount /var by default because container logs could be on /var/log or /var/lib/docker/containers (symlinked to /var/log)
-              mountPath: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
-              {{- if and (.Values.fluentBit.persistence) (ne .Values.fluentBit.persistence.mode "hostPath") }}
+              mountPath: {{ include "newrelic.fluentBit.linuxMountPath" . }}
+              {{- if ne (include "newrelic.fluentBit.persistence.mode" .) "hostPath" }}
               readOnly: true
               {{- end }}
-            {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
+            {{- if eq (include "newrelic.fluentBit.persistence.mode" .) "persistentVolume" }}
             - name: fb-db-pvc
               mountPath: /db
             {{- end }}
@@ -196,8 +196,8 @@ spec:
             name: {{ template "newrelic-logging.fluentBitConfig" . }}
         - name: logs
           hostPath:
-            path: {{ .Values.fluentBit.linuxMountPath | default "/var" }}
-        {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
+            path: {{ include "newrelic.fluentBit.linuxMountPath" . }}
+        {{- if eq (include "newrelic.fluentBit.persistence.mode" .) "persistentVolume" }}
         - name: fb-db-pvc
           persistentVolumeClaim:
             {{- if .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim }}
@@ -215,7 +215,7 @@ spec:
       {{- if .Values.nodeAffinity }}
       affinity:
         nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
-      {{- else if include "newrelic.fargate" . }}
+      {{- else if or (include "newrelic.fargate" .) (include "newrelic.common.fargate" .) }}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
