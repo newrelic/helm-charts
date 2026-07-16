@@ -58,6 +58,19 @@ global:
     ## and include the package.json file before installing Helm Chart.
     customNodeModulesPath: ""
 
+  # Mounts a Kubernetes Secret containing custom CA certificate PEM file(s) into the runtime pods so they trust
+  # internal/private Certificate Authorities. The feature activates on the presence of a volume (same convention as
+  # customNodeModules): when volume is set, Helm mounts it read-only into the runtime pods and sets the
+  # RUNTIME_CERT_PATH environment variable so the runtime cert-loading logic knows where to look. Leave volume empty
+  # to disable (existing behavior is unchanged).
+  customCertificates:
+    ## The Kubernetes volume source to mount, typically a Secret containing the CA PEM file(s). Leave empty to disable.
+    volume: {}
+    # Example customer configuration:
+    # volume:
+    #   secret:
+    #     secretName: my-internal-ca-bundle
+
 synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
   # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
