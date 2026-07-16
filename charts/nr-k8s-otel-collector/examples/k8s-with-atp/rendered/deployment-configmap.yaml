@@ -9,7 +9,7 @@ metadata:
     app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.2.0
+    app.kubernetes.io/version: 1.19.0
     helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   deployment-config.yaml: |
@@ -251,13 +251,13 @@ data:
           - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
           - delete_key(datapoint.attributes, "volumename")
 
-      metricstransform/k8s_cluster_info:
+      metrics_transform/k8s_cluster_info:
         transforms:
           - include: kubernetes_build_info
             action: update
             new_name: k8s.cluster.info
 
-      metricstransform/kube_pod_container_status_phase:
+      metrics_transform/kube_pod_container_status_phase:
         transforms:
           - include: 'kube_pod_container_status_waiting'
             match_type: strict
@@ -284,7 +284,7 @@ data:
                 new_label: container_phase
                 new_value: terminated
 
-      metricstransform/ldm:
+      metrics_transform/ldm:
         transforms:
           - include: .*
             match_type: regexp
@@ -294,7 +294,7 @@ data:
                 new_label: low.data.mode
                 new_value: 'false'
 
-      metricstransform/k8s_cluster_info_ldm:
+      metrics_transform/k8s_cluster_info_ldm:
         transforms:
           - include: k8s.cluster.info
             action: update
@@ -313,7 +313,7 @@ data:
             statements:
               - set(datapoint.attributes["kube_pod_container_status_last_terminated_timestamp_formatted"], FormatTime(Unix(Int(datapoint.value_double)), "%Y-%m-%dT%H:%M:%SZ"))
 
-      metricstransform/ksm:
+      metrics_transform/ksm:
         transforms:
           - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
             action: update
@@ -442,7 +442,7 @@ data:
                   - value: 'false'
                     new_value: 'true'
 
-      metricstransform/apiserver:
+      metrics_transform/apiserver:
         transforms:
           - include: apiserver_storage_objects
             action: update
@@ -751,14 +751,14 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - metricstransform/kube_pod_container_status_phase
+            - metrics_transform/kube_pod_container_status_phase
             - filter/exclude_zero_value_kube_node_status_condition
             - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
             - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
             - transform/convert_timestamp
-            - metricstransform/ldm
-            - metricstransform/k8s_cluster_info_ldm
-            - metricstransform/ksm
+            - metrics_transform/ldm
+            - metrics_transform/k8s_cluster_info_ldm
+            - metrics_transform/ksm
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_zero_value_kube_jobs
             - transform/low_data_mode_inator
@@ -776,10 +776,10 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - metricstransform/k8s_cluster_info
-            - metricstransform/ldm
-            - metricstransform/k8s_cluster_info_ldm
-            - metricstransform/apiserver
+            - metrics_transform/k8s_cluster_info
+            - metrics_transform/ldm
+            - metrics_transform/k8s_cluster_info_ldm
+            - metrics_transform/apiserver
             - filter/exclude_metrics_low_data_mode
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator

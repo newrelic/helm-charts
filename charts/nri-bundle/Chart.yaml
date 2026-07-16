@@ -18,7 +18,7 @@ sources:
   - https://github.com/newrelic/newrelic-infra-operator/tree/master/charts/newrelic-infra-operator
   - https://github.com/newrelic/k8s-agents-operator/tree/master/charts/k8s-agents-operator
 
-version: 8.0.0
+version: 8.0.6
 
 dependencies:
   - name: newrelic-infrastructure
@@ -29,22 +29,22 @@ dependencies:
   - name: nri-prometheus
     repository: https://newrelic.github.io/nri-prometheus
     condition: prometheus.enabled,nri-prometheus.enabled
-    version: 2.1.23
+    version: 2.1.24
 
   - name: newrelic-prometheus-agent
     repository: https://newrelic.github.io/newrelic-prometheus-configurator
     condition: newrelic-prometheus-agent.enabled
-    version: 2.12.0
+    version: 2.13.0
 
   - name: nri-metadata-injection
     repository: https://newrelic.github.io/k8s-metadata-injection
     condition: webhook.enabled,nri-metadata-injection.enabled
-    version: 4.35.0
+    version: 4.36.0
 
   - name: newrelic-k8s-metrics-adapter
     repository: https://newrelic.github.io/newrelic-k8s-metrics-adapter
     condition: metrics-adapter.enabled,newrelic-k8s-metrics-adapter.enabled
-    version: 1.19.9
+    version: 1.20.0
 
   - name: kube-state-metrics
     version: 6.1.5
@@ -54,12 +54,12 @@ dependencies:
   - name: nri-kube-events
     repository: https://newrelic.github.io/nri-kube-events
     condition: kubeEvents.enabled,nri-kube-events.enabled
-    version: 3.20.2
+    version: 3.21.0
 
   - name: newrelic-logging
     repository: https://newrelic.github.io/helm-charts
     condition: logging.enabled,newrelic-logging.enabled
-    version: 1.38.2
+    version: 1.39.0
 
   - name: newrelic-pixie
     repository: https://newrelic.github.io/helm-charts
@@ -67,14 +67,14 @@ dependencies:
     version: 2.1.6
 
   - name: nr-ebpf-agent
-    version: 1.4.5
+    version: 1.4.8
     condition: newrelic-eapm-agent.enabled,nr-ebpf-agent.enabled
     repository: https://newrelic.github.io/helm-charts
 
   - name: k8s-agents-operator
     repository: https://newrelic.github.io/k8s-agents-operator
     condition: k8s-agents-operator.enabled
-    version: 0.44.2
+    version: 0.45.0
 
   # Keep the version of pixie-operator-chart in sync with the CRD versions for
   # olm_crd.yaml and px.dev_viziers.yaml in
@@ -88,7 +88,7 @@ dependencies:
   - name: newrelic-infra-operator
     repository: https://newrelic.github.io/newrelic-infra-operator
     condition: newrelic-infra-operator.enabled
-    version: 3.0.0
+    version: 3.1.0
 
 maintainers:
   - name: Philip-R-Beckwith
