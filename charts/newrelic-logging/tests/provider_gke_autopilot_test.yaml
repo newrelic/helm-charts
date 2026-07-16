@@ -1,4 +1,4 @@
-suite: test provider-specific configurations
+suite: test GKE Autopilot provider configurations
 templates:
   - templates/daemonset.yaml
   - templates/configmap.yaml
@@ -7,7 +7,7 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: GKE_AUTOPILOT sets linuxMountPath to /var/log
+  - it: sets linuxMountPath to /var/log
     set:
       licenseKey: nr_license_key
       provider: GKE_AUTOPILOT
@@ -27,7 +27,7 @@ tests:
               path: /var/log
         template: templates/daemonset.yaml
 
-  - it: GKE_AUTOPILOT sets persistence mode to none - FB_DB is empty, logs are read-only, no PV created
+  - it: sets persistence mode to none - FB_DB is empty, logs are read-only, no PV created
     set:
       licenseKey: nr_license_key
       provider: GKE_AUTOPILOT
@@ -58,7 +58,7 @@ tests:
           count: 0
         template: templates/persistentvolume.yaml
 
-  - it: GKE_AUTOPILOT user-supplied linuxMountPath takes precedence over provider
+  - it: user-supplied linuxMountPath takes precedence over provider
     set:
       licenseKey: nr_license_key
       provider: GKE_AUTOPILOT
@@ -85,7 +85,7 @@ tests:
             value: ""
         template: templates/daemonset.yaml
 
-  - it: GKE_AUTOPILOT user-supplied persistence.mode takes precedence over provider
+  - it: user-supplied persistence.mode takes precedence over provider
     set:
       licenseKey: nr_license_key
       provider: GKE_AUTOPILOT
@@ -112,49 +112,3 @@ tests:
             mountPath: /var/log
             readOnly: true
         template: templates/daemonset.yaml
-
-  - it: FARGATE adds node affinity to exclude fargate nodes
-    set:
-      licenseKey: nr_license_key
-      provider: FARGATE
-    asserts:
-      - equal:
-          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
-          value: eks.amazonaws.com/compute-type
-        template: templates/daemonset.yaml
-      - equal:
-          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator
-          value: NotIn
-        template: templates/daemonset.yaml
-      - equal:
-          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
-          value: fargate
-        template: templates/daemonset.yaml
-
-  - it: FARGATE does not alter linuxMountPath or persistence mode
-    set:
-      licenseKey: nr_license_key
-      provider: FARGATE
-    asserts:
-      - contains:
-          path: spec.template.spec.containers[0].volumeMounts
-          content:
-            name: logs
-            mountPath: /var
-        template: templates/daemonset.yaml
-      - contains:
-          path: spec.template.spec.volumes
-          content:
-            name: logs
-            hostPath:
-              path: /var
-        template: templates/daemonset.yaml
-      - contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: FB_DB
-            value: /var/log/flb_kube.db
-        template: templates/daemonset.yaml
-      - hasDocuments:
-          count: 0
-        template: templates/persistentvolume.yaml
