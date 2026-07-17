@@ -159,9 +159,17 @@ spec:
           - name: AGENT_SERVICE_NAME
             value: {{ include "nr-ebpf-agent.service.name" . }}
           - name: REPORT_APM_DATA
+          {{- if hasKey .Values "reportApmData" }}
             value: "{{ .Values.reportApmData }}"
+          {{- else }}
+            value: "auto"
+          {{- end }}
           - name: REPORT_NETWORK_METRICS
+          {{- if hasKey .Values "reportNetworkMetrics" }}
             value: "{{ .Values.reportNetworkMetrics }}"
+          {{- else }}
+            value: "auto"
+          {{- end }}
           - name: REPORT_LOGS
           {{- if hasKey .Values "reportLogs" }}
             value: "{{ .Values.reportLogs }}"
