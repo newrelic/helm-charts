@@ -126,21 +126,6 @@ Returns nrStaging
 {{- end -}}
 
 {{/*
-TODO: Deprecate this option and only support provider support via the common library.
-See: _provider.tpl provider config + convenience functions such as newrelic.common.fargate.
-Returns fargate
-*/}}
-{{- define "newrelic.fargate" -}}
-{{- if .Values.global }}
-  {{- if .Values.global.fargate }}
-    {{- .Values.global.fargate -}}
-  {{- end -}}
-{{- else if .Values.fargate }}
-  {{- .Values.fargate -}}
-{{- end -}}
-{{- end -}}
-
-{{/*
 Returns lowDataMode
 */}}
 {{- define "newrelic-logging.lowDataMode" -}}
