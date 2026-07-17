@@ -215,7 +215,7 @@ spec:
       {{- if .Values.nodeAffinity }}
       affinity:
         nodeAffinity: {{ .Values.nodeAffinity | toYaml | nindent 10 }}
-      {{- else if (include "newrelic.common.fargate" .) }}
+      {{- else if or (include "newrelic.fargate" .) (include "newrelic.common.fargate" .) }}
       affinity:
         nodeAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
