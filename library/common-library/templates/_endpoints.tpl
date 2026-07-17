@@ -58,6 +58,7 @@ See below.
       "EU"      "https://log-api.eu.newrelic.com"
       "JP"      "https://log-api.jp.nr-data.net"
       "STG"     "https://staging-log-api.newrelic.com"
+      "GOV"     "https://gov-log-api.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "logApiEndpoint" "endpoints" $endpoints) -}}
 {{- end -}}
@@ -67,8 +68,9 @@ See below.
   {{- $endpoints := dict
       "US"      "https://metric-api.newrelic.com"
       "EU"      "https://metric-api.eu.newrelic.com"
-      "JP"      "https://metric-api.jp.newrelic.com"
+      "JP"      "https://metric-api.jp.nr-data.net"
       "STG"     "https://staging-metric-api.newrelic.com"
+      "GOV"     "https://gov-metric-api.newrelic.com"
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "metricApiEndpoint" "endpoints" $endpoints) -}}
 {{- end -}}

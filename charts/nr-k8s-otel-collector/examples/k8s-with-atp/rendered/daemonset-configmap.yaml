@@ -9,13 +9,13 @@ metadata:
     app.kubernetes.io/instance: nr-k8s-otel-collector
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
-    app.kubernetes.io/version: 1.2.0
+    app.kubernetes.io/version: 1.19.0
     helm.sh/chart: nr-k8s-otel-collector-0.13.0
 data:
   daemonset-config.yaml: |
     receivers:
       
-      hostmetrics:
+      host_metrics:
         # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
         collection_interval: 1m
@@ -63,7 +63,7 @@ data:
                 enabled: false
           # ATP (Adaptive Telemetry Processor) intelligently filters process-level metrics
           # These metrics can generate high data volume, so they're only enabled when ATP is explicitly activated.
-          # When ATP is disabled, only a subset of process metrics are collected (see metricstransform/hostmetrics).
+          # When ATP is disabled, only a subset of process metrics are collected (see metrics_transform/hostmetrics).
           processes:
           process:
             metrics:
@@ -80,7 +80,7 @@ data:
             mute_process_io_error: true
             mute_process_user_error: true
 
-      kubeletstats:
+      kubelet_stats:
         collection_interval: 1m
         metric_groups: [node, pod, container, volume]
         endpoint: "${KUBE_NODE_NAME}:10250"
@@ -195,8 +195,8 @@ data:
         include_file_path: true
         include_file_name: true
         operators:
-        - id: container-parser
-          type: container
+          - id: container-parser
+            type: container
 
 
     processors:
@@ -299,63 +299,63 @@ data:
               - set(datapoint.attributes["runtime"], Split(datapoint.attributes["container_id"], "://")[0])
               - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
-      metricstransform/ldm:
+      metrics_transform/ldm:
         transforms:
           - include: .*
             match_type: regexp
             action: update
             operations:
-            - action: add_label
-              new_label: low.data.mode
-              new_value: 'false'
+              - action: add_label
+                new_label: low.data.mode
+                new_value: 'false'
 
-      metricstransform/kubeletstats:
+      metrics_transform/kubeletstats:
         transforms:
           - include: container\.(cpu\.usage|filesystem\.(available|capacity|usage)|memory\.usage)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.node\.(cpu\.(time|usage)|filesystem\.(capacity|usage)|memory\.(available|working_set))
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.pod\.(filesystem\.(available|capacity|usage)|memory\.working_set|network\.io)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.pod\.(cpu|memory)_(limit|request)_utilization
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s\.pod\.(cpu|memory)_request_limit_ratio
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: ^k8s\.pod\.volume\.usage$$
             action: update
             match_type: regexp
@@ -380,146 +380,146 @@ data:
         metric_statements:
           - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
 
-      metricstransform/k8s_cluster_info:
+      metrics_transform/k8s_cluster_info:
         transforms:
           - include: kubernetes_build_info
             action: update
             new_name: k8s.cluster.info
 
-      metricstransform/cadvisor:
+      metrics_transform/cadvisor:
         transforms:
           - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_memory_working_set_bytes
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_memory_mapped_file
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_network_(working_set_bytes|receive_(bytes_total|errors_total)|transmit_(bytes_total|errors_total))
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: container_spec_memory_limit_bytes
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
-      metricstransform/kubelet:
+      metrics_transform/kubelet:
         transforms:
           - include: go_(goroutines|threads)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: process_resident_memory_bytes
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: k8s.cluster.info
             action: update
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-                - value: 'false'
-                  new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
-      metricstransform/hostmetrics:
+      metrics_transform/hostmetrics:
         transforms:
           # When ATP is enabled: all the processes will be ingested, and ATP will filter them
           - include: process\..*
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: processes\..*
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.cpu\.(utilization|load_average\.(15m|1m|5m))
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.disk\.(io_time|operation_time|operations)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.(filesystem|memory)\.(usage|utilization)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
           - include: system\.network\.(errors|io|packets)
             action: update
             match_type: regexp
             operations:
-            - action: update_label
-              label: low.data.mode
-              value_actions:
-              - value: 'false'
-                new_value: 'true'
+              - action: update_label
+                label: low.data.mode
+                value_actions:
+                  - value: 'false'
+                    new_value: 'true'
 
       transform/strip_labels_for_per_node_aggregation:
         metric_statements:
@@ -532,7 +532,7 @@ data:
         keys:
           - node
 
-      metricstransform/sum_container_metrics_per_node:
+      metrics_transform/sum_container_metrics_per_node:
         transforms:
           - include: container.cpu.usage
             action: insert
@@ -606,7 +606,7 @@ data:
               - truncate_all(resource.attributes, 4095)
 
       # group system.cpu metrics by cpu
-      metricstransform/hostmetrics_cpu:
+      metrics_transform/hostmetrics_cpu:
         transforms:
           - include: system.cpu.utilization
             action: update
@@ -621,7 +621,7 @@ data:
                 label_set: [ direction ]
                 aggregation_type: sum
 
-      # following system.% metrics reduce metrics reported by hostmetrics receiver
+      # following system.% metrics reduce metrics reported by host_metrics receiver
       filter/exclude_filesystem_utilization:
         metrics:
           datapoint:
@@ -679,7 +679,7 @@ data:
           - key: type
             action: delete
 
-      resourcedetection/env:
+      resource_detection/env:
         detectors: ["env", "system"]
         override: false
         system:
@@ -688,7 +688,7 @@ data:
             host.name:
               enabled: false
 
-      resourcedetection/cloudproviders:
+      resource_detection/cloudproviders:
         detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
         timeout: 2s
         override: false
@@ -852,8 +852,8 @@ data:
         
         metrics/ingress:
           receivers:
-            - hostmetrics
-            - kubeletstats
+            - host_metrics
+            - kubelet_stats
             - prometheus
           processors:
             - metricsgeneration/calculate_percentage_for_pods
@@ -862,11 +862,11 @@ data:
             - routing/nr_metrics_pipelines
             
         metrics/ingress_aggregation:
-          receivers: [kubeletstats]
+          receivers: [kubelet_stats]
           processors:
             - transform/strip_labels_for_per_node_aggregation
             - groupbyattrs/node
-            - metricstransform/sum_container_metrics_per_node
+            - metrics_transform/sum_container_metrics_per_node
             - metricsgeneration/calculate_percentage
             - filter/keep_only_generated_metrics
             
@@ -882,15 +882,15 @@ data:
             # Insert ATP processors early in the pipeline to filter process metrics before downstream processing.
             # This reduces data volume and processing cost by dropping low-value metrics intelligently.
             - adaptivetelemetry
-            - metricstransform/k8s_cluster_info
-            - metricstransform/ldm
+            - metrics_transform/k8s_cluster_info
+            - metrics_transform/ldm
             - transform/tag_generated_metrics_ldm
-            - metricstransform/kubeletstats
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
-            - metricstransform/hostmetrics
+            - metrics_transform/kubeletstats
+            - metrics_transform/cadvisor
+            - metrics_transform/kubelet
+            - metrics_transform/hostmetrics
             - filter/exclude_metrics_low_data_mode
-            - metricstransform/hostmetrics_cpu
+            - metrics_transform/hostmetrics_cpu
             - transform/truncate
             - filter/exclude_filesystem_utilization
             - filter/exclude_filesystem_usage
@@ -899,8 +899,8 @@ data:
             - filter/exclude_system_paging
             - filter/exclude_network
             - attributes/exclude_system_paging
-            - resourcedetection/env
-            - resourcedetection/cloudproviders
+            - resource_detection/env
+            - resource_detection/cloudproviders
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -913,16 +913,16 @@ data:
             - routing/nr_metrics_pipelines
           processors:
             - memory_limiter
-            - metricstransform/k8s_cluster_info
-            - metricstransform/ldm
-            - metricstransform/cadvisor
-            - metricstransform/kubelet
+            - metrics_transform/k8s_cluster_info
+            - metrics_transform/ldm
+            - metrics_transform/cadvisor
+            - metrics_transform/kubelet
             - transform/collector
             - filter/exclude_metrics_low_data_mode
             - filter/nr_exclude_container_zero_values
             - transform/truncate
-            - resourcedetection/env
-            - resourcedetection/cloudproviders
+            - resource_detection/env
+            - resource_detection/cloudproviders
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
