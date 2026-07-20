@@ -1,0 +1,154 @@
+{{- if and .Values.nrdotCollector.enabled (include "nr-ebpf-agent.ksm.shouldDeploy" .) }}
+{{- $ksm := .Values.nrdotCollector.kubeStateMetrics -}}
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ .Release.Name }}-kube-state-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ .Release.Name }}-kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+rules:
+  - apiGroups: [""]
+    resources: [configmaps, secrets, nodes, pods, services, serviceaccounts, resourcequotas, replicationcontrollers, limitranges, persistentvolumeclaims, persistentvolumes, namespaces, endpoints]
+    verbs: [list, watch]
+  - apiGroups: ["apps"]
+    resources: [statefulsets, daemonsets, deployments, replicasets]
+    verbs: [list, watch]
+  - apiGroups: ["batch"]
+    resources: [cronjobs, jobs]
+    verbs: [list, watch]
+  - apiGroups: ["autoscaling"]
+    resources: [horizontalpodautoscalers]
+    verbs: [list, watch]
+  - apiGroups: ["authentication.k8s.io"]
+    resources: [tokenreviews]
+    verbs: [create]
+  - apiGroups: ["authorization.k8s.io"]
+    resources: [subjectaccessreviews]
+    verbs: [create]
+  - apiGroups: ["policy"]
+    resources: [poddisruptionbudgets]
+    verbs: [list, watch]
+  - apiGroups: ["certificates.k8s.io"]
+    resources: [certificatesigningrequests]
+    verbs: [list, watch]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: [endpointslices]
+    verbs: [list, watch]
+  - apiGroups: ["storage.k8s.io"]
+    resources: [storageclasses, volumeattachments]
+    verbs: [list, watch]
+  - apiGroups: ["admissionregistration.k8s.io"]
+    resources: [mutatingwebhookconfigurations, validatingwebhookconfigurations]
+    verbs: [list, watch]
+  - apiGroups: ["networking.k8s.io"]
+    resources: [networkpolicies, ingressclasses, ingresses]
+    verbs: [list, watch]
+  - apiGroups: ["coordination.k8s.io"]
+    resources: [leases]
+    verbs: [list, watch]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: [clusterrolebindings, clusterroles, rolebindings, roles]
+    verbs: [list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ .Release.Name }}-kube-state-metrics
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ .Release.Name }}-kube-state-metrics
+subjects:
+  - kind: ServiceAccount
+    name: {{ .Release.Name }}-kube-state-metrics
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-kube-state-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: kube-state-metrics
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: kube-state-metrics
+        app.kubernetes.io/instance: {{ .Release.Name }}
+    spec:
+      serviceAccountName: {{ .Release.Name }}-kube-state-metrics
+      containers:
+        - name: kube-state-metrics
+          image: "{{ $ksm.image.repository }}:{{ $ksm.image.tag }}"
+          imagePullPolicy: {{ $ksm.image.pullPolicy }}
+          ports:
+            - name: http-metrics
+              containerPort: 8080
+              protocol: TCP
+            - name: telemetry
+              containerPort: 8081
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 5
+            timeoutSeconds: 5
+          resources:
+            limits:
+              memory: 256Mi
+            requests:
+              cpu: 10m
+              memory: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-kube-state-metrics
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: http-metrics
+      port: 8080
+      targetPort: http-metrics
+      protocol: TCP
+    - name: telemetry
+      port: 8081
+      targetPort: telemetry
+      protocol: TCP
+  selector:
+    app.kubernetes.io/name: kube-state-metrics
+    app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}

@@ -117,4 +117,8 @@ Emit at column 0; call with `| nindent <n>`.
 - name: AGENT_OTLP_ENDPOINT
   value: {{ .agentEndpoint | quote }}
 {{- end }}
+{{- with $ctx.Values.nrdotCollector.goGC }}
+- name: GOGC
+  value: {{ . | quote }}
+{{- end }}
 {{- end -}}

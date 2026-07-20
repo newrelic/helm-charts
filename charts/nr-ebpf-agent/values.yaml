@@ -363,8 +363,27 @@ nrdotCollector:
   otlpIngestPort: 4317
   # -- Metric collection / scrape interval.
   collectionInterval: 30s
+  # -- Go garbage-collection target percentage for both nrdot collectors. Lower
+  # values trade CPU for reduced memory (GC runs more often). 50 is proven to cut
+  # memory. Set to "" to use the Go default (100).
+  goGC: 50
+  # -- Send only the metrics required for the NR Kubernetes UI. When true
+  # (default), KSM scrape is filtered to the ~79 UI-relevant kube_* names and
+  # noisy datapoint attributes (id, name, interface, cpu) are dropped. Set false
+  # for full-fidelity KSM + cadvisor ingest (higher volume).
+  lowDataMode: true
   # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape.
   ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
+  # -- Bundled kube-state-metrics instance.
+  kubeStateMetrics:
+    # -- "auto" = deploy KSM only if no existing KSM Deployment is found cluster-wide
+    # (via lookup). "always" = always deploy. "never" = never
+    # deploy (rely on an external KSM matched by ksmSelector).
+    mode: auto
+    image:
+      repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
+      tag: "v2.13.0"
+      pullPolicy: IfNotPresent
   # -- Per-node (sidecar) collector resources.
   sidecar:
     resources:
