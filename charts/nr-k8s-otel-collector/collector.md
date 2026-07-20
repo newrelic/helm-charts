@@ -80,7 +80,7 @@ The init container workflow:
 ```yaml
 receivers:
   # Host-level system metrics (Linux-specific)
-  hostmetrics:
+  host_metrics:
     root_path: /hostfs
     collection_interval: 1m
     scrapers:
@@ -127,7 +127,7 @@ receivers:
             enabled: false
 
   # Kubelet metrics from the local node
-  kubeletstats:
+  kubelet_stats:
     collection_interval: 1m
     metric_groups: [node, pod, container, volume]
     endpoint: "${KUBE_NODE_NAME}:10250"
@@ -344,7 +344,7 @@ processors:
           - set(datapoint.attributes["container_id"], Split(datapoint.attributes["container_id"], "://")[1])
 
   # Mark all metrics for low data mode (then selectively unmark)
-  metricstransform/ldm:
+  metrics_transform/ldm:
     transforms:
       - include: .*
         match_type: regexp
@@ -354,8 +354,8 @@ processors:
             new_label: low.data.mode
             new_value: 'false'
 
-  # Low data mode transforms for kubeletstats
-  metricstransform/kubeletstats:
+  # Low data mode transforms for kubelet_stats
+  metrics_transform/kubelet_stats:
     transforms:
       - include: container\.(cpu\.usage|filesystem\.(available|capacity|usage)|memory\.usage)
         action: update
@@ -427,14 +427,14 @@ processors:
       - set(datapoint.attributes["low.data.mode"], "true") where datapoint.attributes["job_label"] == "otel-collector-daemonset"
 
   # Rename kubernetes_build_info to k8s.cluster.info
-  metricstransform/k8s_cluster_info:
+  metrics_transform/k8s_cluster_info:
     transforms:
       - include: kubernetes_build_info
         action: update
         new_name: k8s.cluster.info
 
   # Low data mode transforms for cAdvisor
-  metricstransform/cadvisor:
+  metrics_transform/cadvisor:
     transforms:
       - include: container_cpu_(cfs_(periods_total|throttled_periods_total)|usage_seconds_total)
         action: update
@@ -483,7 +483,7 @@ processors:
                 new_value: 'true'
 
   # Low data mode transforms for kubelet metrics
-  metricstransform/kubelet:
+  metrics_transform/kubelet:
     transforms:
       - include: go_(goroutines|threads)
         action: update
@@ -512,8 +512,8 @@ processors:
               - value: 'false'
                 new_value: 'true'
 
-  # Low data mode transforms for hostmetrics
-  metricstransform/hostmetrics:
+  # Low data mode transforms for host_metrics
+  metrics_transform/hostmetrics:
     transforms:
       # When ATP is disabled: Only include a limited subset of process metrics.
       # This matches the original behavior before ATP was introduced.
@@ -574,7 +574,7 @@ processors:
     keys:
       - node
 
-  metricstransform/sum_container_metrics_per_node:
+  metrics_transform/sum_container_metrics_per_node:
     transforms:
       - include: container.cpu.usage
         action: insert
@@ -651,7 +651,7 @@ processors:
           - truncate_all(resource.attributes, 4095)
 
   # Group CPU metrics by state
-  metricstransform/hostmetrics_cpu:
+  metrics_transform/hostmetrics_cpu:
     transforms:
       - include: system.cpu.utilization
         action: update
@@ -733,7 +733,7 @@ processors:
         action: delete
 
   # Detect environment and system attributes
-  resourcedetection/env:
+  resource_detection/env:
     detectors: ["env", "system"]
     override: false
     system:
@@ -743,7 +743,7 @@ processors:
           enabled: false
 
   # Detect cloud provider attributes
-  resourcedetection/cloudproviders:
+  resource_detection/cloudproviders:
     detectors: [gcp, eks, ec2, aks, azure, oraclecloud]
     timeout: 2s
     override: false
@@ -900,8 +900,8 @@ service:
   pipelines:
     metrics/ingress:
       receivers:
-        - hostmetrics
-        - kubeletstats
+        - host_metrics
+        - kubelet_stats
         - prometheus
       processors:
         - metricsgeneration/calculate_percentage_for_pods
@@ -910,11 +910,11 @@ service:
         - routing/nr_metrics_pipelines
         
     metrics/ingress_aggregation:
-      receivers: [kubeletstats]
+      receivers: [kubelet_stats]
       processors:
         - transform/strip_labels_for_per_node_aggregation
         - groupbyattrs/node
-        - metricstransform/sum_container_metrics_per_node
+        - metrics_transform/sum_container_metrics_per_node
         - metricsgeneration/calculate_percentage
         - filter/keep_only_generated_metrics
         
@@ -927,15 +927,15 @@ service:
         - routing/nr_metrics_pipelines
       processors:
         - memory_limiter
-        - metricstransform/k8s_cluster_info
-        - metricstransform/ldm
+        - metrics_transform/k8s_cluster_info
+        - metrics_transform/ldm
         - transform/tag_generated_metrics_ldm
-        - metricstransform/kubeletstats
-        - metricstransform/cadvisor
-        - metricstransform/kubelet
-        - metricstransform/hostmetrics
+        - metrics_transform/kubeletstats
+        - metrics_transform/cadvisor
+        - metrics_transform/kubelet
+        - metrics_transform/hostmetrics
         - filter/exclude_metrics_low_data_mode
-        - metricstransform/hostmetrics_cpu
+        - metrics_transform/hostmetrics_cpu
         - transform/truncate
         - filter/exclude_filesystem_utilization
         - filter/exclude_filesystem_usage
@@ -944,8 +944,8 @@ service:
         - filter/exclude_system_paging
         - filter/exclude_network
         - attributes/exclude_system_paging
-        - resourcedetection/env
-        - resourcedetection/cloudproviders
+        - resource_detection/env
+        - resource_detection/cloudproviders
         - resource/newrelic
         - transform/low_data_mode_inator
         - resource/low_data_mode_inator
@@ -958,16 +958,16 @@ service:
         - routing/nr_metrics_pipelines
       processors:
         - memory_limiter
-        - metricstransform/k8s_cluster_info
-        - metricstransform/ldm
-        - metricstransform/cadvisor
-        - metricstransform/kubelet
+        - metrics_transform/k8s_cluster_info
+        - metrics_transform/ldm
+        - metrics_transform/cadvisor
+        - metrics_transform/kubelet
         - transform/collector
         - filter/exclude_metrics_low_data_mode
         - filter/nr_exclude_container_zero_values
         - transform/truncate
-        - resourcedetection/env
-        - resourcedetection/cloudproviders
+        - resource_detection/env
+        - resource_detection/cloudproviders
         - resource/newrelic
         - transform/low_data_mode_inator
         - resource/low_data_mode_inator
@@ -1062,7 +1062,7 @@ Ensure your DaemonSet manifest includes:
    - `OTEL_RESOURCE_ATTRIBUTES` set to `service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)` — identifies the collector instance
 
 3. **Volume mounts:**
-   - `/hostfs` (read-only) — host root filesystem, needed by the `hostmetrics` receiver
+   - `/hostfs` (read-only) — host root filesystem, needed by the `host_metrics` receiver
    - `/var/log/pods` (read-only) — pod log files, needed by the `filelog` receiver
    - A shared `emptyDir` volume between the init container and main container for the finalized config
 
@@ -1331,13 +1331,13 @@ processors:
       - delete_key(datapoint.attributes, "volumename")
 
   # Metric transform processors for specific metrics
-  metricstransform/k8s_cluster_info:
+  metrics_transform/k8s_cluster_info:
     transforms:
       - include: kubernetes_build_info
         action: update
         new_name: k8s.cluster.info
 
-  metricstransform/kube_pod_container_status_phase:
+  metrics_transform/kube_pod_container_status_phase:
     transforms:
       - include: 'kube_pod_container_status_waiting'
         match_type: strict
@@ -1365,7 +1365,7 @@ processors:
             new_value: terminated
 
   # Low data mode transforms
-  metricstransform/ldm:
+  metrics_transform/ldm:
     transforms:
       - include: .*
         match_type: regexp
@@ -1375,7 +1375,7 @@ processors:
             new_label: low.data.mode
             new_value: 'false'
 
-  metricstransform/k8s_cluster_info_ldm:
+  metrics_transform/k8s_cluster_info_ldm:
     transforms:
       - include: k8s.cluster.info
         action: update
@@ -1394,7 +1394,7 @@ processors:
         statements:
           - set(datapoint.attributes["kube_pod_container_status_last_terminated_timestamp_formatted"], FormatTime(Unix(Int(datapoint.value_double)), "%Y-%m-%dT%H:%M:%SZ"))
 
-  metricstransform/ksm:
+  metrics_transform/ksm:
     transforms:
       - include: kube_cronjob_(created|spec_suspend|status_(active|last_schedule_time))
         action: update
@@ -1524,7 +1524,7 @@ processors:
                 new_value: 'true'
 
   # Control plane metrics transforms
-  metricstransform/apiserver:
+  metrics_transform/apiserver:
     transforms:
       - include: apiserver_storage_objects
         action: update
@@ -1827,14 +1827,14 @@ service:
         - routing/nr_metrics_pipelines
       processors:
         - memory_limiter
-        - metricstransform/kube_pod_container_status_phase
+        - metrics_transform/kube_pod_container_status_phase
         - filter/exclude_zero_value_kube_node_status_condition
         - filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase
         - filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses
         - transform/convert_timestamp
-        - metricstransform/ldm
-        - metricstransform/k8s_cluster_info_ldm
-        - metricstransform/ksm
+        - metrics_transform/ldm
+        - metrics_transform/k8s_cluster_info_ldm
+        - metrics_transform/ksm
         - filter/exclude_metrics_low_data_mode
         - filter/nr_exclude_zero_value_kube_jobs
         - transform/low_data_mode_inator
@@ -1854,10 +1854,10 @@ service:
         - routing/nr_metrics_pipelines
       processors:
         - memory_limiter
-        - metricstransform/k8s_cluster_info
-        - metricstransform/ldm
-        - metricstransform/k8s_cluster_info_ldm
-        - metricstransform/apiserver
+        - metrics_transform/k8s_cluster_info
+        - metrics_transform/ldm
+        - metrics_transform/k8s_cluster_info_ldm
+        - metrics_transform/apiserver
         - filter/exclude_metrics_low_data_mode
         - transform/low_data_mode_inator
         - resource/low_data_mode_inator
@@ -1962,11 +1962,11 @@ If you're running on OpenShift, apply the following changes to the base configur
 
 #### 1. Host Metrics Receiver (DaemonSet)
 
-Remove `root_path: /hostfs` from the `hostmetrics` receiver (host filesystem is not accessible):
+Remove `root_path: /hostfs` from the `host_metrics` receiver (host filesystem is not accessible):
 
 ```yaml
 receivers:
-  hostmetrics:
+  host_metrics:
     # Do NOT set root_path on OpenShift
     collection_interval: 1m
     scrapers:
@@ -1977,17 +1977,17 @@ Also remove the `/hostfs` volume mount from the DaemonSet manifest.
 
 #### 2. Resource Detection (DaemonSet)
 
-Replace `resourcedetection/cloudproviders` with `resourcedetection/openshift` in the DaemonSet processor definitions and pipelines:
+Replace `resource_detection/cloudproviders` with `resource_detection/openshift` in the DaemonSet processor definitions and pipelines:
 
 ```yaml
 processors:
-  # Replace resourcedetection/cloudproviders with:
-  resourcedetection/openshift:
+  # Replace resource_detection/cloudproviders with:
+  resource_detection/openshift:
     detectors: ["openshift"]
     override: true
 ```
 
-Update all DaemonSet pipelines that reference `resourcedetection/cloudproviders` to use `resourcedetection/openshift` instead.
+Update all DaemonSet pipelines that reference `resource_detection/cloudproviders` to use `resource_detection/openshift` instead.
 
 #### 3. API Server TLS (Deployment)
 
@@ -2074,11 +2074,11 @@ GKE Autopilot restricts host filesystem access and kubelet authentication. All c
 
 #### 1. Host Metrics Receiver (DaemonSet)
 
-Remove `root_path: /hostfs` from the `hostmetrics` receiver (host filesystem is not accessible):
+Remove `root_path: /hostfs` from the `host_metrics` receiver (host filesystem is not accessible):
 
 ```yaml
 receivers:
-  hostmetrics:
+  host_metrics:
     # Do NOT set root_path on GKE Autopilot
     collection_interval: 1m
     scrapers:
@@ -2197,7 +2197,7 @@ The kube-stack chart + Operator architecture has several important differences f
 | --- | --- |
 | **Volumes** | When presets are enabled, the chart auto-adds `hostfs`, `varlogpods`, and `varlibdockercontainers` volumes/mounts — do **not** duplicate these. When all presets are disabled (BYO config), you must provide these volumes and mounts yourself. |
 | **Ports** | Uses Service-style `port` (not `containerPort`). |
-| **Presets** | The daemon collector has presets enabled by default (`logsCollection`, `kubeletMetrics`, `hostMetrics`, `kubernetesAttributes`) that inject additional receivers and Prometheus scrape jobs. When providing a complete BYO config, **disable all presets** to avoid duplicate scrape job conflicts. |
+| **Presets** | The daemon collector has presets enabled by default (`logsCollection`, `kubeletMetrics`, `host_metrics`, `kubernetesAttributes`) that inject additional receivers and Prometheus scrape jobs. When providing a complete BYO config, **disable all presets** to avoid duplicate scrape job conflicts. |
 | **scrape_configs_file** | The daemon collector loads `daemon_scrape_configs.yaml` by default, which injects `kubelet`, `kubernetes-pods`, and `node-exporter` scrape jobs. Set `scrape_configs_file: ""` when providing your own. |
 | **ConfigMap naming** | The Operator creates ConfigMaps with a hash suffix (e.g., `<release>-daemon-collector-029afa75`). The config key is always `collector.yaml`. |
 | **Config delivery** | The Operator always uses `--config=/conf/collector.yaml` and mounts its ConfigMap at `/conf`. This path **cannot be overridden** via `args`. |
@@ -2277,7 +2277,7 @@ collectors:
       - name: OTEL_RESOURCE_ATTRIBUTES
         value: service.instance.id=$(POD_NAME),k8s.pod.uid=$(POD_UID)
     args:
-      feature-gates: "metricsgeneration.MatchAttributes,-processor.resourcedetection.propagateerrors"
+      feature-gates: "metricsgeneration.MatchAttributes"
     volumeMounts:
       - name: node-env
         mountPath: /node-env
