@@ -1,8 +1,7 @@
 description: New Relic newrelic-logging chart E2E
 
-# The e2e-action appends `WHERE <custom_test_key> = '<SCENARIO_TAG>'` to every NRQL query,
-# scoping each run to its own data. The chart records `cluster_name` from `global.cluster`,
-# which we set to ${SCENARIO_TAG} on install below — so every query is scoped to this run.
+# Every NRQL query below is auto-scoped to this run via cluster_name, which
+# we set to ${SCENARIO_TAG} when installing the chart.
 custom_test_key: cluster_name
 
 scenarios:
@@ -20,15 +19,13 @@ scenarios:
       - kubectl delete namespace nr-${SCENARIO_TAG} || true
     tests:
       nrqls:
-        # Assert the marker lines emitted by the log-producer (e2e-resources.yml) reached NRDB.
-        # No WHERE/SINCE here: the action appends the cluster_name scope clause automatically.
+        # Checks the marker log actually arrived.
         - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%') AS markerCount FROM Log"
           expected_results:
             - key: "markerCount"
               lowerBoundedValue: 1
-      # Unlike `after:` above, a failing command here fails the scenario.
-      # Logs can arrive fine even if the pod is crash-looping, so we
-      # check pod health too, not just that logs showed up.
+      # A failing script here fails the scenario (unlike `after:`, which is cleanup-only).
+      # We also check pod health, since logs can arrive fine even if the pod is crash-looping.
       scripts:
         - kubectl logs -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true --tail=200 || true  # for debugging, doesn't affect pass/fail
         - kubectl get pods -n nr-${SCENARIO_TAG} -o wide  # for debugging, doesn't affect pass/fail
