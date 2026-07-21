@@ -9,7 +9,7 @@ scenarios:
     before:
       - helm repo add newrelic https://helm-charts.newrelic.com
       - helm dependency update ../
-      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
       - kubectl apply -f e2e-resources.yml
     after:
       - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
@@ -36,7 +36,7 @@ scenarios:
     before:
       - helm repo add newrelic https://helm-charts.newrelic.com
       - helm dependency update ../
-      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} --set lowDataMode=true
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} --set lowDataMode=true
       - kubectl apply -f e2e-resources.yml
     after:
       - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
