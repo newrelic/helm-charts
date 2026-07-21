@@ -1,7 +1,6 @@
 ---
-# Log producer: emits uniquely-marked lines to stdout so the newrelic-logging
-# DaemonSet tails them from the container log and forwards them to New Relic.
-# The marker (nr-logging-e2e-marker) is what test-specs.yml asserts on.
+# Emits marker lines for newrelic-logging to pick up and ship to New Relic.
+# test-specs.yml checks for the "nr-logging-e2e-marker" text.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
