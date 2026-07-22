@@ -10,7 +10,7 @@ All endpoints exposed to customers though NR helm charts should be defined in a 
 See below.
 */}}
 
-{{- define "newrelic.common.endpoints.resolve" -}}                                                                                                                                                                                    
+{{- define "newrelic.common.endpoints.resolve" -}}
   {{- $region := include "newrelic.common.region.or_us" .ctx -}}
   {{- $endpoint := include "newrelic.common.resolve" (dict "ctx" .ctx "key" .key "default" (get .endpoints $region)) -}}
   {{- required (printf "This chart does not have support for the region provided '%s'. Please either supply an override URL via .Values.%s or .Values.global.%s, or set a different region." $region .key .key) $endpoint -}}
@@ -140,3 +140,48 @@ See below.
   -}}
   {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "traceApiEndpoint" "endpoints" $endpoints) -}}
 {{- end -}}
+
+{{/* Returns the New Relic Browser endpoint for this region */}}
+{{- define "newrelic.common.browser_endpoint" -}}
+  {{- $endpoints := dict
+      "US"      "https://bam.nr-data.net"
+      "EU"      "https://bam.eu01.nr-data.net"
+      "JP"      "https://bam.jp.nr-data.net"
+      "STG"     "https://staging-bam.nr-data.net"
+  -}}
+  {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "browserEndpoint" "endpoints" $endpoints) -}}
+{{- end -}}
+
+{{/* Returns the New Relic Mobile Collector endpoint for this region */}}
+{{- define "newrelic.common.mobile_collector_endpoint" -}}
+  {{- $endpoints := dict
+      "US"      "https://mobile-collector.newrelic.com"
+      "EU"      "https://mobile-collector.eu01.nr-data.net"
+      "JP"      "https://mobile-collector.jp.nr-data.net"
+      "STG"     "https://staging-mobile-collector.com"
+  -}}
+  {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "mobileCollectorEndpoint" "endpoints" $endpoints) -}}
+{{- end -}}
+
+{{/* Returns the New Relic Mobile Crash endpoint for this region */}}
+{{- define "newrelic.common.mobile_crash_endpoint" -}}
+  {{- $endpoints := dict
+      "US"      "https://mobile-crash.newrelic.com"
+      "EU"      "https://mobile-crash.eu01.nr-data.net"
+      "JP"      "https://mobile-crash.jp.nr-data.net"
+      "STG"     "https://staging-mobile-crash.newrelic.com"
+  -}}
+  {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "mobileCrashEndpoint" "endpoints" $endpoints) -}}
+{{- end -}}
+
+{{/* Returns the New Relic Mobile Symbol Upload endpoint for this region */}}
+{{- define "newrelic.common.mobile_symbol_upload_endpoint" -}}
+  {{- $endpoints := dict
+      "US"      "https://mobile-symbol-upload.newrelic.com"
+      "EU"      "https://mobile-symbol-upload.eu01.nr-data.net"
+      "JP"      "https://mobile-symbol-upload.jp.nr-data.net"
+      "STG"     "https://staging-mobile-symbol-upload.newrelic.com"
+  -}}
+  {{- include "newrelic.common.endpoints.resolve" (dict "ctx" . "key" "mobileSymbolUploadEndpoint" "endpoints" $endpoints) -}}
+{{- end -}}
+
