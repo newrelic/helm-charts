@@ -1,0 +1,96 @@
+suite: FedRAMP endpoint configuration
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: should use US OTLP endpoint by default (no FedRAMP)
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTLP_ENDPOINT
+            value: "otlp.nr-data.net:443"
+
+  - it: should use FedRAMP endpoint when fedramp.enabled=true (local)
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      fedramp:
+        enabled: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTLP_ENDPOINT
+            value: "gov-otlp.nr-data.net:443"
+
+  - it: should use FedRAMP endpoint when global.fedramp.enabled=true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        fedramp:
+          enabled: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTLP_ENDPOINT
+            value: "gov-otlp.nr-data.net:443"
+
+  - it: should use FedRAMP endpoint when region=GOV is set directly
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      region: "GOV"
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTLP_ENDPOINT
+            value: "gov-otlp.nr-data.net:443"
+
+  - it: local fedramp.enabled=true should override global fedramp.enabled=false
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        fedramp:
+          enabled: false
+      fedramp:
+        enabled: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTLP_ENDPOINT
+            value: "gov-otlp.nr-data.net:443"
+
+  - it: local fedramp.enabled=false should override global fedramp.enabled=true
+    set:
+      cluster: test-cluster
+      licenseKey: test-key
+      global:
+        fedramp:
+          enabled: true
+      fedramp:
+        enabled: false
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTLP_ENDPOINT
+            value: "otlp.nr-data.net:443"

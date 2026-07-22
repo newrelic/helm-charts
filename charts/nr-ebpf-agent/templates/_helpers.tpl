@@ -148,11 +148,10 @@ which contains pre-built kernel headers matching the RHCOS kernel.
 Validate the user inputted quantile when sampling by latency.
 */}}
 {{- define "validate.samplingLatency" -}}
-{{- $validOptions := list "" "p1" "p10" "p50" "p90" "p99" -}}
 {{- $protocol := .protocol -}}
 {{- $latency := .latency -}}
-{{- if not (has $latency $validOptions) -}}
-{{- fail (printf "Invalid samplingLatency '%s' for protocol '%s'. Valid options are: %v" $latency $protocol $validOptions) -}}
+{{- if and (ne $latency "") (not (regexMatch "^p([0-9]|[1-9][0-9])$" $latency)) -}}
+{{- fail (printf "Invalid samplingLatency '%s' for protocol '%s'. Valid options are: p0-p99 (e.g. p0, p1, p10, p50, p90, p99)" $latency $protocol) -}}
 {{- end -}}
 {{- end -}}
 
@@ -227,7 +226,7 @@ Generate environment variables for protocols configuration including enabled/dis
     {{- if and (eq $config.spans.enabled true) (hasKey $config.spans "samplingLatency") }}
       {{- include "validate.samplingLatency" (dict "protocol" $protocol "latency" $config.spans.samplingLatency) }}
 - name: PROTOCOLS_{{ upper $protocol }}_SPANS_SAMPLING_LATENCY
-  value: "{{ $config.spans.samplingLatency | regexMatch "p1|p10|p50|p90|p99" | ternary $config.spans.samplingLatency "" }}"
+  value: "{{ $config.spans.samplingLatency | regexMatch "^p([0-9]|[1-9][0-9])$" | ternary $config.spans.samplingLatency "" }}"
     {{- end }}
   {{- end }}
   {{- end }}
