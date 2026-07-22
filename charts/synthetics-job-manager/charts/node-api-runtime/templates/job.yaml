@@ -43,15 +43,21 @@ spec:
                 {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
                 {{- include "synthetics-job-manager.customCertificatesEnv" . | nindent 16 }}
                 {{- end }}
+                {{- if include "synthetics-job-manager.toMountClientCertificate" . }}
+                {{- include "synthetics-job-manager.clientCertificateEnv" . | nindent 16 }}
+                {{- end }}
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
-              {{ if or (include "synthetics-job-manager.toMountCustomNodeModules" .) (include "synthetics-job-manager.toMountCustomCertificates" .) }}
+              {{ if or (include "synthetics-job-manager.toMountCustomNodeModules" .) (include "synthetics-job-manager.toMountCustomCertificates" .) (include "synthetics-job-manager.toMountClientCertificate" .) }}
               volumeMounts:
                 {{- if include "synthetics-job-manager.toMountCustomNodeModules" . }}
                 {{- include "synthetics-job-manager.customNodeModulesMount" . | nindent 16 }}
                 {{- end }}
                 {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
                 {{- include "synthetics-job-manager.customCertificatesMount" . | nindent 16 }}
+                {{- end }}
+                {{- if include "synthetics-job-manager.toMountClientCertificate" . }}
+                {{- include "synthetics-job-manager.clientCertificateMount" . | nindent 16 }}
                 {{- end }}
               {{ end }}
           {{- with .Values.nodeSelector }}
@@ -72,7 +78,7 @@ spec:
             {{- toYaml . | nindent 12 }}
           {{- end }}
           restartPolicy: OnFailure
-          {{ if or (include "synthetics-job-manager.toMountCustomNodeModules" .) (include "synthetics-job-manager.toMountCustomCertificates" .) }}
+          {{ if or (include "synthetics-job-manager.toMountCustomNodeModules" .) (include "synthetics-job-manager.toMountCustomCertificates" .) (include "synthetics-job-manager.toMountClientCertificate" .) }}
           volumes:
             {{- if include "synthetics-job-manager.toMountCustomNodeModules" . }}
             - name: {{ include "synthetics-job-manager.volumeName" . | quote }}
@@ -81,5 +87,8 @@ spec:
             {{- end }}
             {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
             {{- include "synthetics-job-manager.customCertificatesVolume" . | nindent 12 }}
+            {{- end }}
+            {{- if include "synthetics-job-manager.toMountClientCertificate" . }}
+            {{- include "synthetics-job-manager.clientCertificateVolume" . | nindent 12 }}
             {{- end }}
           {{ end }}

@@ -1,0 +1,18 @@
+# Test values that exercise the global.clientCertificate (mTLS) feature for chart-testing (ct lint-and-install).
+# The privateLocationKey is a test value that is not in use but required to pass CI tests.
+synthetics:
+  privateLocationKey: "NRSP-us01AFC27C568815505EBB08AE29BE11923"
+
+fullnameOverride: "syn"
+
+node-browser-runtime:
+  fullnameOverride: "browser"
+
+node-api-runtime:
+  fullnameOverride: "api"
+
+global:
+  clientCertificate:
+    volume:
+      secret:
+        secretName: test-mtls-client-cert
