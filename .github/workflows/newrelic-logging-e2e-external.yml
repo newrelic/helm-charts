@@ -1,7 +1,7 @@
-name: Newrelic Logging chart E2E
+name: Newrelic Logging chart E2E (External Contribution)
 
 on:
-  pull_request:
+  pull_request_target:
     paths:
       - 'charts/newrelic-logging/**'
       - '.github/workflows/newrelic-logging-e2e.yml'
@@ -16,14 +16,17 @@ env:
   MINIKUBE_VERSION: 'v1.38.1'
 
 jobs:
-  e2e-test:
+  e2e-test-external:
     name: Run Tests
-    # Do not run e2e tests if PR has skip-e2e label or if it's from a forked repo (external contribution)
-    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name == 'newrelic/helm-charts' }}
+    # Do not run e2e tests if PR has skip-e2e label or if it's a non-forked repo (internal contribution)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name != 'newrelic/helm-charts' }}
     runs-on: ubuntu-latest
+    environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.18.0
         with:
