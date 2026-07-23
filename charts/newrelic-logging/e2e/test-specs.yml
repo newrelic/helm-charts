@@ -1,0 +1,65 @@
+description: New Relic newrelic-logging chart E2E
+
+# Every NRQL query below is auto-scoped to this run via cluster_name, which
+# we set to ${SCENARIO_TAG} when installing the chart.
+custom_test_key: cluster_name
+
+scenarios:
+  - description: Default install forwards container logs to New Relic
+    before:
+      - helm repo add newrelic https://helm-charts.newrelic.com
+      - helm dependency update ../
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+      - kubectl apply -f e2e-resources.yml
+    after:
+      - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
+      - kubectl get pods -A -o wide || true
+      - kubectl delete -f e2e-resources.yml || true
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} || true
+      - kubectl delete namespace nr-${SCENARIO_TAG} || true
+    tests:
+      nrqls:
+        # Checks the marker log actually arrived.
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%') AS markerCount FROM Log"
+          expected_results:
+            - key: "markerCount"
+              lowerBoundedValue: 1
+      # A failing script here fails the scenario (unlike `after:`, which is cleanup-only).
+      # We also check pod health, since logs can arrive fine even if the pod is crash-looping.
+      scripts:
+        - kubectl logs -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true --tail=200 || true  # for debugging, doesn't affect pass/fail
+        - kubectl get pods -n nr-${SCENARIO_TAG} -o wide  # for debugging, doesn't affect pass/fail
+        - kubectl wait --for=condition=Ready pod -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --timeout=60s  # fails if the pod never became healthy
+        - kubectl get pods -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging -o json | jq -e '[.items[].status.containerStatuses[].restartCount] | all(. == 0)' > /dev/null  # fails if the pod restarted
+
+  - description: lowDataMode strips extra metadata but keeps the fields the chart says it will
+    before:
+      - helm repo add newrelic https://helm-charts.newrelic.com
+      - helm dependency update ../
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} --set lowDataMode=true
+      - kubectl apply -f e2e-resources.yml
+    after:
+      - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
+      - kubectl get pods -A -o wide || true
+      - kubectl delete -f e2e-resources.yml || true
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} || true
+      - kubectl delete namespace nr-${SCENARIO_TAG} || true
+    tests:
+      nrqls:
+        # lowDataMode strips most metadata, but a few basic fields should still survive.
+        # This checks those fields didn't get dropped by mistake.
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND pod_name IS NOT NULL AND container_name IS NOT NULL AND namespace_name IS NOT NULL) AS retainedCount FROM Log"
+          expected_results:
+            - key: "retainedCount"
+              lowerBoundedValue: 1
+        # The test pod has a label, which normally shows up as `labels.app` on the log.
+        # lowDataMode should remove labels — this checks it actually did.
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND labels.app IS NOT NULL) AS labelLeakCount FROM Log"
+          expected_results:
+            - key: "labelLeakCount"
+              value: 0
+      scripts:
+        - kubectl logs -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true --tail=200 || true  # for debugging, doesn't affect pass/fail
+        - kubectl get pods -n nr-${SCENARIO_TAG} -o wide  # for debugging, doesn't affect pass/fail
+        - kubectl wait --for=condition=Ready pod -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --timeout=60s  # fails if the pod never became healthy
+        - kubectl get pods -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging -o json | jq -e '[.items[].status.containerStatuses[].restartCount] | all(. == 0)' > /dev/null  # fails if the pod restarted
