@@ -47,6 +47,32 @@ data:
           # Pod volume usage (canonical chart enables it) — feeds pod volume views.
           k8s.pod.volume.usage:
             enabled: true
+          # LDM trim (2026-07-22): disable kubeletstats raw absolutes. UI=0 in cloned repos
+          # (container/, kubernetes-cluster-explorer/, infra-summary/) AND not in canonical
+          # metrics-lowDataMode.md. The *_utilization metrics (enabled above) + the cAdvisor
+          # counters carry the same signal. Do NOT disable container.cpu.usage /
+          # container.memory.usage — they feed metricstransform/sum_container_metrics_per_node
+          # -> node.cpu.usage.percentage / node.memory.usage.percentage.
+          k8s.pod.cpu.usage: {enabled: false}
+          k8s.pod.cpu.time: {enabled: false}
+          k8s.pod.memory.usage: {enabled: false}
+          k8s.pod.memory.rss: {enabled: false}
+          k8s.pod.memory.available: {enabled: false}
+          k8s.pod.memory.page_faults: {enabled: false}
+          k8s.pod.memory.major_page_faults: {enabled: false}
+          k8s.pod.network.errors: {enabled: false}
+          k8s.node.memory.usage: {enabled: false}
+          k8s.node.memory.rss: {enabled: false}
+          k8s.node.memory.page_faults: {enabled: false}
+          k8s.node.memory.major_page_faults: {enabled: false}
+          k8s.node.filesystem.available: {enabled: false}
+          k8s.volume.inodes.free: {enabled: false}
+          container.cpu.time: {enabled: false}
+          container.memory.rss: {enabled: false}
+          container.memory.available: {enabled: false}
+          container.memory.working_set: {enabled: false}
+          container.memory.page_faults: {enabled: false}
+          container.memory.major_page_faults: {enabled: false}
       prometheus/cadvisor:
         config:
           scrape_configs:
@@ -214,6 +240,17 @@ data:
       {{- end }}
       groupbyattrs:
         keys: [pod, namespace, container, node, image]
+      # LDM trim (2026-07-22): drop Prometheus synthetic scrape-health metrics
+      # (up, scrape_*) from the prometheus/cadvisor receiver. Like the cluster-side
+      # ksm/controlplane scrapers, these are injected AFTER metric_relabel_configs, so
+      # the cadvisor keep-list cannot filter them — only this pipeline filter can.
+      # datapoint context (metric.name) — matches the shipped filter/* processors.
+      filter/drop_scrape_meta_metrics:
+        error_mode: ignore
+        metrics:
+          datapoint:
+            - metric.name == "up"
+            - IsMatch(metric.name, "^scrape_.*")
       transform/cadvisor_attrs:
         metric_statements:
           - delete_key(resource.attributes, "k8s.pod.name")
@@ -364,7 +401,7 @@ data:
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         # Kubelet /metrics (node-scoped: no pod/namespace label, so no cadvisor-style attr
         # remap). resource/node_identity stamps k8s.node.name from $K8S_NODE_NAME (this
@@ -407,7 +444,7 @@ data:
           exporters: [otlp/agent]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         # Kubelet /metrics — commented out with the prometheus/kubelet receiver above
         # (canonical-only, high-volume). See the direct-mode block for rationale.
