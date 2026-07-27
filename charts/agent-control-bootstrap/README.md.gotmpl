@@ -45,34 +45,6 @@ To use an existing Flux setup, disable the default installation by setting `flux
   - `helm.toolkit.fluxcd.io/v2` for HelmRelease
 - **Namespace Access**: Must be configured to watch resources in the `newrelic` namespace, or the namespace where Agent Control is deployed.
 
-## Test custom agentTypes
-
-In order to test custom agentTypes is possible to leverage `extraVolumeMounts` and `extraVolumes` once you have created the configMap in the namespace.
-
-You can run the following commands to create in the newrelic namespace a configMap containing a dynamic agentType:
-```bash
-$ kubectl create configmap dynamic-agent --from-file=dynamic-agent-type=./local/values-dynamic-agent-type.yaml -n default
-```
-
-Then you can mount such agentType leveraging extra volumes in the values.yaml
-```yaml
-agentControlDeployment:
-  chartValues:
-    # [...]
-    extraVolumeMounts:
-      - name: dynamic
-        mountPath: /etc/newrelic-agent-control/dynamic-agent-type.yaml
-        subPath: dynamic-agent-type.yaml
-        readOnly: true
-    extraVolumes:
-      - name: dynamic
-        configMap:
-          name: dynamic-agent
-          items:
-            - key: dynamic-agent-type
-              path: dynamic-agent-type.yaml
-```
-
 {{ template "chart.valuesSection" . }}
 
 {{ if .Maintainers }}
