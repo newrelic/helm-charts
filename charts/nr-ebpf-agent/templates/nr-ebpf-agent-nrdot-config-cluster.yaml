@@ -33,8 +33,13 @@ data:
                 # Verified against locally cloned repos: kubernetes-cluster-explorer/,
                 # container/. If other repos query additional kube_* names not in this
                 # list, either add them here or set lowDataMode=false.
+                #
+                # NOTE: kube_pod_status_ready_time / kube_pod_status_scheduled_time are
+                # kept in the regex below but are not queried by any cloned UI repo
+                # (verified 2026-07-23). Canonical drops them. Retained deliberately to
+                # compare pod-lifecycle timing against the nri-bundle infra agent.
                 - source_labels: [__name__]
-                  regex: 'kube_(cronjob_(created|spec_suspend|status_active|status_last_schedule_time)|daemonset_(created|status_(current_number_scheduled|desired_number_scheduled|number_available|number_misscheduled|number_ready|number_unavailable|updated_number_scheduled))|deployment_(annotations|created|labels|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas|replicas_available|replicas_ready|replicas_unavailable|replicas_updated))|horizontalpodautoscaler_(spec_(max_replicas|min_replicas)|status_(condition|current_replicas|desired_replicas))|job_(complete|created|failed|owner|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))|namespace_(annotations|created|labels|status_phase)|node_status_(allocatable|capacity|condition)|persistentvolume(claim)?_(access_mode|capacity_bytes|created|info|resource_requests_storage_bytes|status_phase)|pod_(annotations|container_(info|resource_(limits|requests)|status_(last_terminated_exitcode|last_terminated_reason|last_terminated_timestamp|phase|ready|restarts_total|waiting_reason))|created|deletion_timestamp|info|labels|owner|start_time|status_(phase|ready|ready_time|scheduled|scheduled_time))|replicaset_(created|owner)|resourcequota(_created)?|service_(created|info|spec_type|status_load_balancer_ingress)|statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas|replicas_available|replicas_current|replicas_ready|replicas_updated)))'
+                  regex: 'kube_(cronjob_(created|spec_suspend|status_active|status_last_schedule_time)|daemonset_(created|status_(current_number_scheduled|desired_number_scheduled|number_available|number_misscheduled|number_ready|number_unavailable|updated_number_scheduled))|deployment_(annotations|created|labels|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas|replicas_available|replicas_ready|replicas_unavailable|replicas_updated))|horizontalpodautoscaler_(spec_(max_replicas|min_replicas)|status_(condition|current_replicas|desired_replicas))|job_(complete|created|failed|owner|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))|namespace_(annotations|created|labels|status_phase)|node_status_(allocatable|capacity|condition)|persistentvolume(claim)?_(access_mode|capacity_bytes|created|info|resource_requests_storage_bytes|status_phase)|pod_(annotations|container_(info|resource_(limits|requests)|status_(last_terminated_exitcode|last_terminated_reason|last_terminated_timestamp|phase|ready|restarts_total|running|terminated|waiting|waiting_reason))|created|deletion_timestamp|info|labels|owner|start_time|status_(phase|ready|ready_time|scheduled|scheduled_time))|replicaset_(created|owner)|resourcequota(_created)?|service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)|statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas|replicas_available|replicas_current|replicas_ready|replicas_updated)))'
                   action: keep
               {{- end }}
       prometheus/controlplane:
@@ -61,20 +66,27 @@ data:
                     - __meta_kubernetes_endpoint_port_name
                   regex: default;kubernetes;https
               metric_relabel_configs:
-                # TRIMMED (2026-07-20): removed apiserver_storage_objects,
-                # apiserver_request_total, apiserver_current_inflight_requests.
-                # Verified: zero hits in kubernetes-cluster-explorer/ OTel templates
-                # and zero hits in container/ nerdlets. nri-bundle emits none of these.
-                # If a future repo/view queries apiserver_*, add them back here.
+                # TRIMMED (2026-07-20): removed apiserver_request_total,
+                # apiserver_current_inflight_requests (zero hits in cloned repos).
                 #
                 # KEPT: kubernetes_build_info (-> k8s.cluster.info, gates
                 # KUBERNETESCLUSTER entity). go_goroutines, go_threads,
                 # process_resident_memory_bytes, process_cpu_seconds_total are read by
                 # kubernetes-cluster-explorer/common/components/ControlPlaneDashboard/
                 # template-otel.json for the API server panels.
+                #
+                # RE-ADDED (2026-07-23) apiserver_storage_objects for parity: canonical
+                # nr-k8s-otel-collector keeps it in lowDataMode (metricstransform/apiserver
+                # flips it to survive the LDM drop). ~67 resource-type series; ~248 dp/min
+                # at 30s. No cloned-repo UI reads it, but we
+                # match canonical rather than diverge full.
+                # LDM keep-list — only when lowDataMode on. LDM-off = full apiserver scrape
+                # (parity with canonical, whose apiserver job has no metric_relabel keep-list).
+                {{- if include "nr-ebpf-agent.lowDataMode" . }}
                 - source_labels: [__name__]
-                  regex: 'kubernetes_build_info|go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
+                  regex: 'apiserver_storage_objects|kubernetes_build_info|go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
                   action: keep
+                {{- end }}
             # Controller-manager + scheduler: kept for Control Plane Dashboard
             # (template-otel.json query go_goroutines/
             # go_threads/process_resident_memory_bytes per job_label).
@@ -103,9 +115,13 @@ data:
                   source_labels: [__meta_kubernetes_pod_name, __address__]
                   regex: '.*controller-manager.*;.*:10257$'
               metric_relabel_configs:
+                # LDM keep-list — only when lowDataMode on. LDM-off = full scrape (parity
+                # with canonical, whose controlplane jobs have no metric_relabel keep-list).
+                {{- if include "nr-ebpf-agent.lowDataMode" . }}
                 - source_labels: [__name__]
                   regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
                   action: keep
+                {{- end }}
             - job_name: scheduler
               scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
               metrics_path: /metrics
@@ -124,9 +140,13 @@ data:
                   source_labels: [__meta_kubernetes_pod_name, __address__]
                   regex: '.*scheduler.*;.*:10259$'
               metric_relabel_configs:
+                # LDM keep-list — only when lowDataMode on. LDM-off = full scrape (parity
+                # with canonical, whose controlplane jobs have no metric_relabel keep-list).
+                {{- if include "nr-ebpf-agent.lowDataMode" . }}
                 - source_labels: [__name__]
                   regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
                   action: keep
+                {{- end }}
       k8s_events: {}
     processors:
       memory_limiter:
@@ -243,6 +263,9 @@ data:
               - delete_key(datapoint.attributes, "name")
               - delete_key(datapoint.attributes, "interface")
               - delete_key(datapoint.attributes, "cpu")
+              # Parity: canonical stamps low.data.mode=true on every metric via its
+              # metricstransform LDM flip; we set it here since our LDM is receiver-side.
+              - set(datapoint.attributes["low.data.mode"], "true")
       {{- end }}
       resource/newrelic:
         attributes:
@@ -252,6 +275,18 @@ data:
           - key: newrelic.entity.type
             value: "k8s"
             action: upsert
+          # Parity with canonical resource/newrelic — stamp chart version on every metric.
+          - key: newrelic.chart.version
+            value: {{ .Chart.Version | quote }}
+            action: upsert
+          # Parity with canonical: propagate global.customAttributes / customAttributes onto
+          # every metric.
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
       # K8s events typing (canonical nr-k8s-otel-collector parity). Without
       # newrelic.event.type=OtlpInfrastructureEvent, k8s_events land as generic
       # logs rather than registering as infrastructure events (nri-kube-events
@@ -414,7 +449,7 @@ data:
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         metrics/controlplane:
           receivers: [prometheus/controlplane]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, metricstransform/k8s_cluster_info, resource/newrelic, batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlphttp/acct-default]
         {{- if $nsKeys }}
         metrics/acct-default:
@@ -446,7 +481,7 @@ data:
           exporters: [otlp/agent]
         metrics/controlplane:
           receivers: [prometheus/controlplane]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, metricstransform/k8s_cluster_info, resource/newrelic, batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         logs:
           receivers: [k8s_events]

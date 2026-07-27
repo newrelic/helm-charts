@@ -21,21 +21,23 @@ data:
         # Pod/container CPU & memory utilization (vs requests/limits). Off by
         # default in the receiver; the K8s UI's pod/container utilization views
         # read these. kubeletstats computes them from kubelet usage + pod-spec
-        # requests/limits (no KSM, no metric generation).
+        # requests/limits.
         metrics:
+          # TODO: Container-level utilization: not queried by any cloned UI repo (container/,
+          # kubernetes-cluster-explorer/, infra-summary/, nr1-core/) — verified 2026-07-23;
+          # the UI uses the k8s.pod.* variants below. Canonical does not emit these.
+          # Kept enabled deliberately to compare against the nri-bundle infra agent
+          # (nri-kubernetes reports per-container utilization). Drop to tighten parity.
           k8s.container.cpu_limit_utilization:
             enabled: true
-          # TODO (test) : Container-level request/limit utilization. NOT enabled by the canonical
-          # nr-k8s-otel-collector chart (it relies on pod-level only), so the K8s
-          # Navigator's per-container "CPU/Mem Utilization (request)" tile had no
-          # native metric and rendered a wrong value. nri-kubernetes reports these
-          # per container; enabling them restores parity for all four container tiles.
           k8s.container.cpu_request_utilization:
             enabled: true
           k8s.container.memory_request_utilization:
             enabled: true
           k8s.container.memory_limit_utilization:
             enabled: true
+          # Pod-level utilization: queried by the K8s UI tiles (node-overview,
+          # cluster-explorer). Both eBPF and canonical emit these — keep.
           k8s.pod.cpu_limit_utilization:
             enabled: true
           k8s.pod.cpu_request_utilization:
@@ -47,12 +49,17 @@ data:
           # Pod volume usage (canonical chart enables it) — feeds pod volume views.
           k8s.pod.volume.usage:
             enabled: true
-          # LDM trim (2026-07-22): disable kubeletstats raw absolutes. UI=0 in cloned repos
-          # (container/, kubernetes-cluster-explorer/, infra-summary/) AND not in canonical
+          # LDM trim (2026-07-22; gated on lowDataMode 2026-07-23): disable kubeletstats raw
+          # absolutes only when lowDataMode is on. UI=0 in cloned repos (container/,
+          # kubernetes-cluster-explorer/, infra-summary/) AND not in canonical
           # metrics-lowDataMode.md. The *_utilization metrics (enabled above) + the cAdvisor
-          # counters carry the same signal. Do NOT disable container.cpu.usage /
+          # counters carry the same signal. Do not disable container.cpu.usage /
           # container.memory.usage — they feed metricstransform/sum_container_metrics_per_node
           # -> node.cpu.usage.percentage / node.memory.usage.percentage.
+          # Gated so lowDataMode=false restores full fidelity — parity with canonical, which
+          # drops these via its in-pipeline LDM filter (filter/exclude_metrics_low_data_mode),
+          # not at the receiver, so its lowDataMode=false path emits them.
+          {{- if include "nr-ebpf-agent.lowDataMode" . }}
           k8s.pod.cpu.usage: {enabled: false}
           k8s.pod.cpu.time: {enabled: false}
           k8s.pod.memory.usage: {enabled: false}
@@ -73,6 +80,7 @@ data:
           container.memory.working_set: {enabled: false}
           container.memory.page_faults: {enabled: false}
           container.memory.major_page_faults: {enabled: false}
+          {{- end }}
       prometheus/cadvisor:
         config:
           scrape_configs:
@@ -122,9 +130,14 @@ data:
                 #
                 # Only locally cloned repos checked. If other NR repos/views are cloned
                 # later, re-verify before trimming any metric from this list.
+                # LDM keep-list — only when lowDataMode on. LDM-off = full cAdvisor scrape
+                # (parity with canonical, whose cAdvisor job has no metric_relabel keep-list;
+                # its LDM drop is in-pipeline). The junk/POD/lo drop rules below always run.
+                {{- if include "nr-ebpf-agent.lowDataMode" . }}
                 - source_labels: [__name__]
                   regex: 'container_(cpu_usage_seconds_total|cpu_cfs_periods_total|cpu_cfs_throttled_periods_total|memory_working_set_bytes|memory_usage_bytes|memory_mapped_file|network_receive_bytes_total|network_transmit_bytes_total|network_receive_errors_total|network_transmit_errors_total|fs_usage_bytes|fs_capacity_bytes|spec_memory_limit_bytes)'
                   action: keep
+                {{- end }}
                 - source_labels: [__name__, container]
                   regex: 'container_(cpu|memory|fs|spec).*;$'
                   action: drop
@@ -214,6 +227,18 @@ data:
           - key: newrelic.entity.type
             value: "k8s"
             action: upsert
+          # Parity with canonical resource/newrelic — stamp chart version on every metric.
+          - key: newrelic.chart.version
+            value: {{ .Chart.Version | quote }}
+            action: upsert
+          # Parity with canonical: propagate global.customAttributes / customAttributes onto
+          # every metric.
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
       resource/drop_scrape_meta:
         attributes:
           - { key: service.name, action: delete }
@@ -237,6 +262,9 @@ data:
               - delete_key(datapoint.attributes, "name")
               - delete_key(datapoint.attributes, "interface")
               - delete_key(datapoint.attributes, "cpu")
+              # Parity: canonical stamps low.data.mode=true on every metric via its
+              # metricstransform LDM flip; we set it here since our LDM is receiver-side.
+              - set(datapoint.attributes["low.data.mode"], "true")
       {{- end }}
       groupbyattrs:
         keys: [pod, namespace, container, node, image]
@@ -251,6 +279,19 @@ data:
           datapoint:
             - metric.name == "up"
             - IsMatch(metric.name, "^scrape_.*")
+      # Parity with canonical nr-k8s-otel-collector (metrics/nr_prometheus_cadv_kubelet).
+      # Drop zero-valued container network counters before cumulativetodelta — cadvisor
+      # emits container_network_*_errors_total for every pod-series at a cumulative 0
+      # (verified: min=max=0), which canonical drops. Family is kept; only zero datapoints
+      # are removed (UI charts render via "(... or 0)"). Must run pre-cumulativetodelta so
+      # value_double is the raw cumulative (a 0 delta on a nonzero counter would over-drop).
+      filter/nr_exclude_container_zero_values:
+        metrics:
+          datapoint:
+            - metric.name == "container_network_receive_errors_total" and value_double < 0.5
+            - metric.name == "container_network_transmit_errors_total" and value_double < 0.5
+            - metric.name == "container_network_transmit_bytes_total" and value_double < 0.5
+            - metric.name == "container_network_receive_bytes_total" and value_double < 0.5
       transform/cadvisor_attrs:
         metric_statements:
           - delete_key(resource.attributes, "k8s.pod.name")
@@ -397,11 +438,11 @@ data:
         # except the two generated percentages, so nothing here is double-counted.
         metrics/aggregation:
           receivers: [kubeletstats]
-          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metricstransform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, batch]
+          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metricstransform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         # Kubelet /metrics (node-scoped: no pod/namespace label, so no cadvisor-style attr
         # remap). resource/node_identity stamps k8s.node.name from $K8S_NODE_NAME (this
@@ -440,11 +481,11 @@ data:
         # Per-node CPU/memory usage % (cluster gauge). See the direct-mode block.
         metrics/aggregation:
           receivers: [kubeletstats]
-          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metricstransform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, batch]
+          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metricstransform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         # Kubelet /metrics — commented out with the prometheus/kubelet receiver above
         # (canonical-only, high-volume). See the direct-mode block for rationale.
