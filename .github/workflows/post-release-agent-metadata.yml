@@ -84,12 +84,22 @@ jobs:
             ## cause we need the version  to setup requirements that the agent is supported by the agent-control
             VERSION=$(yq '.image.tag' charts/${{ matrix.chart }}/values.yaml | tr -d '"')
             echo "Extracted version from '.image.tag' in values.yaml: $VERSION"
+
+            ## Also capture the Helm chart versions of agent-control-deployment and its CD (Flux) counterpart
+            ## as free-form tags, so we have a record of which chart versions shipped with this agent_control release.
+            HELM_VERSION=$(yq '.version' charts/agent-control-deployment/Chart.yaml)
+            CD_HELM_VERSION=$(yq '.version' charts/agent-control-cd/Chart.yaml)
+            TAGS_JSON=$(jq -nc --arg hv "$HELM_VERSION" --arg cv "$CD_HELM_VERSION" \
+              '{"helm-version": $hv, "cd-helm-version": $cv}')
+            echo "Extracted helm-version=$HELM_VERSION, cd-helm-version=$CD_HELM_VERSION"
           else
             VERSION="${{ env.RELEASE_TAG }}"
             VERSION="${VERSION#${{ matrix.chart }}-}"
+            TAGS_JSON=""
             echo "Extracted version from tag: $VERSION"
           fi
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tags=$TAGS_JSON" >> $GITHUB_OUTPUT
           echo "Final version: $VERSION for chart ${{ matrix.chart }}"
 
       - name: Check .fleetControl directory
@@ -106,7 +116,7 @@ jobs:
 
       - name: Upload to Agent Metadata
         if: steps.should-run.outputs.match == 'true' && steps.check-config.outputs.exists == 'true'
-        uses: newrelic/agent-metadata-action@v1.2.0
+        uses: newrelic/agent-metadata-action@v1.3.0
         with:
           newrelic-client-id: ${{ secrets.NEWRELIC_CLIENT_ID }}
           newrelic-private-key: ${{ secrets.NEWRELIC_PRIVATE_KEY }}
@@ -116,4 +126,5 @@ jobs:
           config-directory: ${{ matrix.config-directory }}
           monitoring-type: ${{ matrix.monitoring-type }}
           display-name: ${{ matrix.display-name }}
+          tags: ${{ steps.version.outputs.tags }}
           apm-control-nr-license-key: ${{ secrets.APM_CONTROL_NR_LICENSE_KEY_STAGING }}
