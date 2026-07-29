@@ -35,8 +35,8 @@ spec:
             {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
             {{- include "synthetics-job-manager.customCertificatesVolume" . | nindent 12 }}
             {{- end }}
-            {{- if include "synthetics-job-manager.toMountClientCertificate" . }}
-            {{- include "synthetics-job-manager.clientCertificateVolume" . | nindent 12 }}
+            {{- if include "synthetics-job-manager.toMountClientCertificates" . }}
+            {{- include "synthetics-job-manager.clientCertificatesVolume" . | nindent 12 }}
             {{- end }}
           containers:
             - name: {{ .Chart.Name }}
@@ -46,8 +46,8 @@ spec:
                 {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
                 {{- include "synthetics-job-manager.customCertificatesMount" . | nindent 16 }}
                 {{- end }}
-                {{- if include "synthetics-job-manager.toMountClientCertificate" . }}
-                {{- include "synthetics-job-manager.clientCertificateMount" . | nindent 16 }}
+                {{- if include "synthetics-job-manager.toMountClientCertificates" . }}
+                {{- include "synthetics-job-manager.clientCertificatesMount" . | nindent 16 }}
                 {{- end }}
               securityContext:
                 {{- toYaml .Values.securityContext | nindent 16 }}
@@ -63,8 +63,8 @@ spec:
                 {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
                 {{- include "synthetics-job-manager.customCertificatesEnv" . | nindent 16 }}
                 {{- end }}
-                {{- if include "synthetics-job-manager.toMountClientCertificate" . }}
-                {{- include "synthetics-job-manager.clientCertificateEnv" . | nindent 16 }}
+                {{- if include "synthetics-job-manager.toMountClientCertificates" . }}
+                {{- include "synthetics-job-manager.clientCertificatesEnv" . | nindent 16 }}
                 {{- end }}
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
