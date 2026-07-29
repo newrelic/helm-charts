@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.19.0
-    helm.sh/chart: nr-k8s-otel-collector-0.13.0
+    helm.sh/chart: nr-k8s-otel-collector-0.14.0
 data:
   daemonset-config.yaml: |
     receivers:
@@ -694,6 +694,60 @@ data:
         override: false
         eks:
           node_from_env_var: KUBE_NODE_NAME
+          resource_attributes:
+            k8s.cluster.name:
+              enabled: true
+        aks:
+          resource_attributes:
+            k8s.cluster.name:
+              enabled: true
+
+      transform/create_cloud_cluster_id:
+        error_mode: ignore
+        metric_statements:
+          - context: resource
+            conditions:
+              - resource.attributes["k8s.cluster.name"] != nil
+            statements:
+              - set(resource.attributes["cloud.k8s.cluster.name"], resource.attributes["k8s.cluster.name"])
+              - delete_key(resource.attributes, "k8s.cluster.name")
+          # EKS
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "aws" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              # arn:aws:eks:{region}:{accountId}:cluster/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["arn:aws:eks:", resource.attributes["cloud.region"], ":", resource.attributes["cloud.account.id"], ":cluster/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+          # AKS + Parse cluster resource group from node resource group
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "azure" and resource.attributes["cloud.account.id"] != nil and resource.attributes["azure.resourcegroup.name"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              # Rename node resource group (from IMDS) for clarity
+              - set(resource.attributes["azure.node.resourcegroup.name"], resource.attributes["azure.resourcegroup.name"])
+              - delete_key(resource.attributes, "azure.resourcegroup.name")
+              # Parse cluster resource group from pattern: MC_{clusterResourceGroup}_{clusterName}_{region}
+              - set(resource.attributes["_parts"], Split(resource.attributes["azure.node.resourcegroup.name"], "_"))
+              # Only set cluster RG if pattern matches exactly (4 parts starting with MC)
+              - set(resource.attributes["azure.resourcegroup.name"], resource.attributes["_parts"][1]) where Len(resource.attributes["_parts"]) == 4 and resource.attributes["_parts"][0] == "MC"
+              # /subscriptions/{subscriptionId}/resourceGroups/{resourceGroup}/providers/Microsoft.ContainerService/managedClusters/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["/subscriptions/", resource.attributes["cloud.account.id"], "/resourceGroups/", resource.attributes["azure.resourcegroup.name"], "/providers/Microsoft.ContainerService/managedClusters/", resource.attributes["cloud.k8s.cluster.name"]], "")) where resource.attributes["azure.resourcegroup.name"] != nil
+              # Clean up temporary attributes
+              - delete_key(resource.attributes, "_parts")
+          # GKE Regional
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              # /projects/{projectId}/locations/{location}/clusters/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.region"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+          # GKE Zonal
+          - context: resource
+            conditions:
+              - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.availability_zone"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
+            statements:
+              # /projects/{projectId}/zones/{zone}/clusters/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/zones/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
 
       resource/newrelic:
         attributes:
@@ -703,7 +757,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.13.0
+            value: 0.14.0
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -901,6 +955,7 @@ data:
             - attributes/exclude_system_paging
             - resource_detection/env
             - resource_detection/cloudproviders
+            - transform/create_cloud_cluster_id
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator
@@ -923,6 +978,7 @@ data:
             - transform/truncate
             - resource_detection/env
             - resource_detection/cloudproviders
+            - transform/create_cloud_cluster_id
             - resource/newrelic
             - transform/low_data_mode_inator
             - resource/low_data_mode_inator

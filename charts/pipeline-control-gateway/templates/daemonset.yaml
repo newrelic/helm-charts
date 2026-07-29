@@ -48,10 +48,11 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/pipeline-control-gateway"]
           {{- if .Values.daemonset.customConfigMap }}
-          args: ["./pipeline-control-gateway", "--config", "/config/deployment-config.yaml"]
+          args: ["--config", "/config/deployment-config.yaml"]
           {{- else }}
-          args: ["./pipeline-control-gateway", "--config", "/config/daemonset-config.yaml"]
+          args: ["--config", "/config/daemonset-config.yaml"]
           {{- end }}
           resources:
             {{- toYaml .Values.daemonset.resources | nindent 12 }}

@@ -32,11 +32,17 @@ spec:
                 medium: Memory
                 sizeLimit: 2048Mi
               name: browser
+            {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
+            {{- include "synthetics-job-manager.customCertificatesVolume" . | nindent 12 }}
+            {{- end }}
           containers:
             - name: {{ .Chart.Name }}
               volumeMounts:
                 - mountPath: /dev/shm
                   name: browser
+                {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
+                {{- include "synthetics-job-manager.customCertificatesMount" . | nindent 16 }}
+                {{- end }}
               securityContext:
                 {{- toYaml .Values.securityContext | nindent 16 }}
               image: "{{ .Values.image.repository }}:{{ include "node-browser-runtime.appVersion" . }}"
@@ -48,6 +54,9 @@ spec:
                   value: "{{- printf "http://%s:8080/api/v1/submit/job" (include "synthetics-job-manager.hostname" .) }}"
                 - name: CHECK_TIMEOUT
                   value: {{ .Values.global.checkTimeout | quote }}
+                {{- if include "synthetics-job-manager.toMountCustomCertificates" . }}
+                {{- include "synthetics-job-manager.customCertificatesEnv" . | nindent 16 }}
+                {{- end }}
               resources:
                 {{- toYaml .Values.resources | nindent 16 }}
               {{ if include "synthetics-job-manager.toMountCustomNodeModules" . }}

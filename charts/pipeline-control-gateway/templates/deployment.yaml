@@ -44,7 +44,8 @@ spec:
           {{- end }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args: ["./pipeline-control-gateway", "--config", "/config/deployment-config.yaml"]
+          command: ["/pipeline-control-gateway"]
+          args: ["--config", "/config/deployment-config.yaml"]
           resources:
             {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- with .Values.deployment.envsFrom }}
