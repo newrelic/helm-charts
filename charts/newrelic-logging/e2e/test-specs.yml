@@ -7,11 +7,11 @@ custom_test_key: cluster_name
 scenarios:
   - description: Default install forwards container logs to New Relic
     before:
-      - helm repo add newrelic https://helm-charts.newrelic.com
       - helm dependency update ../
       - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG}
+      - kubectl rollout status daemonset/${SCENARIO_TAG}-newrelic-logging -n nr-${SCENARIO_TAG} --timeout=60s
       - kubectl apply -f e2e-resources.yml
-    after:
+    after: &cleanup
       - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
       - kubectl get pods -A -o wide || true
       - kubectl delete -f e2e-resources.yml || true
@@ -34,16 +34,11 @@ scenarios:
 
   - description: lowDataMode strips extra metadata but keeps the fields the chart says it will
     before:
-      - helm repo add newrelic https://helm-charts.newrelic.com
       - helm dependency update ../
       - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} --set lowDataMode=true
+      - kubectl rollout status daemonset/${SCENARIO_TAG}-newrelic-logging -n nr-${SCENARIO_TAG} --timeout=60s
       - kubectl apply -f e2e-resources.yml
-    after:
-      - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
-      - kubectl get pods -A -o wide || true
-      - kubectl delete -f e2e-resources.yml || true
-      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} || true
-      - kubectl delete namespace nr-${SCENARIO_TAG} || true
+    after: *cleanup
     tests:
       nrqls:
         # lowDataMode strips most metadata, but a few basic fields should still survive.
