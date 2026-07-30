@@ -265,6 +265,26 @@ data:
               # Parity: canonical stamps low.data.mode=true on every metric via its
               # metricstransform LDM flip; we set it here since our LDM is receiver-side.
               - set(datapoint.attributes["low.data.mode"], "true")
+      # LDM: collapse per-interface container_network_* into a single per-pod series.
+      # cAdvisor emits container_network_*_(bytes|errors)_total per network interface;
+      # a hostNetwork pod sees EVERY host veth (17+ on a busy node), so one pod can carry
+      # 15-20x the datapoints. No NR K8s UI facets by interface — the pod/workload overview
+      # dashboards query max()/FACET k8s.pod.name — and low_data_mode_inator only deletes the
+      # `interface` attr, which strips the label but does not merge the series. Summing the
+      # per-interface deltas here (runs after cumulativetodelta) yields the per-pod total.
+      # label_set names the pod-identity resource attrs so every leftover datapoint label
+      # (interface/id/name) collapses — same idiom as metricstransform/sum_container_metrics_per_node.
+      # LDM-gated so lowDataMode=false keeps full per-interface fidelity (parity with canonical,
+      # which also keeps per-interface).
+      metricstransform/aggregate_container_network_interfaces:
+        transforms:
+          - include: '^container_network_.*'
+            match_type: regexp
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [k8s.pod.name, k8s.namespace.name]
+                aggregation_type: sum
       {{- end }}
       groupbyattrs:
         keys: [pod, namespace, container, node, image]
@@ -442,7 +462,7 @@ data:
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} metricstransform/aggregate_container_network_interfaces, transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
         # Kubelet /metrics (node-scoped: no pod/namespace label, so no cadvisor-style attr
         # remap). resource/node_identity stamps k8s.node.name from $K8S_NODE_NAME (this
@@ -485,7 +505,7 @@ data:
           exporters: [otlp/agent]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resourcedetection/cloudproviders, resource/newrelic, k8sattributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} metricstransform/aggregate_container_network_interfaces, transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         # Kubelet /metrics — commented out with the prometheus/kubelet receiver above
         # (canonical-only, high-volume). See the direct-mode block for rationale.
