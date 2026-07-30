@@ -1,0 +1,51 @@
+suite: k8s.persistent attribute on volume metrics (parity with nri K8sVolumeSample.persistent)
+templates:
+  - templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: enables kubeletstats volume-type metadata + api config
+    set: &base
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "extra_metadata_labels: \\[container\\.id, k8s\\.volume\\.type\\]"
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "k8s_api_config:"
+
+  - it: defines the set_volume_persistent transform scoped to volume metrics
+    set:
+      <<: *base
+    asserts:
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "transform/set_volume_persistent:"
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: 'set\(attributes\["k8s.persistent"\], "true"\) where attributes\["k8s.volume.name"\] != nil and attributes\["k8s.volume.type"\] == "persistentVolumeClaim"'
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: 'set\(attributes\["k8s.persistent"\], "false"\) where attributes\["k8s.volume.name"\] != nil and attributes\["k8s.volume.type"\] != "persistentVolumeClaim"'
+
+  - it: wires the transform into the kubeletstats metrics/in pipeline after k8sattributes
+    set:
+      <<: *base
+    asserts:
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "k8sattributes, transform/set_volume_persistent, resourcedetection/cloudproviders"
+
+  - it: is parity-always (present even when lowDataMode is off)
+    set:
+      <<: *base
+      nrdotCollector:
+        lowDataMode: false
+    asserts:
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "transform/set_volume_persistent:"
