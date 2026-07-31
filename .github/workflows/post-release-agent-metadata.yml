@@ -24,22 +24,18 @@ jobs:
           - chart: nr-ebpf-agent
             agent-type: NReBPFAgent
             config-directory: charts/nr-ebpf-agent/.fleetControl
-            monitoring-type: INFRA
             display-name: "New Relic eBPF Agent"
           - chart: nri-bundle
             agent-type: NRInfra
             config-directory: charts/nri-bundle/.fleetControl
-            monitoring-type: INFRA
             display-name: "New Relic Infrastructure"
           - chart: nr-k8s-otel-collector
             agent-type: NRDOT
             config-directory: charts/nr-k8s-otel-collector/.fleetControl
-            monitoring-type: INFRA
             display-name: "New Relic OpenTelemetry Collector"
           - chart: newrelic-logging
             agent-type: FluentBit
             config-directory: charts/newrelic-logging/.fleetControl
-            monitoring-type: INFRA
             display-name: "Fluent Bit"
           - chart: pipeline-control-gateway
             agent-type: PipelineControlGateway
@@ -124,7 +120,7 @@ jobs:
           version: ${{ steps.version.outputs.version }}
           git-ref: ${{ env.RELEASE_TAG }}
           config-directory: ${{ matrix.config-directory }}
-          monitoring-type: ${{ matrix.monitoring-type }}
+          monitoring-type: INFRA
           display-name: ${{ matrix.display-name }}
           tags: ${{ steps.version.outputs.tags }}
           apm-control-nr-license-key: ${{ secrets.APM_CONTROL_NR_LICENSE_KEY_STAGING }}
