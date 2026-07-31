@@ -98,6 +98,26 @@ jobs:
           echo "tags=$TAGS_JSON" >> $GITHUB_OUTPUT
           echo "Final version: $VERSION for chart ${{ matrix.chart }}"
 
+      - name: Extract Agent Control protocol version
+        if: steps.should-run.outputs.match == 'true' && matrix.chart == 'agent-control-deployment'
+        id: protocol-version
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          AC_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          RAW_VERSION=$(gh api \
+            -H "Accept: application/vnd.github.raw" \
+            "repos/newrelic/newrelic-agent-control/contents/agent-control/Cargo.toml?ref=${AC_VERSION}" \
+            | awk -F'"' '/^agent_type_protocol_version/{print $2; exit}')
+          if [[ ! "$RAW_VERSION" =~ ^[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Could not extract a valid MAJOR.MINOR agent_type_protocol_version from newrelic/newrelic-agent-control@${AC_VERSION}:agent-control/Cargo.toml (got: '$RAW_VERSION')"
+            exit 1
+          fi
+          BINDINGS_JSON=$(jq -nc --arg v "$RAW_VERSION" \
+            '[{"type":"SUPPORTS","targetType":"SPECIFICATION","target":"protocol_version","versions":["<=" + $v]}]')
+          echo "protocol_version=$RAW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "bindings_override=$BINDINGS_JSON" >> "$GITHUB_OUTPUT"
+
       - name: Check .fleetControl directory
         if: steps.should-run.outputs.match == 'true'
         id: check-config
@@ -112,7 +132,7 @@ jobs:
 
       - name: Upload to Agent Metadata
         if: steps.should-run.outputs.match == 'true' && steps.check-config.outputs.exists == 'true'
-        uses: newrelic/agent-metadata-action@v1.3.0
+        uses: newrelic/agent-metadata-action@v1.4.0
         with:
           newrelic-client-id: ${{ secrets.NEWRELIC_CLIENT_ID }}
           newrelic-private-key: ${{ secrets.NEWRELIC_PRIVATE_KEY }}
@@ -123,4 +143,5 @@ jobs:
           monitoring-type: INFRA
           display-name: ${{ matrix.display-name }}
           tags: ${{ steps.version.outputs.tags }}
+          bindings-override: ${{ steps.protocol-version.outputs.bindings_override }}
           apm-control-nr-license-key: ${{ secrets.APM_CONTROL_NR_LICENSE_KEY_STAGING }}
