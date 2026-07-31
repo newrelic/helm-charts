@@ -245,6 +245,10 @@ spec:
             value: "{{ if hasKey .Values "reportAiMetrics" }}{{ .Values.reportAiMetrics }}{{ else }}false{{ end }}"
           - name: REPORT_INFRA
             value: "{{ if hasKey .Values "reportInfra" }}{{ .Values.reportInfra }}{{ else }}false{{ end }}"
+          - name: LOW_DATA_MODE
+            value: "{{ if include "nr-ebpf-agent.lowDataMode" . }}true{{ else }}false{{ end }}"
+          - name: HOST_STATS_LDM_INTERVAL_SECONDS
+            value: "{{ .Values.hostStats.lowDataModeIntervalSeconds | default 30 }}"
           - name: GENAI_CAPTURE_MESSAGE_CONTENT
             value: "{{ if hasKey .Values "genAICaptureMessageContent" }}{{ .Values.genAICaptureMessageContent }}{{ else }}false{{ end }}"
 

@@ -60,6 +60,15 @@ genAICaptureMessageContent: false
 
 reportInfra: "false"
 
+# -- Host metrics (host-stats) cadence tuning.
+hostStats:
+  # -- When low data mode is enabled, run the host-stats script every this many seconds instead
+  # of the default 15s, reducing host `system.*` ingest (30s ≈ halves it, 60s ≈ quarters it).
+  # Rounded down to a multiple of the 15s base scheduler interval; values <30 fall back to 15s.
+  # Ignored when low data mode is off — host-stats then always runs every 15s. Only host-stats
+  # is affected; all other eBPF scripts keep their normal cadence in both modes.
+  lowDataModeIntervalSeconds: 60
+
 # -- Custom labels to be added to all entities reported by the eBPF agent.
 # These labels are sent as the NEW_RELIC_LABELS environment variable in the format "key1:value1;key2:value2".
 # Example:

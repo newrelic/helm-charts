@@ -1,0 +1,70 @@
+suite: host-stats low-data-mode interval wiring
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: LDM on (default) sets LOW_DATA_MODE=true on the agent container
+    set: &base
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "true"
+
+  - it: LDM on (default) sets the host-stats interval to the 30s default
+    set:
+      <<: *base
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOST_STATS_LDM_INTERVAL_SECONDS
+            value: "30"
+
+  - it: a custom hostStats.lowDataModeIntervalSeconds is honored
+    set:
+      <<: *base
+      hostStats:
+        lowDataModeIntervalSeconds: 60
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: HOST_STATS_LDM_INTERVAL_SECONDS
+            value: "60"
+
+  - it: LDM off (nrdotCollector.lowDataMode=false) sets LOW_DATA_MODE=false
+    set:
+      <<: *base
+      nrdotCollector:
+        lowDataMode: false
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "false"
+
+  - it: global.lowDataMode=false also disables LDM
+    set:
+      <<: *base
+      global:
+        lowDataMode: false
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "false"
