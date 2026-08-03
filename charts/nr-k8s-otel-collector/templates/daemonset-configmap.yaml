@@ -11,7 +11,6 @@ data:
     {{- . | nindent 4 }}
     {{- else }}
     receivers:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       host_metrics:
         # TODO (chris): this is a linux specific configuration
         {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
@@ -219,11 +218,9 @@ data:
           - id: container-parser
             type: container
 
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
 
     processors:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
-
       groupbyattrs:
         keys:
           - pod
@@ -877,18 +874,19 @@ data:
         timeout: 30s
         send_batch_size : 800
 
-    exporters:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
 
+    exporters:
       otlp_http/newrelic:
         endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
-    connectors:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
+    connectors:
       routing/nr_logs_pipelines:
         default_pipelines: [logs/pipeline]
         table:
@@ -947,6 +945,8 @@ data:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
+
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
 
     {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.extensions" . }}
     extensions:
