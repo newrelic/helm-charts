@@ -116,6 +116,12 @@ jobs:
             --namespace cert-manager \
             --set crds.enabled=true
 
+      - name: Inject real license key for pipeline-control-gateway
+        env:
+          PCG_LICENSE_KEY: ${{ secrets.PCG_CI_LICENSE_KEY }}
+        run: |
+          sed -i "s/REPLACE_WITH_REAL_LICENSE_KEY/${PCG_LICENSE_KEY}/" charts/pipeline-control-gateway/ci/test-values.yaml
+
       - name: Test install charts
         run: ct install --config .github/ct-install.yaml
       - name: Test upgrade charts
