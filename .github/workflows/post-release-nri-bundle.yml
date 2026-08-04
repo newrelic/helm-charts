@@ -10,11 +10,17 @@ env:
   RELEASE_FILE: RELEASE.md
   SLACK_FILE: RELEASE.slack
 
+permissions:
+  contents: read
+
 jobs:
   release-notes:
     if: startsWith(github.event.release.tag_name, 'nri-bundle-')
     name: Publish release notes
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # needed to edit release notes
+      pull-requests: read
     outputs:
       announcement: ${{ steps.slack-announcement.outputs.announcement }}
     steps:
@@ -167,87 +173,6 @@ jobs:
               --title "feat: ${summary}" \
               --body "${summary}"
           fi
-
-  update-eks-sleek:
-    if: startsWith(github.event.release.tag_name, 'nri-bundle-')
-    name: Update EKS Sleek repo
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout `nri-bundle` chart
-        uses: actions/checkout@v4
-        with:
-          repository: 'newrelic/helm-charts'
-          sparse-checkout: |
-            charts/nri-bundle/Chart.yaml
-          sparse-checkout-cone-mode: false
-
-      - name: Resolve bundle version
-        run: |
-          version=$(cat charts/nri-bundle/Chart.yaml | yq '.version')
-          echo "version=${version}" >> "$GITHUB_ENV"
-
-      - name: Checkout eks-anywhere-addons
-        uses: actions/checkout@v4
-        with:
-          repository: 'aws-samples/eks-anywhere-addons'
-          # Token used to run authenticated git commands
-          token: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
-          sparse-checkout: |
-            eks-anywhere-baremetal/Addons/Partner/newrelic/newrelic.yaml
-            eks-anywhere-baremetal/Addons/Partner/newrelic/namespace.yaml
-            eks-anywhere-snow/Addons/Partner/newrelic/newrelic.yaml
-            eks-anywhere-snow/Addons/Partner/newrelic/namespace.yaml
-            eks-anywhere-vsphere/Addons/Partner/newrelic/newrelic.yaml
-            eks-anywhere-vsphere/Addons/Partner/newrelic/namespace.yaml
-            eks-hybrid-nodes/Addons/Partner/newrelic/newrelic.yaml
-            eks-hybrid-nodes/Addons/Partner/newrelic/namespace.yaml
-            eks-cloud/Addons/Partner/newrelic/newrelic.yaml
-            eks-cloud/Addons/Partner/newrelic/namespace.yaml
-          sparse-checkout-cone-mode: false
-
-      - name: Configure Git
-        run: |
-          git config user.name "NewRelic-K8s-Agents-Bot"
-          git config user.email "NewRelic-K8s-Agents-Bot@users.noreply.github.com"
-
-      - name: Create branch in forked repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
-        run: |
-          branchName=update-nri-bundle-$( date "+%Y-%m-%d_%H_%M" )
-          summary="Update nri-bundle to version ${version}"
-          echo "summary=${summary}" >> "$GITHUB_ENV"
-
-          git checkout -b ${branchName}
-          folders=(
-            'eks-anywhere-baremetal/Addons/Partner/newrelic'
-            'eks-anywhere-snow/Addons/Partner/newrelic'
-            'eks-anywhere-vsphere/Addons/Partner/newrelic'
-            'eks-hybrid-nodes/Addons/Partner/newrelic'
-            'eks-cloud/Addons/Partner/newrelic'
-          )
-          for directory in "${folders[@]}"; do
-            file_name="${directory}/newrelic.yaml"
-            yq eval --inplace ".spec.chart.spec.version=\"${version}\"" "${file_name}"
-            git add ${file_name}
-
-            file_name="${directory}/namespace.yaml"
-            yq eval --inplace '.metadata.labels."aws.conformance.vendor-solution-version"=env(version)' "${file_name}"
-            git add ${file_name}
-          done
-
-          git commit --message="feat: ${summary}"
-          git remote add upstream https://github.com/NewRelic-K8s-Agents-Bot/eks-anywhere-addons.git
-          git push --set-upstream upstream ${branchName}
-
-      - name: Create PR in original repo
-        env:
-          GITHUB_TOKEN: ${{ secrets.K8S_AGENTS_BOT_TOKEN_AWS_EKS }}
-        run: |
-          gh pr create \
-            --repo aws-samples/eks-anywhere-addons \
-            --title "feat: ${summary}" \
-            --body "${summary}"
 
   notify-failure:
     if: ${{ always() && failure() }}
