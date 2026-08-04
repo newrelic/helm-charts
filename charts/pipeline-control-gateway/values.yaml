@@ -72,6 +72,7 @@ autoscaling:
 
 ports:
   nrHttp: 80
+  nrHttpTarget: 8080
   otlpHttp: 4318
   otlpGrpc: 4317
   healthHttp: 13133
@@ -84,7 +85,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "2.2.0"
+  tag: "2.5.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -210,7 +211,7 @@ generated:
       proxy: false
       enable_runtime_metrics: true
       server:
-        endpoint: "0.0.0.0:80"
+        endpoint: "0.0.0.0:8080"
       nr_host: "staging-collector.newrelic.com"
       endpoints:
         infra_event_api_endpoint: "https://staging-infra-api.newrelic.com"
