@@ -7,7 +7,7 @@ metadata:
   labels:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ .Values.autoscaling.minReplicas | default 1 }}
   minReadySeconds: 5
   selector:
     matchLabels:
@@ -99,7 +99,7 @@ spec:
               containerPort: {{ .Values.ports.otlpGrpc }}
               protocol: TCP
             - name: nr-http
-              containerPort: {{ .Values.ports.nrHttp }}
+              containerPort: {{ .Values.ports.nrHttpTarget }}
               protocol: TCP
             - name: health-http
               containerPort: {{ .Values.ports.healthHttp }}
