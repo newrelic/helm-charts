@@ -42,6 +42,7 @@ data:
                   regex: 'kube_(cronjob_(created|spec_suspend|status_active|status_last_schedule_time)|daemonset_(created|status_(current_number_scheduled|desired_number_scheduled|number_available|number_misscheduled|number_ready|number_unavailable|updated_number_scheduled))|deployment_(annotations|created|labels|metadata_generation|spec_(replicas|strategy_rollingupdate_max_surge)|status_(condition|observed_generation|replicas|replicas_available|replicas_ready|replicas_unavailable|replicas_updated))|horizontalpodautoscaler_(spec_(max_replicas|min_replicas)|status_(condition|current_replicas|desired_replicas))|job_(complete|created|failed|owner|spec_(active_deadline_seconds|completions|parallelism)|status_(active|completion_time|failed|start_time|succeeded))|namespace_(annotations|created|labels|status_phase)|node_status_(allocatable|capacity|condition)|persistentvolume(claim)?_(access_mode|capacity_bytes|created|info|resource_requests_storage_bytes|status_phase)|pod_(annotations|container_(info|resource_(limits|requests)|status_(last_terminated_exitcode|last_terminated_reason|last_terminated_timestamp|phase|ready|restarts_total|running|terminated|waiting|waiting_reason))|created|deletion_timestamp|info|labels|owner|start_time|status_(phase|ready|ready_time|scheduled|scheduled_time))|replicaset_(created|owner)|resourcequota(_created)?|service_(annotations|created|info|labels|spec_type|status_load_balancer_ingress)|statefulset_(created|persistentvolumeclaim_retention_policy|replicas|status_(current_revision|replicas|replicas_available|replicas_current|replicas_ready|replicas_updated)))'
                   action: keep
               {{- end }}
+      {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
       prometheus/controlplane:
         config:
           scrape_configs:
@@ -147,6 +148,7 @@ data:
                   regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
                   action: keep
                 {{- end }}
+      {{- end }}
       k8s_events: {}
     processors:
       memory_limiter:
@@ -447,10 +449,12 @@ data:
           receivers: [prometheus/ksm]
           processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/kube_pod_container_status_phase, metricstransform/k8s_cluster_info, filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8sattributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
+        {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
         metrics/controlplane:
           receivers: [prometheus/controlplane]
           processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlphttp/acct-default]
+        {{- end }}
         {{- if $nsKeys }}
         metrics/acct-default:
           receivers: [routing]
@@ -479,10 +483,12 @@ data:
           receivers: [prometheus/ksm]
           processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/kube_pod_container_status_phase, metricstransform/k8s_cluster_info, filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8sattributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
+        {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
         metrics/controlplane:
           receivers: [prometheus/controlplane]
           processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
+        {{- end }}
         logs:
           receivers: [k8s_events]
           processors: [memory_limiter, k8sattributes, transform/events, resource/events, resource/newrelic, batch]

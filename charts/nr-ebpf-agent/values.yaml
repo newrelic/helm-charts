@@ -383,6 +383,16 @@ nrdotCollector:
   lowDataMode: true
   # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape.
   ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
+  # -- Control-plane scraping (kube-apiserver/controller-manager/scheduler) by the
+  # cluster collector. Scraping kube-apiserver /metrics is expensive (~22 MB heap:
+  # the endpoint returns ~26k series with no server-side filter, the collector keeps
+  # ~6, buffering the whole body + caching the dropped series). "auto" scrapes only
+  # when the cluster has control-plane nodes (node-role.kubernetes.io/control-plane|
+  # controlplane|master|etcd) — managed control planes (EKS/GKE/AKS) have none, so
+  # control plane is not scraped, matching nri-bundle's behaviour. "always"/"never"
+  # force it on/off.
+  controlPlane:
+    mode: auto
   # -- Bundled kube-state-metrics instance.
   kubeStateMetrics:
     # -- "auto" = deploy KSM only if no existing KSM Deployment is found cluster-wide
