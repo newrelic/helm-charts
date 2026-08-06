@@ -373,9 +373,14 @@ nrdotCollector:
   # -- Metric collection / scrape interval.
   collectionInterval: 30s
   # -- Go garbage-collection target percentage for both nrdot collectors. Lower
-  # values trade CPU for reduced memory (GC runs more often). 50 is proven to cut
-  # memory. Set to "" to use the Go default (100).
-  goGC: 50
+  # values trade CPU for reduced memory (GC runs more often). Profiled A/B): 
+  # 50 -> 30 cut the per-node sidecar
+  # working set ~19% (~41 -> ~33 MiB — more churn from cadvisor/kubeletstats means
+  # more for GC to reclaim) and the cluster collector ~10% (~31 -> ~28 MiB — already
+  # lean after the control-plane drop), at negligible CPU on low-churn nodes. Below 30
+  # hits the live-set floor (no further memory gain, only added GC frequency). Set to
+  # "" to use the Go default (100).
+  goGC: 30
   # -- Send only the metrics required for the NR Kubernetes UI. When true
   # (default), KSM scrape is filtered to the ~79 UI-relevant kube_* names and
   # noisy datapoint attributes (id, name, interface, cpu) are dropped. Set false
