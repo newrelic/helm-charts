@@ -126,7 +126,7 @@ spec:
               fieldRef:
                 fieldPath: status.hostIP
           - name: OTLP_ENDPOINT
-            value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
+            value: {{ if .Values.customOtlpEndpoint }}{{ .Values.customOtlpEndpoint }}{{ else }}{{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443{{ end }}
           - name: TLS_ENABLED
             value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
