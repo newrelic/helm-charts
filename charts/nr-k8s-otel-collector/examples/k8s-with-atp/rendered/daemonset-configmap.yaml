@@ -10,11 +10,10 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.19.0
-    helm.sh/chart: nr-k8s-otel-collector-0.14.0
+    helm.sh/chart: nr-k8s-otel-collector-0.14.1
 data:
   daemonset-config.yaml: |
     receivers:
-      
       host_metrics:
         # TODO (chris): this is a linux specific configuration
         root_path: /hostfs
@@ -197,12 +196,9 @@ data:
         operators:
           - id: container-parser
             type: container
-
+      
 
     processors:
-      
-      
-
       groupbyattrs:
         keys:
           - pod
@@ -757,7 +753,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.14.0
+            value: 0.14.1
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -826,19 +822,18 @@ data:
         send_batch_max_size: 1000
         timeout: 30s
         send_batch_size : 800
+      
+      
 
     exporters:
-      
-      
-
       otlp_http/newrelic:
         endpoint: https://otlp.nr-data.net
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-
-    connectors:
+      
       
 
+    connectors:
       routing/nr_logs_pipelines:
         default_pipelines: [logs/pipeline]
         table:
@@ -897,6 +892,7 @@ data:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
+      
 
     service:
       telemetry:
