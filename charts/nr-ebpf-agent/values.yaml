@@ -386,7 +386,13 @@ nrdotCollector:
   # noisy datapoint attributes (id, name, interface, cpu) are dropped. Set false
   # for full-fidelity KSM + cadvisor ingest (higher volume).
   lowDataMode: true
-  # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape.
+  # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape,
+  # as comma-separated `label=value` pairs. Only used when relying on an EXTERNAL KSM
+  # (kubeStateMetrics.mode results in no bundled KSM); when this chart deploys its own
+  # KSM the scrape is auto-pinned to that instance. If the cluster has MULTIPLE KSM
+  # instances, tighten this to a single one (e.g.
+  # "app.kubernetes.io/instance=newrelic-bundle") — otherwise every matching KSM is
+  # scraped and each cluster-wide kube_* series is ingested once per KSM (duplicate).
   ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
   # -- Control-plane scraping (kube-apiserver/controller-manager/scheduler) by the
   # cluster collector. Scraping kube-apiserver /metrics is expensive (~22 MB heap:
@@ -400,10 +406,18 @@ nrdotCollector:
     mode: auto
   # -- Bundled kube-state-metrics instance.
   kubeStateMetrics:
-    # -- "auto" = deploy KSM only if no existing KSM Deployment is found cluster-wide
-    # (via lookup). "always" = always deploy. "never" = never
-    # deploy (rely on an external KSM matched by ksmSelector).
-    mode: auto
+    # -- "always" (default) = always deploy our own KSM and pin the cluster
+    # collector's scrape to it (app.kubernetes.io/instance=<release>). This is the
+    # zero-config, robust default: it guarantees exactly one KSM scrape target even
+    # when other KSM instances exist on the cluster (e.g. nri-bundle's during a
+    # migration, or another collector's) — otherwise each KSM exposes identical
+    # cluster-wide series and every kube_* metric is ingested once per KSM. Mirrors
+    # nri-bundle, which also ships its own KSM by default.
+    # "auto" = deploy only if no existing KSM Deployment is found cluster-wide (via
+    # lookup) — reuses an external KSM to save ~16Mi, but if MULTIPLE external KSMs
+    # exist you must set `ksmSelector` to one instance to avoid double-scraping.
+    # "never" = never deploy; rely on an external KSM matched by `ksmSelector`.
+    mode: always
     image:
       repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
       tag: "v2.13.0"

@@ -18,9 +18,7 @@ data:
               scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
               kubernetes_sd_configs: [{role: pod}]
               relabel_configs:
-                - source_labels: [__meta_kubernetes_pod_label_app_kubernetes_io_name]
-                  regex: kube-state-metrics
-                  action: keep
+                {{- include "nr-ebpf-agent.ksm.relabelKeep" . | trim | nindent 16 }}
               {{- if include "nr-ebpf-agent.lowDataMode" . }}
               metric_relabel_configs:
                 # LDM KSM keep-list: 88 kube_* metrics sourced from canonical

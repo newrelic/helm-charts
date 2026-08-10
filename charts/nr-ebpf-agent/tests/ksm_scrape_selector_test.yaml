@@ -1,0 +1,70 @@
+suite: KSM scrape target selection (avoid double-scraping multiple KSMs)
+templates:
+  - templates/nr-ebpf-agent-nrdot-config-cluster.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: default (no mode set) deploys own KSM and pins the scrape to this chart's instance
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_instance\\]\\s*\\n\\s*regex: \"my-release\""
+
+  - it: bundled KSM (mode=always) pins the scrape to this chart's own instance
+    set: &base
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        kubeStateMetrics:
+          mode: always
+    asserts:
+      # keeps the name label...
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_name\\]\\s*\\n\\s*regex: kube-state-metrics"
+      # ...AND pins to the release instance so a foreign KSM is never scraped
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_instance\\]\\s*\\n\\s*regex: \"my-release\""
+
+  - it: external KSM (mode=never) derives the keep rule from ksmSelector
+    set:
+      <<: *base
+      nrdotCollector:
+        enabled: true
+        kubeStateMetrics:
+          mode: never
+        ksmSelector: "app.kubernetes.io/instance=newrelic-bundle"
+    asserts:
+      # ksmSelector is now functional: label name is sanitized to prometheus meta form
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_instance\\]\\s*\\n\\s*regex: \"newrelic-bundle\""
+      # external mode must NOT auto-pin to this chart's release
+      - notMatchRegex:
+          path: data["cluster.yaml"]
+          pattern: "regex: \"my-release\""
+
+  - it: external KSM with multi-pair ksmSelector emits a keep rule per pair
+    set:
+      <<: *base
+      nrdotCollector:
+        enabled: true
+        kubeStateMetrics:
+          mode: never
+        ksmSelector: "app.kubernetes.io/name=kube-state-metrics,app.kubernetes.io/instance=newrelic-bundle"
+    asserts:
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_name\\]\\s*\\n\\s*regex: \"kube-state-metrics\""
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "__meta_kubernetes_pod_label_app_kubernetes_io_instance\\]\\s*\\n\\s*regex: \"newrelic-bundle\""
