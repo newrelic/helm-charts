@@ -94,3 +94,183 @@ tests:
       - equal:
           path: spec.template.spec.imagePullSecrets[1].name
           value: regsecret
+
+  # ---------------------------------------------------------------------------
+  # LICENSE_KEY env — verify secret name and key value, not just structure
+  # ---------------------------------------------------------------------------
+  - it: LICENSE_KEY env references the correct secret name and key
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-release-newrelic-logging-config
+                key: license
+
+  - it: LICENSE_KEY env uses customSecretName and customSecretLicenseKey when set
+    templates:
+      - templates/daemonset.yaml
+    set:
+      customSecretName: my-custom-secret
+      customSecretLicenseKey: my-custom-key
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: my-custom-secret
+                key: my-custom-key
+
+  # ---------------------------------------------------------------------------
+  # Main image pullPolicy
+  # Precedence: chart-specific value > global.images.pullPolicy > default (IfNotPresent)
+  # ---------------------------------------------------------------------------
+  - it: Main image pullPolicy defaults to IfNotPresent when nothing set
+    templates:
+      - templates/daemonset.yaml
+    set: &main_pullpolicy_base
+      licenseKey: nr_license_key
+      image:
+        pullPolicy: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: IfNotPresent
+
+  - it: Main image pullPolicy uses global when no chart-specific value
+    templates:
+      - templates/daemonset.yaml
+    set:
+      <<: *main_pullpolicy_base
+      global:
+        images:
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Always
+
+  - it: Main image chart-specific pullPolicy overrides global
+    templates:
+      - templates/daemonset.yaml
+    set:
+      <<: *main_pullpolicy_base
+      image:
+        pullPolicy: Never
+      global:
+        images:
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].imagePullPolicy
+          value: Never
+
+  # ---------------------------------------------------------------------------
+  # Persistence init container — image and pullPolicy
+  # Precedence: chart-specific value > global.images.* > default
+  # ---------------------------------------------------------------------------
+  - it: Init container uses default busybox image when no global registry set
+    templates:
+      - templates/daemonset.yaml
+    set: &pvc_base
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: busybox:1.36
+
+  - it: Init container uses global registry when set and repository is default
+    templates:
+      - templates/daemonset.yaml
+    set:
+      <<: *pvc_base
+      global:
+        images:
+          registry: my-registry.com
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: my-registry.com/busybox:1.36
+
+  - it: Init container chart-specific repository overrides global registry
+    templates:
+      - templates/daemonset.yaml
+    set:
+      <<: *pvc_base
+      global:
+        images:
+          registry: my-registry.com
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+        persistenceInitContainerImage:
+          repository: my-mirror.com/busybox
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].image
+          pattern: "^my-mirror.com/busybox:"
+
+  - it: Init container pullPolicy defaults to IfNotPresent when nothing set
+    templates:
+      - templates/daemonset.yaml
+    set: &init_pullpolicy_base
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+        persistenceInitContainerImage:
+          pullPolicy: ""
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: IfNotPresent
+
+  - it: Init container pullPolicy uses global when no chart-specific value
+    templates:
+      - templates/daemonset.yaml
+    set:
+      <<: *init_pullpolicy_base
+      global:
+        images:
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Always
+
+  - it: Init container chart-specific pullPolicy overrides global
+    templates:
+      - templates/daemonset.yaml
+    set:
+      <<: *init_pullpolicy_base
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: sample-rwx
+        persistenceInitContainerImage:
+          pullPolicy: Never
+      global:
+        images:
+          pullPolicy: Always
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].imagePullPolicy
+          value: Never
