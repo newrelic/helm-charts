@@ -178,6 +178,8 @@ spec:
           {{- else }}
             value: "false"
           {{- end }}
+          - name: ENABLE_AGENT_METADATA_REPORTING
+            value: "{{ if hasKey .Values "agentMetadataReporting" }}{{ .Values.agentMetadataReporting }}{{ else }}true{{ end }}"
           - name: AI_MONITORING_ENABLED
             value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.enabled | default false }}{{ else }}false{{ end }}"
           - name: AI_MONITORING_SAMPLING_LATENCY
