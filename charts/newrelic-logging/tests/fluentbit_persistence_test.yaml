@@ -315,3 +315,14 @@ tests:
           value: property
         documentIndex: 1
         template: templates/persistentvolume.yaml
+  - it: fluentBit set to an empty object should not crash and use defaults
+    set:
+      licenseKey: nr_license_key
+      fluentBit: {}
+    asserts:
+      - isKind:
+          of: DaemonSet
+        template: templates/daemonset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/persistentvolume.yaml

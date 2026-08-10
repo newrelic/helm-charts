@@ -86,7 +86,7 @@ spec:
               {{- else }}
               value: "docker,cri"
               {{- end }}
-            {{- if or (not $.Values.fluentBit.persistence) (eq $.Values.fluentBit.persistence.mode "hostPath") }}
+            {{- if or (not $.Values.fluentBit.persistence) (eq (include "newrelic.fluentBit.persistence.mode" $) "hostPath") }}
             - name: FB_DB
               value: {{ $.Values.fluentBit.windowsDb | quote }}
             {{- else }}
@@ -142,14 +142,14 @@ spec:
               name: fluent-bit-config
             - mountPath: C:\var\log
               name: logs
-              {{- if and ($.Values.fluentBit.persistence) (ne $.Values.fluentBit.persistence.mode "hostPath") }}
+              {{- if ne (include "newrelic.fluentBit.persistence.mode" $) "hostPath" }}
               readOnly: true
               {{- end }}
               # We need to also mount this because the logs in C:\var\logs are actually symlinks to C:\ProgramData.
               # So, in order to be able to read these logs, the reading process needs to also have access to C:\ProgramData.
             - mountPath: C:\ProgramData
               name: progdata
-              {{- if and ($.Values.fluentBit.persistence) (ne $.Values.fluentBit.persistence.mode "hostPath") }}
+              {{- if ne (include "newrelic.fluentBit.persistence.mode" $) "hostPath" }}
               readOnly: true
               {{- end }}
           {{- if $.Values.resources }}

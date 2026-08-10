@@ -1,0 +1,54 @@
+suite: test Fargate provider configurations
+templates:
+  - templates/daemonset.yaml
+  - templates/configmap.yaml
+  - templates/persistentvolume.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: adds node affinity to exclude fargate nodes
+    set:
+      licenseKey: nr_license_key
+      provider: FARGATE
+    asserts:
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: eks.amazonaws.com/compute-type
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].operator
+          value: NotIn
+        template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].values[0]
+          value: fargate
+        template: templates/daemonset.yaml
+
+  - it: does not alter linuxMountPath or persistence mode
+    set:
+      licenseKey: nr_license_key
+      provider: FARGATE
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: logs
+            mountPath: /var
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: logs
+            hostPath:
+              path: /var
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: FB_DB
+            value: /var/log/flb_kube.db
+        template: templates/daemonset.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/persistentvolume.yaml
