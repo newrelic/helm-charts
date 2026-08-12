@@ -85,16 +85,12 @@ data:
       kubelet_stats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
         metric_groups: [node, pod, container, volume]
-        # GKE Autopilot disables the read-only kubelet port (:10255); the authenticated
-        # port (:10250) is reachable on every provider, so use it unconditionally.
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
         metrics:
           {{- if include "newrelic.common.gkeAutopilot" . }}
-          # These *_utilization metrics require the kubelet /pods endpoint (nodes/proxy),
-          # which GKE Autopilot blocks. Leaving them enabled makes the receiver call /pods,
-          # get a 403, and crash-loop — dropping ALL kubelet metrics. Disable on Autopilot.
+          # Disabled on GKE-Autopilot: /pods (nodes/proxy) is blocked there, crash-looping the receiver.
           k8s.container.cpu_limit_utilization:
             enabled: false
           k8s.pod.cpu_limit_utilization:
@@ -130,8 +126,7 @@ data:
                 - role: node
               relabel_configs:
                 {{- if include "newrelic.common.gkeAutopilot" . }}
-                # GKE Autopilot blocks the API-server nodes/proxy path; scrape the kubelet's
-                # cadvisor endpoint directly on the authenticated port (authorizes via nodes/metrics).
+                # nodes/proxy is blocked on GKE-Autopilot; direct-dial the kubelet cadvisor endpoint (authorizes via nodes/metrics).
                 - replacement: ${KUBE_NODE_NAME}:10250
                   target_label: __address__
                 - replacement: /metrics/cadvisor
@@ -180,7 +175,6 @@ data:
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
                 {{- if include "newrelic.common.gkeAutopilot" . }}
-                # Direct kubelet cert won't match server_name "kubernetes"; skip verification.
                 insecure_skip_verify: true
                 {{- else }}
                 insecure_skip_verify: false
@@ -193,8 +187,6 @@ data:
                 - role: node
               relabel_configs:
                 {{- if include "newrelic.common.gkeAutopilot" . }}
-                # GKE Autopilot blocks the API-server nodes/proxy path; scrape the kubelet
-                # /metrics endpoint directly on the authenticated port (authorizes via nodes/metrics).
                 - replacement: ${KUBE_NODE_NAME}:10250
                   target_label: __address__
                 - replacement: /metrics
