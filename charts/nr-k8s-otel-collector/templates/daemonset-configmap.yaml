@@ -85,15 +85,27 @@ data:
       kubelet_stats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
         metric_groups: [node, pod, container, volume]
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        # GKE Autopilot disables the read-only kubelet port (:10255); the authenticated
+        # port (:10250) is reachable on every provider, so use it unconditionally.
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
-        {{- else }}
-        endpoint: "${KUBE_NODE_NAME}:10255"
-        auth_type: "none"
-        {{- end }}
         metrics:
+          {{- if include "newrelic.common.gkeAutopilot" . }}
+          # These *_utilization metrics require the kubelet /pods endpoint (nodes/proxy),
+          # which GKE Autopilot blocks. Leaving them enabled makes the receiver call /pods,
+          # get a 403, and crash-loop — dropping ALL kubelet metrics. Disable on Autopilot.
+          k8s.container.cpu_limit_utilization:
+            enabled: false
+          k8s.pod.cpu_limit_utilization:
+            enabled: false
+          k8s.pod.cpu_request_utilization:
+            enabled: false
+          k8s.pod.memory_limit_utilization:
+            enabled: false
+          k8s.pod.memory_request_utilization:
+            enabled: false
+          {{- else }}
           k8s.container.cpu_limit_utilization:
             enabled: true
           k8s.pod.cpu_limit_utilization:
@@ -104,6 +116,7 @@ data:
             enabled: true
           k8s.pod.memory_request_utilization:
             enabled: true
+          {{- end }}
           k8s.pod.volume.usage:
             enabled: true
 
@@ -116,6 +129,14 @@ data:
               kubernetes_sd_configs:
                 - role: node
               relabel_configs:
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                # GKE Autopilot blocks the API-server nodes/proxy path; scrape the kubelet's
+                # cadvisor endpoint directly on the authenticated port (authorizes via nodes/metrics).
+                - replacement: ${KUBE_NODE_NAME}:10250
+                  target_label: __address__
+                - replacement: /metrics/cadvisor
+                  target_label: __metrics_path__
+                {{- else }}
                 - replacement: kubernetes.default.svc.cluster.local:443
                   target_label: __address__
                 - regex: (.+)
@@ -123,6 +144,7 @@ data:
                   source_labels:
                     - __meta_kubernetes_node_name
                   target_label: __metrics_path__
+                {{- end }}
                 - action: replace
                   target_label: job_label
                   replacement: cadvisor
@@ -157,14 +179,27 @@ data:
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                # Direct kubelet cert won't match server_name "kubernetes"; skip verification.
+                insecure_skip_verify: true
+                {{- else }}
                 insecure_skip_verify: false
                 server_name: kubernetes
+                {{- end }}
             - job_name: kubelet
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
               relabel_configs:
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                # GKE Autopilot blocks the API-server nodes/proxy path; scrape the kubelet
+                # /metrics endpoint directly on the authenticated port (authorizes via nodes/metrics).
+                - replacement: ${KUBE_NODE_NAME}:10250
+                  target_label: __address__
+                - replacement: /metrics
+                  target_label: __metrics_path__
+                {{- else }}
                 - replacement: kubernetes.default.svc.cluster.local:443
                   target_label: __address__
                 - regex: (.+)
@@ -172,6 +207,7 @@ data:
                   source_labels:
                     - __meta_kubernetes_node_name
                   target_label: __metrics_path__
+                {{- end }}
                 - action: replace
                   target_label: job_label
                   replacement: kubelet
@@ -181,8 +217,13 @@ data:
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                # Direct kubelet cert won't match server_name "kubernetes"; skip verification.
+                insecure_skip_verify: true
+                {{- else }}
                 insecure_skip_verify: false
                 server_name: kubernetes
+                {{- end }}
             {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - job_name: otel-collector
               scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
