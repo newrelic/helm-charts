@@ -90,7 +90,7 @@ data:
         insecure_skip_verify: true
         metrics:
           {{- if include "newrelic.common.gkeAutopilot" . }}
-          # Disabled on GKE-Autopilot: /pods (nodes/proxy) is blocked there, crash-looping the receiver.
+          # Disabled on GKE Autopilot: /pods (nodes/proxy) is blocked there, crash-looping the receiver.
           k8s.container.cpu_limit_utilization:
             enabled: false
           k8s.pod.cpu_limit_utilization:
@@ -126,7 +126,7 @@ data:
                 - role: node
               relabel_configs:
                 {{- if include "newrelic.common.gkeAutopilot" . }}
-                # nodes/proxy is blocked on GKE-Autopilot; direct-dial the kubelet cadvisor endpoint (authorizes via nodes/metrics).
+                # nodes/proxy is blocked on GKE Autopilot; direct-dial the kubelet cadvisor endpoint (authorizes via nodes/metrics).
                 - replacement: ${KUBE_NODE_NAME}:10250
                   target_label: __address__
                 - replacement: /metrics/cadvisor
