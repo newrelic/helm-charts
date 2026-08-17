@@ -27,7 +27,7 @@ spec:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
-        {{- if .Values.nrdotCollector.enabled }}
+        {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
         # Roll the DaemonSet (and its nrdot sidecar) when the nrdot config changes.
         checksum/nrdot-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-pernode.yaml") . | sha256sum }}
         {{- end }}
@@ -65,7 +65,7 @@ spec:
           mountPath: /host
         - name: kernel-headers-volume
           mountPath: /kernel-headers
-      {{- if .Values.nrdotCollector.enabled }}
+      {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
       # Reads this node's CPU/memory allocatable from the K8s API and patches the
       # nrdot config's metricsgeneration/calculate_percentage scale_by fields, so
       # node.cpu.usage.percentage / node.memory.usage.percentage can be computed
@@ -190,7 +190,7 @@ spec:
                 name: nr-ebpf-agent-secrets
                 key: NAMESPACE_LICENSE_KEY_MAP
           {{- end }}
-          {{- if and .Values.nrdotCollector.enabled (eq .Values.nrdotCollector.egressMode "agent") }}
+          {{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (eq .Values.nrdotCollector.egressMode "agent") }}
           # Turn on the inbound OTLP receiver so the nrdot sidecar/Deployment can
           # send infra telemetry through the agent (single egress).
           - name: ENABLE_OTLP_INGEST
@@ -244,7 +244,7 @@ spec:
           - name: REPORT_AI_METRICS
             value: "{{ if hasKey .Values "reportAiMetrics" }}{{ .Values.reportAiMetrics }}{{ else }}false{{ end }}"
           - name: REPORT_INFRA
-            value: "{{ if hasKey .Values "reportInfra" }}{{ .Values.reportInfra }}{{ else }}false{{ end }}"
+            value: "{{ include "nr-ebpf-agent.reportInfra" . }}"
           - name: LOW_DATA_MODE
             value: "{{ if include "nr-ebpf-agent.lowDataMode" . }}true{{ else }}false{{ end }}"
           - name: HOST_STATS_LDM_INTERVAL_SECONDS
@@ -387,7 +387,7 @@ spec:
             mountPath: /etc/otlp-tls
             readOnly: true
           {{- end }}
-      {{- if .Values.nrdotCollector.enabled }}
+      {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
       # nrdot per-node collector (kubeletstats). Non-privileged container; shares
       # the agent pod's hostNetwork (reaches the local kubelet on the node) and the
       # agent ServiceAccount (RBAC extended for nodes/stats, nodes/proxy).
@@ -447,7 +447,7 @@ spec:
           type: Directory
       - name: kernel-headers-volume
         emptyDir: {}
-      {{- if .Values.nrdotCollector.enabled }}
+      {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
       - name: nrdot-config
         configMap:
           name: {{ include "nr-ebpf-agent.nrdot.configName.pernode" . }}
@@ -464,10 +464,8 @@ spec:
           - key: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
             path: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
       {{- end }}
-      {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
-        {{- . | nindent 8 -}}
-      {{- end }}
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
       {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
       affinity:
         {{- . | nindent 8 }}

@@ -1,4 +1,18 @@
 {{/*
+Node selector for the eBPF workloads (agent DaemonSet + nrdot collectors + bundled KSM).
+Always pins `kubernetes.io/os: linux`: the eBPF agent requires a Linux kernel and the
+collector/KSM images are linux-only, so this keeps them off Windows nodes on mixed
+clusters (an otherwise-untargeted privileged DaemonSet would crashloop there). Any
+user/global nodeSelector is merged on top; `kubernetes.io/os` stays `linux`.
+*/}}
+{{- define "nrEbpfAgent.linuxNodeSelector" -}}
+{{- $sel := dict "kubernetes.io/os" "linux" -}}
+{{- $user := fromYaml (include "newrelic.common.nodeSelector" .) -}}
+{{- if $user -}}{{- $sel = merge $sel $user -}}{{- end -}}
+{{- toYaml $sel -}}
+{{- end -}}
+
+{{/*
 Expand the name of the chart.
 */}}
 {{- define "nr-ebpf-agent.name" -}}

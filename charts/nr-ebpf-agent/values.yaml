@@ -53,12 +53,13 @@ reportNetworkMetrics: "auto"
 reportLogs: "false"
 # -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
 reportAiMetrics: "false"
-# -- Enable infrastructure metrics reporting. When enabled, the agent collects and reports infrastructure metrics. Controls infrastructure metrics reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when INFRA agent is not attached)
-reportInfra: "false"
+# -- Enable eBPF-agent host/infrastructure metrics reporting (system.*/host.* → HOST entity).
+# Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when
+# an INFRA agent is not attached). Leave "" (default) to derive from the `infra.enabled`
+# alias: "auto" when infra.enabled is true, "false" otherwise.
+reportInfra: ""
 # -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
 genAICaptureMessageContent: false
-
-reportInfra: "false"
 
 # -- Host metrics (host-stats) cadence tuning.
 hostStats:
@@ -336,8 +337,21 @@ namespaceLicenseKeys: {}
 # -- nrdot collector for Kubernetes infrastructure telemetry (kubeletstats, KSM,
 # k8s events) — the nri-kubernetes replacement half of the agent. When disabled,
 # only the eBPF agent runs (no K8s infra collection); zero added overhead.
+# -- Kubernetes infrastructure monitoring via eBPF+nrdot (the nri-kubernetes
+# replacement). This is a convenience alias for the "Enable eBPF for K8s
+# infrastructure" choice: setting `infra.enabled: true` turns on the nrdot
+# collector (`nrdotCollector.enabled`) and eBPF-agent host stats
+# (`reportInfra: auto`), using `nrdotCollector` defaults for everything else
+# (its own kube-state-metrics, direct egress, low-data-mode). Advanced users can
+# ignore this and drive `nrdotCollector.*` / `reportInfra` directly — those keys
+# still work and take precedence.
+infra:
+  enabled: false
+
 nrdotCollector:
-  # -- Master toggle for K8s infrastructure collection via nrdot.
+  # -- Master toggle for K8s infrastructure collection via nrdot. Prefer the
+  # `infra.enabled` alias above unless you need fine-grained control; either
+  # enabling this OR `infra.enabled` turns the collector on.
   enabled: false
   # -- Egress mode (how nrdot's telemetry reaches New Relic):
   #    "agent"  = nrdot -> eBPF agent inbound OTLP -> agent routes per-namespace -> NR

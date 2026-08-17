@@ -1,4 +1,4 @@
-{{- if .Values.nrdotCollector.enabled }}
+{{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 # Cluster-wide nrdot collector (KSM + k8s events). Single replica is REQUIRED:
 # cluster-scoped collection must happen once, else every replica duplicates it.
 # Reuses the agent ServiceAccount (RBAC extended for events + KSM scrape). In
@@ -73,10 +73,8 @@ spec:
         - name: nrdot-config
           configMap:
             name: {{ include "nr-ebpf-agent.nrdot.configName.cluster" . }}
-      {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
-        {{- . | nindent 8 }}
-      {{- end }}
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
       {{- with include "nrEbpfAgent.clusterCollector.tolerations" . }}
       tolerations:
         {{- . | nindent 8 }}

@@ -1,4 +1,4 @@
-{{- if .Values.nrdotCollector.enabled }}
+{{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 {{- $direct := eq .Values.nrdotCollector.egressMode "direct" }}
 {{- $nsKeys := keys .Values.namespaceLicenseKeys | sortAlpha }}
 apiVersion: v1

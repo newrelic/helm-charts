@@ -25,7 +25,7 @@ rules:
   - get
   - watch
   - list
-{{- if .Values.nrdotCollector.enabled }}
+{{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 # nrdot collector permissions (shared by the per-node sidecar and the cluster
 # Deployment, which both run under this ServiceAccount):
 #  - nodes/stats, nodes/proxy: kubeletstats receiver (kubelet API)

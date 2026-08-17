@@ -1,4 +1,31 @@
 {{/*
+Effective Kubernetes-infrastructure (nrdot collector) enablement.
+Returns "true" (truthy) when either the granular `nrdotCollector.enabled` is set
+OR the `infra.enabled` UX alias is set; otherwise "" (falsy). Every template that
+gates on the collector must go through this so the alias is honored everywhere.
+*/}}
+{{- define "nr-ebpf-agent.nrdotCollector.enabled" -}}
+{{- if or .Values.nrdotCollector.enabled (default dict .Values.infra).enabled -}}true{{- end -}}
+{{- end -}}
+
+{{/*
+Effective REPORT_INFRA value for the eBPF agent.
+An explicit, non-empty `reportInfra` always wins. When it is left empty (default),
+derive it from the `infra.enabled` alias: "auto" when infra is enabled (so eBPF host
+stats replace the infra agent's HOST entity), "false" otherwise.
+*/}}
+{{- define "nr-ebpf-agent.reportInfra" -}}
+{{- $ri := .Values.reportInfra | toString -}}
+{{- if $ri -}}
+{{- $ri -}}
+{{- else if (default dict .Values.infra).enabled -}}
+auto
+{{- else -}}
+false
+{{- end -}}
+{{- end -}}
+
+{{/*
 Return the nrdot collector image reference.
 Precedence: local registry (nrdotCollector.image.registry) > global (global.images.registry) > docker.io
 */}}

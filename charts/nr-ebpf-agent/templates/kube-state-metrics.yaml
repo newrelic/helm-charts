@@ -1,4 +1,4 @@
-{{- if and .Values.nrdotCollector.enabled (include "nr-ebpf-agent.ksm.shouldDeploy" .) }}
+{{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (include "nr-ebpf-agent.ksm.shouldDeploy" .) }}
 {{- $ksm := .Values.nrdotCollector.kubeStateMetrics -}}
 apiVersion: v1
 kind: ServiceAccount
@@ -99,6 +99,8 @@ spec:
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
       serviceAccountName: {{ .Release.Name }}-kube-state-metrics
+      nodeSelector:
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
       containers:
         - name: kube-state-metrics
           image: "{{ $ksm.image.repository }}:{{ $ksm.image.tag }}"
