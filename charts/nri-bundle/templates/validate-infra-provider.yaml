@@ -1,0 +1,28 @@
+{{- /*
+Mutual-exclusion backstop: at most one Kubernetes *infrastructure* provider.
+Renders nothing; evaluated on every template/install/upgrade and fails the
+render on the invalid "state D" (nri-kubernetes AND eBPF+nrdot infra both on),
+which would double-collect cluster infra (double billing, duplicate entities).
+
+Lives in the nri-bundle umbrella because only the parent can see both sibling
+sub-chart values. Keys on the *infra* half of the eBPF agent, NOT
+nr-ebpf-agent.enabled: eBPF-APM legitimately coexists with nri-kubernetes.
+*/ -}}
+{{- /* nri-kubernetes on? Mirror Helm's condition semantics
+       (infrastructure.enabled,newrelic-infrastructure.enabled): the FIRST path
+       that exists wins; if neither is set the sub-chart default (true) applies. */ -}}
+{{- $infra := .Values.infrastructure | default dict -}}
+{{- $nrInfra := (index .Values "newrelic-infrastructure") | default dict -}}
+{{- $nriEnabled := true -}}
+{{- if hasKey $infra "enabled" -}}
+{{- $nriEnabled = $infra.enabled -}}
+{{- else if hasKey $nrInfra "enabled" -}}
+{{- $nriEnabled = $nrInfra.enabled -}}
+{{- end -}}
+{{- /* eBPF+nrdot infra on? sub-chart enabled AND (infra alias OR nrdotCollector). */ -}}
+{{- $ebpf := (index .Values "nr-ebpf-agent") | default dict -}}
+{{- $ebpfEnabled := dig "enabled" false $ebpf -}}
+{{- $ebpfInfra := and $ebpfEnabled (or (dig "infra" "enabled" false $ebpf) (dig "nrdotCollector" "enabled" false $ebpf)) -}}
+{{- if and $nriEnabled $ebpfInfra -}}
+{{- fail (printf "\n\nnri-bundle: two Kubernetes infrastructure providers are enabled at once.\n  - nri-kubernetes  (newrelic-infrastructure / infrastructure.enabled)\n  - eBPF+nrdot      (nr-ebpf-agent.infra.enabled or nr-ebpf-agent.nrdotCollector.enabled)\nThis double-collects cluster infrastructure (double billing, duplicate entities).\nEnable exactly one: set one provider to false.\n  * nri-kubernetes -> --set newrelic-infrastructure.enabled=false --set infrastructure.enabled=false\n  * eBPF+nrdot     -> --set nr-ebpf-agent.infra.enabled=false\neBPF-APM alone (nr-ebpf-agent.enabled=true, infra off) may coexist with nri-kubernetes.\n") -}}
+{{- end -}}
