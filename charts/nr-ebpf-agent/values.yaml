@@ -345,6 +345,14 @@ namespaceLicenseKeys: {}
 # (its own kube-state-metrics, direct egress, low-data-mode). Advanced users can
 # ignore this and drive `nrdotCollector.*` / `reportInfra` directly — those keys
 # still work and take precedence.
+#
+# Platform capability (eBPF needs a supported kernel/OS/arch + privilege) is
+# gated BEFORE install — by the install wizard's config-time platform check and the
+# `linux` nodeSelector on the eBPF workloads — NOT by a runtime auto-fallback here.
+# Runtime "detect the cluster can't run eBPF, then switch to nri-kubernetes" is not
+# doable via Helm (a chart can't re-render its own subchart enablement based on a
+# live probe), so it is intentionally absent, and the Guided/CLI + Manifest install
+# paths are held to the same behavior for parity.
 infra:
   enabled: false
 
