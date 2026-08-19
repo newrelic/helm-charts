@@ -1,0 +1,76 @@
+suite: k8s.cluster.info fallback for managed control planes (NR-608275)
+templates:
+  - templates/nr-ebpf-agent-nrdot-config-cluster.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  # controlPlane.mode=never simulates a managed control plane (apiserver not scraped):
+  # kubernetes_build_info -> k8s.cluster.info never fires, so the KSM-derived fallback
+  # must be wired into the KSM pipeline to synthesize the KUBERNETESCLUSTER entity.
+  - it: control-plane off (mode=never) wires the KSM-derived k8s.cluster.info into the KSM pipeline
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        controlPlane:
+          mode: never
+    asserts:
+      # processor is defined
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metricstransform/k8s_cluster_info_from_ksm:\\s*\\n\\s*transforms:"
+      # ...and referenced in the KSM pipeline, right after the build_info rename
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metricstransform/k8s_cluster_info, metricstransform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
+      # sourced from an always-present KSM series, collapsed to a single datapoint
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "include: kube_namespace_status_phase[\\s\\S]*new_name: k8s.cluster.info[\\s\\S]*aggregate_labels"
+
+  # controlPlane.mode=always simulates a self-managed cluster (apiserver scraped):
+  # kubernetes_build_info -> k8s.cluster.info already fires, so the fallback must NOT be
+  # wired into the KSM pipeline (avoid emitting two k8s.cluster.info series).
+  - it: control-plane on (mode=always) does NOT wire the KSM-derived fallback into the KSM pipeline
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        controlPlane:
+          mode: always
+    asserts:
+      - notMatchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metricstransform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
+      # the build_info-derived path stays in the control-plane pipeline
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metrics/controlplane:"
+
+  # controlPlane.mode=auto is the default. IMPORTANT: during `helm template`/unittest there
+  # is no live cluster, so the Node `lookup` in nr-ebpf-agent.controlPlane.shouldScrape is
+  # inert and `auto` deliberately falls back to "scrape" (true) to keep dry-run output
+  # stable. So in this context `auto` renders like control-plane ON: the fallback is NOT
+  # wired. The real managed-control-plane path (auto -> no control-plane node -> shouldScrape
+  # empty -> fallback wired) only happens on a live install and is validated on a real EKS
+  # cluster (k8s.cluster.info flows from KSM, no apiserver_* metrics, KUBERNETESCLUSTER
+  # synthesized). This case guards that templating/dry-run behavior is unchanged.
+  - it: control-plane auto (default, inert lookup during templating) does NOT wire the fallback
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        controlPlane:
+          mode: auto
+    asserts:
+      - notMatchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metricstransform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metrics/controlplane:"
