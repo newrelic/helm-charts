@@ -215,6 +215,15 @@ image:
   pullSecrets: []
 #    - name: regsecret
 
+# Image used by the init container that cleans up the fluent-bit db files when
+# fluentBit.persistence.mode is set to persistentVolume
+initContainer:
+  image:
+    repository: busybox
+#    registry: my_registry
+    tag: "1.36"
+    pullPolicy: IfNotPresent
+
 # By default, the Linux DaemonSet will always be deployed, while the Windows DaemonSet(s) won't.
 enableLinux: true
 enableWindows: false
