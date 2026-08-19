@@ -68,6 +68,15 @@ fluentBit:
     # - `persistentVolume` will use a ReadWriteMany persistent volume to store the db file. This will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead.
     mode: "hostPath"
 
+    # Image used by the init container that cleans up the fluent-bit db files.
+    # Only used when persistence.mode is set to persistentVolume.
+    initContainer:
+      image:
+        repository: busybox
+#        registry: my_registry
+        tag: "1.36"
+        pullPolicy: IfNotPresent
+
     # In case persistence.mode is set to persistentVolume this will be needed
     persistentVolume:
       # The storage class should allow ReadWriteMany mode
@@ -214,15 +223,6 @@ image:
   ## See https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod
   pullSecrets: []
 #    - name: regsecret
-
-# Image used by the init container that cleans up the fluent-bit db files when
-# fluentBit.persistence.mode is set to persistentVolume
-initContainer:
-  image:
-    repository: busybox
-#    registry: my_registry
-    tag: "1.36"
-    pullPolicy: IfNotPresent
 
 # By default, the Linux DaemonSet will always be deployed, while the Windows DaemonSet(s) won't.
 enableLinux: true

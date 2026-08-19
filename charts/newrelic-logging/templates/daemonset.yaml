@@ -53,8 +53,8 @@ spec:
       initContainers:
       {{- if and (.Values.fluentBit.persistence) (eq .Values.fluentBit.persistence.mode "persistentVolume") }}
         - name: init
-          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.initContainer.image "context" .) }}
-          imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+          image: {{ include "newrelic.common.images.image" ( dict "imageRoot" .Values.fluentBit.persistence.initContainer.image "context" .) }}
+          imagePullPolicy: {{ .Values.fluentBit.persistence.initContainer.image.pullPolicy }}
           {{- with include "newrelic.common.securityContext.container" . }}
           securityContext:
             {{- . | nindent 12 }}

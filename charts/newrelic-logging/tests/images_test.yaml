@@ -135,14 +135,14 @@ tests:
           mode: persistentVolume
           persistentVolume:
             storageClass: standard
+          initContainer:
+            image:
+              registry: local_registry
+              repository: my-mirror/busybox
+              tag: "1.37"
       global:
         images:
           registry: global_registry
-      initContainer:
-        image:
-          registry: local_registry
-          repository: my-mirror/busybox
-          tag: "1.37"
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].image
