@@ -31,6 +31,12 @@ spec:
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- if .Values.daemonset.hostPID }}
+      hostPID: true
+      {{- end }}
+      {{- if .Values.daemonset.hostNetwork }}
+      hostNetwork: true
+      {{- end }}
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}

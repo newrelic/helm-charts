@@ -169,6 +169,10 @@ daemonset:
   podAnnotations: {}
   # -- Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext`
   podSecurityContext: {}
+  # -- (bool) Share the host PID namespace with the daemonset pods. Required for the hostmetrics `process` scraper to see processes outside the collector's own container (node-wide `process.*`).
+  hostPID: false
+  # -- (bool) Use the host network namespace for the daemonset pods. Re-scopes the hostmetrics network scraper from the pod's own interface to the node's, so `system.network.*` reflect node-level traffic.
+  hostNetwork: false
   # -- Sets security context (at container level) for the daemonset. Overrides `containerSecurityContext` and `global.containerSecurityContext`
   containerSecurityContext:
     privileged: false
