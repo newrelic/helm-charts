@@ -1,0 +1,53 @@
+image:
+  repository: newrelic/nrdot-collector
+  tag: "2.2.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+oracle:
+  # -- Required. One of: cdb, pdb, rds. Only required when setupJob.enabled is true.
+  topology: ""
+  # -- Required. host:port of the Oracle listener.
+  endpoint: ""
+  # -- Required. CDB/PDB service name, or the RDS DB name.
+  service: ""
+  # -- Plain-value monitoring username. Ignored if existingSecret is set.
+  username: ""
+  # -- Plain-value monitoring password. Ignored if existingSecret is set.
+  password: ""
+  # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
+  existingSecret: ""
+  # -- How often the receiver scrapes Oracle.
+  collectionInterval: 10s
+
+# -- Required. New Relic OTLP endpoint for the account's region, e.g. otlp.nr-data.net:4317
+otlpEndpoint: ""
+
+# -- Plain-value New Relic license key. Can also be set as global.licenseKey.
+licenseKey: ""
+# -- Name of a pre-existing Secret holding the license key. Can also be set as global.customSecretName.
+customSecretName: ""
+# -- Key inside customSecretName that holds the license key. Can also be set as global.customSecretLicenseKey.
+customSecretLicenseKey: ""
+
+# -- Escape hatch merged into the nroracledb receiver block (e.g. metrics, events, resource_attributes overrides).
+additionalReceiverConfig: {}
+
+setupJob:
+  # -- If true, a Helm hook Job creates the monitoring user and grants it access before install/upgrade.
+  enabled: false
+  image:
+    # -- Oracle Instant Client + sqlplus image. No default: pulling from container-registry.oracle.com requires accepting Oracle's license terms first. See README.
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  oracleAdmin:
+    # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path.
+    existingSecret: ""
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}
