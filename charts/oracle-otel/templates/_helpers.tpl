@@ -34,3 +34,27 @@ app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/name: {{ include "oracle-otel.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
+
+{{- define "oracle-otel.validate.oracle" -}}
+{{- if or (not .Values.oracle.endpoint) (not .Values.oracle.service) -}}
+{{- fail "oracle.endpoint and oracle.service are required" -}}
+{{- end -}}
+{{- if not (or .Values.oracle.existingSecret (and .Values.oracle.username .Values.oracle.password)) -}}
+{{- fail "You must set oracle.existingSecret, or both oracle.username and oracle.password" -}}
+{{- end -}}
+{{- end -}}
+
+{{- define "oracle-otel.credentials.secretName" -}}
+{{- .Values.oracle.existingSecret | default (printf "%s-oracle" (include "oracle-otel.fullname" .)) -}}
+{{- end -}}
+
+{{- define "oracle-otel.validate.setupJob" -}}
+{{- if .Values.setupJob.enabled -}}
+{{- if not (has .Values.oracle.topology (list "cdb" "pdb" "rds")) -}}
+{{- fail "oracle.topology must be one of: cdb, pdb, rds when setupJob.enabled is true" -}}
+{{- end -}}
+{{- if not .Values.setupJob.oracleAdmin.existingSecret -}}
+{{- fail "setupJob.oracleAdmin.existingSecret is required when setupJob.enabled is true" -}}
+{{- end -}}
+{{- end -}}
+{{- end -}}

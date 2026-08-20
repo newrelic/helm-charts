@@ -1,0 +1,23 @@
+{{- if .Values.setupJob.enabled }}
+{{- include "oracle-otel.validate.setupJob" . -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oracle-otel.fullname" . }}-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oracle-otel.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  grants.sql: |
+{{- if eq .Values.oracle.topology "cdb" }}
+{{ .Files.Get "files/setup/cdb-grants.sql" | indent 4 }}
+{{- else if eq .Values.oracle.topology "pdb" }}
+{{ .Files.Get "files/setup/pdb-grants.sql" | indent 4 }}
+{{- else if eq .Values.oracle.topology "rds" }}
+{{ .Files.Get "files/setup/rds-grants.sql" | indent 4 }}
+{{- end }}
+{{- end }}

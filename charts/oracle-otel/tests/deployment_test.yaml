@@ -1,0 +1,60 @@
+suite: deployment
+templates:
+  - templates/deployment.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracle.endpoint: "oracle-db.internal:1521"
+  oracle.service: "MYPDB"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  licenseKey: "testlicensekey"
+tests:
+  - it: uses a chart-owned secretKeyRef when plain oracle credentials are given
+    set:
+      oracle.username: "nr_monitor"
+      oracle.password: "s3cret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: ORACLE_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: my-release-oracle-otel-oracle
+                key: username
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: ORACLE_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-release-oracle-otel-oracle
+                key: password
+  - it: uses the existingSecret name when oracle.existingSecret is set
+    set:
+      oracle.existingSecret: "my-oracle-secret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: my-oracle-secret
+  - it: mounts the collector config and sets image/resources from values
+    set:
+      oracle.username: "u"
+      oracle.password: "p"
+      image.repository: "newrelic/nrdot-collector"
+      image.tag: "2.2.0"
+      resources.limits.memory: "256Mi"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: newrelic/nrdot-collector:2.2.0
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: my-release-oracle-otel-config

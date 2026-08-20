@@ -1,0 +1,88 @@
+suite: setup job resource
+templates:
+  - templates/setup-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracle.endpoint: "db:1521"
+  oracle.service: "MYPDB"
+  oracle.topology: "pdb"
+  oracle.username: "nr_monitor"
+  oracle.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.oracleAdmin.existingSecret: "admin-secret"
+  setupJob.image.repository: "container-registry.oracle.com/database/instantclient"
+  setupJob.image.tag: "21.13"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: has pre-install/pre-upgrade hook annotations with the documented delete policy
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation,hook-succeeded
+  - it: wires admin and monitoring credentials as env vars, never as CLI args
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: ORACLE_ADMIN_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: admin-secret
+                key: username
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: ORACLE_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: admin-secret
+                key: password
+      - equal:
+          path: spec.template.spec.containers[0].env[2]
+          value:
+            name: ORACLE_MONITOR_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: my-release-oracle-otel-oracle
+                key: username
+      - equal:
+          path: spec.template.spec.containers[0].env[3]
+          value:
+            name: ORACLE_MONITOR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-release-oracle-otel-oracle
+                key: password
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "s3cret"
+  - it: uses the configured Instant Client image and restarts on failure
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: container-registry.oracle.com/database/instantclient:21.13
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: setup
+            configMap:
+              name: my-release-oracle-otel-setup

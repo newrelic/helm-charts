@@ -1,0 +1,43 @@
+{{- $receiver := dict
+      "endpoint" .Values.oracle.endpoint
+      "service" .Values.oracle.service
+      "username" "${env:ORACLE_USERNAME}"
+      "password" "${env:ORACLE_PASSWORD}"
+      "collection_interval" .Values.oracle.collectionInterval
+-}}
+{{- $receiver = mergeOverwrite $receiver (.Values.additionalReceiverConfig | default dict) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oracle-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oracle-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      nroracledb:
+{{ toYaml $receiver | indent 8 }}
+    processors:
+      resource/add_event_name:
+        attributes:
+          - key: host.address
+            value: {{ .Values.oracle.endpoint | quote }}
+            action: upsert
+      batch:
+    exporters:
+      otlp:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+    service:
+      pipelines:
+        metrics/oracledb:
+          receivers: [nroracledb]
+          processors: [resource/add_event_name, batch]
+          exporters: [otlp]
+        logs/oracledb:
+          receivers: [nroracledb]
+          processors: [resource/add_event_name, batch]
+          exporters: [otlp]
