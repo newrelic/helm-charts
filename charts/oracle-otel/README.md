@@ -45,6 +45,16 @@ If enabled, a Helm hook Job creates the monitoring user (`oracle.username`/
 credential (`setupJob.oracleAdmin.existingSecret` — **required**, no
 plain-value path, since it can create users and grant broad access).
 
+**For `cdb`/`pdb` topology, this admin credential must be `SYS`, connecting
+`AS SYSDBA`** — confirmed by hands-on testing, not just documentation.
+Oracle protects its `V_$`/`DBA_` catalog views so that only `SYS` can grant
+`SELECT` on them, even to a full `DBA`-role account like `SYSTEM` (which
+fails with `ORA-01031: insufficient privileges` despite otherwise having
+broad administrative rights). The Job connects `AS SYSDBA` automatically for
+these two topologies. For `rds` topology, use the RDS master user instead —
+RDS deliberately disallows `SYSDBA` entirely and grants via the `rdsadmin`
+package internally, which is why `rds-grants.sql` doesn't hit this issue.
+
 This requires an Oracle Instant Client + `sqlplus` image. Oracle publishes
 one at `container-registry.oracle.com`, which requires manually accepting
 Oracle's license terms once, before the image can be pulled — this cannot be

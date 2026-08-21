@@ -55,7 +55,11 @@ spec:
               sqlplus -s /nolog <<SQL
               DEFINE monitor_user = ${ORACLE_MONITOR_USERNAME}
               DEFINE monitor_password = ${ORACLE_MONITOR_PASSWORD}
+              {{- if eq .Values.oracle.topology "rds" }}
               CONNECT ${ORACLE_ADMIN_USERNAME}/${ORACLE_ADMIN_PASSWORD}@${ORACLE_ENDPOINT}/${ORACLE_SERVICE}
+              {{- else }}
+              CONNECT ${ORACLE_ADMIN_USERNAME}/${ORACLE_ADMIN_PASSWORD}@${ORACLE_ENDPOINT}/${ORACLE_SERVICE} AS SYSDBA
+              {{- end }}
               @/etc/oracle-otel/setup/grants.sql
               EXIT
               SQL

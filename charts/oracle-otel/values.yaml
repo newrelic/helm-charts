@@ -45,6 +45,9 @@ setupJob:
     pullPolicy: IfNotPresent
   oracleAdmin:
     # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path.
+    # For oracle.topology cdb/pdb, this MUST be SYS (connected AS SYSDBA) -- Oracle protects its V_$/DBA_ catalog
+    # views so that only SYS can grant SELECT on them, even to a full DBA-role account like SYSTEM. For rds
+    # topology, use the RDS master user instead -- RDS disallows SYSDBA and grants via rdsadmin internally.
     existingSecret: ""
 
 resources: {}

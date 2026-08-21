@@ -86,3 +86,19 @@ tests:
             name: setup
             configMap:
               name: my-release-oracle-otel-setup
+  - it: connects AS SYSDBA for pdb/cdb topology, since only SYS can grant on SYS-owned catalog views
+    set:
+      setupJob.enabled: true
+      oracle.topology: "pdb"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "CONNECT \\$\\{ORACLE_ADMIN_USERNAME\\}/\\$\\{ORACLE_ADMIN_PASSWORD\\}@\\$\\{ORACLE_ENDPOINT\\}/\\$\\{ORACLE_SERVICE\\} AS SYSDBA"
+  - it: does not connect AS SYSDBA for rds topology, since RDS disallows SYSDBA and uses rdsadmin instead
+    set:
+      setupJob.enabled: true
+      oracle.topology: "rds"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "CONNECT \\$\\{ORACLE_ADMIN_USERNAME\\}/\\$\\{ORACLE_ADMIN_PASSWORD\\}@\\$\\{ORACLE_ENDPOINT\\}/\\$\\{ORACLE_SERVICE\\}\\n"
