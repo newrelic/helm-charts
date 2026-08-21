@@ -1,0 +1,60 @@
+suite: configmap
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracle.endpoint: "oracle-db.internal:1521"
+  oracle.service: "MYPDB"
+  oracle.username: "nr_monitor"
+  oracle.password: "s3cret"
+  oracle.collectionInterval: "30s"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: renders the nroracledb receiver with env-substitution credentials, never literal ones
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: oracle-db\\.internal:1521"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "service: MYPDB"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \\$\\{env:ORACLE_USERNAME\\}"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "password: \\$\\{env:ORACLE_PASSWORD\\}"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "collection_interval: 30s"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "s3cret"
+  - it: renders the otlp exporter with an env-substitution api-key, never a literal one
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: \"otlp\\.nr-data\\.net:4317\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "api-key: \"\\$\\{env:NEW_RELIC_LICENSE_KEY\\}\""
+  - it: wires the oracledb pipeline to the receiver, processors, and exporter
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "receivers:\\s*\\[nroracledb\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exporters:\\s*\\[otlp\\]"
+  - it: merges additionalReceiverConfig into the receiver block
+    set:
+      additionalReceiverConfig:
+        events:
+          db.server.query_sample:
+            enabled: true
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.query_sample"
