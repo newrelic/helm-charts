@@ -102,6 +102,8 @@ If using GKE Autopilot, please set the following configuration in your values.ya
 provider: "GKE_AUTOPILOT"
 ```
 
+Setting `gkeAutopilotAllowList: true` keeps the `host-fs` mount and the hostmetrics `root_path` that GKE Autopilot normally strips, so node filesystem metrics (`system.filesystem.*`) can be collected. GKE Autopilot only admits that mount if a `WorkloadAllowlist` permitting the `/` hostPath is installed in the cluster. That allowlist is installed by an `AllowlistSynchronizer` custom resource (`auto.gke.io/v1`) that references the allowlist path. Without it, this flag has no effect.
+
 ## OpenShift
 
 If using OpenShift, please set the following configuration in your values.yaml file in order for the agent to work with OpenShift.
@@ -174,6 +176,8 @@ to export data to this connector which can then be connected to the New Relic ma
 | daemonset.extraArgs | list | `[]` | Additional args for the daemonset container https://opentelemetry.io/docs/collector/configuration/ Example: extraArgs:   - "--config=yaml:service::telemetry::logs::level: debug"   - "--config=yaml:exporters::otlp_http/newrelic::endpoint: https://otlp.eu.nr-data.net" |
 | daemonset.extraVolumeMounts | list | `[]` | Additional volume mounts to be added to the daemonset container |
 | daemonset.extraVolumes | list | `[]` | Additional volumes to be added to the daemonset pod |
+| daemonset.hostNetwork | bool | `false` | Use the host network namespace for the daemonset pods. Re-scopes the hostmetrics network scraper from the pod's own interface to the node's, so `system.network.*` reflect node-level traffic. |
+| daemonset.hostPID | bool | `false` | Share the host PID namespace with the daemonset pods. Required for the hostmetrics `process` scraper to see processes outside the collector's own container (node-wide `process.*`). |
 | daemonset.nodeSelector | object | `{}` | Sets daemonset pod node selector. Overrides `nodeSelector` and `global.nodeSelector` |
 | daemonset.podAnnotations | object | `{}` | Annotations to be added to the daemonset. |
 | daemonset.podSecurityContext | object | `{}` | Sets security context (at pod level) for the daemonset. Overrides `podSecurityContext` and `global.podSecurityContext` |
@@ -198,8 +202,9 @@ to export data to this connector which can then be connected to the New Relic ma
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | enable_atp | bool | `false` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
-| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.14.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
-| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.14.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
+| gkeAutopilotAllowList | bool | `false` | Only applies when `provider: GKE_AUTOPILOT`. When true, keeps the host root filesystem mount (`host-fs` -> `/hostfs`) and the hostmetrics `root_path` that GKE Autopilot normally strips, so the hostmetrics filesystem scraper can read the node's filesystems (`system.filesystem.*`). Requires a GKE Autopilot allowlist admitting the `/` hostPath: a `WorkloadAllowlist` installed by an `AllowlistSynchronizer` (`auto.gke.io/v1`). Has no effect without one. |
+| images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.19.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
+| images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.19.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
 | images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
 | images.pullSecrets | list | `[]` | The secrets that are needed to pull images from a custom registry. |
 | kube-state-metrics.enableCustomResourceSamples | bool | `false` | Enable custom KSM-based CRD metrics |
@@ -237,8 +242,8 @@ to export data to this connector which can then be connected to the New Relic ma
 | receivers.hostmetrics.enabled | bool | `true` | Specifies whether the `hostmetrics` receiver is enabled |
 | receivers.hostmetrics.scrapeInterval | string | `1m` | Sets the scrape interval for the `hostmetrics` receiver |
 | receivers.k8sEvents.enabled | bool | `true` | Specifies whether the `k8s_events` receiver is enabled |
-| receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubeletstats` receiver is enabled |
-| receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubeletstats` receiver |
+| receivers.kubeletstats.enabled | bool | `true` | Specifies whether the `kubelet_stats` receiver is enabled |
+| receivers.kubeletstats.scrapeInterval | string | `1m` | Sets the scrape interval for the `kubelet_stats` receiver |
 | receivers.prometheus.enabled | bool | `true` | Specifies whether the `prometheus` receiver is enabled |
 | receivers.prometheus.ksmSelector | string | `app.kubernetes.io/name=kube-state-metrics` | Label selector that will be used to automatically discover an instance of kube-state-metrics running in the cluster. |
 | receivers.prometheus.scrapeInterval | string | `1m` | Sets the scrape interval for the `prometheus` receiver |
