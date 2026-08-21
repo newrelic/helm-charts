@@ -150,6 +150,17 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: 'root_path: /hostfs'
         template: templates/daemonset-configmap.yaml
+  - it: provider OPEN_SHIFT with gkeAutopilotAllowList does not add root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: OPEN_SHIFT
+      gkeAutopilotAllowList: true
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
   - it: daemonset.hostPID true sets hostPID on the pod spec
     set:
       cluster: my-cluster
