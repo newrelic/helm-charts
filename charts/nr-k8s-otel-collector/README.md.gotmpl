@@ -106,6 +106,8 @@ If using GKE Autopilot, please set the following configuration in your values.ya
 provider: "GKE_AUTOPILOT"
 ```
 
+Setting `gkeAutopilotAllowList: true` keeps the `host-fs` mount and the hostmetrics `root_path` that GKE Autopilot normally strips, so node filesystem metrics (`system.filesystem.*`) can be collected. GKE Autopilot only admits that mount if a `WorkloadAllowlist` permitting the `/` hostPath is installed in the cluster. That allowlist is installed by an `AllowlistSynchronizer` custom resource (`auto.gke.io/v1`) that references the allowlist path. Without it, this flag has no effect.
+
 ## OpenShift
 
 If using OpenShift, please set the following configuration in your values.yaml file in order for the agent to work with OpenShift.

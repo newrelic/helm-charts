@@ -101,3 +101,63 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: 'proxy/metrics/cadvisor'
         template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT with gkeAutopilotAllowList keeps the host-fs mount and root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+      gkeAutopilotAllowList: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT without gkeAutopilotAllowList strips the host-fs mount and root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: provider OPEN_SHIFT with gkeAutopilotAllowList does not add root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: OPEN_SHIFT
+      gkeAutopilotAllowList: true
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
