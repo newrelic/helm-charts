@@ -123,6 +123,10 @@ tests:
           path: spec.template.spec.hostNetwork
           value: true
         template: templates/daemonset.yaml
+      - equal:
+          path: spec.template.spec.dnsPolicy
+          value: ClusterFirstWithHostNet
+        template: templates/daemonset.yaml
   - it: daemonset host namespaces are unset by default
     set:
       cluster: my-cluster
@@ -133,4 +137,7 @@ tests:
         template: templates/daemonset.yaml
       - notExists:
           path: spec.template.spec.hostNetwork
+        template: templates/daemonset.yaml
+      - notExists:
+          path: spec.template.spec.dnsPolicy
         template: templates/daemonset.yaml

@@ -36,6 +36,10 @@ spec:
       {{- end }}
       {{- if .Values.daemonset.hostNetwork }}
       hostNetwork: true
+      # With hostNetwork, the default ClusterFirst policy falls back to the node resolver and loses cluster DNS.
+      # ClusterFirstWithHostNet keeps it so the cadvisor/kubelet scrapes resolve kubernetes.default.svc on
+      # GKE Standard, EKS, AKS, etc. On GKE Autopilot the scrapes direct-dial the kubelet, so this has no effect.
+      dnsPolicy: ClusterFirstWithHostNet
       {{- end }}
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
