@@ -13,7 +13,7 @@ data:
     receivers:
       host_metrics:
         # TODO (chris): this is a linux specific configuration
-        {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
+        {{- if or (not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .))) (and (include "newrelic.common.gkeAutopilot" .) .Values.gkeAutopilotAllowlist) }}
         root_path: /hostfs
         {{- end }}
         collection_interval: {{ .Values.receivers.hostmetrics.scrapeInterval }}
