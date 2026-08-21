@@ -71,6 +71,8 @@ reportApmData: "auto"
 reportNetworkMetrics: "auto"
 # -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
 reportLogs: "false"
+# -- Enable agent/entity metadata reporting. When enabled (default), the agent exports agent and entity metadata to New Relic over HTTP. Set to false to disable the metadata reporting HTTP export path entirely.
+agentMetadataReporting: true
 
 ai_monitoring:
   # -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data.
@@ -226,6 +228,11 @@ protocols:
       enabled: true
       samplingLatency: "p50"
       samplingErrorRate: ""
+  # -- Traces MySQL wire-protocol traffic, which also covers MariaDB and Aurora MySQL.
+  # Both speak the same wire protocol as MySQL, so there is no separate mariadb or
+  # aurora_mysql section to configure -- enabling/disabling protocols.mysql is enough.
+  # The specific flavor is auto-detected per-connection from the server handshake and
+  # reported per-record; it cannot be configured.
   mysql:
     enabled: true
     spans:
