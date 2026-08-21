@@ -101,3 +101,36 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: 'proxy/metrics/cadvisor'
         template: templates/daemonset-configmap.yaml
+  - it: daemonset.hostPID true sets hostPID on the pod spec
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        hostPID: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostPID
+          value: true
+        template: templates/daemonset.yaml
+  - it: daemonset.hostNetwork true sets hostNetwork on the pod spec
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        hostNetwork: true
+    asserts:
+      - equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+        template: templates/daemonset.yaml
+  - it: daemonset host namespaces are unset by default
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - notExists:
+          path: spec.template.spec.hostPID
+        template: templates/daemonset.yaml
+      - notExists:
+          path: spec.template.spec.hostNetwork
+        template: templates/daemonset.yaml
