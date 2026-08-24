@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - uses: codespell-project/actions-codespell@master
         with:
           check_filenames: true
@@ -27,7 +27,7 @@ jobs:
       bundle-changed: ${{ steps.changed.outputs.bundle }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -35,7 +35,7 @@ jobs:
       - uses: helm/chart-testing-action@v2.8.0
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.3'
+          version: 'v3.21.4'
 
       - name: Set up helm-unittest
         # workaround for https://github.com/helm-unittest/helm-unittest/issues/790
@@ -92,7 +92,7 @@ jobs:
     needs: [ lint-test ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
@@ -100,7 +100,7 @@ jobs:
       - uses: helm/chart-testing-action@v2.8.0
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.3'
+          version: 'v3.21.4'
 
       - name: Install Minikube
         uses: manusa/actions-setup-minikube@v2.18.0
@@ -130,10 +130,10 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.3'
+          version: 'v3.21.4'
 
       - name: Add helm repositories
         run: |
@@ -181,10 +181,10 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: azure/setup-helm@v5
         with:
-          version: 'v3.21.3'
+          version: 'v3.21.4'
 
       - name: Add helm repositories
         run: |
