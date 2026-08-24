@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.19.0
-    helm.sh/chart: nr-k8s-otel-collector-0.14.1
+    helm.sh/chart: nr-k8s-otel-collector-0.14.2
 data:
   daemonset-config.yaml: |
     receivers:
@@ -701,15 +701,15 @@ data:
             conditions:
               - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              # /projects/{projectId}/locations/{location}/clusters/{clusterName}
+              # /projects/{projectId}/locations/{region}/clusters/{clusterName}
               - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.region"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
           # GKE Zonal
           - context: resource
             conditions:
               - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.availability_zone"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              # /projects/{projectId}/zones/{zone}/clusters/{clusterName}
-              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/zones/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+              # /projects/{projectId}/locations/{zone}/clusters/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
 
       resource/newrelic:
         attributes:
@@ -719,7 +719,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.14.1
+            value: 0.14.2
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
