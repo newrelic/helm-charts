@@ -32,6 +32,12 @@ jobs:
         with:
           version: 'latest'
 
+      - name: Install yq
+        shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://github.com/mikefarah/yq/releases/latest/download/yq_windows_amd64.exe" -OutFile "$env:RUNNER_TEMP\yq.exe"
+          Add-Content -Path $env:GITHUB_PATH -Value $env:RUNNER_TEMP
+
       - name: Helm dependency build
         shell: pwsh
         working-directory: ${{ env.CHART_DIR }}
