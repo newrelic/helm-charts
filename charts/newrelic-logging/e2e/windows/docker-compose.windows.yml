@@ -12,6 +12,7 @@ services:
     volumes:
       - "${CONFIG_DIR}:C:\\fluent-bit\\etc"
       - "${LOGS_DIR}:C:\\var\\log"
+      - "${SCRIPTS_DIR}:C:\\fluent-bit\\scripts"
     environment:
       # LICENSE_KEY/NODE_NAME/HOSTNAME come from Kubernetes secretKeyRef/fieldRef in production;
       # run-windows-e2e.ps1 supplies them directly since there's no cluster here.
@@ -32,6 +33,7 @@ services:
       SEND_OUTPUT_PLUGIN_METRICS: "${SEND_OUTPUT_PLUGIN_METRICS}"
       METRICS_HOST: "${METRICS_HOST}"
       FLUENTBIT_METRICS_TIER: "${FLUENTBIT_METRICS_TIER}"
+      LUA_SCRIPT_PATH: "${LUA_SCRIPT_PATH}"
       DAEMONSET_NAME: "${DAEMONSET_NAME}"
       NAMESPACE: "${NAMESPACE}"
     command: ["C:\\fluent-bit\\bin\\fluent-bit.exe", "-c", "c:\\fluent-bit\\etc\\fluent-bit.conf", "-e", "C:\\fluent-bit\\bin\\out_newrelic.dll"]

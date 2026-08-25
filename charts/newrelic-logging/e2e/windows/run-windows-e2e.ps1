@@ -12,6 +12,10 @@
     Windows image tag to test, extracted from the chart's rendered DaemonSet.
 .PARAMETER ConfigDir
     Directory with the rendered fluent-bit.conf + parsers.conf, mounted at C:\fluent-bit\etc.
+.PARAMETER ScriptsDir
+    Directory with the extracted payload.lua (from the chart's -lua ConfigMap), mounted at
+    C:\fluent-bit\scripts. Needed because fluentBitMetrics defaults to "basic", which enables a
+    lua filter that requires this script to be present.
 .PARAMETER EnvJsonPath
     JSON file of the DaemonSet's env vars, excluding LICENSE_KEY/NODE_NAME/HOSTNAME (those come
     from Kubernetes secretKeyRef/fieldRef in production; this script supplies them itself).
@@ -26,6 +30,7 @@
 param(
     [Parameter(Mandatory = $true)][string]$Image,
     [Parameter(Mandatory = $true)][string]$ConfigDir,
+    [Parameter(Mandatory = $true)][string]$ScriptsDir,
     [Parameter(Mandatory = $true)][string]$EnvJsonPath,
     [Parameter(Mandatory = $true)][string]$CommandJsonPath,
     [Parameter(Mandatory = $true)][string]$AccountId,
@@ -146,6 +151,7 @@ try {
     $env:HEALTH_PORT = "$HealthPort"
     $env:CONFIG_DIR = $ConfigDir
     $env:LOGS_DIR = $LogsDir
+    $env:SCRIPTS_DIR = $ScriptsDir
     $env:ENDPOINT = $daemonsetEnv.ENDPOINT
     $env:SOURCE = $daemonsetEnv.SOURCE
     $env:LICENSE_KEY = $LicenseKey
@@ -164,6 +170,7 @@ try {
     $env:SEND_OUTPUT_PLUGIN_METRICS = $daemonsetEnv.SEND_OUTPUT_PLUGIN_METRICS
     $env:METRICS_HOST = $daemonsetEnv.METRICS_HOST
     $env:FLUENTBIT_METRICS_TIER = $daemonsetEnv.FLUENTBIT_METRICS_TIER
+    $env:LUA_SCRIPT_PATH = $daemonsetEnv.LUA_SCRIPT_PATH
     $env:DAEMONSET_NAME = $daemonsetEnv.DAEMONSET_NAME
     $env:NAMESPACE = $daemonsetEnv.NAMESPACE
 

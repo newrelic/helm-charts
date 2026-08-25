@@ -60,7 +60,7 @@ jobs:
           helm template ${{ env.RELEASE_NAME }} . `
             --set enableWindows=true --set enableLinux=false `
             --set global.licenseKey=placeholder --set global.cluster=$clusterTag `
-            -s templates/daemonset-windows.yaml -s templates/configmap.yaml | Set-Content rendered.yaml
+            -s templates/daemonset-windows.yaml -s templates/configmap.yaml -s templates/configmap-lua.yaml | Set-Content rendered.yaml
 
           $env:TARGET_NAME = $targetDaemonsetName
           $daemonset = (yq 'select(.kind == "DaemonSet" and .metadata.name == strenv(TARGET_NAME))' rendered.yaml -o=json | Out-String) | ConvertFrom-Json
@@ -84,8 +84,12 @@ jobs:
           ($envMap | ConvertTo-Json -Compress) | Set-Content -NoNewline generated/env.json
 
           New-Item -ItemType Directory -Force -Path generated/config | Out-Null
-          (yq 'select(.kind == "ConfigMap") | .data."fluent-bit.conf"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/config fluent-bit.conf)
-          (yq 'select(.kind == "ConfigMap") | .data."parsers.conf"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/config parsers.conf)
+          (yq 'select(.kind == "ConfigMap" and (.metadata.name | test("-fluent-bit-config$"))) | .data."fluent-bit.conf"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/config fluent-bit.conf)
+          (yq 'select(.kind == "ConfigMap" and (.metadata.name | test("-fluent-bit-config$"))) | .data."parsers.conf"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/config parsers.conf)
+
+          # fluentBitMetrics defaults to "basic", which enables a lua filter needing this script.
+          New-Item -ItemType Directory -Force -Path generated/scripts | Out-Null
+          (yq 'select(.kind == "ConfigMap" and (.metadata.name | test("-lua$"))) | .data."payload.lua"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/scripts payload.lua)
 
           "cluster_tag=$clusterTag" >> $env:GITHUB_OUTPUT
 
@@ -99,6 +103,7 @@ jobs:
           & "${{ env.CHART_DIR }}/e2e/windows/run-windows-e2e.ps1" `
             -Image (Get-Content "${{ env.CHART_DIR }}/generated/image.txt" -Raw) `
             -ConfigDir (Resolve-Path "${{ env.CHART_DIR }}/generated/config") `
+            -ScriptsDir (Resolve-Path "${{ env.CHART_DIR }}/generated/scripts") `
             -EnvJsonPath (Resolve-Path "${{ env.CHART_DIR }}/generated/env.json") `
             -CommandJsonPath (Resolve-Path "${{ env.CHART_DIR }}/generated/command.json") `
             -AccountId $env:K8S_AGENTS_E2E_ACCOUNT_ID `
