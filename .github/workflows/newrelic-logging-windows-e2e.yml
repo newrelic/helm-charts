@@ -33,7 +33,9 @@ jobs:
       - name: Helm dependency build
         shell: pwsh
         working-directory: ${{ env.CHART_DIR }}
-        run: helm dependency build .
+        run: |
+          helm repo add newrelic https://helm-charts.newrelic.com
+          helm dependency build .
 
       - name: Render Windows DaemonSet + ConfigMap from the chart
         id: render
