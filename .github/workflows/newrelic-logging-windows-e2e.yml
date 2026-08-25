@@ -1,0 +1,97 @@
+name: Newrelic Logging chart Windows E2E
+
+on:
+  pull_request:
+    paths:
+      - 'charts/newrelic-logging/**'
+      - '.github/workflows/newrelic-logging-windows-e2e.yml'
+      - '.github/workflows/newrelic-logging-windows-e2e-external.yml'
+
+permissions:
+  contents: read
+
+env:
+  CHART_DIR: charts/newrelic-logging
+  RELEASE_NAME: nrlogwine2e
+
+jobs:
+  windows-e2e-test:
+    name: Run Windows Tests
+    # Do not run e2e tests if PR has skip-e2e label or if it's from a forked repo (external contribution)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name == 'newrelic/helm-charts' }}
+    # Runs the chart's real Windows container natively, no Kubernetes needed (see run-windows-e2e.ps1).
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v5
+        with:
+          version: 'latest'
+
+      - name: Helm dependency build
+        shell: pwsh
+        working-directory: ${{ env.CHART_DIR }}
+        run: helm dependency build .
+
+      - name: Render Windows DaemonSet + ConfigMap from the chart
+        id: render
+        shell: pwsh
+        working-directory: ${{ env.CHART_DIR }}
+        run: |
+          $clusterTag = "nr-logging-wine2e-${{ github.run_id }}-${{ github.run_attempt }}"
+
+          # Only ltsc2022 runs here: GitHub retired the windows-2019 runner image, and Windows
+          # containers need a host matching their build. ltsc2019 stays covered by helm-unittest
+          # only (ci/test-enable-windows-values.yaml) - see README's Windows support section.
+          $targetDaemonsetName = "${{ env.RELEASE_NAME }}-newrelic-logging-windows-ltsc2022"
+
+          helm template ${{ env.RELEASE_NAME }} . `
+            --set enableWindows=true --set enableLinux=false `
+            --set global.licenseKey=placeholder --set global.cluster=$clusterTag `
+            -s templates/daemonset-windows.yaml -s templates/configmap.yaml | Set-Content rendered.yaml
+
+          $env:TARGET_NAME = $targetDaemonsetName
+          $daemonset = (yq 'select(.kind == "DaemonSet" and .metadata.name == strenv(TARGET_NAME))' rendered.yaml -o=json | Out-String) | ConvertFrom-Json
+          if (-not $daemonset) {
+            throw "Could not find rendered DaemonSet '$targetDaemonsetName' - has templates/daemonset-windows.yaml or values.yaml's windowsOsList changed?"
+          }
+          $container = $daemonset.spec.template.spec.containers[0]
+
+          New-Item -ItemType Directory -Force -Path generated | Out-Null
+          $container.image | Set-Content -NoNewline generated/image.txt
+          ($container.command | ConvertTo-Json -Compress) | Set-Content -NoNewline generated/command.json
+
+          # LICENSE_KEY/NODE_NAME/HOSTNAME have no literal value (secretKeyRef/fieldRef) -
+          # run-windows-e2e.ps1 supplies them itself.
+          $envMap = [ordered]@{}
+          foreach ($e in $container.env) {
+            if ($e.PSObject.Properties.Name -contains 'value') {
+              $envMap[$e.name] = $e.value
+            }
+          }
+          ($envMap | ConvertTo-Json -Compress) | Set-Content -NoNewline generated/env.json
+
+          New-Item -ItemType Directory -Force -Path generated/config | Out-Null
+          (yq 'select(.kind == "ConfigMap") | .data."fluent-bit.conf"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/config fluent-bit.conf)
+          (yq 'select(.kind == "ConfigMap") | .data."parsers.conf"' rendered.yaml | Out-String) | Set-Content (Join-Path generated/config parsers.conf)
+
+          "cluster_tag=$clusterTag" >> $env:GITHUB_OUTPUT
+
+      - name: Run Windows E2E test
+        shell: pwsh
+        env:
+          K8S_AGENTS_E2E_ACCOUNT_ID: ${{ secrets.K8S_AGENTS_E2E_ACCOUNT_ID }}
+          K8S_AGENTS_E2E_API_KEY: ${{ secrets.K8S_AGENTS_E2E_API_KEY }}
+          K8S_AGENTS_E2E_LICENSE_KEY: ${{ secrets.K8S_AGENTS_E2E_LICENSE_KEY }}
+        run: |
+          & "${{ env.CHART_DIR }}/e2e/windows/run-windows-e2e.ps1" `
+            -Image (Get-Content "${{ env.CHART_DIR }}/generated/image.txt" -Raw) `
+            -ConfigDir (Resolve-Path "${{ env.CHART_DIR }}/generated/config") `
+            -EnvJsonPath (Resolve-Path "${{ env.CHART_DIR }}/generated/env.json") `
+            -CommandJsonPath (Resolve-Path "${{ env.CHART_DIR }}/generated/command.json") `
+            -AccountId $env:K8S_AGENTS_E2E_ACCOUNT_ID `
+            -ApiKey $env:K8S_AGENTS_E2E_API_KEY `
+            -LicenseKey $env:K8S_AGENTS_E2E_LICENSE_KEY `
+            -MarkerTag "${{ steps.render.outputs.cluster_tag }}"
