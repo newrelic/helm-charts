@@ -41,13 +41,16 @@ scenarios:
     after: *cleanup
     tests:
       nrqls:
-        # lowDataMode strips most metadata, but a few basic fields should still survive,
-        # while others (like the pod's `labels.app`) should be gone. Both assertions run
-        # against the same query so labelLeakCount can't pass on rows that haven't arrived yet.
-        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND pod_name IS NOT NULL AND container_name IS NOT NULL AND namespace_name IS NOT NULL) AS retainedCount, filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND labels.app IS NOT NULL) AS labelLeakCount FROM Log"
+        # Basic fields should survive lowDataMode. Checks they weren't dropped by mistake.
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND pod_name IS NOT NULL AND container_name IS NOT NULL AND namespace_name IS NOT NULL) AS retainedCount FROM Log"
           expected_results:
             - key: "retainedCount"
               lowerBoundedValue: 1
+        # Labels should NOT survive lowDataMode. Checks they were actually stripped.
+        # (Both queries must pass together, so this can't pass on empty data alone —
+        # retainedCount above blocks success until real marker logs show up.)
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND labels.app IS NOT NULL) AS labelLeakCount FROM Log"
+          expected_results:
             - key: "labelLeakCount"
               value: 0
       scripts:
