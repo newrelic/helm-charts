@@ -18,7 +18,8 @@ env:
 jobs:
   e2e-test-external:
     name: Run Tests
-    # Do not run e2e tests if PR has skip-e2e label or if it's a non-forked repo (internal contribution)
+    # Skip if the PR has the skip-e2e label, or if it's an internal (non-forked) PR —
+    # those run via newrelic-logging-e2e.yml instead, which doesn't need the approval gate below.
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name != 'newrelic/helm-charts' }}
     runs-on: ubuntu-latest
     environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
@@ -40,7 +41,7 @@ jobs:
         uses: newrelic/newrelic-integration-e2e-action@v1
         with:
           retry_seconds: 90
-          retry_attempts: 10
+          retry_attempts: 6
           agent_enabled: false
           spec_path: charts/newrelic-logging/e2e/test-specs.yml
           account_id: ${{ secrets.K8S_AGENTS_E2E_ACCOUNT_ID }}
