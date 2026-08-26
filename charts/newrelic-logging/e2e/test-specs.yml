@@ -12,7 +12,7 @@ scenarios:
       - kubectl rollout status daemonset/${SCENARIO_TAG}-newrelic-logging -n nr-${SCENARIO_TAG} --timeout=60s
       - kubectl apply -f e2e-resources.yml
     after: &cleanup
-      - kubectl logs -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
+      - kubectl logs -n nr-${SCENARIO_TAG} -l app.kubernetes.io/name=newrelic-logging --all-containers --prefix=true || true
       - kubectl get pods -A -o wide || true
       - kubectl delete -f e2e-resources.yml || true
       - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} || true
@@ -41,16 +41,13 @@ scenarios:
     after: *cleanup
     tests:
       nrqls:
-        # lowDataMode strips most metadata, but a few basic fields should still survive.
-        # This checks those fields didn't get dropped by mistake.
-        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND pod_name IS NOT NULL AND container_name IS NOT NULL AND namespace_name IS NOT NULL) AS retainedCount FROM Log"
+        # lowDataMode strips most metadata, but a few basic fields should still survive,
+        # while others (like the pod's `labels.app`) should be gone. Both assertions run
+        # against the same query so labelLeakCount can't pass on rows that haven't arrived yet.
+        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND pod_name IS NOT NULL AND container_name IS NOT NULL AND namespace_name IS NOT NULL) AS retainedCount, filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND labels.app IS NOT NULL) AS labelLeakCount FROM Log"
           expected_results:
             - key: "retainedCount"
               lowerBoundedValue: 1
-        # The test pod has a label, which normally shows up as `labels.app` on the log.
-        # lowDataMode should remove labels — this checks it actually did.
-        - query: "SELECT filter(count(*), WHERE message LIKE '%nr-logging-e2e-marker%' AND labels.app IS NOT NULL) AS labelLeakCount FROM Log"
-          expected_results:
             - key: "labelLeakCount"
               value: 0
       scripts:
