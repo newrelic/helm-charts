@@ -1,0 +1,40 @@
+suite: setup job configmap
+templates:
+  - templates/setup-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mssql.server: "sql.internal"
+  mssql.topology: "self-hosted"
+  mssql.username: "nr_monitor"
+  mssql.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.sqlAdmin.existingSecret: "admin-secret"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: fails when setupJob.enabled is true and sqlAdmin.existingSecret is unset
+    set:
+      setupJob.enabled: true
+      setupJob.sqlAdmin.existingSecret: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "setupJob.sqlAdmin.existingSecret is required when setupJob.enabled is true"
+  - it: mounts the grants script with the expected permissions
+    set:
+      setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "GRANT VIEW SERVER STATE TO \\[\\$\\(monitor_user\\)\\];"
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "GRANT VIEW DATABASE STATE TO \\[\\$\\(monitor_user\\)\\]"
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "'rdsadmin'"

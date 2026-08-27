@@ -1,0 +1,60 @@
+image:
+  repository: newrelic/nrdot-collector
+  tag: "2.4.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+mssql:
+  # -- Required. One of: self-hosted, rds. Documentation/validation only today -- grants.sql and receiver defaults are identical either way.
+  topology: ""
+  # -- Required. SQL Server host/endpoint (no port).
+  server: ""
+  # -- SQL Server port.
+  port: 1433
+  # -- Plain-value monitoring username. Ignored if existingSecret is set.
+  username: ""
+  # -- Plain-value monitoring password. Ignored if existingSecret is set.
+  password: ""
+  # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
+  existingSecret: ""
+  # -- How often the receiver scrapes SQL Server.
+  collectionInterval: 15s
+  # -- Maximum number of queries the receiver runs concurrently.
+  maxConcurrentQueries: 4
+  tls:
+    # -- Enables an encrypted connection to SQL Server. Maps to the receiver's enable_ssl.
+    enabled: false
+    # -- Skips SQL Server TLS certificate validation. Maps to the receiver's trust_server_certificate.
+    trustServerCertificate: false
+
+# -- Required. New Relic OTLP endpoint for the account's region, e.g. otlp.nr-data.net:4317
+otlpEndpoint: ""
+
+# -- Plain-value New Relic license key. Can also be set as global.licenseKey.
+licenseKey: ""
+# -- Name of a pre-existing Secret holding the license key. Can also be set as global.customSecretName.
+customSecretName: ""
+# -- Key inside customSecretName that holds the license key. Can also be set as global.customSecretLicenseKey.
+customSecretLicenseKey: ""
+
+# -- Escape hatch merged into the nrsqlserver receiver block (e.g. metrics, events overrides).
+additionalReceiverConfig: {}
+
+setupJob:
+  # -- If true, a Helm hook Job creates the monitoring login and grants it read-only access before install/upgrade.
+  enabled: false
+  image:
+    # -- sqlcmd image. No default -- see README for why (mcr.microsoft.com/mssql-tools:latest is freely pullable but stale/unmaintained).
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  sqlAdmin:
+    # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path. Must be a sysadmin-role login able to CREATE LOGIN and grant server-level permissions.
+    existingSecret: ""
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

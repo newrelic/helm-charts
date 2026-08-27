@@ -1,0 +1,53 @@
+{{- include "mssql-otel.validate.topology" . -}}
+{{- $receiver := dict -}}
+{{- $receiver = mergeOverwrite $receiver (include "mssql-otel.receiver.defaults" . | fromYaml) -}}
+{{- $receiver = mergeOverwrite $receiver (dict
+      "server" .Values.mssql.server
+      "port" (.Values.mssql.port | int)
+      "username" "${env:MSSQL_USERNAME}"
+      "password" "${env:MSSQL_PASSWORD}"
+      "collection_interval" .Values.mssql.collectionInterval
+      "max_concurrent_queries" (.Values.mssql.maxConcurrentQueries | int)
+      "enable_ssl" .Values.mssql.tls.enabled
+      "trust_server_certificate" .Values.mssql.tls.trustServerCertificate
+) -}}
+{{- $receiver = mergeOverwrite $receiver (.Values.additionalReceiverConfig | default dict) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mssql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mssql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      nrsqlserver:
+{{ toYaml $receiver | indent 8 }}
+    processors:
+      memory_limiter:
+        check_interval: ${env:NR_MEM_LIMITER_CHECK_INTERVAL:-1s}
+        limit_mib: ${env:NR_MEM_LIMITER_LIMIT_MIB:-200}
+        spike_limit_mib: ${env:NR_MEM_LIMITER_SPIKE_MIB:-50}
+      batch:
+    exporters:
+      otlphttp:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [nrsqlserver]
+          processors: [memory_limiter, batch]
+          exporters: [otlphttp]
+        logs:
+          receivers: [nrsqlserver]
+          processors: [memory_limiter, batch]
+          exporters: [otlphttp]

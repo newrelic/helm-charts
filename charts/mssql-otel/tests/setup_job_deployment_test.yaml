@@ -1,0 +1,98 @@
+suite: setup job resource
+templates:
+  - templates/setup-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mssql.server: "sql.internal"
+  mssql.port: 1433
+  mssql.topology: "self-hosted"
+  mssql.username: "nr_monitor"
+  mssql.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.sqlAdmin.existingSecret: "admin-secret"
+  setupJob.image.repository: "mycompany/mssql-tools18"
+  setupJob.image.tag: "18.4"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: has pre-install/pre-upgrade hook annotations with the documented delete policy
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-install,pre-upgrade
+      - equal:
+          path: metadata.annotations["helm.sh/hook-delete-policy"]
+          value: before-hook-creation,hook-succeeded
+  - it: wires admin and monitoring credentials as env vars, never as CLI args
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: SQL_ADMIN_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: admin-secret
+                key: username
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: SQL_ADMIN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: admin-secret
+                key: password
+      - equal:
+          path: spec.template.spec.containers[0].env[2]
+          value:
+            name: SQL_MONITOR_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: my-release-mssql-otel-mssql
+                key: username
+      - equal:
+          path: spec.template.spec.containers[0].env[3]
+          value:
+            name: SQL_MONITOR_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-release-mssql-otel-mssql
+                key: password
+      - notContains:
+          path: spec.template.spec.containers[0].args
+          content: "s3cret"
+  - it: uses the configured sqlcmd image and restarts on failure
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: mycompany/mssql-tools18:18.4
+      - equal:
+          path: spec.template.spec.restartPolicy
+          value: Never
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: setup
+            configMap:
+              name: my-release-mssql-otel-setup
+  - it: passes server and port to sqlcmd, and monitor credentials as scripting variables
+    set:
+      setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "sqlcmd -S \"\\$\\{MSSQL_SERVER\\},\\$\\{MSSQL_PORT\\}\""
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-v monitor_user=\"\\$\\{SQL_MONITOR_USERNAME\\}\" monitor_password=\"\\$\\{SQL_MONITOR_PASSWORD\\}\""
