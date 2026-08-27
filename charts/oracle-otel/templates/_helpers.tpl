@@ -94,7 +94,10 @@ session_wait_event_collection:
 
 {{/*
 metrics + resource_attributes for cdb/pdb (self-hosted). Verbatim from New Relic's
-otel-oracledb docs "Database configuration" section -- identical between cdb and pdb.
+otel-oracledb docs "Database configuration" section -- identical between cdb and pdb,
+except resource_attributes omits oracle.db.pdb: nrdot-collector 2.2.0's nroracledb
+receiver rejects it as an invalid resource_attributes key at startup (confirmed via
+ct install CI failure), even though the docs list it as one of 8 valid keys.
 */}}
 {{- define "oracle-otel.receiver.cdbPdbDefaults" -}}
 metrics:
@@ -280,8 +283,6 @@ resource_attributes:
   oracle.db.hosting_type:
     enabled: true
   oracle.db.open_mode:
-    enabled: true
-  oracle.db.pdb:
     enabled: true
   oracle.db.role:
     enabled: true
