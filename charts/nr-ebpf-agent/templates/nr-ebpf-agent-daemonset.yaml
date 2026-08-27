@@ -5,6 +5,9 @@
 {{- if and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpoint) }}
   {{- fail "customOtlpEndpointTlsCertSecret is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or remove the TLS cert configuration." }}
 {{- end }}
+{{- if and (hasKey .Values "agentMetadataReporting") (not (or (eq (toString .Values.agentMetadataReporting) "true") (eq (toString .Values.agentMetadataReporting) "false"))) }}
+  {{- fail (printf "agentMetadataReporting must be a boolean (true or false), got '%v'." .Values.agentMetadataReporting) }}
+{{- end }}
 {{- $region := include "newrelic.common.region" . }}
 apiVersion: apps/v1
 kind: DaemonSet
