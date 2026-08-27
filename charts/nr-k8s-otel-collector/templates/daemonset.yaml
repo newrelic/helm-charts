@@ -151,7 +151,7 @@ spec:
             {{- . | toYaml | nindent 12 }}
             {{- end }}
           volumeMounts:
-            {{- if or (not (include "newrelic.common.gkeAutopilot" .)) (and (include "newrelic.common.gkeAutopilot" .) .Values.gkeAutopilotAllowlist) }}
+            {{- if or (not (include "newrelic.common.gkeAutopilot" .)) (and (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.gkeAutopilotAllowlist" .)) }}
             - name: host-fs
               mountPath: /hostfs
               readOnly: true
@@ -171,7 +171,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
-        {{- if or (not (include "newrelic.common.gkeAutopilot" .)) (and (include "newrelic.common.gkeAutopilot" .) .Values.gkeAutopilotAllowlist) }}
+        {{- if or (not (include "newrelic.common.gkeAutopilot" .)) (and (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.gkeAutopilotAllowlist" .)) }}
         - name: host-fs
           hostPath:
             path: /
