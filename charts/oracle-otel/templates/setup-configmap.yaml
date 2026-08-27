@@ -19,5 +19,7 @@ data:
 {{ .Files.Get "files/setup/pdb-grants.sql" | indent 4 }}
 {{- else if eq .Values.oracle.topology "rds" }}
 {{ .Files.Get "files/setup/rds-grants.sql" | indent 4 }}
+{{- else if eq .Values.oracle.topology "adb" }}
+{{ .Files.Get "files/setup/adb-grants.sql" | indent 4 }}
 {{- end }}
 {{- end }}

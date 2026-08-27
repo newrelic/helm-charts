@@ -23,7 +23,7 @@ tests:
       setupJob.enabled: true
     asserts:
       - failedTemplate:
-          errorMessage: "oracle.topology must be one of: cdb, pdb, rds when setupJob.enabled is true"
+          errorMessage: "oracle.topology must be one of: cdb, pdb, rds, adb when setupJob.enabled is true"
   - it: fails when setupJob.enabled is true and oracleAdmin.existingSecret is unset
     set:
       setupJob.enabled: true
@@ -59,3 +59,17 @@ tests:
       - matchRegex:
           path: data["grants.sql"]
           pattern: "rdsadmin.rdsadmin_util.grant_sys_object"
+  - it: mounts the adb grant script when topology is adb
+    set:
+      setupJob.enabled: true
+      oracle.topology: "adb"
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "GRANT SELECT ON SYS\\.V_\\$INSTANCE TO &monitor_user;"
+      - notMatchRegex:
+          path: data["grants.sql"]
+          pattern: "CONTAINER=ALL"
+      - notMatchRegex:
+          path: data["grants.sql"]
+          pattern: "rdsadmin"

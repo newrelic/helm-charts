@@ -102,3 +102,11 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "CONNECT \\$\\{ORACLE_ADMIN_USERNAME\\}/\\$\\{ORACLE_ADMIN_PASSWORD\\}@\\$\\{ORACLE_ENDPOINT\\}/\\$\\{ORACLE_SERVICE\\}\\n"
+  - it: does not connect AS SYSDBA for adb topology, since ADB grants run as SYS without SYSDBA mode
+    set:
+      setupJob.enabled: true
+      oracle.topology: "adb"
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "CONNECT \\$\\{ORACLE_ADMIN_USERNAME\\}/\\$\\{ORACLE_ADMIN_PASSWORD\\}@\\$\\{ORACLE_ENDPOINT\\}/\\$\\{ORACLE_SERVICE\\}\\n"
