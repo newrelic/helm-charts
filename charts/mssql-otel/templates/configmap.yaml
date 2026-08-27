@@ -1,4 +1,5 @@
 {{- include "mssql-otel.validate.topology" . -}}
+{{- include "mssql-otel.validate.otlpEndpoint" . -}}
 {{- $datasource := printf "server=%s;user id=${env:MSSQL_USERNAME};password=${env:MSSQL_PASSWORD};port=%d;encrypt=%t;trustservercertificate=%t"
       .Values.mssql.server
       (.Values.mssql.port | int)

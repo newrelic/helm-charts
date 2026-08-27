@@ -10,7 +10,7 @@ set:
   mssql.username: "nr_monitor"
   mssql.password: "s3cret"
   mssql.collectionInterval: "30s"
-  otlpEndpoint: "otlp.nr-data.net:4317"
+  otlpEndpoint: "https://otlp.nr-data.net:4318"
 tests:
   - it: fails when mssql.topology is unset or invalid
     set:
@@ -18,6 +18,12 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "mssql.topology must be one of: self-hosted, rds"
+  - it: fails when otlpEndpoint has no scheme, since otlphttp requires a full URL
+    set:
+      otlpEndpoint: "otlp.nr-data.net:4318"
+    asserts:
+      - failedTemplate:
+          errorMessage: 'otlpEndpoint must include a scheme (http:// or https://) -- the otlphttp exporter requires a full URL, not bare host:port. Got: "otlp.nr-data.net:4318". New Relic''s US OTLP/HTTP endpoint is https://otlp.nr-data.net:4318'
   - it: renders the nrsqlserver receiver's datasource with env-substitution credentials, never literal ones
     asserts:
       - matchRegex:
@@ -41,7 +47,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: \"otlp\\.nr-data\\.net:4317\""
+          pattern: "endpoint: \"https://otlp\\.nr-data\\.net:4318\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "api-key: \"\\$\\{env:NEW_RELIC_LICENSE_KEY\\}\""

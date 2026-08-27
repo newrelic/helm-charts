@@ -121,7 +121,7 @@ without touching production.
 | `mssql.maxConcurrentQueries` | Max concurrent scrape queries | `4` |
 | `mssql.tls.enabled` | Encrypt the connection to SQL Server | `false` |
 | `mssql.tls.trustServerCertificate` | Skip SQL Server TLS certificate validation | `false` |
-| `otlpEndpoint` | New Relic OTLP endpoint for your account's region | `""` |
+| `otlpEndpoint` | New Relic OTLP/HTTP endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time, since `otlphttp` needs a full URL, not bare `host:port` like `oracle-otel`'s gRPC exporter | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into the `nrsqlserver` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated login-creation Job | `false` |

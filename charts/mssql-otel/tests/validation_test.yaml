@@ -9,14 +9,14 @@ tests:
     set:
       mssql.username: "u"
       mssql.password: "p"
-      otlpEndpoint: "otlp.nr-data.net:4317"
+      otlpEndpoint: "https://otlp.nr-data.net:4318"
     asserts:
       - failedTemplate:
           errorMessage: "mssql.server is required"
   - it: fails when no credential path is provided
     set:
       mssql.server: "sql.internal"
-      otlpEndpoint: "otlp.nr-data.net:4317"
+      otlpEndpoint: "https://otlp.nr-data.net:4318"
     asserts:
       - failedTemplate:
           errorMessage: "You must set mssql.existingSecret, or both mssql.username and mssql.password"

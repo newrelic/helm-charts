@@ -54,6 +54,18 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{/*
+The otlphttp exporter requires a full scheme://host:port URL, not bare host:port
+(unlike oracle-otel's gRPC otlp exporter). Confirmed live: https://otlp.nr-data.net:4318
+(the gRPC-style value, copied from oracle-otel's convention) fails at runtime with
+"unsupported protocol scheme" -- catch this at render time instead.
+*/}}
+{{- define "mssql-otel.validate.otlpEndpoint" -}}
+{{- if not (or (hasPrefix "http://" .Values.otlpEndpoint) (hasPrefix "https://" .Values.otlpEndpoint)) -}}
+{{- fail (printf "otlpEndpoint must include a scheme (http:// or https://) -- the otlphttp exporter requires a full URL, not bare host:port. Got: %q. New Relic's US OTLP/HTTP endpoint is https://otlp.nr-data.net:4318" .Values.otlpEndpoint) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "mssql-otel.validate.setupJob" -}}
 {{- if .Values.setupJob.enabled -}}
 {{- if not .Values.setupJob.sqlAdmin.existingSecret -}}
