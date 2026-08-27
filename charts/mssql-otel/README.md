@@ -58,13 +58,21 @@ clarity and to leave room for a future difference without a breaking change.
 
 ## TLS
 
-Set `mssql.tls.enabled: true` to encrypt the connection to SQL Server
-(maps to the receiver's `enable_ssl`), and `mssql.tls.trustServerCertificate:
-true` to skip certificate validation (maps to `trust_server_certificate`) —
+The `nrsqlserver` receiver has no discrete TLS fields — despite what New
+Relic's docs show, `ct install` confirmed the real receiver schema rejects
+`enable_ssl`/`trust_server_certificate` outright. TLS is only configurable
+via the receiver's `datasource` connection string, so this chart always
+connects that way and sets the string's `encrypt`/`trustservercertificate`
+DSN parameters (from the underlying `go-mssqldb` driver) from
+`mssql.tls.enabled`/`mssql.tls.trustServerCertificate`.
+
+Set `mssql.tls.enabled: true` to encrypt the connection, and
+`mssql.tls.trustServerCertificate: true` to skip certificate validation —
 useful for self-signed certs in test environments, but weakens the
-connection's security guarantees. Confirm both flags' actual behavior
-against a real SQL Server instance requiring TLS before relying on this in
-production.
+connection's security guarantees. This has been confirmed to render a
+schema-valid `datasource` string via `ct install`; the actual TLS handshake
+behavior against a real SQL Server instance requiring encryption is still
+unverified — see `TESTING.md`.
 
 ## Automated setup (`setupJob.enabled: true`)
 

@@ -24,9 +24,9 @@ mssql:
   # -- Maximum number of queries the receiver runs concurrently.
   maxConcurrentQueries: 4
   tls:
-    # -- Enables an encrypted connection to SQL Server. Maps to the receiver's enable_ssl.
+    # -- Enables an encrypted connection to SQL Server. The nrsqlserver receiver has no discrete TLS fields -- this sets the `encrypt` DSN parameter on the receiver's `datasource` connection string (the only place TLS is configurable), per the underlying go-mssqldb driver.
     enabled: false
-    # -- Skips SQL Server TLS certificate validation. Maps to the receiver's trust_server_certificate.
+    # -- Skips SQL Server TLS certificate validation. Sets the `datasource` string's `trustservercertificate` DSN parameter.
     trustServerCertificate: false
 
 # -- Required. New Relic OTLP endpoint for the account's region, e.g. otlp.nr-data.net:4317

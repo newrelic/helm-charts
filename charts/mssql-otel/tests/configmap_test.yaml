@@ -18,37 +18,25 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "mssql.topology must be one of: self-hosted, rds"
-  - it: renders the nrsqlserver receiver with env-substitution credentials, never literal ones
+  - it: renders the nrsqlserver receiver's datasource with env-substitution credentials, never literal ones
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "server: sql\\.internal"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "port: 1433"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "username: \\$\\{env:MSSQL_USERNAME\\}"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "password: \\$\\{env:MSSQL_PASSWORD\\}"
+          pattern: "datasource: server=sql\\.internal;user id=\\$\\{env:MSSQL_USERNAME\\};password=\\$\\{env:MSSQL_PASSWORD\\};port=1433;encrypt=false;trustservercertificate=false"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "collection_interval: 30s"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "s3cret"
-  - it: renders TLS fields from mssql.tls
+  - it: sets encrypt and trustservercertificate on the datasource from mssql.tls
     set:
       mssql.tls.enabled: true
       mssql.tls.trustServerCertificate: true
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "enable_ssl: true"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "trust_server_certificate: true"
+          pattern: "encrypt=true;trustservercertificate=true"
   - it: renders the otlphttp exporter with an env-substitution api-key, never a literal one, plus retry_on_failure
     asserts:
       - matchRegex:

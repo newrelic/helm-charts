@@ -1,15 +1,15 @@
 {{- include "mssql-otel.validate.topology" . -}}
+{{- $datasource := printf "server=%s;user id=${env:MSSQL_USERNAME};password=${env:MSSQL_PASSWORD};port=%d;encrypt=%t;trustservercertificate=%t"
+      .Values.mssql.server
+      (.Values.mssql.port | int)
+      .Values.mssql.tls.enabled
+      .Values.mssql.tls.trustServerCertificate -}}
 {{- $receiver := dict -}}
 {{- $receiver = mergeOverwrite $receiver (include "mssql-otel.receiver.defaults" . | fromYaml) -}}
 {{- $receiver = mergeOverwrite $receiver (dict
-      "server" .Values.mssql.server
-      "port" (.Values.mssql.port | int)
-      "username" "${env:MSSQL_USERNAME}"
-      "password" "${env:MSSQL_PASSWORD}"
+      "datasource" $datasource
       "collection_interval" .Values.mssql.collectionInterval
       "max_concurrent_queries" (.Values.mssql.maxConcurrentQueries | int)
-      "enable_ssl" .Values.mssql.tls.enabled
-      "trust_server_certificate" .Values.mssql.tls.trustServerCertificate
 ) -}}
 {{- $receiver = mergeOverwrite $receiver (.Values.additionalReceiverConfig | default dict) -}}
 apiVersion: v1
