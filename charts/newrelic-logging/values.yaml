@@ -232,7 +232,7 @@ enableWindows: false
 # Windows containers can only be executed on hosts running the exact same Windows version and build number,
 # because Kubernetes only supports process isolation and not Hyper-V isolation (as of September 2021)
 windowsOsList:
-  # We aim to support (limited to LTSC2019/LTSC2022 using GitHub actions, see https://github.com/actions/runner-images/tree/main/images/win):
+  # We aim to support (limited to LTSC2019/LTSC2022/LTSC2025 using GitHub actions, see https://github.com/actions/runner-images/tree/main/images/win):
   # https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#windows-os-version-support
   - version: ltsc2019
     imageTagSuffix: windows-ltsc-2019
@@ -240,6 +240,9 @@ windowsOsList:
   - version: ltsc2022
     imageTagSuffix: windows-ltsc-2022
     buildNumber: 10.0.20348
+  - version: ltsc2025
+    imageTagSuffix: windows-ltsc-2025
+    buildNumber: 10.0.26100
 
 # Default set of resources assigned to the DaemonSet pods
 resources:
