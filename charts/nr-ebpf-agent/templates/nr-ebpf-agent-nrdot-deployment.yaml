@@ -34,6 +34,41 @@ spec:
       imagePullSecrets:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- if .Values.infraDetection.enabled }}
+      initContainers:
+      # eBPF-infra deactivation (cluster Deployment). One cluster-wide K8s API read
+      # decides report vs suppress; on suppress it stages a no-op collector config so
+      # this Deployment stops emitting KSM / k8s.* while a traditional infra agent is
+      # present anywhere in the cluster. Same detection + decision the DaemonSet uses,
+      # so both reach an identical verdict before either collector starts.
+      # "infra present anywhere -> nrdot cluster Deployment stands down."
+      - name: detect-infra
+        image: {{ include "nr-ebpf-agent.nrdot.kubectlImage" . }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.kubectlImagePullPolicy" . }}
+        command: ["/bin/sh", "/scripts/detect-infra-agent.sh"]
+        env:
+          - name: INFRA_MODE_PATH
+            value: /shared/infra-mode
+          - name: INFRA_MODE_ON_ERROR
+            value: "{{ .Values.infraDetection.onError }}"
+          # Stage the config the collector will load into the shared emptyDir.
+          - name: NRDOT_SRC_CONFIG
+            value: /temp-config/cluster.yaml
+          - name: NRDOT_DST_CONFIG
+            value: /final-config/cluster.yaml
+          - name: NRDOT_STANDDOWN_CONFIG
+            value: /scripts/nrdot-standdown.yaml
+        volumeMounts:
+          - name: infra-detect-script
+            mountPath: /scripts
+            readOnly: true
+          - name: infra-mode
+            mountPath: /shared
+          - name: nrdot-config
+            mountPath: /temp-config
+          - name: nrdot-config-final
+            mountPath: /final-config
+      {{- end }}
       containers:
         - name: nrdot-collector
           image: {{ include "nr-ebpf-agent.nrdot.image" . }}
@@ -66,13 +101,33 @@ spec:
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "$(HOST_IP):%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 12 }}
           volumeMounts:
+            {{- if .Values.infraDetection.enabled }}
+            # Config staged by the detect-infra init container (live cluster.yaml on
+            # "report", no-op stand-down config on "suppress"). Same path either way.
+            - name: nrdot-config-final
+              mountPath: /etc/nrdot
+              readOnly: true
+            {{- else }}
             - name: nrdot-config
               mountPath: /etc/nrdot
               readOnly: true
+            {{- end }}
       volumes:
         - name: nrdot-config
           configMap:
             name: {{ include "nr-ebpf-agent.nrdot.configName.cluster" . }}
+        {{- if .Values.infraDetection.enabled }}
+        - name: infra-detect-script
+          configMap:
+            name: {{ include "nr-ebpf-agent.fullname" . }}-infra-detect
+            defaultMode: 0755
+        - name: infra-mode
+          emptyDir: {}
+        # Holds the config selected by detect-infra (live vs stand-down); mounted by
+        # the collector.
+        - name: nrdot-config-final
+          emptyDir: {}
+        {{- end }}
       nodeSelector:
         {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
       {{- with include "nrEbpfAgent.clusterCollector.tolerations" . }}

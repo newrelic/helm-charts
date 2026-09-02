@@ -25,6 +25,22 @@ rules:
   - get
   - watch
   - list
+{{- if .Values.infraDetection.enabled }}
+# eBPF-infra deactivation: the detect-infra init container lists DaemonSets and
+# Deployments cluster-wide to check whether a traditional infrastructure agent is
+# present. Deployments are required because nri-kubernetes' KSM / cluster metrics
+# component (nrk8s-ksm) is a Deployment, not a DaemonSet - that is the component
+# the nrdot cluster Deployment must stand down for.
+- apiGroups:
+  - "apps"
+  resources:
+  - daemonsets
+  - deployments
+  verbs:
+  - get
+  - watch
+  - list
+{{- end }}
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 # nrdot collector permissions (shared by the per-node sidecar and the cluster
 # Deployment, which both run under this ServiceAccount):

@@ -1,0 +1,100 @@
+{{- if .Values.infraDetection.enabled }}
+# Detection script for the eBPF-infra stand-down feature. Run by the detect-infra
+# init container (in the eBPF DaemonSet and the nrdot cluster Deployment). One
+# cluster-wide K8s API read decides report vs suppress, identically for every
+# component, before any of them starts - no double-emit window, no partial state.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-infra-detect
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  detect-infra-agent.sh: |
+    #!/bin/sh
+    # Decide whether a traditional New Relic infrastructure agent (nri-kubernetes /
+    # newrelic-infrastructure) is deployed anywhere in this cluster, and write the
+    # decision ("report"|"suppress") to $INFRA_MODE_PATH. This is a cluster-wide
+    # question, not a per-node one: if infra runs anywhere the whole eBPF-infra unit
+    # stands down (host.* on the DaemonSet and k8s.*/KSM on the nrdot cluster
+    # Deployment), so the two providers never double-collect.
+    #
+    # We query both daemonsets AND deployments: nri-kubernetes splits into a per-node
+    # DaemonSet (nrk8s-kubelet / classic newrelic-infra) and a cluster-scoped
+    # Deployment (nrk8s-ksm) that emits the KSM / cluster k8s metrics. The KSM piece
+    # is exactly what competes with our nrdot cluster Deployment, so a daemonset-only
+    # check would miss it. Our own eBPF unit is labeled app=nr-ebpf-agent and never
+    # matched here.
+    INFRA_MODE_PATH="${INFRA_MODE_PATH:-/shared/infra-mode}"
+    ON_ERROR="${INFRA_MODE_ON_ERROR:-report}"
+    KINDS="${INFRA_KINDS:-daemonset,deployment}"
+    log() { echo "[detect-infra] $*"; }
+    write_decision() {
+      printf '%s\n' "$1" > "${INFRA_MODE_PATH}.tmp"
+      mv "${INFRA_MODE_PATH}.tmp" "${INFRA_MODE_PATH}"
+      log "decision='$1' written to ${INFRA_MODE_PATH}"
+    }
+    SELECTORS="app.kubernetes.io/name=newrelic-infrastructure app.kubernetes.io/name=nri-kubernetes app=newrelic-infrastructure"
+    found=""; api_ok=""
+    for sel in $SELECTORS; do
+      if out="$(kubectl get $KINDS -A -l "$sel" -o name 2>/dev/null)"; then
+        api_ok=1
+        if [ -n "$out" ]; then found=1; log "matched via '$sel':"; echo "$out"; break; fi
+      fi
+    done
+    if [ -z "$found" ]; then
+      if names="$(kubectl get $KINDS -A -o name 2>/dev/null)"; then
+        api_ok=1
+        if echo "$names" | grep -Eq 'newrelic-infrastructure|nri-kubernetes|nrk8s'; then
+          found=1; log "matched by name:"; echo "$names" | grep -E 'newrelic-infrastructure|nri-kubernetes|nrk8s'
+        fi
+      fi
+    fi
+    if [ -z "$api_ok" ]; then
+      log "WARNING: K8s API unreachable/denied; defaulting to '$ON_ERROR'."
+      DECISION="$ON_ERROR"; write_decision "$DECISION"
+    elif [ -n "$found" ]; then
+      DECISION="suppress"; write_decision "$DECISION"
+    else
+      log "no infra agent found."; DECISION="report"; write_decision "$DECISION"
+    fi
+
+    # Optional config staging (nrdot pods): when NRDOT_DST_CONFIG is set, stage the
+    # collector config the sidecar/Deployment will load into a shared emptyDir. On
+    # "suppress" we stage the no-op stand-down config (a valid collector with a
+    # single dead pipeline -> no KSM/k8s.* scrape, no export, health_check still
+    # green); on "report" we stage the live config unchanged. Doing this in the init
+    # container means the collector never even starts its real pipelines while an
+    # infra agent is present (no double-emit window).
+    if [ -n "$NRDOT_DST_CONFIG" ]; then
+      if [ "$DECISION" = "suppress" ] && [ -n "$NRDOT_STANDDOWN_CONFIG" ]; then
+        cp "$NRDOT_STANDDOWN_CONFIG" "$NRDOT_DST_CONFIG"
+        log "suppress -> staged stand-down config at $NRDOT_DST_CONFIG (collector goes silent)"
+      elif [ -n "$NRDOT_SRC_CONFIG" ]; then
+        cp "$NRDOT_SRC_CONFIG" "$NRDOT_DST_CONFIG"
+        log "report -> staged live config at $NRDOT_DST_CONFIG"
+      fi
+    fi
+  # No-op collector config staged on "suppress" (verified on nrdot-collector 1.17.0:
+  # a config needs >=1 pipeline with >=1 receiver, so a truly empty one is rejected).
+  # The otlp receiver is bound to a localhost port nothing sends to, so no data ever
+  # flows and the debug exporter never fires; the collector stays up and healthy.
+  nrdot-standdown.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 127.0.0.1:14317
+    exporters:
+      debug: {}
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+    service:
+      extensions: [health_check]
+      pipelines:
+        metrics:
+          receivers: [otlp]
+          exporters: [debug]
+{{- end }}

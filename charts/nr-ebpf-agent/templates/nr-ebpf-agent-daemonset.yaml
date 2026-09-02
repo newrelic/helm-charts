@@ -51,6 +51,27 @@ spec:
         {{- . | nindent 8 }}
       {{- end }}
       initContainers:
+      {{- if .Values.infraDetection.enabled }}
+      # eBPF-infra deactivation: decide report vs suppress once, cluster-wide, before
+      # any main container starts. Writes /shared/infra-mode; the agent entrypoint
+      # and nrdot read it. Completing as an init container guarantees no window
+      # where both providers emit and one shared decision for all.
+      - name: detect-infra
+        image: {{ include "nr-ebpf-agent.nrdot.kubectlImage" . }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.kubectlImagePullPolicy" . }}
+        command: ["/bin/sh", "/scripts/detect-infra-agent.sh"]
+        env:
+          - name: INFRA_MODE_PATH
+            value: /shared/infra-mode
+          - name: INFRA_MODE_ON_ERROR
+            value: "{{ .Values.infraDetection.onError }}"
+        volumeMounts:
+          - name: infra-detect-script
+            mountPath: /scripts
+            readOnly: true
+          - name: infra-mode
+            mountPath: /shared
+      {{- end }}
       - name: kernel-header-installer
         image: {{ include "nr-ebpf-agent.initContainerImage" . }}
         imagePullPolicy: {{ include "nr-ebpf-agent.kernelHeaderInstaller.imagePullPolicy" . }}
@@ -80,6 +101,18 @@ spec:
           - sh
           - -c
           - |
+            {{- if .Values.infraDetection.enabled }}
+            # eBPF-infra deactivation: detect-infra (an earlier init container) already
+            # wrote the decision. On "suppress" stage the no-op config so the per-node
+            # sidecar's kubeletstats k8s.* is not emitted while an infra agent is
+            # present, and skip the allocatable patch (nothing to scale).
+            if [ "$(cat /shared/infra-mode 2>/dev/null | tr -d '[:space:]')" = "suppress" ]; then
+              echo "[nrdot-get-allocatable] infra-mode=suppress -> staging stand-down config"
+              cp /scripts/nrdot-standdown.yaml /final-config/pernode.yaml
+              cat /final-config/pernode.yaml
+              exit 0
+            fi
+            {{- end }}
             NODE_NAME=$(echo $KUBE_NODE_NAME)
             echo "Node Name: $KUBE_NODE_NAME"
 
@@ -126,6 +159,16 @@ spec:
             mountPath: /temp-config
           - name: nrdot-config-final
             mountPath: /final-config
+          {{- if .Values.infraDetection.enabled }}
+          # Read the detect-infra decision and the shared stand-down config so a
+          # "suppress" verdict silences the per-node collector too.
+          - name: infra-mode
+            mountPath: /shared
+            readOnly: true
+          - name: infra-detect-script
+            mountPath: /scripts
+            readOnly: true
+          {{- end }}
       {{- end }}
 
       containers:
@@ -382,6 +425,12 @@ spec:
           - name: kernel-headers-volume
             mountPath: /kernel-headers
             readOnly: true
+          {{- if .Values.infraDetection.enabled }}
+          # Read the detect-infra decision (startup.sh turns it into REPORT_INFRA).
+          - name: infra-mode
+            mountPath: /shared
+            readOnly: true
+          {{- end }}
           {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
           - name: otlp-tls-cert
             mountPath: /etc/otlp-tls
@@ -433,6 +482,17 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
+      {{- if .Values.infraDetection.enabled }}
+      - name: infra-detect-script
+        configMap:
+          name: {{ include "nr-ebpf-agent.fullname" . }}-infra-detect
+          defaultMode: 0755
+      # Shared decision written by the detect-infra init container, read by the
+      # agent (and, when nrdot is enabled, the collector) - the mechanism by which
+      # one startup decision reaches every container in the unit.
+      - name: infra-mode
+        emptyDir: {}
+      {{- end }}
       - name: installer-script
         configMap:
           name: {{ include "nr-ebpf-agent.fullname" . }}-installer-script

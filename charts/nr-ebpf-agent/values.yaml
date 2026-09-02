@@ -61,6 +61,23 @@ reportInfra: ""
 # -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
 genAICaptureMessageContent: false
 
+# eBPF-infra deactivation: detect a traditional infrastructure agent
+# (nri-kubernetes / newrelic-infrastructure) at pod startup and, if present, make
+# the whole eBPF-infra unit stop reporting infra (host.* AND k8s.*), so the two
+# providers never double-collect. A detect-infra init container performs one
+# cluster-wide K8s API read and writes the decision to a shared volume before any
+# main container starts (no double-emit window); the eBPF agent entrypoint turns
+# it into REPORT_INFRA, and nrdot loads a with-infra vs no-infra config.
+infraDetection:
+  # -- Turn the deactivation feature on. Default on.
+  enabled: true
+  # -- Decision when the K8s API is unreachable/RBAC-denied: "report" (eBPF is the
+  # intended primary) or "suppress" (yield defensively).
+  onError: report
+  # -- Image for the detect-infra init container (needs kubectl). Reuses the same
+  # kubectl image the nrdot allocatable init container uses.
+  # (rendered via nr-ebpf-agent.nrdot.kubectlImage)
+
 # -- Host metrics (host-stats) cadence tuning.
 hostStats:
   # -- When low data mode is enabled, run the host-stats script every this many seconds instead
