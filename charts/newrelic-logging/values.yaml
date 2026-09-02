@@ -114,7 +114,9 @@ fluentBit:
           Daemon        off
           Parsers_File  parsers.conf
           HTTP_Server   On
-          HTTP_Listen   0.0.0.0
+          # Listening on :: binds a dual-stack socket, so the health check
+          # (and liveness probe) works on IPv4-only, IPv6-only, and dual-stack clusters.
+          HTTP_Listen   ::
           HTTP_Port     2020
           Health_Check  On
 
