@@ -277,3 +277,9 @@ This Helm chart deploys one `DaemonSet` for each of the Windows versions it supp
 This Helm chart currently supports the following Windows versions:
 -  Windows Server LTSC 2019, build 10.0.17763
 -  Windows Server LTSC 2022, build 10.0.20348
+
+### Windows E2E test coverage
+
+Both variants are covered by static `helm-unittest` tests (`ci/test-enable-windows-values.yaml`). `ltsc2022` additionally gets a real running-container E2E test (`.github/workflows/newrelic-logging-windows-e2e.yml`) that runs the chart's actual image/config as a Windows container on a GitHub-hosted `windows-latest` runner and verifies log delivery to New Relic.
+
+`ltsc2019` isn't covered this way: GitHub retired the `windows-2019` runner image, and Windows containers require a host matching their exact build.

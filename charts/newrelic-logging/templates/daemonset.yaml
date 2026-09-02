@@ -137,6 +137,8 @@ spec:
             {{- include "newrelic-logging.extraEnv" . | nindent 12 }}
             - name: FLUENTBIT_METRICS_TIER 
               value: {{ $.Values.fluentBit.fluentBitMetrics | default "basic" | quote }}
+            - name: LUA_SCRIPT_PATH
+              value: /fluent-bit/scripts/payload.lua
             - name: DAEMONSET_NAME
               value: {{ template "newrelic-logging.fullname" . }}  
             - name: NAMESPACE
