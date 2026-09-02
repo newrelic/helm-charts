@@ -53,21 +53,56 @@ helm install newrelic/newrelic-pixie \
 
 ## Globals
 
-**Important:** global parameters have higher precedence than locals with the same name.
-
 These are meant to be used when you are writing a chart with subcharts. It helps to avoid
 setting values multiple times on different subcharts.
 
+**Precedence Model**: For each value, the precedence is (highest to lowest):
+1. **Local value** (e.g., `cluster`) - takes precedence over global
+2. **Global value** (e.g., `global.cluster`) - applies if local value is not set
+3. **Default value** - applies if neither local nor global value is set
+
 More information on globals and subcharts can be found at [Helm's official documentation](https://helm.sh/docs/topics/chart_template_guide/subcharts_and_globals/).
 
-| Parameter                       |
-| ------------------------------- |
-| `global.cluster`                |
-| `global.licenseKey`             |
-| `global.customSecretName`       |
-| `global.customSecretLicenseKey` |
-| `global.lowDataMode`            |
-| `global.nrStaging`              |
+### Supported Global Values
+
+| Parameter                              | Description | Default |
+| -------------------------------------- | ----------- | ------- |
+| `global.cluster`                       | Cluster name for Kubernetes cluster | |
+| `global.licenseKey`                    | New Relic license key | |
+| `global.customSecretName`              | Name of Secret containing license key | |
+| `global.customSecretLicenseKey`        | Key in Secret for license key | |
+| `global.lowDataMode`                   | If true, enable low data mode sampling | false |
+| `global.nrStaging`                     | Send data to staging environment | false |
+| `global.proxy`                         | HTTP/HTTPS proxy URL for connectivity | |
+| `global.images.registry`               | Container registry (for air-gapped environments) | |
+| `global.images.pullSecrets`            | Image pull secrets | |
+| `global.images.pullPolicy`             | Image pull policy (IfNotPresent, Always, Never) | |
+| `global.nodeSelector`                  | Node selector for pod scheduling | {} |
+| `global.tolerations`                   | Node tolerations for tainted nodes | [] |
+| `global.affinity`                      | Pod affinity rules | {} |
+| `global.priorityClassName`             | Priority class for pod scheduling | |
+| `global.podSecurityContext`            | Security context for pods | |
+| `global.containerSecurityContext`      | Security context for containers | |
+| `global.dnsConfig`                     | DNS configuration for pods | |
+| `global.hostNetwork`                   | Use host network for pod | false |
+| `global.labels`                        | Additional labels for all resources | {} |
+| `global.podLabels`                     | Additional labels for pods | {} |
+
+### Important Notes
+
+- **apiKey is not inherited from global**: The Pixie API key must be provided separately as `apiKey` (not `global.licenseKey`). This is because Pixie uses a separate authentication system from New Relic.
+- **Example with globals**:
+  ```yaml
+  global:
+    cluster: my-cluster
+    licenseKey: <your-nrl-key>
+    proxy: http://proxy.example.com:3128
+    nodeSelector:
+      node.role/monitoring: "true"
+
+  # Still required - Pixie uses separate auth:
+  apiKey: <your-pixie-api-key>
+  ```
 
 ## Custom scripts
 
