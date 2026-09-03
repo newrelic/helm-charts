@@ -102,6 +102,8 @@ If using GKE Autopilot, please set the following configuration in your values.ya
 provider: "GKE_AUTOPILOT"
 ```
 
+Setting `gkeAutopilotAllowlist: true` keeps the `host-fs` mount and the hostmetrics `root_path` that GKE Autopilot normally strips, so node filesystem metrics (`system.filesystem.*`) can be collected. GKE Autopilot only admits that mount if a `WorkloadAllowlist` permitting the `/` hostPath is installed in the cluster. That allowlist is installed by an `AllowlistSynchronizer` custom resource (`auto.gke.io/v1`) that references the allowlist path. Without it, this flag has no effect.
+
 ## OpenShift
 
 If using OpenShift, please set the following configuration in your values.yaml file in order for the agent to work with OpenShift.
@@ -198,6 +200,7 @@ to export data to this connector which can then be connected to the New Relic ma
 | dnsConfig | object | `{}` | Sets pod's dnsConfig. Can be configured also with `global.dnsConfig` |
 | enable_atp | bool | `false` | Enable Adaptive Telemetry Processor (ATP) for intelligent process metrics filtering. When disabled (default), ATP processors are not included in the pipeline. When enabled, activates ATP with opinionated process metrics collection. IMPORTANT: Requires setting images.collector.repository to newrelic/nrdot-collector |
 | exporters | string | `nil` | Define custom exporters here. See: https://opentelemetry.io/docs/collector/configuration/#exporters |
+| gkeAutopilotAllowlist | bool | `false` | Only applies when `provider: GKE_AUTOPILOT`. When true, keeps the host root filesystem mount (`host-fs` -> `/hostfs`) and the hostmetrics `root_path` that GKE Autopilot normally strips, so the hostmetrics filesystem scraper can read the node's filesystems (`system.filesystem.*`). Requires a GKE Autopilot allowlist admitting the `/` hostPath: a `WorkloadAllowlist` installed by an `AllowlistSynchronizer` (`auto.gke.io/v1`). Has no effect without one. Can be configured also with `global.gkeAutopilotAllowlist`. |
 | images | object | `{"collector":{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.14.0"},"kubectl":{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"},"pullSecrets":[]}` | Images used by the chart. |
 | images.collector | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"newrelic/nrdot-collector","tag":"1.14.0"}` | Image for the OpenTelemetry Collector. To use experimental features, you must use the image newrelic/nrdot-collector. See below for experimental features. |
 | images.kubectl | object | `{"pullPolicy":"IfNotPresent","registry":"","repository":"bitnami/kubectl","tag":"latest"}` | Image for the initContainer that retrieves node allocatable resources. |
