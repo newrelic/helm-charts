@@ -14,12 +14,18 @@ customSecretLicenseKey: ""
 # @default -- "newrelic"
 subAgentsNamespace: "newrelic"
 
+uninstallation:
+  log:
+    # -- Log level for the uninstallation job.
+    # @default -- debug
+    level: "debug"
+
 # -- Image for the New Relic Agent Control
 # @default -- See <a href="values.yaml">values.yaml</a>
 image:
   registry:
   repository: newrelic/newrelic-agent-control
-  tag: "1.18.0"
+  tag: "1.23.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []
@@ -31,7 +37,7 @@ image:
 toolkitImage:
   registry:
   repository: newrelic/newrelic-agent-control-cli
-  tag: "1.18.0"
+  tag: "1.23.0"
   pullPolicy: IfNotPresent
   # -- The secrets that are needed to pull images from a custom registry.
   pullSecrets: []

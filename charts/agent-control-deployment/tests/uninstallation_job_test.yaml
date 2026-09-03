@@ -1,0 +1,48 @@
+suite: uninstall job template
+templates:
+  - templates/uninstallation-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: calls uninstall-agent-control without --release-name
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: 'newrelic-agent-control-cli uninstall-agent-control'
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: '--namespace "my-namespace"'
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: '--namespace-agents "newrelic"'
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: '--log-level "debug"'
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: '--release-name'
+
+  - it: waits for the Agent Control pod to terminate before sweeping
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: 'kubectl wait --for=delete pod \\\s*\n\s*-l app\.kubernetes\.io/name=agent-control,app\.kubernetes\.io/instance=my-release \\\s*\n\s*-n my-namespace --timeout=60s \|\| true'
+
+  - it: honors a custom subAgentsNamespace
+    set:
+      subAgentsNamespace: agents-ns
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: '--namespace-agents "agents-ns"'
+
+  - it: honors a custom uninstallation log level
+    set:
+      uninstallation:
+        log:
+          level: trace
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: '--log-level "trace"'

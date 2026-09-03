@@ -10,11 +10,10 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.19.0
-    helm.sh/chart: nr-k8s-otel-collector-0.13.0
+    helm.sh/chart: nr-k8s-otel-collector-0.14.2
 data:
   deployment-config.yaml: |
     receivers:
-      
       otlp:
         protocols:
           http:
@@ -143,11 +142,9 @@ data:
                 - action: replace
                   target_label: job_label
                   replacement: scheduler
+      
 
     processors:
-      
-      
-
       transform/promote_job_label:
         metric_statements:
           - context: datapoint
@@ -509,7 +506,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.13.0
+            value: 0.14.2
           - key: newrelic.entity.type
             action: upsert
             value: "k8s"
@@ -527,7 +524,7 @@ data:
             value: <cluser_name>
           - key: "newrelic.chart.version"
             action: upsert
-            value: 0.13.0
+            value: 0.14.2
 
       transform/events:
         log_statements:
@@ -679,18 +676,18 @@ data:
         send_batch_max_size: 1000
         timeout: 30s
         send_batch_size : 800
+      
+      
 
     exporters:
-      
-      
       otlp_http/newrelic:
         endpoint: https://otlp.nr-data.net
         headers:
           api-key: ${env:NR_LICENSE_KEY}
-
-    connectors:
+      
       
 
+    connectors:
       routing/nr_logs_pipelines:
         default_pipelines: [logs/pipeline]
         table:
@@ -728,6 +725,7 @@ data:
           - context: metric
             condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
+      
 
     service:
       telemetry:

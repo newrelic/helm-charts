@@ -1,4 +1,3 @@
-{{- if not .Values.cdEnabled -}}
 {{- $uninstallJobName := include "newrelic.common.naming.truncateToDNSWithSuffix" ( dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job" ) -}}
 apiVersion: batch/v1
 kind: Job
@@ -29,7 +28,12 @@ spec:
           command: ["/bin/sh", "-c"]
           args:
             - |-
-              echo "Removing configMaps created by AgentControl"
-              kubectl delete configmaps -l app.kubernetes.io/managed-by=newrelic-agent-control
-              kubectl delete configmaps -l app.kubernetes.io/managed-by=newrelic-agent-control -n {{ .Values.subAgentsNamespace }}
-{{- end -}}
+              echo "Waiting for the Agent Control pod to terminate..."
+              kubectl wait --for=delete pod \
+                -l app.kubernetes.io/name={{ include "newrelic.common.naming.name" . }},app.kubernetes.io/instance={{ .Release.Name }} \
+                -n {{ .Release.Namespace }} --timeout=60s || true
+              echo "Removing Agent Control managed resources..."
+              newrelic-agent-control-cli uninstall-agent-control \
+                --namespace "{{ .Release.Namespace }}" \
+                --namespace-agents "{{ .Values.subAgentsNamespace }}" \
+                --log-level "{{ .Values.uninstallation.log.level }}"

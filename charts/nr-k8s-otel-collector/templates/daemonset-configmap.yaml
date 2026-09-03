@@ -11,7 +11,6 @@ data:
     {{- . | nindent 4 }}
     {{- else }}
     receivers:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
       host_metrics:
         # TODO (chris): this is a linux specific configuration
         {{- if not (or (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.openShift" .)) }}
@@ -86,15 +85,23 @@ data:
       kubelet_stats:
         collection_interval: {{ .Values.receivers.kubeletstats.scrapeInterval }}
         metric_groups: [node, pod, container, volume]
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
         endpoint: "${KUBE_NODE_NAME}:10250"
         auth_type: "serviceAccount"
         insecure_skip_verify: true
-        {{- else }}
-        endpoint: "${KUBE_NODE_NAME}:10255"
-        auth_type: "none"
-        {{- end }}
         metrics:
+          {{- if include "newrelic.common.gkeAutopilot" . }}
+          # Disabled on GKE Autopilot: /pods (nodes/proxy) is blocked there, crash-looping the receiver.
+          k8s.container.cpu_limit_utilization:
+            enabled: false
+          k8s.pod.cpu_limit_utilization:
+            enabled: false
+          k8s.pod.cpu_request_utilization:
+            enabled: false
+          k8s.pod.memory_limit_utilization:
+            enabled: false
+          k8s.pod.memory_request_utilization:
+            enabled: false
+          {{- else }}
           k8s.container.cpu_limit_utilization:
             enabled: true
           k8s.pod.cpu_limit_utilization:
@@ -105,6 +112,7 @@ data:
             enabled: true
           k8s.pod.memory_request_utilization:
             enabled: true
+          {{- end }}
           k8s.pod.volume.usage:
             enabled: true
 
@@ -117,6 +125,13 @@ data:
               kubernetes_sd_configs:
                 - role: node
               relabel_configs:
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                # nodes/proxy is blocked on GKE Autopilot; direct-dial the kubelet cadvisor endpoint (authorizes via nodes/metrics).
+                - replacement: ${KUBE_NODE_NAME}:10250
+                  target_label: __address__
+                - replacement: /metrics/cadvisor
+                  target_label: __metrics_path__
+                {{- else }}
                 - replacement: kubernetes.default.svc.cluster.local:443
                   target_label: __address__
                 - regex: (.+)
@@ -124,6 +139,7 @@ data:
                   source_labels:
                     - __meta_kubernetes_node_name
                   target_label: __metrics_path__
+                {{- end }}
                 - action: replace
                   target_label: job_label
                   replacement: cadvisor
@@ -158,14 +174,24 @@ data:
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                insecure_skip_verify: true
+                {{- else }}
                 insecure_skip_verify: false
                 server_name: kubernetes
+                {{- end }}
             - job_name: kubelet
               scrape_interval: {{ .Values.receivers.prometheus.scrapeInterval }}
               bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
               kubernetes_sd_configs:
                 - role: node
               relabel_configs:
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                - replacement: ${KUBE_NODE_NAME}:10250
+                  target_label: __address__
+                - replacement: /metrics
+                  target_label: __metrics_path__
+                {{- else }}
                 - replacement: kubernetes.default.svc.cluster.local:443
                   target_label: __address__
                 - regex: (.+)
@@ -173,6 +199,7 @@ data:
                   source_labels:
                     - __meta_kubernetes_node_name
                   target_label: __metrics_path__
+                {{- end }}
                 - action: replace
                   target_label: job_label
                   replacement: kubelet
@@ -182,8 +209,13 @@ data:
               scheme: https
               tls_config:
                 ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+                {{- if include "newrelic.common.gkeAutopilot" . }}
+                # Direct kubelet cert won't match server_name "kubernetes"; skip verification.
+                insecure_skip_verify: true
+                {{- else }}
                 insecure_skip_verify: false
                 server_name: kubernetes
+                {{- end }}
             {{- if (((.Values.receivers).collectorMetrics).enabled) }}
             - job_name: otel-collector
               scrape_interval: {{ ((.Values.receivers).collectorMetrics).scrapeInterval | default "1m" }}
@@ -219,11 +251,9 @@ data:
           - id: container-parser
             type: container
 
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.receivers" . | nindent 6 }}
 
     processors:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
-
       groupbyattrs:
         keys:
           - pod
@@ -783,15 +813,15 @@ data:
             conditions:
               - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.region"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              # /projects/{projectId}/locations/{location}/clusters/{clusterName}
+              # /projects/{projectId}/locations/{region}/clusters/{clusterName}
               - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.region"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
           # GKE Zonal
           - context: resource
             conditions:
               - resource.attributes["cloud.provider"] == "gcp" and resource.attributes["cloud.account.id"] != nil and resource.attributes["cloud.availability_zone"] != nil and resource.attributes["cloud.k8s.cluster.name"] != nil
             statements:
-              # /projects/{projectId}/zones/{zone}/clusters/{clusterName}
-              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/zones/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
+              # /projects/{projectId}/locations/{zone}/clusters/{clusterName}
+              - set(resource.attributes["cloud.resource_id"], Concat(["/projects/", resource.attributes["cloud.account.id"], "/locations/", resource.attributes["cloud.availability_zone"], "/clusters/", resource.attributes["cloud.k8s.cluster.name"]], ""))
 
       resource/newrelic:
         attributes:
@@ -877,18 +907,19 @@ data:
         timeout: 30s
         send_batch_size : 800
 
-    exporters:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
 
+    exporters:
       otlp_http/newrelic:
         endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
-    connectors:
-      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
+    connectors:
       routing/nr_logs_pipelines:
         default_pipelines: [logs/pipeline]
         table:
@@ -947,6 +978,8 @@ data:
           - context: metric
             condition: instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver"
             pipelines: [metrics/nr]
+
+      {{- include "nrKubernetesOtel.daemonset.configMap.extraConfig.connectors" . | nindent 6 }}
 
     {{- with include "nrKubernetesOtel.daemonset.configMap.extraConfig.extensions" . }}
     extensions:
