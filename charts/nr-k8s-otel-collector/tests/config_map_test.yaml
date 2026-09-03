@@ -493,3 +493,77 @@ tests:
         matchRegex:
           path: data["daemonset-config.yaml"]
           pattern: endpoint:\s*https://otlp.jp.nr-data.net
+
+  - it: custom processors override the same-named built-in processor (last occurrence wins)
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      processors:
+        resource_detection/cloudproviders:
+          zzz_override_marker: applied
+    asserts:
+      # The built-in resource_detection/cloudproviders (with its full detector list) must render
+      # BEFORE the custom override, so the collector's last-key-wins parsing applies the override.
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'detectors: \[gcp, eks, ec2, aks, azure, oraclecloud\][\S\s]*zzz_override_marker: applied'
+        template: templates/daemonset-configmap.yaml
+
+  - it: custom processors override the same-named built-in processor on the deployment (last occurrence wins)
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      processors:
+        memory_limiter:
+          zzz_override_marker: applied
+    asserts:
+      # The built-in memory_limiter must render BEFORE the custom override so last-key-wins applies it.
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: 'spike_limit_percentage: 25[\S\s]*zzz_override_marker: applied'
+        template: templates/deployment-configmap.yaml
+
+  - it: custom exporters override the same-named built-in exporter (last occurrence wins)
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      exporters:
+        otlp_http/newrelic:
+          zzz_override_marker: applied
+    asserts:
+      # The built-in otlp_http/newrelic must render BEFORE the custom override so last-key-wins applies it.
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: 'api-key: \$\{env:NR_LICENSE_KEY\}[\S\s]*zzz_override_marker: applied'
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'api-key: \$\{env:NR_LICENSE_KEY\}[\S\s]*zzz_override_marker: applied'
+        template: templates/daemonset-configmap.yaml
+
+  - it: extraConfig receivers and connectors render after the built-in definitions
+    set:
+      cluster: my-cluster
+      licenseKey: us-key
+      deployment.configMap.extraConfig.receivers: zzzExtraReceiverMarker
+      deployment.configMap.extraConfig.connectors: zzzExtraConnectorMarker
+      daemonset.configMap.extraConfig.receivers: zzzExtraReceiverMarker
+      daemonset.configMap.extraConfig.connectors: zzzExtraConnectorMarker
+    asserts:
+      # A built-in receiver must render before the custom one, which must still sit inside the receivers block.
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'host_metrics:[\S\s]*zzzExtraReceiverMarker[\S\s]*processors:'
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'routing/nr_logs_pipelines:[\S\s]*zzzExtraConnectorMarker'
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: 'otlp:[\S\s]*zzzExtraReceiverMarker[\S\s]*processors:'
+        template: templates/deployment-configmap.yaml
+      - matchRegex:
+          path: data["deployment-config.yaml"]
+          pattern: 'routing/nr_logs_pipelines:[\S\s]*zzzExtraConnectorMarker'
+        template: templates/deployment-configmap.yaml

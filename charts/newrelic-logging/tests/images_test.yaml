@@ -17,16 +17,16 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/newrelic/newrelic-fluentbit-output:3.7.0
+          value: docker.io/newrelic/newrelic-fluentbit-output:3.8.0
         template: templates/daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/newrelic/newrelic-fluentbit-output:3.7.0-windows-ltsc-2019
+          value: docker.io/newrelic/newrelic-fluentbit-output:3.8.0-windows-ltsc-2019
         template: templates/daemonset-windows.yaml
         documentIndex: 0
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/newrelic/newrelic-fluentbit-output:3.7.0-windows-ltsc-2022
+          value: docker.io/newrelic/newrelic-fluentbit-output:3.8.0-windows-ltsc-2022
         template: templates/daemonset-windows.yaml
         documentIndex: 1
   - it: global registry is used if set
@@ -94,3 +94,56 @@ tests:
       - equal:
           path: spec.template.spec.imagePullSecrets[1].name
           value: regsecret
+  - it: persistence init container image name is correct
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: standard
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: docker.io/busybox:1.36
+  - it: persistence init container image uses global registry if set
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: standard
+      global:
+        images:
+          registry: global_registry
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: global_registry/busybox:1.36
+  - it: persistence init container image local registry overrides global
+    templates:
+      - templates/daemonset.yaml
+    set:
+      licenseKey: nr_license_key
+      fluentBit:
+        persistence:
+          mode: persistentVolume
+          persistentVolume:
+            storageClass: standard
+          initContainer:
+            image:
+              registry: local_registry
+              repository: my-mirror/busybox
+              tag: "1.37"
+      global:
+        images:
+          registry: global_registry
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: local_registry/my-mirror/busybox:1.37
