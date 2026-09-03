@@ -77,7 +77,7 @@ kube-state-metrics:
 # -- The provider that you are deploying your cluster into. Sets known config constraints for your specific provider. Currently supporting OpenShift and GKE autopilot. If set, provider must be one of "GKE_AUTOPILOT" or "OPEN_SHIFT"
 provider: ""
 
-# -- (bool) Only applies when `provider: GKE_AUTOPILOT`. When true, keeps the host root filesystem mount (`host-fs` -> `/hostfs`) and the hostmetrics `root_path` that GKE Autopilot normally strips, so the hostmetrics filesystem scraper can read the node's filesystems (`system.filesystem.*`). Requires a GKE Autopilot allowlist admitting the `/` hostPath: a `WorkloadAllowlist` installed by an `AllowlistSynchronizer` (`auto.gke.io/v1`). Has no effect without one. Can be configured also with `global.gkeAutopilotAllowlist`.
+# -- (bool) Only applies when `provider: GKE_AUTOPILOT`. When true, keeps the `host-fs` mount and the hostmetrics `root_path` that Autopilot normally strips, so `system.filesystem.*` metrics can be collected. Requires a GKE Autopilot allowlist admitting the `/` hostPath (see the GKE Autopilot section of the README). Can be configured also with `global.gkeAutopilotAllowlist`.
 # @default -- `false`
 gkeAutopilotAllowlist:
 
