@@ -1,0 +1,81 @@
+{{- include "oracle-otel.validate.topology" . -}}
+{{- $isAdb := eq .Values.oracle.topology "adb" -}}
+{{- $isRds := eq .Values.oracle.topology "rds" -}}
+{{- $receiver := dict -}}
+{{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.collectionDefaults" . | fromYaml) -}}
+{{- if $isRds -}}
+{{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.rdsDefaults" . | fromYaml) -}}
+{{- else if $isAdb -}}
+{{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.adbDefaults" . | fromYaml) -}}
+{{- else -}}
+{{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.cdbPdbDefaults" . | fromYaml) -}}
+{{- end -}}
+{{- if $isAdb -}}
+{{- $datasource := print "oracle://${env:ORACLE_USERNAME}:${env:ORACLE_PASSWORD}@" .Values.oracle.endpoint "/" .Values.oracle.service "?ssl=true&ssl%20verify=true" -}}
+{{- $receiver = mergeOverwrite $receiver (dict
+      "datasource" $datasource
+      "collection_interval" .Values.oracle.collectionInterval
+) -}}
+{{- else -}}
+{{- $receiver = mergeOverwrite $receiver (dict
+      "endpoint" .Values.oracle.endpoint
+      "service" .Values.oracle.service
+      "username" "${env:ORACLE_USERNAME}"
+      "password" "${env:ORACLE_PASSWORD}"
+      "collection_interval" .Values.oracle.collectionInterval
+) -}}
+{{- end -}}
+{{- $receiver = mergeOverwrite $receiver (.Values.additionalReceiverConfig | default dict) -}}
+{{- $oracleHost := first (splitList ":" .Values.oracle.endpoint) -}}
+{{- $receiverKey := "nroracledb" -}}
+{{- if $isRds -}}
+{{- $receiverKey = "nroracledb/rds" -}}
+{{- else if $isAdb -}}
+{{- $receiverKey = "nroracledb/adb" -}}
+{{- end -}}
+{{- $exporterKey := ternary "otlphttp/newrelic" "otlp/newrelic" $isAdb -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oracle-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oracle-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      {{ $receiverKey }}:
+{{ toYaml $receiver | indent 8 }}
+    processors:
+      resource/add_event_name:
+        attributes:
+          - key: host.address
+            value: {{ $oracleHost | quote }}
+            action: upsert
+      batch:
+    exporters:
+      {{ $exporterKey }}:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+{{- if $isAdb }}
+      telemetry:
+        metrics:
+          level: none
+{{- end }}
+      pipelines:
+        metrics/oracledb:
+          receivers: [{{ $receiverKey }}]
+          processors: [resource/add_event_name, batch]
+          exporters: [{{ $exporterKey }}]
+        logs/oracledb:
+          receivers: [{{ $receiverKey }}]
+          processors: [resource/add_event_name, batch]
+          exporters: [{{ $exporterKey }}]
