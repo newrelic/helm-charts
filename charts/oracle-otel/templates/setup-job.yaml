@@ -1,0 +1,74 @@
+{{- if .Values.setupJob.enabled }}
+{{- include "oracle-otel.validate.setupJob" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "oracle-otel.fullname" . }}-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oracle-otel.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "oracle-otel.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: oracle-otel-setup
+          image: "{{ .Values.setupJob.image.repository }}:{{ .Values.setupJob.image.tag }}"
+          imagePullPolicy: {{ .Values.setupJob.image.pullPolicy }}
+          env:
+            - name: ORACLE_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.setupJob.oracleAdmin.existingSecret }}
+                  key: username
+            - name: ORACLE_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.setupJob.oracleAdmin.existingSecret }}
+                  key: password
+            - name: ORACLE_MONITOR_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "oracle-otel.credentials.secretName" . }}
+                  key: username
+            - name: ORACLE_MONITOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "oracle-otel.credentials.secretName" . }}
+                  key: password
+            - name: ORACLE_ENDPOINT
+              value: {{ .Values.oracle.endpoint | quote }}
+            - name: ORACLE_SERVICE
+              value: {{ .Values.oracle.service | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              sqlplus -s /nolog <<SQL
+              DEFINE monitor_user = ${ORACLE_MONITOR_USERNAME}
+              DEFINE monitor_password = ${ORACLE_MONITOR_PASSWORD}
+              {{- if or (eq .Values.oracle.topology "rds") (eq .Values.oracle.topology "adb") }}
+              CONNECT ${ORACLE_ADMIN_USERNAME}/${ORACLE_ADMIN_PASSWORD}@${ORACLE_ENDPOINT}/${ORACLE_SERVICE}
+              {{- else }}
+              CONNECT ${ORACLE_ADMIN_USERNAME}/${ORACLE_ADMIN_PASSWORD}@${ORACLE_ENDPOINT}/${ORACLE_SERVICE} AS SYSDBA
+              {{- end }}
+              @/etc/oracle-otel/setup/grants.sql
+              EXIT
+              SQL
+          volumeMounts:
+            - name: setup
+              mountPath: /etc/oracle-otel/setup
+              readOnly: true
+      volumes:
+        - name: setup
+          configMap:
+            name: {{ include "oracle-otel.fullname" . }}-setup
+{{- end }}
