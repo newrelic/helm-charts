@@ -1,0 +1,22 @@
+suite: validation
+templates:
+  - templates/secret.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: fails when mssql.server is unset
+    set:
+      mssql.username: "u"
+      mssql.password: "p"
+      otlpEndpoint: "https://otlp.nr-data.net:4318"
+    asserts:
+      - failedTemplate:
+          errorMessage: "mssql.server is required"
+  - it: fails when no credential path is provided
+    set:
+      mssql.server: "sql.internal"
+      otlpEndpoint: "https://otlp.nr-data.net:4318"
+    asserts:
+      - failedTemplate:
+          errorMessage: "You must set mssql.existingSecret, or both mssql.username and mssql.password"
