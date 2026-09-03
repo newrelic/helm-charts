@@ -1,0 +1,33 @@
+suite: validation
+templates:
+  - templates/secret.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: fails when oracle.endpoint is unset
+    set:
+      oracle.service: "MYPDB"
+      oracle.username: "u"
+      oracle.password: "p"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracle.endpoint and oracle.service are required"
+  - it: fails when oracle.service is unset
+    set:
+      oracle.endpoint: "db:1521"
+      oracle.username: "u"
+      oracle.password: "p"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracle.endpoint and oracle.service are required"
+  - it: fails when no credential path is provided
+    set:
+      oracle.endpoint: "db:1521"
+      oracle.service: "MYPDB"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "You must set oracle.existingSecret, or both oracle.username and oracle.password"
