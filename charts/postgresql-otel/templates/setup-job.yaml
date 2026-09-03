@@ -1,0 +1,168 @@
+{{- if .Values.setupJob.enabled }}
+{{- include "postgresql-otel.validate.setupJob" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "postgresql-otel.fullname" . }}-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "postgresql-otel.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "postgresql-otel.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: postgresql-otel-setup
+          image: "{{ .Values.setupJob.image.repository }}:{{ .Values.setupJob.image.tag }}"
+          imagePullPolicy: {{ .Values.setupJob.image.pullPolicy }}
+          env:
+            # PGUSER/PGPASSWORD/PGHOST/PGPORT are psql's own environment
+            # variables -- the admin credentials never appear as CLI flags, so
+            # they stay out of any process listing inside the Pod.
+            - name: PGUSER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.setupJob.postgresAdmin.existingSecret }}
+                  key: username
+            - name: PGPASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.setupJob.postgresAdmin.existingSecret }}
+                  key: password
+            - name: PG_MONITOR_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgresql-otel.credentials.secretName" . }}
+                  key: username
+            - name: PG_MONITOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "postgresql-otel.credentials.secretName" . }}
+                  key: password
+            - name: PGHOST
+              value: {{ .Values.postgresql.server | quote }}
+            - name: PGPORT
+              value: {{ .Values.postgresql.port | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            # Every heredoc below is quoted (<<'SQL'), so the shell performs no
+            # expansion inside them. The monitoring credentials reach psql as
+            # -v variables instead, interpolated by psql itself as a quoted
+            # identifier (:"monitor_user") or a quoted literal
+            # (:'monitor_password'). That is injection-safe for credentials
+            # containing quotes, and it means the PL/pgSQL below needs no
+            # dollar-quote escaping.
+            - |
+              set -eu
+
+              # Cluster-level: create the monitoring role, if it doesn't already
+              # exist. PostgreSQL has no CREATE USER IF NOT EXISTS, and psql
+              # variables are not interpolated inside a dollar-quoted DO block,
+              # so this uses the format()+\gexec idiom instead: the SELECT emits
+              # the DDL as text (with %I/%L applying correct identifier/literal
+              # quoting) only when the role is missing, and \gexec executes it.
+              #
+              # ALTER ROLE ... INHERIT is required on PostgreSQL 15+. On 14 the
+              # role already inherits by default, making it a harmless no-op --
+              # the chart cannot know the server's major version at render time,
+              # so it always runs.
+              psql -v ON_ERROR_STOP=1 \
+                -v monitor_user="$PG_MONITOR_USERNAME" \
+                -v monitor_password="$PG_MONITOR_PASSWORD" \
+                -d postgres <<'SQL'
+              SELECT format('CREATE USER %I WITH LOGIN PASSWORD %L', :'monitor_user', :'monitor_password')
+              WHERE NOT EXISTS (SELECT FROM pg_roles WHERE rolname = :'monitor_user')
+              \gexec
+              SELECT format('ALTER ROLE %I INHERIT', :'monitor_user')
+              \gexec
+              SQL
+              {{- range $db := .Values.postgresql.databases }}
+
+              # Per-database: schema, grants, and the pg_stat_statements
+              # extension. New Relic's instructions call for these "in every
+              # database you want to monitor", so they run once per entry in
+              # postgresql.databases.
+              #
+              # This requires the server-level pg_stat_statements prerequisites
+              # (shared_preload_libraries etc.) to already be in place -- see the
+              # README. CREATE EXTENSION fails here if they are not.
+              psql -v ON_ERROR_STOP=1 \
+                -v monitor_user="$PG_MONITOR_USERNAME" \
+                -d {{ $db | quote }} <<'SQL'
+              CREATE SCHEMA IF NOT EXISTS otel;
+              GRANT USAGE ON SCHEMA otel TO :"monitor_user";
+              GRANT USAGE ON SCHEMA public TO :"monitor_user";
+              GRANT SELECT ON ALL TABLES IN SCHEMA public TO :"monitor_user";
+              GRANT pg_monitor TO :"monitor_user";
+              CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+              SQL
+              {{- if $.Values.setupJob.enablePgvector }}
+
+              # Optional: pgvector, for vector metrics.
+              psql -v ON_ERROR_STOP=1 -d {{ $db | quote }} <<'SQL'
+              CREATE EXTENSION IF NOT EXISTS vector;
+              SQL
+              {{- end }}
+              {{- if $.Values.setupJob.enableExplainPermissions }}
+
+              # Optional: a SECURITY DEFINER helper so the receiver can EXPLAIN
+              # locking/write queries without holding write grants. This only
+              # creates the function -- set
+              # postgresql.topQueryCollection.explainFunctionName to
+              # "otel.explain_statement" to make the receiver actually call it.
+              psql -v ON_ERROR_STOP=1 \
+                -v monitor_user="$PG_MONITOR_USERNAME" \
+                -d {{ $db | quote }} <<'SQL'
+              CREATE OR REPLACE FUNCTION otel.explain_statement(l_query text)
+              RETURNS json
+              LANGUAGE plpgsql
+              SECURITY DEFINER
+              AS $$
+              DECLARE
+                  v_plan json;
+                  v_param_count int;
+                  v_nulls text := '';
+                  i int;
+              BEGIN
+                  SET TRANSACTION READ ONLY;
+                  SET plan_cache_mode = force_generic_plan;
+
+                  EXECUTE 'PREPARE otel_explain_stmt AS ' || l_query;
+
+                  SELECT COALESCE(array_length(parameter_types, 1), 0) INTO v_param_count
+                  FROM pg_prepared_statements WHERE name = 'otel_explain_stmt';
+
+                  IF v_param_count > 0 THEN
+                      FOR i IN 1..v_param_count LOOP
+                          v_nulls := v_nulls || CASE WHEN i > 1 THEN ', ' ELSE '' END || 'null';
+                      END LOOP;
+                      v_nulls := '(' || v_nulls || ')';
+                  END IF;
+
+                  EXECUTE 'EXPLAIN (FORMAT JSON) EXECUTE otel_explain_stmt' || v_nulls INTO v_plan;
+                  DEALLOCATE otel_explain_stmt;
+                  RETURN v_plan;
+              EXCEPTION WHEN OTHERS THEN
+                  IF EXISTS (SELECT 1 FROM pg_prepared_statements WHERE name = 'otel_explain_stmt') THEN
+                      DEALLOCATE otel_explain_stmt;
+                  END IF;
+                  RAISE;
+              END;
+              $$;
+              SQL
+              psql -v ON_ERROR_STOP=1 \
+                -v monitor_user="$PG_MONITOR_USERNAME" \
+                -d {{ $db | quote }} <<'SQL'
+              GRANT EXECUTE ON FUNCTION otel.explain_statement(text) TO :"monitor_user";
+              SQL
+              {{- end }}
+              {{- end }}
+{{- end }}

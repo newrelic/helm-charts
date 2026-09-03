@@ -1,0 +1,106 @@
+image:
+  repository: newrelic/nrdot-collector
+  tag: "2.4.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+postgresql:
+  # -- Required. One of: self-hosted, rds. Documentation/validation only -- no rendered difference.
+  topology: ""
+  # -- Required. PostgreSQL host/endpoint (no port).
+  server: ""
+  # -- PostgreSQL port.
+  port: 5432
+  # -- Plain-value monitoring username. Ignored if existingSecret is set.
+  username: ""
+  # -- Plain-value monitoring password. Ignored if existingSecret is set.
+  password: ""
+  # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
+  existingSecret: ""
+  # -- Required, non-empty. Databases to monitor. PostgreSQL has no monitor-all-databases mode, so at least one name is required.
+  databases: []
+  # -- Databases to exclude from cluster-wide top-query/query-sample scans. Defaults to rdsadmin: required on RDS (the monitoring user can never reach it) and a harmless no-op on self-hosted, where that database doesn't exist.
+  excludeDatabases:
+    - rdsadmin
+  # -- How often the receiver scrapes PostgreSQL.
+  collectionInterval: 15s
+  tls:
+    # -- Disables TLS entirely (plaintext connection). Maps to the receiver's tls.insecure. Matches the receiver's own default.
+    insecure: false
+    # -- Skips PostgreSQL TLS certificate validation. Maps to tls.insecure_skip_verify. Defaults to true to match the receiver's own default -- set false and supply caFile to actually verify the server certificate.
+    insecureSkipVerify: true
+    # -- CA bundle path inside the collector container, e.g. an Amazon RDS CA bundle. Maps to tls.ca_file. Note the receiver rejects tls.server_name_override, tls.min_version, and tls.max_version outright (a lib/pq limitation), so those are not exposed here.
+    caFile: ""
+  events:
+    querySample:
+      enabled: true
+    topQuery:
+      enabled: true
+  topQueryCollection:
+    maxRowsPerQuery: 1000
+    topNQuery: 200
+    collectionInterval: 60s
+    allowedCommentKeys:
+      - nr_service_guid
+    maxExplainEachInterval: 1000
+    queryPlanCacheSize: 1000
+    queryPlanCacheTtl: 1h
+    # -- Name of a SECURITY DEFINER helper function the receiver calls to EXPLAIN locking/write queries. Left empty, this key is omitted from the rendered config and the receiver falls back to its OWN default, which is already "otel.explain_statement" -- so the function setupJob.enableExplainPermissions creates is what the receiver looks for out of the box. Only set this to point at a differently-named function.
+    explainFunctionName: ""
+    # -- How often the receiver re-probes explainFunctionName's availability per database. Matches the receiver's own default of 5m.
+    explainFunctionCacheTtl: 5m
+  querySampleCollection:
+    maxRowsPerQuery: 1000
+    allowedCommentKeys:
+      - nr_service_guid
+  metrics:
+    databaseLocks:
+      enabled: true
+    deadlocks:
+      enabled: true
+    functionCalls:
+      enabled: true
+    queryConflicts:
+      enabled: true
+    sequentialScans:
+      enabled: true
+    tempIo:
+      enabled: true
+    tempFiles:
+      enabled: true
+
+# -- Required. New Relic OTLP/gRPC endpoint for the account's region, bare host:port with NO scheme, e.g. otlp.nr-data.net:4317
+otlpEndpoint: ""
+
+# -- Plain-value New Relic license key. Can also be set as global.licenseKey.
+licenseKey: ""
+# -- Name of a pre-existing Secret holding the license key. Can also be set as global.customSecretName.
+customSecretName: ""
+# -- Key inside customSecretName that holds the license key. Can also be set as global.customSecretLicenseKey.
+customSecretLicenseKey: ""
+
+# -- Escape hatch merged into the nrpostgresql receiver block.
+additionalReceiverConfig: {}
+
+setupJob:
+  # -- If true, a Helm hook Job creates the monitoring user, per-database grants, and pg_stat_statements before install/upgrade.
+  enabled: false
+  image:
+    # -- psql-capable image. No default -- unlike mysql-otel's mysql:8.4, no free, actively-maintained psql-client image has been verified for this chart yet. postgres:16 is a candidate; see README.
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  postgresAdmin:
+    # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path. Must be a superuser (self-hosted) or rds_superuser-equivalent (RDS) able to CREATE USER, CREATE SCHEMA, and CREATE EXTENSION.
+    existingSecret: ""
+  # -- Also creates the otel.explain_statement SECURITY DEFINER function and grants EXECUTE on it. Set postgresql.topQueryCollection.explainFunctionName to actually use it.
+  enableExplainPermissions: false
+  # -- Also creates the pgvector extension in each monitored database, for vector metrics. Optional per the doc.
+  enablePgvector: false
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

@@ -1,0 +1,96 @@
+{{- include "postgresql-otel.validate.topology" . -}}
+{{- include "postgresql-otel.validate.otlpEndpoint" . -}}
+{{- $topQuery := dict
+      "max_rows_per_query" (.Values.postgresql.topQueryCollection.maxRowsPerQuery | int)
+      "top_n_query" (.Values.postgresql.topQueryCollection.topNQuery | int)
+      "collection_interval" .Values.postgresql.topQueryCollection.collectionInterval
+      "allowed_comment_keys" .Values.postgresql.topQueryCollection.allowedCommentKeys
+      "max_explain_each_interval" (.Values.postgresql.topQueryCollection.maxExplainEachInterval | int)
+      "query_plan_cache_size" (.Values.postgresql.topQueryCollection.queryPlanCacheSize | int)
+      "query_plan_cache_ttl" .Values.postgresql.topQueryCollection.queryPlanCacheTtl
+      "explain_function_cache_ttl" .Values.postgresql.topQueryCollection.explainFunctionCacheTtl
+-}}
+{{- if .Values.postgresql.topQueryCollection.explainFunctionName }}
+{{- $topQuery = set $topQuery "explain_function_name" .Values.postgresql.topQueryCollection.explainFunctionName -}}
+{{- end }}
+{{- $tls := dict "insecure" .Values.postgresql.tls.insecure "insecure_skip_verify" .Values.postgresql.tls.insecureSkipVerify -}}
+{{- if .Values.postgresql.tls.caFile }}
+{{- $tls = set $tls "ca_file" .Values.postgresql.tls.caFile -}}
+{{- end }}
+{{- $receiver := dict
+      "endpoint" (printf "%s:%d" .Values.postgresql.server (.Values.postgresql.port | int))
+      "transport" "tcp"
+      "username" "${env:POSTGRESQL_USERNAME}"
+      "password" "${env:POSTGRESQL_PASSWORD}"
+      "databases" .Values.postgresql.databases
+      "collection_interval" .Values.postgresql.collectionInterval
+      "tls" $tls
+      "events" (dict
+        "db.server.query_sample" (dict "enabled" .Values.postgresql.events.querySample.enabled)
+        "db.server.top_query" (dict "enabled" .Values.postgresql.events.topQuery.enabled)
+      )
+      "top_query_collection" $topQuery
+      "query_sample_collection" (dict
+        "max_rows_per_query" (.Values.postgresql.querySampleCollection.maxRowsPerQuery | int)
+        "allowed_comment_keys" .Values.postgresql.querySampleCollection.allowedCommentKeys
+      )
+      "metrics" (dict
+        "postgresql.database.locks" (dict "enabled" .Values.postgresql.metrics.databaseLocks.enabled)
+        "postgresql.deadlocks" (dict "enabled" .Values.postgresql.metrics.deadlocks.enabled)
+        "postgresql.function.calls" (dict "enabled" .Values.postgresql.metrics.functionCalls.enabled)
+        "postgresql.query.conflicts" (dict "enabled" .Values.postgresql.metrics.queryConflicts.enabled)
+        "postgresql.sequential_scans" (dict "enabled" .Values.postgresql.metrics.sequentialScans.enabled)
+        "postgresql.temp.io" (dict "enabled" .Values.postgresql.metrics.tempIo.enabled)
+        "postgresql.temp_files" (dict "enabled" .Values.postgresql.metrics.tempFiles.enabled)
+      )
+-}}
+{{- if .Values.postgresql.excludeDatabases }}
+{{- $receiver = set $receiver "exclude_databases" .Values.postgresql.excludeDatabases -}}
+{{- end }}
+{{- $receiver = mergeOverwrite $receiver (.Values.additionalReceiverConfig | default dict) -}}
+{{- $resourceAttrs := list
+      (dict "key" "server.address" "value" .Values.postgresql.server "action" "upsert")
+      (dict "key" "server.port" "value" (.Values.postgresql.port | toString) "action" "upsert")
+-}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgresql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "postgresql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      nrpostgresql:
+{{ toYaml $receiver | indent 8 }}
+    processors:
+      memory_limiter:
+        check_interval: ${env:NR_MEM_LIMITER_CHECK_INTERVAL:-1s}
+        limit_mib: ${env:NR_MEM_LIMITER_LIMIT_MIB:-200}
+        spike_limit_mib: ${env:NR_MEM_LIMITER_SPIKE_MIB:-50}
+      resource/postgresql:
+        attributes:
+{{ toYaml $resourceAttrs | indent 8 }}
+      batch:
+    exporters:
+      otlp:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [nrpostgresql]
+          processors: [memory_limiter, resource/postgresql, batch]
+          exporters: [otlp]
+        logs:
+          receivers: [nrpostgresql]
+          processors: [memory_limiter, resource/postgresql, batch]
+          exporters: [otlp]
