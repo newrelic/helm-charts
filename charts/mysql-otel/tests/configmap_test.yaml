@@ -1,0 +1,148 @@
+suite: configmap
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mysql.server: "mysql.internal"
+  mysql.topology: "self-hosted"
+  mysql.username: "nr_monitor"
+  mysql.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: fails when mysql.topology is unset or invalid
+    set:
+      mysql.topology: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysql.topology must be one of: self-hosted, rds"
+  - it: fails when otlpEndpoint has a scheme
+    set:
+      otlpEndpoint: "https://otlp.nr-data.net:4318"
+    asserts:
+      - failedTemplate:
+          errorMessage: "otlpEndpoint must be a bare host:port with no scheme -- the otlp (gRPC) exporter rejects a URL, unlike mssql-otel's otlphttp. Got: \"https://otlp.nr-data.net:4318\". New Relic's US OTLP/gRPC endpoint is otlp.nr-data.net:4317"
+  - it: renders the nrmysql receiver with env-substitution credentials, never literal ones
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: mysql\\.internal:3306"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "transport: tcp"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \\$\\{env:MYSQL_USERNAME\\}"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "password: \\$\\{env:MYSQL_PASSWORD\\}"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "collection_interval: 10s"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "s3cret"
+  - it: omits database when unset
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "database:"
+  - it: includes database when mysql.database is set
+    set:
+      mysql.database: "appdb"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "database: appdb"
+  - it: renders TLS fields from mysql.tls, omitting ca_file when unset
+    set:
+      mysql.tls.insecure: true
+      mysql.tls.insecureSkipVerify: true
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "insecure: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "insecure_skip_verify: true"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "ca_file:"
+  - it: includes ca_file when mysql.tls.caFile is set
+    set:
+      mysql.tls.caFile: "/etc/ssl/rds-ca-bundle.pem"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "ca_file: /etc/ssl/rds-ca-bundle\\.pem"
+  - it: renders statement_events, query_sample_collection, top_query_collection, and events from values
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "digest_text_limit: 4096"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "time_limit: 24h"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "max_rows_per_query: 100"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "lookback_time: 120"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "max_query_sample_count: 5000"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "query_plan_cache_ttl: 1h"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nr_service_guid"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.query_sample:\\s*\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.top_query:\\s*\\n\\s*enabled: true"
+  - it: renders the resource/mysql processor with server.address and server.port
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "resource/mysql:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "action: upsert\\s*\\n\\s*key: server\\.address\\s*\\n\\s*value: mysql\\.internal"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "action: upsert\\s*\\n\\s*key: server\\.port\\s*\\n\\s*value: \"3306\""
+  - it: renders the otlp exporter with a bare endpoint and env-substitution api-key, never a literal one
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: \"otlp\\.nr-data\\.net:4317\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "api-key: \"\\$\\{env:NEW_RELIC_LICENSE_KEY\\}\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "retry_on_failure:"
+  - it: wires the metrics and logs pipelines to the receiver, processors, and exporter
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "receivers:\\s*\\[nrmysql\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exporters:\\s*\\[otlp\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "processors:\\s*\\[memory_limiter, resource/mysql, batch\\]"
+  - it: merges additionalReceiverConfig into the receiver block
+    set:
+      additionalReceiverConfig:
+        allow_native_passwords: false
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "allow_native_passwords: false"

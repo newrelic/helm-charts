@@ -1,0 +1,22 @@
+suite: validation
+templates:
+  - templates/secret.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: fails when mysql.server is unset
+    set:
+      mysql.username: "u"
+      mysql.password: "p"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysql.server is required"
+  - it: fails when no credential path is provided
+    set:
+      mysql.server: "mysql.internal"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "You must set mysql.existingSecret, or both mysql.username and mysql.password"
