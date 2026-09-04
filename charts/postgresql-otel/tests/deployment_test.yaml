@@ -1,0 +1,76 @@
+suite: deployment
+templates:
+  - templates/deployment.yaml
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  postgresql.server: "postgresql.internal"
+  postgresql.topology: "self-hosted"
+  postgresql.databases: ["appdb"]
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  licenseKey: "testlicensekey"
+tests:
+  - it: uses a chart-owned secretKeyRef when plain postgresql credentials are given
+    set:
+      postgresql.username: "nr_monitor"
+      postgresql.password: "s3cret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: POSTGRESQL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: my-release-postgresql-otel-postgresql
+                key: username
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: POSTGRESQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-release-postgresql-otel-postgresql
+                key: password
+        template: templates/deployment.yaml
+  - it: uses the existingSecret name when postgresql.existingSecret is set
+    set:
+      postgresql.existingSecret: "my-postgresql-secret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: my-postgresql-secret
+        template: templates/deployment.yaml
+  - it: mounts the collector config and sets image/resources from values
+    set:
+      postgresql.username: "u"
+      postgresql.password: "p"
+      image.repository: "newrelic/nrdot-collector"
+      image.tag: "2.4.0"
+      resources.limits.memory: "256Mi"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: newrelic/nrdot-collector:2.4.0
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: my-release-postgresql-otel-config
+        template: templates/deployment.yaml
+  - it: sets a config checksum annotation so a config-only change forces a Pod restart on upgrade
+    set:
+      postgresql.username: "u"
+      postgresql.password: "p"
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+        template: templates/deployment.yaml
