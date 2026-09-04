@@ -186,6 +186,31 @@ fleet_id: ""
 # @default -- `false`
 lowDataMode:
 
+# -- Federated Logs Write-Ahead Log (WAL) durable buffer. When enabled, a per-pod
+# ephemeral EBS volume (via `ephemeral.volumeClaimTemplate`) is attached to the existing
+# gateway Deployment at `wal.mountPath` and mounted into the collector container. There is
+# NO StatefulSet and NO standalone PVC — the volume is created and deleted with the pod, so
+# each replica (HPA 2->10) gets its own single-attached disk (no Multi-Attach). Durability on
+# the normal path comes from the exporter draining to S3 before the pod terminates, not from a
+# durable disk. Gated exactly like `daemonset.enabled`. Keep `wal.enabled` in sync with the
+# iceberg exporter's `wal.enabled`; `wal.mountPath` MUST equal the exporter's `wal.dir`.
+# @default -- See `values.yaml`
+wal:
+  # -- Attach the per-pod ephemeral WAL disk and mount it into the gateway container.
+  enabled: false
+  # -- Mount path for the WAL disk inside the container. MUST equal the exporter `wal.dir`.
+  mountPath: /var/wal
+  # -- Requested size of each pod's ephemeral EBS volume.
+  size: 10Gi
+  # -- StorageClass for the ephemeral volume. Use a `WaitForFirstConsumer` gp3 class so the
+  # disk is provisioned in the pod's AZ. Empty string uses the cluster default StorageClass.
+  storageClass: gp3-wal
+  # -- Access mode for the per-pod volume (single-attach; each pod has its own volume).
+  accessMode: ReadWriteOnce
+  # -- Kill ceiling (seconds) for the graceful drain-to-S3 on shutdown. Must exceed the
+  # worst-case drain time or Kubernetes SIGKILLs the pod mid-drain and buffered data is lost.
+  terminationGracePeriodSeconds: 120
+
 # -- Complete OpenTelemetry pipeline configuration as YAML map. When provided, this will override all other OpenTelemetry configuration sections.
 # @default -- `{}`
 generated:
