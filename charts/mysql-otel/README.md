@@ -93,12 +93,6 @@ GRANT SELECT ON performance_schema.* TO 'nr_monitor'@'%';
 FLUSH PRIVILEGES;
 ```
 
-## Testing
-
-See [`TESTING.md`](./TESTING.md) for a full local/EC2 setup and end-to-end
-validation runbook, including a disposable MySQL instance for testing
-without touching production.
-
 ## Values
 
 | Key | Description | Default |
