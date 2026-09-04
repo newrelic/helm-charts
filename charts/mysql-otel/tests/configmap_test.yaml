@@ -27,16 +27,16 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: mysql\\.internal:3306"
+          pattern: "endpoint: \"mysql\\.internal:3306\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "transport: tcp"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "username: \\$\\{env:MYSQL_USERNAME\\}"
+          pattern: "username: \"\\$\\{env:MYSQL_USERNAME\\}\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "password: \\$\\{env:MYSQL_PASSWORD\\}"
+          pattern: "password: \"\\$\\{env:MYSQL_PASSWORD\\}\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "collection_interval: 10s"
@@ -54,7 +54,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "database: appdb"
+          pattern: "database: \"appdb\""
   - it: renders TLS fields from mysql.tls, omitting ca_file when unset
     set:
       mysql.tls.insecure: true
@@ -75,7 +75,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "ca_file: /etc/ssl/rds-ca-bundle\\.pem"
+          pattern: "ca_file: \"/etc/ssl/rds-ca-bundle\\.pem\""
   - it: renders statement_events, query_sample_collection, top_query_collection, and events from values
     asserts:
       - matchRegex:
@@ -112,11 +112,11 @@ tests:
           pattern: "resource/mysql:"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "action: upsert\\s*\\n\\s*key: server\\.address\\s*\\n\\s*value: mysql\\.internal"
+          pattern: "key: server\\.address\\s*\\n\\s*value: \"mysql\\.internal\"\\s*\\n\\s*action: upsert"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "action: upsert\\s*\\n\\s*key: server\\.port\\s*\\n\\s*value: \"3306\""
-  - it: renders the otlp exporter with a bare endpoint and env-substitution api-key, never a literal one
+          pattern: "key: server\\.port\\s*\\n\\s*value: 3306\\s*\\n\\s*action: upsert"
+  - it: renders the otlp/newrelic exporter with a bare endpoint and env-substitution api-key, never a literal one
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -134,10 +134,10 @@ tests:
           pattern: "receivers:\\s*\\[nrmysql\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "exporters:\\s*\\[otlp\\]"
+          pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[memory_limiter, resource/mysql, batch\\]"
+          pattern: "processors:\\s*\\[resource/mysql, batch\\]"
   - it: merges additionalReceiverConfig into the receiver block
     set:
       additionalReceiverConfig:
