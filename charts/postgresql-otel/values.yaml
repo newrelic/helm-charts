@@ -21,18 +21,11 @@ postgresql:
   existingSecret: ""
   # -- Required, non-empty. Databases to monitor. PostgreSQL has no monitor-all-databases mode, so at least one name is required.
   databases: []
-  # -- Databases to exclude from cluster-wide top-query/query-sample scans. Defaults to rdsadmin: required on RDS (the monitoring user can never reach it) and a harmless no-op on self-hosted, where that database doesn't exist.
+  # -- Databases to exclude from cluster-wide top-query/query-sample scans. Only rendered when topology=rds -- rdsadmin is unreachable by the monitoring user there. Ignored on self-hosted, where that database doesn't exist.
   excludeDatabases:
     - rdsadmin
   # -- How often the receiver scrapes PostgreSQL.
   collectionInterval: 15s
-  tls:
-    # -- Disables TLS entirely (plaintext connection). Maps to the receiver's tls.insecure. Matches the receiver's own default.
-    insecure: false
-    # -- Skips PostgreSQL TLS certificate validation. Maps to tls.insecure_skip_verify. Defaults to true to match the receiver's own default -- set false and supply caFile to actually verify the server certificate.
-    insecureSkipVerify: true
-    # -- CA bundle path inside the collector container, e.g. an Amazon RDS CA bundle. Maps to tls.ca_file. Note the receiver rejects tls.server_name_override, tls.min_version, and tls.max_version outright (a lib/pq limitation), so those are not exposed here.
-    caFile: ""
   events:
     querySample:
       enabled: true
@@ -44,13 +37,8 @@ postgresql:
     collectionInterval: 60s
     allowedCommentKeys:
       - nr_service_guid
-    maxExplainEachInterval: 1000
-    queryPlanCacheSize: 1000
-    queryPlanCacheTtl: 1h
     # -- Name of a SECURITY DEFINER helper function the receiver calls to EXPLAIN locking/write queries. Left empty, this key is omitted from the rendered config and the receiver falls back to its OWN default, which is already "otel.explain_statement" -- so the function setupJob.enableExplainPermissions creates is what the receiver looks for out of the box. Only set this to point at a differently-named function.
     explainFunctionName: ""
-    # -- How often the receiver re-probes explainFunctionName's availability per database. Matches the receiver's own default of 5m.
-    explainFunctionCacheTtl: 5m
   querySampleCollection:
     maxRowsPerQuery: 1000
     allowedCommentKeys:

@@ -7,11 +7,9 @@ Relic over OTLP.
 
 ## What this chart does not do
 
-- **Pin a TLS protocol version or override the certificate's server
-  name.** TLS itself *is* supported (see the TLS section), but the
-  receiver rejects `tls.server_name_override`, `tls.min_version`, and
-  `tls.max_version` outright — a limitation of the underlying `lib/pq`
-  driver — so this chart deliberately exposes no values for them.
+- **Configure TLS.** This chart does not expose or render any `tls`
+  block for the receiver; it connects with whatever the `nrpostgresql`
+  receiver's own defaults are.
 - **Support `db_auth` credential providers** (e.g. AWS IAM
   authentication instead of a static password). The receiver supports a
   `db_auth` block, mutually exclusive with `password`, but this chart
@@ -88,40 +86,9 @@ postgresql:
 `postgresql.excludeDatabases` defaults to `[rdsadmin]`. Top-query and
 query-sample collection scan cluster-wide regardless of the `databases`
 list, and on RDS the monitoring user can never reach `rdsadmin`, so
-excluding it avoids permission errors. On self-hosted PostgreSQL that
-database doesn't exist and the exclusion is a harmless no-op — which is
-why it's defaulted unconditionally rather than gated on `topology`.
-
-## TLS
-
-The receiver connects over TLS by default, but **without verifying the
-server's certificate** — its own defaults are `insecure: false`
-(TLS on) plus `insecure_skip_verify: true`. This chart's defaults match
-that, so behavior is unchanged from the receiver's out-of-the-box state.
-
-To actually verify the server certificate — recommended, and necessary
-for an Amazon RDS instance with `rds.force_ssl` where you want real
-verification — turn verification on and supply a CA bundle:
-
-```yaml
-postgresql:
-  tls:
-    insecure: false
-    insecureSkipVerify: false
-    caFile: /etc/ssl/certs/rds-ca-bundle.pem
-```
-
-`caFile` is a path **inside the collector container**. This chart does
-not currently provide a volume-mount mechanism to get a CA bundle in
-there, so you'll need to bake it into a custom collector image or add a
-volume via a values override until that's addressed.
-
-Set `insecure: true` to drop TLS entirely and connect in plaintext.
-
-Three `configtls` fields are intentionally not exposed:
-`server_name_override`, `min_version`, and `max_version` are all
-rejected by the receiver's own validation (a `lib/pq` limitation), so
-setting them would only produce a startup error.
+excluding it avoids permission errors. It's only rendered when
+`postgresql.topology` is `rds` — on self-hosted PostgreSQL that database
+doesn't exist, so the value is ignored there.
 
 ## Networking prerequisites
 
@@ -186,10 +153,11 @@ postgresql:
 ```
 
 The receiver probes for the function's availability per database and
-re-checks every `explainFunctionCacheTtl` (default `5m`, matching the
-receiver), falling back to inline `EXPLAIN` when it isn't there — so
-leaving `enableExplainPermissions: false` is safe and simply means write
-and locking statements don't get query plans.
+re-checks periodically (the receiver's own default caching behavior;
+this chart doesn't expose a value to override it), falling back to
+inline `EXPLAIN` when it isn't there — so leaving
+`enableExplainPermissions: false` is safe and simply means write and
+locking statements don't get query plans.
 
 ### Credential handling in the setup Job
 
@@ -224,13 +192,6 @@ GRANT pg_monitor TO nr_monitor;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 ```
 
-## Testing
-
-See [`TESTING.md`](./TESTING.md) for a full local/EC2 setup and
-end-to-end validation runbook, including a disposable PostgreSQL instance
-(pre-configured with the required server parameters) for testing without
-touching production.
-
 ## Values
 
 | Key | Description | Default |
@@ -245,19 +206,12 @@ touching production.
 | `postgresql.databases` | **Required, non-empty list** of databases to monitor | `[]` |
 | `postgresql.excludeDatabases` | Databases excluded from cluster-wide scans | `[rdsadmin]` |
 | `postgresql.collectionInterval` | Scrape interval | `15s` |
-| `postgresql.tls.insecure` | Disable TLS, connect in plaintext | `false` |
-| `postgresql.tls.insecureSkipVerify` | Skip certificate verification — defaults to `true` to match the receiver's own default | `true` |
-| `postgresql.tls.caFile` | CA bundle path inside the collector container | `""` |
 | `postgresql.events.querySample.enabled` / `topQuery.enabled` | Enable the query-sample/top-query log events | `true` / `true` |
 | `postgresql.topQueryCollection.maxRowsPerQuery` | | `1000` |
 | `postgresql.topQueryCollection.topNQuery` | | `200` |
 | `postgresql.topQueryCollection.collectionInterval` | | `60s` |
 | `postgresql.topQueryCollection.allowedCommentKeys` | | `[nr_service_guid]` |
-| `postgresql.topQueryCollection.maxExplainEachInterval` | | `1000` |
-| `postgresql.topQueryCollection.queryPlanCacheSize` | | `1000` |
-| `postgresql.topQueryCollection.queryPlanCacheTtl` | | `1h` |
 | `postgresql.topQueryCollection.explainFunctionName` | `SECURITY DEFINER` helper the receiver calls to EXPLAIN write/locking queries. Empty omits the key, so the receiver's own default (`otel.explain_statement`) applies | `""` |
-| `postgresql.topQueryCollection.explainFunctionCacheTtl` | How often that function's availability is re-probed per database | `5m` |
 | `postgresql.querySampleCollection.maxRowsPerQuery` | | `1000` |
 | `postgresql.querySampleCollection.allowedCommentKeys` | | `[nr_service_guid]` |
 | `postgresql.metrics.databaseLocks.enabled` | `postgresql.database.locks` | `true` |

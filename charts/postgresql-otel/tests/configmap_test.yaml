@@ -28,13 +28,13 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: postgresql\\.internal:5432"
+          pattern: "endpoint: \"postgresql\\.internal:5432\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "username: \\$\\{env:POSTGRESQL_USERNAME\\}"
+          pattern: "username: \"\\$\\{env:POSTGRESQL_USERNAME\\}\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "password: \\$\\{env:POSTGRESQL_PASSWORD\\}"
+          pattern: "password: \"\\$\\{env:POSTGRESQL_PASSWORD\\}\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "collection_interval: 15s"
@@ -44,45 +44,38 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "s3cret"
-  - it: renders TLS fields matching the receiver's own defaults, omitting ca_file when unset
+  - it: never renders a tls block, the receiver falls back to its own defaults
     asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure: false"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure_skip_verify: true"
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "ca_file:"
-  - it: includes ca_file when postgresql.tls.caFile is set
-    set:
-      postgresql.tls.caFile: "/etc/ssl/rds-ca-bundle.pem"
-      postgresql.tls.insecureSkipVerify: false
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "ca_file: /etc/ssl/rds-ca-bundle\\.pem"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure_skip_verify: false"
+          pattern: "tls:"
   - it: never renders the useOTelSemconv key, which is a collector feature gate and not a receiver config field
     asserts:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "useOTelSemconv"
-  - it: renders databases and exclude_databases as lists
+  - it: renders databases as a list
     set:
       postgresql.databases: ["appdb", "reporting"]
     asserts:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "databases:\\s*\\n\\s*- appdb\\s*\\n\\s*- reporting"
+  - it: omits exclude_databases on self-hosted, even with the default non-empty list
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "exclude_databases:"
+  - it: renders exclude_databases on rds
+    set:
+      postgresql.topology: "rds"
+    asserts:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "exclude_databases:\\s*\\n\\s*- rdsadmin"
-  - it: omits exclude_databases when explicitly emptied
+  - it: omits exclude_databases on rds when explicitly emptied
     set:
+      postgresql.topology: "rds"
       postgresql.excludeDatabases: []
     asserts:
       - notMatchRegex:
@@ -93,9 +86,6 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "explain_function_name:"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "explain_function_cache_ttl: 5m"
   - it: renders explain_function_name when set, independently of the setupJob flag
     set:
       postgresql.topQueryCollection.explainFunctionName: "otel.explain_statement"
@@ -108,15 +98,6 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "top_n_query: 200"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "max_explain_each_interval: 1000"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "query_plan_cache_size: 1000"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "query_plan_cache_ttl: 1h"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "nr_service_guid"
@@ -163,11 +144,11 @@ tests:
           pattern: "resource/postgresql:"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "action: upsert\\s*\\n\\s*key: server\\.address\\s*\\n\\s*value: postgresql\\.internal"
+          pattern: "key: server\\.address\\s*\\n\\s*value: \"postgresql\\.internal\"\\s*\\n\\s*action: upsert"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "action: upsert\\s*\\n\\s*key: server\\.port\\s*\\n\\s*value: \"5432\""
-  - it: renders the otlp exporter with a bare endpoint and env-substitution api-key, never a literal one
+          pattern: "key: server\\.port\\s*\\n\\s*value: 5432\\s*\\n\\s*action: upsert"
+  - it: renders the otlp/newrelic exporter with a bare endpoint and env-substitution api-key, never a literal one
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -185,10 +166,10 @@ tests:
           pattern: "receivers:\\s*\\[nrpostgresql\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "exporters:\\s*\\[otlp\\]"
+          pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[memory_limiter, resource/postgresql, batch\\]"
+          pattern: "processors:\\s*\\[resource/postgresql, batch\\]"
   - it: merges additionalReceiverConfig into the receiver block
     set:
       additionalReceiverConfig:
