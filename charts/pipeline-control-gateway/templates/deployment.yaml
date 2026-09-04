@@ -28,7 +28,7 @@ spec:
       {{- if .Values.wal.enabled }}
       # Federated Logs WAL: give the iceberg exporter room to drain the WAL to S3 on SIGTERM
       # before Kubernetes SIGKILLs the pod. Must exceed the worst-case drain time.
-      terminationGracePeriodSeconds: {{ .Values.wal.terminationGracePeriodSeconds | default 120 }}
+      terminationGracePeriodSeconds: 120
       {{- end }}
       {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
       securityContext:
@@ -140,10 +140,10 @@ spec:
             - name: deployment-config
               mountPath: /config
             {{- if .Values.wal.enabled }}
-            # Federated Logs WAL scratch disk (per-pod ephemeral EBS). Path must equal the
-            # iceberg exporter's wal.dir.
+            # Federated Logs WAL scratch disk (per-pod ephemeral EBS). Path equals the iceberg
+            # exporter's wal.dir (both fixed at /var/wal).
             - name: wal-data
-              mountPath: {{ .Values.wal.mountPath }}
+              mountPath: /var/wal
             {{- end }}
         {{- if and .Values.deployment.customConfigMap .Values.configWatcher.enabled }}
         {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.deployment.customConfigMap "root" .) | nindent 8 }}
@@ -165,13 +165,11 @@ spec:
           ephemeral:
             volumeClaimTemplate:
               spec:
-                accessModes: [{{ .Values.wal.accessMode | default "ReadWriteOnce" }}]
-                {{- with .Values.wal.storageClass }}
-                storageClassName: {{ . }}
-                {{- end }}
+                accessModes: ["ReadWriteOnce"]
+                storageClassName: gp3-wal
                 resources:
                   requests:
-                    storage: {{ .Values.wal.size | default "10Gi" }}
+                    storage: 10Gi
         {{- end }}
       {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
