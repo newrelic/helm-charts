@@ -118,6 +118,12 @@ spec:
               # creates the function -- set
               # postgresql.topQueryCollection.explainFunctionName to
               # "otel.explain_statement" to make the receiver actually call it.
+              #
+              # $$$$ below is not a typo: Kubernetes expands $(VAR) references
+              # in command/args and collapses any bare $$ to a single $ as an
+              # escape mechanism, before the shell ever sees this string. PL/pgSQL
+              # dollar-quoting needs a real $$ to reach psql, so it must be
+              # written here as $$$$.
               psql -v ON_ERROR_STOP=1 \
                 -v monitor_user="$PG_MONITOR_USERNAME" \
                 -d {{ $db | quote }} <<'SQL'
@@ -125,7 +131,7 @@ spec:
               RETURNS json
               LANGUAGE plpgsql
               SECURITY DEFINER
-              AS $$
+              AS $$$$
               DECLARE
                   v_plan json;
                   v_param_count int;
@@ -156,7 +162,7 @@ spec:
                   END IF;
                   RAISE;
               END;
-              $$;
+              $$$$;
               SQL
               psql -v ON_ERROR_STOP=1 \
                 -v monitor_user="$PG_MONITOR_USERNAME" \
