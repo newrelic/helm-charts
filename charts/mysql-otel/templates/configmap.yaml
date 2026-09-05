@@ -1,0 +1,138 @@
+{{- include "mysql-otel.validate.topology" . -}}
+{{- include "mysql-otel.validate.otlpEndpoint" . -}}
+{{- $tlsDefaults := dict "insecure" .Values.mysql.tls.insecure "insecure_skip_verify" .Values.mysql.tls.insecureSkipVerify -}}
+{{- if .Values.mysql.tls.caFile }}
+{{- $tlsDefaults = set $tlsDefaults "ca_file" .Values.mysql.tls.caFile -}}
+{{- end }}
+{{- $receiverDefaults := dict
+      "endpoint" (printf "%s:%d" .Values.mysql.server (.Values.mysql.port | int))
+      "transport" "tcp"
+      "username" "${env:MYSQL_USERNAME}"
+      "password" "${env:MYSQL_PASSWORD}"
+      "allow_native_passwords" .Values.mysql.allowNativePasswords
+      "collection_interval" .Values.mysql.collectionInterval
+      "initial_delay" .Values.mysql.initialDelay
+      "explain_mode" .Values.mysql.explainMode
+      "tls" $tlsDefaults
+      "statement_events" (dict
+        "digest_text_limit" (.Values.mysql.statementEvents.digestTextLimit | int)
+        "time_limit" .Values.mysql.statementEvents.timeLimit
+        "limit" (.Values.mysql.statementEvents.limit | int)
+      )
+      "query_sample_collection" (dict
+        "max_rows_per_query" (.Values.mysql.querySampleCollection.maxRowsPerQuery | int)
+        "allowed_comment_keys" .Values.mysql.querySampleCollection.allowedCommentKeys
+      )
+      "top_query_collection" (dict
+        "lookback_time" (.Values.mysql.topQueryCollection.lookbackTime | int)
+        "max_query_sample_count" (.Values.mysql.topQueryCollection.maxQuerySampleCount | int)
+        "top_query_count" (.Values.mysql.topQueryCollection.topQueryCount | int)
+        "collection_interval" .Values.mysql.topQueryCollection.collectionInterval
+        "query_plan_cache_size" (.Values.mysql.topQueryCollection.queryPlanCacheSize | int)
+        "query_plan_cache_ttl" .Values.mysql.topQueryCollection.queryPlanCacheTtl
+        "allowed_comment_keys" .Values.mysql.topQueryCollection.allowedCommentKeys
+      )
+      "events" (dict
+        "db.server.query_sample" (dict "enabled" .Values.mysql.events.querySample.enabled)
+        "db.server.top_query" (dict "enabled" .Values.mysql.events.topQuery.enabled)
+      )
+-}}
+{{- if .Values.mysql.database }}
+{{- $receiverDefaults = set $receiverDefaults "database" .Values.mysql.database -}}
+{{- end }}
+{{- $receiver := mergeOverwrite $receiverDefaults (.Values.additionalReceiverConfig | default dict) -}}
+{{- $tls := index $receiver "tls" -}}
+{{- $stmt := index $receiver "statement_events" -}}
+{{- $qsc := index $receiver "query_sample_collection" -}}
+{{- $tqc := index $receiver "top_query_collection" -}}
+{{- $events := index $receiver "events" -}}
+{{- $knownReceiverKeys := list "endpoint" "transport" "username" "password" "database" "allow_native_passwords" "collection_interval" "initial_delay" "tls" "explain_mode" "statement_events" "query_sample_collection" "top_query_collection" "events" -}}
+{{- $extraReceiverKeys := list -}}
+{{- range $k, $v := $receiver }}
+{{- if not (has $k $knownReceiverKeys) }}
+{{- $extraReceiverKeys = append $extraReceiverKeys $k -}}
+{{- end }}
+{{- end }}
+{{- $extraReceiverKeys = sortAlpha $extraReceiverKeys -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mysql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mysql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      nrmysql:
+        endpoint: {{ index $receiver "endpoint" | quote }}
+        transport: {{ index $receiver "transport" }}
+        username: {{ index $receiver "username" | quote }}
+        password: {{ index $receiver "password" | quote }}
+        {{- if hasKey $receiver "database" }}
+        database: {{ index $receiver "database" | quote }}
+        {{- end }}
+        allow_native_passwords: {{ index $receiver "allow_native_passwords" }}
+        collection_interval: {{ index $receiver "collection_interval" }}
+        initial_delay: {{ index $receiver "initial_delay" }}
+        tls:
+          insecure: {{ index $tls "insecure" }}
+          insecure_skip_verify: {{ index $tls "insecure_skip_verify" }}
+          {{- if hasKey $tls "ca_file" }}
+          ca_file: {{ index $tls "ca_file" | quote }}
+          {{- end }}
+        explain_mode: {{ index $receiver "explain_mode" }}
+        statement_events:
+          digest_text_limit: {{ index $stmt "digest_text_limit" }}
+          time_limit: {{ index $stmt "time_limit" }}
+          limit: {{ index $stmt "limit" }}
+        query_sample_collection:
+          max_rows_per_query: {{ index $qsc "max_rows_per_query" }}
+          allowed_comment_keys: [{{ index $qsc "allowed_comment_keys" | join ", " }}]
+        top_query_collection:
+          lookback_time: {{ index $tqc "lookback_time" }}
+          max_query_sample_count: {{ index $tqc "max_query_sample_count" }}
+          top_query_count: {{ index $tqc "top_query_count" }}
+          collection_interval: {{ index $tqc "collection_interval" }}
+          query_plan_cache_size: {{ index $tqc "query_plan_cache_size" }}
+          query_plan_cache_ttl: {{ index $tqc "query_plan_cache_ttl" }}
+          allowed_comment_keys: [{{ index $tqc "allowed_comment_keys" | join ", " }}]
+        events:
+          db.server.query_sample:
+            enabled: {{ index (index $events "db.server.query_sample") "enabled" }}
+          db.server.top_query:
+            enabled: {{ index (index $events "db.server.top_query") "enabled" }}
+        {{- range $k := $extraReceiverKeys }}
+        {{ $k }}: {{ toYaml (index $receiver $k) }}
+        {{- end }}
+    processors:
+      batch:
+      resource/mysql:
+        attributes:
+          - key: server.address
+            value: {{ .Values.mysql.server | quote }}
+            action: upsert
+          - key: server.port
+            value: {{ .Values.mysql.port | int }}
+            action: upsert
+    exporters:
+      otlp/newrelic:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [nrmysql]
+          processors: [resource/mysql, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [nrmysql]
+          processors: [resource/mysql, batch]
+          exporters: [otlp/newrelic]
