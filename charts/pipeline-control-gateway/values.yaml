@@ -85,7 +85,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "2.5.0"
+  tag: "3.0.2-fedlogs-wal"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -203,7 +203,7 @@ lowDataMode:
 wal:
   # -- Provision the per-pod ephemeral WAL disk and mount it into the gateway container at
   # /var/wal. Mirrors the iceberg exporter's `wal.enabled`.
-  enabled: false
+  enabled: true
 
 # -- Complete OpenTelemetry pipeline configuration as YAML map. When provided, this will override all other OpenTelemetry configuration sections.
 # @default -- `{}`
