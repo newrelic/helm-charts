@@ -1,0 +1,94 @@
+suite: test gkeAutopilotAllowlist helper
+templates:
+  - templates/example-cm-gkeautopilotallowlist.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Is false by default
+    asserts:
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-if
+          value: "disabled"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-quote
+          value: ""
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-default
+          value: "false"
+
+  - it: Is false with everything null
+    set:
+      global: null
+      gkeAutopilotAllowlist: null
+    asserts:
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-if
+          value: "disabled"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-quote
+          value: ""
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-default
+          value: "false"
+
+  - it: Enable gkeAutopilotAllowlist (globally)
+    set:
+      global:
+        gkeAutopilotAllowlist: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-if
+          value: "enabled"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-quote
+          value: "true"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-default
+          value: "true"
+
+  - it: Enable gkeAutopilotAllowlist (locally)
+    set:
+      gkeAutopilotAllowlist: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-if
+          value: "enabled"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-quote
+          value: "true"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-default
+          value: "true"
+
+  - it: Overrides to false the global state locally
+    set:
+      global:
+        gkeAutopilotAllowlist: true
+      gkeAutopilotAllowlist: false
+    asserts:
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-if
+          value: "disabled"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-quote
+          value: ""
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-default
+          value: "false"
+
+  - it: Overrides to true the global state locally
+    set:
+      global:
+        gkeAutopilotAllowlist: false
+      gkeAutopilotAllowlist: true
+    asserts:
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-if
+          value: "enabled"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-quote
+          value: "true"
+      - equal:
+          path: data.gkeAutopilotAllowlist-with-default
+          value: "true"

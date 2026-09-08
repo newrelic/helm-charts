@@ -68,6 +68,15 @@ fluentBit:
     # - `persistentVolume` will use a ReadWriteMany persistent volume to store the db file. This will override `fluentBit.db` path and use `/db/${NODE_NAME}-fb.db` file instead.
     mode: "hostPath"
 
+    # Image used by the init container that cleans up the fluent-bit db files.
+    # Only used when persistence.mode is set to persistentVolume.
+    initContainer:
+      image:
+        repository: busybox
+#        registry: my_registry
+        tag: "1.36"
+        pullPolicy: IfNotPresent
+
     # In case persistence.mode is set to persistentVolume this will be needed
     persistentVolume:
       # The storage class should allow ReadWriteMany mode
@@ -105,7 +114,9 @@ fluentBit:
           Daemon        off
           Parsers_File  parsers.conf
           HTTP_Server   On
-          HTTP_Listen   0.0.0.0
+          # Listening on :: binds a dual-stack socket, so the health check
+          # (and liveness probe) works on IPv4-only, IPv6-only, and dual-stack clusters.
+          HTTP_Listen   ::
           HTTP_Port     2020
           Health_Check  On
 
