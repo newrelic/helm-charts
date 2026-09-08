@@ -30,9 +30,20 @@ spec:
       # before Kubernetes SIGKILLs the pod. Must exceed the worst-case drain time.
       terminationGracePeriodSeconds: 120
       {{- end }}
+      {{- if .Values.wal.enabled }}
+      # Federated Logs WAL: the per-pod ephemeral EBS volume is provisioned root-owned, but the
+      # gateway container runs as a non-root user. Set fsGroup so the kubelet group-owns the
+      # /var/wal volume to this GID and adds it to the container's supplementary groups, letting
+      # the non-root process write the WAL. Merged on top of any user-provided podSecurityContext.
+      {{- $walPodSecurityContext := include "nrKubernetesOtel.deployment.securityContext.pod" . | fromYaml }}
+      {{- $_ := set $walPodSecurityContext "fsGroup" (.Values.wal.fsGroup | default 1000) }}
+      securityContext:
+        {{- toYaml $walPodSecurityContext | nindent 8 }}
+      {{- else }}
       {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
       securityContext:
         {{- . | nindent 8 }}
+      {{- end }}
       {{- end }}
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
