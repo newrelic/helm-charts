@@ -1,0 +1,75 @@
+suite: setup job configmap
+templates:
+  - templates/setup-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracle.endpoint: "db:1521"
+  oracle.service: "MYPDB"
+  oracle.username: "nr_monitor"
+  oracle.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.oracleAdmin.existingSecret: "admin-secret"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: fails when setupJob.enabled is true and topology is unset
+    set:
+      setupJob.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracle.topology must be one of: cdb, pdb, rds, adb when setupJob.enabled is true"
+  - it: fails when setupJob.enabled is true and oracleAdmin.existingSecret is unset
+    set:
+      setupJob.enabled: true
+      oracle.topology: "pdb"
+      setupJob.oracleAdmin.existingSecret: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "setupJob.oracleAdmin.existingSecret is required when setupJob.enabled is true"
+  - it: mounts the pdb grant script when topology is pdb
+    set:
+      setupJob.enabled: true
+      oracle.topology: "pdb"
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "GRANT CREATE SESSION TO &monitor_user;"
+      - notMatchRegex:
+          path: data["grants.sql"]
+          pattern: "CONTAINER=ALL"
+  - it: mounts the cdb grant script when topology is cdb
+    set:
+      setupJob.enabled: true
+      oracle.topology: "cdb"
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "CONTAINER=ALL"
+  - it: mounts the rds grant script when topology is rds
+    set:
+      setupJob.enabled: true
+      oracle.topology: "rds"
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "rdsadmin.rdsadmin_util.grant_sys_object"
+  - it: mounts the adb grant script when topology is adb
+    set:
+      setupJob.enabled: true
+      oracle.topology: "adb"
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "GRANT SELECT ON SYS\\.V_\\$INSTANCE TO &monitor_user;"
+      - notMatchRegex:
+          path: data["grants.sql"]
+          pattern: "CONTAINER=ALL"
+      - notMatchRegex:
+          path: data["grants.sql"]
+          pattern: "rdsadmin"
