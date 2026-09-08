@@ -1,0 +1,149 @@
+{{- include "postgresql-otel.validate.topology" . -}}
+{{- include "postgresql-otel.validate.otlpEndpoint" . -}}
+{{- $topQueryDefaults := dict
+      "max_rows_per_query" (.Values.postgresql.topQueryCollection.maxRowsPerQuery | int)
+      "top_n_query" (.Values.postgresql.topQueryCollection.topNQuery | int)
+      "collection_interval" .Values.postgresql.topQueryCollection.collectionInterval
+      "allowed_comment_keys" .Values.postgresql.topQueryCollection.allowedCommentKeys
+-}}
+{{- if .Values.postgresql.topQueryCollection.explainFunctionName }}
+{{- $topQueryDefaults = set $topQueryDefaults "explain_function_name" .Values.postgresql.topQueryCollection.explainFunctionName -}}
+{{- end }}
+{{- $receiverDefaults := dict
+      "endpoint" (printf "%s:%d" .Values.postgresql.server (.Values.postgresql.port | int))
+      "transport" "tcp"
+      "username" "${env:POSTGRESQL_USERNAME}"
+      "password" "${env:POSTGRESQL_PASSWORD}"
+      "databases" .Values.postgresql.databases
+      "collection_interval" .Values.postgresql.collectionInterval
+      "events" (dict
+        "db.server.top_query" (dict "enabled" .Values.postgresql.events.topQuery.enabled)
+        "db.server.query_sample" (dict "enabled" .Values.postgresql.events.querySample.enabled)
+      )
+      "top_query_collection" $topQueryDefaults
+      "query_sample_collection" (dict
+        "max_rows_per_query" (.Values.postgresql.querySampleCollection.maxRowsPerQuery | int)
+        "allowed_comment_keys" .Values.postgresql.querySampleCollection.allowedCommentKeys
+      )
+      "metrics" (dict
+        "postgresql.database.locks" (dict "enabled" .Values.postgresql.metrics.databaseLocks.enabled)
+        "postgresql.deadlocks" (dict "enabled" .Values.postgresql.metrics.deadlocks.enabled)
+        "postgresql.function.calls" (dict "enabled" .Values.postgresql.metrics.functionCalls.enabled)
+        "postgresql.query.conflicts" (dict "enabled" .Values.postgresql.metrics.queryConflicts.enabled)
+        "postgresql.sequential_scans" (dict "enabled" .Values.postgresql.metrics.sequentialScans.enabled)
+        "postgresql.temp.io" (dict "enabled" .Values.postgresql.metrics.tempIo.enabled)
+        "postgresql.temp_files" (dict "enabled" .Values.postgresql.metrics.tempFiles.enabled)
+      )
+-}}
+{{- if and (eq .Values.postgresql.topology "rds") .Values.postgresql.excludeDatabases }}
+{{- $receiverDefaults = set $receiverDefaults "exclude_databases" .Values.postgresql.excludeDatabases -}}
+{{- end }}
+{{- $receiver := mergeOverwrite $receiverDefaults (.Values.additionalReceiverConfig | default dict) -}}
+{{- $tqc := index $receiver "top_query_collection" -}}
+{{- $qsc := index $receiver "query_sample_collection" -}}
+{{- $events := index $receiver "events" -}}
+{{- $metrics := index $receiver "metrics" -}}
+{{- $knownReceiverKeys := list "endpoint" "transport" "username" "password" "databases" "collection_interval" "events" "top_query_collection" "query_sample_collection" "metrics" "exclude_databases" -}}
+{{- $extraReceiverKeys := list -}}
+{{- range $k, $v := $receiver }}
+{{- if not (has $k $knownReceiverKeys) }}
+{{- $extraReceiverKeys = append $extraReceiverKeys $k -}}
+{{- end }}
+{{- end }}
+{{- $extraReceiverKeys = sortAlpha $extraReceiverKeys -}}
+{{- $knownTqcKeys := list "max_rows_per_query" "top_n_query" "collection_interval" "allowed_comment_keys" -}}
+{{- $extraTqcKeys := list -}}
+{{- range $k, $v := $tqc }}
+{{- if not (has $k $knownTqcKeys) }}
+{{- $extraTqcKeys = append $extraTqcKeys $k -}}
+{{- end }}
+{{- end }}
+{{- $extraTqcKeys = sortAlpha $extraTqcKeys -}}
+{{- $metricsOrder := list "postgresql.database.locks" "postgresql.deadlocks" "postgresql.function.calls" "postgresql.query.conflicts" "postgresql.sequential_scans" "postgresql.temp.io" "postgresql.temp_files" -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgresql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "postgresql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      nrpostgresql:
+        endpoint: {{ index $receiver "endpoint" | quote }}
+        transport: {{ index $receiver "transport" }}
+        username: {{ index $receiver "username" | quote }}
+        password: {{ index $receiver "password" | quote }}
+        databases:
+        {{- range (index $receiver "databases") }}
+          - {{ . }}
+        {{- end }}
+        {{- if hasKey $receiver "exclude_databases" }}
+        exclude_databases:
+        {{- range (index $receiver "exclude_databases") }}
+          - {{ . }}
+        {{- end }}
+        {{- end }}
+        collection_interval: {{ index $receiver "collection_interval" }}
+        events:
+          db.server.top_query:
+            enabled: {{ index (index $events "db.server.top_query") "enabled" }}
+          db.server.query_sample:
+            enabled: {{ index (index $events "db.server.query_sample") "enabled" }}
+        top_query_collection:
+          max_rows_per_query: {{ index $tqc "max_rows_per_query" }}
+          top_n_query: {{ index $tqc "top_n_query" }}
+          collection_interval: {{ index $tqc "collection_interval" }}
+          allowed_comment_keys: [{{ index $tqc "allowed_comment_keys" | join ", " }}]
+          {{- range $k := $extraTqcKeys }}
+          {{ $k }}: {{ index $tqc $k }}
+          {{- end }}
+        query_sample_collection:
+          max_rows_per_query: {{ index $qsc "max_rows_per_query" }}
+          allowed_comment_keys: [{{ index $qsc "allowed_comment_keys" | join ", " }}]
+        metrics:
+          {{- range $k := $metricsOrder }}
+          {{ $k }}:
+            enabled: {{ index (index $metrics $k) "enabled" }}
+          {{- end }}
+        {{- range $k := $extraReceiverKeys }}
+        {{- $v := index $receiver $k }}
+        {{- if kindIs "map" $v }}
+        {{ $k }}:
+{{ toYaml $v | indent 10 }}
+        {{- else }}
+        {{ $k }}: {{ toYaml $v }}
+        {{- end }}
+        {{- end }}
+    processors:
+      batch:
+      resource/postgresql:
+        attributes:
+          - key: server.address
+            value: {{ .Values.postgresql.server | quote }}
+            action: upsert
+          - key: server.port
+            value: {{ .Values.postgresql.port | int }}
+            action: upsert
+    exporters:
+      otlp/newrelic:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [nrpostgresql]
+          processors: [resource/postgresql, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [nrpostgresql]
+          processors: [resource/postgresql, batch]
+          exporters: [otlp/newrelic]
