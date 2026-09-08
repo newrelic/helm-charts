@@ -13,7 +13,7 @@ data:
     # Detect OS and install kernel headers accordingly
     if [ -f /host/etc/os-release ]; then
       . /host/etc/os-release
-      if [[ $ID == 'rhcos' || $VARIANT_ID == 'coreos' ]]; then
+      if [[ $ID == 'rhcos' ]]; then
         echo 'Detected Red Hat CoreOS (OpenShift). Checking for kernel headers...'
 
         KERNEL_VERSION=$(uname -r)
@@ -128,6 +128,12 @@ data:
       elif [[ $ID == 'amzn' || $ID == 'centos' || $ID == 'rhel' ]]; then
         echo 'Detected EKS/Amazon Linux or CentOS/RHEL. Installing kernel-devel...'
         chroot /host /bin/bash -c "yum install -y kernel-devel-$(uname -r)" || echo 'kernel-devel install failed, proceeding.'
+      elif [[ $VARIANT_ID == 'coreos' ]]; then
+        echo 'Detected CoreOS (OKD). Checking for pre-installed kernel headers...'
+        KERNEL_VERSION=$(uname -r)
+        for p in "/usr/src/kernels/${KERNEL_VERSION}" "/host/usr/src/kernels/${KERNEL_VERSION}" "/host/lib/modules/${KERNEL_VERSION}/build"; do
+          [ -d "$p" ] && [ -f "$p/Makefile" ] && mkdir -p /kernel-headers && cp -r "$p"/* /kernel-headers/ && echo "/kernel-headers" > /host/tmp/kernel-headers-path.txt && break
+        done
       elif [[ $ID == 'debian' || $ID == 'ubuntu' ]]; then
         echo 'Detected Debian/Ubuntu. Installing linux-headers...'
         chroot /host /bin/bash -c "apt-get update || true && apt-get install -y linux-headers-$(uname -r)" || echo 'linux-headers install failed, proceeding.'
