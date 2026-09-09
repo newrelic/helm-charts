@@ -60,7 +60,7 @@ scenarios:
       system.filesystem.* is collected. Requires the pod-scoped-hostnet-off allowlist.
     before:
       - helm dependency update ../
-      - kubectl apply -f gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
+      - kubectl apply -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
       - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values-gke-autopilot-filesystem.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} ${EXTRA_HELM_ARGS}
       - sleep 90
     after:
@@ -68,7 +68,7 @@ scenarios:
       - kubectl get pods --namespace nr-${SCENARIO_TAG} -o wide
       - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
       - kubectl delete namespace nr-${SCENARIO_TAG} --wait=false
-      - kubectl delete -f gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
+      - kubectl delete -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
     tests:
       nrqls:
         # the delta the allowlist buys
@@ -90,7 +90,7 @@ scenarios:
       Runs on the same pod-scoped-hostnet-off allowlist (its ATP write mount is pre-listed).
     before:
       - helm dependency update ../
-      - kubectl apply -f gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
+      - kubectl apply -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
       - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values-gke-autopilot-atp.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} ${EXTRA_HELM_ARGS}
       - sleep 90
     after:
@@ -98,7 +98,7 @@ scenarios:
       - kubectl get pods --namespace nr-${SCENARIO_TAG} -o wide
       - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
       - kubectl delete namespace nr-${SCENARIO_TAG} --wait=false
-      - kubectl delete -f gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
+      - kubectl delete -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.workloadallowlist.yaml
     tests:
       nrqls:
         - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'process.%') AS 'process names'

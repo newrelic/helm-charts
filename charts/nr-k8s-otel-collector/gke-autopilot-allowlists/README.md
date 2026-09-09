@@ -3,15 +3,15 @@
 Manual end-to-end check of the `nr-k8s-otel-collector` chart on a real GKE Autopilot cluster: it
 deploys each GKE Autopilot variant, applies the matching New Relic `WorkloadAllowlist` where needed,
 and asserts the metrics that variant should produce. This is **not** wired into CI — the CI e2e runs
-on Minikube (`../test-specs.yml`).
+on Minikube (`../e2e/test-specs.yml`).
 
 ## Variants tested
 
 | Variant | Values | Allowlist CR | Adds |
 |---|---|---|---|
-| baseline | `../e2e-values-gke-autopilot-baseline.yml` (`provider: GKE_AUTOPILOT`) | none | kubelet/cAdvisor metrics with no privilege |
-| filesystem | `../e2e-values-gke-autopilot-filesystem.yml` (`+ gkeAutopilotAllowlist: true`) | `newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off` | `system.filesystem.*` |
-| atp | `../e2e-values-gke-autopilot-atp.yml` (`+ enable_atp: true`) | same pod-scoped CR | `process.*` |
+| baseline | `../e2e/e2e-values-gke-autopilot-baseline.yml` (`provider: GKE_AUTOPILOT`) | none | kubelet/cAdvisor metrics with no privilege |
+| filesystem | `../e2e/e2e-values-gke-autopilot-filesystem.yml` (`+ gkeAutopilotAllowlist: true`) | `newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off` | `system.filesystem.*` |
+| atp | `../e2e/e2e-values-gke-autopilot-atp.yml` (`+ enable_atp: true`) | same pod-scoped CR | `process.*` |
 
 The **node-scoped / host-network** variant (node `system.network.*` + `process.cpu.time`) needs the
 daemonset `hostPID`/`hostNetwork` chart change from PR #2403 (`otel/daemonset-host-namespaces`). It is
