@@ -1,9 +1,9 @@
 # GKE Autopilot variant confirmation (manual e2e)
 
-Manual end-to-end check of the `nr-k8s-otel-collector` chart on a real GKE Autopilot cluster: it
+Manual end-to-end check of the `nr-k8s-otel-collector` chart on a real GKE Autopilot cluster. It
 deploys each GKE Autopilot variant, applies the matching New Relic `WorkloadAllowlist` where needed,
-and asserts the metrics that variant should produce. This is **not** wired into CI — the CI e2e runs
-on Minikube (`../e2e/test-specs.yml`).
+and asserts the metrics that variant should produce. Not wired into CI. The CI e2e runs on Minikube
+(`../e2e/test-specs.yml`).
 
 ## Variants tested
 
@@ -11,26 +11,26 @@ on Minikube (`../e2e/test-specs.yml`).
 |---|---|---|---|
 | baseline | `../e2e/e2e-values-gke-autopilot-baseline.yml` (`provider: GKE_AUTOPILOT`) | none | kubelet/cAdvisor metrics with no privilege |
 | filesystem | `../e2e/e2e-values-gke-autopilot-filesystem.yml` (`+ gkeAutopilotAllowlist: true`) | `newrelic-nr-k8s-otel-collector-hostnet-off` | `system.filesystem.*` |
-| atp | `../e2e/e2e-values-gke-autopilot-atp.yml` (`+ enable_atp: true`) | same pod-scoped CR | `process.*` |
+| atp | `../e2e/e2e-values-gke-autopilot-atp.yml` (`+ enable_atp: true`) | same hostnet-off CR | `process.*` |
 | node | `../e2e/e2e-values-gke-autopilot-node.yml` (`+ daemonset.hostPID/hostNetwork: true`) | `newrelic-nr-k8s-otel-collector-hostnet-on` | node `system.network.*` + partial `process.cpu.time` |
 
-The **node-scoped / host-network** variant is scenario 4 (`node`). It sets the daemonset
-`hostPID`/`hostNetwork` flags from PR #2403 (`otel/daemonset-host-namespaces`) and uses the
-`newrelic-nr-k8s-otel-collector-hostnet-on` CR. It only passes once PR #2403 is merged:
-without those flags the chart renders `hostNetwork:false`, which Warden exact-matches and denies under
-the node CR. Live-verified on GKE Autopilot 2026-09-09 (daemonset pods admitted on the node network,
-`system.network.*` re-scoped to the node — 30 host interfaces incl. `cilium_*`/`lxc*`).
+The node variant is scenario 4 (`node`). It sets the daemonset `hostPID`/`hostNetwork` flags from
+PR #2403 (`otel/daemonset-host-namespaces`) and uses the `newrelic-nr-k8s-otel-collector-hostnet-on`
+CR. It only passes once PR #2403 is merged: without those flags the chart renders `hostNetwork:false`,
+which Warden exact-matches and denies under the node CR. Live-verified on GKE Autopilot 2026-09-09
+(daemonset pods admitted on the node network, `system.network.*` re-scoped to the node, 30 host
+interfaces incl. `cilium_*`/`lxc*`).
 
-These CRs are the New Relic `WorkloadAllowlist` submission candidates for GKE Autopilot — the same
+These CRs are the New Relic `WorkloadAllowlist` submission candidates for GKE Autopilot, the same
 manifests submitted to Google. Keep them in sync with what is submitted.
 
 ## Prerequisites
 
-- An existing GKE Autopilot cluster you can reach (the runner defaults to your active kube-context and
-  only verifies it, never switches). Applying a CR directly requires a "blessed"
-  project; customers use the `AllowlistSynchronizer` instead.
-- A New Relic **production** account (Autopilot is not on staging): `ACCOUNT_ID`, a USER API key, an
-  INGEST license key — all for the same account/region.
+- A GKE Autopilot cluster you can reach. The runner defaults to your active kube-context and only
+  verifies it, never switches. Applying a CR directly requires a "blessed" project; customers use the
+  `AllowlistSynchronizer` instead.
+- A New Relic production account (Autopilot is not on staging): `ACCOUNT_ID`, a USER API key, and an
+  INGEST license key, all for the same account and region.
 - `helm` v3, `kubectl`, `go`. The published `newrelic/nrdot-collector` image is used by default (no
   build needed).
 
@@ -49,5 +49,5 @@ kube-context or any identity.
 
 - Query scoping is `k8s.cluster.name` (OTel-native); `global.cluster` is set to the scenario tag.
   Assertions use `filter(...)` so the e2e-action's appended cluster filter is the only `WHERE`.
-- Managed control-plane metrics (apiserver/scheduler/etcd) are not collected on Autopilot — expected.
+- Managed control-plane metrics (apiserver/scheduler/etcd) are not collected on Autopilot, as expected.
 - To validate your own collector build, push it and set `COLLECTOR_REGISTRY`/`COLLECTOR_TAG` in `.env`.
