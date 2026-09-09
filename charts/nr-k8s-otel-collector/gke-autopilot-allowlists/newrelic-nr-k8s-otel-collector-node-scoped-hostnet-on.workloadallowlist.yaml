@@ -22,11 +22,10 @@ matchingCriteria:
         - name: get-cpu-allocatable
           image: ^(.*/)?bitnami/kubectl$
           # ⚠️ MAINTENANCE RISK — exact-enumerated script → frozen; ANY chart edit to this
-          # block breaks the match (_experiments 2026-08-21: omitting it = match failure).
-          # Google Q4 (2026-09-08) blessed broad RE2 for args[]; TODO(Phase 2 admit-test):
-          # try replacing the script element with `^.*$`. If Warden admits, generalize here
-          # and in the pod-off CR; if it rejects, keep exact and treat any script edit as a
-          # mandatory re-submission trigger.
+          # block breaks the match. command[] is matched LITERALLY by Warden, NOT by RE2
+          # (TESTED 2026-09-09 on a live GKE Autopilot cluster: both `(?s).*` and `[\s\S]*`
+          # were DENIED; the exact script admits). Google's Q4 RE2 blessing covers args[]/env,
+          # not command[]. Keep this script exact — any edit is a mandatory re-submission trigger.
           command:
             - sh
             - -c

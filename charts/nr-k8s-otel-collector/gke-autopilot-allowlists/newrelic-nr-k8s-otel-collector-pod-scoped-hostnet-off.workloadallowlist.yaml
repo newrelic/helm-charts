@@ -23,8 +23,8 @@ matchingCriteria:
     initContainers:
         - name: get-cpu-allocatable
           image: ^(.*/)?bitnami/kubectl$
-          # ⚠️ MAINTENANCE RISK — see the node-scoped-hostnet-on CR. Same frozen script;
-          # generalize both together if the Phase 2 RE2-on-command admit-test passes.
+          # ⚠️ MAINTENANCE RISK — see the node-scoped-hostnet-on CR. command[] is matched
+          # literally by Warden (RE2 not honored there; TESTED 2026-09-09). Keep the script exact.
           command:
             - sh
             - -c
