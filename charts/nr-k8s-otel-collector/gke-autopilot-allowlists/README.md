@@ -21,8 +21,8 @@ without those flags the chart renders `hostNetwork:false`, which Warden exact-ma
 the node CR. Live-verified on GKE Autopilot 2026-09-09 (daemonset pods admitted on the node network,
 `system.network.*` re-scoped to the node — 30 host interfaces incl. `cilium_*`/`lxc*`).
 
-The two CRs are byte-identical copies of the submission candidates in the gke-autopilot-allowlist
-staging repo (`allowListToSubmit/finalized_v3/`). Keep them in sync.
+These CRs are the New Relic `WorkloadAllowlist` submission candidates for GKE Autopilot — the same
+manifests submitted to Google. Keep them in sync with what is submitted.
 
 ## Prerequisites
 
