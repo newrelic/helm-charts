@@ -226,7 +226,7 @@ Returns fluentbit config to collect and forward its metrics to New Relic
 [FILTER]
     Name    lua
     Match   buildInfo
-    script  /fluent-bit/scripts/payload.lua
+    script  ${LUA_SCRIPT_PATH}
     call    build_payload
 [OUTPUT]
     Name    http
