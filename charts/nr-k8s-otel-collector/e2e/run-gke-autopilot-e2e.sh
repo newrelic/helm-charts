@@ -2,10 +2,11 @@
 #
 # Manual GKE Autopilot variant confirmation for nr-k8s-otel-collector.
 #
-# Runs test-specs-gke-autopilot.yml against an EXISTING GKE Autopilot cluster (never minikube). Three
+# Runs test-specs-gke-autopilot.yml against an EXISTING GKE Autopilot cluster (never minikube). Four
 # scenarios show what each knob buys: baseline (config fix, no allowlist) -> filesystem
-# (gkeAutopilotAllowlist + CR) -> atp (+ process metrics). Each deploys the chart, applies its
-# WorkloadAllowlist where needed, asserts the expected metrics, and tears down.
+# (gkeAutopilotAllowlist + hostnet-off CR) -> atp (+ process metrics, same CR) -> node (daemonset
+# hostPID/hostNetwork + hostnet-on CR). Each deploys the chart, applies its WorkloadAllowlist where
+# needed, asserts the expected metrics, and tears down.
 #
 # Images: the published newrelic/nrdot-collector is used by default (the collector is not built from
 # this repo). To test a dev collector you built and pushed yourself, set COLLECTOR_REGISTRY (and
