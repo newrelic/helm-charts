@@ -36,7 +36,7 @@ echo "Logging this run to: $RUN_LOG"
 echo "Latest run always at: $RESULTS_DIR/latest.log"
 echo
 
-DEFAULT_KUBE_CONTEXT="gke_k8s-o11y-team_us-west2_gke-autopilot-truong"
+DEFAULT_KUBE_CONTEXT="$(kubectl config current-context 2>/dev/null || true)"   # your active context; the runner only verifies it, never switches
 DEFAULT_REGION="US"   # US | EU | Staging | Local
 
 PROMPTED=()

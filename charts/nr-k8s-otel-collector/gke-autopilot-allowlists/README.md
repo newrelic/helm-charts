@@ -26,8 +26,8 @@ staging repo (`allowListToSubmit/finalized_v3/`). Keep them in sync.
 
 ## Prerequisites
 
-- An existing GKE Autopilot cluster you can reach (default context
-  `gke_k8s-o11y-team_us-west2_gke-autopilot-truong`). Applying a CR directly requires a "blessed"
+- An existing GKE Autopilot cluster you can reach (the runner defaults to your active kube-context and
+  only verifies it, never switches). Applying a CR directly requires a "blessed"
   project; customers use the `AllowlistSynchronizer` instead.
 - A New Relic **production** account (Autopilot is not on staging): `ACCOUNT_ID`, a USER API key, an
   INGEST license key — all for the same account/region.
