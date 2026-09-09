@@ -10,13 +10,13 @@ on Minikube (`../e2e/test-specs.yml`).
 | Variant | Values | Allowlist CR | Adds |
 |---|---|---|---|
 | baseline | `../e2e/e2e-values-gke-autopilot-baseline.yml` (`provider: GKE_AUTOPILOT`) | none | kubelet/cAdvisor metrics with no privilege |
-| filesystem | `../e2e/e2e-values-gke-autopilot-filesystem.yml` (`+ gkeAutopilotAllowlist: true`) | `newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off` | `system.filesystem.*` |
+| filesystem | `../e2e/e2e-values-gke-autopilot-filesystem.yml` (`+ gkeAutopilotAllowlist: true`) | `newrelic-nr-k8s-otel-collector-hostnet-off` | `system.filesystem.*` |
 | atp | `../e2e/e2e-values-gke-autopilot-atp.yml` (`+ enable_atp: true`) | same pod-scoped CR | `process.*` |
-| node | `../e2e/e2e-values-gke-autopilot-node.yml` (`+ daemonset.hostPID/hostNetwork: true`) | `newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on` | node `system.network.*` + partial `process.cpu.time` |
+| node | `../e2e/e2e-values-gke-autopilot-node.yml` (`+ daemonset.hostPID/hostNetwork: true`) | `newrelic-nr-k8s-otel-collector-hostnet-on` | node `system.network.*` + partial `process.cpu.time` |
 
 The **node-scoped / host-network** variant is scenario 4 (`node`). It sets the daemonset
 `hostPID`/`hostNetwork` flags from PR #2403 (`otel/daemonset-host-namespaces`) and uses the
-`newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on` CR. It only passes once PR #2403 is merged:
+`newrelic-nr-k8s-otel-collector-hostnet-on` CR. It only passes once PR #2403 is merged:
 without those flags the chart renders `hostNetwork:false`, which Warden exact-matches and denies under
 the node CR. Live-verified on GKE Autopilot 2026-09-09 (daemonset pods admitted on the node network,
 `system.network.*` re-scoped to the node — 30 host interfaces incl. `cilium_*`/`lxc*`).

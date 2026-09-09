@@ -1,24 +1,28 @@
-# nr-k8s-otel-collector — pod-scoped shape (filesystem tier, no host namespaces).
-# Chart values that produce this workload:
+# nr-k8s-otel-collector — node-scoped shape. Chart values that produce this workload:
 #   provider: GKE_AUTOPILOT
-#   gkeAutopilotAllowlist: true    # keeps the /hostfs mount -> system.filesystem.*
-#   (daemonset.hostPID / daemonset.hostNetwork off)
-# Collector runs privileged:false. Pairs with newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on.
+#   gkeAutopilotAllowlist: true    # keeps the /hostfs mount + hostmetrics root_path
+#   daemonset.hostPID: true
+#   daemonset.hostNetwork: true    # node-scoped system.network.* + partial process.cpu.time
+#   enable_atp: true               # optional; adds process.* (CR admits with ATP on or off)
+# Collector runs privileged:false. Pairs with newrelic-nr-k8s-otel-collector-hostnet-off.
 apiVersion: auto.gke.io/v1
 kind: WorkloadAllowlist
 minGKEVersion: 1.32.2-gke.1652000
 metadata:
-    name: newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off
+    name: newrelic-nr-k8s-otel-collector-hostnet-on
     annotations:
         autopilot.gke.io/no-connect: "true"
 exemptions:
     - autogke-no-write-mode-hostpath
+    - autogke-disallow-hostnamespaces
 matchingCriteria:
+    hostPID: true
+    hostNetwork: true
     initContainers:
         - name: get-cpu-allocatable
           image: ^(.*/)?bitnami/kubectl$
-          # ⚠️ MAINTENANCE RISK — see the node-scoped-hostnet-on CR. command[] is matched
-          # literally by Warden (RE2 not honored there; TESTED 2026-09-09). Keep the script exact.
+          # command[] is matched LITERALLY by Warden (RE2 not honored here; tested 2026-09-09).
+          # Keep this script byte-for-byte — any edit is a mandatory re-submission trigger.
           command:
             - sh
             - -c
