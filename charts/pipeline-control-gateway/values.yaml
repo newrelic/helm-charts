@@ -202,8 +202,10 @@ lowDataMode:
 # @default -- See `values.yaml`
 wal:
   # -- Provision the per-pod ephemeral WAL disk and mount it into the gateway container at
-  # /var/wal. Mirrors the iceberg exporter's `wal.enabled`.
-  enabled: true
+  # /var/wal. Mirrors the iceberg exporter's `wal.enabled`. Opt-in: real deployments turn this
+  # on per-fleet via chart_values.gateway.wal.enabled (pipeline-control-api), so the shipped
+  # default is off — otherwise every install would require a `gp3` StorageClass.
+  enabled: false
   # -- fsGroup applied to the pod when WAL is enabled. The ephemeral EBS volume is provisioned
   # root-owned, so this GID is needed for the non-root gateway to write /var/wal (the kubelet
   # group-owns the volume to it and adds it to the container's supplementary groups).
