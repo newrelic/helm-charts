@@ -1,0 +1,6 @@
+# GKE Autopilot e2e — BASELINE variant (config-fix only, NO allowlist).
+# provider=GKE_AUTOPILOT alone: the collector dials the kubelet directly (:10250) and recovers
+# kubelet/cAdvisor metrics with NO privilege and NO WorkloadAllowlist. This is the "you don't even
+# need the allowlist for K8s metrics" baseline. system.filesystem.* is NOT collected here (Autopilot
+# strips the host-fs root_path) — that is what the filesystem variant adds.
+provider: GKE_AUTOPILOT

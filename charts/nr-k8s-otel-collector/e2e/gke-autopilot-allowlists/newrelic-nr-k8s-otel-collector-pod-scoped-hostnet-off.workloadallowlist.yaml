@@ -1,0 +1,120 @@
+# =============================================================================
+# nr-k8s-otel-collector — POD-SCOPED shape (hostNetwork + hostPID: OFF).
+# Filesystem-only tier. hostpath ONLY (no host namespaces), privileged:false.
+# The /hostfs mount buys system.filesystem.usage/utilization (~139 names) over the
+# no-allowlist baseline (~137). NO node-level system.network.* and NO hostPID
+# process.cpu.time — for those use the node-scoped-hostnet-on CR.
+# Chart shape: provider=GKE_AUTOPILOT + gkeAutopilotAllowlist=true, host namespaces off.
+# Derived from the node-on CR by dropping hostPID/hostNetwork + the hostnamespaces
+# exemption; init container, /hostfs, ATP mount, and all matching are identical.
+# Google Q3 (2026-09-08): host-namespace matching is EXACT — separate submission;
+# admits ONLY hostNetwork:false / hostPID:false workloads.
+# =============================================================================
+apiVersion: auto.gke.io/v1
+kind: WorkloadAllowlist
+minGKEVersion: 1.32.2-gke.1652000
+metadata:
+    name: newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off
+    annotations:
+        autopilot.gke.io/no-connect: "true"
+exemptions:
+    - autogke-no-write-mode-hostpath
+matchingCriteria:
+    initContainers:
+        - name: get-cpu-allocatable
+          image: ^(.*/)?bitnami/kubectl$
+          # ⚠️ MAINTENANCE RISK — see the node-scoped-hostnet-on CR. Same frozen script;
+          # generalize both together if the Phase 2 RE2-on-command admit-test passes.
+          command:
+            - sh
+            - -c
+            - |
+              NODE_NAME=$(echo $KUBE_NODE_NAME)
+              echo "Node Name: $KUBE_NODE_NAME"
+
+              export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+              if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              # Convert milliCPU values to plain CPU values
+              if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
+                # Strip the 'm' and convert the milliCPUs to CPUs
+                export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+              fi
+
+              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
+                /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+                /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+                /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+                /m$/  {printf "%.0f\n", $1 / 1000; next}
+                {print $1}
+              ')
+
+              if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+                echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+              echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
+              cp /temp-config/daemonset-config.yaml /final-config
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/daemonset-config.yaml
+              cat /final-config/daemonset-config.yaml
+          env:
+            - name: KUBE_NODE_NAME
+          volumeMounts:
+            - mountPath: /temp-config
+              name: daemonset-config
+            - mountPath: /final-config
+              name: final-daemonset-config
+    containers:
+        - name: otel-collector-daemonset
+          image: ^(.*/)?newrelic/nrdot-collector$
+          args:
+            - --config
+            - /config/daemonset-config.yaml
+            - --feature-gates
+            - metricsgeneration.MatchAttributes
+          env:
+            # RE2 families for the vars that have one (POD_*, OTEL_*, NR_*); HOST_IP and
+            # KUBE_NODE_NAME are downward-API singletons kept exact.
+            - name: HOST_IP
+            - name: KUBE_NODE_NAME
+            - name: ^POD_.*$
+            - name: ^OTEL_.*$
+            - name: ^NR_.*$
+          securityContext:
+            capabilities:
+                drop:
+                    - ALL
+            privileged: false
+          volumeMounts:
+            - mountPath: /hostfs
+              name: host-fs
+              readOnly: true
+            - mountPath: /var/log/pods
+              name: varlogpods
+              readOnly: true
+            - mountPath: /config
+              name: final-daemonset-config
+            # ATP only (enable_atp=true): persistent-state write mount
+            - mountPath: /var/lib/nrdot-collector
+              name: nrdot-data-storage
+    volumes:
+        - hostPath:
+            path: /
+          name: host-fs
+        - hostPath:
+            path: /var/log/pods
+          name: varlogpods
+        - name: final-daemonset-config
+        - configMap: {}
+          name: daemonset-config
+        # ATP only (enable_atp=true): persistent-state hostPath
+        - hostPath:
+            path: /var/lib/nrdot-collector
+          name: nrdot-data-storage
