@@ -1,10 +1,10 @@
-# =============================================================================
-# nr-k8s-otel-collector — NODE-SCOPED shape (hostNetwork + hostPID: ON). genALL.
-# hostpath + hostnamespaces, privileged:false. hostNetwork re-scopes system.network.*
-# pod->node; hostPID adds a partial process.cpu.time. Full surface (~143-149 names).
-# Pair: newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off (filesystem-only tier).
-# Google Q3 (2026-09-08): EXACT host-namespace matching -> separate submission.
-# =============================================================================
+# nr-k8s-otel-collector — node-scoped shape. Chart values that produce this workload:
+#   provider: GKE_AUTOPILOT
+#   gkeAutopilotAllowlist: true    # keeps the /hostfs mount + hostmetrics root_path
+#   daemonset.hostPID: true
+#   daemonset.hostNetwork: true    # node-scoped system.network.* + partial process.cpu.time
+#   enable_atp: true               # optional; adds process.* (CR admits with ATP on or off)
+# Collector runs privileged:false. Pairs with newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off.
 apiVersion: auto.gke.io/v1
 kind: WorkloadAllowlist
 minGKEVersion: 1.32.2-gke.1652000
@@ -21,11 +21,8 @@ matchingCriteria:
     initContainers:
         - name: get-cpu-allocatable
           image: ^(.*/)?bitnami/kubectl$
-          # ⚠️ MAINTENANCE RISK — exact-enumerated script → frozen; ANY chart edit to this
-          # block breaks the match. command[] is matched LITERALLY by Warden, NOT by RE2
-          # (TESTED 2026-09-09 on a live GKE Autopilot cluster: both `(?s).*` and `[\s\S]*`
-          # were DENIED; the exact script admits). Google's Q4 RE2 blessing covers args[]/env,
-          # not command[]. Keep this script exact — any edit is a mandatory re-submission trigger.
+          # command[] is matched LITERALLY by Warden (RE2 not honored here; tested 2026-09-09).
+          # Keep this script byte-for-byte — any edit is a mandatory re-submission trigger.
           command:
             - sh
             - -c
@@ -81,8 +78,6 @@ matchingCriteria:
             - --feature-gates
             - metricsgeneration.MatchAttributes
           env:
-            # RE2 families for the vars that have one (POD_*, OTEL_*, NR_*); HOST_IP and
-            # KUBE_NODE_NAME are downward-API singletons kept exact.
             - name: HOST_IP
             - name: KUBE_NODE_NAME
             - name: ^POD_.*$

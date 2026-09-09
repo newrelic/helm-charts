@@ -1,15 +1,9 @@
-# =============================================================================
-# nr-k8s-otel-collector — POD-SCOPED shape (hostNetwork + hostPID: OFF).
-# Filesystem-only tier. hostpath ONLY (no host namespaces), privileged:false.
-# The /hostfs mount buys system.filesystem.usage/utilization (~139 names) over the
-# no-allowlist baseline (~137). NO node-level system.network.* and NO hostPID
-# process.cpu.time — for those use the node-scoped-hostnet-on CR.
-# Chart shape: provider=GKE_AUTOPILOT + gkeAutopilotAllowlist=true, host namespaces off.
-# Derived from the node-on CR by dropping hostPID/hostNetwork + the hostnamespaces
-# exemption; init container, /hostfs, ATP mount, and all matching are identical.
-# Google Q3 (2026-09-08): host-namespace matching is EXACT — separate submission;
-# admits ONLY hostNetwork:false / hostPID:false workloads.
-# =============================================================================
+# nr-k8s-otel-collector — pod-scoped shape (filesystem tier, no host namespaces).
+# Chart values that produce this workload:
+#   provider: GKE_AUTOPILOT
+#   gkeAutopilotAllowlist: true    # keeps the /hostfs mount -> system.filesystem.*
+#   (daemonset.hostPID / daemonset.hostNetwork off)
+# Collector runs privileged:false. Pairs with newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on.
 apiVersion: auto.gke.io/v1
 kind: WorkloadAllowlist
 minGKEVersion: 1.32.2-gke.1652000
@@ -80,8 +74,6 @@ matchingCriteria:
             - --feature-gates
             - metricsgeneration.MatchAttributes
           env:
-            # RE2 families for the vars that have one (POD_*, OTEL_*, NR_*); HOST_IP and
-            # KUBE_NODE_NAME are downward-API singletons kept exact.
             - name: HOST_IP
             - name: KUBE_NODE_NAME
             - name: ^POD_.*$
