@@ -12,12 +12,14 @@ on Minikube (`../e2e/test-specs.yml`).
 | baseline | `../e2e/e2e-values-gke-autopilot-baseline.yml` (`provider: GKE_AUTOPILOT`) | none | kubelet/cAdvisor metrics with no privilege |
 | filesystem | `../e2e/e2e-values-gke-autopilot-filesystem.yml` (`+ gkeAutopilotAllowlist: true`) | `newrelic-nr-k8s-otel-collector-pod-scoped-hostnet-off` | `system.filesystem.*` |
 | atp | `../e2e/e2e-values-gke-autopilot-atp.yml` (`+ enable_atp: true`) | same pod-scoped CR | `process.*` |
+| node | `../e2e/e2e-values-gke-autopilot-node.yml` (`+ daemonset.hostPID/hostNetwork: true`) | `newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on` | node `system.network.*` + partial `process.cpu.time` |
 
-The **node-scoped / host-network** variant (node `system.network.*` + `process.cpu.time`) needs the
-daemonset `hostPID`/`hostNetwork` chart change from PR #2403 (`otel/daemonset-host-namespaces`). It is
-not reachable on this branch (PR #2426 is filesystem-only). When #2403 lands, add a fourth scenario
-using the `newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on` CR (already included here as a
-fixture) and values that set the host-namespace flags.
+The **node-scoped / host-network** variant is scenario 4 (`node`). It sets the daemonset
+`hostPID`/`hostNetwork` flags from PR #2403 (`otel/daemonset-host-namespaces`) and uses the
+`newrelic-nr-k8s-otel-collector-node-scoped-hostnet-on` CR. It only passes once PR #2403 is merged:
+without those flags the chart renders `hostNetwork:false`, which Warden exact-matches and denies under
+the node CR. Live-verified on GKE Autopilot 2026-09-09 (daemonset pods admitted on the node network,
+`system.network.*` re-scoped to the node — 30 host interfaces incl. `cilium_*`/`lxc*`).
 
 The two CRs are byte-identical copies of the submission candidates in the gke-autopilot-allowlist
 staging repo (`allowListToSubmit/finalized_v3/`). Keep them in sync.
@@ -40,7 +42,7 @@ bash e2e/run-gke-autopilot-e2e.sh
 ```
 
 The runner prompts for anything missing (context, region, account, keys), offers to save to a
-gitignored `.env`, adds the required helm repos, and runs all three variants. It never switches your
+gitignored `.env`, adds the required helm repos, and runs all four variants. It never switches your
 kube-context or any identity.
 
 ## Notes
