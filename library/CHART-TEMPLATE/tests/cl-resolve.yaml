@@ -1,0 +1,138 @@
+suite: test resolve
+templates:
+  - templates/example-cm-resolve.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: Should return local override values
+    set:
+      custom: my_custom_data
+      proxy: my_proxy_name
+      endpoint: my_endpoint
+    asserts:
+        # Lookup with default
+      - equal:
+          path: data.custom
+          value: my_custom_data
+        # Lookup only
+      - equal:
+          path: data.proxy
+          value: my_proxy_name
+        # Lookup with custom default logic
+      - equal:
+          path: data.endpoint
+          value: my_endpoint
+
+  - it: Should return global override values
+    set:
+      global:
+        custom: some_custom_data
+        proxy: some_proxy_name
+        endpoint: some_endpoint
+    asserts:
+      # Lookup with default
+      - equal:
+          path: data.custom
+          value: some_custom_data
+        # Lookup only
+      - equal:
+          path: data.proxy
+          value: some_proxy_name
+        # Lookup with custom default logic
+      - equal:
+          path: data.endpoint
+          value: some_endpoint
+
+  - it: Should return defaults when no values are set
+    asserts:
+      # Lookup with default
+      - equal:
+          path: data.custom
+          value: myDefaultData
+        # Lookup only
+      - equal:
+          path: data.proxy
+          value: null
+        # Lookup with custom default logic
+      - equal:
+          path: data.endpoint
+          value: inline-default
+          
+  - it: Should return local values when both global and local are set
+    set:
+      custom: local_custom_data
+      proxy: local_proxy_name
+      endpoint: local_endpoint
+      global:
+        custom: global_custom_data
+        proxy: global_proxy_name
+        endpoint: global_endpoint
+    asserts:
+      # Lookup with default
+      - equal:
+          path: data.custom
+          value: local_custom_data
+        # Lookup only
+      - equal:
+          path: data.proxy
+          value: local_proxy_name
+        # Lookup with custom default logic
+      - equal:
+          path: data.endpoint
+          value: local_endpoint
+
+  - it: Should return nested values
+    set:
+      nested:
+        value: my_nested_value
+        secondLevel:
+            value: my_second_level_nested_value
+    asserts:
+      - equal:
+          path: data.nested_two_deep
+          value: my_nested_value
+      - equal:
+          path: data.nested_three_deep
+          value: my_second_level_nested_value
+
+  - it: Should return global nested values
+    set:
+      global:
+        nested:
+          value: my_other_nested_value
+          secondLevel:
+            value: my_other_second_level_nested_value
+    asserts:
+      - equal:
+          path: data.nested_two_deep
+          value: my_other_nested_value
+      - equal:
+          path: data.nested_three_deep
+          value: my_other_second_level_nested_value
+
+  - it: lookup with default should return found nested value
+    set:
+      nested:
+        value: not_the_default
+    asserts:
+      - equal:
+          path: data.nested_two_deep_with_default
+          value: not_the_default
+
+  - it: lookup with default should return default when values not set
+    asserts:
+      - equal:
+          path: data.nested_two_deep_with_default
+          value: defaultNestedValue
+
+  # This test exposes the bug where `default $ctx.Values $ctx` always returns
+  # $ctx (the full Helm context) instead of $ctx.Values, causing the function
+  # to index the top-level context map rather than Values — so no value is ever found.
+  - it: BUG should resolve a simple local value (fails if default args are swapped)
+    set:
+      proxy: bug_repro_value
+    asserts:
+      - equal:
+          path: data.proxy
+          value: bug_repro_value

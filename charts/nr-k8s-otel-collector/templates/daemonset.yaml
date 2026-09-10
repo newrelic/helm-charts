@@ -62,7 +62,13 @@ spec:
                 export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
               fi
 
-              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | numfmt --from=auto)
+              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
+                /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+                /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+                /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+                /m$/  {printf "%.0f\n", $1 / 1000; next}
+                {print $1}
+              ')
 
               if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
                 echo "Could not retrieve Memory allocatable for node $NODE_NAME"
@@ -155,6 +161,12 @@ spec:
               readOnly: true
             - name: final-daemonset-config
               mountPath: /config
+            {{- if .Values.enable_atp }}
+            # ATP requires persistent storage to maintain state across restarts (thresholds, history).
+            # This hostPath volume ensures ATP data survives pod restarts on the same node.
+            - name: nrdot-data-storage
+              mountPath: /var/lib/nrdot-collector
+            {{- end }}
             {{- with .Values.daemonset.extraVolumeMounts }}
             {{- toYaml . | nindent 12 }}
             {{- end }}
@@ -172,6 +184,15 @@ spec:
         - name: daemonset-config
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+        {{- if .Values.enable_atp }}
+        # ATP storage volume: Uses hostPath to persist adaptive telemetry processor state.
+        # DirectoryOrCreate ensures the directory is created if it doesn't exist.
+        # Data persists across pod restarts but is node-specific (DaemonSet behavior).
+        - name: nrdot-data-storage
+          hostPath:
+            path: /var/lib/nrdot-collector
+            type: DirectoryOrCreate
+        {{- end }}
         {{- with .Values.daemonset.extraVolumes }}
         {{- toYaml . | nindent 8 }}
         {{- end }}

@@ -1,0 +1,185 @@
+suite: containerStorageOverlayExclusion
+templates:
+  - templates/daemonset-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: excludes container storage overlay mount point when running as non-root (default)
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1001
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: does not exclude container storage overlay mount point when running as root
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: false
+          runAsUser: 0
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: excludes container storage overlay mount point when runAsNonRoot is false but runAsUser is non-root
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: false
+          runAsUser: 1001
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: does not exclude container storage overlay mount point when privileged is true
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        containerSecurityContext:
+          privileged: true
+          runAsNonRoot: true
+          runAsUser: 1001
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: does not exclude container storage overlay mount point when privileged and running as root
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      daemonset:
+        containerSecurityContext:
+          privileged: true
+          runAsNonRoot: false
+          runAsUser: 0
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: excludes when using default containerSecurityContext values
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: uses fallback to top-level containerSecurityContext when daemonset.containerSecurityContext not set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      containerSecurityContext:
+        privileged: false
+        runAsNonRoot: true
+        runAsUser: 1001
+      daemonset:
+        containerSecurityContext:
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: respects daemonset security context over top-level when running as root
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      containerSecurityContext:
+        privileged: false
+        runAsNonRoot: true
+        runAsUser: 1001
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: false
+          runAsUser: 0
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: uses global containerSecurityContext when daemonset and top-level not set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      global:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1001
+      daemonset:
+        containerSecurityContext:
+      containerSecurityContext:
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: respects daemonset over global when both set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      global:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: true
+          runAsUser: 1001
+      daemonset:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: false
+          runAsUser: 0
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml
+
+  - it: respects top-level over global when both set
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      global:
+        containerSecurityContext:
+          privileged: false
+          runAsNonRoot: false
+          runAsUser: 0
+      containerSecurityContext:
+        privileged: false
+        runAsNonRoot: true
+        runAsUser: 1001
+      daemonset:
+        containerSecurityContext:
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'exclude_mount_points:\s+mount_points:\s+- \^/var/lib/containers/storage/overlay\$'
+        template: templates/daemonset-configmap.yaml

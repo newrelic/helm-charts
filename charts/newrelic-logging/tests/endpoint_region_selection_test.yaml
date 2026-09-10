@@ -106,6 +106,41 @@ tests:
         template: templates/daemonset-windows.yaml
 
 
+  - it: selects FedRAMP (GOV) endpoints when global.fedramp.enabled is true
+    set:
+      licenseKey: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
+      global:
+        fedramp:
+          enabled: true
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://gov-log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "gov-metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://gov-log-api.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "gov-metric-api.newrelic.com"
+        template: templates/daemonset-windows.yaml
+
   - it: selects custom logs endpoint if provided
     set:
       licenseKey: euaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL

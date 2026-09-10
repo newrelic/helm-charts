@@ -1,0 +1,59 @@
+suite: test extra environment settings
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: extra-env-release
+  namespace: extra-env-namespace
+tests:
+  - it: should instantiate daemonset with static and templatized extra environment variables when using fluentBit.extraEnv
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: need_to_specify_this_otherwise_templates_wont_render
+      someConfigurationKey: "someConfigurationValue"
+      fluentBit:
+        extraEnv:
+        - name: EXTRA_ENV_VAR
+          value: "extra_env_value"
+        - name: EXTRA_ENV_VAR_WITH_TEMPLATE
+          value: "should read from someConfigurationKey: {{ .Values.someConfigurationKey }}"
+      enableWindows: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA_ENV_VAR
+            value: "extra_env_value"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA_ENV_VAR_WITH_TEMPLATE
+            value: "should read from someConfigurationKey: someConfigurationValue"
+  - it: should instantiate daemonset with static and templatized extra environment variables when using fluentBit.additionalEnvVariables
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: need_to_specify_this_otherwise_templates_wont_render
+      someConfigurationKey: "someConfigurationValue"
+      fluentBit:
+        additionalEnvVariables:
+          - name: EXTRA_ENV_VAR
+            value: "extra_env_value"
+          - name: EXTRA_ENV_VAR_WITH_TEMPLATE
+            value: "should read from someConfigurationKey: {{ .Values.someConfigurationKey }}"
+      enableWindows: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA_ENV_VAR
+            value: "extra_env_value"
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: EXTRA_ENV_VAR_WITH_TEMPLATE
+            value: "should read from someConfigurationKey: someConfigurationValue"

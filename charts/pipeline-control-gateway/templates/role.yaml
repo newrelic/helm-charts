@@ -1,0 +1,21 @@
+{{- $customConfigMap := ternary .Values.daemonset.customConfigMap .Values.deployment.customConfigMap .Values.daemonset.enabled }}
+{{- if and (include "newrelic.common.serviceAccount.create" .) $customConfigMap .Values.configWatcher.enabled }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-config-watcher
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+rules:
+  # Allow watching and getting the ConfigMap
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    resourceNames:
+      - "{{ $customConfigMap }}"
+    verbs: ["get", "watch"]
+  # Allow deleting the pod to trigger restart
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]
+{{- end -}}

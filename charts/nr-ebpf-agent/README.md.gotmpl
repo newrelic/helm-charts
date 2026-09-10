@@ -32,16 +32,9 @@ kubectl get pods -n newrelic --watch
 
 ### Check the logs of the eBPF agent pod:
 ```
-# The client container logs report data export metrics.
-kubectl logs <ebpf-pod-name> -c nr-ebpf-client -n newrelic
 
 # The agent container logs detail probe attachment and data collection.
 kubectl logs <ebpf-pod-name> -c nr-ebpf-agent -n newrelic
-```
-
-### Check the logs of the OpenteTemetry collector pod:
-```
-kubectl logs <otel-pod-name> -n newrelic
 ```
 
 ### Confirm data ingest to New Relic
@@ -75,7 +68,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 ### Exporting Errors
 
-If the `nr-ebpf-client` or `nr-ebpf-agent` container logs indicate that the scripts are failing to export data, ensure that Linux headers are installed on the host. Verify that the `nr-ebpf-agent` container logs indicate that the Linux header files were found and that the Stirling data tables were initialized. These logs should be written as the agent is booting up (towards the beginning of the output).
+If the `nr-ebpf-agent` container logs indicate that the scripts are failing to export data, ensure that Linux headers are installed on the host. Verify that the `nr-ebpf-agent` container logs indicate that the Linux header files were found and that the Stirling data tables were initialized. These logs should be written as the agent is booting up (towards the beginning of the output).
 
 {{ if .Maintainers }}
 ## Maintainers

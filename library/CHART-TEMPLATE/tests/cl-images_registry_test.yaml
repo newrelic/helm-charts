@@ -6,11 +6,11 @@ release:
   name: my-release
   namespace: my-namespace
 tests:
-  - it: does not set registry if not specified
+  - it: Sets docker.io as default registry if no registry set.
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: nginx:1.16.0
+          value: docker.io/nginx:1.16.0
 
   - it: sets registry if specified in values
     set:
@@ -50,7 +50,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: nginx:1.16.0
+          value: docker.io/nginx:1.16.0
 
   - it: does not break if global.image=null
     set:
@@ -59,4 +59,4 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: nginx:1.16.0
+          value: docker.io/nginx:1.16.0

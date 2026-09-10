@@ -37,7 +37,7 @@ Here is a list of global options:
 | global.priorityClassName | priorityClassName | `""` |  | Sets pod's priorityClassName |
 | global.hostNetwork | hostNetwork | `false` |  | Sets pod's hostNetwork |
 | global.dnsConfig | dnsConfig | `{}` |  | Sets pod's dnsConfig |
-| global.images.registry | See [Further information](#values-managed-globally-2) | `""` |  | Changes the registry where to get the images. Useful when there is an internal image cache/proxy |
+| global.images.registry | See [Further information](#values-managed-globally-2) | `"docker.io"` |  | Changes the registry where to get the images. Useful when there is an internal image cache/proxy. Defaults to docker.io when not specified |
 | global.images.pullSecrets | See [Further information](#values-managed-globally-2) | `[]` | yes | Set secrets to be able to fetch images |
 | global.podSecurityContext | podSecurityContext | `{}` |  | Sets security context (at pod level) |
 | global.containerSecurityContext | containerSecurityContext | `{}` |  | Sets security context (at container level) |

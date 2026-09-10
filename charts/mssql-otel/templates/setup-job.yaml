@@ -1,0 +1,66 @@
+{{- if .Values.setupJob.enabled }}
+{{- include "mssql-otel.validate.setupJob" . -}}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "mssql-otel.fullname" . }}-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mssql-otel.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "1"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        {{- include "mssql-otel.labels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: mssql-otel-setup
+          image: "{{ .Values.setupJob.image.repository }}:{{ .Values.setupJob.image.tag }}"
+          imagePullPolicy: {{ .Values.setupJob.image.pullPolicy }}
+          env:
+            - name: SQL_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.setupJob.sqlAdmin.existingSecret }}
+                  key: username
+            - name: SQL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.setupJob.sqlAdmin.existingSecret }}
+                  key: password
+            - name: SQL_MONITOR_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mssql-otel.credentials.secretName" . }}
+                  key: username
+            - name: SQL_MONITOR_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "mssql-otel.credentials.secretName" . }}
+                  key: password
+            - name: MSSQL_SERVER
+              value: {{ .Values.mssql.server | quote }}
+            - name: MSSQL_PORT
+              value: {{ .Values.mssql.port | quote }}
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              sqlcmd -S "${MSSQL_SERVER},${MSSQL_PORT}" -U "${SQL_ADMIN_USERNAME}" -P "${SQL_ADMIN_PASSWORD}" \
+                -v monitor_user="${SQL_MONITOR_USERNAME}" monitor_password="${SQL_MONITOR_PASSWORD}" \
+                -i /etc/mssql-otel/setup/grants.sql
+          volumeMounts:
+            - name: setup
+              mountPath: /etc/mssql-otel/setup
+              readOnly: true
+      volumes:
+        - name: setup
+          configMap:
+            name: {{ include "mssql-otel.fullname" . }}-setup
+{{- end }}

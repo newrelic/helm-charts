@@ -2,16 +2,20 @@ name: Test Renovate configuration
 
 on: pull_request
 
+permissions:
+  contents: read
+
 jobs:
   renovate-config-validator:
     name: Renovate config validator
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Install Renovate config validator
-        run: npm install --global renovate
+        uses: actions/checkout@v7
 
       - name: Test that the config is valid
-        run: renovate-config-validator
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/.github/renovate.json5:/usr/src/app/renovate.json5" \
+            ghcr.io/renovatebot/renovate:latest \
+            renovate-config-validator renovate.json5

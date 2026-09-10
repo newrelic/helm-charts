@@ -35,7 +35,7 @@ Return the proper image registry
     {{- $localRegistry = .imageRoot.registry -}}
 {{- end -}}
 
-{{- $registry := $localRegistry | default $globalRegistry | default .defaultRegistry -}}
+{{- $registry := $localRegistry | default $globalRegistry | default .defaultRegistry | default "docker.io" -}}
 {{- if $registry -}}
     {{- $registry -}}
 {{- end -}}

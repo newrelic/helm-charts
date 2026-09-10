@@ -238,6 +238,104 @@ yaml for Custom Node Modules volume mount
 {{- end -}}
 
 {{/*
+Create the name of the volume used to mount custom certificates into the runtime pods
+*/}}
+{{- define "synthetics-job-manager.customCertificatesVolumeName" -}}
+custom-certs-volume
+{{- end -}}
+
+{{/*
+Mount path for the custom certificates directory (also the value of RUNTIME_CERT_PATH)
+*/}}
+{{- define "synthetics-job-manager.customCertificatesPath" -}}
+/var/lib/newrelic/synthetics/certs
+{{- end -}}
+
+{{/*
+yaml for the custom certificates volume mount (mounted read-only into the runtime pods)
+*/}}
+{{- define "synthetics-job-manager.customCertificatesMount" -}}
+- mountPath: {{ include "synthetics-job-manager.customCertificatesPath" . | quote }}
+  name: {{ include "synthetics-job-manager.customCertificatesVolumeName" . | quote }}
+  readOnly: true
+{{- end -}}
+
+{{/*
+yaml for the custom certificates volume. The volume source is provided by the user via
+global.customCertificates.volume (typically a Secret containing the PEM file(s)).
+*/}}
+{{- define "synthetics-job-manager.customCertificatesVolume" -}}
+- name: {{ include "synthetics-job-manager.customCertificatesVolumeName" . | quote }}
+{{ toYaml (.Values.global.customCertificates).volume | indent 2 }}
+{{- end -}}
+
+{{/*
+yaml for the RUNTIME_CERT_PATH env var, pointing runtimes at the custom certificates mount path
+*/}}
+{{- define "synthetics-job-manager.customCertificatesEnv" -}}
+- name: RUNTIME_CERT_PATH
+  value: {{ include "synthetics-job-manager.customCertificatesPath" . | quote }}
+{{- end -}}
+
+{{/*
+Define whether to mount the custom certificates volume. Activates on the presence of a volume
+(same convention as customNodeModules) - no separate enabled flag.
+*/}}
+{{- define "synthetics-job-manager.toMountCustomCertificates" -}}
+  {{ if (.Values.global.customCertificates).volume }}
+  {{ end }}
+{{- end -}}
+
+{{/*
+Create the name of the volume used to mount the mTLS client certificate into the runtime pods
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesVolumeName" -}}
+client-cert-volume
+{{- end -}}
+
+{{/*
+Mount path for the mTLS client certificate directory (also the value of RUNTIME_CLIENT_CERT_PATH)
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesPath" -}}
+/var/lib/newrelic/synthetics/client-cert
+{{- end -}}
+
+{{/*
+yaml for the mTLS client certificate volume mount (mounted read-only into the runtime pods)
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesMount" -}}
+- mountPath: {{ include "synthetics-job-manager.clientCertificatesPath" . | quote }}
+  name: {{ include "synthetics-job-manager.clientCertificatesVolumeName" . | quote }}
+  readOnly: true
+{{- end -}}
+
+{{/*
+yaml for the mTLS client certificate volume. The volume source is provided by the user via
+global.clientCertificates.volume (typically a Secret containing cert-map.json and the cert/key files).
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesVolume" -}}
+- name: {{ include "synthetics-job-manager.clientCertificatesVolumeName" . | quote }}
+{{ toYaml (.Values.global.clientCertificates).volume | indent 2 }}
+{{- end -}}
+
+{{/*
+yaml for the RUNTIME_CLIENT_CERT_PATH env var, pointing runtimes at the mTLS client certificate mount path
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesEnv" -}}
+- name: RUNTIME_CLIENT_CERT_PATH
+  value: {{ include "synthetics-job-manager.clientCertificatesPath" . | quote }}
+{{- end -}}
+
+{{/*
+Define whether to mount the mTLS client certificate volume. Activates on the presence of a volume
+(same convention as customNodeModules) - no separate enabled flag.
+*/}}
+{{- define "synthetics-job-manager.toMountClientCertificates" -}}
+  {{ if (.Values.global.clientCertificates).volume }}
+  {{ end }}
+{{- end -}}
+
+{{/*
 Define the optional volume mounts for the SJM
 */}}
 {{- define "synthetics-job-manager.volumeMounts" -}}
@@ -280,6 +378,20 @@ whether they've provided an existing PV name.
 {{- define "synthetics-job-manager.generatePVC" -}}
   {{ if and (not (.Values.global.persistence).existingClaimName) (.Values.global.persistence).existingVolumeName }}
   {{ end }}
+{{- end -}}
+
+{{/*
+Validate that persistence is configured when volume mounting is required.
+This prevents the confusing "PVC not found" error by failing fast with a clear message.
+*/}}
+{{- define "synthetics-job-manager.validatePersistence" -}}
+{{- $needsMount := or (.Values.global.customNodeModules).customNodeModulesPath (.Values.synthetics.userDefinedVariables).userDefinedPath -}}
+{{- $hasExistingClaim := (.Values.global.persistence).existingClaimName -}}
+{{- $hasExistingVolume := (.Values.global.persistence).existingVolumeName -}}
+{{- $hasPersistence := or $hasExistingClaim $hasExistingVolume -}}
+{{- if and $needsMount (not $hasPersistence) -}}
+{{- fail "Error: When using global.customNodeModules.customNodeModulesPath or synthetics.userDefinedVariables.userDefinedPath, you must configure persistence. Please set either global.persistence.existingClaimName (for an existing PVC) or global.persistence.existingVolumeName (to create a PVC for an existing PV)." -}}
+{{- end -}}
 {{- end -}}
 
 {{/*

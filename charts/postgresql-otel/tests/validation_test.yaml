@@ -1,0 +1,34 @@
+suite: validation
+templates:
+  - templates/secret.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: fails when postgresql.server is unset
+    set:
+      postgresql.username: "u"
+      postgresql.password: "p"
+      postgresql.databases: ["appdb"]
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresql.server is required"
+  - it: fails when no credential path is provided
+    set:
+      postgresql.server: "postgresql.internal"
+      postgresql.databases: ["appdb"]
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "You must set postgresql.existingSecret, or both postgresql.username and postgresql.password"
+  - it: fails when postgresql.databases is empty
+    set:
+      postgresql.server: "postgresql.internal"
+      postgresql.username: "u"
+      postgresql.password: "p"
+      postgresql.databases: []
+      otlpEndpoint: "otlp.nr-data.net:4317"
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresql.databases must be a non-empty list -- PostgreSQL has no monitor-all-databases mode, so at least one database name is required"

@@ -1,0 +1,73 @@
+suite: log level precedence
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: defaults to INFO when no local logLevel and no global.verboseLog
+    set: &base
+      cluster: test-cluster
+      licenseKey: test-license-key
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LOG_LEVEL
+            value: "INFO"
+
+  - it: uses DEBUG when global.verboseLog is true and no local logLevel set
+    set:
+      <<: *base
+      global:
+        verboseLog: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LOG_LEVEL
+            value: "DEBUG"
+
+  - it: local logLevel takes precedence over global.verboseLog
+    set:
+      <<: *base
+      logLevel: "WARNING"
+      global:
+        verboseLog: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LOG_LEVEL
+            value: "WARNING"
+
+  - it: local logLevel is used when set without global
+    set:
+      <<: *base
+      logLevel: "DEBUG"
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LOG_LEVEL
+            value: "DEBUG"
+
+  - it: explicit local INFO beats global.verboseLog true
+    set:
+      <<: *base
+      logLevel: "INFO"
+      global:
+        verboseLog: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NEW_RELIC_LOG_LEVEL
+            value: "INFO"

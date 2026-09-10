@@ -19,3 +19,25 @@ A helper to return the container security context to apply to the deployment.
     {{- include "newrelic.common.securityContext.container" . -}}
 {{- end -}}
 {{- end -}}
+
+{{- /*
+A helper to return the pod security context to apply to the daemonset.
+*/ -}}
+{{- define "nrKubernetesOtel.daemonset.securityContext.pod" -}}
+{{- if .Values.daemonset.podSecurityContext -}}
+    {{- toYaml .Values.daemonset.podSecurityContext -}}
+{{- else if include "newrelic.common.securityContext.pod" . -}}
+    {{- include "newrelic.common.securityContext.pod" . -}}
+{{- end -}}
+{{- end -}}
+
+{{- /*
+A helper to return the container security context to apply to the daemonset.
+*/ -}}
+{{- define "nrKubernetesOtel.daemonset.securityContext.container" -}}
+{{- if .Values.daemonset.containerSecurityContext -}}
+    {{- toYaml .Values.daemonset.containerSecurityContext -}}
+{{- else if include "newrelic.common.securityContext.container" . -}}
+    {{- include "newrelic.common.securityContext.container" . -}}
+{{- end -}}
+{{- end -}}

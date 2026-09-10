@@ -58,6 +58,34 @@ global:
     ## and include the package.json file before installing Helm Chart.
     customNodeModulesPath: ""
 
+  # Mounts a Kubernetes Secret containing custom CA certificate PEM file(s) into the runtime pods so they trust
+  # internal/private Certificate Authorities. The feature activates on the presence of a volume (same convention as
+  # customNodeModules): when volume is set, Helm mounts it read-only into the runtime pods and sets the
+  # RUNTIME_CERT_PATH environment variable so the runtime cert-loading logic knows where to look. Leave volume empty
+  # to disable (existing behavior is unchanged).
+  customCertificates:
+    ## The Kubernetes volume source to mount, typically a Secret containing the CA PEM file(s). Leave empty to disable.
+    volume: {}
+    # Example customer configuration:
+    # volume:
+    #   secret:
+    #     secretName: my-internal-ca-bundle
+
+  # Mounts a Kubernetes Secret containing one or more mTLS client certificates (with their private keys) and a
+  # cert-map.json that maps target hosts to the certificate to present, so the runtime pods can present a client
+  # certificate to servers that enforce mutual TLS. The feature activates on the presence of a volume (same convention
+  # as customNodeModules): when volume is set, Helm mounts it read-only into the runtime pods and sets the
+  # RUNTIME_CLIENT_CERT_PATH environment variable. Leave volume empty to disable. This is kept separate from
+  # customCertificates to distinguish inbound trust (CA certs) from outbound identity (client certs).
+  clientCertificates:
+    ## The Kubernetes volume source to mount, a Secret containing cert-map.json and the client cert/key files
+    ## (one or more certificates). Leave empty to disable.
+    volume: {}
+    # Example customer configuration:
+    # volume:
+    #   secret:
+    #     secretName: my-mtls-client-certs
+
 synthetics:
   # The privateLocationKey is a key generated when creating a private location. The default value is empty.
   # Private locations allow you to run monitors in new geographical locations or behind a firewall, such as an intranet site.
@@ -109,6 +137,9 @@ synthetics:
   ## If set, the format is: "username" and "password". Support HTTP Basic Authentication and additional authentication protocols supported by Chrome.
   #  hordeApiProxyUsername: ""
   #  hordeApiProxyPw: ""
+
+  ## Enable Webassembly for the Node Browser Runtime
+  #  enableWasm: false
 
   ## The jvmOpts passes command line options to the internal JVM.
   ## For more information: https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html
