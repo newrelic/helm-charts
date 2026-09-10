@@ -113,18 +113,12 @@ If you'd rather not grant this chart admin-level Oracle access at all, leave
 `setupJob.enabled: false` and run the appropriate script from `files/setup/`
 yourself, as a DBA, before installing.
 
-## Testing
-
-See [`TESTING.md`](./TESTING.md) for a full local/EC2 setup and end-to-end
-validation runbook, including a disposable Oracle instance for testing
-without touching production.
-
 ## Values
 
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.2.0` |
+| `image.tag` | Collector image tag | `2.4.0` |
 | `oracle.topology` | `cdb`, `pdb`, `rds`, or `adb` — always required | `""` |
 | `oracle.endpoint` | Oracle listener `host:port` | `""` |
 | `oracle.service` | CDB/PDB service name, RDS DB name, or ADB service name | `""` |

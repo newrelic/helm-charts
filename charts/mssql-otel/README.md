@@ -24,7 +24,7 @@ Server instance and export the results to New Relic over OTLP.
   always reaches it remotely over the network.
 - Report host/infrastructure metrics for the machine SQL Server runs on.
   New Relic's docs show a "Full-feature configuration" that adds
-  `hostmetrics`/`filelog`/`otlp` receivers and a `resourcedetection`
+  `host_metrics`/`otlp` (for traces) receivers and a `resourcedetection`
   processor chain — that only makes sense for a collector running directly
   on the SQL Server's own host OS. This chart runs the collector as a
   Kubernetes Deployment reaching SQL Server remotely, so it implements only
@@ -56,23 +56,6 @@ clarity and to leave room for a future difference without a breaking change.
   placement with the RDS instance, and the RDS security group must allow the
   SQL Server port (1433 by default) from the cluster's egress source.
 
-## TLS
-
-The `nrsqlserver` receiver has no discrete TLS fields — despite what New
-Relic's docs show, `ct install` confirmed the real receiver schema rejects
-`enable_ssl`/`trust_server_certificate` outright. TLS is only configurable
-via the receiver's `datasource` connection string, so this chart always
-connects that way and sets the string's `encrypt`/`trustservercertificate`
-DSN parameters (from the underlying `go-mssqldb` driver) from
-`mssql.tls.enabled`/`mssql.tls.trustServerCertificate`.
-
-Set `mssql.tls.enabled: true` to encrypt the connection, and
-`mssql.tls.trustServerCertificate: true` to skip certificate validation —
-useful for self-signed certs in test environments, but weakens the
-connection's security guarantees. This has been confirmed to render a
-schema-valid `datasource` string via `ct install`; the actual TLS handshake
-behavior against a real SQL Server instance requiring encryption is still
-unverified — see `TESTING.md`.
 
 ## Automated setup (`setupJob.enabled: true`)
 
@@ -100,12 +83,6 @@ If you'd rather not grant this chart admin-level SQL Server access at all,
 leave `setupJob.enabled: false` and run `files/setup/grants.sql` yourself,
 as a `sysadmin`, before installing.
 
-## Testing
-
-See [`TESTING.md`](./TESTING.md) for a full local/EC2 setup and end-to-end
-validation runbook, including a disposable SQL Server instance for testing
-without touching production.
-
 ## Values
 
 | Key | Description | Default |
@@ -118,10 +95,7 @@ without touching production.
 | `mssql.username` / `mssql.password` | Plain-value monitoring credentials | `""` |
 | `mssql.existingSecret` | Pre-existing Secret (keys `username`, `password`), wins over plain values | `""` |
 | `mssql.collectionInterval` | Scrape interval | `15s` |
-| `mssql.maxConcurrentQueries` | Max concurrent scrape queries | `4` |
-| `mssql.tls.enabled` | Encrypt the connection to SQL Server | `false` |
-| `mssql.tls.trustServerCertificate` | Skip SQL Server TLS certificate validation | `false` |
-| `otlpEndpoint` | New Relic OTLP/HTTP endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time, since `otlphttp` needs a full URL, not bare `host:port` like `oracle-otel`'s gRPC exporter | `""` |
+| `otlpEndpoint` | New Relic endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time; see "## Telemetry export" above, this combination is not confirmed working | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into the `nrsqlserver` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated login-creation Job | `false` |

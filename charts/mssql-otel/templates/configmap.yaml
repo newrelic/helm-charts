@@ -1,16 +1,13 @@
 {{- include "mssql-otel.validate.topology" . -}}
 {{- include "mssql-otel.validate.otlpEndpoint" . -}}
-{{- $datasource := printf "server=%s;user id=${env:MSSQL_USERNAME};password=${env:MSSQL_PASSWORD};port=%d;encrypt=%t;trustservercertificate=%t"
-      .Values.mssql.server
-      (.Values.mssql.port | int)
-      .Values.mssql.tls.enabled
-      .Values.mssql.tls.trustServerCertificate -}}
 {{- $receiver := dict -}}
 {{- $receiver = mergeOverwrite $receiver (include "mssql-otel.receiver.defaults" . | fromYaml) -}}
 {{- $receiver = mergeOverwrite $receiver (dict
-      "datasource" $datasource
+      "server" .Values.mssql.server
+      "port" (.Values.mssql.port | int)
+      "username" "${env:MSSQL_USERNAME}"
+      "password" "${env:MSSQL_PASSWORD}"
       "collection_interval" .Values.mssql.collectionInterval
-      "max_concurrent_queries" (.Values.mssql.maxConcurrentQueries | int)
 ) -}}
 {{- $receiver = mergeOverwrite $receiver (.Values.additionalReceiverConfig | default dict) -}}
 apiVersion: v1
@@ -24,7 +21,58 @@ data:
   config.yaml: |
     receivers:
       nrsqlserver:
-{{ toYaml $receiver | indent 8 }}
+{{- $orderedKeys := list "collection_interval" "username" "password" "server" "port" "metrics" "events" "top_query_collection" "collect_full_query_text" "allowed_comment_keys" "query_sample_collection" }}
+{{- $metricsOrder := list "sqlserver.database.count" "sqlserver.database.io" "sqlserver.database.latency" "sqlserver.database.operations" "sqlserver.database.tempdb.space" "sqlserver.database.tempdb.version_store.size" "sqlserver.deadlock.rate" "sqlserver.os.wait.duration" "sqlserver.processes.blocked" "sqlserver.memory.grants.pending.count" "sqlserver.database.file.size" "sqlserver.memory.area" }}
+{{- $topQueryOrder := list "lookback_time" "max_query_sample_count" "top_query_count" "collection_interval" }}
+{{- $emitted := list }}
+{{- range $key := $orderedKeys }}
+{{- if hasKey $receiver $key }}
+{{- if eq $key "metrics" }}
+        metrics:
+{{- $mval := index $receiver $key }}
+{{- $memitted := list }}
+{{- range $mkey := $metricsOrder }}
+{{- if hasKey $mval $mkey }}
+{{ toYaml (dict $mkey (index $mval $mkey)) | indent 10 }}
+{{- $memitted = append $memitted $mkey }}
+{{- end }}
+{{- end }}
+{{- range $mkey := (keys $mval | sortAlpha) }}
+{{- if not (has $mkey $memitted) }}
+{{ toYaml (dict $mkey (index $mval $mkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "top_query_collection" }}
+        top_query_collection:
+{{- $tval := index $receiver $key }}
+{{- $temitted := list }}
+{{- range $tkey := $topQueryOrder }}
+{{- if hasKey $tval $tkey }}
+{{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- $temitted = append $temitted $tkey }}
+{{- end }}
+{{- end }}
+{{- range $tkey := (keys $tval | sortAlpha) }}
+{{- if not (has $tkey $temitted) }}
+{{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "allowed_comment_keys" }}
+        allowed_comment_keys:
+{{- range $item := (index $receiver $key) }}
+          - {{ $item }}
+{{- end }}
+{{- else }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- $emitted = append $emitted $key }}
+{{- end }}
+{{- end }}
+{{- range $key := (keys $receiver | sortAlpha) }}
+{{- if not (has $key $emitted) }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- end }}
     processors:
       memory_limiter:
         check_interval: ${env:NR_MEM_LIMITER_CHECK_INTERVAL:-1s}
@@ -32,23 +80,23 @@ data:
         spike_limit_mib: ${env:NR_MEM_LIMITER_SPIKE_MIB:-50}
       batch:
     exporters:
-      otlphttp:
-        endpoint: {{ .Values.otlpEndpoint | quote }}
+      otlp:
+        endpoint: {{ .Values.otlpEndpoint }}
         headers:
-          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+        tls:
+          insecure: false
         compression: gzip
-        retry_on_failure:
-          enabled: true
-          initial_interval: 5s
-          max_interval: 30s
-          max_elapsed_time: 300s
     service:
+      telemetry:
+        metrics:
+          level: none
       pipelines:
         metrics:
           receivers: [nrsqlserver]
           processors: [memory_limiter, batch]
-          exporters: [otlphttp]
+          exporters: [otlp]
         logs:
           receivers: [nrsqlserver]
           processors: [memory_limiter, batch]
-          exporters: [otlphttp]
+          exporters: [otlp]
