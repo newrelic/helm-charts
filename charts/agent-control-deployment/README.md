@@ -447,6 +447,12 @@ proxy:
 			<td>The secrets that are needed to pull images from a custom registry.</td>
 		</tr>
 		<tr>
+			<td>uninstallation.log.level</td>
+			<td>string</td>
+			<td>debug</td>
+			<td>Log level for the uninstallation job.</td>
+		</tr>
+		<tr>
 			<td>verboseLog</td>
 			<td>bool</td>
 			<td>`false`</td>

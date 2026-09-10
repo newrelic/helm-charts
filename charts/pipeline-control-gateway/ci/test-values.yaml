@@ -1,3 +1,11 @@
 global:
   cluster: sa-cluster
   licenseKey: 1234567890abcdef1234567890abcdef12345678
+
+# The CI license key is a dummy value that cannot pass PCG's preconnect
+# validation (NR-577441). Skip the functional license-key check so the chart
+# is testable in CI. Older images ignore this unknown env var harmlessly.
+deployment:
+  envs:
+    - name: PCG_SKIP_PRECONNECT_VALIDATION
+      value: "true"

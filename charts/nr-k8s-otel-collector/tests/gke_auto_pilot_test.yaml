@@ -33,3 +33,71 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: ^\s*receivers:[\S\s]*processors:[\S\s]*exporters:[\S\s]*service:[\S\s]*pipelines:[\S\s]*logs/ingress:[\S\s]*$
         template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT points kubelet_stats at the authenticated port 10250, not the disabled read-only 10255
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'endpoint: "\$\{KUBE_NODE_NAME\}:10250"'
+        template: templates/daemonset-configmap.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'endpoint: "\$\{KUBE_NODE_NAME\}:10255"'
+        template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT disables the /pods-dependent utilization metrics (they 403 and crash the receiver on Autopilot)
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'k8s\.pod\.cpu_request_utilization:\s+enabled: false'
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'k8s\.pod\.memory_request_utilization:\s+enabled: false'
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'k8s\.container\.cpu_limit_utilization:\s+enabled: false'
+        template: templates/daemonset-configmap.yaml
+  - it: non-autopilot keeps the utilization metrics enabled on port 10250
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'endpoint: "\$\{KUBE_NODE_NAME\}:10250"'
+        template: templates/daemonset-configmap.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'k8s\.pod\.cpu_request_utilization:\s+enabled: true'
+        template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT direct-dials the cadvisor prometheus job (bypasses the blocked nodes/proxy path)
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'replacement: /metrics/cadvisor'
+        template: templates/daemonset-configmap.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'proxy/metrics/cadvisor'
+        template: templates/daemonset-configmap.yaml
+  - it: non-autopilot cadvisor prometheus job uses the API-server nodes/proxy path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'proxy/metrics/cadvisor'
+        template: templates/daemonset-configmap.yaml

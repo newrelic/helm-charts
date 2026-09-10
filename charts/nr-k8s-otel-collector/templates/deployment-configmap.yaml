@@ -11,7 +11,6 @@ data:
     {{- . | nindent 4 }}
     {{- else }}
     receivers:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" . | nindent 6 }}
       otlp:
         protocols:
           http:
@@ -178,10 +177,9 @@ data:
                   replacement: otel-collector-deployment
       {{- end }}
 
-    processors:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.receivers" . | nindent 6 }}
 
+    processors:
       transform/promote_job_label:
         metric_statements:
           - context: datapoint
@@ -748,17 +746,19 @@ data:
         timeout: 30s
         send_batch_size : 800
 
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.processors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.processors" . | nindent 6 }}
+
     exporters:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 }}
-      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
       otlp_http/newrelic:
         endpoint: {{ include "newrelic.common.otlp_endpoint" . }}
         headers:
           api-key: ${env:NR_LICENSE_KEY}
 
-    connectors:
-      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.exporters" . | nindent 6 }}
+      {{- include "nrKubernetesOtel.custom.exporters" . | nindent 6 }}
 
+    connectors:
       routing/nr_logs_pipelines:
         default_pipelines: [logs/pipeline]
         table:
@@ -796,6 +796,8 @@ data:
           - context: metric
             condition: instrumentation_scope.attributes["job_label"] == "scheduler"
             pipelines: [metrics/nr_controlplane]
+
+      {{- include "nrKubernetesOtel.deployment.configMap.extraConfig.connectors" . | nindent 6 }}
 
     {{- with include "nrKubernetesOtel.deployment.configMap.extraConfig.extensions" . }}
     extensions:

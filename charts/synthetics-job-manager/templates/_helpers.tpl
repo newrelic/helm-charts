@@ -287,6 +287,55 @@ Define whether to mount the custom certificates volume. Activates on the presenc
 {{- end -}}
 
 {{/*
+Create the name of the volume used to mount the mTLS client certificate into the runtime pods
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesVolumeName" -}}
+client-cert-volume
+{{- end -}}
+
+{{/*
+Mount path for the mTLS client certificate directory (also the value of RUNTIME_CLIENT_CERT_PATH)
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesPath" -}}
+/var/lib/newrelic/synthetics/client-cert
+{{- end -}}
+
+{{/*
+yaml for the mTLS client certificate volume mount (mounted read-only into the runtime pods)
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesMount" -}}
+- mountPath: {{ include "synthetics-job-manager.clientCertificatesPath" . | quote }}
+  name: {{ include "synthetics-job-manager.clientCertificatesVolumeName" . | quote }}
+  readOnly: true
+{{- end -}}
+
+{{/*
+yaml for the mTLS client certificate volume. The volume source is provided by the user via
+global.clientCertificates.volume (typically a Secret containing cert-map.json and the cert/key files).
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesVolume" -}}
+- name: {{ include "synthetics-job-manager.clientCertificatesVolumeName" . | quote }}
+{{ toYaml (.Values.global.clientCertificates).volume | indent 2 }}
+{{- end -}}
+
+{{/*
+yaml for the RUNTIME_CLIENT_CERT_PATH env var, pointing runtimes at the mTLS client certificate mount path
+*/}}
+{{- define "synthetics-job-manager.clientCertificatesEnv" -}}
+- name: RUNTIME_CLIENT_CERT_PATH
+  value: {{ include "synthetics-job-manager.clientCertificatesPath" . | quote }}
+{{- end -}}
+
+{{/*
+Define whether to mount the mTLS client certificate volume. Activates on the presence of a volume
+(same convention as customNodeModules) - no separate enabled flag.
+*/}}
+{{- define "synthetics-job-manager.toMountClientCertificates" -}}
+  {{ if (.Values.global.clientCertificates).volume }}
+  {{ end }}
+{{- end -}}
+
+{{/*
 Define the optional volume mounts for the SJM
 */}}
 {{- define "synthetics-job-manager.volumeMounts" -}}
