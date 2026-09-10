@@ -25,9 +25,25 @@ spec:
         {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
+      {{- if .Values.wal.enabled }}
+      # Federated Logs WAL: give the iceberg exporter room to drain the WAL to S3 on SIGTERM
+      # before Kubernetes SIGKILLs the pod. Must exceed the worst-case drain time.
+      terminationGracePeriodSeconds: 120
+      {{- end }}
+      {{- if .Values.wal.enabled }}
+      # Federated Logs WAL: the per-pod ephemeral EBS volume is provisioned root-owned, but the
+      # gateway container runs as a non-root user. Set fsGroup so the kubelet group-owns the
+      # /var/wal volume to this GID and adds it to the container's supplementary groups, letting
+      # the non-root process write the WAL. Merged on top of any user-provided podSecurityContext.
+      {{- $walPodSecurityContext := include "nrKubernetesOtel.deployment.securityContext.pod" . | fromYaml }}
+      {{- $_ := set $walPodSecurityContext "fsGroup" (.Values.wal.fsGroup | default 1000) }}
+      securityContext:
+        {{- toYaml $walPodSecurityContext | nindent 8 }}
+      {{- else }}
       {{- with include "nrKubernetesOtel.deployment.securityContext.pod" . }}
       securityContext:
         {{- . | nindent 8 }}
+      {{- end }}
       {{- end }}
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
@@ -71,6 +87,14 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+            {{- if .Values.wal.enabled }}
+            # Federated Logs WAL: the iceberg exporter uses POD_NAME as the WAL pod_id,
+            # which disambiguates each replica's S3 object keys (pcg-00000-<pod_id>-<seq>).
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            {{- end }}
             - name: MY_POD_NAMESPACE
               valueFrom:
                 fieldRef:
@@ -126,6 +150,12 @@ spec:
           volumeMounts:
             - name: deployment-config
               mountPath: /config
+            {{- if .Values.wal.enabled }}
+            # Federated Logs WAL scratch disk (per-pod ephemeral EBS). Path equals the iceberg
+            # exporter's wal.dir (both fixed at /var/wal).
+            - name: wal-data
+              mountPath: /var/wal
+            {{- end }}
         {{- if and .Values.deployment.customConfigMap .Values.configWatcher.enabled }}
         {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.deployment.customConfigMap "root" .) | nindent 8 }}
         {{- end }}
@@ -138,6 +168,20 @@ spec:
           configMap:
             name: {{ include "nrKubernetesOtel.deployment.fullname" . }}-config
           {{- end }}
+        {{- if .Values.wal.enabled }}
+        # Federated Logs WAL: per-pod ephemeral EBS volume, created and deleted with the pod.
+        # Uses `ephemeral.volumeClaimTemplate` so each replica gets its own single-attached
+        # disk on the plain Deployment — no StatefulSet, no standalone PVC, no Multi-Attach.
+        - name: wal-data
+          ephemeral:
+            volumeClaimTemplate:
+              spec:
+                accessModes: ["ReadWriteOnce"]
+                storageClassName: gp3
+                resources:
+                  requests:
+                    storage: 10Gi
+        {{- end }}
       {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}
