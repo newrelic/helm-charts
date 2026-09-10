@@ -2,6 +2,9 @@
 # Chart values that produce this workload:
 #   provider: GKE_AUTOPILOT
 #   gkeAutopilotAllowlist: true    # keeps the /hostfs mount -> system.filesystem.*
+#   enable_atp: true               # optional; adds process.* (CR admits with ATP on OR off —
+#                                  #   the /var/lib/nrdot-collector mount below is pre-listed, so
+#                                  #   non-ATP installs match the same CR). No host namespace needed.
 #   (daemonset.hostPID / daemonset.hostNetwork off)
 # Collector runs privileged:false. Pairs with newrelic-nr-k8s-otel-collector-hostnet-on.
 apiVersion: auto.gke.io/v1
