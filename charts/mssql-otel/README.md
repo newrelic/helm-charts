@@ -95,7 +95,7 @@ as a `sysadmin`, before installing.
 | `mssql.username` / `mssql.password` | Plain-value monitoring credentials | `""` |
 | `mssql.existingSecret` | Pre-existing Secret (keys `username`, `password`), wins over plain values | `""` |
 | `mssql.collectionInterval` | Scrape interval | `15s` |
-| `otlpEndpoint` | New Relic endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time; see "## Telemetry export" above, this combination is not confirmed working | `""` |
+| `otlpEndpoint` | New Relic endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into the `nrsqlserver` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated login-creation Job | `false` |
