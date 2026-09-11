@@ -1,0 +1,49 @@
+name: Newrelic Logging chart E2E (External Contribution)
+
+on:
+  pull_request_target:
+    paths:
+      - 'charts/newrelic-logging/**'
+      - '.github/workflows/newrelic-logging-e2e.yml'
+      - '.github/workflows/newrelic-logging-e2e-external.yml'
+
+permissions:
+  contents: read
+
+env:
+  # NOTICE that apart from this, the versions in the chart linter matrix needs to be bumped too.
+  LATEST_K8S_VERSION: 'v1.35.0'
+  MINIKUBE_VERSION: 'v1.38.1'
+
+jobs:
+  e2e-test-external:
+    name: Run Tests
+    # Skip if the PR has the skip-e2e label, or if it's an internal (non-forked) PR —
+    # those run via newrelic-logging-e2e.yml instead, which doesn't need the approval gate below.
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name != 'newrelic/helm-charts' }}
+    runs-on: ubuntu-latest
+    environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.18.0
+        with:
+          minikube version: ${{ env.MINIKUBE_VERSION }}
+          kubernetes version: ${{ env.LATEST_K8S_VERSION }}
+          # default driver doesn't support 'eval $$(minikube docker-env)'.
+          driver: docker
+          container runtime: containerd
+          github token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run e2e-test
+        uses: newrelic/newrelic-integration-e2e-action@v1
+        with:
+          retry_seconds: 90
+          retry_attempts: 6
+          agent_enabled: false
+          spec_path: charts/newrelic-logging/e2e/test-specs.yml
+          account_id: ${{ secrets.K8S_AGENTS_E2E_ACCOUNT_ID }}
+          api_key: ${{ secrets.K8S_AGENTS_E2E_API_KEY }}
+          license_key: ${{ secrets.K8S_AGENTS_E2E_LICENSE_KEY }}
