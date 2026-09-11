@@ -35,6 +35,35 @@ app.kubernetes.io/name: {{ include "oracle-otel.name" . }}
 app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
+{{/*
+Renders one metric entry (`.key`: `.value`, where `.value` is the metric's
+dict, e.g. {enabled: true, attributes: [...]}) in New Relic's doc order --
+`enabled:` before `attributes:`, with the attributes list indented under
+its key -- instead of toYaml's alphabetical "attributes before enabled,
+dash at the same column as the key" default. Falls back to sorted order
+for any other field a metric might carry (e.g. via additionalReceiverConfig).
+Caller pipes the result through `indent N`.
+*/}}
+{{- define "oracle-otel.renderMetric" -}}
+{{- $mkey := .key -}}
+{{- $mval := .value -}}
+{{ $mkey }}:
+{{- if hasKey $mval "enabled" }}
+  enabled: {{ index $mval "enabled" }}
+{{- end }}
+{{- if hasKey $mval "attributes" }}
+  attributes:
+{{- range $attr := (index $mval "attributes") }}
+    - {{ $attr }}
+{{- end }}
+{{- end }}
+{{- range $k := (keys $mval | sortAlpha) }}
+{{- if not (or (eq $k "enabled") (eq $k "attributes")) }}
+  {{ $k }}: {{ toYaml (index $mval $k) }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
 {{- define "oracle-otel.validate.oracle" -}}
 {{- if or (not .Values.oracle.endpoint) (not .Values.oracle.service) -}}
 {{- fail "oracle.endpoint and oracle.service are required" -}}
@@ -97,7 +126,10 @@ metrics + resource_attributes for cdb/pdb (self-hosted). Verbatim from New Relic
 otel-oracledb docs "Database configuration" section -- identical between cdb and pdb,
 except resource_attributes omits oracle.db.pdb: nrdot-collector 2.2.0's nroracledb
 receiver rejects it as an invalid resource_attributes key at startup (confirmed via
-ct install CI failure), even though the docs list it as one of 8 valid keys.
+ct install CI failure), even though the docs list it as one of 8 valid keys. The
+image tag was bumped to 2.4.0 without re-confirming this specific behavior against
+that version -- kept omitted here as the safe default until re-verified, since
+reinstating it and being wrong would reintroduce the original startup failure.
 */}}
 {{- define "oracle-otel.receiver.cdbPdbDefaults" -}}
 metrics:

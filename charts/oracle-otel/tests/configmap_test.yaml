@@ -23,16 +23,16 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: oracle-db\\.internal:1521"
+          pattern: "endpoint: \"oracle-db\\.internal:1521\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "service: MYPDB"
+          pattern: "service: \"MYPDB\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "username: \\$\\{env:ORACLE_USERNAME\\}"
+          pattern: "username: \"\\$\\{env:ORACLE_USERNAME\\}\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "password: \\$\\{env:ORACLE_PASSWORD\\}"
+          pattern: "password: \"\\$\\{env:ORACLE_PASSWORD\\}\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "collection_interval: 30s"
@@ -128,6 +128,13 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "resource_attributes:"
+  - it: renders receiver fields in the documented order -- endpoint, username, password, service, then collection blocks, then metrics
+    set:
+      oracle.topology: "rds"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint:.*\\n\\s*username:.*\\n\\s*password:.*\\n\\s*service:.*\\n\\s*collection_interval:.*\\n\\s*events:"
   - it: renders the reduced rds metrics defaults and omits resource_attributes
     set:
       oracle.topology: "rds"
@@ -167,10 +174,10 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "datasource: oracle://\\$\\{env:ORACLE_USERNAME\\}:\\$\\{env:ORACLE_PASSWORD\\}@oracle-db\\.internal:1521/MYPDB\\?ssl=true&ssl%20verify=true"
+          pattern: "datasource: \"oracle://\\$\\{env:ORACLE_USERNAME\\}:\\$\\{env:ORACLE_PASSWORD\\}@oracle-db\\.internal:1521/MYPDB\\?ssl=true&ssl%20verify=true\""
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: oracle-db\\.internal:1521"
+          pattern: "endpoint: \"oracle-db\\.internal:1521\""
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "^\\s*username:"
