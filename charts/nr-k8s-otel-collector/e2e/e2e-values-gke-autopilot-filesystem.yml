@@ -1,0 +1,7 @@
+# GKE Autopilot e2e — FILESYSTEM variant (PR #2426: gkeAutopilotAllowlist).
+# provider=GKE_AUTOPILOT + gkeAutopilotAllowlist=true keeps the host-fs mount (/ -> /hostfs) and the
+# hostmetrics root_path that Autopilot normally strips, so system.filesystem.usage/utilization are
+# collected. Requires the hostnet-off WorkloadAllowlist CR to admit the / hostPath.
+# This is the delta the allowlist buys over the baseline variant.
+provider: GKE_AUTOPILOT
+gkeAutopilotAllowlist: true
