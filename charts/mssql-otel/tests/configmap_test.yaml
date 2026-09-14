@@ -18,42 +18,66 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "mssql.topology must be one of: self-hosted, rds"
-  - it: fails when otlpEndpoint has no scheme, since otlphttp requires a full URL
+  - it: fails when otlpEndpoint has no scheme
     set:
       otlpEndpoint: "otlp.nr-data.net:4318"
     asserts:
       - failedTemplate:
-          errorMessage: 'otlpEndpoint must include a scheme (http:// or https://) -- the otlphttp exporter requires a full URL, not bare host:port. Got: "otlp.nr-data.net:4318". New Relic''s US OTLP/HTTP endpoint is https://otlp.nr-data.net:4318'
-  - it: renders the nrsqlserver receiver's datasource with env-substitution credentials, never literal ones
+          errorMessage: 'otlpEndpoint must include a scheme (http:// or https://). Got: "otlp.nr-data.net:4318". New Relic''s US OTLP/HTTP endpoint is https://otlp.nr-data.net:4318'
+  - it: renders the nrsqlserver receiver's discrete connection fields with env-substitution credentials, never literal ones
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "datasource: server=sql\\.internal;user id=\\$\\{env:MSSQL_USERNAME\\};password=\\$\\{env:MSSQL_PASSWORD\\};port=1433;encrypt=false;trustservercertificate=false"
+          pattern: "server: sql\\.internal"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "port: 1433"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \\$\\{env:MSSQL_USERNAME\\}"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "password: \\$\\{env:MSSQL_PASSWORD\\}"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "collection_interval: 30s"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "s3cret"
-  - it: sets encrypt and trustservercertificate on the datasource from mssql.tls
-    set:
-      mssql.tls.enabled: true
-      mssql.tls.trustServerCertificate: true
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "datasource:"
+  - it: renders receiver fields in the documented order -- collection_interval, username, password, server, port, then metrics before events
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "encrypt=true;trustservercertificate=true"
-  - it: renders the otlphttp exporter with an env-substitution api-key, never a literal one, plus retry_on_failure
+          pattern: "collection_interval:.*\\n\\s*username:.*\\n\\s*password:.*\\n\\s*server:.*\\n\\s*port:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "port: 1433\\n\\s*metrics:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "sqlserver\\.memory\\.area:\\n\\s*enabled: true\\n\\s*events:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "top_query_collection:\\n\\s*lookback_time:.*\\n\\s*max_query_sample_count:.*\\n\\s*top_query_count:.*\\n\\s*collection_interval:"
+  - it: renders the otlp exporter with an env-substitution api-key, never a literal one, no retry_on_failure
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: \"https://otlp\\.nr-data\\.net:4318\""
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "api-key: \"\\$\\{env:NEW_RELIC_LICENSE_KEY\\}\""
-      - matchRegex:
+          pattern: "endpoint: https://otlp\\.nr-data\\.net:4318"
+      - notMatchRegex:
           path: data["config.yaml"]
           pattern: "retry_on_failure:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "tls:\\n\\s*insecure: false"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "telemetry:\\n\\s*metrics:\\n\\s*level: none"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "api-key: \\$\\{env:NEW_RELIC_LICENSE_KEY\\}"
   - it: wires the metrics and logs pipelines to the receiver, processors, and exporter
     asserts:
       - matchRegex:
@@ -61,7 +85,7 @@ tests:
           pattern: "receivers:\\s*\\[nrsqlserver\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "exporters:\\s*\\[otlphttp\\]"
+          pattern: "exporters:\\s*\\[otlp\\]"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "processors:\\s*\\[memory_limiter, batch\\]"

@@ -1,12 +1,14 @@
 suite: deployment
 templates:
   - templates/deployment.yaml
+  - templates/configmap.yaml
 release:
   name: my-release
   namespace: my-namespace
 set:
   oracle.endpoint: "oracle-db.internal:1521"
   oracle.service: "MYPDB"
+  oracle.topology: "pdb"
   otlpEndpoint: "otlp.nr-data.net:4317"
   licenseKey: "testlicensekey"
 tests:
@@ -23,6 +25,7 @@ tests:
               secretKeyRef:
                 name: my-release-oracle-otel-oracle
                 key: username
+        template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].env[1]
           value:
@@ -31,6 +34,7 @@ tests:
               secretKeyRef:
                 name: my-release-oracle-otel-oracle
                 key: password
+        template: templates/deployment.yaml
   - it: uses the existingSecret name when oracle.existingSecret is set
     set:
       oracle.existingSecret: "my-oracle-secret"
@@ -38,23 +42,35 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
           value: my-oracle-secret
+        template: templates/deployment.yaml
   - it: mounts the collector config and sets image/resources from values
     set:
       oracle.username: "u"
       oracle.password: "p"
       image.repository: "newrelic/nrdot-collector"
-      image.tag: "2.2.0"
+      image.tag: "2.4.0"
       resources.limits.memory: "256Mi"
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: newrelic/nrdot-collector:2.2.0
+          value: newrelic/nrdot-collector:2.4.0
+        template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].resources.limits.memory
           value: 256Mi
+        template: templates/deployment.yaml
       - contains:
           path: spec.template.spec.volumes
           content:
             name: config
             configMap:
               name: my-release-oracle-otel-config
+        template: templates/deployment.yaml
+  - it: sets a config checksum annotation so a config-only change forces a Pod restart on upgrade
+    set:
+      oracle.username: "u"
+      oracle.password: "p"
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+        template: templates/deployment.yaml
