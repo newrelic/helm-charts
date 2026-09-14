@@ -43,10 +43,18 @@ its key -- instead of toYaml's alphabetical "attributes before enabled,
 dash at the same column as the key" default. Falls back to sorted order
 for any other field a metric might carry (e.g. via additionalReceiverConfig).
 Caller pipes the result through `indent N`.
+
+`.value` must be a map -- an `additionalReceiverConfig.metrics.<name>`
+override that replaces a metric with a scalar (e.g. `metrics: {oracledb.cpu_time: false}`
+instead of `metrics: {oracledb.cpu_time: {enabled: false}}`) fails clearly here
+instead of crashing inside `hasKey` with a raw Go type-mismatch error.
 */}}
 {{- define "oracle-otel.renderMetric" -}}
 {{- $mkey := .key -}}
 {{- $mval := .value -}}
+{{- if not (kindIs "map" $mval) -}}
+{{- fail (printf "additionalReceiverConfig.metrics.%s must be a map, e.g. {enabled: true} -- got %#v" $mkey $mval) -}}
+{{- end -}}
 {{ $mkey }}:
 {{- if hasKey $mval "enabled" }}
   enabled: {{ index $mval "enabled" }}
@@ -122,14 +130,13 @@ session_wait_event_collection:
 {{- end -}}
 
 {{/*
-metrics + resource_attributes for cdb/pdb (self-hosted). Verbatim from New Relic's
-otel-oracledb docs "Database configuration" section -- identical between cdb and pdb,
-except resource_attributes omits oracle.db.pdb: nrdot-collector 2.2.0's nroracledb
-receiver rejects it as an invalid resource_attributes key at startup (confirmed via
-ct install CI failure), even though the docs list it as one of 8 valid keys. The
-image tag was bumped to 2.4.0 without re-confirming this specific behavior against
-that version -- kept omitted here as the safe default until re-verified, since
-reinstating it and being wrong would reintroduce the original startup failure.
+metrics + resource_attributes for cdb/pdb (self-hosted), verbatim from New
+Relic's otel-oracledb docs "Database configuration" section, are supported
+from nrdot-collector 2.4.0 (confirmed against nroracledbreceiver v0.158.3's
+generated_resource.go) -- except resource_attributes still omits
+oracle.db.pdb: it's not a valid resource_attributes key at this version
+either (only valid as a per-metric attribute, used throughout the metrics
+below), so it stays omitted.
 */}}
 {{- define "oracle-otel.receiver.cdbPdbDefaults" -}}
 metrics:

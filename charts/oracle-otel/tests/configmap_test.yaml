@@ -168,6 +168,14 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "oracledb\\.cpu_time:\\n(?:.*\\n)*?\\s*enabled: false"
+  - it: fails clearly when additionalReceiverConfig overrides a metric with a scalar instead of a map
+    set:
+      additionalReceiverConfig:
+        metrics:
+          oracledb.cpu_time: false
+    asserts:
+      - failedTemplate:
+          errorMessage: "additionalReceiverConfig.metrics.oracledb.cpu_time must be a map, e.g. {enabled: true} -- got false"
   - it: renders a single datasource connection string for adb, not discrete endpoint/username/password/service fields
     set:
       oracle.topology: "adb"

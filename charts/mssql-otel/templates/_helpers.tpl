@@ -64,8 +64,7 @@ genuine gRPC otlp exporter expects (bare host:port, conventionally port
 4317, like oracle-otel's). This chart still requires a full scheme'd URL
 here (kept from when the exporter was named `otlphttp`, which genuinely
 needed one) -- this is a deliberate doc-fidelity choice, not a fix, and
-telemetry export in this configuration is unconfirmed/likely broken. See
-TESTING.md and README.md.
+telemetry export in this configuration is unconfirmed/likely broken. See README.md.
 */}}
 {{- define "mssql-otel.validate.otlpEndpoint" -}}
 {{- if not (or (hasPrefix "http://" .Values.otlpEndpoint) (hasPrefix "https://" .Values.otlpEndpoint)) -}}
