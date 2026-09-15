@@ -1,12 +1,16 @@
-{{- if and .Values.setupJob.enabled (not .Values.mysqlMulti.enabled) }}
-{{- include "mysql-otel.validate.setupJob" . -}}
+{{- if and .Values.setupJob.enabled .Values.mysqlMulti.enabled }}
+{{- include "mysql-otel.validate.mysqlMulti" . -}}
+{{- range $i, $db := .Values.mysqlMulti.databases }}
+{{- $admin := $db.mysqlAdmin | default dict }}
+{{- $port := $db.port | default 3306 }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "mysql-otel.fullname" . }}-setup
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "mysql-otel.fullname" $ }}-setup-{{ $db.name }}
+  namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "mysql-otel.labels" . | nindent 4 }}
+    {{- include "mysql-otel.labels" $ | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "1"
@@ -16,38 +20,38 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "mysql-otel.labels" . | nindent 8 }}
+        {{- include "mysql-otel.labels" $ | nindent 8 }}
     spec:
       restartPolicy: Never
       containers:
         - name: mysql-otel-setup
-          image: "{{ .Values.setupJob.image.repository }}:{{ .Values.setupJob.image.tag }}"
-          imagePullPolicy: {{ .Values.setupJob.image.pullPolicy }}
+          image: "{{ $.Values.setupJob.image.repository }}:{{ $.Values.setupJob.image.tag }}"
+          imagePullPolicy: {{ $.Values.setupJob.image.pullPolicy }}
           env:
             - name: MYSQL_ADMIN_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.setupJob.mysqlAdmin.existingSecret }}
+                  name: {{ $admin.existingSecret }}
                   key: username
             - name: MYSQL_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.setupJob.mysqlAdmin.existingSecret }}
+                  name: {{ $admin.existingSecret }}
                   key: password
             - name: MYSQL_MONITOR_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mysql-otel.credentials.secretName" . }}
+                  name: {{ $db.existingSecret }}
                   key: username
             - name: MYSQL_MONITOR_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mysql-otel.credentials.secretName" . }}
+                  name: {{ $db.existingSecret }}
                   key: password
             - name: MYSQL_SERVER
-              value: {{ .Values.mysql.server | quote }}
+              value: {{ $db.server | quote }}
             - name: MYSQL_PORT
-              value: {{ .Values.mysql.port | quote }}
+              value: {{ $port | quote }}
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -57,10 +61,11 @@ spec:
               GRANT SELECT ON performance_schema.* TO '$MYSQL_MONITOR_USERNAME'@'%';
               FLUSH PRIVILEGES;
               SQL
-              {{- if .Values.setupJob.enableWaitTimeMetrics }}
+              {{- if $.Values.setupJob.enableWaitTimeMetrics }}
               mysql -h "$MYSQL_SERVER" -P "$MYSQL_PORT" -u "$MYSQL_ADMIN_USERNAME" -p"$MYSQL_ADMIN_PASSWORD" <<SQL
               GRANT UPDATE ON performance_schema.setup_consumers TO '$MYSQL_MONITOR_USERNAME'@'%';
               FLUSH PRIVILEGES;
               SQL
               {{- end }}
+{{- end }}
 {{- end }}

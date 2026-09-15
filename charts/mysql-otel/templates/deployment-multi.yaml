@@ -1,41 +1,44 @@
-{{- if not .Values.oracleMulti.enabled }}
-{{- include "oracle-otel.validate.oracle" . -}}
+{{- if .Values.mysqlMulti.enabled }}
+{{- include "mysql-otel.validate.mysqlMulti" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ include "oracle-otel.fullname" . }}
+  name: {{ include "mysql-otel.fullname" . }}
   namespace: {{ .Release.Namespace }}
   labels:
-    {{- include "oracle-otel.labels" . | nindent 4 }}
+    {{- include "mysql-otel.labels" . | nindent 4 }}
 spec:
   replicas: 1
   selector:
     matchLabels:
-      {{- include "oracle-otel.selectorLabels" . | nindent 6 }}
+      {{- include "mysql-otel.selectorLabels" . | nindent 6 }}
   template:
     metadata:
       labels:
-        {{- include "oracle-otel.labels" . | nindent 8 }}
+        {{- include "mysql-otel.labels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-multi.yaml") . | sha256sum }}
     spec:
       containers:
-        - name: oracle-otel
+        - name: mysql-otel
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
-            - --config=/etc/oracle-otel/config.yaml
+            - --config=/etc/mysql-otel/config.yaml
           env:
-            - name: ORACLE_USERNAME
+            {{- range .Values.mysqlMulti.databases }}
+            {{- $suffix := include "mysql-otel.multi.envVarSuffix" .name }}
+            - name: MYSQL_USERNAME_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "oracle-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: username
-            - name: ORACLE_PASSWORD
+            - name: MYSQL_PASSWORD_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "oracle-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: password
+            {{- end }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
@@ -47,12 +50,12 @@ spec:
           {{- end }}
           volumeMounts:
             - name: config
-              mountPath: /etc/oracle-otel
+              mountPath: /etc/mysql-otel
               readOnly: true
       volumes:
         - name: config
           configMap:
-            name: {{ include "oracle-otel.fullname" . }}-config
+            name: {{ include "mysql-otel.fullname" . }}-config
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
