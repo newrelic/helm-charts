@@ -11,23 +11,34 @@
 {{- else -}}
 {{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.cdbPdbDefaults" . | fromYaml) -}}
 {{- end -}}
-{{- $receivers := dict -}}
+{{- $databases := .Values.oracleMulti.databases -}}
+{{- $multiEntry := gt (len $databases) 1 -}}
+{{- $receiverModes := dict -}}
+{{- $receiverContents := dict -}}
 {{- $receiverKeys := list -}}
 {{- $firstHost := "" -}}
-{{- range $i, $db := .Values.oracleMulti.databases -}}
+{{- range $i, $db := $databases -}}
 {{- $suffix := include "oracle-otel.multi.envVarSuffix" $db.name -}}
 {{- $collectionInterval := $db.collectionInterval | default $.Values.oracleMulti.collectionInterval -}}
-{{- $receiver := dict -}}
-{{- $receiver = mergeOverwrite $receiver $topologyDefaults -}}
+{{- $identity := dict -}}
 {{- if $isAdb -}}
 {{- $datasource := printf "oracle://${env:ORACLE_USERNAME_%s}:${env:ORACLE_PASSWORD_%s}@%s/%s?ssl=true&ssl%%20verify=true" $suffix $suffix $db.endpoint $db.service -}}
-{{- $receiver = mergeOverwrite $receiver (dict "datasource" $datasource "collection_interval" $collectionInterval) -}}
+{{- $identity = dict "datasource" $datasource "collection_interval" $collectionInterval -}}
 {{- else -}}
-{{- $receiver = mergeOverwrite $receiver (dict "endpoint" $db.endpoint "service" $db.service "username" (printf "${env:ORACLE_USERNAME_%s}" $suffix) "password" (printf "${env:ORACLE_PASSWORD_%s}" $suffix) "collection_interval" $collectionInterval) -}}
+{{- $identity = dict "endpoint" $db.endpoint "service" $db.service "username" (printf "${env:ORACLE_USERNAME_%s}" $suffix) "password" (printf "${env:ORACLE_PASSWORD_%s}" $suffix) "collection_interval" $collectionInterval -}}
 {{- end -}}
-{{- $receiver = mergeOverwrite $receiver ($.Values.additionalReceiverConfig | default dict) -}}
 {{- $receiverKey := printf "nroracledb/%s" $db.name -}}
-{{- $receivers = set $receivers $receiverKey $receiver -}}
+{{- if and $multiEntry (gt $i 0) -}}
+{{- $receiverModes = set $receiverModes $receiverKey "override" -}}
+{{- $receiverContents = set $receiverContents $receiverKey $identity -}}
+{{- else -}}
+{{- $full := dict -}}
+{{- $full = mergeOverwrite $full $topologyDefaults -}}
+{{- $full = mergeOverwrite $full $identity -}}
+{{- $full = mergeOverwrite $full ($.Values.additionalReceiverConfig | default dict) -}}
+{{- $receiverModes = set $receiverModes $receiverKey (ternary "anchor" "full" $multiEntry) -}}
+{{- $receiverContents = set $receiverContents $receiverKey $full -}}
+{{- end -}}
 {{- $receiverKeys = append $receiverKeys $receiverKey -}}
 {{- if eq $i 0 -}}
 {{- $firstHost = first (splitList ":" $db.endpoint) -}}
@@ -45,8 +56,18 @@ data:
   config.yaml: |
     receivers:
       {{- range $key := $receiverKeys }}
+      {{- $mode := index $receiverModes $key }}
+      {{- if eq $mode "anchor" }}
+      {{ $key }}: &nroracledb-common
+{{- include "oracle-otel.renderReceiver" (dict "receiver" (index $receiverContents $key) "isRds" $isRds "isAdb" $isAdb) }}
+      {{- else if eq $mode "override" }}
       {{ $key }}:
-{{- include "oracle-otel.renderReceiver" (dict "receiver" (index $receivers $key) "isRds" $isRds "isAdb" $isAdb) }}
+        <<: *nroracledb-common
+{{- include "oracle-otel.renderReceiverOverride" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else }}
+      {{ $key }}:
+{{- include "oracle-otel.renderReceiver" (dict "receiver" (index $receiverContents $key) "isRds" $isRds "isAdb" $isAdb) }}
+      {{- end }}
       {{- end }}
     processors:
       resource/add_event_name:

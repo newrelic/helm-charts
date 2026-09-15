@@ -59,24 +59,29 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "oracleMulti.enabled and oracle.endpoint are mutually exclusive -- use one mode or the other in a single release"
-  - it: renders one nroracledb/<name> receiver per database entry with env-substitution credentials
+  - it: renders the first entry as the full receiver, anchored, with the rest of its identity fields
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "nroracledb/db1:\\n\\s*endpoint: \"host1\\.rds\\.amazonaws\\.com:1521\""
+          pattern: "nroracledb/db1: &nroracledb-common\\n\\s*endpoint: \"host1\\.rds\\.amazonaws\\.com:1521\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "username: \"\\$\\{env:ORACLE_USERNAME_DB1\\}\""
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "db1-creds|db2-creds"
+  - it: renders every subsequent entry as a merge-key override, not a full duplicate
+    asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "nroracledb/db2:\\n\\s*endpoint: \"host2\\.rds\\.amazonaws\\.com:1521\""
+          pattern: "nroracledb/db2:\\n\\s*<<: \\*nroracledb-common\\n\\s*endpoint: \"host2\\.rds\\.amazonaws\\.com:1521\""
       - matchRegex:
           path: data["config.yaml"]
           pattern: "username: \"\\$\\{env:ORACLE_USERNAME_DB2\\}\""
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "db1-creds|db2-creds"
-  - it: renders the reduced rds metrics defaults for every entry and omits resource_attributes
+          pattern: "&nroracledb-common[\\s\\S]*&nroracledb-common"
+  - it: renders the reduced rds metrics defaults once (on the anchor) and omits resource_attributes
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -84,6 +89,23 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "resource_attributes:"
+  - it: does not use a YAML anchor/merge key when there's only one database entry
+    set:
+      oracleMulti.databases:
+        - name: db1
+          endpoint: "host1.rds.amazonaws.com:1521"
+          service: "ORCL1"
+          existingSecret: "db1-creds"
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "&nroracledb-common"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "<<: \\*nroracledb-common"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nroracledb/db1:\\n\\s*endpoint: \"host1\\.rds\\.amazonaws\\.com:1521\""
   - it: shares one exporter and lists every receiver in one combined pipeline pair
     asserts:
       - matchRegex:

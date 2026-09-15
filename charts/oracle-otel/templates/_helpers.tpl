@@ -728,3 +728,27 @@ unique names, and no accidental mixing with the single-instance oracle.endpoint.
 {{- $seenSuffixes = set $seenSuffixes $suffix true -}}
 {{- end -}}
 {{- end -}}
+
+{{/*
+Renders just the fields that vary between multi-instance database entries when 2+ entries share one receiver's
+metrics/events/resource_attributes block via a `<<: *nroracledb-common` merge key (see configmap-multi.yaml):
+endpoint/username/password/service/datasource, then collection_interval. Same field order and quoting as
+oracle-otel.renderReceiver's identity-field branch -- deliberately does not touch events/top_query_collection/
+query_sample_collection/session_wait_event_collection/metrics/resource_attributes, since those are inherited via
+the merge key rather than repeated per entry.
+
+Args (single dict): .receiver -- the entry's override-only dict (endpoint/service/username/password/datasource/collection_interval)
+*/}}
+{{- define "oracle-otel.renderReceiverOverride" -}}
+{{- $receiver := .receiver -}}
+{{- $orderedKeys := list "endpoint" "username" "password" "service" "datasource" "collection_interval" -}}
+{{- range $key := $orderedKeys }}
+{{- if hasKey $receiver $key }}
+{{- if has $key (list "endpoint" "username" "password" "service" "datasource") }}
+        {{ $key }}: {{ (index $receiver $key) | quote }}
+{{- else }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
