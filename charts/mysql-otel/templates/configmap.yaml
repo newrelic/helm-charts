@@ -1,3 +1,4 @@
+{{- if not .Values.mysqlMulti.enabled }}
 {{- include "mysql-otel.validate.topology" . -}}
 {{- include "mysql-otel.validate.otlpEndpoint" . -}}
 {{- $tlsDefaults := dict "insecure" .Values.mysql.tls.insecure "insecure_skip_verify" .Values.mysql.tls.insecureSkipVerify -}}
@@ -136,3 +137,4 @@ data:
           receivers: [nrmysql]
           processors: [resource/mysql, batch]
           exporters: [otlp/newrelic]
+{{- end }}

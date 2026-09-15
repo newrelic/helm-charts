@@ -1,0 +1,142 @@
+suite: configmap (mysqlMulti)
+templates:
+  - templates/configmap-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mysqlMulti.enabled: true
+  mysqlMulti.topology: "self-hosted"
+  mysqlMulti.databases:
+    - name: db1
+      server: "host1.example.internal"
+      existingSecret: "db1-creds"
+    - name: db2
+      server: "host2.example.internal"
+      existingSecret: "db2-creds"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: fails when mysqlMulti.topology is unset or invalid
+    set:
+      mysqlMulti.topology: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysqlMulti.topology must be one of: self-hosted, rds"
+  - it: fails when mysqlMulti.databases is empty
+    set:
+      mysqlMulti.databases: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysqlMulti.databases must contain at least one entry when mysqlMulti.enabled is true"
+  - it: fails when a database entry is missing a required field
+    set:
+      mysqlMulti.databases:
+        - name: db1
+          existingSecret: "db1-creds"
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysqlMulti.databases[0].server is required"
+  - it: fails when two entries share the same name
+    set:
+      mysqlMulti.databases:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+        - name: db1
+          server: "host2"
+          existingSecret: "db2-creds"
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysqlMulti.databases[1].name \"db1\" duplicates an earlier entry's name"
+  - it: fails when mysql.server is also set (mixed-mode guard)
+    set:
+      mysql.server: "legacy.example.internal"
+    asserts:
+      - failedTemplate:
+          errorMessage: "mysqlMulti.enabled and mysql.server are mutually exclusive -- use one mode or the other in a single release"
+  - it: renders the first entry as the full receiver, anchored, with its own identity fields
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nrmysql/db1: &nrmysql-common\\n\\s*endpoint: \"host1\\.example\\.internal:3306\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \"\\$\\{env:MYSQL_USERNAME_DB1\\}\""
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "db1-creds|db2-creds"
+  - it: renders every subsequent entry as a merge-key override, not a full duplicate
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nrmysql/db2:\\n\\s*<<: \\*nrmysql-common\\n\\s*endpoint: \"host2\\.example\\.internal:3306\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \"\\$\\{env:MYSQL_USERNAME_DB2\\}\""
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "&nrmysql-common[\\s\\S]*&nrmysql-common"
+  - it: renders the shared scrape-behavior config once (on the anchor)
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "statement_events:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "top_query_collection:"
+  - it: shares one exporter and lists every receiver in one combined pipeline pair
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "receivers: \\[nrmysql/db1, nrmysql/db2\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exporters:\\n\\s*otlp/newrelic:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "otlp/newrelic:[\\s\\S]*otlp/newrelic:"
+  - it: sets server.address/server.port to the first database entry's values only (documented shared-pipeline limitation)
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "value: \"host1\\.example\\.internal\"\\n\\s*action: upsert"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "value: 3306\\n\\s*action: upsert"
+  - it: renders an optional per-entry database field when set
+    set:
+      mysqlMulti.databases:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+          database: "app_db"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "database: \"app_db\""
+  - it: does not use a YAML anchor/merge key when there's only one database entry
+    set:
+      mysqlMulti.databases:
+        - name: db1
+          server: "host1.example.internal"
+          existingSecret: "db1-creds"
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "&nrmysql-common"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "<<: \\*nrmysql-common"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nrmysql/db1:\\n\\s*endpoint: \"host1\\.example\\.internal:3306\""
+  - it: merges additionalReceiverConfig into the shared block
+    set:
+      additionalReceiverConfig:
+        events:
+          db.server.query_sample:
+            enabled: false
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.query_sample:\\n\\s*enabled: false"

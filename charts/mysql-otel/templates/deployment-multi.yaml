@@ -1,5 +1,5 @@
-{{- if not .Values.mysqlMulti.enabled }}
-{{- include "mysql-otel.validate.mysql" . -}}
+{{- if .Values.mysqlMulti.enabled }}
+{{- include "mysql-otel.validate.mysqlMulti" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +17,7 @@ spec:
       labels:
         {{- include "mysql-otel.labels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-multi.yaml") . | sha256sum }}
     spec:
       containers:
         - name: mysql-otel
@@ -26,16 +26,19 @@ spec:
           args:
             - --config=/etc/mysql-otel/config.yaml
           env:
-            - name: MYSQL_USERNAME
+            {{- range .Values.mysqlMulti.databases }}
+            {{- $suffix := include "mysql-otel.multi.envVarSuffix" .name }}
+            - name: MYSQL_USERNAME_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mysql-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: username
-            - name: MYSQL_PASSWORD
+            - name: MYSQL_PASSWORD_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mysql-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: password
+            {{- end }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:
