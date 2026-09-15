@@ -9,3 +9,10 @@ deployment:
   envs:
     - name: PCG_SKIP_PRECONNECT_VALIDATION
       value: "true"
+
+# The WAL feature provisions a per-pod ephemeral EBS volume with storageClass
+# `gp3-wal`, which only exists on a real EBS-backed cluster. In CI (minikube)
+# that PVC never binds and `ct install` times out, so disable WAL here — its
+# templating is covered by lint/`helm template`, not the install smoke test.
+wal:
+  enabled: false

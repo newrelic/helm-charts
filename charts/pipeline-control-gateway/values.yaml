@@ -85,7 +85,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "2.5.0"
+  tag: "3.0.2-fedlogs-wal"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -185,6 +185,31 @@ fleet_id: ""
 # -- (bool) Send only the [metrics required](https://github.com/newrelic/helm-charts/tree/master/charts/nr-k8s-otel-collector/docs/metrics-lowDataMode.md) to light up the NR kubernetes UI, this agent defaults to setting lowDataMode true, but if this setting is unset, lowDataMode will be set to false
 # @default -- `false`
 lowDataMode:
+
+# -- Federated Logs Write-Ahead Log (WAL) durable buffer. When enabled, a per-pod
+# ephemeral EBS volume (via `ephemeral.volumeClaimTemplate`) is attached to the existing
+# gateway Deployment at /var/wal and mounted into the collector container. There is NO
+# StatefulSet and NO standalone PVC — the volume is created and deleted with the pod, so each
+# replica (HPA 2->10) gets its own single-attached disk (no Multi-Attach). Durability on the
+# normal path comes from the exporter draining to S3 before the pod terminates, not from a
+# durable disk. Gated exactly like `daemonset.enabled`.
+#
+# This is the ONLY WAL knob at the chart level: it just gates volume provisioning. The exporter
+# WAL runtime config (dir, fsync_interval, disk_high_watermark, drain_no_progress_timeout) is
+# set on the iceberg exporter by pipeline-control-api, NOT here. The volume spec (mountPath
+# /var/wal, size, storageClass, accessMode, terminationGracePeriodSeconds) is fixed in
+# templates/deployment.yaml.
+# @default -- See `values.yaml`
+wal:
+  # -- Provision the per-pod ephemeral WAL disk and mount it into the gateway container at
+  # /var/wal. Mirrors the iceberg exporter's `wal.enabled`. Opt-in: real deployments turn this
+  # on per-fleet via chart_values.gateway.wal.enabled (pipeline-control-api), so the shipped
+  # default is off — otherwise every install would require a `gp3` StorageClass.
+  enabled: false
+  # -- fsGroup applied to the pod when WAL is enabled. The ephemeral EBS volume is provisioned
+  # root-owned, so this GID is needed for the non-root gateway to write /var/wal (the kubelet
+  # group-owns the volume to it and adds it to the container's supplementary groups).
+  fsGroup: 1000
 
 # -- Complete OpenTelemetry pipeline configuration as YAML map. When provided, this will override all other OpenTelemetry configuration sections.
 # @default -- `{}`
