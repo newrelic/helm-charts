@@ -1,0 +1,39 @@
+# Runs the Windows Fluent Bit image/env the chart's daemonset-windows.yaml wires up, values
+# extracted from `helm template` by run-windows-e2e.ps1, so this tracks the real chart.
+#
+# `command` is static (doesn't vary with values.yaml) so it's hardcoded here; run-windows-e2e.ps1
+# checks it against the helm-template output and fails if templates/daemonset-windows.yaml changed.
+services:
+  newrelic-logging-windows:
+    image: "${NR_FB_IMAGE}"
+    container_name: "${CONTAINER_NAME}"
+    ports:
+      - "${HEALTH_PORT}:${HEALTH_PORT}"
+    volumes:
+      - "${CONFIG_DIR}:C:\\fluent-bit\\etc"
+      - "${LOGS_DIR}:C:\\var\\log"
+      - "${SCRIPTS_DIR}:C:\\fluent-bit\\scripts"
+    environment:
+      # LICENSE_KEY/NODE_NAME/HOSTNAME come from Kubernetes secretKeyRef/fieldRef in production;
+      # run-windows-e2e.ps1 supplies them directly since there's no cluster here.
+      ENDPOINT: "${ENDPOINT}"
+      SOURCE: "${SOURCE}"
+      LICENSE_KEY: "${LICENSE_KEY}"
+      CLUSTER_NAME: "${CLUSTER_NAME}"
+      LOG_LEVEL: "${LOG_LEVEL}"
+      LOG_PARSER: "${LOG_PARSER}"
+      FB_DB: "${FB_DB}"
+      PATH: "${FLUENTBIT_PATH}"
+      K8S_BUFFER_SIZE: "${K8S_BUFFER_SIZE}"
+      K8S_LOGGING_EXCLUDE: "${K8S_LOGGING_EXCLUDE}"
+      LOW_DATA_MODE: "${LOW_DATA_MODE}"
+      RETRY_LIMIT: "${RETRY_LIMIT}"
+      NODE_NAME: "${NODE_NAME}"
+      HOSTNAME: "${HOSTNAME}"
+      SEND_OUTPUT_PLUGIN_METRICS: "${SEND_OUTPUT_PLUGIN_METRICS}"
+      METRICS_HOST: "${METRICS_HOST}"
+      FLUENTBIT_METRICS_TIER: "${FLUENTBIT_METRICS_TIER}"
+      LUA_SCRIPT_PATH: "${LUA_SCRIPT_PATH}"
+      DAEMONSET_NAME: "${DAEMONSET_NAME}"
+      NAMESPACE: "${NAMESPACE}"
+    command: ["C:\\fluent-bit\\bin\\fluent-bit.exe", "-c", "c:\\fluent-bit\\etc\\fluent-bit.conf", "-e", "C:\\fluent-bit\\bin\\out_newrelic.dll"]
