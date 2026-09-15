@@ -1,5 +1,5 @@
-{{- if not .Values.oracleMulti.enabled }}
-{{- include "oracle-otel.validate.oracle" . -}}
+{{- if .Values.oracleMulti.enabled }}
+{{- include "oracle-otel.validate.oracleMulti" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +17,7 @@ spec:
       labels:
         {{- include "oracle-otel.labels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-multi.yaml") . | sha256sum }}
     spec:
       containers:
         - name: oracle-otel
@@ -26,16 +26,19 @@ spec:
           args:
             - --config=/etc/oracle-otel/config.yaml
           env:
-            - name: ORACLE_USERNAME
+            {{- range .Values.oracleMulti.databases }}
+            {{- $suffix := include "oracle-otel.multi.envVarSuffix" .name }}
+            - name: ORACLE_USERNAME_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "oracle-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: username
-            - name: ORACLE_PASSWORD
+            - name: ORACLE_PASSWORD_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "oracle-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: password
+            {{- end }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:

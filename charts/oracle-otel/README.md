@@ -113,6 +113,52 @@ If you'd rather not grant this chart admin-level Oracle access at all, leave
 `setupJob.enabled: false` and run the appropriate script from `files/setup/`
 yourself, as a DBA, before installing.
 
+## Multiple databases in one release (`oracleMulti`)
+
+By default (see "What this chart does not do" above), one release monitors
+one Oracle instance. Setting `oracleMulti.enabled: true` switches to an
+alternative, fully opt-in mode: one release, one collector pod, monitoring
+every entry in `oracleMulti.databases` (all sharing one `oracleMulti.topology`
+-- a release can't mix topologies). This is additive: `oracleMulti` is a
+separate values block from `oracle:`, and the two are mutually exclusive in
+a single release (setting both fails the render).
+
+```yaml
+oracleMulti:
+  enabled: true
+  topology: "rds"
+  databases:
+    - name: db1
+      endpoint: "prod-db-1.xxxxx.us-east-1.rds.amazonaws.com:1521"
+      service: "ORCL1"
+      existingSecret: "db1-monitor-creds"
+      oracleAdmin:
+        existingSecret: "db1-admin-creds"   # only required if setupJob.enabled
+    - name: db2
+      endpoint: "prod-db-2.xxxxx.us-east-1.rds.amazonaws.com:1521"
+      service: "ORCL2"
+      existingSecret: "db2-monitor-creds"
+      oracleAdmin:
+        existingSecret: "db2-admin-creds"
+```
+
+Each entry requires `name` (unique within the release), `endpoint`, `service`,
+and `existingSecret` -- there is no plain-value credential path in this mode.
+When `setupJob.enabled: true`, one setup Job runs per entry (named
+`<release>-setup-<name>`), each using that entry's own `oracleAdmin.existingSecret`
+-- separate RDS instances normally have independent master-user passwords, so
+there's no shared admin credential option.
+
+**Known limitation:** the collector runs all entries' receivers through one
+shared pipeline and processor, matching New Relic's own documented RDS
+multi-receiver pattern. That processor's `host.address` resource attribute is
+only correct for the *first* entry in `oracleMulti.databases` -- every other
+entry's metrics/events carry the first entry's host. For `rds` topology this
+matters more than for `cdb`/`pdb`, since RDS has no `resource_attributes`
+block to independently identify each instance otherwise. See
+`docs/superpowers/specs/2026-09-15-oracle-otel-multi-instance-design.md` for
+the full rationale.
+
 ## Values
 
 | Key | Description | Default |
@@ -131,3 +177,7 @@ yourself, as a DBA, before installing.
 | `setupJob.enabled` | Run the automated user-creation Job | `false` |
 | `setupJob.image.repository` / `setupJob.image.tag` | Oracle Instant Client image | `""` |
 | `setupJob.oracleAdmin.existingSecret` | Admin credential Secret (keys `username`, `password`) — required if enabled | `""` |
+| `oracleMulti.enabled` | Enables multi-instance mode (one release, one pod, many databases) -- mutually exclusive with `oracle.*` | `false` |
+| `oracleMulti.topology` | `cdb`, `pdb`, `rds`, or `adb` -- applies to every entry in `oracleMulti.databases` | `""` |
+| `oracleMulti.collectionInterval` | Default scrape interval for every entry, overridable per entry | `10s` |
+| `oracleMulti.databases` | List of `{name, endpoint, service, existingSecret, collectionInterval, oracleAdmin.existingSecret}` entries, one per monitored database | `[]` |

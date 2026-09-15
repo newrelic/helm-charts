@@ -1,0 +1,112 @@
+suite: configmap (oracleMulti)
+templates:
+  - templates/configmap-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracleMulti.enabled: true
+  oracleMulti.topology: "rds"
+  oracleMulti.databases:
+    - name: db1
+      endpoint: "host1.rds.amazonaws.com:1521"
+      service: "ORCL1"
+      existingSecret: "db1-creds"
+    - name: db2
+      endpoint: "host2.rds.amazonaws.com:1521"
+      service: "ORCL2"
+      existingSecret: "db2-creds"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: fails when oracleMulti.topology is unset or invalid
+    set:
+      oracleMulti.topology: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracleMulti.topology must be one of: cdb, pdb, rds, adb -- required to select the correct nroracledb metrics/events defaults"
+  - it: fails when oracleMulti.databases is empty
+    set:
+      oracleMulti.databases: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracleMulti.databases must contain at least one entry when oracleMulti.enabled is true"
+  - it: fails when a database entry is missing a required field
+    set:
+      oracleMulti.databases:
+        - name: db1
+          service: "ORCL1"
+          existingSecret: "db1-creds"
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracleMulti.databases[0].endpoint is required"
+  - it: fails when two entries share the same name
+    set:
+      oracleMulti.databases:
+        - name: db1
+          endpoint: "host1:1521"
+          service: "ORCL1"
+          existingSecret: "db1-creds"
+        - name: db1
+          endpoint: "host2:1521"
+          service: "ORCL2"
+          existingSecret: "db2-creds"
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracleMulti.databases[1].name \"db1\" duplicates an earlier entry's name"
+  - it: fails when oracle.endpoint is also set (mixed-mode guard)
+    set:
+      oracle.endpoint: "legacy:1521"
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracleMulti.enabled and oracle.endpoint are mutually exclusive -- use one mode or the other in a single release"
+  - it: renders one nroracledb/<name> receiver per database entry with env-substitution credentials
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nroracledb/db1:\\n\\s*endpoint: \"host1\\.rds\\.amazonaws\\.com:1521\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \"\\$\\{env:ORACLE_USERNAME_DB1\\}\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nroracledb/db2:\\n\\s*endpoint: \"host2\\.rds\\.amazonaws\\.com:1521\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \"\\$\\{env:ORACLE_USERNAME_DB2\\}\""
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "db1-creds|db2-creds"
+  - it: renders the reduced rds metrics defaults for every entry and omits resource_attributes
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.cpu_time:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "resource_attributes:"
+  - it: shares one exporter and lists every receiver in one combined pipeline pair
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "receivers: \\[nroracledb/db1, nroracledb/db2\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exporters:\\n\\s*otlp/newrelic:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "otlp/newrelic:[\\s\\S]*otlp/newrelic:"
+  - it: sets host.address to the first database entry's host only (documented shared-pipeline limitation)
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "value: \"host1\\.rds\\.amazonaws\\.com\"\\n\\s*action: upsert"
+  - it: merges additionalReceiverConfig into every entry's receiver block
+    set:
+      additionalReceiverConfig:
+        events:
+          db.server.query_sample:
+            enabled: true
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.query_sample"
