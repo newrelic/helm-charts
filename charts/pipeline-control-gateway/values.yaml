@@ -206,6 +206,10 @@ wal:
   # on per-fleet via chart_values.gateway.wal.enabled (pipeline-control-api), so the shipped
   # default is off — otherwise every install would require a `gp3` StorageClass.
   enabled: false
+  # -- Requested size of each pod's ephemeral WAL EBS volume. Forwarded from the simplified
+  # config (pipeline-control-api) via chart_values.gateway.wal.size. This applies only to the
+  # volume request below — it is not propagated to the iceberg exporter config.
+  size: 10Gi
   # -- fsGroup applied to the pod when WAL is enabled. The ephemeral EBS volume is provisioned
   # root-owned, so this GID is needed for the non-root gateway to write /var/wal (the kubelet
   # group-owns the volume to it and adds it to the container's supplementary groups).

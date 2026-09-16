@@ -180,7 +180,7 @@ spec:
                 storageClassName: gp3
                 resources:
                   requests:
-                    storage: 10Gi
+                    storage: {{ .Values.wal.size | default "10Gi" }}
         {{- end }}
       {{- with include "nrKubernetesOtel.deployment.nodeSelector" . }}
       nodeSelector:
