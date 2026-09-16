@@ -1,5 +1,5 @@
-{{- if not .Values.postgresqlMulti.enabled }}
-{{- include "postgresql-otel.validate.postgresql" . -}}
+{{- if .Values.postgresqlMulti.enabled }}
+{{- include "postgresql-otel.validate.postgresqlMulti" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +17,7 @@ spec:
       labels:
         {{- include "postgresql-otel.labels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-multi.yaml") . | sha256sum }}
     spec:
       containers:
         - name: postgresql-otel
@@ -26,16 +26,19 @@ spec:
           args:
             - --config=/etc/postgresql-otel/config.yaml
           env:
-            - name: POSTGRESQL_USERNAME
+            {{- range .Values.postgresqlMulti.instances }}
+            {{- $suffix := include "postgresql-otel.multi.envVarSuffix" .name }}
+            - name: POSTGRESQL_USERNAME_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "postgresql-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: username
-            - name: POSTGRESQL_PASSWORD
+            - name: POSTGRESQL_PASSWORD_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "postgresql-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: password
+            {{- end }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:

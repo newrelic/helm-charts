@@ -178,6 +178,32 @@ this chart does not do" above). This is additive: `oracleMulti` is a
 separate values block from `oracle:`, and the two are mutually exclusive in
 a single release.
 
+**Without the setup Job** (`setupJob.enabled: false`, the default — you
+create the monitoring user/grants yourself per "If you'd rather not grant
+this chart admin-level Oracle access at all" above, once per instance):
+
+```yaml
+oracleMulti:
+  enabled: true
+  topology: "rds"
+  databases:
+    - name: db1
+      endpoint: "prod-db-1.xxxxx.us-east-1.rds.amazonaws.com:1521"
+      service: "ORCL1"
+      existingSecret: "db1-monitor-creds"
+    - name: db2
+      endpoint: "prod-db-2.xxxxx.us-east-1.rds.amazonaws.com:1521"
+      service: "ORCL2"
+      existingSecret: "db2-monitor-creds"
+
+otlpEndpoint: "otlp.nr-data.net:4317"
+licenseKey: "<your New Relic license key>"
+```
+
+**With the setup Job** (`setupJob.enabled: true` — a top-level field,
+shared with single-instance mode, **not** nested under `oracleMulti`;
+each entry additionally needs its own `oracleAdmin.existingSecret`):
+
 ```yaml
 oracleMulti:
   enabled: true
@@ -188,7 +214,7 @@ oracleMulti:
       service: "ORCL1"
       existingSecret: "db1-monitor-creds"
       oracleAdmin:
-        existingSecret: "db1-admin-creds"   # only required if setupJob.enabled
+        existingSecret: "db1-admin-creds"
     - name: db2
       endpoint: "prod-db-2.xxxxx.us-east-1.rds.amazonaws.com:1521"
       service: "ORCL2"
@@ -198,7 +224,15 @@ oracleMulti:
 
 otlpEndpoint: "otlp.nr-data.net:4317"
 licenseKey: "<your New Relic license key>"
+
+setupJob:
+  enabled: true
+  image:
+    repository: "<confirmed container-registry.oracle.com repo>"
+    tag: "<confirmed tag>"
 ```
+This runs one setup Job per entry (see "Automated setup" above), each
+using that entry's own `oracleAdmin.existingSecret`.
 
 Each entry requires `name` (unique within the release), `endpoint`,
 `service`, and `existingSecret` — there is no plain-value credential path in

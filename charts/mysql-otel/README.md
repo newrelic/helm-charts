@@ -153,6 +153,30 @@ opt-in mode: one release, one collector pod, monitoring every entry in
 block from `mysql:`, and the two are mutually exclusive in a single
 release.
 
+**Without the setup Job** (`setupJob.enabled: false`, the default — you
+create the monitoring user yourself per "If you'd rather not grant this
+chart admin-level MySQL access at all" above, once per instance):
+
+```yaml
+mysqlMulti:
+  enabled: true
+  topology: "self-hosted"
+  databases:
+    - name: db1
+      server: "mysql-db-1.example.internal"
+      existingSecret: "db1-monitor-creds"
+    - name: db2
+      server: "mysql-db-2.example.internal"
+      existingSecret: "db2-monitor-creds"
+
+otlpEndpoint: "otlp.nr-data.net:4317"
+licenseKey: "<your New Relic license key>"
+```
+
+**With the setup Job** (`setupJob.enabled: true` — a top-level field,
+shared with single-instance mode, **not** nested under `mysqlMulti`;
+each entry additionally needs its own `mysqlAdmin.existingSecret`):
+
 ```yaml
 mysqlMulti:
   enabled: true
@@ -162,7 +186,7 @@ mysqlMulti:
       server: "mysql-db-1.example.internal"
       existingSecret: "db1-monitor-creds"
       mysqlAdmin:
-        existingSecret: "db1-admin-creds"   # only required if setupJob.enabled
+        existingSecret: "db1-admin-creds"
     - name: db2
       server: "mysql-db-2.example.internal"
       existingSecret: "db2-monitor-creds"
@@ -171,7 +195,13 @@ mysqlMulti:
 
 otlpEndpoint: "otlp.nr-data.net:4317"
 licenseKey: "<your New Relic license key>"
+
+setupJob:
+  enabled: true
+  # image defaults to mysql:8.4 -- no extra --set needed unless you want a different version
 ```
+This runs one setup Job per entry (see "Automated setup" above), each
+using that entry's own `mysqlAdmin.existingSecret`.
 
 Each entry requires `name` (unique within the release), `server`, and
 `existingSecret` — there is no plain-value credential path in this mode,

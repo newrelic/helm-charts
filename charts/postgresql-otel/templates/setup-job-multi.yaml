@@ -1,12 +1,16 @@
-{{- if and .Values.setupJob.enabled (not .Values.postgresqlMulti.enabled) }}
-{{- include "postgresql-otel.validate.setupJob" . -}}
+{{- if and .Values.setupJob.enabled .Values.postgresqlMulti.enabled }}
+{{- include "postgresql-otel.validate.postgresqlMulti" . -}}
+{{- range $i, $inst := .Values.postgresqlMulti.instances }}
+{{- $admin := $inst.postgresAdmin | default dict }}
+{{- $port := $inst.port | default 5432 }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "postgresql-otel.fullname" . }}-setup
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "postgresql-otel.fullname" $ }}-setup-{{ $inst.name }}
+  namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "postgresql-otel.labels" . | nindent 4 }}
+    {{- include "postgresql-otel.labels" $ | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "1"
@@ -16,13 +20,13 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "postgresql-otel.labels" . | nindent 8 }}
+        {{- include "postgresql-otel.labels" $ | nindent 8 }}
     spec:
       restartPolicy: Never
       containers:
         - name: postgresql-otel-setup
-          image: "{{ .Values.setupJob.image.repository }}:{{ .Values.setupJob.image.tag }}"
-          imagePullPolicy: {{ .Values.setupJob.image.pullPolicy }}
+          image: "{{ $.Values.setupJob.image.repository }}:{{ $.Values.setupJob.image.tag }}"
+          imagePullPolicy: {{ $.Values.setupJob.image.pullPolicy }}
           env:
             # PGUSER/PGPASSWORD/PGHOST/PGPORT are psql's own environment
             # variables -- the admin credentials never appear as CLI flags, so
@@ -30,27 +34,27 @@ spec:
             - name: PGUSER
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.setupJob.postgresAdmin.existingSecret }}
+                  name: {{ $admin.existingSecret }}
                   key: username
             - name: PGPASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.setupJob.postgresAdmin.existingSecret }}
+                  name: {{ $admin.existingSecret }}
                   key: password
             - name: PG_MONITOR_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "postgresql-otel.credentials.secretName" . }}
+                  name: {{ $inst.existingSecret }}
                   key: username
             - name: PG_MONITOR_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "postgresql-otel.credentials.secretName" . }}
+                  name: {{ $inst.existingSecret }}
                   key: password
             - name: PGHOST
-              value: {{ .Values.postgresql.server | quote }}
+              value: {{ $inst.server | quote }}
             - name: PGPORT
-              value: {{ .Values.postgresql.port | quote }}
+              value: {{ $port | quote }}
           command: ["/bin/sh", "-c"]
           args:
             # Every heredoc below is quoted (<<'SQL'), so the shell performs no
@@ -84,12 +88,12 @@ spec:
               SELECT format('ALTER ROLE %I INHERIT', :'monitor_user')
               \gexec
               SQL
-              {{- range $db := .Values.postgresql.databases }}
+              {{- range $db := $inst.databases }}
 
               # Per-database: schema, grants, and the pg_stat_statements
               # extension. New Relic's instructions call for these "in every
-              # database you want to monitor", so they run once per entry in
-              # postgresql.databases.
+              # database you want to monitor", so this runs once per entry in
+              # this instance's own databases list.
               #
               # This requires the server-level pg_stat_statements prerequisites
               # (shared_preload_libraries etc.) to already be in place -- see the
@@ -116,8 +120,9 @@ spec:
               # Optional: a SECURITY DEFINER helper so the receiver can EXPLAIN
               # locking/write queries without holding write grants. This only
               # creates the function -- set
-              # postgresql.topQueryCollection.explainFunctionName to
-              # "otel.explain_statement" to make the receiver actually call it.
+              # postgresqlMulti's topQueryCollection.explainFunctionName equivalent
+              # (via additionalReceiverConfig) to "otel.explain_statement" to make
+              # the receiver actually call it.
               #
               # $$$$ below is not a typo: Kubernetes expands $(VAR) references
               # in command/args and collapses any bare $$ to a single $ as an
@@ -171,4 +176,5 @@ spec:
               SQL
               {{- end }}
               {{- end }}
+{{- end }}
 {{- end }}
