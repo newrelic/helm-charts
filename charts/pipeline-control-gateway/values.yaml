@@ -200,14 +200,14 @@ lowDataMode:
 # /var/wal, size, storageClass, accessMode, terminationGracePeriodSeconds) is fixed in
 # templates/deployment.yaml.
 # @default -- See `values.yaml`
-wal:
+fedLogsWal:
   # -- Provision the per-pod ephemeral WAL disk and mount it into the gateway container at
   # /var/wal. Mirrors the iceberg exporter's `wal.enabled`. Opt-in: real deployments turn this
-  # on per-fleet via chart_values.gateway.wal.enabled (pipeline-control-api), so the shipped
+  # on per-fleet via chart_values.gateway.fedLogsWal.enabled (pipeline-control-api), so the shipped
   # default is off — otherwise every install would require a `gp3` StorageClass.
   enabled: false
   # -- Requested size of each pod's ephemeral WAL EBS volume. Forwarded from the simplified
-  # config (pipeline-control-api) via chart_values.gateway.wal.size. This applies only to the
+  # config (pipeline-control-api) via chart_values.gateway.fedLogsWal.size. This applies only to the
   # volume request below — it is not propagated to the iceberg exporter config.
   size: 10Gi
   # -- fsGroup applied to the pod when WAL is enabled. The ephemeral EBS volume is provisioned
