@@ -1,5 +1,5 @@
-{{- if not .Values.mssqlMulti.enabled }}
-{{- include "mssql-otel.validate.mssql" . -}}
+{{- if .Values.mssqlMulti.enabled }}
+{{- include "mssql-otel.validate.mssqlMulti" . -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -17,7 +17,7 @@ spec:
       labels:
         {{- include "mssql-otel.labels" . | nindent 8 }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
+        checksum/config: {{ include (print $.Template.BasePath "/configmap-multi.yaml") . | sha256sum }}
     spec:
       containers:
         - name: mssql-otel
@@ -26,16 +26,19 @@ spec:
           args:
             - --config=/etc/mssql-otel/config.yaml
           env:
-            - name: MSSQL_USERNAME
+            {{- range .Values.mssqlMulti.databases }}
+            {{- $suffix := include "mssql-otel.multi.envVarSuffix" .name }}
+            - name: MSSQL_USERNAME_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mssql-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: username
-            - name: MSSQL_PASSWORD
+            - name: MSSQL_PASSWORD_{{ $suffix }}
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mssql-otel.credentials.secretName" . }}
+                  name: {{ .existingSecret }}
                   key: password
+            {{- end }}
             - name: NEW_RELIC_LICENSE_KEY
               valueFrom:
                 secretKeyRef:

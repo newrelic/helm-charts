@@ -1,12 +1,16 @@
-{{- if and .Values.setupJob.enabled (not .Values.mssqlMulti.enabled) }}
-{{- include "mssql-otel.validate.setupJob" . -}}
+{{- if and .Values.setupJob.enabled .Values.mssqlMulti.enabled }}
+{{- include "mssql-otel.validate.mssqlMulti" . -}}
+{{- range $i, $db := .Values.mssqlMulti.databases }}
+{{- $admin := $db.sqlAdmin | default dict }}
+{{- $port := $db.port | default 1433 }}
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ include "mssql-otel.fullname" . }}-setup
-  namespace: {{ .Release.Namespace }}
+  name: {{ include "mssql-otel.fullname" $ }}-setup-{{ $db.name }}
+  namespace: {{ $.Release.Namespace }}
   labels:
-    {{- include "mssql-otel.labels" . | nindent 4 }}
+    {{- include "mssql-otel.labels" $ | nindent 4 }}
   annotations:
     "helm.sh/hook": pre-install,pre-upgrade
     "helm.sh/hook-weight": "1"
@@ -16,38 +20,38 @@ spec:
   template:
     metadata:
       labels:
-        {{- include "mssql-otel.labels" . | nindent 8 }}
+        {{- include "mssql-otel.labels" $ | nindent 8 }}
     spec:
       restartPolicy: Never
       containers:
         - name: mssql-otel-setup
-          image: "{{ .Values.setupJob.image.repository }}:{{ .Values.setupJob.image.tag }}"
-          imagePullPolicy: {{ .Values.setupJob.image.pullPolicy }}
+          image: "{{ $.Values.setupJob.image.repository }}:{{ $.Values.setupJob.image.tag }}"
+          imagePullPolicy: {{ $.Values.setupJob.image.pullPolicy }}
           env:
             - name: SQL_ADMIN_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.setupJob.sqlAdmin.existingSecret }}
+                  name: {{ $admin.existingSecret }}
                   key: username
             - name: SQL_ADMIN_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ .Values.setupJob.sqlAdmin.existingSecret }}
+                  name: {{ $admin.existingSecret }}
                   key: password
             - name: SQL_MONITOR_USERNAME
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mssql-otel.credentials.secretName" . }}
+                  name: {{ $db.existingSecret }}
                   key: username
             - name: SQL_MONITOR_PASSWORD
               valueFrom:
                 secretKeyRef:
-                  name: {{ include "mssql-otel.credentials.secretName" . }}
+                  name: {{ $db.existingSecret }}
                   key: password
             - name: MSSQL_SERVER
-              value: {{ .Values.mssql.server | quote }}
+              value: {{ $db.server | quote }}
             - name: MSSQL_PORT
-              value: {{ .Values.mssql.port | quote }}
+              value: {{ $port | quote }}
           command: ["/bin/sh", "-c"]
           args:
             - |
@@ -62,5 +66,6 @@ spec:
       volumes:
         - name: setup
           configMap:
-            name: {{ include "mssql-otel.fullname" . }}-setup
+            name: {{ include "mssql-otel.fullname" $ }}-setup
+{{- end }}
 {{- end }}
