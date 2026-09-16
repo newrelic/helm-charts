@@ -346,7 +346,7 @@ entry after that is a short `<<: *nrpostgresql-common` override carrying
 only its own `endpoint`/`username`/`password`/`databases` — this matches
 New Relic's own documented PostgreSQL multi-receiver pattern
 (https://docs.newrelic.com/docs/opentelemetry/database/postgresql/multi-receiver/#multi),
-whose own example explicitly re-declares `databases` per instance after
+whose own example explicitly redeclares `databases` per instance after
 the merge key, confirming it's meant to vary per instance rather than be
 shared.
 
