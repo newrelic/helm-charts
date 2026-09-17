@@ -1,0 +1,119 @@
+suite: per-node nrdot config injection (discovery-portal extraConfig)
+templates:
+  - templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+release:
+  name: my-release
+  namespace: newrelic
+
+tests:
+  - it: default (no injection) leaves the base config intact and adds nothing
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "kubeletstats:"
+      - notMatchRegex:
+          path: data["pernode.yaml"]
+          pattern: "nginx/web:"
+
+  - it: extraConfig splices receivers, pipelines and extensions (single account)
+    set: &extra
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        egressMode: direct
+        sidecar:
+          configMap:
+            extraConfig:
+              receivers:
+                nginx/web:
+                  endpoint: "http://localhost/status"
+              extensions:
+                k8s_observer:
+                  auth_type: serviceAccount
+              service:
+                extensions: [k8s_observer]
+              pipelines:
+                metrics/nginx:
+                  receivers: [nginx/web]
+                  processors: [memory_limiter, batch]
+                  exporters: [otlphttp/acct-default]
+    asserts:
+      # receiver merged alongside the base receivers
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "nginx/web:"
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "kubeletstats:"
+      # observer extension merged into the extensions block AND activated in service::extensions
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "k8s_observer:"
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "extensions: \\[health_check, k8s_observer\\]"
+      # portal pipeline present
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "metrics/nginx:"
+
+  - it: multi-account keeps the routing connector and lets portal pipelines target it
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        egressMode: direct
+        sidecar:
+          configMap:
+            extraConfig:
+              receivers:
+                nginx/web:
+                  endpoint: "http://localhost/status"
+              pipelines:
+                metrics/nginx:
+                  receivers: [nginx/web]
+                  exporters: [routing]
+      namespaceLicenseKeys:
+        team-a: NRAK-aaa
+    asserts:
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "routing:"
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "metrics/nginx:"
+      - matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "metrics/acct-default:"
+
+  - it: agent mode ignores extraConfig (no orphan receiver can crash the collector)
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        egressMode: agent
+        sidecar:
+          configMap:
+            extraConfig:
+              receivers:
+                nginx/web:
+                  endpoint: "http://localhost/status"
+              pipelines:
+                metrics/nginx:
+                  receivers: [nginx/web]
+                  exporters: [otlp/agent]
+    asserts:
+      - notMatchRegex:
+          path: data["pernode.yaml"]
+          pattern: "nginx/web:"
+      - notMatchRegex:
+          path: data["pernode.yaml"]
+          pattern: "metrics/nginx:"

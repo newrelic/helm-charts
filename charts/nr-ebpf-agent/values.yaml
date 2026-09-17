@@ -452,6 +452,29 @@ nrdotCollector:
       requests:
         cpu: 100m
         memory: 256Mi
+    # Discovery-portal config injection for the per-node (sidecar) otel collector.
+    # Effective only with `egressMode: direct` (ignored in agent mode).
+    # pernode.yaml renders onto every node, so a static endpoint is
+    # scraped on every node. For per-instance targets use `receiver_creator` + a
+    # node-scoped observer; put cluster-aggregate receivers on `clusterCollector`.
+    configMap:
+      # -- Merge-delta spliced into the base config. Optional keys: `receivers`,
+      # `processors`, `exporters`, `connectors`, `pipelines`, `extensions` (name->
+      # config maps) and `service.extensions` (list). Portal supplies at least
+      # `receivers`+`pipelines`; pipelines target `routing` (multi-account) or
+      # `otlphttp/acct-default`, and may reference base processors by name
+      # (memory_limiter, k8sattributes, resourcedetection/cloudproviders,
+      # resource/newrelic, cumulativetodelta, batch).
+      extraConfig: {}
+    # -- Extra env for the per-node collector container (use `valueFrom.secretKeyRef`
+    # for secrets). Satisfies `${env:...}` refs in portal receiver configs.
+    extraEnv: []
+    # -- Extra `envFrom` sources (secretRef / configMapRef) for the per-node collector.
+    extraEnvFrom: []
+    # -- KV pairs the chart materializes into a Secret and mounts (envFrom) on the
+    # per-node collector. Plaintext in values (like `licenseKey`); prefer `extraEnv` +
+    # secretKeyRef otherwise. Changes roll the pod.
+    secretEnv: {}
   # -- Cluster (Deployment) collector resources.
   clusterCollector:
     resources:
@@ -465,3 +488,20 @@ nrdotCollector:
     # only needs one schedulable node, so it does NOT inherit the tolerate-all default.
     # Set this only if every node in your cluster is tainted (e.g. dedicated node pools).
     tolerations: []
+    # Discovery-portal config injection for the cluster (Deployment) collector.
+    # Same contract as `sidecar.configMap` (direct egress only), but runs once per
+    # cluster (replicas: 1) - for run-once / cluster-aggregate integrations (e.g.
+    # kafkametrics). Base processor chain omits resourcedetection/cloudproviders
+    # (the Deployment is not hostNetwork).
+    configMap:
+      # -- Merge-delta spliced into the base config. Same keys as
+      # `sidecar.configMap.extraConfig`; cluster chain omits resourcedetection/cloudproviders.
+      extraConfig: {}
+    # -- Extra env for the cluster collector container (see `sidecar.extraEnv`); e.g.
+    # cluster-aggregate receiver credentials (Kafka SASL, Elasticsearch auth).
+    extraEnv: []
+    # -- Extra `envFrom` sources (secretRef / configMapRef) for the cluster collector.
+    extraEnvFrom: []
+    # -- Convenience: key/value pairs the chart materializes into a Secret and mounts
+    # (envFrom) on the cluster collector (see `sidecar.secretEnv`). Changes roll the pod.
+    secretEnv: {}

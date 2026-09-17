@@ -11,6 +11,11 @@ metadata:
 data:
   cluster.yaml: |
     receivers:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "clusterCollector" "section" "receivers")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       prometheus/ksm:
         config:
           scrape_configs:
@@ -149,6 +154,11 @@ data:
       {{- end }}
       k8s_events: {}
     processors:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "clusterCollector" "section" "processors")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       memory_limiter:
         check_interval: 1s
         limit_percentage: 80
@@ -438,11 +448,18 @@ data:
         send_batch_max_size: 1000
         timeout: {{ .Values.nrdotCollector.collectionInterval }}
     extensions:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "clusterCollector" "section" "extensions")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       health_check:
         endpoint: 0.0.0.0:13133
     {{- if $direct }}
-    {{- if $nsKeys }}
+    {{- $siConnectors := include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "clusterCollector" "section" "connectors") }}
+    {{- if or $nsKeys $siConnectors }}
     connectors:
+      {{- if $nsKeys }}
       routing:
         error_mode: ignore
         default_pipelines: [metrics/acct-default]
@@ -452,8 +469,17 @@ data:
             condition: attributes["k8s.namespace.name"] == {{ $ns | quote }}
             pipelines: [metrics/acct-{{ $i }}]
         {{- end }}
+      {{- end }}
+      {{- with $siConnectors }}
+      {{- . | nindent 6 }}
+      {{- end }}
     {{- end }}
     exporters:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "clusterCollector" "section" "exporters")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       otlphttp/acct-default:
         endpoint: ${env:NR_OTLP_ENDPOINT}
         headers: {"api-key": "${env:NEW_RELIC_LICENSE_KEY}"}
@@ -465,8 +491,13 @@ data:
         compression: gzip
     {{- end }}
     service:
-      extensions: [health_check]
+      extensions: [health_check{{ if $direct }}{{ include "nr-ebpf-agent.nrdot.extraConfig.serviceExtensionsCsv" (dict "ctx" $ "roleKey" "clusterCollector") }}{{ end }}]
       pipelines:
+      {{- if $direct }}
+        {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "clusterCollector" "section" "pipelines")) }}
+        {{- . | nindent 8 }}
+        {{- end }}
+      {{- end }}
         metrics/in:
           receivers: [prometheus/ksm]
           processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/kube_pod_container_status_phase, metricstransform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metricstransform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8sattributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]

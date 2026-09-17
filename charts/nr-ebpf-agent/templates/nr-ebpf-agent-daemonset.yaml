@@ -30,6 +30,8 @@ spec:
         {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
         # Roll the DaemonSet (and its nrdot sidecar) when the nrdot config changes.
         checksum/nrdot-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-pernode.yaml") . | sha256sum }}
+        # Roll when injected collector credentials (secretEnv) change.
+        checksum/nrdot-env: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-env-secret.yaml") . | sha256sum }}
         {{- end }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
@@ -420,6 +422,13 @@ spec:
           - name: CLUSTER_NAME
             value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
           {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "127.0.0.1:%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 10 }}
+          {{- with (include "nr-ebpf-agent.nrdot.extraEnv" (dict "ctx" . "roleKey" "sidecar")) }}
+          {{- . | nindent 10 }}
+          {{- end }}
+        {{- with (include "nr-ebpf-agent.nrdot.envFrom" (dict "ctx" . "roleKey" "sidecar")) }}
+        envFrom:
+          {{- . | nindent 10 }}
+        {{- end }}
         volumeMounts:
           # Patched config written by the nrdot-get-allocatable init container
           # (the raw ConfigMap is mounted only on that init container).

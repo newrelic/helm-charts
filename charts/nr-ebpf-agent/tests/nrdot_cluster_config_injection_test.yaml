@@ -1,0 +1,74 @@
+suite: cluster nrdot config injection (discovery-portal extraConfig)
+templates:
+  - templates/nr-ebpf-agent-nrdot-config-cluster.yaml
+release:
+  name: my-release
+  namespace: newrelic
+
+tests:
+  - it: default (no injection) leaves the base config intact and adds nothing
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+    asserts:
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "prometheus/ksm:"
+      - notMatchRegex:
+          path: data["cluster.yaml"]
+          pattern: "kafkametrics/cluster:"
+
+  - it: extraConfig splices a run-once cluster-aggregate receiver + pipeline
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        egressMode: direct
+        clusterCollector:
+          configMap:
+            extraConfig:
+              receivers:
+                kafkametrics/cluster:
+                  brokers: [kafka-bootstrap:9092]
+                  scrapers: [brokers, topics, consumers]
+              pipelines:
+                metrics/kafka:
+                  receivers: [kafkametrics/cluster]
+                  processors: [memory_limiter, k8sattributes, resource/newrelic, batch]
+                  exporters: [otlphttp/acct-default]
+    asserts:
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "kafkametrics/cluster:"
+      # base cluster receivers still present
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "prometheus/ksm:"
+      - matchRegex:
+          path: data["cluster.yaml"]
+          pattern: "metrics/kafka:"
+
+  - it: agent mode ignores cluster extraConfig
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
+        egressMode: agent
+        clusterCollector:
+          configMap:
+            extraConfig:
+              receivers:
+                kafkametrics/cluster:
+                  brokers: [kafka-bootstrap:9092]
+              pipelines:
+                metrics/kafka:
+                  receivers: [kafkametrics/cluster]
+                  exporters: [otlp/agent]
+    asserts:
+      - notMatchRegex:
+          path: data["cluster.yaml"]
+          pattern: "kafkametrics/cluster:"

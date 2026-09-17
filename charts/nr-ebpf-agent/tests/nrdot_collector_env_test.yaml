@@ -1,0 +1,115 @@
+suite: nrdot collector credential env injection (extraEnv / extraEnvFrom / secretEnv)
+templates:
+  # Tested templates + the sibling templates they include-by-path (checksums),
+  # which helm-unittest must load for those includes to resolve.
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/nr-ebpf-agent-nrdot-deployment.yaml
+  - templates/nr-ebpf-agent-nrdot-env-secret.yaml
+  - templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+  - templates/nr-ebpf-agent-nrdot-config-cluster.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: newrelic
+
+tests:
+  - it: sidecar.extraEnv is appended to the per-node nrdot collector container env
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    set:
+      cluster: c
+      licenseKey: lk
+      nrdotCollector:
+        enabled: true
+        sidecar:
+          extraEnv:
+            - name: MYSQL_MONITOR_USER
+              valueFrom:
+                secretKeyRef: { name: my-mysql-secret, key: user }
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].env
+          content:
+            name: MYSQL_MONITOR_USER
+            valueFrom:
+              secretKeyRef: { name: my-mysql-secret, key: user }
+
+  - it: sidecar.secretEnv mounts the chart Secret via envFrom on the per-node container
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    set:
+      cluster: c
+      licenseKey: lk
+      nrdotCollector:
+        enabled: true
+        sidecar:
+          secretEnv:
+            MYSQL_MONITOR_PASSWORD: s3cr3t
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[1].envFrom
+          content:
+            secretRef:
+              name: my-release-nr-ebpf-agent-nrdot-sidecar-env
+
+  - it: no credential knobs => no envFrom on the per-node container
+    template: templates/nr-ebpf-agent-daemonset.yaml
+    set:
+      cluster: c
+      licenseKey: lk
+      nrdotCollector:
+        enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.spec.containers[1].envFrom
+
+  - it: clusterCollector.secretEnv mounts the chart Secret via envFrom on the cluster container
+    template: templates/nr-ebpf-agent-nrdot-deployment.yaml
+    set:
+      cluster: c
+      licenseKey: lk
+      nrdotCollector:
+        enabled: true
+        clusterCollector:
+          secretEnv:
+            KAFKA_SASL_PASSWORD: kpw
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].envFrom
+          content:
+            secretRef:
+              name: my-release-nr-ebpf-agent-nrdot-cluster-env
+
+  - it: secretEnv materializes a Secret with the provided keys
+    template: templates/nr-ebpf-agent-nrdot-env-secret.yaml
+    set:
+      cluster: c
+      licenseKey: lk
+      nrdotCollector:
+        enabled: true
+        sidecar:
+          secretEnv:
+            MYSQL_MONITOR_PASSWORD: s3cr3t
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: Secret
+      - equal:
+          path: metadata.name
+          value: my-release-nr-ebpf-agent-nrdot-sidecar-env
+      - equal:
+          path: stringData.MYSQL_MONITOR_PASSWORD
+          value: s3cr3t
+
+  - it: no secretEnv => no credential Secret is rendered
+    template: templates/nr-ebpf-agent-nrdot-env-secret.yaml
+    set:
+      cluster: c
+      licenseKey: lk
+      nrdotCollector:
+        enabled: true
+        sidecar:
+          extraEnv:
+            - { name: FOO, value: bar }
+    asserts:
+      - hasDocuments:
+          count: 0

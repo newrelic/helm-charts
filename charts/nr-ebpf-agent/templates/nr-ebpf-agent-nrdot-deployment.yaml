@@ -27,6 +27,8 @@ spec:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-cluster.yaml") . | sha256sum }}
+        # Roll when injected collector credentials (secretEnv) change.
+        checksum/nrdot-env: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-env-secret.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       terminationGracePeriodSeconds: 60
@@ -65,6 +67,13 @@ spec:
             - name: CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "$(HOST_IP):%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 12 }}
+            {{- with (include "nr-ebpf-agent.nrdot.extraEnv" (dict "ctx" . "roleKey" "clusterCollector")) }}
+            {{- . | nindent 12 }}
+            {{- end }}
+          {{- with (include "nr-ebpf-agent.nrdot.envFrom" (dict "ctx" . "roleKey" "clusterCollector")) }}
+          envFrom:
+            {{- . | nindent 12 }}
+          {{- end }}
           volumeMounts:
             - name: nrdot-config
               mountPath: /etc/nrdot

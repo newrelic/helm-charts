@@ -149,3 +149,63 @@ Emit at column 0; call with `| nindent <n>`.
   value: {{ . | quote }}
 {{- end }}
 {{- end -}}
+
+{{/*
+Discovery-portal config injection into the nrdot collector config. `extraConfig`
+is a merge-delta spliced into the base config blocks (portal supplies at least
+`receivers`+`pipelines`; each pipeline targets `routing` for multi-account, else
+`otlphttp/acct-default`). Splices are $direct-gated in the config templates, so
+nothing is injected in (unsupported) agent mode.
+Helpers take a dict: { "ctx": $, "roleKey": "sidecar" | "clusterCollector" }.
+*/}}
+
+{{/*
+extraConfig section (receivers|processors|exporters|connectors|pipelines|
+extensions) as YAML, or empty string when unset. Call with an extra
+"section" key in the dict.
+*/}}
+{{- define "nr-ebpf-agent.nrdot.extraConfig.section" -}}
+{{- $v := dig .roleKey "configMap" "extraConfig" .section dict .ctx.Values.nrdotCollector -}}
+{{- if $v }}{{ toYaml $v }}{{ end -}}
+{{- end -}}
+
+{{/*
+Portal-supplied service::extensions as a leading-comma CSV (", a, b"), for
+appending to the base `[health_check]` flow list. Empty string when unset.
+*/}}
+{{- define "nr-ebpf-agent.nrdot.extraConfig.serviceExtensionsCsv" -}}
+{{- $v := dig .roleKey "configMap" "extraConfig" "service" "extensions" list .ctx.Values.nrdotCollector -}}
+{{- range $e := $v }}, {{ $e }}{{ end -}}
+{{- end -}}
+
+{{/*
+Credential env/envFrom for the nrdot collector containers, satisfying `${env:...}`
+refs in portal receiver configs. Per-role knobs under nrdotCollector.<role>:
+extraEnv (raw env list), extraEnvFrom (raw envFrom), secretEnv (KV map the chart
+turns into a Secret + envFrom; plaintext in values, same posture as licenseKey).
+*/}}
+
+{{/* Name of the chart-managed credential Secret for a role. */}}
+{{- define "nr-ebpf-agent.nrdot.envSecretName" -}}
+{{- $suffix := ternary "cluster" "sidecar" (eq .roleKey "clusterCollector") -}}
+{{- printf "%s-nrdot-%s-env" (include "nr-ebpf-agent.fullname" .ctx) $suffix -}}
+{{- end -}}
+
+{{/* Raw extra env entries (list) for a collector container, YAML or empty. */}}
+{{- define "nr-ebpf-agent.nrdot.extraEnv" -}}
+{{- $e := dig .roleKey "extraEnv" list .ctx.Values.nrdotCollector -}}
+{{- if $e }}{{ toYaml $e }}{{ end -}}
+{{- end -}}
+
+{{/*
+envFrom entries for a collector container: user `extraEnvFrom` plus a secretRef
+to the chart-managed credential Secret when `secretEnv` is non-empty. YAML or empty.
+*/}}
+{{- define "nr-ebpf-agent.nrdot.envFrom" -}}
+{{- $ef := dig .roleKey "extraEnvFrom" list .ctx.Values.nrdotCollector -}}
+{{- $se := dig .roleKey "secretEnv" dict .ctx.Values.nrdotCollector -}}
+{{- if $se -}}
+{{- $ef = append $ef (dict "secretRef" (dict "name" (include "nr-ebpf-agent.nrdot.envSecretName" (dict "ctx" .ctx "roleKey" .roleKey)))) -}}
+{{- end -}}
+{{- if $ef }}{{ toYaml $ef }}{{ end -}}
+{{- end -}}

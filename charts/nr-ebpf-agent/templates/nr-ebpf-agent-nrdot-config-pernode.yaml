@@ -11,6 +11,11 @@ metadata:
 data:
   pernode.yaml: |
     receivers:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "sidecar" "section" "receivers")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       kubeletstats:
         collection_interval: {{ .Values.nrdotCollector.collectionInterval }}
         auth_type: serviceAccount
@@ -191,6 +196,11 @@ data:
     #              regex: ${env:K8S_NODE_NAME}
     #              action: keep
     processors:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "sidecar" "section" "processors")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       memory_limiter:
         check_interval: 1s
         limit_percentage: 80
@@ -440,11 +450,18 @@ data:
         send_batch_max_size: 1000
         timeout: {{ .Values.nrdotCollector.collectionInterval }}
     extensions:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "sidecar" "section" "extensions")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       health_check:
         endpoint: 0.0.0.0:13133
     {{- if $direct }}
-    {{- if $nsKeys }}
+    {{- $siConnectors := include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "sidecar" "section" "connectors") }}
+    {{- if or $nsKeys $siConnectors }}
     connectors:
+      {{- if $nsKeys }}
       routing:
         error_mode: ignore
         default_pipelines: [metrics/acct-default]
@@ -454,8 +471,17 @@ data:
             condition: attributes["k8s.namespace.name"] == {{ $ns | quote }}
             pipelines: [metrics/acct-{{ $i }}]
         {{- end }}
+      {{- end }}
+      {{- with $siConnectors }}
+      {{- . | nindent 6 }}
+      {{- end }}
     {{- end }}
     exporters:
+    {{- if $direct }}
+      {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "sidecar" "section" "exporters")) }}
+      {{- . | nindent 6 }}
+      {{- end }}
+    {{- end }}
       otlphttp/acct-default:
         endpoint: ${env:NR_OTLP_ENDPOINT}
         headers: {"api-key": "${env:NEW_RELIC_LICENSE_KEY}"}
@@ -467,8 +493,13 @@ data:
         compression: gzip
     {{- end }}
     service:
-      extensions: [health_check]
+      extensions: [health_check{{ if $direct }}{{ include "nr-ebpf-agent.nrdot.extraConfig.serviceExtensionsCsv" (dict "ctx" $ "roleKey" "sidecar") }}{{ end }}]
       pipelines:
+      {{- if $direct }}
+        {{- with (include "nr-ebpf-agent.nrdot.extraConfig.section" (dict "ctx" $ "roleKey" "sidecar" "section" "pipelines")) }}
+        {{- . | nindent 8 }}
+        {{- end }}
+      {{- end }}
         metrics/in:
           receivers: [kubeletstats]
           processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8sattributes, transform/set_volume_persistent, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
