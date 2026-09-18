@@ -87,14 +87,6 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
-            {{- if .Values.fedLogsWal.enabled }}
-            # Federated Logs WAL: the iceberg exporter uses POD_NAME as the WAL pod_id,
-            # which disambiguates each replica's S3 object keys (pcg-00000-<pod_id>-<seq>).
-            - name: POD_NAME
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.name
-            {{- end }}
             - name: MY_POD_NAMESPACE
               valueFrom:
                 fieldRef:
