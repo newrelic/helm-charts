@@ -1,3 +1,4 @@
+{{- if not .Values.mssqlMulti.enabled }}
 {{- include "mssql-otel.validate.topology" . -}}
 {{- include "mssql-otel.validate.otlpEndpoint" . -}}
 {{- $receiver := dict -}}
@@ -100,3 +101,4 @@ data:
           receivers: [nrsqlserver]
           processors: [memory_limiter, batch]
           exporters: [otlp]
+{{- end }}

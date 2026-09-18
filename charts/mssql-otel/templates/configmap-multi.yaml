@@ -1,0 +1,78 @@
+{{- if .Values.mssqlMulti.enabled }}
+{{- include "mssql-otel.validate.mssqlMulti" . -}}
+{{- $sharedDefaults := include "mssql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- $databases := .Values.mssqlMulti.databases -}}
+{{- $multiEntry := gt (len $databases) 1 -}}
+{{- $receiverModes := dict -}}
+{{- $receiverContents := dict -}}
+{{- $receiverKeys := list -}}
+{{- range $i, $db := $databases -}}
+{{- $suffix := include "mssql-otel.multi.envVarSuffix" $db.name -}}
+{{- $port := $db.port | default 1433 -}}
+{{- $identity := dict "username" (printf "${env:MSSQL_USERNAME_%s}" $suffix) "password" (printf "${env:MSSQL_PASSWORD_%s}" $suffix) "server" $db.server "port" ($port | int) -}}
+{{- $receiverKey := printf "nrsqlserver/%s" $db.name -}}
+{{- if and $multiEntry (gt $i 0) -}}
+{{- $receiverModes = set $receiverModes $receiverKey "override" -}}
+{{- $receiverContents = set $receiverContents $receiverKey $identity -}}
+{{- else -}}
+{{- $full := dict -}}
+{{- $full = mergeOverwrite $full $sharedDefaults -}}
+{{- $full = mergeOverwrite $full $identity -}}
+{{- $full = mergeOverwrite $full ($.Values.additionalReceiverConfig | default dict) -}}
+{{- $receiverModes = set $receiverModes $receiverKey (ternary "anchor" "full" $multiEntry) -}}
+{{- $receiverContents = set $receiverContents $receiverKey $full -}}
+{{- end -}}
+{{- $receiverKeys = append $receiverKeys $receiverKey -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mssql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mssql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      {{- range $key := $receiverKeys }}
+      {{- $mode := index $receiverModes $key }}
+      {{- if eq $mode "anchor" }}
+      {{ $key }}: &nrsqlserver-common
+{{- include "mssql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else if eq $mode "override" }}
+      {{ $key }}:
+        <<: *nrsqlserver-common
+{{- include "mssql-otel.renderReceiverOverride" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else }}
+      {{ $key }}:
+{{- include "mssql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
+      {{- end }}
+      {{- end }}
+    processors:
+      memory_limiter:
+        check_interval: ${env:NR_MEM_LIMITER_CHECK_INTERVAL:-1s}
+        limit_mib: ${env:NR_MEM_LIMITER_LIMIT_MIB:-200}
+        spike_limit_mib: ${env:NR_MEM_LIMITER_SPIKE_MIB:-50}
+      batch:
+    exporters:
+      otlp:
+        endpoint: {{ .Values.otlpEndpoint }}
+        headers:
+          api-key: ${env:NEW_RELIC_LICENSE_KEY}
+        tls:
+          insecure: false
+        compression: gzip
+    service:
+      telemetry:
+        metrics:
+          level: none
+      pipelines:
+        metrics:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [memory_limiter, batch]
+          exporters: [otlp]
+        logs:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [memory_limiter, batch]
+          exporters: [otlp]
+{{- end }}

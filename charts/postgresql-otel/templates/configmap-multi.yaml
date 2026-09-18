@@ -1,0 +1,91 @@
+{{- if .Values.postgresqlMulti.enabled }}
+{{- include "postgresql-otel.validate.postgresqlMulti" . -}}
+{{- $sharedDefaults := include "postgresql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- if eq .Values.postgresqlMulti.topology "rds" -}}
+{{- $sharedDefaults = set $sharedDefaults "exclude_databases" (list "rdsadmin") -}}
+{{- end -}}
+{{- $instances := .Values.postgresqlMulti.instances -}}
+{{- $multiEntry := gt (len $instances) 1 -}}
+{{- $receiverModes := dict -}}
+{{- $receiverContents := dict -}}
+{{- $receiverKeys := list -}}
+{{- $firstServer := "" -}}
+{{- $firstPort := 0 -}}
+{{- range $i, $inst := $instances -}}
+{{- $suffix := include "postgresql-otel.multi.envVarSuffix" $inst.name -}}
+{{- $port := $inst.port | default 5432 -}}
+{{- $identity := dict "endpoint" (printf "%s:%d" $inst.server ($port | int)) "username" (printf "${env:POSTGRESQL_USERNAME_%s}" $suffix) "password" (printf "${env:POSTGRESQL_PASSWORD_%s}" $suffix) "databases" $inst.databases -}}
+{{- $receiverKey := printf "nrpostgresql/%s" $inst.name -}}
+{{- if and $multiEntry (gt $i 0) -}}
+{{- $receiverModes = set $receiverModes $receiverKey "override" -}}
+{{- $receiverContents = set $receiverContents $receiverKey $identity -}}
+{{- else -}}
+{{- $full := dict -}}
+{{- $full = mergeOverwrite $full $sharedDefaults -}}
+{{- $full = mergeOverwrite $full $identity -}}
+{{- $full = mergeOverwrite $full ($.Values.additionalReceiverConfig | default dict) -}}
+{{- $receiverModes = set $receiverModes $receiverKey (ternary "anchor" "full" $multiEntry) -}}
+{{- $receiverContents = set $receiverContents $receiverKey $full -}}
+{{- end -}}
+{{- $receiverKeys = append $receiverKeys $receiverKey -}}
+{{- if eq $i 0 -}}
+{{- $firstServer = $inst.server -}}
+{{- $firstPort = $port -}}
+{{- end -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgresql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "postgresql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      {{- range $key := $receiverKeys }}
+      {{- $mode := index $receiverModes $key }}
+      {{- if eq $mode "anchor" }}
+      {{ $key }}: &nrpostgresql-common
+{{- include "postgresql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else if eq $mode "override" }}
+      {{ $key }}:
+        <<: *nrpostgresql-common
+{{- include "postgresql-otel.renderReceiverOverride" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else }}
+      {{ $key }}:
+{{- include "postgresql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
+      {{- end }}
+      {{- end }}
+    processors:
+      batch:
+      resource/postgresql:
+        attributes:
+          - key: server.address
+            value: {{ $firstServer | quote }}
+            action: upsert
+          - key: server.port
+            value: {{ $firstPort | int }}
+            action: upsert
+    exporters:
+      otlp/newrelic:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [resource/postgresql, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [resource/postgresql, batch]
+          exporters: [otlp/newrelic]
+{{- end }}
