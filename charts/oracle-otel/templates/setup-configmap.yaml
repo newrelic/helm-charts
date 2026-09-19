@@ -1,5 +1,12 @@
 {{- if .Values.setupJob.enabled }}
+{{- $topology := "" -}}
+{{- if .Values.oracleMulti.enabled -}}
+{{- include "oracle-otel.validate.oracleMulti" . -}}
+{{- $topology = .Values.oracleMulti.topology -}}
+{{- else -}}
 {{- include "oracle-otel.validate.setupJob" . -}}
+{{- $topology = .Values.oracle.topology -}}
+{{- end -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -13,13 +20,13 @@ metadata:
     "helm.sh/hook-delete-policy": before-hook-creation
 data:
   grants.sql: |
-{{- if eq .Values.oracle.topology "cdb" }}
+{{- if eq $topology "cdb" }}
 {{ .Files.Get "files/setup/cdb-grants.sql" | indent 4 }}
-{{- else if eq .Values.oracle.topology "pdb" }}
+{{- else if eq $topology "pdb" }}
 {{ .Files.Get "files/setup/pdb-grants.sql" | indent 4 }}
-{{- else if eq .Values.oracle.topology "rds" }}
+{{- else if eq $topology "rds" }}
 {{ .Files.Get "files/setup/rds-grants.sql" | indent 4 }}
-{{- else if eq .Values.oracle.topology "adb" }}
+{{- else if eq $topology "adb" }}
 {{ .Files.Get "files/setup/adb-grants.sql" | indent 4 }}
 {{- end }}
 {{- end }}

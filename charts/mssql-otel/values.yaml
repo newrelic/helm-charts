@@ -22,6 +22,19 @@ mssql:
   # -- How often the receiver scrapes SQL Server.
   collectionInterval: 15s
 
+mssqlMulti:
+  # -- Enables multi-instance mode: one release monitors every entry in mssqlMulti.databases from a single collector pod.
+  # Mutually exclusive with the mssql.* single-instance block above -- do not set mssql.server when this is true.
+  enabled: false
+  # -- Required when enabled. One of: self-hosted, rds. Kept for parity with mssql.topology -- still validation-only, no rendered effect.
+  topology: ""
+  # -- List of SQL Server instances to monitor from this one release. Each entry requires: name (unique), server, existingSecret.
+  # port defaults to 1433. sqlAdmin.existingSecret is required per entry only when setupJob.enabled is true.
+  # Scrape-behavior settings (collectionInterval, metrics, events, topQueryCollection, etc.) are NOT configurable per
+  # entry or at the mssqlMulti level -- they're fixed defaults shared by every entry (same defaults as the mssql:
+  # block above). Use additionalReceiverConfig to override any of them if you need to.
+  databases: []
+
 # -- Required. New Relic OTLP endpoint for the account's region, e.g. https://otlp.nr-data.net:4318
 otlpEndpoint: ""
 

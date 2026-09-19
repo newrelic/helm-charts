@@ -1,0 +1,91 @@
+{{- if .Values.mysqlMulti.enabled }}
+{{- include "mysql-otel.validate.mysqlMulti" . -}}
+{{- $sharedDefaults := include "mysql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- $databases := .Values.mysqlMulti.databases -}}
+{{- $multiEntry := gt (len $databases) 1 -}}
+{{- $receiverModes := dict -}}
+{{- $receiverContents := dict -}}
+{{- $receiverKeys := list -}}
+{{- $firstServer := "" -}}
+{{- $firstPort := 0 -}}
+{{- range $i, $db := $databases -}}
+{{- $suffix := include "mysql-otel.multi.envVarSuffix" $db.name -}}
+{{- $port := $db.port | default 3306 -}}
+{{- $identity := dict "endpoint" (printf "%s:%d" $db.server ($port | int)) "username" (printf "${env:MYSQL_USERNAME_%s}" $suffix) "password" (printf "${env:MYSQL_PASSWORD_%s}" $suffix) -}}
+{{- if $db.database -}}
+{{- $identity = set $identity "database" $db.database -}}
+{{- end -}}
+{{- $receiverKey := printf "nrmysql/%s" $db.name -}}
+{{- if and $multiEntry (gt $i 0) -}}
+{{- $receiverModes = set $receiverModes $receiverKey "override" -}}
+{{- $receiverContents = set $receiverContents $receiverKey $identity -}}
+{{- else -}}
+{{- $full := dict -}}
+{{- $full = mergeOverwrite $full $sharedDefaults -}}
+{{- $full = mergeOverwrite $full $identity -}}
+{{- $full = mergeOverwrite $full ($.Values.additionalReceiverConfig | default dict) -}}
+{{- $receiverModes = set $receiverModes $receiverKey (ternary "anchor" "full" $multiEntry) -}}
+{{- $receiverContents = set $receiverContents $receiverKey $full -}}
+{{- end -}}
+{{- $receiverKeys = append $receiverKeys $receiverKey -}}
+{{- if eq $i 0 -}}
+{{- $firstServer = $db.server -}}
+{{- $firstPort = $port -}}
+{{- end -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mysql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mysql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      {{- range $key := $receiverKeys }}
+      {{- $mode := index $receiverModes $key }}
+      {{- if eq $mode "anchor" }}
+      {{ $key }}: &nrmysql-common
+{{- include "mysql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else if eq $mode "override" }}
+      {{ $key }}:
+        <<: *nrmysql-common
+{{- include "mysql-otel.renderReceiverOverride" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else }}
+      {{ $key }}:
+{{- include "mysql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
+      {{- end }}
+      {{- end }}
+    processors:
+      batch:
+      resource/mysql:
+        attributes:
+          - key: server.address
+            value: {{ $firstServer | quote }}
+            action: upsert
+          - key: server.port
+            value: {{ $firstPort | int }}
+            action: upsert
+    exporters:
+      otlp/newrelic:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [resource/mysql, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [resource/mysql, batch]
+          exporters: [otlp/newrelic]
+{{- end }}

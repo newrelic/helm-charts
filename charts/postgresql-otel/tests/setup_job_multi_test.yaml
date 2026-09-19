@@ -1,0 +1,115 @@
+suite: setup job resource (postgresqlMulti)
+templates:
+  - templates/setup-job-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  postgresqlMulti.enabled: true
+  postgresqlMulti.topology: "self-hosted"
+  postgresqlMulti.instances:
+    - name: db1
+      server: "host1"
+      existingSecret: "db1-creds"
+      databases: ["appdb1", "appdb1b"]
+      postgresAdmin:
+        existingSecret: "db1-admin"
+    - name: db2
+      server: "host2"
+      existingSecret: "db2-creds"
+      databases: ["appdb2"]
+      postgresAdmin:
+        existingSecret: "db2-admin"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.image.repository: "postgres"
+  setupJob.image.tag: "16"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders one Job per instance
+    set:
+      setupJob.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: names each Job after its instance entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-postgresql-otel-setup-db1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: my-release-postgresql-otel-setup-db2
+        documentIndex: 1
+  - it: wires each Job's admin and monitoring credentials from that entry's own secrets
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db1-admin
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db1-creds
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db2-admin
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db2-creds
+        documentIndex: 1
+  - it: loops the per-database grant block over that instance's own databases list
+    set:
+      setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb1\""
+        documentIndex: 0
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb1b\""
+        documentIndex: 0
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb2\""
+        documentIndex: 0
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb2\""
+        documentIndex: 1
+  - it: does not create pgvector/explain-function extensions by default
+    set:
+      setupJob.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "CREATE EXTENSION IF NOT EXISTS vector"
+        documentIndex: 0
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "explain_statement"
+        documentIndex: 0
+  - it: creates pgvector for every database in every instance when enablePgvector is true
+    set:
+      setupJob.enabled: true
+      setupJob.enablePgvector: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb1\"[\\s\\S]*CREATE EXTENSION IF NOT EXISTS vector"
+        documentIndex: 0
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb2\"[\\s\\S]*CREATE EXTENSION IF NOT EXISTS vector"
+        documentIndex: 1

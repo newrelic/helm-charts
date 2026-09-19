@@ -553,3 +553,202 @@ metrics:
   oracledb.parallel_operations_downgraded_to_serial:
     enabled: true
 {{- end -}}
+
+{{/*
+Renders one receiver's field block in New Relic's documented order (endpoint/username/password/service/datasource,
+collection_interval, events, top_query_collection, query_sample_collection, session_wait_event_collection, metrics,
+resource_attributes), falling back to alphabetical order for any other field (e.g. from additionalReceiverConfig).
+Caller must emit the `      <receiverKey>:` line itself and invoke this with `{{- include ... }}` (note the leading
+`{{-`) immediately after it, since this renders only the field block that follows, at a fixed 8-space (fields) /
+10-space (nested content) indent -- i.e. it assumes it's invoked directly under a `receivers:` block whose entries
+are indented 6 spaces.
+
+Args (single dict):
+  .receiver -- the merged receiver config dict (endpoint/service/username/password/datasource/collection_interval/events/...)
+  .isRds    -- bool, selects the RDS metrics order
+  .isAdb    -- bool, selects the ADB metrics order
+*/}}
+{{- define "oracle-otel.renderReceiver" -}}
+{{- $receiver := .receiver -}}
+{{- $isRds := .isRds -}}
+{{- $isAdb := .isAdb -}}
+{{- $orderedKeys := list "endpoint" "username" "password" "service" "datasource" "collection_interval" "events" "top_query_collection" "query_sample_collection" "session_wait_event_collection" "metrics" "resource_attributes" }}
+{{- $eventsOrder := list "db.server.query_sample" "db.server.top_query" "db.server.session.wait_sample" }}
+{{- $topQueryOrder := list "max_query_sample_count" "top_query_count" "collection_interval" }}
+{{- $querySampleOrder := list "max_rows_per_query" }}
+{{- $rdsMetricsOrder := list "oracledb.cpu_time" "oracledb.executions" "oracledb.parse_calls" "oracledb.hard_parses" "oracledb.logical_reads" "oracledb.physical_reads" "oracledb.physical_reads_direct" "oracledb.physical_writes" "oracledb.physical_writes_direct" "oracledb.physical_read_io_requests" "oracledb.physical_write_io_requests" "oracledb.physical_io.cache_writes" "oracledb.physical_io.requests" "oracledb.physical_io.transferred" "oracledb.sqlnet.io.transferred" "oracledb.consistent_gets" "oracledb.db_block_gets" "oracledb.data_dictionary.hit_ratio" "oracledb.pga_memory" "oracledb.sga.limit" "oracledb.sga.usage" "oracledb.enqueue_deadlocks" "oracledb.exchange_deadlocks" "oracledb.sessions.usage" "oracledb.logons" "oracledb.user_commits" "oracledb.user_rollbacks" "oracledb.tablespace_size.limit" "oracledb.tablespace_size.usage" "oracledb.storage.usage" "oracledb.storage.utilization" "oracledb.recycle_bin.limit" "oracledb.queries_parallelized" "oracledb.ddl_statements_parallelized" "oracledb.dml_statements_parallelized" "oracledb.parallel_operations_not_downgraded" "oracledb.parallel_operations_downgraded_1_to_25_pct" "oracledb.parallel_operations_downgraded_25_to_50_pct" "oracledb.parallel_operations_downgraded_50_to_75_pct" "oracledb.parallel_operations_downgraded_75_to_99_pct" "oracledb.parallel_operations_downgraded_to_serial" }}
+{{- $cdbPdbMetricsOrder := list "oracledb.cpu_time" "oracledb.database.cpu.utilization" "oracledb.host.cpu.utilization" "oracledb.executions" "oracledb.execution.utilization" "oracledb.parse_calls" "oracledb.parse.rate" "oracledb.parse.utilization" "oracledb.hard_parses" "oracledb.logical_reads" "oracledb.physical_reads" "oracledb.physical_reads_direct" "oracledb.physical_writes" "oracledb.physical_writes_direct" "oracledb.physical_read_io_requests" "oracledb.physical_write_io_requests" "oracledb.physical_io.cache_writes" "oracledb.physical_io.requests" "oracledb.physical_io.transferred" "oracledb.sqlnet.io.transferred" "oracledb.consistent_gets" "oracledb.db_block_gets" "oracledb.buffer_cache.utilization" "oracledb.library_cache.utilization" "oracledb.data_dictionary.hit_ratio" "oracledb.shared_pool.utilization" "oracledb.pga_memory" "oracledb.sga.limit" "oracledb.sga.usage" "oracledb.database.wait.utilization" "oracledb.dml_locks.limit" "oracledb.dml_locks.usage" "oracledb.enqueue_locks.limit" "oracledb.enqueue_locks.usage" "oracledb.enqueue_resources.limit" "oracledb.enqueue_resources.usage" "oracledb.enqueue_deadlocks" "oracledb.exchange_deadlocks" "oracledb.processes.limit" "oracledb.processes.usage" "oracledb.sessions.limit" "oracledb.sessions.usage" "oracledb.logons" "oracledb.transactions.limit" "oracledb.transactions.usage" "oracledb.user_commits" "oracledb.user_rollbacks" "oracledb.tablespace_size.limit" "oracledb.tablespace_size.usage" "oracledb.storage.usage" "oracledb.storage.utilization" "oracledb.recycle_bin.limit" "oracledb.queries_parallelized" "oracledb.ddl_statements_parallelized" "oracledb.dml_statements_parallelized" "oracledb.parallel_operations_not_downgraded" "oracledb.parallel_operations_downgraded_1_to_25_pct" "oracledb.parallel_operations_downgraded_25_to_50_pct" "oracledb.parallel_operations_downgraded_50_to_75_pct" "oracledb.parallel_operations_downgraded_75_to_99_pct" "oracledb.parallel_operations_downgraded_to_serial" "oracledb.redo_allocation.utilization" "oracledb.sort.ratio" "oracledb.sql_service.response.duration" }}
+{{- $adbMetricsOrder := list "oracledb.cpu_time" "oracledb.executions" "oracledb.parse_calls" "oracledb.hard_parses" "oracledb.logical_reads" "oracledb.physical_reads" "oracledb.physical_reads_direct" "oracledb.physical_writes" "oracledb.physical_writes_direct" "oracledb.physical_read_io_requests" "oracledb.physical_write_io_requests" "oracledb.physical_io.cache_writes" "oracledb.physical_io.requests" "oracledb.physical_io.transferred" "oracledb.sqlnet.io.transferred" "oracledb.consistent_gets" "oracledb.db_block_gets" "oracledb.data_dictionary.hit_ratio" "oracledb.pga_memory" "oracledb.enqueue_deadlocks" "oracledb.exchange_deadlocks" "oracledb.sessions.usage" "oracledb.logons" "oracledb.user_commits" "oracledb.user_rollbacks" "oracledb.tablespace_size.limit" "oracledb.tablespace_size.usage" "oracledb.storage.usage" "oracledb.storage.utilization" "oracledb.recycle_bin.limit" "oracledb.queries_parallelized" "oracledb.ddl_statements_parallelized" "oracledb.dml_statements_parallelized" "oracledb.parallel_operations_not_downgraded" "oracledb.parallel_operations_downgraded_1_to_25_pct" "oracledb.parallel_operations_downgraded_25_to_50_pct" "oracledb.parallel_operations_downgraded_50_to_75_pct" "oracledb.parallel_operations_downgraded_75_to_99_pct" "oracledb.parallel_operations_downgraded_to_serial" }}
+{{- $metricsOrder := $cdbPdbMetricsOrder }}
+{{- if $isRds }}
+{{- $metricsOrder = $rdsMetricsOrder }}
+{{- else if $isAdb }}
+{{- $metricsOrder = $adbMetricsOrder }}
+{{- end }}
+{{- $emitted := list }}
+{{- range $key := $orderedKeys }}
+{{- if hasKey $receiver $key }}
+{{- if eq $key "events" }}
+        events:
+{{- $eval := index $receiver $key }}
+{{- $eemitted := list }}
+{{- range $ekey := $eventsOrder }}
+{{- if hasKey $eval $ekey }}
+{{ toYaml (dict $ekey (index $eval $ekey)) | indent 10 }}
+{{- $eemitted = append $eemitted $ekey }}
+{{- end }}
+{{- end }}
+{{- range $ekey := (keys $eval | sortAlpha) }}
+{{- if not (has $ekey $eemitted) }}
+{{ toYaml (dict $ekey (index $eval $ekey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "top_query_collection" }}
+        top_query_collection:
+{{- $tval := index $receiver $key }}
+{{- $temitted := list }}
+{{- range $tkey := $topQueryOrder }}
+{{- if hasKey $tval $tkey }}
+{{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- $temitted = append $temitted $tkey }}
+{{- end }}
+{{- end }}
+{{- if hasKey $tval "allowed_comment_keys" }}
+          allowed_comment_keys:
+{{- range $item := (index $tval "allowed_comment_keys") }}
+            - {{ $item }}
+{{- end }}
+{{- $temitted = append $temitted "allowed_comment_keys" }}
+{{- end }}
+{{- range $tkey := (keys $tval | sortAlpha) }}
+{{- if not (has $tkey $temitted) }}
+{{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "query_sample_collection" }}
+        query_sample_collection:
+{{- $qval := index $receiver $key }}
+{{- $qemitted := list }}
+{{- range $qkey := $querySampleOrder }}
+{{- if hasKey $qval $qkey }}
+{{ toYaml (dict $qkey (index $qval $qkey)) | indent 10 }}
+{{- $qemitted = append $qemitted $qkey }}
+{{- end }}
+{{- end }}
+{{- if hasKey $qval "allowed_comment_keys" }}
+          allowed_comment_keys:
+{{- range $item := (index $qval "allowed_comment_keys") }}
+            - {{ $item }}
+{{- end }}
+{{- $qemitted = append $qemitted "allowed_comment_keys" }}
+{{- end }}
+{{- range $qkey := (keys $qval | sortAlpha) }}
+{{- if not (has $qkey $qemitted) }}
+{{ toYaml (dict $qkey (index $qval $qkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "metrics" }}
+        metrics:
+{{- $mval := index $receiver $key }}
+{{- $memitted := list }}
+{{- range $mkey := $metricsOrder }}
+{{- if hasKey $mval $mkey }}
+{{ include "oracle-otel.renderMetric" (dict "key" $mkey "value" (index $mval $mkey)) | indent 10 }}
+{{- $memitted = append $memitted $mkey }}
+{{- end }}
+{{- end }}
+{{- range $mkey := (keys $mval | sortAlpha) }}
+{{- if not (has $mkey $memitted) }}
+{{ include "oracle-otel.renderMetric" (dict "key" $mkey "value" (index $mval $mkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if has $key (list "endpoint" "username" "password" "service" "datasource") }}
+        {{ $key }}: {{ (index $receiver $key) | quote }}
+{{- else }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- $emitted = append $emitted $key }}
+{{- end }}
+{{- end }}
+{{- range $key := (keys $receiver | sortAlpha) }}
+{{- if not (has $key $emitted) }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{- define "oracle-otel.multi.envVarSuffix" -}}
+{{- regexReplaceAll "[^A-Za-z0-9]" (upper .) "_" -}}
+{{- end -}}
+
+{{/*
+Validates .Values.oracleMulti when oracleMulti.enabled is true: topology, non-empty databases list, each entry's
+required fields (name/endpoint/service/existingSecret, plus oracleAdmin.existingSecret when setupJob.enabled),
+unique names, and no accidental mixing with the single-instance oracle.endpoint.
+*/}}
+{{- define "oracle-otel.validate.oracleMulti" -}}
+{{- if not (has .Values.oracleMulti.topology (list "cdb" "pdb" "rds" "adb")) -}}
+{{- fail "oracleMulti.topology must be one of: cdb, pdb, rds, adb -- required to select the correct nroracledb metrics/events defaults" -}}
+{{- end -}}
+{{- if not .Values.oracleMulti.databases -}}
+{{- fail "oracleMulti.databases must contain at least one entry when oracleMulti.enabled is true" -}}
+{{- end -}}
+{{- if .Values.oracle.endpoint -}}
+{{- fail "oracleMulti.enabled and oracle.endpoint are mutually exclusive -- use one mode or the other in a single release" -}}
+{{- end -}}
+{{- $seenNames := dict -}}
+{{- $seenSuffixes := dict -}}
+{{- range $i, $db := .Values.oracleMulti.databases -}}
+{{- if not $db.name -}}
+{{- fail (printf "oracleMulti.databases[%d].name is required" $i) -}}
+{{- end -}}
+{{- if not $db.endpoint -}}
+{{- fail (printf "oracleMulti.databases[%d].endpoint is required" $i) -}}
+{{- end -}}
+{{- if not $db.service -}}
+{{- fail (printf "oracleMulti.databases[%d].service is required" $i) -}}
+{{- end -}}
+{{- if not $db.existingSecret -}}
+{{- fail (printf "oracleMulti.databases[%d].existingSecret is required" $i) -}}
+{{- end -}}
+{{- if $.Values.setupJob.enabled -}}
+{{- $admin := $db.oracleAdmin | default dict -}}
+{{- if not $admin.existingSecret -}}
+{{- fail (printf "oracleMulti.databases[%d].oracleAdmin.existingSecret is required when setupJob.enabled is true" $i) -}}
+{{- end -}}
+{{- end -}}
+{{- if hasKey $seenNames $db.name -}}
+{{- fail (printf "oracleMulti.databases[%d].name %q duplicates an earlier entry's name" $i $db.name) -}}
+{{- end -}}
+{{- $seenNames = set $seenNames $db.name true -}}
+{{- $suffix := include "oracle-otel.multi.envVarSuffix" $db.name -}}
+{{- if hasKey $seenSuffixes $suffix -}}
+{{- fail (printf "oracleMulti.databases[%d].name %q collides with another entry's name after env-var sanitization (%q) -- choose more distinct names" $i $db.name $suffix) -}}
+{{- end -}}
+{{- $seenSuffixes = set $seenSuffixes $suffix true -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Renders just the fields that vary between multi-instance database entries when 2+ entries share one receiver's
+metrics/events/resource_attributes block via a `<<: *nroracledb-common` merge key (see configmap-multi.yaml):
+endpoint/username/password/service/datasource, then collection_interval. Same field order and quoting as
+oracle-otel.renderReceiver's identity-field branch -- deliberately does not touch events/top_query_collection/
+query_sample_collection/session_wait_event_collection/metrics/resource_attributes, since those are inherited via
+the merge key rather than repeated per entry.
+
+Args (single dict): .receiver -- the entry's override-only dict (endpoint/service/username/password/datasource/collection_interval)
+*/}}
+{{- define "oracle-otel.renderReceiverOverride" -}}
+{{- $receiver := .receiver -}}
+{{- $orderedKeys := list "endpoint" "username" "password" "service" "datasource" "collection_interval" -}}
+{{- range $key := $orderedKeys }}
+{{- if hasKey $receiver $key }}
+{{- if has $key (list "endpoint" "username" "password" "service" "datasource") }}
+        {{ $key }}: {{ (index $receiver $key) | quote }}
+{{- else }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end -}}
