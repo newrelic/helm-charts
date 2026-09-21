@@ -1,0 +1,45 @@
+suite: setup job configmap (oracleMulti)
+templates:
+  - templates/setup-configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracleMulti.enabled: true
+  oracleMulti.topology: "rds"
+  oracleMulti.databases:
+    - name: db1
+      endpoint: "host1:1521"
+      service: "ORCL1"
+      existingSecret: "db1-creds"
+      oracleAdmin:
+        existingSecret: "db1-admin"
+    - name: db2
+      endpoint: "host2:1521"
+      service: "ORCL2"
+      existingSecret: "db2-creds"
+      oracleAdmin:
+        existingSecret: "db2-admin"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: mounts the rds grant script, reading topology from oracleMulti instead of oracle
+    set:
+      setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "rdsadmin.rdsadmin_util.grant_sys_object"
+  - it: mounts the cdb grant script when oracleMulti.topology is cdb
+    set:
+      setupJob.enabled: true
+      oracleMulti.topology: "cdb"
+    asserts:
+      - matchRegex:
+          path: data["grants.sql"]
+          pattern: "CONTAINER=ALL"

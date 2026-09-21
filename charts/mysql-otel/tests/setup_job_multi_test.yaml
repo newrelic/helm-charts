@@ -1,0 +1,101 @@
+suite: setup job resource (mysqlMulti)
+templates:
+  - templates/setup-job-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mysqlMulti.enabled: true
+  mysqlMulti.topology: "self-hosted"
+  mysqlMulti.databases:
+    - name: db1
+      server: "host1"
+      existingSecret: "db1-creds"
+      mysqlAdmin:
+        existingSecret: "db1-admin"
+    - name: db2
+      server: "host2"
+      existingSecret: "db2-creds"
+      mysqlAdmin:
+        existingSecret: "db2-admin"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.image.repository: "mysql"
+  setupJob.image.tag: "8.4"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders one Job per database entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: names each Job after its database entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-mysql-otel-setup-db1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: my-release-mysql-otel-setup-db2
+        documentIndex: 1
+  - it: wires each Job's admin and monitoring credentials from that entry's own secrets
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db1-admin
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db1-creds
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db2-admin
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db2-creds
+        documentIndex: 1
+  - it: uses each entry's own server/port for the connection
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: "host1"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: "host2"
+        documentIndex: 1
+  - it: does not grant wait-time metrics by default
+    set:
+      setupJob.enabled: true
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "setup_consumers"
+        documentIndex: 0
+  - it: grants wait-time metrics for every entry when enableWaitTimeMetrics is true
+    set:
+      setupJob.enabled: true
+      setupJob.enableWaitTimeMetrics: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
+        documentIndex: 0
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
+        documentIndex: 1

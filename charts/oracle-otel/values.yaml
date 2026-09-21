@@ -22,6 +22,18 @@ oracle:
   # -- How often the receiver scrapes Oracle.
   collectionInterval: 10s
 
+oracleMulti:
+  # -- Enables multi-instance mode: one release monitors every entry in oracleMulti.databases from a single collector pod.
+  # Mutually exclusive with the oracle.* single-instance block above -- do not set oracle.endpoint when this is true.
+  enabled: false
+  # -- Required when enabled. One of: cdb, pdb, rds, adb. Applies to every entry in oracleMulti.databases -- a release cannot mix topologies.
+  topology: ""
+  # -- Default scrape interval for every entry. Override per-entry via databases[].collectionInterval.
+  collectionInterval: 10s
+  # -- List of Oracle/RDS instances to monitor from this one release. Each entry requires: name (unique), endpoint, service, existingSecret.
+  # oracleAdmin.existingSecret is required per entry only when setupJob.enabled is true.
+  databases: []
+
 # -- Required. New Relic OTLP endpoint for the account's region, e.g. otlp.nr-data.net:4317
 otlpEndpoint: ""
 

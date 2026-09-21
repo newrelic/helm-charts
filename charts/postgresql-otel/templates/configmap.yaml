@@ -1,3 +1,4 @@
+{{- if not .Values.postgresqlMulti.enabled }}
 {{- include "postgresql-otel.validate.topology" . -}}
 {{- include "postgresql-otel.validate.otlpEndpoint" . -}}
 {{- $topQueryDefaults := dict
@@ -147,3 +148,4 @@ data:
           receivers: [nrpostgresql]
           processors: [resource/postgresql, batch]
           exporters: [otlp/newrelic]
+{{- end }}
