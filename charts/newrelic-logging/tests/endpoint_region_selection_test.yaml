@@ -41,6 +41,39 @@ tests:
             value: "staging-metric-api.newrelic.com"
         template: templates/daemonset-windows.yaml
 
+  - it: selects staging endpoints if global.nrStaging is enabled
+    set:
+      licenseKey: nr_license_key
+      global.nrStaging: true
+      enableWindows: true
+    asserts:
+      # Linux
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://staging-log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "staging-metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+      # Windows
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://staging-log-api.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "staging-metric-api.newrelic.com"
+        template: templates/daemonset-windows.yaml
+
   - it: selects US endpoints for a US license key
     set:
       licenseKey: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaFFFFNRAL
