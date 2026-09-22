@@ -117,6 +117,8 @@ spec:
               value: {{ include "newrelic-logging.metricsHost" $ | quote }}
             - name: FLUENTBIT_METRICS_TIER 
               value: {{ $.Values.fluentBit.fluentBitMetrics | default "basic" | quote }}
+            - name: LUA_SCRIPT_PATH
+              value: C:\fluent-bit\scripts\payload.lua
             {{- include "newrelic-logging.extraEnv" $ | nindent 12 }}
             - name: DAEMONSET_NAME
               value: {{ template "newrelic-logging.fullname" $ }}
@@ -135,7 +137,7 @@ spec:
             {{- if eq $.Values.fluentBit.fluentBitMetrics "basic" }}
 
             - name: lua-scripts
-              mountPath: /fluent-bit/scripts
+              mountPath: C:\fluent-bit\scripts
               readOnly: true
                {{- end }}
             - mountPath: C:\fluent-bit\etc
