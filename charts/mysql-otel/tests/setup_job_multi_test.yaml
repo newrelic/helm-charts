@@ -78,24 +78,28 @@ tests:
           path: spec.template.spec.containers[0].env[4].value
           value: "host2"
         documentIndex: 1
-  - it: does not grant wait-time metrics by default
+  - it: grants wait-time metrics for every entry by default
     set:
       setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
+        documentIndex: 0
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
+        documentIndex: 1
+  - it: omits wait-time metrics for every entry when enableWaitTimeMetrics is set to false
+    set:
+      setupJob.enabled: true
+      setupJob.enableWaitTimeMetrics: false
     asserts:
       - notMatchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "setup_consumers"
         documentIndex: 0
-  - it: grants wait-time metrics for every entry when enableWaitTimeMetrics is true
-    set:
-      setupJob.enabled: true
-      setupJob.enableWaitTimeMetrics: true
-    asserts:
-      - matchRegex:
+      - notMatchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
-        documentIndex: 0
-      - matchRegex:
-          path: spec.template.spec.containers[0].args[0]
-          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
+          pattern: "setup_consumers"
         documentIndex: 1

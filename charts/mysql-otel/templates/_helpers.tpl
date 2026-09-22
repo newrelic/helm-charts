@@ -196,10 +196,10 @@ via the merge key rather than repeated per entry.
 Args (single dict): .receiver -- the entry's override-only dict (endpoint/username/password/database)
 */}}
 {{/*
-Fixed scrape-behavior defaults for every mysqlMulti entry -- same values as the single-instance mysql: block's
-own defaults, but not user-configurable in multi-instance mode (matches oracle-otel's pattern of hardcoded
-topology defaults rather than per-field values.yaml knobs). additionalReceiverConfig remains the one escape
-hatch for overriding any of this.
+Fixed scrape-behavior defaults shared by both single-instance (configmap.yaml) and multi-instance
+(configmap-multi.yaml) rendering -- not user-configurable via values.yaml in either mode (matches
+oracle-otel/mssql-otel's pattern of hardcoded shared defaults rather than per-field values.yaml knobs).
+additionalReceiverConfig remains the one escape hatch for overriding any of this.
 */}}
 {{- define "mysql-otel.multi.receiverDefaults" -}}
 transport: tcp
