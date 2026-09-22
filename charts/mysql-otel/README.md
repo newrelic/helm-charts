@@ -32,9 +32,9 @@ just applied per instance in the multi case.
   `host_metrics` receiver and split host/db/traces pipelines — that only
   makes sense for a collector running directly on the MySQL host's own OS.
   This chart implements only the standalone "Standard configuration" shape.
-- Auto-select an Amazon RDS CA bundle for you. `tls.caFile` is a plain
-  value you supply — a chart-hardcoded default risks going stale as Amazon
-  rotates CA bundles.
+- Auto-select an Amazon RDS CA bundle for you. `additionalReceiverConfig.tls.ca_file`
+  is a plain value you supply — a chart-hardcoded default risks going
+  stale as Amazon rotates CA bundles.
 
 ## Choosing the topology
 
@@ -65,20 +65,22 @@ reaching N databases still needs a valid network path to all N of them.
 
 ## TLS
 
-Set `tls.insecure: false` (the default) to require an encrypted
-connection, `tls.insecureSkipVerify: true` to skip certificate validation
-(useful for self-signed certs in test environments, but weakens the
-connection's security guarantees), and `tls.caFile` to a CA bundle path
-mounted into the collector container if the MySQL server's certificate
-isn't in the default trust store — for example, an **Amazon RDS instance
-with "Require SSL/TLS" enforcement needs `caFile` pointed at Amazon's RDS
-CA bundle**. Confirm these flags' actual behavior against a real MySQL
-instance requiring TLS before relying on this in production — see
-`TESTING.md`.
+`tls.insecure: false` and `tls.insecure_skip_verify: false` are the
+receiver's fixed defaults (requiring an encrypted connection with
+certificate validation) — not `values.yaml` fields in either mode. Use
+`additionalReceiverConfig.tls.insecure_skip_verify=true` to skip
+certificate validation (useful for self-signed certs in test
+environments, but weakens the connection's security guarantees), and
+`additionalReceiverConfig.tls.ca_file` to a CA bundle path mounted into
+the collector container if the MySQL server's certificate isn't in the
+default trust store — for example, an **Amazon RDS instance with "Require
+SSL/TLS" enforcement needs `ca_file` pointed at Amazon's RDS CA bundle**.
+Confirm these flags' actual behavior against a real MySQL instance
+requiring TLS before relying on this in production — see `TESTING.md`.
 
 In multi-instance mode, `tls.*` (like the other scrape-behavior settings)
-is one shared value applied to every entry, not configurable per instance
-— see "Multi-instance schema" below for why.
+is one shared value applied to every entry via `additionalReceiverConfig`,
+not configurable per instance — see "Multi-instance schema" below for why.
 
 ## Automated setup (`setupJob.enabled: true`)
 
@@ -95,17 +97,38 @@ broad `performance_schema` access:
   — separate MySQL instances normally have independent admin passwords, so
   there's no shared admin credential option.
 
-Set `setupJob.enableWaitTimeMetrics: true` to also grant `UPDATE` on
-`performance_schema.setup_consumers`, needed for wait-time data — this is
-optional per New Relic's docs, and applies to every entry's Job identically
-in multi-instance mode (one shared toggle, not per-entry).
+`setupJob.enableWaitTimeMetrics` (default `true`, opt-out) also grants
+`UPDATE` on `performance_schema.setup_consumers`, so the receiver can
+enable the `events_waits_current` consumer itself on reconnect — needed
+for lock-wait duration tracking, since that consumer resets on
+restart/failover. This is the RDS-specific workaround from New Relic's
+[mysql/advanced-config docs, "Enable lock-wait duration
+tracking"](https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#lock)
+(self-managed MySQL instead sets
+`performance-schema-consumer-events-waits-current=ON` in `my.cnf`, which
+this chart has no way to touch). Applies to every entry's Job identically
+in multi-instance mode (one shared toggle, not per-entry). Set to `false`
+to skip it.
+
+**This setup Job does not create the `explain_statement` procedure**
+`mysql.explainMode: procedure` depends on — that receiver mode collects
+`EXPLAIN` plans for write statements without granting DML privileges to
+the monitoring user, but requires a `SQL SECURITY DEFINER` stored
+procedure to exist first. If you want that, follow New Relic's
+[mysql/advanced-config docs, "Query plans for write
+statements"](https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#query)
+and create the procedure yourself; leaving `explainMode: inline` (the
+default) needs no extra setup.
 
 This requires a `mysql`-CLI-capable image (shared across every entry's Job
-in multi-instance mode — one image, not one per instance). Unlike the other
-two charts in this family, `setupJob.image` defaults to the official,
-actively-maintained `mysql:8.4` image — no license click-through required,
-so enabling the setup Job needs no extra `--set` flags for the image.
-Override `setupJob.image.repository`/`tag` if you need a different version.
+in multi-instance mode — one image, not one per instance), and **this
+chart ships no default one** — same as `postgresql-otel`/`mssql-otel`.
+The official, actively-maintained, freely-pullable `mysql:8.4` image is a
+reasonable choice:
+
+```
+--set setupJob.image.repository=mysql --set setupJob.image.tag=8.4
+```
 
 **Known limitation:** the setup Job builds its `CREATE USER`/`GRANT`
 statements by shell-expanding the monitoring credentials directly into a
@@ -198,7 +221,9 @@ licenseKey: "<your New Relic license key>"
 
 setupJob:
   enabled: true
-  # image defaults to mysql:8.4 -- no extra --set needed unless you want a different version
+  image:
+    repository: mysql
+    tag: "8.4"
 ```
 This runs one setup Job per entry (see "Automated setup" above), each
 using that entry's own `mysqlAdmin.existingSecret`.
@@ -208,15 +233,17 @@ Each entry requires `name` (unique within the release), `server`, and
 unlike `mysql:`. `port` defaults to `3306` per entry if not set, and
 `database` is optional per entry, mirroring `mysql.database`.
 
-Everything else that's configurable for the single-instance chart
-(`allowNativePasswords`, `collectionInterval`, `initialDelay`, `explainMode`,
-`tls`, `statementEvents`, `querySampleCollection`, `topQueryCollection`,
-`events`) is **not configurable at all in multi-instance mode** — every
-entry shares the same fixed defaults (identical values to `mysql:`'s own
-defaults), matching `oracle-otel`'s pattern of hardcoded shared scrape
-behavior rather than per-field values.yaml knobs. Use
-`additionalReceiverConfig` if you need to override any of it — same global
-escape hatch as single-instance mode. A single-entry `databases` list is
+`allowNativePasswords`, `collectionInterval`, `initialDelay`, and
+`explainMode`, which **are** configurable for the single-instance chart,
+are **not configurable at all in multi-instance mode** — every entry
+shares the same fixed defaults (identical values to `mysql:`'s own
+defaults). `tls`, the query-sampling/top-query events, `statementEvents`,
+`querySampleCollection`, and `topQueryCollection` aren't `values.yaml` fields in *either* mode —
+both share the same hardcoded defaults, matching
+`oracle-otel`/`mssql-otel`'s pattern of fixed scrape behavior rather than
+per-field values.yaml knobs. Use `additionalReceiverConfig` if you need to
+override any of it — same global escape hatch in both modes. A
+single-entry `databases` list is
 valid too (e.g. as a values-file template meant to scale from 1 to N) — it
 just renders as a plain receiver with none of the sharing behavior
 described next, since there's nothing to share with.
@@ -249,8 +276,8 @@ Shared across both modes:
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrmysql` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated user-creation Job(s) | `false` |
-| `setupJob.image.repository` / `setupJob.image.tag` | `mysql`-CLI image, shared across every Job | `mysql` / `8.4` |
-| `setupJob.enableWaitTimeMetrics` | Also grant `UPDATE` on `performance_schema.setup_consumers`, every entry in multi mode | `false` |
+| `setupJob.image.repository` / `setupJob.image.tag` | `mysql`-CLI image, shared across every Job — **required** when enabled, no default | `""` |
+| `setupJob.enableWaitTimeMetrics` | Grant `UPDATE` on `performance_schema.setup_consumers`, every entry in multi mode; set `false` to opt out | `true` |
 | `resources` / `nodeSelector` / `tolerations` / `affinity` | Standard Pod scheduling/sizing fields | `{}` / `{}` / `[]` / `{}` |
 
 Single-instance schema (`mysql:`, ignored when `mysqlMulti.enabled: true`):
@@ -266,13 +293,15 @@ Single-instance schema (`mysql:`, ignored when `mysqlMulti.enabled: true`):
 | `mysql.allowNativePasswords` | Receiver's allow_native_passwords | `true` |
 | `mysql.collectionInterval` | Scrape interval | `10s` |
 | `mysql.initialDelay` | Delay before first scrape | `1s` |
-| `mysql.explainMode` | `inline` or `procedure` | `inline` |
-| `mysql.tls.insecure` / `insecureSkipVerify` / `caFile` | TLS connection settings | `false` / `false` / `""` |
-| `mysql.statementEvents.*` | `digestTextLimit`, `timeLimit`, `limit` | `4096` / `24h` / `500` |
-| `mysql.querySampleCollection.*` | `maxRowsPerQuery`, `allowedCommentKeys` | `100` / `[nr_service_guid]` |
-| `mysql.topQueryCollection.*` | `lookbackTime`, `maxQuerySampleCount`, `topQueryCount`, `collectionInterval`, `queryPlanCacheSize`, `queryPlanCacheTtl`, `allowedCommentKeys` | see `values.yaml` |
-| `mysql.events.querySample.enabled` / `topQuery.enabled` | Enable the query-sample/top-query log events | `true` / `true` |
+| `mysql.explainMode` | `inline` or `procedure` — `procedure` needs a manually-created `explain_statement` procedure, see "Automated setup" | `inline` |
 | `setupJob.mysqlAdmin.existingSecret` | Admin credential Secret (keys `username`, `password`) — required if `setupJob.enabled` | `""` |
+
+`tls`, `statementEvents`, query-sampling/top-query events, `query_sample_collection`, and
+`top_query_collection` are **not** `values.yaml` fields (single- or multi-instance) — they're fixed defaults
+shared by both modes (matches `oracle-otel`/`mssql-otel`'s pattern). Use `additionalReceiverConfig` to
+override any of them, e.g. `additionalReceiverConfig.tls.insecure_skip_verify=true`,
+`additionalReceiverConfig.statement_events.limit=1000`, or
+`additionalReceiverConfig.top_query_collection.top_query_count=100`.
 
 Multi-instance schema (`mysqlMulti:`, mutually exclusive with `mysql.*`):
 
@@ -283,6 +312,6 @@ Multi-instance schema (`mysqlMulti:`, mutually exclusive with `mysql.*`):
 | `mysqlMulti.databases` | List of `{name, server, port, existingSecret, database, mysqlAdmin.existingSecret}` entries, one per monitored instance | `[]` |
 
 Scrape-behavior settings (`allowNativePasswords`, `collectionInterval`,
-`tls`, `statementEvents`, etc.) are not configurable in multi-instance mode
-— every entry uses the same fixed defaults as `mysql:`'s own defaults. Use
-`additionalReceiverConfig` to override any of it.
+`initialDelay`, `explainMode`, etc.) are not configurable in multi-instance
+mode — every entry uses the same fixed defaults as `mysql:`'s own
+defaults. Use `additionalReceiverConfig` to override any of it.

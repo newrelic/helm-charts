@@ -119,10 +119,11 @@ spec:
 
               # Optional: a SECURITY DEFINER helper so the receiver can EXPLAIN
               # locking/write queries without holding write grants. This only
-              # creates the function -- set
-              # postgresqlMulti's topQueryCollection.explainFunctionName equivalent
-              # (via additionalReceiverConfig) to "otel.explain_statement" to make
-              # the receiver actually call it.
+              # creates the function -- the receiver's own default for
+              # top_query_collection.explain_function_name is already
+              # "otel.explain_statement", so no further config is needed. Set
+              # additionalReceiverConfig.top_query_collection.explain_function_name
+              # to point at a differently-named function instead.
               #
               # $$$$ below is not a typo: Kubernetes expands $(VAR) references
               # in command/args and collapses any bare $$ to a single $ as an

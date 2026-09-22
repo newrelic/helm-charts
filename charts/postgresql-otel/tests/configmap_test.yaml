@@ -86,9 +86,11 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "explain_function_name:"
-  - it: renders explain_function_name when set, independently of the setupJob flag
+  - it: renders explain_function_name when set via additionalReceiverConfig, independently of the setupJob flag
     set:
-      postgresql.topQueryCollection.explainFunctionName: "otel.explain_statement"
+      additionalReceiverConfig:
+        top_query_collection:
+          explain_function_name: "otel.explain_statement"
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -130,9 +132,12 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "postgresql\\.temp_files:"
-  - it: can disable an individual metric
+  - it: can disable an individual metric via additionalReceiverConfig
     set:
-      postgresql.metrics.deadlocks.enabled: false
+      additionalReceiverConfig:
+        metrics:
+          postgresql.deadlocks:
+            enabled: false
     asserts:
       - matchRegex:
           path: data["config.yaml"]
