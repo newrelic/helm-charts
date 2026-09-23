@@ -1,6 +1,6 @@
 namespace: newrelic
 name: com.newrelic.pipeline_control_gateway_config_mode
-version: 0.1.0
+version: 1.0.0
 platform: kubernetes
 protocol_version: "1.0"
 variables:
@@ -8,18 +8,19 @@ variables:
     description: "OTel Collector configuration for the Pipeline Control Gateway"
     type: yaml
     required: true
+    classification: config
   config_map_name:
     description: "Name of the ConfigMap that AC creates and PCG mounts as its configuration source"
     type: string
     required: false
     default: "pipeline-control-gateway-custom-config"
   deployment_name:
-    description: "Name of the Pipeline Control deployment for health-checks"
+    description: "Name of the pipeline control deployment for health-checks"
     type: string
     required: false
     default: "pipeline-control-gateway"
   daemonset_name:
-    description: "Name of the Pipeline Control daemonset for health-checks (used when PCG is deployed as a DaemonSet via daemonset.enabled=true)"
+    description: "Name of the pipeline control daemonset for health-checks (used when PCG is deployed as a DaemonSet via daemonset.enabled=true)"
     type: string
     required: false
     default: "pipeline-control-gateway-daemonset"
