@@ -27,37 +27,8 @@ mysql:
   collectionInterval: 10s
   # -- Delay before the receiver's first scrape.
   initialDelay: 1s
-  # -- inline or procedure. "inline" is the receiver's real default -- New Relic's own doc example sets "procedure" to demonstrate the alternative, not because it's the default.
+  # -- inline or procedure. "inline" is the receiver's real default -- New Relic's own doc example sets "procedure" to demonstrate the alternative, not because it's the default. "procedure" requires a SQL SECURITY DEFINER explain_statement procedure this chart's setupJob does not create -- see README, "Automated setup", or https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#query.
   explainMode: inline
-  tls:
-    # -- Maps to the receiver's tls.insecure.
-    insecure: false
-    # -- Maps to the receiver's tls.insecure_skip_verify.
-    insecureSkipVerify: false
-    # -- CA bundle path, e.g. Amazon's RDS CA bundle when topology=rds and TLS is required. Maps to tls.ca_file. Left to the operator deliberately -- see README.
-    caFile: ""
-  statementEvents:
-    digestTextLimit: 4096
-    timeLimit: 24h
-    limit: 500
-  querySampleCollection:
-    maxRowsPerQuery: 100
-    allowedCommentKeys:
-      - nr_service_guid
-  topQueryCollection:
-    lookbackTime: 120
-    maxQuerySampleCount: 5000
-    topQueryCount: 200
-    collectionInterval: 60s
-    queryPlanCacheSize: 1000
-    queryPlanCacheTtl: 1h
-    allowedCommentKeys:
-      - nr_service_guid
-  events:
-    querySample:
-      enabled: true
-    topQuery:
-      enabled: true
 
 mysqlMulti:
   # -- Enables multi-instance mode: one release monitors every entry in mysqlMulti.databases from a single collector pod.
@@ -67,9 +38,10 @@ mysqlMulti:
   topology: ""
   # -- List of MySQL instances to monitor from this one release. Each entry requires: name (unique), server, existingSecret.
   # port defaults to 3306. mysqlAdmin.existingSecret is required per entry only when setupJob.enabled is true.
-  # Scrape-behavior settings (tls, statementEvents, querySampleCollection, topQueryCollection, events, etc.) are
-  # NOT configurable per entry or at the mysqlMulti level -- they're fixed defaults shared by every entry (same
-  # defaults as the mysql: block above). Use additionalReceiverConfig to override any of them if you need to.
+  # Scrape-behavior settings (allowNativePasswords, collectionInterval, initialDelay, explainMode, etc.) are
+  # NOT configurable per entry or at the mysqlMulti level -- they're the same fixed defaults used in
+  # single-instance mode too (see mysql-otel.multi.receiverDefaults in _helpers.tpl). Use additionalReceiverConfig
+  # to override any of them if you need to.
   databases: []
 
 # -- Required. New Relic OTLP/gRPC endpoint for the account's region, bare host:port with NO scheme, e.g. otlp.nr-data.net:4317
@@ -89,15 +61,18 @@ setupJob:
   # -- If true, a Helm hook Job creates the monitoring user and grants it read-only access before install/upgrade.
   enabled: false
   image:
-    # -- mysql CLI image. Defaults to the official, actively-maintained, freely-pullable image -- unlike mssql-otel/oracle-otel, which leave this blank.
-    repository: mysql
-    tag: "8.4"
+    # -- mysql CLI image. No default -- see README for why (mysql:8.4 is a candidate).
+    repository: ""
+    tag: ""
     pullPolicy: IfNotPresent
   mysqlAdmin:
     # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path. Must be able to CREATE USER and GRANT SELECT on performance_schema.
     existingSecret: ""
-  # -- Also grants UPDATE ON performance_schema.setup_consumers, needed for wait-time data. Optional per the doc.
-  enableWaitTimeMetrics: false
+  # -- Grants UPDATE ON performance_schema.setup_consumers, so the receiver can enable the events_waits_current
+  # consumer itself on reconnect -- needed for lock-wait duration tracking, since that consumer resets on
+  # restart/failover (RDS's documented workaround; see "Enable lock-wait duration tracking" in New Relic's
+  # mysql/advanced-config docs). Set to false to skip it.
+  enableWaitTimeMetrics: true
 
 resources: {}
 nodeSelector: {}

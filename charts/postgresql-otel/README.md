@@ -169,33 +169,33 @@ reasonable choice:
 --set setupJob.image.repository=postgres --set setupJob.image.tag=16
 ```
 
-Two optional extras, applied to every database in every instance
-identically (single shared toggle, not per-instance or per-database):
+Two extras, applied to every database in every instance identically
+(single shared toggle, not per-instance or per-database):
 
-- `setupJob.enablePgvector: true` also runs
+- `setupJob.enablePgvector: true` (default `false`, opt-in) also runs
   `CREATE EXTENSION IF NOT EXISTS vector` in each database, for vector
   metrics (the `l1`/`hamming`/`jaccard` distance functions need pgvector
   0.7.0+).
-- `setupJob.enableExplainPermissions: true` also creates the
-  `otel.explain_statement` `SECURITY DEFINER` function and grants
-  `EXECUTE` on it, letting the receiver run `EXPLAIN` against
-  locking/write queries without holding write grants.
+- `setupJob.enableExplainPermissions` (default `true`, opt-out) also
+  creates the `otel.explain_statement` `SECURITY DEFINER` function and
+  grants `EXECUTE` on it, letting the receiver run `EXPLAIN` against
+  locking/write queries without holding write grants. Set to `false` to
+  skip creating it.
 
-### You usually don't need to set `explainFunctionName`
+### You usually don't need to set `explain_function_name`
 
 The receiver's **own default** for `top_query_collection.
 explain_function_name` is already `otel.explain_statement` — the exact
-function `setupJob.enableExplainPermissions` creates. In single-instance
-mode, this chart omits the key from the rendered config when
-`postgresql.topQueryCollection.explainFunctionName` is empty (the
-default), so the receiver's default applies with no extra configuration.
-In multi-instance mode this isn't a values.yaml field at all — use
-`additionalReceiverConfig` if you need a non-default function name there.
+function `setupJob.enableExplainPermissions` creates. This isn't a
+values.yaml field in either single- or multi-instance mode — it's a
+fixed default the receiver already applies with no extra configuration.
+Use `additionalReceiverConfig.top_query_collection.explain_function_name`
+if you need a non-default function name.
 
 The receiver probes for the function's availability per database and
 re-checks periodically (the receiver's own default caching behavior;
 this chart doesn't expose a value to override it), falling back to
-inline `EXPLAIN` when it isn't there — so leaving
+inline `EXPLAIN` when it isn't there — so setting
 `enableExplainPermissions: false` is safe and simply means write and
 locking statements don't get query plans.
 
@@ -326,15 +326,17 @@ Each entry requires `name` (unique within the release), `server`,
 plain-value credential path in this mode, unlike `postgresql:`. `port`
 defaults to `5432` per entry if not set.
 
-Everything else that's configurable for the single-instance chart
-(`collectionInterval`, `events`, `topQueryCollection`,
-`querySampleCollection`, `metrics`, `excludeDatabases`) is **not
-configurable at all in multi-instance mode** — every entry shares the
-same fixed defaults (identical values to `postgresql:`'s own defaults),
-matching `oracle-otel`/`mysql-otel`'s pattern of hardcoded shared scrape
-behavior rather than per-field values.yaml knobs. Use
-`additionalReceiverConfig` if you need to override any of it — same
-global escape hatch as single-instance mode. A single-entry `instances`
+`collectionInterval` and `excludeDatabases`, which **are** configurable
+for the single-instance chart, are **not configurable at all in
+multi-instance mode** — every entry shares the same fixed defaults
+(`15s` collection interval, `[rdsadmin]` excluded on RDS). The
+query-sampling/top-query events, `topQueryCollection`,
+`querySampleCollection`, and per-metric toggles aren't `values.yaml`
+fields in *either* mode — both share the same hardcoded defaults,
+matching `oracle-otel`/`mssql-otel`'s pattern of fixed scrape behavior
+rather than per-field values.yaml knobs. Use `additionalReceiverConfig`
+if you need to override any of this — same global escape hatch in both
+modes. A single-entry `instances`
 list is valid too (e.g. as a values-file template meant to scale from 1
 to N) — it just renders as a plain receiver with none of the sharing
 behavior described next, since there's nothing to share with.
@@ -372,7 +374,7 @@ Shared across both modes:
 | `additionalReceiverConfig` | Merged into every `nrpostgresql` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated user/grant/extension Job(s) | `false` |
 | `setupJob.image.repository` / `setupJob.image.tag` | `psql`-capable image, shared across every Job — **required** when enabled, no default | `""` |
-| `setupJob.enableExplainPermissions` | Also create `otel.explain_statement` + grant `EXECUTE`, every entry in multi mode | `false` |
+| `setupJob.enableExplainPermissions` | Create `otel.explain_statement` + grant `EXECUTE`, every entry in multi mode; set `false` to opt out | `true` |
 | `setupJob.enablePgvector` | Also create the `vector` extension in each database, every entry in multi mode | `false` |
 | `resources` / `nodeSelector` / `tolerations` / `affinity` | Standard Pod scheduling/sizing fields | `{}` / `{}` / `[]` / `{}` |
 
@@ -388,11 +390,13 @@ Single-instance schema (`postgresql:`, ignored when `postgresqlMulti.enabled: tr
 | `postgresql.databases` | **Required, non-empty list** of databases to monitor on this one instance | `[]` |
 | `postgresql.excludeDatabases` | Databases excluded from cluster-wide scans | `[rdsadmin]` |
 | `postgresql.collectionInterval` | Scrape interval | `15s` |
-| `postgresql.events.querySample.enabled` / `topQuery.enabled` | Enable the query-sample/top-query log events | `true` / `true` |
-| `postgresql.topQueryCollection.*` | `maxRowsPerQuery`, `topNQuery`, `collectionInterval`, `allowedCommentKeys`, `explainFunctionName` | see `values.yaml` |
-| `postgresql.querySampleCollection.*` | `maxRowsPerQuery`, `allowedCommentKeys` | `1000` / `[nr_service_guid]` |
-| `postgresql.metrics.*.enabled` | `databaseLocks`, `deadlocks`, `functionCalls`, `queryConflicts`, `sequentialScans`, `tempIo`, `tempFiles` | `true` each |
 | `setupJob.postgresAdmin.existingSecret` | Admin Secret (keys `username`, `password`) — required if `setupJob.enabled`; superuser or `rds_superuser` | `""` |
+
+Query-sampling/top-query events, `top_query_collection`, `query_sample_collection`, and the per-metric
+`postgresql.*` enable toggles are **not** `values.yaml` fields (single- or multi-instance) — they're fixed
+defaults shared by both modes (matches oracle-otel/mssql-otel's pattern). Use `additionalReceiverConfig` to
+override any of them, e.g. `additionalReceiverConfig.metrics."postgresql.deadlocks".enabled=false` or
+`additionalReceiverConfig.top_query_collection.explain_function_name=my_fn`.
 
 Multi-instance schema (`postgresqlMulti:`, mutually exclusive with `postgresql.*`):
 
