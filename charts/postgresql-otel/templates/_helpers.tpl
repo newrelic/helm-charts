@@ -141,11 +141,11 @@ mixing with the single-instance postgresql.server.
 {{- end -}}
 
 {{/*
-Fixed scrape-behavior defaults for every postgresqlMulti entry -- same values as the single-instance postgresql:
-block's own defaults, but not user-configurable in multi-instance mode (matches oracle-otel/mysql-otel's pattern
-of hardcoded shared defaults rather than per-field values.yaml knobs). additionalReceiverConfig remains the one
-escape hatch for overriding any of this. exclude_databases (RDS-only) is added separately in configmap-multi.yaml,
-since it depends on postgresqlMulti.topology.
+Fixed scrape-behavior defaults shared by both single-instance (configmap.yaml) and multi-instance
+(configmap-multi.yaml) rendering -- not user-configurable via values.yaml in either mode (matches
+oracle-otel/mssql-otel's pattern of hardcoded shared defaults rather than per-field values.yaml knobs).
+additionalReceiverConfig remains the one escape hatch for overriding any of this. exclude_databases (RDS-only)
+is layered on separately by each caller, since it depends on topology.
 */}}
 {{- define "postgresql-otel.multi.receiverDefaults" -}}
 transport: tcp
