@@ -10,7 +10,7 @@ set:
   mssql.username: "nr_monitor"
   mssql.password: "s3cret"
   mssql.collectionInterval: "30s"
-  otlpEndpoint: "https://otlp.nr-data.net:4318"
+  otlpEndpoint: "otlp.nr-data.net:4317"
 tests:
   - it: fails when mssql.topology is unset or invalid
     set:
@@ -18,12 +18,19 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "mssql.topology must be one of: self-hosted, rds"
-  - it: fails when otlpEndpoint has no scheme
+  - it: fails when otlpEndpoint is unset
     set:
-      otlpEndpoint: "otlp.nr-data.net:4318"
+      otlpEndpoint: ""
     asserts:
       - failedTemplate:
-          errorMessage: 'otlpEndpoint must include a scheme (http:// or https://). Got: "otlp.nr-data.net:4318". New Relic''s US OTLP/HTTP endpoint is https://otlp.nr-data.net:4318'
+          errorMessage: "otlpEndpoint is required"
+  - it: tolerates a scheme'd otlpEndpoint (gRPC client strips it and enables TLS)
+    set:
+      otlpEndpoint: "https://otlp.nr-data.net:4317"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: https://otlp\\.nr-data\\.net:4317"
   - it: renders the nrsqlserver receiver's discrete connection fields with env-substitution credentials, never literal ones
     asserts:
       - matchRegex:
@@ -65,7 +72,7 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "endpoint: https://otlp\\.nr-data\\.net:4318"
+          pattern: "endpoint: otlp\\.nr-data\\.net:4317"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "retry_on_failure:"

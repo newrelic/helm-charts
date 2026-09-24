@@ -18,12 +18,19 @@ tests:
     asserts:
       - failedTemplate:
           errorMessage: "postgresql.topology must be one of: self-hosted, rds"
-  - it: fails when otlpEndpoint has a scheme
+  - it: fails when otlpEndpoint is unset
+    set:
+      otlpEndpoint: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "otlpEndpoint is required"
+  - it: tolerates a scheme'd otlpEndpoint (gRPC client strips it and enables TLS)
     set:
       otlpEndpoint: "https://otlp.nr-data.net:4318"
     asserts:
-      - failedTemplate:
-          errorMessage: "otlpEndpoint must be a bare host:port with no scheme -- the otlp (gRPC) exporter rejects a URL, unlike mssql-otel's otlphttp. Got: \"https://otlp.nr-data.net:4318\". New Relic's US OTLP/gRPC endpoint is otlp.nr-data.net:4317"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: \"https://otlp\\.nr-data\\.net:4318\""
   - it: renders the nrpostgresql receiver with env-substitution credentials, never literal ones
     asserts:
       - matchRegex:

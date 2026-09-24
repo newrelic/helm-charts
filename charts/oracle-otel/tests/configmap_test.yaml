@@ -205,7 +205,7 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "oracle\\.db\\.pdb"
-  - it: uses the nroracledb/adb receiver key and the otlphttp/newrelic exporter, plus disables collector self-metrics
+  - it: uses the nroracledb/adb receiver key and the otlp/newrelic exporter, plus disables collector self-metrics
     set:
       oracle.topology: "adb"
     asserts:
@@ -217,13 +217,13 @@ tests:
           pattern: "receivers:\\s*\\[nroracledb/adb\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "otlphttp/newrelic:"
+          pattern: "otlp/newrelic:"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "exporters:\\s*\\[otlphttp/newrelic\\]"
+          pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "otlp/newrelic:"
+          pattern: "otlphttp/newrelic:"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "telemetry:\\s*\\n\\s*metrics:\\s*\\n\\s*level: none"

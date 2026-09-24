@@ -1,5 +1,6 @@
 {{- if .Values.postgresqlMulti.enabled }}
 {{- include "postgresql-otel.validate.postgresqlMulti" . -}}
+{{- include "postgresql-otel.validate.otlpEndpoint" . -}}
 {{- $sharedDefaults := include "postgresql-otel.multi.receiverDefaults" . | fromYaml -}}
 {{- if eq .Values.postgresqlMulti.topology "rds" -}}
 {{- $sharedDefaults = set $sharedDefaults "exclude_databases" (list "rdsadmin") -}}
