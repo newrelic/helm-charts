@@ -88,7 +88,7 @@ tests:
           path: spec.template.spec.containers[0].args[0]
           pattern: "-d \"appdb2\""
         documentIndex: 1
-  - it: does not create pgvector/explain-function extensions by default
+  - it: does not create the pgvector extension by default
     set:
       setupJob.enabled: true
     asserts:
@@ -96,6 +96,23 @@ tests:
           path: spec.template.spec.containers[0].args[0]
           pattern: "CREATE EXTENSION IF NOT EXISTS vector"
         documentIndex: 0
+  - it: creates the explain-function for every database in every instance by default
+    set:
+      setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb1\"[\\s\\S]*explain_statement"
+        documentIndex: 0
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "-d \"appdb2\"[\\s\\S]*explain_statement"
+        documentIndex: 1
+  - it: omits the explain-function when enableExplainPermissions is set to false
+    set:
+      setupJob.enabled: true
+      setupJob.enableExplainPermissions: false
+    asserts:
       - notMatchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "explain_statement"

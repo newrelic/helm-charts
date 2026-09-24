@@ -26,38 +26,6 @@ postgresql:
     - rdsadmin
   # -- How often the receiver scrapes PostgreSQL.
   collectionInterval: 15s
-  events:
-    querySample:
-      enabled: true
-    topQuery:
-      enabled: true
-  topQueryCollection:
-    maxRowsPerQuery: 1000
-    topNQuery: 200
-    collectionInterval: 60s
-    allowedCommentKeys:
-      - nr_service_guid
-    # -- Name of a SECURITY DEFINER helper function the receiver calls to EXPLAIN locking/write queries. Left empty, this key is omitted from the rendered config and the receiver falls back to its OWN default, which is already "otel.explain_statement" -- so the function setupJob.enableExplainPermissions creates is what the receiver looks for out of the box. Only set this to point at a differently-named function.
-    explainFunctionName: ""
-  querySampleCollection:
-    maxRowsPerQuery: 1000
-    allowedCommentKeys:
-      - nr_service_guid
-  metrics:
-    databaseLocks:
-      enabled: true
-    deadlocks:
-      enabled: true
-    functionCalls:
-      enabled: true
-    queryConflicts:
-      enabled: true
-    sequentialScans:
-      enabled: true
-    tempIo:
-      enabled: true
-    tempFiles:
-      enabled: true
 
 postgresqlMulti:
   # -- Enables multi-instance mode: one release monitors every entry in postgresqlMulti.instances from a single collector pod.
@@ -69,8 +37,8 @@ postgresqlMulti:
   # databases (non-empty list of database names on that instance -- same requirement as postgresql.databases today, just per-instance).
   # port defaults to 5432. postgresAdmin.existingSecret is required per entry only when setupJob.enabled is true.
   # Scrape-behavior settings (collectionInterval, events, topQueryCollection, querySampleCollection, metrics, excludeDatabases) are
-  # NOT configurable per entry or at the postgresqlMulti level -- they're fixed defaults shared by every entry (same defaults as the
-  # postgresql: block above). Use additionalReceiverConfig to override any of them if you need to.
+  # NOT configurable per entry or at the postgresqlMulti level -- they're the same fixed defaults used in single-instance mode
+  # too (see postgresql-otel.multi.receiverDefaults in _helpers.tpl). Use additionalReceiverConfig to override any of them if you need to.
   instances: []
 
 # -- Required. New Relic OTLP/gRPC endpoint for the account's region, bare host:port with NO scheme, e.g. otlp.nr-data.net:4317
@@ -97,8 +65,8 @@ setupJob:
   postgresAdmin:
     # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path. Must be a superuser (self-hosted) or rds_superuser-equivalent (RDS) able to CREATE USER, CREATE SCHEMA, and CREATE EXTENSION.
     existingSecret: ""
-  # -- Also creates the otel.explain_statement SECURITY DEFINER function and grants EXECUTE on it. Set postgresql.topQueryCollection.explainFunctionName to actually use it.
-  enableExplainPermissions: false
+  # -- Creates the otel.explain_statement SECURITY DEFINER function and grants EXECUTE on it -- the exact name the receiver's own top_query_collection.explain_function_name default already looks for. Set to false to skip it. Set additionalReceiverConfig.top_query_collection.explain_function_name to point at a differently-named function instead.
+  enableExplainPermissions: true
   # -- Also creates the pgvector extension in each monitored database, for vector metrics. Optional per the doc.
   enablePgvector: false
 
