@@ -1,17 +1,17 @@
 # Auto Labeler configuration
-#autolabeler:
-#  - label: 'release/breaking'
-#    title:
-#      - '/!:/'
-#  - label: 'release/feature'
-#    title:
-#      - '/^feat/i'
-#  - label: 'release/fix'
-#    title:
-#      - '/^fix/i'
-#  - label: 'release/other'
-#    title:
-#      - '/^(build|chore|ci|docs|perf|refactor|revert|style|test)/i'
+autolabeler:
+  - label: 'release/breaking'
+    title:
+      - '/!:/'
+  - label: 'release/feature'
+    title:
+      - '/^feat/i'
+  - label: 'release/fix'
+    title:
+      - '/^fix/i'
+  - label: 'release/other'
+    title:
+      - '/^(build|chore|ci|docs|perf|refactor|revert|style|test)/i'
 
 # Release Drafter configuration
 #name-template: 'v$RESOLVED_VERSION 🌈'
@@ -22,26 +22,26 @@ categories:
       - label: 'nr-k8s-otel-collector'
   - type: 'pre-exclude'
     when:
-      - label: 'release/skip'
+      - labels:
+          - 'release/skip'
   - title: '💥 Breaking Changes'
     semver-increment: major
     when:
-      - conventional:
-          type: 'feat'
-          breaking: true
+      - labels:
+          - 'release/breaking'
   - title: '🚀 Features'
     semver-increment: minor
     when:
-      - conventional:
-          type: 'feat'
+      - labels:
+          - 'release/feature'
   - title: '🐛 Bug Fixes'
     when:
-      - conventional:
-          type: 'fix'
+      - labels: 
+          - 'release/fix'
   - title: '📝 Other'
     when:
-      - conventional:
-          type: 'build'
+      - labels:
+          - 'release/other'
 
 change-template: '- $TITLE (#$NUMBER) $AUTHORS'
 change-title-escapes: '\<*_&'
