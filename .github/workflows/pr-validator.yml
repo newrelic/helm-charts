@@ -1,0 +1,65 @@
+name: Validate PR
+on:
+  pull_request
+
+permissions:
+  contents: read
+
+jobs:
+  label-charts:
+    name: Label PR with changed charts
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu
+    steps:
+      - name: Remove labels in preparation for Autolabeler
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Fetch all existing labels, join them by commas, and pass them to the remove command
+          LABELS=$(gh pr view "$PR_NUMBER" --json labels --jq '[.labels[].name] | join(",")')
+          
+          if [ -n "$LABELS" ]; then
+            gh pr edit "$PR_NUMBER" --remove-label "$LABELS"
+            echo "Successfully removed labels: $LABELS"
+          else
+            echo "No labels found to remove."
+          fi
+
+      - uses: release-drafter/release-drafter/autolabeler@v7
+        name: Run Autolabeler for changed charts
+        with:
+          config-name: 'chart-autolabeler-config.yml'
+
+      - name: Apply Fallback Label
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Fetch existing labels as a JSON array
+          LABEL_COUNT=$(gh pr view "PR_NUMBER" --json labels --jq '.labels | length')
+          
+          # Check if the PR lacks chart labels
+          if [ "$LABEL_COUNT" -eq 0 ]; then
+            echo "No labels found. Applying fallback label..."
+            gh pr edit "$PR_NUMBER" --add-label "needs-triage"
+          else
+            echo "PR already labeled correctly."
+          fi
+  label-change-type-k8s-otel:
+    if: contains(github.event.pull_request.labels.*.name, 'nr-k8s-otel-collector')
+    name: Label PR with change type
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu
+    needs: [ label-charts ]
+    steps:
+      - uses: release-drafter/release-drafter/autolabeler@v7
+        name: Run Autolabeler for change type
+        with:
+          config-name: 'nr-k8s-otel-collector-release-drafter.yml'
+      - uses: release-drafter/release-drafter/check-pr@v7
+        name: Verify PR has a matched release category
+        with:
+          config-name: 'nr-k8s-otel-collector-release-drafter.yml'
