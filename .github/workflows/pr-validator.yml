@@ -17,7 +17,7 @@ jobs:
       - name: Remove labels in preparation for Autolabeler
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.event.repository }}
+          GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Fetch all existing labels, join them by commas, and pass them to the remove command
@@ -40,7 +40,7 @@ jobs:
         env:
           LABELS: ${{ steps.chart-autolabeler.outputs.labels }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_REPO: ${{ github.event.repository }}
+          GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           if [ -z "$LABELS" ]; then
