@@ -36,7 +36,7 @@ jobs:
         with:
           config-name: 'chart-autolabeler-config.yml'
 
-      - name: Apply Fallback Label
+      - name: Apply fallback label
         env:
           LABELS: ${{ steps.chart-autolabeler.outputs.labels }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -61,7 +61,7 @@ jobs:
         name: Run Autolabeler for change type
         with:
           config-name: 'nr-k8s-otel-collector-release-drafter.yml'
-      - uses: release-drafter/release-drafter/check-pr@v7
-        name: Verify PR has a matched release category
+      - name: Verify PR has a matched release category
+        uses: release-drafter/release-drafter/check-pr@v7
         with:
           config-name: 'nr-k8s-otel-collector-release-drafter.yml'
