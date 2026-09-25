@@ -11,10 +11,13 @@ jobs:
     permissions:
       pull-requests: write
     runs-on: ubuntu-latest
+    outputs:
+      changed-charts: ${{ steps.chart-autolabeler.outputs.labels }}
     steps:
       - name: Remove labels in preparation for Autolabeler
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           # Fetch all existing labels, join them by commas, and pass them to the remove command
@@ -27,28 +30,27 @@ jobs:
             echo "No labels found to remove."
           fi
 
-      - uses: release-drafter/release-drafter/autolabeler@v7
-        name: Run Autolabeler for changed charts
+      - name: Run Autolabeler for changed charts
+        id: chart-autolabeler
+        uses: release-drafter/release-drafter/autolabeler@v7
         with:
           config-name: 'chart-autolabeler-config.yml'
 
       - name: Apply Fallback Label
         env:
+          LABELS: ${{ steps.chart-autolabeler.outputs.labels }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.event.repository.name }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          # Fetch existing labels as a JSON array
-          LABEL_COUNT=$(gh pr view "PR_NUMBER" --json labels --jq '.labels | length')
-          
-          # Check if the PR lacks chart labels
-          if [ "$LABEL_COUNT" -eq 0 ]; then
+          if [ -z "$LABELS" ]; then
             echo "No labels found. Applying fallback label..."
             gh pr edit "$PR_NUMBER" --add-label "needs-triage"
           else
             echo "PR already labeled correctly."
           fi
   label-change-type-k8s-otel:
-    if: contains(github.event.pull_request.labels.*.name, 'nr-k8s-otel-collector')
+    if: contains(needs.label-charts.outputs.changed-charts, 'nr-k8s-otel-collector')
     name: Label PR with change type
     permissions:
       pull-requests: write
