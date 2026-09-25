@@ -62,6 +62,12 @@ jobs:
         with:
           config-name: 'nr-k8s-otel-collector-release-drafter.yml'
       - name: Verify PR has a matched release category
-        uses: release-drafter/release-drafter/check-pr@f259c0ada5376557cd49e74487398301fab5287a
+        id: verify-release-category
+        uses: release-drafter/release-drafter@v7
+#        uses: release-drafter/release-drafter/check-pr@f259c0ada5376557cd49e74487398301fab5287a
         with:
           config-name: 'nr-k8s-otel-collector-release-drafter.yml'
+      - name: Print Changelog Category
+        run: |
+          echo "Changelog Category: ${{ steps.verify-release-category.outputs.resolved_version }}"
+          echo "Changelog Category: ${{ steps.verify-release-category.outputs.body }}"

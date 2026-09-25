@@ -1,27 +1,59 @@
 # Auto Labeler configuration
-autolabeler:
-  - label: 'release/breaking'
-    title:
-      - '/!:/'
-  - label: 'release/feature'
-    title:
-      - '/^feat/i'
-  - label: 'release/fix'
-    title:
-      - '/^fix/i'
-  - label: 'release/other'
-    title:
-      - '/^(build|chore|ci|docs|perf|refactor|revert|style|test)/i'
+#autolabeler:
+#  - label: 'release/breaking'
+#    title:
+#      - '/!:/'
+#  - label: 'release/feature'
+#    title:
+#      - '/^feat/i'
+#  - label: 'release/fix'
+#    title:
+#      - '/^fix/i'
+#  - label: 'release/other'
+#    title:
+#      - '/^(build|chore|ci|docs|perf|refactor|revert|style|test)/i'
 
 # Release Drafter configuration
+#name-template: 'v$RESOLVED_VERSION 🌈'
+#tag-template: 'v$RESOLVED_VERSION'
 categories:
+  - type: 'pre-include'
+    when:
+      - label: 'nr-k8s-otel-collector'
+  - type: 'pre-exclude'
+    when:
+      - label: 'release/skip'
   - title: '💥 Breaking Changes'
-    label: 'release/breaking'
+    semver-increment: major
+    when:
+      - conventional:
+          type: 'feat'
+          breaking: true
   - title: '🚀 Features'
-    label: 'release/feature'
+    semver-increment: minor
+    when:
+      - conventional:
+          type: 'feat'
   - title: '🐛 Bug Fixes'
-    label: 'release/fix'
+    when:
+      - conventional:
+          type: 'fix'
   - title: '📝 Other'
-    label: 'release/other'
-exclude-labels:
-  - 'release/skip'
+    when:
+      - conventional:
+          type: 'build'
+
+change-template: '- $TITLE (#$NUMBER) $AUTHORS'
+change-title-escapes: '\<*_&'
+replacers:
+#  # Remove conventional commit prefix
+#  - search: '/^- [a-zA-Z]+(\([a-zA-Z]+\))?!?:\s*/gm'
+#    replace: '- '
+  # Uppercase the first letter of each changelog entry
+  - search: '/- ([a-z])/g'
+    replace: '- \u$1'
+
+template: |
+  ## Changes
+
+  $CHANGES
