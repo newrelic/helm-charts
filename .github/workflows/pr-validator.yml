@@ -58,13 +58,18 @@ jobs:
     needs: [ label-charts ]
     steps:
       - name: Run Autolabeler for change type
+        id: change-type-autolabeler
         uses: release-drafter/release-drafter/autolabeler@v7
         with:
           config-name: 'nr-k8s-otel-collector-release-drafter.yml'
       - name: Verify PR has a matched release category
-        uses: release-drafter/release-drafter/check-pr@f259c0ada5376557cd49e74487398301fab5287a
-        with:
-          config-name: 'nr-k8s-otel-collector-release-drafter.yml'
+        env:
+          LABELS: ${{ steps.change-type-autolabeler.outputs.labels }}
+        run: |
+          if [ -z "$LABELS" ]; then
+            echo "No change label found. Please use conventional commits in your PR title."
+            exit 1
+          fi
       - name: Generate changelog
         id: generate-changelog
         uses: release-drafter/release-drafter@v7
