@@ -1,0 +1,22 @@
+name: release-otel.yml
+on: pull_request
+
+jobs:
+  generate-changelog-k8s-otel:
+#    if: contains(needs.label-charts.outputs.changed-charts, 'nr-k8s-otel-collector')
+    name: Generate changelog for nr-k8s-otel-collector
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate changelog
+        id: generate-changelog
+        uses: release-drafter/release-drafter@v7
+        with:
+          config-name: 'nr-k8s-otel-collector-release-drafter.yml'
+          publish: 'false'
+          dry-run: 'true'
+      - name: Print changelog details
+        run: |
+          echo "Changelog Category: ${{ steps.generate-changelog.outputs.resolved_version }}"
+          echo "Changelog Body: ${{ steps.generate-changelog.outputs.body }}"

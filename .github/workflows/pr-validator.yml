@@ -1,0 +1,109 @@
+name: Validate PR
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  label-charts:
+    name: Label PR with changed charts
+    if: github.event.action != 'labeled' && github.event.action != 'unlabeled'
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Remove fallback label in preparation for labeler
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr edit "$PR_NUMBER" --remove-label "triage/needs-chart"
+
+      - name: Run labeler for changed charts
+        id: chart-labeler
+        uses: actions/labeler@v7
+        with:
+          configuration-path: '.github/chart-labels.yml'
+          sync-labels: 'true'
+
+      - name: Apply fallback label
+        env:
+          LABELS: ${{ steps.chart-labeler.outputs.all-labels }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ -z "$LABELS" ]; then
+            echo "No labels found. Applying fallback label..."
+            gh pr edit "$PR_NUMBER" --add-label "triage/needs-chart"
+          else
+            echo "PR already labeled correctly."
+          fi
+
+  validate-labels:
+    name: Validate PR labels
+    needs: [label-charts]
+    if: always() && (needs.label-charts.result == 'success' || needs.label-charts.result == 'skipped')
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Fetch current PR labels
+        id: fetch-pr-labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          echo "labels=$(gh pr view "$PR_NUMBER" --json labels --jq '[.labels[].name]')" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure exactly one chart label or 'core' is present
+        env:
+          PR_LABELS: ${{ steps.fetch-pr-labels.outputs.labels }}
+        run: |
+          VALID_LABELS=$(yq eval -o=json 'keys' .github/chart-labels.yml | jq '. + ["core"]')
+
+          # Remove valid labels from PR labels, then remove the result from the original PR labels to get the intersection
+          MATCHED_LABELS=$(jq -n --argjson pr "$PR_LABELS" --argjson valid "$VALID_LABELS" '$pr - ($pr - $valid)')
+          MATCH_COUNT=$(echo "$MATCHED_LABELS" | jq 'length')
+
+          if [ "$MATCH_COUNT" -ne 1 ]; then
+            echo "Expected exactly one chart label or 'core' to be present, found $MATCH_COUNT: $(echo "$MATCHED_LABELS" | jq -r 'join(", ")')"
+            exit 1
+          fi
+          echo "Exactly one chart label or 'core' is present: $(echo "$MATCHED_LABELS" | jq -r '.[0]')"
+
+      - name: Ensure exactly one change type label or 'skip-changelog' is present
+        env:
+          PR_LABELS: ${{ steps.fetch-pr-labels.outputs.labels }}
+        run: |
+          VALID_LABELS='["type/breaking", "type/feature", "type/fix", "type/maintenance", "skip-changelog"]'
+
+          # Remove valid labels from PR labels, then remove the result from the original PR labels to get the intersection
+          MATCHED_LABELS=$(jq -n --argjson pr "$PR_LABELS" --argjson valid "$VALID_LABELS" '$pr - ($pr - $valid)')
+          MATCH_COUNT=$(echo "$MATCHED_LABELS" | jq 'length')
+
+          if [ "$MATCH_COUNT" -ne 1 ]; then
+            echo "Expected exactly one of $(echo "$VALID_LABELS" | jq -r 'join(", ")') to be present, found $MATCH_COUNT: $(echo "$MATCHED_LABELS" | jq -r 'join(", ")')"
+            exit 1
+          fi
+          echo "Exactly one change type label or 'skip-changelog' is present: $(echo "$MATCHED_LABELS" | jq -r '.[0]')"
+
+      - name: Ensure 'do-not-merge' label is not present
+        env:
+          PR_LABELS: ${{ steps.fetch-pr-labels.outputs.labels }}
+        run: |
+          HAS_DO_NOT_MERGE=$(echo "$PR_LABELS" | jq 'any(. == "do-not-merge")')
+
+          if [ "$HAS_DO_NOT_MERGE" = "true" ]; then
+            echo "'do-not-merge' label is present."
+            exit 1
+          fi
+          echo "'do-not-merge' label is not present."
+      
