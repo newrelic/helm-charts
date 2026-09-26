@@ -260,9 +260,7 @@ documented MySQL multi-receiver pattern
 that processor's `server.address`/`server.port` resource attributes are
 only correct for the *first* entry in `mysqlMulti.databases` — every other
 entry's metrics/events carry the first entry's server/port. Same accepted
-tradeoff as `oracle-otel`'s `oracleMulti` — see
-`docs/superpowers/specs/2026-09-16-mysql-otel-multi-instance-design.md` for
-the full rationale.
+tradeoff as `oracle-otel`'s `oracleMulti`.
 
 ## Values
 
@@ -272,7 +270,7 @@ Shared across both modes:
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
 | `image.tag` | Collector image tag | `2.4.0` |
-| `otlpEndpoint` | New Relic OTLP/gRPC endpoint, bare host:port, no scheme | `""` |
+| `otlpEndpoint` | New Relic OTLP/gRPC endpoint. Bare host:port is recommended (e.g. `otlp.nr-data.net:4317`); a scheme'd URL is tolerated too | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrmysql` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated user-creation Job(s) | `false` |

@@ -1,5 +1,6 @@
 {{- if .Values.mysqlMulti.enabled }}
 {{- include "mysql-otel.validate.mysqlMulti" . -}}
+{{- include "mysql-otel.validate.otlpEndpoint" . -}}
 {{- $sharedDefaults := include "mysql-otel.multi.receiverDefaults" . | fromYaml -}}
 {{- $databases := .Values.mysqlMulti.databases -}}
 {{- $multiEntry := gt (len $databases) 1 -}}
