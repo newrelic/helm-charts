@@ -1,18 +1,3 @@
-# Auto Labeler configuration
-autolabeler:
-  - label: 'release/breaking'
-    title:
-      - '/!:/'
-  - label: 'release/feature'
-    title:
-      - '/^feat/i'
-  - label: 'release/fix'
-    title:
-      - '/^fix/i'
-  - label: 'release/other'
-    title:
-      - '/^(build|chore|ci|docs|perf|refactor|revert|style|test)/i'
-
 # Release Drafter configuration
 tag-prefix: 'nr-k8s-otel-collector-'
 categories:
@@ -22,25 +7,25 @@ categories:
   - type: 'pre-exclude'
     when:
       - labels:
-          - 'release/skip'
+          - 'skip-changelog'
   - title: '💥 Breaking Changes'
     semver-increment: major
     when:
       - labels:
-          - 'release/breaking'
+          - 'type/breaking'
   - title: '🚀 Features'
     semver-increment: minor
     when:
       - labels:
-          - 'release/feature'
+          - 'type/feature'
   - title: '🐛 Bug Fixes'
     when:
       - labels:
-          - 'release/fix'
-  - title: '📝 Other'
+          - 'type/fix'
+  - title: '🧰 Maintenance'
     when:
       - labels:
-          - 'release/other'
+          - 'type/maintenance'
 
 change-template: '- $TITLE (#$NUMBER) $AUTHORS'
 change-title-escapes: '\<*_&'
