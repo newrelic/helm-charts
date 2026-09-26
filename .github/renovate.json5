@@ -12,6 +12,23 @@
       "matchStrings": [
         "# renovate: chartName=(?<depName>\\S+)\\n[^:]+: (?<currentValue>\\S+)"
       ]
+    },
+    {
+      // Keep appVersion in sync with the newrelic/nrdot-collector image tag for the
+      // database NRDOT charts, since Renovate's default helm-values manager only
+      // bumps image.tag in values.yaml and doesn't touch Chart.yaml's appVersion.
+      "customType": "regex",
+      "fileMatch": [
+        "charts/mssql-otel/Chart.yaml",
+        "charts/mysql-otel/Chart.yaml",
+        "charts/postgresql-otel/Chart.yaml",
+        "charts/oracle-otel/Chart.yaml"
+      ],
+      "datasourceTemplate": "docker",
+      "depNameTemplate": "newrelic/nrdot-collector",
+      "matchStrings": [
+        "appVersion:\\s*[\"']?(?<currentValue>[^\"'\\n]+)[\"']?"
+      ]
     }
   ],
   "packageRules": [
@@ -88,6 +105,19 @@
       "matchFileNames": ["charts/agent-control-bootstrap/**"],
       "groupName": "agent-control-bootstrap dependencies",
       "groupSlug": "agent-control-bootstrap-dependencies"
+    },
+    {
+      // Group nrdot-collector image bumps (and the appVersion sync above) across all
+      // four database NRDOT charts into a single PR instead of one per chart.
+      "matchPackageNames": ["newrelic/nrdot-collector"],
+      "matchFileNames": [
+        "charts/mssql-otel/**",
+        "charts/mysql-otel/**",
+        "charts/postgresql-otel/**",
+        "charts/oracle-otel/**"
+      ],
+      "groupName": "nrdot-collector database charts",
+      "groupSlug": "nrdot-collector-database-charts"
     }
   ]
 }
