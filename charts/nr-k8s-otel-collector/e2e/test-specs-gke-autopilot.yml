@@ -1,0 +1,155 @@
+description: |
+  MANUAL GKE Autopilot variant confirmation for nr-k8s-otel-collector.
+  NOT wired into any .github/workflows/* — run only via ./e2e/run-gke-autopilot-e2e.sh against an
+  existing GKE Autopilot cluster, never minikube.
+
+  Four variants, each its own scenario, showing what each config knob buys on GKE Autopilot:
+    1. baseline    — provider=GKE_AUTOPILOT only. Kubelet/cAdvisor metrics with NO allowlist.
+    2. filesystem  — + gkeAutopilotAllowlist=true (PR #2426) + the hostnet-off CR.
+                     Adds system.filesystem.*.
+    3. atp         — + enable_atp=true. Adds the process.* family.
+    4. node        — + daemonset.hostPID/hostNetwork=true (PR #2403) + the hostnet-on CR.
+                     Re-scopes system.network.* pod->node and adds partial process.cpu.time.
+
+  The runner exports ${LICENSE_KEY} and ${EXTRA_HELM_ARGS} (--set global.nrStaging=true when
+  REGION=Staging, plus any collector image override).
+
+  Query scoping: the e2e-action ALWAYS appends " WHERE <custom_test_key> = '<SCENARIO_TAG>'" to every
+  query. custom_test_key is k8s.cluster.name (the OTel-native resource attribute; global.cluster sets
+  it to the scenario tag). Queries use filter(...) so they carry NO top-level WHERE of their own —
+  the appended clause is the only WHERE (avoids invalid double-WHERE).
+
+custom_test_key: k8s.cluster.name
+
+scenarios:
+  # ===========================================================================
+  # 1) BASELINE — provider=GKE_AUTOPILOT only, no allowlist, no CR.
+  # ===========================================================================
+  - description: |
+      GKE Autopilot baseline: kubelet/cAdvisor metrics recovered by the config fix with no privilege
+      and no WorkloadAllowlist.
+    before:
+      - helm dependency update ../
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values-gke-autopilot-baseline.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} ${EXTRA_HELM_ARGS}
+      - sleep 90
+    after:
+      - kubectl logs -l app.kubernetes.io/name=nr-k8s-otel-collector --namespace nr-${SCENARIO_TAG} --all-containers --prefix=true
+      - kubectl get pods --namespace nr-${SCENARIO_TAG} -o wide
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
+      - kubectl delete namespace nr-${SCENARIO_TAG} --wait=false
+    tests:
+      nrqls:
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'k8s.node.%') AS 'k8s.node names'
+          expected_results:
+            - key: "k8s.node names"
+              lowerBoundedValue: 1.0
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'k8s.pod.%') AS 'k8s.pod names'
+          expected_results:
+            - key: "k8s.pod names"
+              lowerBoundedValue: 1.0
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'container.%') AS 'container names'
+          expected_results:
+            - key: "container names"
+              lowerBoundedValue: 1.0
+
+  # ===========================================================================
+  # 2) FILESYSTEM — gkeAutopilotAllowlist=true + hostnet-off CR (PR #2426).
+  # ===========================================================================
+  - description: |
+      GKE Autopilot filesystem tier: gkeAutopilotAllowlist keeps the /hostfs mount so
+      system.filesystem.* is collected. Requires the hostnet-off allowlist.
+    before:
+      - helm dependency update ../
+      - kubectl apply -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-hostnet-off.workloadallowlist.yaml
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values-gke-autopilot-filesystem.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} ${EXTRA_HELM_ARGS}
+      - sleep 90
+    after:
+      - kubectl logs -l app.kubernetes.io/name=nr-k8s-otel-collector --namespace nr-${SCENARIO_TAG} --all-containers --prefix=true
+      - kubectl get pods --namespace nr-${SCENARIO_TAG} -o wide
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
+      - kubectl delete namespace nr-${SCENARIO_TAG} --wait=false
+      - kubectl delete -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-hostnet-off.workloadallowlist.yaml
+    tests:
+      nrqls:
+        # the delta the allowlist buys
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'system.filesystem.%') AS 'system.filesystem names'
+          expected_results:
+            - key: "system.filesystem names"
+              lowerBoundedValue: 1.0
+        # baseline still present
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'k8s.node.%') AS 'k8s.node names'
+          expected_results:
+            - key: "k8s.node names"
+              lowerBoundedValue: 1.0
+
+  # ===========================================================================
+  # 3) ATP — filesystem + enable_atp=true. Adds the process.* family.
+  # ===========================================================================
+  - description: |
+      GKE Autopilot ATP tier: enable_atp adds the process metrics pipeline (process.* via /hostfs/proc).
+      Runs on the same hostnet-off allowlist (its ATP write mount is pre-listed).
+    before:
+      - helm dependency update ../
+      - kubectl apply -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-hostnet-off.workloadallowlist.yaml
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values-gke-autopilot-atp.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} ${EXTRA_HELM_ARGS}
+      - sleep 90
+    after:
+      - kubectl logs -l app.kubernetes.io/name=nr-k8s-otel-collector --namespace nr-${SCENARIO_TAG} --all-containers --prefix=true
+      - kubectl get pods --namespace nr-${SCENARIO_TAG} -o wide
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
+      - kubectl delete namespace nr-${SCENARIO_TAG} --wait=false
+      - kubectl delete -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-hostnet-off.workloadallowlist.yaml
+    tests:
+      nrqls:
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'process.%') AS 'process names'
+          expected_results:
+            - key: "process names"
+              lowerBoundedValue: 1.0
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'system.filesystem.%') AS 'system.filesystem names'
+          expected_results:
+            - key: "system.filesystem names"
+              lowerBoundedValue: 1.0
+
+  # ===========================================================================
+  # 4) NODE — filesystem + atp + daemonset.hostPID/hostNetwork=true (PR #2403).
+  #    Uses the hostnet-on CR (adds autogke-disallow-hostnamespaces).
+  #    REQUIRES PR #2403 (daemonset host-namespace flags) merged to pass: without it the chart
+  #    renders hostNetwork:false, which Warden EXACT-matches and denies under the node CR.
+  # ===========================================================================
+  - description: |
+      GKE Autopilot node tier: daemonset.hostPID/hostNetwork re-scope the host layer to the node —
+      system.network.* moves pod->node (node interfaces) and hostPID adds a partial process.cpu.time.
+      Requires the hostnet-on allowlist (hostpath + hostnamespaces exemptions). A passing
+      run also proves Warden admits the hostNetwork:true/hostPID:true shape under that CR.
+    before:
+      - helm dependency update ../
+      - kubectl apply -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-hostnet-on.workloadallowlist.yaml
+      - helm upgrade --install ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG} --create-namespace ../ --values e2e-values-gke-autopilot-node.yml --set global.licenseKey=${LICENSE_KEY} --set global.cluster=${SCENARIO_TAG} ${EXTRA_HELM_ARGS}
+      - sleep 90
+    after:
+      - kubectl logs -l app.kubernetes.io/name=nr-k8s-otel-collector --namespace nr-${SCENARIO_TAG} --all-containers --prefix=true
+      - kubectl get pods --namespace nr-${SCENARIO_TAG} -o wide
+      - helm uninstall ${SCENARIO_TAG} --namespace nr-${SCENARIO_TAG}
+      - kubectl delete namespace nr-${SCENARIO_TAG} --wait=false
+      - kubectl delete -f ../gke-autopilot-allowlists/newrelic-nr-k8s-otel-collector-hostnet-on.workloadallowlist.yaml
+    tests:
+      nrqls:
+        # node host layer: network re-scoped to the node + process metrics present
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'system.network.%') AS 'system.network names'
+          expected_results:
+            - key: "system.network names"
+              lowerBoundedValue: 1.0
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'process.%') AS 'process names'
+          expected_results:
+            - key: "process names"
+              lowerBoundedValue: 1.0
+        # hostpath tier still intact under the node CR
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'system.filesystem.%') AS 'system.filesystem names'
+          expected_results:
+            - key: "system.filesystem names"
+              lowerBoundedValue: 1.0
+        # baseline kubelet surface still present
+        - query: FROM Metric SELECT filter(uniqueCount(metricName), WHERE metricName LIKE 'k8s.node.%') AS 'k8s.node names'
+          expected_results:
+            - key: "k8s.node names"
+              lowerBoundedValue: 1.0
