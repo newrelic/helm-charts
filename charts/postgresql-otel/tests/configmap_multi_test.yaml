@@ -116,6 +116,11 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "enabled: true\\n\\s*top_query_collection:"
+  - it: renders resource_attributes with db.system.version once (on the anchor), right after events
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "events:\\s*\\n\\s*db\\.server\\.top_query:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.query_sample:\\s*\\n\\s*enabled: true\\s*\\n\\s*resource_attributes:\\s*\\n\\s*db\\.system\\.version:\\s*\\n\\s*enabled: true"
   - it: adds exclude_databases to the shared config for rds topology
     set:
       postgresqlMulti.topology: "rds"
@@ -134,14 +139,6 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "otlp/newrelic:[\\s\\S]*otlp/newrelic:"
-  - it: sets server.address/server.port to the first instance's values only (documented shared-pipeline limitation)
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "value: \"host1\\.example\\.internal\"\\n\\s*action: upsert"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "value: 5432\\n\\s*action: upsert"
   - it: does not use a YAML anchor/merge key when there's only one instance
     set:
       postgresqlMulti.instances:

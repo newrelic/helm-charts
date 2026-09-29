@@ -27,14 +27,6 @@ data:
 {{- include "postgresql-otel.renderReceiver" (dict "receiver" $receiver) }}
     processors:
       batch:
-      resource/postgresql:
-        attributes:
-          - key: server.address
-            value: {{ .Values.postgresql.server | quote }}
-            action: upsert
-          - key: server.port
-            value: {{ .Values.postgresql.port | int }}
-            action: upsert
     exporters:
       otlp/newrelic:
         endpoint: {{ .Values.otlpEndpoint | quote }}
@@ -50,10 +42,10 @@ data:
       pipelines:
         metrics:
           receivers: [nrpostgresql]
-          processors: [resource/postgresql, batch]
+          processors: [batch]
           exporters: [otlp/newrelic]
         logs:
           receivers: [nrpostgresql]
-          processors: [resource/postgresql, batch]
+          processors: [batch]
           exporters: [otlp/newrelic]
 {{- end }}

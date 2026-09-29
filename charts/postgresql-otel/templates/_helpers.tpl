@@ -155,6 +155,9 @@ events:
     enabled: true
   db.server.query_sample:
     enabled: true
+resource_attributes:
+  db.system.version:
+    enabled: true
 top_query_collection:
   max_rows_per_query: 1000
   top_n_query: 200
@@ -194,7 +197,7 @@ Args (single dict): .receiver -- the merged receiver config dict.
 {{- define "postgresql-otel.renderReceiver" -}}
 {{- $receiver := .receiver -}}
 {{- $metricsOrder := list "postgresql.database.locks" "postgresql.deadlocks" "postgresql.function.calls" "postgresql.query.conflicts" "postgresql.sequential_scans" "postgresql.temp.io" "postgresql.temp_files" -}}
-{{- $orderedKeys := list "endpoint" "transport" "username" "password" "databases" "exclude_databases" "collection_interval" "events" "top_query_collection" "query_sample_collection" "metrics" -}}
+{{- $orderedKeys := list "endpoint" "transport" "username" "password" "databases" "exclude_databases" "collection_interval" "events" "resource_attributes" "top_query_collection" "query_sample_collection" "metrics" -}}
 {{- $emitted := list -}}
 {{- range $key := $orderedKeys }}
 {{- if hasKey $receiver $key }}
@@ -210,6 +213,10 @@ Args (single dict): .receiver -- the merged receiver config dict.
             enabled: {{ index (index $events "db.server.top_query") "enabled" }}
           db.server.query_sample:
             enabled: {{ index (index $events "db.server.query_sample") "enabled" }}
+{{- else if eq $key "resource_attributes" }}
+{{- $ra := index $receiver $key }}
+        resource_attributes:
+{{ toYaml $ra | indent 10 }}
 {{- else if eq $key "top_query_collection" }}
 {{- $tqc := index $receiver $key -}}
 {{- $tqcOrder := list "max_rows_per_query" "top_n_query" "collection_interval" "allowed_comment_keys" -}}
