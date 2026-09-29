@@ -65,9 +65,11 @@ reaching N databases still needs a valid network path to all N of them.
 
 ## TLS
 
-`tls.insecure: false` and `tls.insecure_skip_verify: false` are the
-receiver's fixed defaults (requiring an encrypted connection with
-certificate validation) — not `values.yaml` fields in either mode. Use
+The chart no longer declares a `tls:` block at all — `insecure: false` and
+`insecure_skip_verify: false` (requiring an encrypted connection with
+certificate validation) are `nrmysqlreceiver`'s own zero-value defaults,
+so omitting `tls:` entirely has the same effect as explicitly setting
+both to `false`. Not a `values.yaml` field in either mode. Use
 `additionalReceiverConfig.tls.insecure_skip_verify=true` to skip
 certificate validation (useful for self-signed certs in test
 environments, but weakens the connection's security guarantees), and
@@ -296,10 +298,12 @@ Single-instance schema (`mysql:`, ignored when `mysqlMulti.enabled: true`):
 | `mysql.explainMode` | `inline` or `procedure` — `procedure` needs a manually-created `explain_statement` procedure, see "Automated setup" | `inline` |
 | `setupJob.mysqlAdmin.existingSecret` | Admin credential Secret (keys `username`, `password`) — required if `setupJob.enabled` | `""` |
 
-`tls`, `statementEvents`, query-sampling/top-query events, `query_sample_collection`, and
-`top_query_collection` are **not** `values.yaml` fields (single- or multi-instance) — they're fixed defaults
-shared by both modes (matches `oracle-otel`/`mssql-otel`'s pattern). Use `additionalReceiverConfig` to
-override any of them, e.g. `additionalReceiverConfig.tls.insecure_skip_verify=true`,
+`statementEvents`, query-sampling/top-query events, `query_sample_collection`, `top_query_collection`, and
+`metrics` (`mysql.query.count`, `mysql.query.slow.count`, `mysql.commands`, `mysql.innodb.data_file.io` are
+enabled by default, right after `events:`) are **not** `values.yaml` fields (single- or multi-instance) —
+they're fixed defaults shared by both modes (matches `oracle-otel`/`mssql-otel`'s pattern). `tls` isn't
+declared at all by default (see "TLS" above). Use `additionalReceiverConfig` to override any of them, e.g.
+`additionalReceiverConfig.tls.insecure_skip_verify=true`,
 `additionalReceiverConfig.statement_events.limit=1000`, or
 `additionalReceiverConfig.top_query_collection.top_query_count=100`.
 

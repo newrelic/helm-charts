@@ -55,18 +55,12 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "database: \"appdb\""
-  - it: renders TLS fields with fixed defaults, omitting ca_file when unset
+  - it: omits tls entirely, relying on the receiver's own zero-value default (same as the old insecure=false)
     asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure: false"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure_skip_verify: false"
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "ca_file:"
-  - it: can override TLS fields via additionalReceiverConfig
+          pattern: "tls:"
+  - it: can still set tls via additionalReceiverConfig if needed
     set:
       additionalReceiverConfig:
         tls:
@@ -76,14 +70,17 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
+          pattern: "tls:"
+      - matchRegex:
+          path: data["config.yaml"]
           pattern: "insecure: true"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "insecure_skip_verify: true"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "ca_file: \"/etc/ssl/rds-ca-bundle\\.pem\""
-  - it: renders statement_events, query_sample_collection, top_query_collection, and events from values
+          pattern: "ca_file: /etc/ssl/rds-ca-bundle\\.pem"
+  - it: renders statement_events, query_sample_collection, top_query_collection, events, and metrics from values
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -112,6 +109,9 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "db\\.server\\.top_query:\\s*\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "events:[\\s\\S]*metrics:\\s*\\n\\s*mysql\\.query\\.count:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.query\\.slow\\.count:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.commands:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.innodb\\.data_file\\.io:\\s*\\n\\s*enabled: true"
   - it: renders the resource/mysql processor with server.address and server.port
     asserts:
       - matchRegex:

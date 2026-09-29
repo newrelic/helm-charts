@@ -122,28 +122,21 @@ unique env-var suffixes, and no accidental mixing with the single-instance mysql
 
 {{/*
 Renders one receiver's field block in the same order as the single-instance configmap.yaml: endpoint/transport/
-username/password/database, allow_native_passwords/collection_interval/initial_delay, tls, explain_mode,
-statement_events, query_sample_collection, top_query_collection, events, falling back to alphabetical order for
-any other field (e.g. from additionalReceiverConfig). Caller emits the `      <receiverKey>:` line itself and
-invokes this with `{{- include ... }}` immediately after it (leading `{{-` required, trims the preceding newline).
+username/password/database, allow_native_passwords/collection_interval/initial_delay, explain_mode,
+statement_events, query_sample_collection, top_query_collection, events, metrics, falling back to alphabetical
+order for any other field (e.g. from additionalReceiverConfig). Caller emits the `      <receiverKey>:` line
+itself and invokes this with `{{- include ... }}` immediately after it (leading `{{-` required, trims the
+preceding newline).
 
 Args (single dict): .receiver -- the merged receiver config dict.
 */}}
 {{- define "mysql-otel.renderReceiver" -}}
 {{- $receiver := .receiver -}}
-{{- $orderedKeys := list "endpoint" "transport" "username" "password" "database" "allow_native_passwords" "collection_interval" "initial_delay" "tls" "explain_mode" "statement_events" "query_sample_collection" "top_query_collection" "events" -}}
+{{- $orderedKeys := list "endpoint" "transport" "username" "password" "database" "allow_native_passwords" "collection_interval" "initial_delay" "explain_mode" "statement_events" "query_sample_collection" "top_query_collection" "events" "metrics" -}}
 {{- $emitted := list -}}
 {{- range $key := $orderedKeys }}
 {{- if hasKey $receiver $key }}
-{{- if eq $key "tls" }}
-{{- $tls := index $receiver $key }}
-        tls:
-          insecure: {{ index $tls "insecure" }}
-          insecure_skip_verify: {{ index $tls "insecure_skip_verify" }}
-          {{- if hasKey $tls "ca_file" }}
-          ca_file: {{ index $tls "ca_file" | quote }}
-          {{- end }}
-{{- else if eq $key "statement_events" }}
+{{- if eq $key "statement_events" }}
 {{- $stmt := index $receiver $key }}
         statement_events:
           digest_text_limit: {{ index $stmt "digest_text_limit" }}
@@ -171,6 +164,17 @@ Args (single dict): .receiver -- the merged receiver config dict.
             enabled: {{ index (index $events "db.server.query_sample") "enabled" }}
           db.server.top_query:
             enabled: {{ index (index $events "db.server.top_query") "enabled" }}
+{{- else if eq $key "metrics" }}
+{{- $metrics := index $receiver $key }}
+        metrics:
+          mysql.query.count:
+            enabled: {{ index (index $metrics "mysql.query.count") "enabled" }}
+          mysql.query.slow.count:
+            enabled: {{ index (index $metrics "mysql.query.slow.count") "enabled" }}
+          mysql.commands:
+            enabled: {{ index (index $metrics "mysql.commands") "enabled" }}
+          mysql.innodb.data_file.io:
+            enabled: {{ index (index $metrics "mysql.innodb.data_file.io") "enabled" }}
 {{- else if has $key (list "endpoint" "username" "password" "database") }}
         {{ $key }}: {{ (index $receiver $key) | quote }}
 {{- else }}
@@ -190,8 +194,8 @@ Args (single dict): .receiver -- the merged receiver config dict.
 Renders just the fields that vary between multi-instance database entries when 2+ entries share one receiver's
 scrape-behavior block via a `<<: *nrmysql-common` merge key (see configmap-multi.yaml): endpoint/username/
 password/database. Deliberately does not touch transport/allow_native_passwords/collection_interval/initial_delay/
-tls/explain_mode/statement_events/query_sample_collection/top_query_collection/events, since those are inherited
-via the merge key rather than repeated per entry.
+explain_mode/statement_events/query_sample_collection/top_query_collection/events/metrics, since those are
+inherited via the merge key rather than repeated per entry.
 
 Args (single dict): .receiver -- the entry's override-only dict (endpoint/username/password/database)
 */}}
@@ -207,9 +211,6 @@ allow_native_passwords: true
 collection_interval: 10s
 initial_delay: 1s
 explain_mode: inline
-tls:
-  insecure: false
-  insecure_skip_verify: false
 statement_events:
   digest_text_limit: 4096
   time_limit: 24h
@@ -231,6 +232,15 @@ events:
   db.server.query_sample:
     enabled: true
   db.server.top_query:
+    enabled: true
+metrics:
+  mysql.query.count:
+    enabled: true
+  mysql.query.slow.count:
+    enabled: true
+  mysql.commands:
+    enabled: true
+  mysql.innodb.data_file.io:
     enabled: true
 {{- end -}}
 
