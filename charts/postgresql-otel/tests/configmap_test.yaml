@@ -109,6 +109,11 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "db\\.server\\.top_query:\\s*\\n\\s*enabled: true"
+  - it: renders resource_attributes with db.system.version right after events
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "events:\\s*\\n\\s*db\\.server\\.top_query:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.query_sample:\\s*\\n\\s*enabled: true\\s*\\n\\s*resource_attributes:\\s*\\n\\s*db\\.system\\.version:\\s*\\n\\s*enabled: true"
   - it: renders all seven documented metrics as enabled by default
     asserts:
       - matchRegex:
@@ -142,17 +147,6 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "postgresql\\.deadlocks:\\s*\\n\\s*enabled: false"
-  - it: renders the resource/postgresql processor with server.address and server.port
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "resource/postgresql:"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.address\\s*\\n\\s*value: \"postgresql\\.internal\"\\s*\\n\\s*action: upsert"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.port\\s*\\n\\s*value: 5432\\s*\\n\\s*action: upsert"
   - it: renders the otlp/newrelic exporter with a bare endpoint and env-substitution api-key, never a literal one
     asserts:
       - matchRegex:
@@ -174,7 +168,7 @@ tests:
           pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[resource/postgresql, batch\\]"
+          pattern: "processors:\\s*\\[batch\\]"
   - it: merges additionalReceiverConfig into the receiver block
     set:
       additionalReceiverConfig:
