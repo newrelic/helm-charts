@@ -16,7 +16,6 @@
 {{- $receiverModes := dict -}}
 {{- $receiverContents := dict -}}
 {{- $receiverKeys := list -}}
-{{- $firstHost := "" -}}
 {{- range $i, $db := $databases -}}
 {{- $suffix := include "oracle-otel.multi.envVarSuffix" $db.name -}}
 {{- $collectionInterval := $db.collectionInterval | default $.Values.oracleMulti.collectionInterval -}}
@@ -40,11 +39,8 @@
 {{- $receiverContents = set $receiverContents $receiverKey $full -}}
 {{- end -}}
 {{- $receiverKeys = append $receiverKeys $receiverKey -}}
-{{- if eq $i 0 -}}
-{{- $firstHost = first (splitList ":" $db.endpoint) -}}
 {{- end -}}
-{{- end -}}
-{{- $exporterKey := ternary "otlphttp/newrelic" "otlp/newrelic" $isAdb -}}
+{{- $exporterKey := "otlp/newrelic" -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -70,11 +66,6 @@ data:
       {{- end }}
       {{- end }}
     processors:
-      resource/add_event_name:
-        attributes:
-          - key: host.address
-            value: {{ $firstHost | quote }}
-            action: upsert
       batch:
     exporters:
       {{ $exporterKey }}:
@@ -96,10 +87,10 @@ data:
       pipelines:
         metrics/oracledb:
           receivers: [{{ join ", " $receiverKeys }}]
-          processors: [resource/add_event_name, batch]
+          processors: [batch]
           exporters: [{{ $exporterKey }}]
         logs/oracledb:
           receivers: [{{ join ", " $receiverKeys }}]
-          processors: [resource/add_event_name, batch]
+          processors: [batch]
           exporters: [{{ $exporterKey }}]
 {{- end }}

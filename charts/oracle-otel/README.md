@@ -60,28 +60,29 @@ This is `oracle.topology` in single-instance mode, or `oracleMulti.topology`
 way. It selects the `nroracledb` receiver's default `metrics`/
 `resource_attributes` block for `config.yaml`:
 
-- **CDB/PDB**: same 64-metric set plus 8 `resource_attributes` keys.
-- **RDS**: reduced 41-metric set, no `resource_attributes` — RDS restricts
-  access to some of the `V$`/`DBA_` views the extra metrics/attributes read
-  from.
-- **ADB**: reduced 39-metric set, no `resource_attributes`, and no
-  `oracle.db.pdb` attribute anywhere (ADB isn't multitenant from the client's
-  perspective).
+- **CDB/PDB**: same 64-metric set.
+- **RDS**: reduced 41-metric set — RDS restricts access to some of the
+  `V$`/`DBA_` views the extra metrics read from.
+- **ADB**: reduced 39-metric set, and no `oracle.db.pdb` attribute anywhere
+  (ADB isn't multitenant from the client's perspective).
+
+`resource_attributes` (just `oracle.db.edition`) comes from a block shared
+across all four topologies, not the per-topology defaults above.
 
 Override any individual metric/event via `additionalReceiverConfig` if you
 need to (applies globally — one shared escape hatch, not per-entry, even in
 multi-instance mode).
 
-`adb` also changes the receiver's connection shape and the exporter: instead
-of discrete `endpoint`/`username`/`password`/`service` fields, the receiver
-gets a single `datasource` connection string
+`adb` also changes the receiver's connection shape: instead of discrete
+`endpoint`/`username`/`password`/`service` fields, the receiver gets a single
+`datasource` connection string
 (`oracle://<user>:<password>@<host>:<port>/<service>?ssl=true&ssl%20verify=true`,
 credentials still injected via `${env:ORACLE_USERNAME}`/`${env:ORACLE_PASSWORD}`
 (or the `_<NAME>`-suffixed equivalents per entry in multi-instance mode),
 never written literally into the ConfigMap) with TLS enabled inline — no
-wallet file is needed. The exporter becomes `otlphttp/newrelic` (HTTP)
-instead of `otlp/newrelic` (gRPC), and `service.telemetry.metrics.level: none`
-is added, all matching New Relic's documented ADB configuration.
+wallet file is needed. `service.telemetry.metrics.level: none` is also added
+for ADB, matching New Relic's documented ADB configuration. The exporter is
+`otlp/newrelic` (gRPC) for every topology, including ADB.
 
 When `setupJob.enabled: true`, this value additionally selects which grant
 script the setup Job runs, since RDS, CDB, PDB, and ADB each require a
@@ -250,14 +251,15 @@ matches New Relic's own documented RDS multi-receiver pattern, and means the
 ConfigMap stays small (~6 extra lines per additional database, not a full
 duplicate of the ~150-line metrics block) even at high database counts.
 
-**Known limitation:** because every entry shares one pipeline and processor,
-that processor's `host.address` resource attribute is only correct for the
-*first* entry in `oracleMulti.databases` — every other entry's metrics/events
-carry the first entry's host. For `rds` topology this matters more than for
-`cdb`/`pdb`, since RDS has no `resource_attributes` block to independently
-identify each instance otherwise. See
+Earlier versions of this chart added a `resource/add_event_name` processor
+to stamp a `host.address` resource attribute onto every entry — but in a
+shared pipeline that processor could only ever apply one value, so every
+entry after the first carried the wrong host. That processor has been
+removed; per-instance identity now comes from each entry's own receiver
+config (`endpoint`/`service`/`server.address`/`server.port`), which is
+correct per entry even when multiple receivers share one pipeline. See
 `docs/superpowers/specs/2026-09-15-oracle-otel-multi-instance-design.md` for
-the full rationale.
+the fuller history.
 
 ## Values
 
@@ -267,7 +269,7 @@ Shared across both modes:
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
 | `image.tag` | Collector image tag | `2.4.0` |
-| `otlpEndpoint` | New Relic OTLP endpoint for your account's region | `""` |
+| `otlpEndpoint` | New Relic OTLP/gRPC endpoint, bare host:port, no scheme (e.g. `otlp.nr-data.net:4317`) | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nroracledb` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated user-creation Job(s) | `false` |
