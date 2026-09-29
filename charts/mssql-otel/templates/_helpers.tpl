@@ -134,6 +134,26 @@ Fixed scrape-behavior defaults for every mssqlMulti entry -- same values as the 
 own defaults, but not user-configurable in multi-instance mode (matches oracle-otel/mysql-otel/postgresql-otel's
 pattern of hardcoded shared defaults rather than per-field values.yaml knobs). additionalReceiverConfig remains
 the one escape hatch for overriding any of this.
+
+KNOWN ISSUE (unresolved as of this writing -- do not remove this note without re-verifying):
+events.db.server.query_plan/db.server.top_procedure, the whole top_procedure_collection block, and
+resource_attributes.db.system.version/sqlserver.db.edition are NOT valid keys in nrsqlserverreceiver v0.158.3
+(the version bundled by this chart's pinned nrdot-collector 2.4.0) -- checked generated_config.go/config.go
+directly. EventsConfig only has db.server.query_sample/db.server.top_query, Config has no
+top_procedure_collection field at all, and ResourceAttributesConfig only has host.name/server.address/
+server.port/service.instance.id/service.name/service.namespace/sqlserver.computer.name/
+sqlserver.database.name/sqlserver.host.name/sqlserver.instance.name. Left in anyway by request; re-verify
+against whatever receiver version is actually pinned before assuming these keys work (see oracle-otel's CI
+failure for what "invalid keys" looks like at runtime).
+
+ALSO NOTE: collect_full_query_text and allowed_comment_keys are nested here under top_query_collection and
+query_sample_collection, but nrsqlserverreceiver v0.158.3's actual config.go declares BOTH as top-level
+Config fields (`mapstructure:"collect_full_query_text"` / `mapstructure:"allowed_comment_keys"` directly on
+Config, not on TopQueryCollection or QuerySample). Nesting them here means the real collector will very
+likely reject them with the same kind of "invalid keys" decode error as the items above (this mapstructure
+decoder has consistently errored on unrecognized keys rather than silently ignoring them, per every other
+chart's CI history in this repo) -- not just silently drop them. Kept nested anyway by explicit request;
+re-verify before assuming this works, and note the fix (if reverted) is moving both back to top-level.
 */}}
 {{- define "mssql-otel.multi.receiverDefaults" -}}
 collection_interval: 15s
@@ -167,33 +187,53 @@ events:
     enabled: true
   db.server.top_query:
     enabled: true
+  db.server.query_plan:
+    enabled: true
+  db.server.top_procedure:
+    enabled: true
 top_query_collection:
   lookback_time: 60s
-  max_query_sample_count: 1000
-  top_query_count: 250
+  max_query_sample_count: 500
+  top_query_count: 200
   collection_interval: 60s
-collect_full_query_text: true
-allowed_comment_keys:
-  - nr_service_guid
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
 query_sample_collection:
   max_rows_per_query: 100
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
+top_procedure_collection:
+  max_procedure_sample_count: 500
+  top_procedure_count: 200
+  collection_interval: 60s
+resource_attributes:
+  db.system.version:
+    enabled: true
+  sqlserver.db.edition:
+    enabled: true
 {{- end -}}
 
 {{/*
 Renders one receiver's field block in the same order as the single-instance configmap.yaml: collection_interval/
-username/password/server/port, metrics, events, top_query_collection, collect_full_query_text,
-allowed_comment_keys, query_sample_collection, falling back to alphabetical order for any other field. Deliberately
-uses the same unquoted toYaml rendering as the single-instance chart for scalar fields (including username/
-password/server) rather than forcing `| quote`, to match this chart's own existing style exactly. Caller emits
-the `      <receiverKey>:` line itself and invokes this with `{{- include ... }}` immediately after it.
+username/password/server/port, metrics, events, top_query_collection, query_sample_collection,
+top_procedure_collection, resource_attributes, falling back to alphabetical order for any other field.
+Deliberately uses the same unquoted toYaml rendering as the single-instance chart for scalar fields (including
+username/password/server) rather than forcing `| quote`, to match this chart's own existing style exactly.
+Caller emits the `      <receiverKey>:` line itself and invokes this with `{{- include ... }}` immediately
+after it.
 
 Args (single dict): .receiver -- the merged receiver config dict.
 */}}
 {{- define "mssql-otel.renderReceiver" -}}
 {{- $receiver := .receiver -}}
-{{- $orderedKeys := list "collection_interval" "username" "password" "server" "port" "metrics" "events" "top_query_collection" "collect_full_query_text" "allowed_comment_keys" "query_sample_collection" -}}
+{{- $orderedKeys := list "collection_interval" "username" "password" "server" "port" "metrics" "events" "top_query_collection" "query_sample_collection" "top_procedure_collection" "resource_attributes" -}}
 {{- $metricsOrder := list "sqlserver.database.count" "sqlserver.database.io" "sqlserver.database.latency" "sqlserver.database.operations" "sqlserver.database.tempdb.space" "sqlserver.database.tempdb.version_store.size" "sqlserver.deadlock.rate" "sqlserver.os.wait.duration" "sqlserver.processes.blocked" "sqlserver.memory.grants.pending.count" "sqlserver.database.file.size" "sqlserver.memory.area" -}}
-{{- $topQueryOrder := list "lookback_time" "max_query_sample_count" "top_query_count" "collection_interval" -}}
+{{- $eventsOrder := list "db.server.query_sample" "db.server.top_query" "db.server.query_plan" "db.server.top_procedure" -}}
+{{- $topQueryOrder := list "lookback_time" "max_query_sample_count" "top_query_count" "collection_interval" "collect_full_query_text" "allowed_comment_keys" -}}
+{{- $querySampleOrder := list "max_rows_per_query" "collect_full_query_text" "allowed_comment_keys" -}}
+{{- $topProcedureOrder := list "max_procedure_sample_count" "top_procedure_count" "collection_interval" -}}
 {{- $emitted := list -}}
 {{- range $key := $orderedKeys }}
 {{- if hasKey $receiver $key }}
@@ -212,13 +252,35 @@ Args (single dict): .receiver -- the merged receiver config dict.
 {{ toYaml (dict $mkey (index $mval $mkey)) | indent 10 }}
 {{- end }}
 {{- end }}
+{{- else if eq $key "events" }}
+        events:
+{{- $eval := index $receiver $key }}
+{{- $eemitted := list }}
+{{- range $ekey := $eventsOrder }}
+{{- if hasKey $eval $ekey }}
+{{ toYaml (dict $ekey (index $eval $ekey)) | indent 10 }}
+{{- $eemitted = append $eemitted $ekey }}
+{{- end }}
+{{- end }}
+{{- range $ekey := (keys $eval | sortAlpha) }}
+{{- if not (has $ekey $eemitted) }}
+{{ toYaml (dict $ekey (index $eval $ekey)) | indent 10 }}
+{{- end }}
+{{- end }}
 {{- else if eq $key "top_query_collection" }}
         top_query_collection:
 {{- $tval := index $receiver $key }}
 {{- $temitted := list }}
 {{- range $tkey := $topQueryOrder }}
 {{- if hasKey $tval $tkey }}
+{{- if eq $tkey "allowed_comment_keys" }}
+          allowed_comment_keys:
+{{- range $item := (index $tval $tkey) }}
+            - {{ $item }}
+{{- end }}
+{{- else }}
 {{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- end }}
 {{- $temitted = append $temitted $tkey }}
 {{- end }}
 {{- end }}
@@ -227,10 +289,42 @@ Args (single dict): .receiver -- the merged receiver config dict.
 {{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
 {{- end }}
 {{- end }}
-{{- else if eq $key "allowed_comment_keys" }}
-        allowed_comment_keys:
-{{- range $item := (index $receiver $key) }}
-          - {{ $item }}
+{{- else if eq $key "query_sample_collection" }}
+        query_sample_collection:
+{{- $qval := index $receiver $key }}
+{{- $qemitted := list }}
+{{- range $qkey := $querySampleOrder }}
+{{- if hasKey $qval $qkey }}
+{{- if eq $qkey "allowed_comment_keys" }}
+          allowed_comment_keys:
+{{- range $item := (index $qval $qkey) }}
+            - {{ $item }}
+{{- end }}
+{{- else }}
+{{ toYaml (dict $qkey (index $qval $qkey)) | indent 10 }}
+{{- end }}
+{{- $qemitted = append $qemitted $qkey }}
+{{- end }}
+{{- end }}
+{{- range $qkey := (keys $qval | sortAlpha) }}
+{{- if not (has $qkey $qemitted) }}
+{{ toYaml (dict $qkey (index $qval $qkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "top_procedure_collection" }}
+        top_procedure_collection:
+{{- $pval := index $receiver $key }}
+{{- $pemitted := list }}
+{{- range $pkey := $topProcedureOrder }}
+{{- if hasKey $pval $pkey }}
+{{ toYaml (dict $pkey (index $pval $pkey)) | indent 10 }}
+{{- $pemitted = append $pemitted $pkey }}
+{{- end }}
+{{- end }}
+{{- range $pkey := (keys $pval | sortAlpha) }}
+{{- if not (has $pkey $pemitted) }}
+{{ toYaml (dict $pkey (index $pval $pkey)) | indent 10 }}
+{{- end }}
 {{- end }}
 {{- else }}
 {{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
@@ -249,8 +343,8 @@ Args (single dict): .receiver -- the merged receiver config dict.
 Renders just the fields that vary between multi-instance database entries when 2+ entries share one receiver's
 scrape-behavior block via a `<<: *nrsqlserver-common` merge key (see configmap-multi.yaml): username/password/
 server/port. Deliberately does not touch collection_interval/metrics/events/top_query_collection/
-collect_full_query_text/allowed_comment_keys/query_sample_collection, since those are inherited via the merge key
-rather than repeated per entry. Same unquoted toYaml rendering as renderReceiver, for consistency.
+query_sample_collection/top_procedure_collection/resource_attributes, since those are inherited via the merge
+key rather than repeated per entry. Same unquoted toYaml rendering as renderReceiver, for consistency.
 
 Args (single dict): .receiver -- the entry's override-only dict (username/password/server/port)
 */}}
@@ -266,9 +360,12 @@ Args (single dict): .receiver -- the entry's override-only dict (username/passwo
 
 {{/*
 metrics + events + collection tuning for the nrsqlserver receiver's "Standard configuration".
-Verbatim from New Relic's otel-mssql docs. Needs ct install verification against the real
-collector schema before this is trusted -- see the design spec's schema-drift lesson from
-oracle-otel's resource_attributes/oracle.db.pdb failure.
+Verbatim from New Relic's otel-mssql docs, duplicated from mssql-otel.multi.receiverDefaults for the
+single-instance path -- keep both in sync. See the KNOWN ISSUE note on mssql-otel.multi.receiverDefaults
+above for exactly which keys here are unverified against nrsqlserverreceiver v0.158.3 (events.db.server.
+query_plan/top_procedure, top_procedure_collection, resource_attributes.db.system.version/sqlserver.db.
+edition, and collect_full_query_text/allowed_comment_keys nested under top_query_collection/
+query_sample_collection instead of top-level).
 */}}
 {{- define "mssql-otel.receiver.defaults" -}}
 metrics:
@@ -301,14 +398,30 @@ events:
     enabled: true
   db.server.top_query:
     enabled: true
+  db.server.query_plan:
+    enabled: true
+  db.server.top_procedure:
+    enabled: true
 top_query_collection:
   lookback_time: 60s
-  max_query_sample_count: 1000
-  top_query_count: 250
+  max_query_sample_count: 500
+  top_query_count: 200
   collection_interval: 60s
-collect_full_query_text: true
-allowed_comment_keys:
-  - nr_service_guid
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
 query_sample_collection:
   max_rows_per_query: 100
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
+top_procedure_collection:
+  max_procedure_sample_count: 500
+  top_procedure_count: 200
+  collection_interval: 60s
+resource_attributes:
+  db.system.version:
+    enabled: true
+  sqlserver.db.edition:
+    enabled: true
 {{- end -}}

@@ -44,6 +44,35 @@ applied per instance in the multi case.
   Kubernetes Deployment reaching SQL Server remotely, so it implements only
   the standalone "Standard configuration" shape.
 
+## Known issues
+
+- **Exporter/endpoint mismatch, telemetry export unconfirmed.** The exporter
+  is named `otlp` (the real gRPC exporter type) but paired with an HTTP-style
+  scheme'd endpoint (`https://...:4318`) — a combination confirmed live to
+  fail with "unsupported protocol scheme" when a scheme is present, and
+  otherwise mismatched with what a genuine gRPC `otlp` exporter expects (bare
+  `host:port`, conventionally port 4317). This is a deliberate doc-fidelity
+  choice matching New Relic's own doc example verbatim, not a fix — telemetry
+  export in this configuration is unconfirmed/likely broken. See the comment
+  on `mssql-otel.validate.otlpEndpoint` in `templates/_helpers.tpl`.
+- **Five receiver-config keys unverified against the pinned receiver
+  version.** Checked `nrsqlserverreceiver` v0.158.3 (the version bundled by
+  this chart's pinned `nrdot-collector:2.4.0`) directly: `events.db.server.
+  query_plan`, `events.db.server.top_procedure`, the whole
+  `top_procedure_collection` block, `resource_attributes.db.system.version`,
+  and `resource_attributes.sqlserver.db.edition` are **not** valid keys in
+  that version's config schema. Also, `collect_full_query_text` and
+  `allowed_comment_keys` are declared here nested under `top_query_collection`
+  and `query_sample_collection`, but the receiver's actual `config.go` has
+  both as top-level `Config` fields — nesting them will very likely produce
+  the same kind of "invalid keys" decode error and crash-loop as the other
+  five items, based on every other chart's CI history in this repo (see
+  `oracle-otel`'s). All of this is kept in the recipe anyway per explicit
+  request; see the `KNOWN ISSUE` comment on `mssql-otel.multi.receiverDefaults`
+  in `templates/_helpers.tpl` for the full verification detail. **Do not
+  deploy this chart against a real `nrdot-collector` image without resolving
+  this first.**
+
 ## Choosing the topology
 
 | Your setup | Topology value |

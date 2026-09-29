@@ -62,6 +62,16 @@ data:
         tls:
           insecure: false
         compression: gzip
+        sending_queue:
+          enabled: true
+          sizer: bytes
+          queue_size: 100_000_000
+          num_consumers: 4
+          batch:
+            sizer: bytes
+            max_size: 1_000_000
+            min_size: 100_000
+            flush_timeout: 5s
     service:
       telemetry:
         metrics:
