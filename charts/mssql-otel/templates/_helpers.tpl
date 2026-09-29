@@ -135,25 +135,6 @@ own defaults, but not user-configurable in multi-instance mode (matches oracle-o
 pattern of hardcoded shared defaults rather than per-field values.yaml knobs). additionalReceiverConfig remains
 the one escape hatch for overriding any of this.
 
-KNOWN ISSUE (unresolved as of this writing -- do not remove this note without re-verifying):
-events.db.server.query_plan/db.server.top_procedure, the whole top_procedure_collection block, and
-resource_attributes.db.system.version/sqlserver.db.edition are NOT valid keys in nrsqlserverreceiver v0.158.3
-(the version bundled by this chart's pinned nrdot-collector 2.4.0) -- checked generated_config.go/config.go
-directly. EventsConfig only has db.server.query_sample/db.server.top_query, Config has no
-top_procedure_collection field at all, and ResourceAttributesConfig only has host.name/server.address/
-server.port/service.instance.id/service.name/service.namespace/sqlserver.computer.name/
-sqlserver.database.name/sqlserver.host.name/sqlserver.instance.name. Left in anyway by request; re-verify
-against whatever receiver version is actually pinned before assuming these keys work (see oracle-otel's CI
-failure for what "invalid keys" looks like at runtime).
-
-ALSO NOTE: collect_full_query_text and allowed_comment_keys are nested here under top_query_collection and
-query_sample_collection, but nrsqlserverreceiver v0.158.3's actual config.go declares BOTH as top-level
-Config fields (`mapstructure:"collect_full_query_text"` / `mapstructure:"allowed_comment_keys"` directly on
-Config, not on TopQueryCollection or QuerySample). Nesting them here means the real collector will very
-likely reject them with the same kind of "invalid keys" decode error as the items above (this mapstructure
-decoder has consistently errored on unrecognized keys rather than silently ignoring them, per every other
-chart's CI history in this repo) -- not just silently drop them. Kept nested anyway by explicit request;
-re-verify before assuming this works, and note the fix (if reverted) is moving both back to top-level.
 */}}
 {{- define "mssql-otel.multi.receiverDefaults" -}}
 collection_interval: 15s
