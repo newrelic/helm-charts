@@ -1,0 +1,16 @@
+mssqlMulti:
+  enabled: true
+  topology: "self-hosted"
+  databases:
+    - name: db1
+      server: "mssql-db-1.example.internal"
+      existingSecret: "mssql-otel-db1-creds"
+    - name: db2
+      server: "mssql-db-2.example.internal"
+      existingSecret: "mssql-otel-db2-creds"
+
+otlpEndpoint: "https://otlp.nr-data.net:4318"
+licenseKey: "0000000000000000000000000000000000000000"
+
+setupJob:
+  enabled: false

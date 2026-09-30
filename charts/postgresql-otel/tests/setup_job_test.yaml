@@ -139,20 +139,16 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "-d \"reporting\""
-  - it: omits the explain-permissions and pgvector blocks by default
+  - it: omits the pgvector block by default
     set:
       setupJob.enabled: true
     asserts:
       - notMatchRegex:
           path: spec.template.spec.containers[0].args[0]
-          pattern: "otel\\.explain_statement"
-      - notMatchRegex:
-          path: spec.template.spec.containers[0].args[0]
           pattern: "CREATE EXTENSION IF NOT EXISTS vector;"
-  - it: adds the explain-permissions function and grant when enableExplainPermissions is true
+  - it: creates the explain-permissions function and grant by default
     set:
       setupJob.enabled: true
-      setupJob.enableExplainPermissions: true
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
@@ -163,6 +159,14 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "GRANT EXECUTE ON FUNCTION otel\\.explain_statement\\(text\\) TO :\"monitor_user\";"
+  - it: omits the explain-permissions function when enableExplainPermissions is set to false
+    set:
+      setupJob.enabled: true
+      setupJob.enableExplainPermissions: false
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "otel\\.explain_statement"
   - it: adds pgvector when enablePgvector is true
     set:
       setupJob.enabled: true

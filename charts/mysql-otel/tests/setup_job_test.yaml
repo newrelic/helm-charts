@@ -12,6 +12,8 @@ set:
   mysql.password: "s3cret"
   otlpEndpoint: "otlp.nr-data.net:4317"
   setupJob.mysqlAdmin.existingSecret: "admin-secret"
+  setupJob.image.repository: "mysql"
+  setupJob.image.tag: "8.4"
 tests:
   - it: renders nothing when setupJob.enabled is false
     set:
@@ -75,7 +77,7 @@ tests:
       - notContains:
           path: spec.template.spec.containers[0].args
           content: "s3cret"
-  - it: uses the default mysql:8.4 image and restarts on failure
+  - it: uses the configured mysql image and restarts on failure
     set:
       setupJob.enabled: true
     asserts:
@@ -94,7 +96,7 @@ tests:
       - equal:
           path: spec.template.spec.containers[0].image
           value: mycompany/mysql-client:8.0
-  - it: runs the base grant heredoc, omitting the wait-time grant by default
+  - it: runs the base grant heredoc
     set:
       setupJob.enabled: true
     asserts:
@@ -104,14 +106,18 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "GRANT SELECT ON performance_schema\\.\\* TO '\\$MYSQL_MONITOR_USERNAME'@'%';"
-      - notMatchRegex:
-          path: spec.template.spec.containers[0].args[0]
-          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"
-  - it: adds the wait-time grant heredoc when enableWaitTimeMetrics is true
+  - it: adds the wait-time grant heredoc by default
     set:
       setupJob.enabled: true
-      setupJob.enableWaitTimeMetrics: true
     asserts:
       - matchRegex:
           path: spec.template.spec.containers[0].args[0]
           pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers TO '\\$MYSQL_MONITOR_USERNAME'@'%';"
+  - it: omits the wait-time grant heredoc when enableWaitTimeMetrics is set to false
+    set:
+      setupJob.enabled: true
+      setupJob.enableWaitTimeMetrics: false
+    asserts:
+      - notMatchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "GRANT UPDATE ON performance_schema\\.setup_consumers"

@@ -1,3 +1,4 @@
+{{- if not .Values.oracleMulti.enabled }}
 {{- include "oracle-otel.validate.topology" . -}}
 {{- $isAdb := eq .Values.oracle.topology "adb" -}}
 {{- $isRds := eq .Values.oracle.topology "rds" -}}
@@ -45,14 +46,14 @@ data:
   config.yaml: |
     receivers:
       {{ $receiverKey }}:
-{{ toYaml $receiver | indent 8 }}
+{{- include "oracle-otel.renderReceiver" (dict "receiver" $receiver "isRds" $isRds "isAdb" $isAdb) }}
     processors:
+      batch:
       resource/add_event_name:
         attributes:
           - key: host.address
             value: {{ $oracleHost | quote }}
             action: upsert
-      batch:
     exporters:
       {{ $exporterKey }}:
         endpoint: {{ .Values.otlpEndpoint | quote }}
@@ -79,3 +80,4 @@ data:
           receivers: [{{ $receiverKey }}]
           processors: [resource/add_event_name, batch]
           exporters: [{{ $exporterKey }}]
+{{- end }}

@@ -21,13 +21,19 @@ mssql:
   existingSecret: ""
   # -- How often the receiver scrapes SQL Server.
   collectionInterval: 15s
-  # -- Maximum number of queries the receiver runs concurrently.
-  maxConcurrentQueries: 4
-  tls:
-    # -- Enables an encrypted connection to SQL Server. The nrsqlserver receiver has no discrete TLS fields -- this sets the `encrypt` DSN parameter on the receiver's `datasource` connection string (the only place TLS is configurable), per the underlying go-mssqldb driver.
-    enabled: false
-    # -- Skips SQL Server TLS certificate validation. Sets the `datasource` string's `trustservercertificate` DSN parameter.
-    trustServerCertificate: false
+
+mssqlMulti:
+  # -- Enables multi-instance mode: one release monitors every entry in mssqlMulti.databases from a single collector pod.
+  # Mutually exclusive with the mssql.* single-instance block above -- do not set mssql.server when this is true.
+  enabled: false
+  # -- Required when enabled. One of: self-hosted, rds. Kept for parity with mssql.topology -- still validation-only, no rendered effect.
+  topology: ""
+  # -- List of SQL Server instances to monitor from this one release. Each entry requires: name (unique), server, existingSecret.
+  # port defaults to 1433. sqlAdmin.existingSecret is required per entry only when setupJob.enabled is true.
+  # Scrape-behavior settings (collectionInterval, metrics, events, topQueryCollection, etc.) are NOT configurable per
+  # entry or at the mssqlMulti level -- they're fixed defaults shared by every entry (same defaults as the mssql:
+  # block above). Use additionalReceiverConfig to override any of them if you need to.
+  databases: []
 
 # -- Required. New Relic OTLP endpoint for the account's region, e.g. https://otlp.nr-data.net:4318
 otlpEndpoint: ""

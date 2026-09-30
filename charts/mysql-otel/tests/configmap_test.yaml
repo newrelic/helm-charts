@@ -55,10 +55,24 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "database: \"appdb\""
-  - it: renders TLS fields from mysql.tls, omitting ca_file when unset
+  - it: renders TLS fields with fixed defaults, omitting ca_file when unset
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "insecure: false"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "insecure_skip_verify: false"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "ca_file:"
+  - it: can override TLS fields via additionalReceiverConfig
     set:
-      mysql.tls.insecure: true
-      mysql.tls.insecureSkipVerify: true
+      additionalReceiverConfig:
+        tls:
+          insecure: true
+          insecure_skip_verify: true
+          ca_file: "/etc/ssl/rds-ca-bundle.pem"
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -66,13 +80,6 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "insecure_skip_verify: true"
-      - notMatchRegex:
-          path: data["config.yaml"]
-          pattern: "ca_file:"
-  - it: includes ca_file when mysql.tls.caFile is set
-    set:
-      mysql.tls.caFile: "/etc/ssl/rds-ca-bundle.pem"
-    asserts:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "ca_file: \"/etc/ssl/rds-ca-bundle\\.pem\""

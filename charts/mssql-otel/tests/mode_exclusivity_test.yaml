@@ -1,0 +1,51 @@
+suite: single/multi mode exclusivity
+templates:
+  - templates/deployment.yaml
+  - templates/configmap.yaml
+  - templates/secret.yaml
+  - templates/setup-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: renders no single-instance resources when mssqlMulti.enabled is true
+    set:
+      mssqlMulti.enabled: true
+      mssqlMulti.topology: "self-hosted"
+      mssqlMulti.databases:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+      setupJob.enabled: true
+      setupJob.sqlAdmin.existingSecret: "admin-secret"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/secret.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/setup-job.yaml
+  - it: still renders single-instance resources when mssqlMulti.enabled is false (default)
+    set:
+      mssql.server: "sqlserver.example.internal"
+      mssql.topology: "self-hosted"
+      mssql.username: "u"
+      mssql.password: "p"
+      otlpEndpoint: "https://otlp.nr-data.net:4318"
+      licenseKey: "testlicensekey"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/secret.yaml

@@ -1,0 +1,171 @@
+suite: configmap (postgresqlMulti)
+templates:
+  - templates/configmap-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  postgresqlMulti.enabled: true
+  postgresqlMulti.topology: "self-hosted"
+  postgresqlMulti.instances:
+    - name: db1
+      server: "host1.example.internal"
+      existingSecret: "db1-creds"
+      databases: ["appdb1"]
+    - name: db2
+      server: "host2.example.internal"
+      existingSecret: "db2-creds"
+      databases: ["appdb2"]
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: fails when postgresqlMulti.topology is unset or invalid
+    set:
+      postgresqlMulti.topology: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresqlMulti.topology must be one of: self-hosted, rds"
+  - it: fails when postgresqlMulti.instances is empty
+    set:
+      postgresqlMulti.instances: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresqlMulti.instances must contain at least one entry when postgresqlMulti.enabled is true"
+  - it: fails when an instance entry is missing a required field
+    set:
+      postgresqlMulti.instances:
+        - name: db1
+          existingSecret: "db1-creds"
+          databases: ["appdb1"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresqlMulti.instances[0].server is required"
+  - it: fails when an instance entry has an empty databases list
+    set:
+      postgresqlMulti.instances:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+          databases: []
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresqlMulti.instances[0].databases must be a non-empty list -- PostgreSQL has no monitor-all-databases mode"
+  - it: fails when two entries share the same name
+    set:
+      postgresqlMulti.instances:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+          databases: ["appdb1"]
+        - name: db1
+          server: "host2"
+          existingSecret: "db2-creds"
+          databases: ["appdb2"]
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresqlMulti.instances[1].name \"db1\" duplicates an earlier entry's name"
+  - it: fails when postgresql.server is also set (mixed-mode guard)
+    set:
+      postgresql.server: "legacy.example.internal"
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresqlMulti.enabled and postgresql.server are mutually exclusive -- use one mode or the other in a single release"
+  - it: renders the first entry as the full receiver, anchored, with its own identity fields including its own databases list
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nrpostgresql/db1: &nrpostgresql-common\\n\\s*endpoint: \"host1\\.example\\.internal:5432\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \"\\$\\{env:POSTGRESQL_USERNAME_DB1\\}\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "databases:\\n\\s*- appdb1"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "db1-creds|db2-creds"
+  - it: renders every subsequent entry as a merge-key override with its own distinct databases list
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nrpostgresql/db2:\\n\\s*<<: \\*nrpostgresql-common\\n\\s*endpoint: \"host2\\.example\\.internal:5432\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "username: \"\\$\\{env:POSTGRESQL_USERNAME_DB2\\}\""
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "databases:\\n\\s*- appdb2"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "&nrpostgresql-common[\\s\\S]*&nrpostgresql-common"
+  - it: renders the shared scrape-behavior config once (on the anchor) and omits exclude_databases for self-hosted
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "top_query_collection:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.database\\.locks:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "exclude_databases:"
+  - it: renders events and top_query_collection as properly separated YAML keys, not glued together
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "truetop_query_collection"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "enabled: true\\n\\s*top_query_collection:"
+  - it: adds exclude_databases to the shared config for rds topology
+    set:
+      postgresqlMulti.topology: "rds"
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exclude_databases:\\n\\s*- rdsadmin"
+  - it: shares one exporter and lists every receiver in one combined pipeline pair
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "receivers: \\[nrpostgresql/db1, nrpostgresql/db2\\]"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exporters:\\n\\s*otlp/newrelic:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "otlp/newrelic:[\\s\\S]*otlp/newrelic:"
+  - it: sets server.address/server.port to the first instance's values only (documented shared-pipeline limitation)
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "value: \"host1\\.example\\.internal\"\\n\\s*action: upsert"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "value: 5432\\n\\s*action: upsert"
+  - it: does not use a YAML anchor/merge key when there's only one instance
+    set:
+      postgresqlMulti.instances:
+        - name: db1
+          server: "host1.example.internal"
+          existingSecret: "db1-creds"
+          databases: ["appdb1"]
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "&nrpostgresql-common"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "<<: \\*nrpostgresql-common"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "nrpostgresql/db1:\\n\\s*endpoint: \"host1\\.example\\.internal:5432\""
+  - it: merges additionalReceiverConfig into the shared block
+    set:
+      additionalReceiverConfig:
+        events:
+          db.server.query_sample:
+            enabled: false
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.query_sample:\\n\\s*enabled: false"

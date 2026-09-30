@@ -1,0 +1,77 @@
+suite: deployment (postgresqlMulti)
+templates:
+  - templates/deployment-multi.yaml
+  - templates/configmap-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  postgresqlMulti.enabled: true
+  postgresqlMulti.topology: "self-hosted"
+  postgresqlMulti.instances:
+    - name: db1
+      server: "host1"
+      existingSecret: "db1-creds"
+      databases: ["appdb1"]
+    - name: db2
+      server: "host2"
+      existingSecret: "db2-creds"
+      databases: ["appdb2"]
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  licenseKey: "testlicensekey"
+tests:
+  - it: sets one secretKeyRef pair per instance, named after that entry
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: POSTGRESQL_USERNAME_DB1
+            valueFrom:
+              secretKeyRef:
+                name: db1-creds
+                key: username
+        template: templates/deployment-multi.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: POSTGRESQL_PASSWORD_DB1
+            valueFrom:
+              secretKeyRef:
+                name: db1-creds
+                key: password
+        template: templates/deployment-multi.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[2]
+          value:
+            name: POSTGRESQL_USERNAME_DB2
+            valueFrom:
+              secretKeyRef:
+                name: db2-creds
+                key: username
+        template: templates/deployment-multi.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[3]
+          value:
+            name: POSTGRESQL_PASSWORD_DB2
+            valueFrom:
+              secretKeyRef:
+                name: db2-creds
+                key: password
+        template: templates/deployment-multi.yaml
+  - it: mounts the shared multi-instance ConfigMap and sets a config checksum annotation
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: my-release-postgresql-otel-config
+        template: templates/deployment-multi.yaml
+      - isNotEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+        template: templates/deployment-multi.yaml
+  - it: renders exactly one Deployment for the whole release, regardless of instance count
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/deployment-multi.yaml
