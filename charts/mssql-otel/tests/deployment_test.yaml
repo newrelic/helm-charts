@@ -1,0 +1,75 @@
+suite: deployment
+templates:
+  - templates/deployment.yaml
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mssql.server: "sql.internal"
+  mssql.topology: "self-hosted"
+  otlpEndpoint: "https://otlp.nr-data.net:4318"
+  licenseKey: "testlicensekey"
+tests:
+  - it: uses a chart-owned secretKeyRef when plain mssql credentials are given
+    set:
+      mssql.username: "nr_monitor"
+      mssql.password: "s3cret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0]
+          value:
+            name: MSSQL_USERNAME
+            valueFrom:
+              secretKeyRef:
+                name: my-release-mssql-otel-mssql
+                key: username
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].env[1]
+          value:
+            name: MSSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: my-release-mssql-otel-mssql
+                key: password
+        template: templates/deployment.yaml
+  - it: uses the existingSecret name when mssql.existingSecret is set
+    set:
+      mssql.existingSecret: "my-mssql-secret"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: my-mssql-secret
+        template: templates/deployment.yaml
+  - it: mounts the collector config and sets image/resources from values
+    set:
+      mssql.username: "u"
+      mssql.password: "p"
+      image.repository: "newrelic/nrdot-collector"
+      image.tag: "2.4.0"
+      resources.limits.memory: "256Mi"
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: newrelic/nrdot-collector:2.4.0
+        template: templates/deployment.yaml
+      - equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 256Mi
+        template: templates/deployment.yaml
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: config
+            configMap:
+              name: my-release-mssql-otel-config
+        template: templates/deployment.yaml
+  - it: sets a config checksum annotation so a config-only change forces a Pod restart on upgrade
+    set:
+      mssql.username: "u"
+      mssql.password: "p"
+    asserts:
+      - isNotEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+        template: templates/deployment.yaml

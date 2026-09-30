@@ -1,0 +1,105 @@
+{{- if .Values.oracleMulti.enabled }}
+{{- include "oracle-otel.validate.oracleMulti" . -}}
+{{- $isAdb := eq .Values.oracleMulti.topology "adb" -}}
+{{- $isRds := eq .Values.oracleMulti.topology "rds" -}}
+{{- $topologyDefaults := dict -}}
+{{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.collectionDefaults" . | fromYaml) -}}
+{{- if $isRds -}}
+{{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.rdsDefaults" . | fromYaml) -}}
+{{- else if $isAdb -}}
+{{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.adbDefaults" . | fromYaml) -}}
+{{- else -}}
+{{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.cdbPdbDefaults" . | fromYaml) -}}
+{{- end -}}
+{{- $databases := .Values.oracleMulti.databases -}}
+{{- $multiEntry := gt (len $databases) 1 -}}
+{{- $receiverModes := dict -}}
+{{- $receiverContents := dict -}}
+{{- $receiverKeys := list -}}
+{{- $firstHost := "" -}}
+{{- range $i, $db := $databases -}}
+{{- $suffix := include "oracle-otel.multi.envVarSuffix" $db.name -}}
+{{- $collectionInterval := $db.collectionInterval | default $.Values.oracleMulti.collectionInterval -}}
+{{- $identity := dict -}}
+{{- if $isAdb -}}
+{{- $datasource := printf "oracle://${env:ORACLE_USERNAME_%s}:${env:ORACLE_PASSWORD_%s}@%s/%s?ssl=true&ssl%%20verify=true" $suffix $suffix $db.endpoint $db.service -}}
+{{- $identity = dict "datasource" $datasource "collection_interval" $collectionInterval -}}
+{{- else -}}
+{{- $identity = dict "endpoint" $db.endpoint "service" $db.service "username" (printf "${env:ORACLE_USERNAME_%s}" $suffix) "password" (printf "${env:ORACLE_PASSWORD_%s}" $suffix) "collection_interval" $collectionInterval -}}
+{{- end -}}
+{{- $receiverKey := printf "nroracledb/%s" $db.name -}}
+{{- if and $multiEntry (gt $i 0) -}}
+{{- $receiverModes = set $receiverModes $receiverKey "override" -}}
+{{- $receiverContents = set $receiverContents $receiverKey $identity -}}
+{{- else -}}
+{{- $full := dict -}}
+{{- $full = mergeOverwrite $full $topologyDefaults -}}
+{{- $full = mergeOverwrite $full $identity -}}
+{{- $full = mergeOverwrite $full ($.Values.additionalReceiverConfig | default dict) -}}
+{{- $receiverModes = set $receiverModes $receiverKey (ternary "anchor" "full" $multiEntry) -}}
+{{- $receiverContents = set $receiverContents $receiverKey $full -}}
+{{- end -}}
+{{- $receiverKeys = append $receiverKeys $receiverKey -}}
+{{- if eq $i 0 -}}
+{{- $firstHost = first (splitList ":" $db.endpoint) -}}
+{{- end -}}
+{{- end -}}
+{{- $exporterKey := ternary "otlphttp/newrelic" "otlp/newrelic" $isAdb -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oracle-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oracle-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      {{- range $key := $receiverKeys }}
+      {{- $mode := index $receiverModes $key }}
+      {{- if eq $mode "anchor" }}
+      {{ $key }}: &nroracledb-common
+{{- include "oracle-otel.renderReceiver" (dict "receiver" (index $receiverContents $key) "isRds" $isRds "isAdb" $isAdb) }}
+      {{- else if eq $mode "override" }}
+      {{ $key }}:
+        <<: *nroracledb-common
+{{- include "oracle-otel.renderReceiverOverride" (dict "receiver" (index $receiverContents $key)) }}
+      {{- else }}
+      {{ $key }}:
+{{- include "oracle-otel.renderReceiver" (dict "receiver" (index $receiverContents $key) "isRds" $isRds "isAdb" $isAdb) }}
+      {{- end }}
+      {{- end }}
+    processors:
+      resource/add_event_name:
+        attributes:
+          - key: host.address
+            value: {{ $firstHost | quote }}
+            action: upsert
+      batch:
+    exporters:
+      {{ $exporterKey }}:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+{{- if $isAdb }}
+      telemetry:
+        metrics:
+          level: none
+{{- end }}
+      pipelines:
+        metrics/oracledb:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [resource/add_event_name, batch]
+          exporters: [{{ $exporterKey }}]
+        logs/oracledb:
+          receivers: [{{ join ", " $receiverKeys }}]
+          processors: [resource/add_event_name, batch]
+          exporters: [{{ $exporterKey }}]
+{{- end }}

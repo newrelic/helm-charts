@@ -1,0 +1,59 @@
+{{- if not .Values.postgresqlMulti.enabled }}
+{{- include "postgresql-otel.validate.topology" . -}}
+{{- include "postgresql-otel.validate.otlpEndpoint" . -}}
+{{- $receiverDefaults := include "postgresql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- $receiverDefaults = mergeOverwrite $receiverDefaults (dict
+      "endpoint" (printf "%s:%d" .Values.postgresql.server (.Values.postgresql.port | int))
+      "username" "${env:POSTGRESQL_USERNAME}"
+      "password" "${env:POSTGRESQL_PASSWORD}"
+      "databases" .Values.postgresql.databases
+      "collection_interval" .Values.postgresql.collectionInterval
+) -}}
+{{- if and (eq .Values.postgresql.topology "rds") .Values.postgresql.excludeDatabases }}
+{{- $receiverDefaults = set $receiverDefaults "exclude_databases" .Values.postgresql.excludeDatabases -}}
+{{- end }}
+{{- $receiver := mergeOverwrite $receiverDefaults (.Values.additionalReceiverConfig | default dict) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "postgresql-otel.fullname" . }}-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "postgresql-otel.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      nrpostgresql:
+{{- include "postgresql-otel.renderReceiver" (dict "receiver" $receiver) }}
+    processors:
+      batch:
+      resource/postgresql:
+        attributes:
+          - key: server.address
+            value: {{ .Values.postgresql.server | quote }}
+            action: upsert
+          - key: server.port
+            value: {{ .Values.postgresql.port | int }}
+            action: upsert
+    exporters:
+      otlp/newrelic:
+        endpoint: {{ .Values.otlpEndpoint | quote }}
+        headers:
+          api-key: "${env:NEW_RELIC_LICENSE_KEY}"
+        compression: gzip
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+    service:
+      pipelines:
+        metrics:
+          receivers: [nrpostgresql]
+          processors: [resource/postgresql, batch]
+          exporters: [otlp/newrelic]
+        logs:
+          receivers: [nrpostgresql]
+          processors: [resource/postgresql, batch]
+          exporters: [otlp/newrelic]
+{{- end }}
