@@ -149,126 +149,86 @@ block instead of being repeated here.
 */}}
 {{- define "oracle-otel.receiver.cdbPdbDefaults" -}}
 metrics:
+  oracledb.buffer_cache.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.consistent_gets:
+    enabled: true
+    attributes: [oracle.db.pdb]
   oracledb.cpu_time:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.database.cpu.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.host.cpu.utilization:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.executions:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.execution.utilization:
-    enabled: true
-    attributes: [oracledb.parse.type, oracle.db.pdb]
-  oracledb.parse_calls:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parse.rate:
-    enabled: true
-    attributes: [oracledb.parse.result, oracle.db.pdb]
-  oracledb.parse.utilization:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.hard_parses:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.logical_reads:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_reads:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_reads_direct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_writes:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_writes_direct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_read_io_requests:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_write_io_requests:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_io.cache_writes:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_io.requests:
-    enabled: true
-    attributes: [disk.io.direction, disk.io.block_size, oracle.db.pdb]
-  oracledb.physical_io.transferred:
-    enabled: true
-    attributes: [disk.io.direction, disk.io.type, oracle.db.pdb]
-  oracledb.sqlnet.io.transferred:
-    enabled: true
-    attributes: [network.io.direction, destination.type, oracle.db.pdb]
-  oracledb.consistent_gets:
+  oracledb.database.wait.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.db_block_gets:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.buffer_cache.utilization:
+  oracledb.enqueue_deadlocks:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.execution.utilization:
+    enabled: true
+    attributes: [oracledb.parse.type, oracle.db.pdb]
+  oracledb.executions:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.hard_parses:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.host.cpu.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.library_cache.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.data_dictionary.hit_ratio:
+  oracledb.logical_reads:
     enabled: true
-  oracledb.shared_pool.utilization:
+    attributes: [oracle.db.pdb]
+  oracledb.logons:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.parse.rate:
+    enabled: true
+    attributes: [oracledb.parse.result, oracle.db.pdb]
+  oracledb.parse_calls:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.pga_memory:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.sga.limit:
+  oracledb.physical_io.requests:
     enabled: true
-  oracledb.sga.usage:
-    enabled: true
-    attributes: [oracledb.sga.component.name]
-  oracledb.database.wait.utilization:
+    attributes: [disk.io.direction, disk.io.block_size, oracle.db.pdb]
+  oracledb.physical_reads:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.dml_locks.limit:
-    enabled: true
-  oracledb.dml_locks.usage:
-    enabled: true
-  oracledb.enqueue_locks.limit:
-    enabled: true
-  oracledb.enqueue_locks.usage:
-    enabled: true
-  oracledb.enqueue_resources.limit:
-    enabled: true
-  oracledb.enqueue_resources.usage:
-    enabled: true
-  oracledb.enqueue_deadlocks:
+  oracledb.physical_writes:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.exchange_deadlocks:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.processes.limit:
-    enabled: true
   oracledb.processes.usage:
-    enabled: true
-  oracledb.sessions.limit:
     enabled: true
   oracledb.sessions.usage:
     enabled: true
     attributes: [session_type, session_status, oracle.db.pdb]
-  oracledb.logons:
+  oracledb.sga.usage:
+    enabled: true
+    attributes: [oracledb.sga.component.name]
+  oracledb.shared_pool.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.transactions.limit:
+  oracledb.sql_service.response.duration:
     enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.sqlnet.io.transferred:
+    enabled: true
+    attributes: [network.io.direction, destination.type, oracle.db.pdb]
+  oracledb.tablespace_size.usage:
+    enabled: true
+    attributes: [tablespace_name, oracle.db.pdb]
   oracledb.transactions.usage:
     enabled: true
   oracledb.user_commits:
@@ -277,277 +237,200 @@ metrics:
   oracledb.user_rollbacks:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.tablespace_size.limit:
-    enabled: true
-    attributes: [tablespace_name, oracle.db.pdb]
-  oracledb.tablespace_size.usage:
-    enabled: true
-    attributes: [tablespace_name, oracle.db.pdb]
-  oracledb.storage.usage:
-    enabled: true
-  oracledb.storage.utilization:
-    enabled: true
-  oracledb.recycle_bin.limit:
-    enabled: true
-  oracledb.queries_parallelized:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.ddl_statements_parallelized:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.dml_statements_parallelized:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_not_downgraded:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_1_to_25_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_25_to_50_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_50_to_75_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_75_to_99_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_to_serial:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.redo_allocation.utilization:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.sort.ratio:
-    enabled: true
-    attributes: [oracledb.sort.type, oracle.db.pdb]
-  oracledb.sql_service.response.duration:
-    enabled: true
-    attributes: [oracle.db.pdb]
 {{- end -}}
 
 {{/*
-metrics for rds. Verbatim from New Relic's otel-oracledb docs RDS "Database configuration"
-section -- fewer metrics than cdb/pdb (RDS restricts access to some V$/DBA_ views), and no
-resource_attributes of its own (gets the shared oracle.db.edition attribute from
-collectionDefaults instead).
+metrics for rds. Same 30-metric baseline set as cdb/pdb, matching New Relic's otel-oracledb docs RDS
+"Database configuration" section. No resource_attributes of its own (gets the shared
+oracle.db.edition attribute from collectionDefaults instead).
 */}}
 {{- define "oracle-otel.receiver.rdsDefaults" -}}
 metrics:
+  oracledb.buffer_cache.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.consistent_gets:
+    enabled: true
+    attributes: [oracle.db.pdb]
   oracledb.cpu_time:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.executions:
+  oracledb.database.cpu.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.parse_calls:
+  oracledb.database.wait.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.db_block_gets:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.enqueue_deadlocks:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.execution.utilization:
+    enabled: true
+    attributes: [oracledb.parse.type, oracle.db.pdb]
+  oracledb.executions:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.hard_parses:
     enabled: true
     attributes: [oracle.db.pdb]
+  oracledb.host.cpu.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.library_cache.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
   oracledb.logical_reads:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.physical_reads:
+  oracledb.logons:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.physical_reads_direct:
+  oracledb.parse.rate:
+    enabled: true
+    attributes: [oracledb.parse.result, oracle.db.pdb]
+  oracledb.parse_calls:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.physical_writes:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_writes_direct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_read_io_requests:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_write_io_requests:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.physical_io.cache_writes:
+  oracledb.pga_memory:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.physical_io.requests:
     enabled: true
     attributes: [disk.io.direction, disk.io.block_size, oracle.db.pdb]
-  oracledb.physical_io.transferred:
-    enabled: true
-    attributes: [disk.io.direction, disk.io.type, oracle.db.pdb]
-  oracledb.sqlnet.io.transferred:
-    enabled: true
-    attributes: [network.io.direction, destination.type, oracle.db.pdb]
-  oracledb.consistent_gets:
+  oracledb.physical_reads:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.db_block_gets:
+  oracledb.physical_writes:
     enabled: true
     attributes: [oracle.db.pdb]
-  oracledb.data_dictionary.hit_ratio:
+  oracledb.processes.usage:
     enabled: true
-  oracledb.pga_memory:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.sga.limit:
-    enabled: true
-  oracledb.sga.usage:
-    enabled: true
-    attributes: [oracledb.sga.component.name]
-  oracledb.enqueue_deadlocks:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.exchange_deadlocks:
-    enabled: true
-    attributes: [oracle.db.pdb]
   oracledb.sessions.usage:
     enabled: true
     attributes: [session_type, session_status, oracle.db.pdb]
-  oracledb.logons:
+  oracledb.sga.usage:
+    enabled: true
+    attributes: [oracledb.sga.component.name]
+  oracledb.shared_pool.utilization:
     enabled: true
     attributes: [oracle.db.pdb]
+  oracledb.sql_service.response.duration:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.sqlnet.io.transferred:
+    enabled: true
+    attributes: [network.io.direction, destination.type, oracle.db.pdb]
+  oracledb.tablespace_size.usage:
+    enabled: true
+    attributes: [tablespace_name, oracle.db.pdb]
+  oracledb.transactions.usage:
+    enabled: true
   oracledb.user_commits:
     enabled: true
     attributes: [oracle.db.pdb]
   oracledb.user_rollbacks:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.tablespace_size.limit:
-    enabled: true
-    attributes: [tablespace_name, oracle.db.pdb]
-  oracledb.tablespace_size.usage:
-    enabled: true
-    attributes: [tablespace_name, oracle.db.pdb]
-  oracledb.storage.usage:
-    enabled: true
-  oracledb.storage.utilization:
-    enabled: true
-  oracledb.recycle_bin.limit:
-    enabled: true
-  oracledb.queries_parallelized:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.ddl_statements_parallelized:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.dml_statements_parallelized:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_not_downgraded:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_1_to_25_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_25_to_50_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_50_to_75_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_75_to_99_pct:
-    enabled: true
-    attributes: [oracle.db.pdb]
-  oracledb.parallel_operations_downgraded_to_serial:
     enabled: true
     attributes: [oracle.db.pdb]
 {{- end -}}
 
 {{/*
-metrics for adb (Autonomous Database). Verbatim from New Relic's otel-oracledb docs ADB
-"Database configuration" section -- fewer metrics than cdb/pdb/rds, no oracle.db.pdb
-attribute anywhere (ADB isn't multitenant from the client's perspective), and no
-resource_attributes of its own (gets the shared oracle.db.edition attribute from
-collectionDefaults instead).
+metrics for adb (Autonomous Database). Same 30-metric baseline set as cdb/pdb/rds, matching New
+Relic's otel-oracledb docs ADB "Database configuration" section. No resource_attributes of its
+own (gets the shared oracle.db.edition attribute from collectionDefaults instead).
 */}}
 {{- define "oracle-otel.receiver.adbDefaults" -}}
 metrics:
-  oracledb.cpu_time:
+  oracledb.buffer_cache.utilization:
     enabled: true
-  oracledb.executions:
-    enabled: true
-  oracledb.parse_calls:
-    enabled: true
-  oracledb.hard_parses:
-    enabled: true
-  oracledb.logical_reads:
-    enabled: true
-  oracledb.physical_reads:
-    enabled: true
-  oracledb.physical_reads_direct:
-    enabled: true
-  oracledb.physical_writes:
-    enabled: true
-  oracledb.physical_writes_direct:
-    enabled: true
-  oracledb.physical_read_io_requests:
-    enabled: true
-  oracledb.physical_write_io_requests:
-    enabled: true
-  oracledb.physical_io.cache_writes:
-    enabled: true
-  oracledb.physical_io.requests:
-    enabled: true
-    attributes: [disk.io.direction, disk.io.block_size]
-  oracledb.physical_io.transferred:
-    enabled: true
-    attributes: [disk.io.direction, disk.io.type]
-  oracledb.sqlnet.io.transferred:
-    enabled: true
-    attributes: [network.io.direction, destination.type]
+    attributes: [oracle.db.pdb]
   oracledb.consistent_gets:
     enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.cpu_time:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.database.cpu.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.database.wait.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
   oracledb.db_block_gets:
     enabled: true
-  oracledb.data_dictionary.hit_ratio:
-    enabled: true
-  oracledb.pga_memory:
-    enabled: true
+    attributes: [oracle.db.pdb]
   oracledb.enqueue_deadlocks:
     enabled: true
-  oracledb.exchange_deadlocks:
+    attributes: [oracle.db.pdb]
+  oracledb.execution.utilization:
+    enabled: true
+    attributes: [oracledb.parse.type, oracle.db.pdb]
+  oracledb.executions:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.hard_parses:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.host.cpu.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.library_cache.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.logical_reads:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.logons:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.parse.rate:
+    enabled: true
+    attributes: [oracledb.parse.result, oracle.db.pdb]
+  oracledb.parse_calls:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.pga_memory:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.physical_io.requests:
+    enabled: true
+    attributes: [disk.io.direction, disk.io.block_size, oracle.db.pdb]
+  oracledb.physical_reads:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.physical_writes:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.processes.usage:
     enabled: true
   oracledb.sessions.usage:
     enabled: true
-    attributes: [session_type, session_status]
-  oracledb.logons:
+    attributes: [session_type, session_status, oracle.db.pdb]
+  oracledb.sga.usage:
+    enabled: true
+    attributes: [oracledb.sga.component.name]
+  oracledb.shared_pool.utilization:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.sql_service.response.duration:
+    enabled: true
+    attributes: [oracle.db.pdb]
+  oracledb.sqlnet.io.transferred:
+    enabled: true
+    attributes: [network.io.direction, destination.type, oracle.db.pdb]
+  oracledb.tablespace_size.usage:
+    enabled: true
+    attributes: [tablespace_name, oracle.db.pdb]
+  oracledb.transactions.usage:
     enabled: true
   oracledb.user_commits:
     enabled: true
+    attributes: [oracle.db.pdb]
   oracledb.user_rollbacks:
     enabled: true
-  oracledb.tablespace_size.limit:
-    enabled: true
-    attributes: [tablespace_name]
-  oracledb.tablespace_size.usage:
-    enabled: true
-    attributes: [tablespace_name]
-  oracledb.storage.usage:
-    enabled: true
-  oracledb.storage.utilization:
-    enabled: true
-  oracledb.recycle_bin.limit:
-    enabled: true
-  oracledb.queries_parallelized:
-    enabled: true
-  oracledb.ddl_statements_parallelized:
-    enabled: true
-  oracledb.dml_statements_parallelized:
-    enabled: true
-  oracledb.parallel_operations_not_downgraded:
-    enabled: true
-  oracledb.parallel_operations_downgraded_1_to_25_pct:
-    enabled: true
-  oracledb.parallel_operations_downgraded_25_to_50_pct:
-    enabled: true
-  oracledb.parallel_operations_downgraded_50_to_75_pct:
-    enabled: true
-  oracledb.parallel_operations_downgraded_75_to_99_pct:
-    enabled: true
-  oracledb.parallel_operations_downgraded_to_serial:
-    enabled: true
+    attributes: [oracle.db.pdb]
 {{- end -}}
 
 {{/*

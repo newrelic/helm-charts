@@ -28,7 +28,6 @@ data:
         check_interval: ${env:NR_MEM_LIMITER_CHECK_INTERVAL:-1s}
         limit_mib: ${env:NR_MEM_LIMITER_LIMIT_MIB:-200}
         spike_limit_mib: ${env:NR_MEM_LIMITER_SPIKE_MIB:-50}
-      batch:
     exporters:
       otlp:
         endpoint: {{ .Values.otlpEndpoint }}
@@ -41,7 +40,7 @@ data:
           enabled: true
           sizer: bytes
           queue_size: 100_000_000
-          num_consumers: 4
+          num_consumers: 10
           batch:
             sizer: bytes
             max_size: 1_000_000
@@ -54,10 +53,10 @@ data:
       pipelines:
         metrics:
           receivers: [nrsqlserver]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter]
           exporters: [otlp]
         logs:
           receivers: [nrsqlserver]
-          processors: [memory_limiter, batch]
+          processors: [memory_limiter]
           exporters: [otlp]
 {{- end }}

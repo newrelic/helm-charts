@@ -60,11 +60,9 @@ This is `oracle.topology` in single-instance mode, or `oracleMulti.topology`
 way. It selects the `nroracledb` receiver's default `metrics`/
 `resource_attributes` block for `config.yaml`:
 
-- **CDB/PDB**: same 64-metric set.
-- **RDS**: reduced 41-metric set — RDS restricts access to some of the
-  `V$`/`DBA_` views the extra metrics read from.
-- **ADB**: reduced 39-metric set, and no `oracle.db.pdb` attribute anywhere
-  (ADB isn't multitenant from the client's perspective).
+- **CDB/PDB**: same 30-metric baseline set.
+- **RDS**: same 30-metric baseline set as CDB/PDB.
+- **ADB**: same 30-metric baseline set as CDB/PDB.
 
 `resource_attributes` (just `oracle.db.edition`) comes from a block shared
 across all four topologies, not the per-topology defaults above.
@@ -80,8 +78,7 @@ multi-instance mode).
 credentials still injected via `${env:ORACLE_USERNAME}`/`${env:ORACLE_PASSWORD}`
 (or the `_<NAME>`-suffixed equivalents per entry in multi-instance mode),
 never written literally into the ConfigMap) with TLS enabled inline — no
-wallet file is needed. `service.telemetry.metrics.level: none` is also added
-for ADB, matching New Relic's documented ADB configuration. The exporter is
+wallet file is needed. The exporter is
 `otlp/newrelic` (gRPC) for every topology, including ADB.
 
 When `setupJob.enabled: true`, this value additionally selects which grant
@@ -285,7 +282,7 @@ Single-instance schema (`oracle:`, ignored when `oracleMulti.enabled: true`):
 | `oracle.service` | CDB/PDB service name, RDS DB name, or ADB service name | `""` |
 | `oracle.username` / `oracle.password` | Plain-value monitoring credentials | `""` |
 | `oracle.existingSecret` | Pre-existing Secret (keys `username`, `password`), wins over plain values | `""` |
-| `oracle.collectionInterval` | Scrape interval | `10s` |
+| `oracle.collectionInterval` | Scrape interval | `15s` |
 | `setupJob.oracleAdmin.existingSecret` | Admin credential Secret (keys `username`, `password`) — required if `setupJob.enabled` | `""` |
 
 Multi-instance schema (`oracleMulti:`, mutually exclusive with `oracle.*`):
@@ -294,5 +291,5 @@ Multi-instance schema (`oracleMulti:`, mutually exclusive with `oracle.*`):
 |---|---|---|
 | `oracleMulti.enabled` | Enables multi-instance mode | `false` |
 | `oracleMulti.topology` | `cdb`, `pdb`, `rds`, or `adb` — applies to every entry | `""` |
-| `oracleMulti.collectionInterval` | Default scrape interval for every entry, overridable per entry | `10s` |
+| `oracleMulti.collectionInterval` | Default scrape interval for every entry, overridable per entry | `15s` |
 | `oracleMulti.databases` | List of `{name, endpoint, service, existingSecret, collectionInterval, oracleAdmin.existingSecret}` entries, one per monitored database | `[]` |

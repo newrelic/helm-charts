@@ -227,7 +227,7 @@ Relic's own documented SQL Server multi-receiver pattern.
 
 **No host-identification limitation to document here**, unlike
 `oracleMulti`/`mysqlMulti`/`postgresqlMulti`: this chart's `processors:`
-block (`memory_limiter`+`batch`) never included a per-instance
+block (`memory_limiter`) never included a per-instance
 `resource.server.address`-style attribute in the first place, even in
 single-instance mode, so there's nothing that becomes "only correct for
 the first entry" when moving to multi-instance — there was never a

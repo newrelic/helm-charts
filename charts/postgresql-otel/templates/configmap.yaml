@@ -27,12 +27,26 @@ data:
 {{- include "postgresql-otel.renderReceiver" (dict "receiver" $receiver) }}
     processors:
       batch:
+      batch/metrics:
+        send_batch_size: 8192
+        send_batch_max_size: 8192
+        timeout: 10s
     exporters:
       otlp/newrelic:
         endpoint: {{ .Values.otlpEndpoint | quote }}
         headers:
           api-key: "${env:NEW_RELIC_LICENSE_KEY}"
         compression: gzip
+        sending_queue:
+          enabled: true
+          sizer: bytes
+          queue_size: 100_000_000
+          num_consumers: 10
+          batch:
+            sizer: bytes
+            max_size: 1_000_000
+            min_size: 0
+            flush_timeout: 5s
         retry_on_failure:
           enabled: true
           initial_interval: 5s
@@ -42,7 +56,7 @@ data:
       pipelines:
         metrics:
           receivers: [nrpostgresql]
-          processors: [batch]
+          processors: [batch/metrics]
           exporters: [otlp/newrelic]
         logs:
           receivers: [nrpostgresql]

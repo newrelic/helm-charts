@@ -174,8 +174,8 @@ events:
     enabled: true
 top_query_collection:
   lookback_time: 60s
-  max_query_sample_count: 500
-  top_query_count: 200
+  max_query_sample_count: 1000
+  top_query_count: 250
   collection_interval: 60s
   collect_full_query_text: true
   allowed_comment_keys:
@@ -186,8 +186,8 @@ query_sample_collection:
   allowed_comment_keys:
     - nr_service_guid
 top_procedure_collection:
-  max_procedure_sample_count: 500
-  top_procedure_count: 200
+  max_procedure_sample_count: 1000
+  top_procedure_count: 250
   collection_interval: 60s
 resource_attributes:
   db.system.version:
@@ -385,8 +385,8 @@ events:
     enabled: true
 top_query_collection:
   lookback_time: 60s
-  max_query_sample_count: 500
-  top_query_count: 200
+  max_query_sample_count: 1000
+  top_query_count: 250
   collection_interval: 60s
   collect_full_query_text: true
   allowed_comment_keys:
@@ -397,8 +397,8 @@ query_sample_collection:
   allowed_comment_keys:
     - nr_service_guid
 top_procedure_collection:
-  max_procedure_sample_count: 500
-  top_procedure_count: 200
+  max_procedure_sample_count: 1000
+  top_procedure_count: 250
   collection_interval: 60s
 resource_attributes:
   db.system.version:

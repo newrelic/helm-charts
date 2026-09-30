@@ -79,11 +79,6 @@ data:
           max_interval: 30s
           max_elapsed_time: 300s
     service:
-{{- if $isAdb }}
-      telemetry:
-        metrics:
-          level: none
-{{- end }}
       pipelines:
         metrics/oracledb:
           receivers: [{{ join ", " $receiverKeys }}]

@@ -148,12 +148,13 @@ additionalReceiverConfig remains the one escape hatch for overriding any of this
 is layered on separately by each caller, since it depends on topology.
 */}}
 {{- define "postgresql-otel.multi.receiverDefaults" -}}
-transport: tcp
 collection_interval: 15s
 events:
   db.server.top_query:
     enabled: true
   db.server.query_sample:
+    enabled: true
+  db.server.query_plan:
     enabled: true
 resource_attributes:
   db.system.version:
@@ -186,7 +187,7 @@ metrics:
 {{- end -}}
 
 {{/*
-Renders one receiver's field block in the same order as the single-instance configmap.yaml: endpoint/transport/
+Renders one receiver's field block in the same order as the single-instance configmap.yaml: endpoint/
 username/password/databases/exclude_databases, collection_interval, events, top_query_collection,
 query_sample_collection, metrics, falling back to alphabetical order for any other field (e.g. from
 additionalReceiverConfig). Caller emits the `      <receiverKey>:` line itself and invokes this with
@@ -197,7 +198,7 @@ Args (single dict): .receiver -- the merged receiver config dict.
 {{- define "postgresql-otel.renderReceiver" -}}
 {{- $receiver := .receiver -}}
 {{- $metricsOrder := list "postgresql.database.locks" "postgresql.deadlocks" "postgresql.function.calls" "postgresql.query.conflicts" "postgresql.sequential_scans" "postgresql.temp.io" "postgresql.temp_files" -}}
-{{- $orderedKeys := list "endpoint" "transport" "username" "password" "databases" "exclude_databases" "collection_interval" "events" "resource_attributes" "top_query_collection" "query_sample_collection" "metrics" -}}
+{{- $orderedKeys := list "endpoint" "username" "password" "databases" "exclude_databases" "collection_interval" "events" "resource_attributes" "top_query_collection" "query_sample_collection" "metrics" -}}
 {{- $emitted := list -}}
 {{- range $key := $orderedKeys }}
 {{- if hasKey $receiver $key }}
@@ -213,6 +214,8 @@ Args (single dict): .receiver -- the merged receiver config dict.
             enabled: {{ index (index $events "db.server.top_query") "enabled" }}
           db.server.query_sample:
             enabled: {{ index (index $events "db.server.query_sample") "enabled" }}
+          db.server.query_plan:
+            enabled: {{ index (index $events "db.server.query_plan") "enabled" }}
 {{- else if eq $key "resource_attributes" }}
 {{- $ra := index $receiver $key }}
         resource_attributes:
@@ -273,7 +276,7 @@ Args (single dict): .receiver -- the merged receiver config dict.
 {{/*
 Renders just the fields that vary between multi-instance database entries when 2+ entries share one receiver's
 scrape-behavior block via a `<<: *nrpostgresql-common` merge key (see configmap-multi.yaml): endpoint/username/
-password/databases. Deliberately does not touch transport/exclude_databases/collection_interval/events/
+password/databases. Deliberately does not touch exclude_databases/collection_interval/events/
 top_query_collection/query_sample_collection/metrics, since those are inherited via the merge key rather than
 repeated per entry.
 
