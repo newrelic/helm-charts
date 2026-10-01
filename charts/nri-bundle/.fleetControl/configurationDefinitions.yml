@@ -1,6 +1,11 @@
 configurationDefinitions:
   - platform: KUBERNETESCLUSTER
-    description: infra agent config
-    type: agent-config
+    type: AgentConfig
     version: 1.0.0
     format: yml
+    bindings:
+      - type: CONFIGURES
+        targetType: AGENT
+        target: NRInfra
+        versions:
+          - ">=6.0.34"
