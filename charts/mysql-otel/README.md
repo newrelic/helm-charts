@@ -119,8 +119,9 @@ the monitoring user, but requires a `SQL SECURITY DEFINER` stored
 procedure to exist first. If you want that, follow New Relic's
 [mysql/advanced-config docs, "Query plans for write
 statements"](https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#query)
-and create the procedure yourself; leaving `explainMode: inline` (the
-default) needs no extra setup.
+and create the procedure yourself. `explainMode` defaults to `procedure`;
+the receiver falls back to `inline` automatically for any schema where the
+procedure is absent, so no extra setup is required to start collecting.
 
 This requires a `mysql`-CLI-capable image (shared across every entry's Job
 in multi-instance mode — one image, not one per instance), and **this
@@ -293,9 +294,9 @@ Single-instance schema (`mysql:`, ignored when `mysqlMulti.enabled: true`):
 | `mysql.existingSecret` | Pre-existing Secret (keys `username`, `password`), wins over plain values | `""` |
 | `mysql.database` | Restrict monitoring to one database; empty monitors all | `""` |
 | `mysql.allowNativePasswords` | Receiver's allow_native_passwords | `true` |
-| `mysql.collectionInterval` | Scrape interval | `10s` |
+| `mysql.collectionInterval` | Scrape interval | `15s` |
 | `mysql.initialDelay` | Delay before first scrape | `1s` |
-| `mysql.explainMode` | `inline` or `procedure` — `procedure` needs a manually-created `explain_statement` procedure, see "Automated setup" | `inline` |
+| `mysql.explainMode` | `inline` or `procedure` — `procedure` needs a manually-created `explain_statement` procedure, see "Automated setup" | `procedure` |
 | `setupJob.mysqlAdmin.existingSecret` | Admin credential Secret (keys `username`, `password`) — required if `setupJob.enabled` | `""` |
 
 `statementEvents`, query-sampling/top-query events, `query_sample_collection`, `top_query_collection`, and

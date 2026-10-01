@@ -39,7 +39,7 @@ tests:
           pattern: "password: \"\\$\\{env:MYSQL_PASSWORD\\}\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "collection_interval: 10s"
+          pattern: "collection_interval: 15s"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "s3cret"
@@ -93,7 +93,7 @@ tests:
           pattern: "max_rows_per_query: 100"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "lookback_time: 120"
+          pattern: "lookback_time: 60"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "max_query_sample_count: 5000"

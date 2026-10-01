@@ -80,7 +80,7 @@ tests:
           pattern: "api-key: \\$\\{env:NEW_RELIC_LICENSE_KEY\\}"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "sending_queue:\\s*\\n\\s*enabled: true\\s*\\n\\s*sizer: bytes\\s*\\n\\s*queue_size: 100_000_000\\s*\\n\\s*num_consumers: 10\\s*\\n\\s*batch:\\s*\\n\\s*sizer: bytes\\s*\\n\\s*max_size: 1_000_000\\s*\\n\\s*min_size: 100_000\\s*\\n\\s*flush_timeout: 5s"
+          pattern: "sending_queue:\\s*\\n\\s*enabled: true\\s*\\n\\s*sizer: bytes\\s*\\n\\s*queue_size: 100_000_000\\s*\\n\\s*num_consumers: 10\\s*\\n\\s*batch:\\s*\\n\\s*sizer: bytes\\s*\\n\\s*max_size: 1_000_000\\s*\\n\\s*min_size: 0\\s*\\n\\s*flush_timeout: 5s"
   - it: wires the metrics and logs pipelines to the receiver, processors, and exporter
     asserts:
       - matchRegex:

@@ -24,11 +24,11 @@ mysql:
   # -- Maps to the receiver's allow_native_passwords.
   allowNativePasswords: true
   # -- How often the receiver scrapes MySQL.
-  collectionInterval: 10s
+  collectionInterval: 15s
   # -- Delay before the receiver's first scrape.
   initialDelay: 1s
-  # -- inline or procedure. "inline" is the receiver's real default -- New Relic's own doc example sets "procedure" to demonstrate the alternative, not because it's the default. "procedure" requires a SQL SECURITY DEFINER explain_statement procedure this chart's setupJob does not create -- see README, "Automated setup", or https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#query.
-  explainMode: inline
+  # -- inline or procedure. "procedure" collects EXPLAIN plans for write statements without granting DML to the monitoring user, via a SQL SECURITY DEFINER procedure; the receiver falls back to "inline" automatically for any schema where the procedure is absent. Procedure setup is per schema -- see README, or https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#query.
+  explainMode: procedure
 
 mysqlMulti:
   # -- Enables multi-instance mode: one release monitors every entry in mysqlMulti.databases from a single collector pod.

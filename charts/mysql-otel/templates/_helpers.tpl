@@ -123,7 +123,7 @@ unique env-var suffixes, and no accidental mixing with the single-instance mysql
 {{/*
 Renders one receiver's field block in the same order as the single-instance configmap.yaml: endpoint/transport/
 username/password/database, allow_native_passwords/collection_interval/initial_delay, explain_mode,
-statement_events, query_sample_collection, top_query_collection, events, metrics, falling back to alphabetical
+statement_events, query_sample_collection, top_query_collection, events, resource_attributes, metrics, falling back to alphabetical
 order for any other field (e.g. from additionalReceiverConfig). Caller emits the `      <receiverKey>:` line
 itself and invokes this with `{{- include ... }}` immediately after it (leading `{{-` required, trims the
 preceding newline).
@@ -132,7 +132,7 @@ Args (single dict): .receiver -- the merged receiver config dict.
 */}}
 {{- define "mysql-otel.renderReceiver" -}}
 {{- $receiver := .receiver -}}
-{{- $orderedKeys := list "endpoint" "transport" "username" "password" "database" "allow_native_passwords" "collection_interval" "initial_delay" "explain_mode" "statement_events" "query_sample_collection" "top_query_collection" "events" "metrics" -}}
+{{- $orderedKeys := list "endpoint" "transport" "username" "password" "database" "allow_native_passwords" "collection_interval" "initial_delay" "explain_mode" "statement_events" "query_sample_collection" "top_query_collection" "events" "resource_attributes" "metrics" -}}
 {{- $emitted := list -}}
 {{- range $key := $orderedKeys }}
 {{- if hasKey $receiver $key }}
@@ -164,6 +164,13 @@ Args (single dict): .receiver -- the merged receiver config dict.
             enabled: {{ index (index $events "db.server.query_sample") "enabled" }}
           db.server.top_query:
             enabled: {{ index (index $events "db.server.top_query") "enabled" }}
+          db.server.query_plan:
+            enabled: {{ index (index $events "db.server.query_plan") "enabled" }}
+{{- else if eq $key "resource_attributes" }}
+{{- $ra := index $receiver $key }}
+        resource_attributes:
+          db.system.version:
+            enabled: {{ index (index $ra "db.system.version") "enabled" }}
 {{- else if eq $key "metrics" }}
 {{- $metrics := index $receiver $key }}
         metrics:
@@ -208,9 +215,9 @@ additionalReceiverConfig remains the one escape hatch for overriding any of this
 {{- define "mysql-otel.multi.receiverDefaults" -}}
 transport: tcp
 allow_native_passwords: true
-collection_interval: 10s
+collection_interval: 15s
 initial_delay: 1s
-explain_mode: inline
+explain_mode: procedure
 statement_events:
   digest_text_limit: 4096
   time_limit: 24h
@@ -220,7 +227,7 @@ query_sample_collection:
   allowed_comment_keys:
     - nr_service_guid
 top_query_collection:
-  lookback_time: 120
+  lookback_time: 60
   max_query_sample_count: 5000
   top_query_count: 200
   collection_interval: 60s
@@ -232,6 +239,11 @@ events:
   db.server.query_sample:
     enabled: true
   db.server.top_query:
+    enabled: true
+  db.server.query_plan:
+    enabled: true
+resource_attributes:
+  db.system.version:
     enabled: true
 metrics:
   mysql.query.count:
