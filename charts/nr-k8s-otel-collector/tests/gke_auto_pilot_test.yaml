@@ -101,3 +101,146 @@ tests:
           path: data["daemonset-config.yaml"]
           pattern: 'proxy/metrics/cadvisor'
         template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT with gkeAutopilotAllowlist keeps the host-fs mount and root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+      gkeAutopilotAllowlist: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT without gkeAutopilotAllowlist strips the host-fs mount and root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: provider OPEN_SHIFT with gkeAutopilotAllowlist does not add root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: OPEN_SHIFT
+      gkeAutopilotAllowlist: true
+    asserts:
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: gkeAutopilotAllowlist true without a provider is a no-op (host-fs mount and volume stay, as in the default)
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      gkeAutopilotAllowlist: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+  - it: gkeAutopilotAllowlist true without a provider is a no-op (root_path stays, as in the default)
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      gkeAutopilotAllowlist: true
+    asserts:
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT with global.gkeAutopilotAllowlist keeps the host-fs mount and root_path
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+      global:
+        gkeAutopilotAllowlist: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
+  - it: provider GKE_AUTOPILOT with global.gkeAutopilotAllowlist true is overridden by a local gkeAutopilotAllowlist false
+    set:
+      cluster: my-cluster
+      licenseKey: us-whatever
+      provider: GKE_AUTOPILOT
+      gkeAutopilotAllowlist: false
+      global:
+        gkeAutopilotAllowlist: true
+    asserts:
+      - notContains:
+          path: spec.template.spec.volumes
+          content:
+            name: host-fs
+            hostPath:
+              path: /
+        template: templates/daemonset.yaml
+      - notContains:
+          path: spec.template.spec.containers[0].volumeMounts
+          content:
+            name: host-fs
+            mountPath: /hostfs
+            readOnly: true
+        template: templates/daemonset.yaml
+      - notMatchRegex:
+          path: data["daemonset-config.yaml"]
+          pattern: 'root_path: /hostfs'
+        template: templates/daemonset-configmap.yaml
