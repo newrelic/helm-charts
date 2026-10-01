@@ -295,8 +295,13 @@ ebpfAgent:
     tag: ""
     # -- Image pull policy. Overrides `global.images.pullPolicy`
     pullPolicy: ""
-  # -- Configuration for the kernel header installer init container
+  # -- Configuration for the kernel header installer init container.
+  # Agent versions >= 1.7.0 use CO-RE/BTF and do not need kernel headers installed on the host, so the
+  # init container is skipped automatically for those versions. Older agent versions still require it.
   kernelHeaderInstaller:
+    # -- Force the kernel header installer on (true) or off (false), bypassing agent version detection.
+    # Leave empty to auto-detect based on the resolved ebpfAgent.image.tag / Chart.AppVersion.
+    enabled: ""
     image:
       # -- Kernel header installer image registry. Overrides `global.images.registry`. Defaults to docker.io
       registry: ""
