@@ -58,16 +58,13 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 
 {{/*
-The otlp (gRPC) exporter takes a bare host:port target and rejects a full URL --
-the exact opposite of mssql-otel's otlphttp exporter, which requires a scheme.
-Catch a copy-pasted scheme'd endpoint at render time rather than at runtime.
+The otlp (gRPC) exporter takes a bare host:port target (conventionally port
+4317). A scheme'd URL is tolerated (the gRPC client strips it and uses it to
+enable TLS), but the bare form is the documented/recommended one.
 */}}
 {{- define "postgresql-otel.validate.otlpEndpoint" -}}
 {{- if not .Values.otlpEndpoint -}}
 {{- fail "otlpEndpoint is required" -}}
-{{- end -}}
-{{- if or (hasPrefix "http://" .Values.otlpEndpoint) (hasPrefix "https://" .Values.otlpEndpoint) -}}
-{{- fail (printf "otlpEndpoint must be a bare host:port with no scheme -- the otlp (gRPC) exporter rejects a URL, unlike mssql-otel's otlphttp. Got: %q. New Relic's US OTLP/gRPC endpoint is otlp.nr-data.net:4317" .Values.otlpEndpoint) -}}
 {{- end -}}
 {{- end -}}
 

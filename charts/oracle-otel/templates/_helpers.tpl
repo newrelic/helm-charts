@@ -103,6 +103,17 @@ instead of crashing inside `hasKey` with a raw Go type-mismatch error.
 {{- end -}}
 
 {{/*
+The otlp (gRPC) exporter takes a bare host:port target (conventionally port
+4317). A scheme'd URL is tolerated (the gRPC client strips it and uses it to
+enable TLS), but the bare form is the documented/recommended one.
+*/}}
+{{- define "oracle-otel.validate.otlpEndpoint" -}}
+{{- if not .Values.otlpEndpoint -}}
+{{- fail "otlpEndpoint is required" -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Fields shared by every topology: events, top_query_collection, query_sample_collection,
 session_wait_event_collection. Verbatim from New Relic's otel-oracledb docs -- identical
 across cdb/pdb/rds/adb.

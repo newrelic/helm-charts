@@ -127,7 +127,7 @@ mssql:
   port: 1433
   existingSecret: "db-monitor-creds"   # or username/password as plain values
 
-otlpEndpoint: "https://otlp.nr-data.net:4318"
+otlpEndpoint: "otlp.nr-data.net:4317"
 licenseKey: "<your New Relic license key>"
 ```
 
@@ -161,7 +161,7 @@ mssqlMulti:
       server: "sqlserver-db-2.example.internal"
       existingSecret: "db2-monitor-creds"
 
-otlpEndpoint: "https://otlp.nr-data.net:4318"
+otlpEndpoint: "otlp.nr-data.net:4317"
 licenseKey: "<your New Relic license key>"
 ```
 
@@ -185,7 +185,7 @@ mssqlMulti:
       sqlAdmin:
         existingSecret: "db2-admin-creds"
 
-otlpEndpoint: "https://otlp.nr-data.net:4318"
+otlpEndpoint: "otlp.nr-data.net:4317"
 licenseKey: "<your New Relic license key>"
 
 setupJob:
@@ -240,7 +240,7 @@ Shared across both modes:
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
 | `image.tag` | Collector image tag | `2.4.0` |
-| `otlpEndpoint` | New Relic endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time | `""` |
+| `otlpEndpoint` | New Relic endpoint for your account's region. Bare host:port is recommended (e.g. `otlp.nr-data.net:4317` for US); a scheme'd URL is tolerated too | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrsqlserver` receiver block | `{}` |
 | `setupJob.enabled` | Run the automated login-creation Job(s) | `false` |

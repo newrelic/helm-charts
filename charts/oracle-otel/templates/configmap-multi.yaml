@@ -1,5 +1,6 @@
 {{- if .Values.oracleMulti.enabled }}
 {{- include "oracle-otel.validate.oracleMulti" . -}}
+{{- include "oracle-otel.validate.otlpEndpoint" . -}}
 {{- $isAdb := eq .Values.oracleMulti.topology "adb" -}}
 {{- $isRds := eq .Values.oracleMulti.topology "rds" -}}
 {{- $topologyDefaults := dict -}}
@@ -44,7 +45,7 @@
 {{- $firstHost = first (splitList ":" $db.endpoint) -}}
 {{- end -}}
 {{- end -}}
-{{- $exporterKey := ternary "otlphttp/newrelic" "otlp/newrelic" $isAdb -}}
+{{- $exporterKey := "otlp/newrelic" -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:

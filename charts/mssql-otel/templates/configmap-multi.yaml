@@ -1,5 +1,6 @@
 {{- if .Values.mssqlMulti.enabled }}
 {{- include "mssql-otel.validate.mssqlMulti" . -}}
+{{- include "mssql-otel.validate.otlpEndpoint" . -}}
 {{- $sharedDefaults := include "mssql-otel.multi.receiverDefaults" . | fromYaml -}}
 {{- $databases := .Values.mssqlMulti.databases -}}
 {{- $multiEntry := gt (len $databases) 1 -}}

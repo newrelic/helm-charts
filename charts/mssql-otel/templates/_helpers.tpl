@@ -56,19 +56,14 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 
 {{/*
 This chart's exporter is named `otlp` to match New Relic's doc example
-verbatim, but that doc example pairs `otlp:` (the real OTel Collector gRPC
-exporter type) with an HTTP-style endpoint (port 4318, no scheme) -- a
-combination confirmed live to fail at runtime with "unsupported protocol
-scheme" when a scheme is present, and otherwise mismatched with what a
-genuine gRPC otlp exporter expects (bare host:port, conventionally port
-4317, like oracle-otel's). This chart still requires a full scheme'd URL
-here (kept from when the exporter was named `otlphttp`, which genuinely
-needed one) -- this is a deliberate doc-fidelity choice, not a fix, and
-telemetry export in this configuration is unconfirmed/likely broken. See README.md.
+verbatim -- it is the real OTel Collector gRPC exporter type, which takes a
+bare host:port endpoint (conventionally port 4317). A scheme'd URL is
+tolerated (the gRPC client strips it and uses it to enable TLS), but the
+bare form is the documented/recommended one -- see README.md.
 */}}
 {{- define "mssql-otel.validate.otlpEndpoint" -}}
-{{- if not (or (hasPrefix "http://" .Values.otlpEndpoint) (hasPrefix "https://" .Values.otlpEndpoint)) -}}
-{{- fail (printf "otlpEndpoint must include a scheme (http:// or https://). Got: %q. New Relic's US OTLP/HTTP endpoint is https://otlp.nr-data.net:4318" .Values.otlpEndpoint) -}}
+{{- if not .Values.otlpEndpoint -}}
+{{- fail "otlpEndpoint is required" -}}
 {{- end -}}
 {{- end -}}
 

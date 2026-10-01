@@ -1,5 +1,6 @@
 {{- if not .Values.oracleMulti.enabled }}
 {{- include "oracle-otel.validate.topology" . -}}
+{{- include "oracle-otel.validate.otlpEndpoint" . -}}
 {{- $isAdb := eq .Values.oracle.topology "adb" -}}
 {{- $isRds := eq .Values.oracle.topology "rds" -}}
 {{- $receiver := dict -}}
@@ -34,7 +35,7 @@
 {{- else if $isAdb -}}
 {{- $receiverKey = "nroracledb/adb" -}}
 {{- end -}}
-{{- $exporterKey := ternary "otlphttp/newrelic" "otlp/newrelic" $isAdb -}}
+{{- $exporterKey := "otlp/newrelic" -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
