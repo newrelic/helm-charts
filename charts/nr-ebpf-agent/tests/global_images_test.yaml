@@ -15,6 +15,9 @@ tests:
     set: &base
       cluster: test-cluster
       licenseKey: test-license-key
+      ebpfAgent:
+        kernelHeaderInstaller:
+          enabled: true
     asserts:
       - equal:
           path: spec.template.spec.initContainers[0].image
@@ -22,7 +25,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: docker.io/newrelic/newrelic-ebpf-agent:1.6.0
+          value: docker.io/newrelic/newrelic-ebpf-agent:1.7.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: uses global.images.registry for both images when set and no local override
@@ -38,7 +41,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.6.0
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.7.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: prefers local registry over global registry for kernel header installer
@@ -49,6 +52,7 @@ tests:
           registry: my.private.registry.com
       ebpfAgent:
         kernelHeaderInstaller:
+          enabled: true
           image:
             registry: my.local.registry.com
             repository: my-org/my-image
@@ -71,7 +75,7 @@ tests:
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.local.registry.com/my-org/ebpf-agent:1.6.0
+          value: my.local.registry.com/my-org/ebpf-agent:1.7.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   - it: supports air-gapped registry with only global registry configured
@@ -87,7 +91,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:1.6.0
+          value: registry.internal.company.com/newrelic/newrelic-ebpf-agent:1.7.0
         template: templates/nr-ebpf-agent-daemonset.yaml
 
   # ========================================
@@ -218,6 +222,7 @@ tests:
           pullPolicy: Always
       ebpfAgent:
         kernelHeaderInstaller:
+          enabled: true
           image:
             pullPolicy: Never
     asserts:
@@ -246,7 +251,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.6.0
+          value: my.private.registry.com/newrelic/newrelic-ebpf-agent:1.7.0
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.imagePullSecrets
@@ -276,6 +281,7 @@ tests:
           registry: local.registry.com
           repository: my-org/ebpf-agent
         kernelHeaderInstaller:
+          enabled: true
           image:
             registry: local.registry.com
             repository: my-org/header-installer
@@ -286,7 +292,7 @@ tests:
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.containers[0].image
-          value: local.registry.com/my-org/ebpf-agent:1.6.0
+          value: local.registry.com/my-org/ebpf-agent:1.7.0
         template: templates/nr-ebpf-agent-daemonset.yaml
       - equal:
           path: spec.template.spec.imagePullSecrets

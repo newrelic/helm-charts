@@ -8,31 +8,26 @@ release:
   namespace: my-namespace
 
 tests:
-  - it: installs kernel headers by default (Chart.AppVersion < 1.7.0)
+  - it: skips kernel header installation by default (Chart.AppVersion >= 1.7.0)
     set: &base
       cluster: test-cluster
       licenseKey: test-license-key
     asserts:
-      - contains:
+      - notExists:
           path: spec.template.spec.initContainers
-          content:
-            name: kernel-header-installer
-          any: true
         template: templates/nr-ebpf-agent-daemonset.yaml
-      - contains:
+      - notContains:
           path: spec.template.spec.volumes
           content:
             name: kernel-headers-volume
-          any: true
         template: templates/nr-ebpf-agent-daemonset.yaml
-      - contains:
+      - notContains:
           path: spec.template.spec.containers[0].volumeMounts
           content:
             name: kernel-headers-volume
-          any: true
         template: templates/nr-ebpf-agent-daemonset.yaml
       - hasDocuments:
-          count: 1
+          count: 0
         template: templates/nr-ebpf-agent-kernel-header-configmap.yaml
 
   - it: skips kernel header installation for CORE agent images (>= 1.7.0)
@@ -115,3 +110,65 @@ tests:
       - hasDocuments:
           count: 1
         template: templates/nr-ebpf-agent-kernel-header-configmap.yaml
+
+  # ========================================
+  # Manual header-path overrides stay backward compatible: they are independent
+  # of the installer/CORE gating above and must keep working in both modes.
+  # ========================================
+
+  - it: still honors manual header path overrides on a pre-CORE tag (installer present)
+    set:
+      <<: *base
+      ebpfAgent:
+        image:
+          tag: 1.6.9
+        downloadedPackagedHeadersPath: /host/opt/newrelic-headers
+        distroKernelHeadersPath: /host/usr/src/kernels/custom
+    asserts:
+      - contains:
+          path: spec.template.spec.initContainers
+          content:
+            name: kernel-header-installer
+          any: true
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DOWNLOADED_PACKAGED_HEADERS_PATH
+            value: /host/opt/newrelic-headers
+          any: true
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DISTRO_KERNEL_HEADERS_PATH
+            value: /host/usr/src/kernels/custom
+          any: true
+        template: templates/nr-ebpf-agent-daemonset.yaml
+
+  - it: still honors manual header path overrides on a CORE tag (installer skipped)
+    set:
+      <<: *base
+      ebpfAgent:
+        image:
+          tag: 1.7.0
+        downloadedPackagedHeadersPath: /host/opt/newrelic-headers
+        distroKernelHeadersPath: /host/usr/src/kernels/custom
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DOWNLOADED_PACKAGED_HEADERS_PATH
+            value: /host/opt/newrelic-headers
+          any: true
+        template: templates/nr-ebpf-agent-daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: DISTRO_KERNEL_HEADERS_PATH
+            value: /host/usr/src/kernels/custom
+          any: true
+        template: templates/nr-ebpf-agent-daemonset.yaml
