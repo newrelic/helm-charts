@@ -121,6 +121,28 @@ Extracts version from image tag and compares using semver
 {{- end -}}
 
 {{/*
+Determine whether the kernel header installer init container is required.
+Agent versions >= 1.7.0 use CO-RE/BTF and do not need kernel headers installed on the host.
+The agent version is parsed from the resolved image tag; if it can't be parsed, headers are
+installed to stay safe for older/custom images. Can be forced via
+ebpfAgent.kernelHeaderInstaller.enabled (true/false), which bypasses version detection entirely.
+*/}}
+{{- define "nr-ebpf-agent.kernelHeaderInstaller.enabled" -}}
+{{- $override := .Values.ebpfAgent.kernelHeaderInstaller.enabled -}}
+{{- if and (kindIs "string" $override) (eq $override "") -}}
+{{- $tag := include "nr-ebpf-agent.imageTag" . -}}
+{{- if regexMatch "^v?[0-9]+\\.[0-9]+\\.[0-9]+" $tag -}}
+{{- $agentVersion := regexFind "^v?([0-9]+\\.[0-9]+\\.[0-9]+)" $tag | trimPrefix "v" -}}
+{{- semverCompare "<1.7.0" $agentVersion -}}
+{{- else -}}
+{{- true -}}
+{{- end -}}
+{{- else -}}
+{{- $override -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Select the init container image for kernel header installation.
 On OpenShift, automatically resolves the driver-toolkit image from the cluster's ImageStream,
 which contains pre-built kernel headers matching the RHCOS kernel.
