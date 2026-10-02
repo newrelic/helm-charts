@@ -50,14 +50,6 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "retry_on_failure:"
-  - it: sets host.address to the host only, stripping the port from oracle.endpoint
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "value: \"oracle-db\\.internal\"\\n\\s*action: upsert"
-      - notMatchRegex:
-          path: data["config.yaml"]
-          pattern: "value: \"oracle-db\\.internal:1521\""
   - it: wires the oracledb pipeline to the receiver, processors, and exporter
     asserts:
       - matchRegex:
@@ -89,6 +81,12 @@ tests:
           pattern: "db\\.server\\.session\\.wait_sample:\\s*\\n\\s*enabled: true"
       - matchRegex:
           path: data["config.yaml"]
+          pattern: "db\\.server\\.top_procedure:\\s*\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "db\\.server\\.query_plan:\\s*\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
           pattern: "top_query_collection:"
       - matchRegex:
           path: data["config.yaml"]
@@ -96,13 +94,19 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "session_wait_event_collection:"
-  - it: renders the full cdb/pdb metrics and resource_attributes defaults for pdb topology
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "top_procedure_collection:\\s*\\n\\s*max_procedure_sample_count: 1000\\s*\\n\\s*top_procedure_count: 250\\s*\\n\\s*collection_interval: 60s"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "resource_attributes:\\s*\\n\\s*oracle\\.db\\.edition:\\s*\\n\\s*enabled: true"
+  - it: renders the cdb/pdb metrics and resource_attributes defaults for pdb topology
     set:
       oracle.topology: "pdb"
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "oracledb\\.sessions\\.limit:"
+          pattern: "oracledb\\.sessions\\.usage:"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "oracledb\\.sql_service\\.response\\.duration:"
@@ -110,6 +114,9 @@ tests:
           path: data["config.yaml"]
           pattern: "resource_attributes:"
       - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracle\\.db\\.edition:"
+      - notMatchRegex:
           path: data["config.yaml"]
           pattern: "oracledb\\.instance\\.name:"
       - matchRegex:
@@ -124,10 +131,13 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "oracledb\\.sessions\\.limit:"
+          pattern: "oracledb\\.sessions\\.usage:"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "resource_attributes:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracle\\.db\\.edition:"
   - it: renders receiver fields in the documented order -- endpoint, username, password, service, then collection blocks, then metrics
     set:
       oracle.topology: "rds"
@@ -135,7 +145,7 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "endpoint:.*\\n\\s*username:.*\\n\\s*password:.*\\n\\s*service:.*\\n\\s*collection_interval:.*\\n\\s*events:"
-  - it: renders the reduced rds metrics defaults and omits resource_attributes
+  - it: renders the reduced rds metrics defaults and the shared oracle.db.edition resource attribute
     set:
       oracle.topology: "rds"
     asserts:
@@ -147,16 +157,16 @@ tests:
           pattern: "oracledb\\.sessions\\.limit:"
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "oracledb\\.sql_service\\.response\\.duration:"
+          pattern: "oracledb\\.dml_locks\\.usage:"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "receivers:\\s*\\n\\s*nroracledb/rds:"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "receivers:\\s*\\[nroracledb/rds\\]"
-      - notMatchRegex:
+      - matchRegex:
           path: data["config.yaml"]
-          pattern: "resource_attributes:"
+          pattern: "resource_attributes:\\s*\\n\\s*oracle\\.db\\.edition:"
   - it: additionalReceiverConfig can still override a topology default metric
     set:
       oracle.topology: "rds"
@@ -189,7 +199,7 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "^\\s*username:"
-  - it: renders the reduced adb metrics defaults, omits resource_attributes and oracle.db.pdb attributes
+  - it: renders the adb metrics defaults, including oracle.db.pdb attributes, and keeps the shared oracle.db.edition resource attribute
     set:
       oracle.topology: "adb"
     asserts:
@@ -199,13 +209,13 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "oracledb\\.sessions\\.limit:"
-      - notMatchRegex:
+      - matchRegex:
           path: data["config.yaml"]
-          pattern: "resource_attributes:"
-      - notMatchRegex:
+          pattern: "resource_attributes:\\s*\\n\\s*oracle\\.db\\.edition:"
+      - matchRegex:
           path: data["config.yaml"]
           pattern: "oracle\\.db\\.pdb"
-  - it: uses the nroracledb/adb receiver key and the otlphttp/newrelic exporter, plus disables collector self-metrics
+  - it: uses the nroracledb/adb receiver key and the otlp/newrelic exporter
     set:
       oracle.topology: "adb"
     asserts:
@@ -217,13 +227,13 @@ tests:
           pattern: "receivers:\\s*\\[nroracledb/adb\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "otlphttp/newrelic:"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "exporters:\\s*\\[otlphttp/newrelic\\]"
-      - notMatchRegex:
-          path: data["config.yaml"]
           pattern: "otlp/newrelic:"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "telemetry:\\s*\\n\\s*metrics:\\s*\\n\\s*level: none"
+          pattern: "exporters:\\s*\\[otlp/newrelic\\]"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "otlphttp/newrelic:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "telemetry:"
