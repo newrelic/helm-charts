@@ -1,10 +1,10 @@
 {{- if (not (empty .Values.fluentBit.persistence)) }}
 
-{{- if and (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.storageClass) (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
+{{- if and (eq (include "newrelic.fluentBit.persistence.mode" .) "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.storageClass) (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
 {{ fail "You should provide a ReadWriteMany storageClass or an existingVolumeClaim if using persitentVolume as Fluent Bit persistence mode." }}
 {{- end }}
 
-{{- if and (eq .Values.fluentBit.persistence.mode "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
+{{- if and (eq (include "newrelic.fluentBit.persistence.mode" .) "persistentVolume") (not .Values.fluentBit.persistence.persistentVolume.existingVolumeClaim) }}
 {{- if and (not .Values.fluentBit.persistence.persistentVolume.dynamicProvisioning) (not .Values.fluentBit.persistence.persistentVolume.existingVolume) }}
 apiVersion: v1
 kind: PersistentVolume
