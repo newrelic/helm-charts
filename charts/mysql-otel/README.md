@@ -259,14 +259,6 @@ after that is a short `<<: *nrmysql-common` override carrying only its own
 documented MySQL multi-receiver pattern
 (https://docs.newrelic.com/docs/opentelemetry/database/mysql/multi-receiver/#multi).
 
-**Known limitation:** because every entry shares one pipeline and processor,
-that processor's `server.address`/`server.port` resource attributes are
-only correct for the *first* entry in `mysqlMulti.databases` — every other
-entry's metrics/events carry the first entry's server/port. Same accepted
-tradeoff as `oracle-otel`'s `oracleMulti` — see
-`docs/superpowers/specs/2026-09-16-mysql-otel-multi-instance-design.md` for
-the full rationale.
-
 ## Values
 
 Shared across both modes:
