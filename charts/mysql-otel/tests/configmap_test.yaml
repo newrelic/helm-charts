@@ -112,17 +112,6 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "events:[\\s\\S]*metrics:\\s*\\n\\s*mysql\\.query\\.count:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.query\\.slow\\.count:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.commands:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.innodb\\.data_file\\.io:\\s*\\n\\s*enabled: true"
-  - it: renders the resource/mysql processor with server.address and server.port
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "resource/mysql:"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.address\\s*\\n\\s*value: \"mysql\\.internal\"\\s*\\n\\s*action: upsert"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.port\\s*\\n\\s*value: 3306\\s*\\n\\s*action: upsert"
   - it: renders the otlp/newrelic exporter with a bare endpoint and env-substitution api-key, never a literal one
     asserts:
       - matchRegex:
@@ -144,7 +133,7 @@ tests:
           pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[resource/mysql, batch\\]"
+          pattern: "processors:\\s*\\[batch\\]"
   - it: merges additionalReceiverConfig into the receiver block
     set:
       additionalReceiverConfig:

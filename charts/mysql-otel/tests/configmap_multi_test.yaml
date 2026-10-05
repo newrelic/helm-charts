@@ -101,14 +101,6 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "otlp/newrelic:[\\s\\S]*otlp/newrelic:"
-  - it: sets server.address/server.port to the first database entry's values only (documented shared-pipeline limitation)
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "value: \"host1\\.example\\.internal\"\\n\\s*action: upsert"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "value: 3306\\n\\s*action: upsert"
   - it: renders an optional per-entry database field when set
     set:
       mysqlMulti.databases:

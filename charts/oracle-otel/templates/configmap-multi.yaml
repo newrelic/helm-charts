@@ -65,14 +65,22 @@ data:
 {{- include "oracle-otel.renderReceiver" (dict "receiver" (index $receiverContents $key) "isRds" $isRds "isAdb" $isAdb) }}
       {{- end }}
       {{- end }}
-    processors:
-      batch:
     exporters:
       {{ $exporterKey }}:
         endpoint: {{ .Values.otlpEndpoint | quote }}
         headers:
           api-key: "${env:NEW_RELIC_LICENSE_KEY}"
         compression: gzip
+        sending_queue:
+          enabled: true
+          sizer: bytes
+          queue_size: 100_000_000
+          num_consumers: 10
+          batch:
+            sizer: bytes
+            max_size: 1_000_000
+            min_size: 0
+            flush_timeout: 5s
         retry_on_failure:
           enabled: true
           initial_interval: 5s
@@ -82,10 +90,8 @@ data:
       pipelines:
         metrics/oracledb:
           receivers: [{{ join ", " $receiverKeys }}]
-          processors: [batch]
           exporters: [{{ $exporterKey }}]
         logs/oracledb:
           receivers: [{{ join ", " $receiverKeys }}]
-          processors: [batch]
           exporters: [{{ $exporterKey }}]
 {{- end }}
