@@ -11,8 +11,8 @@ gates on the collector must go through this so the alias is honored everywhere.
 {{/*
 Effective REPORT_INFRA value for the eBPF agent.
 An explicit, non-empty `reportInfra` always wins. When it is left empty (default),
-derive it from the `infra.enabled` alias: "auto" when infra is enabled (so eBPF host
-stats replace the infra agent's HOST entity), "false" otherwise.
+derive it from the `infra.enabled` alias: "auto" when infra is enabled (eBPF-only process
+and cgroup metrics; host system.* metrics come from the nrdot sidecar), "false" otherwise.
 */}}
 {{- define "nr-ebpf-agent.reportInfra" -}}
 {{- $ri := .Values.reportInfra | toString -}}

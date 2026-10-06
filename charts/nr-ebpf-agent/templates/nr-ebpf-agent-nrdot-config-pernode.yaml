@@ -11,6 +11,123 @@ metadata:
 data:
   pernode.yaml: |
     receivers:
+      # Host system.* and per-process CPU/memory/thread/page-fault metrics for this node. The
+      # eBPF agent no longer emits these; it keeps the process metrics that need privilege or
+      # eBPF. Scrapers and filters mirror the ebpf-host VM recipe so VM and K8s hosts match.
+      host_metrics:
+        root_path: /hostfs
+        collection_interval: {{ .Values.nrdotCollector.collectionInterval }}
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.logical.count:
+                enabled: false
+              system.cpu.time:
+                enabled: false
+              system.cpu.utilization:
+                enabled: true
+          load:
+          # used = MemTotal - MemAvailable (feature gate receiver.hostmetricsreceiver.UseLinuxMemAvailable,
+          # on by default), as OTel semconv defines it: "On Linux, this corresponds to "MemTotal -
+          # MemAvailable" from /proc/meminfo, which more accurately reflects memory in active use by
+          # applications compared to older formulas based on free, cached, and buffers."
+          # (https://opentelemetry.io/docs/specs/semconv/system/system-metrics/#metric-systemmemoryusage).
+          # The infrastructure agent's default (ignore_reclaimable: false) is the same.
+          memory:
+            metrics:
+              system.memory.utilization:
+                enabled: true
+          paging:
+            metrics:
+              system.paging.utilization:
+                enabled: false
+              system.paging.faults:
+                enabled: false
+          filesystem:
+            metrics:
+              system.filesystem.utilization:
+                enabled: true
+            # Container runtime / kubelet bind mounts would otherwise report the node's disks
+            # many times over.
+            exclude_mount_points:
+              mount_points: ["^/(dev|proc|sys|run)($|/.*)", "^/var/lib/(docker|containerd|kubelet|containers)/.*", "^/var/log/pods/.*"]
+              match_type: regexp
+            # The infrastructure agent's supported filesystems (storage_sampler_linux.go
+            # SupportedFileSystems); vfat, tmpfs, overlay and squashfs are not reported.
+            include_fs_types:
+              fs_types: [xfs, btrfs, ext, ext2, ext3, ext4, hfs, vxfs, zfs, reiserfs]
+              match_type: strict
+          # Whole disks only. /proc/diskstats also lists partitions and dm/md devices, whose
+          # I/O is already counted on the disk underneath, so summing across devices would
+          # double-count.
+          disk:
+            include:
+              devices: ["^(sd[a-z]+|xvd[a-z]+|vd[a-z]+|hd[a-z]+|nvme[0-9]+n[0-9]+)$"]
+              match_type: regexp
+            metrics:
+              system.disk.merged:
+                enabled: false
+              system.disk.pending_operations:
+                enabled: false
+              system.disk.weighted_io_time:
+                enabled: false
+          # The infrastructure agent's default network_interface_filters (config_linux.go):
+          # case-insensitive prefix dummy, lo, vmnet, sit, tun, tap, veth, or tun/tap at index 1.
+          network:
+            exclude:
+              interfaces: ["(?i)^(dummy|lo|vmnet|sit|tun|tap|veth|.tun|.tap)"]
+              match_type: regexp
+            metrics:
+              system.network.connections:
+                enabled: false
+          processes:
+          # Per-process metrics that need no privilege (/proc/<pid>/stat, statm, status). Disk
+          # I/O and FD counts need CAP_SYS_PTRACE / CAP_DAC_READ_SEARCH for other users'
+          # processes, so the eBPF agent reports those instead.
+          # process.cpu.utilization follows OTel semconv: "Difference in process.cpu.time since the
+          # last measurement, divided by the elapsed time and number of CPUs available to the process."
+          # (https://opentelemetry.io/docs/specs/semconv/system/process-metrics/#metric-processcpuutilization).
+          # So a process busy on 2 cores of a 16-CPU host reads 0.125, and per-process values add up to
+          # host CPU utilization. The infrastructure agent's ProcessSample.cpuPercent is not divided by
+          # the CPU count (the same process reads 200%).
+          # Processes are sampled once per collection interval. A process needs two samples to get a
+          # cpu.utilization value, so one that lives shorter than the interval is not attributed (its
+          # CPU still shows in system.cpu.utilization). The infrastructure agent has the same limit at
+          # its 20s metrics_process_sample_rate.
+          process:
+            metrics:
+              process.cpu.time:
+                enabled: false
+              process.cpu.utilization:
+                enabled: true
+              process.threads:
+                enabled: true
+              # Attribute renamed to system.paging.fault.type by transform/host_paging_fault_type.
+              process.paging.faults:
+                enabled: true
+              process.disk.io:
+                enabled: false
+            resource_attributes:
+              # Scraper default; no New Relic UI reads it, and it needs CAP_SYS_PTRACE.
+              process.executable.path:
+                enabled: false
+              # Full argv can carry secrets. OTel semconv marks process.command_line Opt-In: "SHOULD NOT
+              # be collected by default unless there is sanitization that excludes sensitive data."
+              # (https://opentelemetry.io/docs/specs/semconv/resource/process/). The infrastructure agent
+              # also strips arguments by default (strip_command_line: true). process.command (argv[0])
+              # is kept; no New Relic UI reads process.command_line.
+              process.command_line:
+                enabled: false
+              # Not sent on K8s (the image has no /etc/passwd to resolve it); the eBPF agent's
+              # process I/O omits it too (PROCESS_IO_REPORT_OWNER=false), so the rows merge.
+              process.owner:
+                enabled: false
+              # Source of the pod/container attributes (transform/host_process_k8s); dropped
+              # before export.
+              process.cgroup:
+                enabled: true
+            # Kernel threads and processes exiting mid-scrape would log errors every scrape.
+            mute_process_all_errors: true
       kubeletstats:
         collection_interval: {{ .Values.nrdotCollector.collectionInterval }}
         auth_type: serviceAccount
@@ -191,6 +308,167 @@ data:
     #              regex: ${env:K8S_NODE_NAME}
     #              action: keep
     processors:
+      # --- host_metrics processors (mirror the ebpf-host VM recipe) ---
+      metricstransform/host:
+        transforms:
+          # One node-wide value per state, grouped as the infrastructure agent does (cpu.go):
+          # user = user + nice, system = system + interrupt + softirq.
+          - include: system.cpu.utilization
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ state ]
+                aggregation_type: mean
+              - action: aggregate_label_values
+                label: state
+                aggregated_values: [ user, nice ]
+                new_value: user
+                aggregation_type: sum
+              - action: aggregate_label_values
+                label: state
+                aggregated_values: [ system, interrupt, softirq ]
+                new_value: system
+                aggregation_type: sum
+          - include: system.paging.operations
+            action: update
+            operations:
+              - action: aggregate_labels
+                label_set: [ direction ]
+                aggregation_type: sum
+      filter/host:
+        error_mode: ignore
+        metrics:
+          datapoint:
+            # Kernel threads (pid 2 = kthreadd and its children). The infrastructure agent skips
+            # processes with no resident memory, which "filters out certain kernel processes"
+            # (process/harvester_linux.go); on the test host that set is exactly pid 2 and its children.
+            # OTel semconv and the process scraper have no kernel-thread rule.
+            - 'resource.attributes["process.pid"] == 2 or resource.attributes["process.parent_pid"] == 2'
+            # utilization keeps only state=used: no UI reads the other states (the Host Metrics
+            # page reads free/used from system.memory.usage).
+            - 'metric.name == "system.memory.utilization" and attributes["state"] != "used"'
+            - 'metric.name == "system.memory.usage" and (attributes["state"] == "slab_unreclaimable" or attributes["state"] == "inactive")'
+            - 'IsMatch(metric.name, "^system.filesystem.(usage|inodes.usage)$") == true and attributes["state"] == "reserved"'
+            - 'metric.name == "system.paging.usage" and attributes["state"] == "cached"'
+      # process.paging.faults: rename the fault-type attribute `type` to the semconv name
+      # system.paging.fault.type (major/minor), the name the eBPF agent sent. The scraper's own
+      # semconv form (process.paging.faults@v1) needs the alpha feature gate
+      # scraper.process.EmitV1SystemConventions, which also switches process.cpu.utilization to
+      # cpu.mode (the New Relic UI reads state) and adds process.thread.count.
+      transform/host_paging_fault_type:
+        error_mode: ignore
+        metric_statements:
+          - context: datapoint
+            statements:
+              - set(datapoint.attributes["system.paging.fault.type"], datapoint.attributes["type"]) where metric.name == "process.paging.faults"
+              - delete_key(datapoint.attributes, "type") where metric.name == "process.paging.faults"
+      # A process with no page faults in the interval sends nothing, as the eBPF agent did.
+      # Must run after cumulativetodelta.
+      filter/host_drop_zero_page_faults:
+        error_mode: ignore
+        metrics:
+          datapoint:
+            - 'metric.name == "process.paging.faults" and value_int == 0'
+      # Pod/container attributes for processes in pods, as the eBPF agent's process metrics
+      # and the infrastructure agent's ProcessSample (containerId) carry. The pod UID and
+      # container ID come from /proc/<pid>/cgroup (systemd driver: kubepods-...-pod<uid with
+      # _>.slice/cri-containerd-<id>.scope; cgroupfs driver: kubepods/.../pod<uid>/<id>).
+      transform/host_process_k8s:
+        error_mode: ignore
+        metric_statements:
+          - context: resource
+            statements:
+              - merge_maps(resource.attributes, ExtractPatterns(resource.attributes["process.cgroup"], "pod(?P<tmp_pod_uid>[0-9a-f]{8}[-_][0-9a-f]{4}[-_][0-9a-f]{4}[-_][0-9a-f]{4}[-_][0-9a-f]{12})"), "upsert") where IsMatch(resource.attributes["process.cgroup"], "pod[0-9a-f]{8}[-_]")
+              - merge_maps(resource.attributes, ExtractPatterns(resource.attributes["process.cgroup"], "(?P<tmp_container_id>[0-9a-f]{64})"), "upsert") where resource.attributes["tmp_pod_uid"] != nil and IsMatch(resource.attributes["process.cgroup"], "[0-9a-f]{64}")
+              - set(resource.attributes["k8s.pod.uid"], resource.attributes["tmp_pod_uid"]) where resource.attributes["tmp_pod_uid"] != nil
+              - replace_pattern(resource.attributes["k8s.pod.uid"], "_", "-") where resource.attributes["tmp_pod_uid"] != nil
+              # Bare id, the key k8sattributes uses for container-level metadata.
+              - set(resource.attributes["container.id"], resource.attributes["tmp_container_id"]) where resource.attributes["tmp_container_id"] != nil
+              - delete_key(resource.attributes, "tmp_pod_uid")
+              - delete_key(resource.attributes, "tmp_container_id")
+              - delete_key(resource.attributes, "process.cgroup")
+      k8sattributes/host_process:
+        auth_type: serviceAccount
+        passthrough: false
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        extract:
+          metadata:
+            - k8s.pod.name
+            - k8s.namespace.name
+            - k8s.deployment.name
+            - k8s.container.name
+        pod_association:
+          - sources: [{ from: resource_attribute, name: k8s.pod.uid }]
+      # container.id must not reach New Relic: HOST entity synthesis skips process metrics
+      # that carry it (infra-host rule infra_host_host_id_3), which would detach these
+      # processes from the node. The infrastructure agent's name for it is containerId.
+      transform/host_process_k8s_names:
+        error_mode: ignore
+        metric_statements:
+          - context: resource
+            statements:
+              - set(resource.attributes["containerId"], resource.attributes["container.id"]) where resource.attributes["container.id"] != nil
+              - delete_key(resource.attributes, "container.id")
+              - set(resource.attributes["container.name"], resource.attributes["k8s.container.name"]) where resource.attributes["k8s.container.name"] != nil
+              - delete_key(resource.attributes, "k8s.container.name")
+      attributes/host_paging:
+        include:
+          match_type: strict
+          metric_names:
+            - system.paging.operations
+        actions:
+          - key: type
+            action: delete
+      # host.name from the OS (hostNetwork: the node's hostname, same as the eBPF agent);
+      # host.id comes from resource/host_id instead of this container's machine-id.
+      resourcedetection/host_system:
+        detectors: [system]
+        system:
+          hostname_sources: [os]
+          resource_attributes:
+            host.id:
+              enabled: false
+      # Placeholder replaced with the node's machine-id (else hostname) by the
+      # nrdot-get-allocatable init container.
+      resource/host_id:
+        attributes:
+          - key: host.id
+            value: <HOST_MACHINE_ID_PLACEHOLDER>
+            action: upsert
+      # Cloud instance id wins, as in the VM recipe and the eBPF agent. host.name stays the
+      # OS hostname (== eBPF's gethostname()) rather than e.g. the EC2 private DNS name, so
+      # the HOST entity name keeps matching the node (measured: ec2 detector otherwise sets
+      # ip-a-b-c-d.<region>.compute.internal over the OS hostname ip-a-b-c-d).
+      resourcedetection/host_cloud:
+        detectors: [gcp, ec2, azure]
+        timeout: 2s
+        override: true
+        ec2:
+          resource_attributes:
+            host.name:
+              enabled: false
+        gcp:
+          resource_attributes:
+            host.name:
+              enabled: false
+        azure:
+          resource_attributes:
+            host.name:
+              enabled: false
+      # No newrelic.entity.type here: these must synthesize the node's HOST entity, not a
+      # K8s one.
+      resource/host:
+        attributes:
+          - key: k8s.cluster.name
+            value: ${env:CLUSTER_NAME}
+            action: upsert
+          - key: k8s.node.name
+            value: ${env:K8S_NODE_NAME}
+            action: upsert
+          - key: newrelic.chart.version
+            value: {{ .Chart.Version | quote }}
+            action: upsert
       memory_limiter:
         check_interval: 1s
         limit_percentage: 80
@@ -469,6 +747,11 @@ data:
     service:
       extensions: [health_check]
       pipelines:
+        # Node-scoped (no namespace): always the default account.
+        metrics/host:
+          receivers: [host_metrics]
+          processors: [memory_limiter, metricstransform/host, filter/host, attributes/host_paging, transform/host_paging_fault_type, transform/host_process_k8s, k8sattributes/host_process, transform/host_process_k8s_names, resourcedetection/host_system, resource/host_id, resourcedetection/host_cloud, resource/host, cumulativetodelta, filter/host_drop_zero_page_faults, batch]
+          exporters: [otlphttp/acct-default]
         metrics/in:
           receivers: [kubeletstats]
           processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8sattributes, transform/set_volume_persistent, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
@@ -514,6 +797,11 @@ data:
     service:
       extensions: [health_check]
       pipelines:
+        # Node-scoped (no namespace): always the default account.
+        metrics/host:
+          receivers: [host_metrics]
+          processors: [memory_limiter, metricstransform/host, filter/host, attributes/host_paging, transform/host_paging_fault_type, transform/host_process_k8s, k8sattributes/host_process, transform/host_process_k8s_names, resourcedetection/host_system, resource/host_id, resourcedetection/host_cloud, resource/host, cumulativetodelta, filter/host_drop_zero_page_faults, batch]
+          exporters: [otlp/agent]
         metrics:
           receivers: [kubeletstats]
           processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8sattributes, transform/set_volume_persistent, resourcedetection/cloudproviders, resource/newrelic, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]

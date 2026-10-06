@@ -1,4 +1,4 @@
-suite: host-stats low-data-mode interval wiring
+suite: process-stats low-data-mode interval wiring
 templates:
   - templates/nr-ebpf-agent-daemonset.yaml
   - templates/secrets.yaml
@@ -19,7 +19,7 @@ tests:
             name: LOW_DATA_MODE
             value: "true"
 
-  - it: LDM on (default) sets the host-stats interval to the 30s default
+  - it: LDM on (default) sets the process-stats interval to the 60s values.yaml default
     set:
       <<: *base
     asserts:
@@ -27,21 +27,21 @@ tests:
         contains:
           path: spec.template.spec.containers[0].env
           content:
-            name: HOST_STATS_LDM_INTERVAL_SECONDS
-            value: "30"
-
-  - it: a custom hostStats.lowDataModeIntervalSeconds is honored
-    set:
-      <<: *base
-      hostStats:
-        lowDataModeIntervalSeconds: 60
-    asserts:
-      - template: templates/nr-ebpf-agent-daemonset.yaml
-        contains:
-          path: spec.template.spec.containers[0].env
-          content:
-            name: HOST_STATS_LDM_INTERVAL_SECONDS
+            name: PROCESS_STATS_LDM_INTERVAL_SECONDS
             value: "60"
+
+  - it: a custom processStats.lowDataModeIntervalSeconds is honored
+    set:
+      <<: *base
+      processStats:
+        lowDataModeIntervalSeconds: 30
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: PROCESS_STATS_LDM_INTERVAL_SECONDS
+            value: "30"
 
   - it: LDM off (nrdotCollector.lowDataMode=false) sets LOW_DATA_MODE=false
     set:

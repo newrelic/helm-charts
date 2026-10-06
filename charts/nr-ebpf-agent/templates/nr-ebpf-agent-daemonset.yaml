@@ -114,6 +114,19 @@ spec:
             cp /temp-config/pernode.yaml /final-config
             yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/pernode.yaml
             yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/pernode.yaml
+            # host.id must match the eBPF agent's: machine-id, else hostname (the cloud
+            # detector overrides both with the instance id). The collector's system detector
+            # would read the container's /etc/machine-id, not the node's.
+            # Same order and trimming as the agent's ReadHostMachineId(): an empty file falls
+            # through to the next source.
+            HOST_MACHINE_ID=""
+            for f in /hostfs/etc/machine-id /hostfs/var/lib/dbus/machine-id; do
+              [ -z "$HOST_MACHINE_ID" ] && [ -r "$f" ] && HOST_MACHINE_ID=$(tr -d '[:space:]' < "$f")
+            done
+            [ -n "$HOST_MACHINE_ID" ] || HOST_MACHINE_ID=$(hostname)
+            export HOST_MACHINE_ID
+            echo "HOST_MACHINE_ID : $HOST_MACHINE_ID"
+            yq -i '(.processors.resource/host_id.attributes[] | select(.key == "host.id").value) = env(HOST_MACHINE_ID)' /final-config/pernode.yaml
             cat /final-config/pernode.yaml
         env:
           - name: KUBE_NODE_NAME
@@ -126,6 +139,9 @@ spec:
             mountPath: /temp-config
           - name: nrdot-config-final
             mountPath: /final-config
+          - name: host-root-volume
+            mountPath: /hostfs
+            readOnly: true
       {{- end }}
 
       containers:
@@ -247,8 +263,12 @@ spec:
             value: "{{ include "nr-ebpf-agent.reportInfra" . }}"
           - name: LOW_DATA_MODE
             value: "{{ if include "nr-ebpf-agent.lowDataMode" . }}true{{ else }}false{{ end }}"
-          - name: HOST_STATS_LDM_INTERVAL_SECONDS
-            value: "{{ .Values.hostStats.lowDataModeIntervalSeconds | default 30 }}"
+          - name: PROCESS_STATS_LDM_INTERVAL_SECONDS
+            value: "{{ .Values.processStats.lowDataModeIntervalSeconds | default 60 }}"
+          # process.owner is not sent on K8s by either side: the nrdot sidecar image has no
+          # /etc/passwd, and rows on the OTel process page merge only when both sides agree.
+          - name: PROCESS_IO_REPORT_OWNER
+            value: "false"
           - name: GENAI_CAPTURE_MESSAGE_CONTENT
             value: "{{ if hasKey .Values "genAICaptureMessageContent" }}{{ .Values.genAICaptureMessageContent }}{{ else }}false{{ end }}"
 
@@ -401,6 +421,8 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
           readOnlyRootFilesystem: true
+          # The host and process scrapers only read world-readable /proc and /sys files; the
+          # process metrics that need privilege stay in the (privileged) eBPF agent.
           capabilities:
             drop: ["ALL"]
         resources: {{ .Values.nrdotCollector.sidecar.resources | toYaml | nindent 10 }}
@@ -425,6 +447,10 @@ spec:
           # (the raw ConfigMap is mounted only on that init container).
           - name: nrdot-config-final
             mountPath: /etc/nrdot
+            readOnly: true
+          # hostmetrics root_path: node /proc, /sys and mounts.
+          - name: host-root-volume
+            mountPath: /hostfs
             readOnly: true
       {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
