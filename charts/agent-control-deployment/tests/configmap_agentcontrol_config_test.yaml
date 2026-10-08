@@ -24,6 +24,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -53,6 +54,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -89,6 +91,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -117,6 +120,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -145,6 +149,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -179,6 +184,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -215,6 +221,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -256,6 +263,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: config-cluster
@@ -268,38 +276,67 @@ tests:
             test: value
             test2: value2
 
-  - it: agent control's config always include cluster_name, namespace, defaults, and honor the EU endpoint.
+  - it: region=eu routes fleet_control through the EU endpoints
     set:
       cluster: my-cluster
       region: eu
     asserts:
-      - equal:
+      - matchRegex:
           path: data["local_config"]
-          value: |
-            agents: {}
-            fleet_control:
-              auth_config:
-                private_key_path: /etc/newrelic-agent-control/keys/from-secret.key
-                provider: local
-                token_url: https://system-identity-oauth.service.newrelic.com/oauth2/token
-              endpoint: https://opamp.service.eu.newrelic.com/v1/opamp
-              signature_validation:
-                public_key_server_url: https://publickeys.eu.newrelic.com/r/blob-management/global/agentconfiguration/jwks.json
-            k8s:
-              ac_release_name: my-release
-              ac_remote_update: true
-              auth_secret:
-                secret_key_name: private_key
-                secret_name: agent-control-auth
-              cd_release_name: agent-control-cd
-              cd_remote_update: true
-              cluster_name: my-cluster
-              namespace: my-namespace
-              namespace_agents: newrelic
-            server:
-              enabled: true
-              host: 0.0.0.0
-              port: 51200
+          pattern: 'token_url: https://system-identity-oauth\.service\.newrelic\.com/oauth2/token'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'endpoint: https://opamp\.service\.eu\.newrelic\.com/v1/opamp'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'public_key_server_url: https://publickeys\.eu\.newrelic\.com/r/blob-management/global/agentconfiguration/jwks\.json'
+
+  - it: region=jp routes fleet_control through the JP endpoints
+    set:
+      cluster: my-cluster
+      region: jp
+    asserts:
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'token_url: https://system-identity-oauth\.service\.newrelic\.com/oauth2/token'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'endpoint: https://opamp\.service\.jp\.newrelic\.com/v1/opamp'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'public_key_server_url: https://publickeys\.jp\.newrelic\.com/r/blob-management/global/agentconfiguration/jwks\.json'
+
+  - it: nrStaging routes fleet_control through the staging endpoints
+    set:
+      cluster: my-cluster
+      nrStaging: true
+    asserts:
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'token_url: https://system-identity-oauth\.staging-service\.newrelic\.com/oauth2/token'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'endpoint: https://opamp\.staging-service\.newrelic\.com/v1/opamp'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'public_key_server_url: https://staging-publickeys\.newrelic\.com/r/blob-management/global/agentconfiguration/jwks\.json'
+
+  - it: fleet_control endpoints can be overridden via values
+    set:
+      cluster: my-cluster
+      opampEndpoint: https://opamp.custom.example.com
+      publicKeysEndpoint: https://publickeys.custom.example.com
+      systemIdentityOauthEndpoint: https://oauth.custom.example.com
+    asserts:
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'token_url: https://oauth\.custom\.example\.com/oauth2/token'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'endpoint: https://opamp\.custom\.example\.com/v1/opamp'
+      - matchRegex:
+          path: data["local_config"]
+          pattern: 'public_key_server_url: https://publickeys\.custom\.example\.com/r/blob-management/global/agentconfiguration/jwks\.json'
 
   - it: remote_update flags can be changed
     set:
@@ -320,6 +357,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: false
               cluster_name: my-cluster
@@ -418,6 +456,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -449,6 +488,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -481,6 +521,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -520,6 +561,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -561,6 +603,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster
@@ -605,6 +648,7 @@ tests:
               auth_secret:
                 secret_key_name: private_key
                 secret_name: agent-control-auth
+              cd_enabled: true
               cd_release_name: agent-control-cd
               cd_remote_update: true
               cluster_name: my-cluster

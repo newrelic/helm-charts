@@ -1,0 +1,80 @@
+image:
+  repository: newrelic/nrdot-collector
+  tag: "2.6.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+mysql:
+  # -- Required. One of: self-hosted, rds. Documentation/validation only -- no rendered difference.
+  topology: ""
+  # -- Required. MySQL host/endpoint (no port).
+  server: ""
+  # -- MySQL port.
+  port: 3306
+  # -- Plain-value monitoring username. Ignored if existingSecret is set.
+  username: ""
+  # -- Plain-value monitoring password. Ignored if existingSecret is set.
+  password: ""
+  # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
+  existingSecret: ""
+  # -- Restrict monitoring to one database. Leave empty to monitor all databases.
+  database: ""
+  # -- Maps to the receiver's allow_native_passwords.
+  allowNativePasswords: true
+  # -- How often the receiver scrapes MySQL.
+  collectionInterval: 15s
+  # -- Delay before the receiver's first scrape.
+  initialDelay: 1s
+  # -- inline or procedure. "procedure" collects EXPLAIN plans for write statements without granting DML to the monitoring user, via a SQL SECURITY DEFINER procedure; the receiver falls back to "inline" automatically for any schema where the procedure is absent. Procedure setup is per schema -- see README, or https://docs.newrelic.com/docs/opentelemetry/database/mysql/advanced-config/#query.
+  explainMode: procedure
+
+mysqlMulti:
+  # -- Enables multi-instance mode: one release monitors every entry in mysqlMulti.databases from a single collector pod.
+  # Mutually exclusive with the mysql.* single-instance block above -- do not set mysql.server when this is true.
+  enabled: false
+  # -- Required when enabled. One of: self-hosted, rds. Kept for parity with mysql.topology -- still validation-only, no rendered effect.
+  topology: ""
+  # -- List of MySQL instances to monitor from this one release. Each entry requires: name (unique), server, existingSecret.
+  # port defaults to 3306. mysqlAdmin.existingSecret is required per entry only when setupJob.enabled is true.
+  # Scrape-behavior settings (allowNativePasswords, collectionInterval, initialDelay, explainMode, etc.) are
+  # NOT configurable per entry or at the mysqlMulti level -- they're the same fixed defaults used in
+  # single-instance mode too (see mysql-otel.multi.receiverDefaults in _helpers.tpl). Use additionalReceiverConfig
+  # to override any of them if you need to.
+  databases: []
+
+# -- Required. New Relic OTLP/gRPC endpoint for the account's region, bare host:port with NO scheme, e.g. otlp.nr-data.net:4317
+otlpEndpoint: ""
+
+# -- Plain-value New Relic license key. Can also be set as global.licenseKey.
+licenseKey: ""
+# -- Name of a pre-existing Secret holding the license key. Can also be set as global.customSecretName.
+customSecretName: ""
+# -- Key inside customSecretName that holds the license key. Can also be set as global.customSecretLicenseKey.
+customSecretLicenseKey: ""
+
+# -- Escape hatch merged into the nrmysql receiver block.
+additionalReceiverConfig: {}
+
+setupJob:
+  # -- If true, a Helm hook Job creates the monitoring user and grants it read-only access before install/upgrade.
+  enabled: false
+  image:
+    # -- mysql CLI image. No default -- see README for why (mysql:8.4 is a candidate).
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  mysqlAdmin:
+    # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path. Must be able to CREATE USER and GRANT SELECT on performance_schema.
+    existingSecret: ""
+  # -- Grants UPDATE ON performance_schema.setup_consumers, so the receiver can enable the events_waits_current
+  # consumer itself on reconnect -- needed for lock-wait duration tracking, since that consumer resets on
+  # restart/failover (RDS's documented workaround; see "Enable lock-wait duration tracking" in New Relic's
+  # mysql/advanced-config docs). Set to false to skip it.
+  enableWaitTimeMetrics: true
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

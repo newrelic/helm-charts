@@ -6,5 +6,7 @@ except_metrics: [
   "kube_pod_container_status_restarts_total", # This metric seems to have issues with `AggregationTemporality: Unspecified`
   "kube_service_status_load_balancer_ingress", # This test environment does not have a load balancer
   "container.memory.usage", # Missing in CI
-  "k8s.pod.network.io" # Missing in CI
+  "k8s.pod.network.io", # Missing in CI
+  "system.filesystem.usage", # GHA mounts the Minikube node's host in a virtual filesystem, which is not collected by the agent
+  "system.filesystem.utilization" # GHA mounts the Minikube node's host in a virtual filesystem, which is not collected by the agent
 ]

@@ -1,0 +1,12 @@
+# This is a dummy CM to test that gkeAutopilotAllowlist is templated and how to use it
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-examples-gkeautopilotallowlist
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- /* Be careful because this returns an empty string when false because "false" is evaluated as true in Helm
+         Take a look to the tests suite "cl-gkeautopilotallowlist_test.yaml" to see who this behaves */}}
+  gkeAutopilotAllowlist-with-if: {{ if include "newrelic.common.gkeAutopilotAllowlist" . }}enabled{{ else }}disabled{{ end }}
+  gkeAutopilotAllowlist-with-quote: {{ include "newrelic.common.gkeAutopilotAllowlist" . | quote }}
+  gkeAutopilotAllowlist-with-default: {{ include "newrelic.common.gkeAutopilotAllowlist" . | default "false" | quote }}

@@ -3,6 +3,17 @@
     "github>newrelic/k8s-agents-automation:renovate-base.json5"
   ],
   "bumpVersion": "patch",
+  "customManagers": [
+    {
+      "customType": "regex",
+      "fileMatch": ["charts/agent-control-bootstrap/Chart.yaml"],
+      "datasourceTemplate": "helm",
+      "registryUrlTemplate": "https://helm-charts.newrelic.com",
+      "matchStrings": [
+        "# renovate: chartName=(?<depName>\\S+)\\n[^:]+: (?<currentValue>\\S+)"
+      ]
+    }
+  ],
   "packageRules": [
     // This is a shared repository where it is not clear that generic rules apply
     // Making rules per folders or properties runs the risk that future 
@@ -59,7 +70,7 @@
     {
       // Auto-bump chart version when Renovate updates chart values files. These updates
       // are usually container tag updates.
-      "matchFileNames": ["charts/*/values.yaml"],
+      "matchFileNames": ["charts/*/values.yaml", "charts/*/Chart.yaml"],
       "bumpVersions": [
         {
           "filePatterns": ["{{packageFileDir}}/Chart.{yaml,yml}"],
@@ -69,11 +80,14 @@
       ]
     },
     {
-      "matchFileNames": [
-        "charts/agent-control-deployment/**",
-        "charts/agent-control-bootstrap/**"
-      ],
-      "groupName": "agent-control release"
+      "matchFileNames": ["charts/agent-control-deployment/**"],
+      "groupName": "agent-control-deployment dependencies",
+      "groupSlug": "agent-control-deployment-dependencies"
+    },
+    {
+      "matchFileNames": ["charts/agent-control-bootstrap/**"],
+      "groupName": "agent-control-bootstrap dependencies",
+      "groupSlug": "agent-control-bootstrap-dependencies"
     }
   ]
 }

@@ -2,19 +2,22 @@ name: Lint and Test Charts
 
 on: pull_request
 
+permissions:
+  contents: read
+
 jobs:
   codespell:
     name: Check spelling
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - uses: codespell-project/actions-codespell@master
         with:
           check_filenames: true
           check_hidden: true
           skip: ./.git
-          ignore_words_list: enver,NotIn,aks,commitish
+          ignore_words_list: enver,NotIn,aks,commitish,NPE,DNE,NAN
 
   lint-test:
     name: Lint and test charts
@@ -24,15 +27,15 @@ jobs:
       bundle-changed: ${{ steps.changed.outputs.bundle }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
       - uses: helm/chart-testing-action@v2.8.0
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
-          version: 'v3.19.2'
+          version: 'v3.21.4'
 
       - name: Set up helm-unittest
         # workaround for https://github.com/helm-unittest/helm-unittest/issues/790
@@ -89,21 +92,21 @@ jobs:
     needs: [ lint-test ]
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
       - uses: helm/chart-testing-action@v2.8.0
-      - uses: azure/setup-helm@v4
+      - uses: azure/setup-helm@v5
         with:
-          version: 'v3.19.2'
+          version: 'v3.21.4'
 
       - name: Install Minikube
-        uses: manusa/actions-setup-minikube@v2.16.1
+        uses: manusa/actions-setup-minikube@v2.18.0
         with:
-          minikube version: 'v1.37.0'
-          kubernetes version: 'v1.34.0'
+          minikube version: 'v1.39.0'
+          kubernetes version: 'v1.36.0'
           github token: ${{ secrets.GITHUB_TOKEN }}
           driver: docker
           start args: "--container-runtime=containerd"
@@ -127,10 +130,10 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/setup-helm@v4
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
         with:
-          version: 'v3.19.2'
+          version: 'v3.21.4'
 
       - name: Add helm repositories
         run: |
@@ -142,6 +145,9 @@ jobs:
 
       - name: Build nri-bundle dependencies
         run: helm dependency update ./charts/nri-bundle
+
+      - name: Validate Chart.lock is in sync with Chart.yaml
+        run: git diff --exit-code charts/nri-bundle/Chart.lock
 
       - name: Decompress nri-bundle and all its dependencies recursively
         run: |
@@ -175,10 +181,10 @@ jobs:
     if: ${{ needs.lint-test.outputs.bundle-changed == 'true' }}
     needs: [ lint-test ]
     steps:
-      - uses: actions/checkout@v4
-      - uses: azure/setup-helm@v4
+      - uses: actions/checkout@v7
+      - uses: azure/setup-helm@v5
         with:
-          version: 'v3.19.2'
+          version: 'v3.21.4'
 
       - name: Add helm repositories
         run: |

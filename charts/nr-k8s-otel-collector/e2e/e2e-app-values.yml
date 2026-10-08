@@ -10,7 +10,7 @@ components:
 opentelemetry-collector:
   config:
     exporters:
-      otlphttp/newrelic:
+      otlp_http/newrelic:
         endpoint: https://otlp.nr-data.net:4317
         headers:
           api-key: NEW_RELIC_LICENSE_KEY
@@ -27,12 +27,12 @@ opentelemetry-collector:
         traces:
           receivers: [otlp]
           processors: [batch, resource]
-          exporters: [otlphttp/newrelic]
+          exporters: [otlp_http/newrelic]
         metrics:
           receivers: [otlp]
           processors: [batch, resource]
-          exporters: [otlphttp/newrelic]
+          exporters: [otlp_http/newrelic]
         logs:
           receivers: [otlp]
           processors: [batch, resource]
-          exporters: [otlphttp/newrelic]
+          exporters: [otlp_http/newrelic]

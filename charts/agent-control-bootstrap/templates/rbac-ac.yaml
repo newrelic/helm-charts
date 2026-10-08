@@ -21,10 +21,6 @@ rules:
       - get
       - list
       - watch
-  - apiGroups: [ "" ]
-    resources: [ "namespaces" ]
-    verbs:
-      - get
   - apiGroups: [ "apps" ]
     resources: [ "deployments", "daemonsets", "statefulsets" ]
     verbs:
@@ -63,10 +59,6 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
   name: {{ include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "uninstall-job-resources") }}
 rules:
-  - apiGroups: [ "" ]
-    resources: [ "namespaces" ]
-    verbs:
-      - get
   - apiGroups: [ "apps" ]
     resources: [ "deployments", "daemonsets", "statefulsets" ]
     verbs:

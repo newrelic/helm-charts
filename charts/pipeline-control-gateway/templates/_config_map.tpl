@@ -8,3 +8,14 @@
     {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- /* Defines if the daemonset config map has to be created or not */ -}}
+{{- define "nrKubernetesOtel.daemonset.configMap.config" -}}
+
+{{- /* Look for a local creation of a daemonset config map */ -}}
+{{- if get .Values.daemonset "configMap" | kindIs "map" -}}
+    {{- if .Values.daemonset.configMap.config -}}
+        {{- toYaml .Values.daemonset.configMap.config -}}
+    {{- end -}}
+{{- end -}}
+{{- end -}}

@@ -1,0 +1,24 @@
+{{- if and .Values.daemonset.enabled (not .Values.daemonset.customConfigMap) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+data:
+  gateway-config.yaml: |
+    reserved_melt_attributes:
+      Metric:
+        - interval.ms
+        - metricName
+  daemonset-config.yaml: |
+    {{- with include "nrKubernetesOtel.daemonset.configMap.config" . }}
+    {{- . | nindent 4 }}
+    {{- end }}
+    {{- if not (include "nrKubernetesOtel.daemonset.configMap.config" .) }}
+    {{- if .Values.generated }}
+    {{- tpl (.Values.generated | toYaml) . | nindent 4 }}
+    {{- else }}
+    # No configuration provided - please provide configuration via Values.generated
+    {{- end }}
+    {{- end }}
+{{- end }}

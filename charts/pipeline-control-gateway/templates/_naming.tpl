@@ -11,6 +11,10 @@
 {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "config") -}}
 {{- end -}}
 
+{{- define "nrKubernetesOtel.daemonset.configMap.fullname" -}}
+{{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "daemonset-config") -}}
+{{- end -}}
+
 {{- define "nrKubernetesOtel.hpa.fullname" -}}
 {{- include "newrelic.common.naming.truncateToDNSWithSuffix" (dict "name" (include "newrelic.common.naming.fullname" .) "suffix" "hpa") -}}
 {{- end -}}
