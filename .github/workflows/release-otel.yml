@@ -22,8 +22,9 @@ jobs:
           echo "Changelog Body: ${{ steps.generate-changelog.outputs.body }}"
       - name: Check for changes
         id: check-changes
+        env:
+          CHANGELOG_BODY: ${{ steps.generate-changelog.outputs.body }}
         run: |
-          CHANGELOG_BODY="${{ steps.generate-changelog.outputs.body }}"
           TRIMMED_CHANGELOG_BODY="${CHANGELOG_BODY%%$'\n'}"
           if [ "TRIMMED_CHANGELOG_BODY" = "* No changes" ]; then
             echo "No relevant commits since last release. Skipping release."
