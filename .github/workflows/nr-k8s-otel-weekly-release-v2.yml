@@ -124,9 +124,6 @@ jobs:
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
           CR_SKIP_EXISTING: true
           CR_RELEASE_NOTES_FILE: changelog.txt
-          # Workaround for chart-releaser-action bug: set latest_tag to prevent
-          # "unbound variable" error at line 111 of cr.sh when skip_packaging=true
-          latest_tag: ${{ steps.last_tag.outputs.tag }}
 
   notify-failure:
     if: ${{ always() && failure() }}
