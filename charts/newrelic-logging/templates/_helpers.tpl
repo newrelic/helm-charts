@@ -170,6 +170,7 @@ Returns logsEndpoint
 {{- if .Values.endpoint -}}
 {{ .Values.endpoint -}}
 {{- else -}}
+{{- include "newrelic.common.region.fail_if_unresolvable" . -}}
 {{ (include "newrelic.common.log_api_endpoint" .) | default "https://log-api.newrelic.com" }}/log/v1
 {{- end -}}
 {{- end -}}
@@ -249,6 +250,7 @@ Returns metricsHost
 {{- if .Values.metricsEndpoint -}}
 {{ .Values.metricsEndpoint -}}
 {{- else -}}
+{{- include "newrelic.common.region.fail_if_unresolvable" . -}}
 {{- (include "newrelic.common.metric_api_endpoint" .) | default "https://metric-api.newrelic.com" | trimPrefix "https://" | trimPrefix "http://" -}}
 {{- end -}}
 {{- end -}}

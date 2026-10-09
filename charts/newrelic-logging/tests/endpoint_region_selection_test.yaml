@@ -274,3 +274,65 @@ tests:
             name: METRICS_HOST
             value: "custom-metric-endpoint"
         template: templates/daemonset-windows.yaml
+  - it: selects EU endpoints when a custom secret is used together with region EU
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      region: EU
+      enableWindows: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "metric-api.eu.newrelic.com"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset-windows.yaml
+
+  - it: selects EU endpoints when a custom secret is used together with global.region EU
+    set:
+      global:
+        customSecretName: secret_name
+        customSecretLicenseKey: key_name
+        region: EU
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+
+  - it: fails when a custom secret is used without a region or explicit endpoints
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+    asserts:
+      - failedTemplate:
+          errorPattern: "not able to compute the region"
+        template: templates/daemonset.yaml
+
+  - it: does not fail with a custom secret when both endpoints are set explicitly
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      endpoint: https://log-api.eu.newrelic.com/log/v1
+      metricsEndpoint: metric-api.eu.newrelic.com
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
