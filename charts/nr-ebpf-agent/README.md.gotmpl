@@ -68,7 +68,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 ### Exporting Errors
 
-If the `nr-ebpf-agent` container logs indicate that the scripts are failing to export data, ensure that Linux headers are installed on the host. Verify that the `nr-ebpf-agent` container logs indicate that the Linux header files were found and that the Stirling data tables were initialized. These logs should be written as the agent is booting up (towards the beginning of the output).
+If the `nr-ebpf-agent` container logs indicate that the scripts are failing to export data, and you are running an agent version older than 1.7.0, ensure that Linux headers are installed on the host. Verify that the `nr-ebpf-agent` container logs indicate that the Linux header files were found and that the Stirling data tables were initialized. These logs should be written as the agent is booting up (towards the beginning of the output). Agent versions 1.7.0 and above use CO-RE/BTF and do not require kernel headers.
 
 {{ if .Maintainers }}
 ## Maintainers
