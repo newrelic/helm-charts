@@ -58,7 +58,8 @@ jobs:
             echo "No relevant commits since last release. Skipping release."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
-            echo "has_changes=true" >> $GITHUB_OUTPUT 
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi
 
       - name: Save changelog details
         if: steps.check-changes.outputs.has_changes == 'true'
