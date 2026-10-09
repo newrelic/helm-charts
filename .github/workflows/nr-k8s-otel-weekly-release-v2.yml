@@ -43,17 +43,6 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for git log and chart-releaser
 
-#      - name: Get previous release tag
-#        id: last_tag
-#        run: |
-#          LAST_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' 2>/dev/null || echo "")
-#          if [ -z "$LAST_TAG" ]; then
-#            echo "No previous release found."
-#            echo "previous_tag=" >> $GITHUB_OUTPUT
-#          else
-#            echo "Last release tag: $LAST_TAG"
-#            echo "previous_tag=$LAST_TAG" >> $GITHUB_OUTPUT
-
       - name: Generate changelog
         id: generate-changelog
         uses: release-drafter/release-drafter@v7
@@ -65,7 +54,7 @@ jobs:
       - name: Check for changes
         id: check-changes
         run: |
-          if [ "${{ steps.generate-changelog.outputs.body }}" = "No changes" ]; then
+          if [ "${{ steps.generate-changelog.outputs.body }}" = "* No changes" ]; then
             echo "No relevant commits since last release. Skipping release."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else

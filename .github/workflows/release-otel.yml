@@ -20,3 +20,11 @@ jobs:
         run: |
           echo "Changelog Category: ${{ steps.generate-changelog.outputs.resolved_version }}"
           echo "Changelog Body: ${{ steps.generate-changelog.outputs.body }}"
+      - name: Check for changes
+        id: check-changes
+        run: |
+          if [ "${{ steps.generate-changelog.outputs.body }}" = "* No changes" ]; then
+            echo "No relevant commits since last release. Skipping release."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
