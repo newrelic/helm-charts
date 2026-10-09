@@ -14,6 +14,9 @@ jobs:
       pull-requests: write
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Remove fallback label in preparation for labeler
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,16 +34,23 @@ jobs:
 
       - name: Apply fallback label
         env:
-          LABELS: ${{ steps.chart-labeler.outputs.all-labels }}
+          ALL_LABELS: ${{ steps.chart-labeler.outputs.all-labels }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if [ -z "$LABELS" ]; then
-            echo "No labels found. Applying fallback label..."
+          PR_LABELS=$(printf '%s' "$ALL_LABELS" | jq -R 'split(",") | map(select(length > 0))')
+          VALID_LABELS=$(yq eval -o=json 'keys' .github/chart-labels.yml | jq '. + ["core"]')
+
+          # Remove valid labels from PR labels, then remove the result from the original PR labels to get the intersection
+          MATCHED_LABELS=$(jq -n --argjson pr "$PR_LABELS" --argjson valid "$VALID_LABELS" '$pr - ($pr - $valid)')
+          MATCH_COUNT=$(echo "$MATCHED_LABELS" | jq 'length')
+
+          if [ "$MATCH_COUNT" -eq 0 ]; then
+            echo "No chart label found. Applying fallback label..."
             gh pr edit "$PR_NUMBER" --add-label "triage/needs-chart"
           else
-            echo "PR already labeled correctly."
+            echo "Chart label(s) already present: $(echo "$MATCHED_LABELS" | jq -r 'join(", ")')"
           fi
 
   validate-labels:
