@@ -54,10 +54,13 @@ jobs:
       - name: Check for changes
         id: check-changes
         run: |
-          if [ "${{ steps.generate-changelog.outputs.body }}" = "* No changes" ]; then
+          CHANGELOG_BODY="${{ steps.generate-changelog.outputs.body }}"
+          TRIMMED_CHANGELOG_BODY="${CHANGELOG_BODY%%$'\n'}"
+          if [ "TRIMMED_CHANGELOG_BODY" = "* No changes" ]; then
             echo "No relevant commits since last release. Skipping release."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
+            echo "Relevant commits found. Proceeding with release."
             echo "has_changes=true" >> $GITHUB_OUTPUT
           fi
 
