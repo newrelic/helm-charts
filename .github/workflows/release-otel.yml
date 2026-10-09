@@ -25,8 +25,8 @@ jobs:
         env:
           CHANGELOG_BODY: ${{ steps.generate-changelog.outputs.body }}
         run: |
-          TRIMMED_CHANGELOG_BODY="${CHANGELOG_BODY%%$'\n'}"
-          if [ "TRIMMED_CHANGELOG_BODY" = "* No changes" ]; then
+          TRIMMED_CHANGELOG_BODY="$(echo -e "${CHANGELOG_BODY}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          if [ "$TRIMMED_CHANGELOG_BODY" = "* No changes" ]; then
             echo "No relevant commits since last release. Skipping release."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
