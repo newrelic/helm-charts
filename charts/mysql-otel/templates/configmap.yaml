@@ -29,14 +29,6 @@ data:
 {{- include "mysql-otel.renderReceiver" (dict "receiver" $receiver) }}
     processors:
       batch:
-      resource/mysql:
-        attributes:
-          - key: server.address
-            value: {{ .Values.mysql.server | quote }}
-            action: upsert
-          - key: server.port
-            value: {{ .Values.mysql.port | int }}
-            action: upsert
     exporters:
       otlp/newrelic:
         endpoint: {{ .Values.otlpEndpoint | quote }}
@@ -52,10 +44,10 @@ data:
       pipelines:
         metrics:
           receivers: [nrmysql]
-          processors: [resource/mysql, batch]
+          processors: [batch]
           exporters: [otlp/newrelic]
         logs:
           receivers: [nrmysql]
-          processors: [resource/mysql, batch]
+          processors: [batch]
           exporters: [otlp/newrelic]
 {{- end }}

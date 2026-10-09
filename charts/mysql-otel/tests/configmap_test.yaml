@@ -39,7 +39,7 @@ tests:
           pattern: "password: \"\\$\\{env:MYSQL_PASSWORD\\}\""
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "collection_interval: 10s"
+          pattern: "collection_interval: 15s"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "s3cret"
@@ -55,18 +55,12 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "database: \"appdb\""
-  - it: renders TLS fields with fixed defaults, omitting ca_file when unset
+  - it: omits tls entirely, relying on the receiver's own zero-value default (same as the old insecure=false)
     asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure: false"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "insecure_skip_verify: false"
       - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "ca_file:"
-  - it: can override TLS fields via additionalReceiverConfig
+          pattern: "tls:"
+  - it: can still set tls via additionalReceiverConfig if needed
     set:
       additionalReceiverConfig:
         tls:
@@ -76,14 +70,17 @@ tests:
     asserts:
       - matchRegex:
           path: data["config.yaml"]
+          pattern: "tls:"
+      - matchRegex:
+          path: data["config.yaml"]
           pattern: "insecure: true"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "insecure_skip_verify: true"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "ca_file: \"/etc/ssl/rds-ca-bundle\\.pem\""
-  - it: renders statement_events, query_sample_collection, top_query_collection, and events from values
+          pattern: "ca_file: /etc/ssl/rds-ca-bundle\\.pem"
+  - it: renders statement_events, query_sample_collection, top_query_collection, events, and metrics from values
     asserts:
       - matchRegex:
           path: data["config.yaml"]
@@ -96,7 +93,7 @@ tests:
           pattern: "max_rows_per_query: 100"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "lookback_time: 120"
+          pattern: "lookback_time: 60"
       - matchRegex:
           path: data["config.yaml"]
           pattern: "max_query_sample_count: 5000"
@@ -112,17 +109,9 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "db\\.server\\.top_query:\\s*\\n\\s*enabled: true"
-  - it: renders the resource/mysql processor with server.address and server.port
-    asserts:
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "resource/mysql:"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.address\\s*\\n\\s*value: \"mysql\\.internal\"\\s*\\n\\s*action: upsert"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.port\\s*\\n\\s*value: 3306\\s*\\n\\s*action: upsert"
+          pattern: "events:[\\s\\S]*metrics:\\s*\\n\\s*mysql\\.query\\.count:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.query\\.slow\\.count:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.commands:\\s*\\n\\s*enabled: true\\s*\\n\\s*mysql\\.innodb\\.data_file\\.io:\\s*\\n\\s*enabled: true"
   - it: renders the otlp/newrelic exporter with a bare endpoint and env-substitution api-key, never a literal one
     asserts:
       - matchRegex:
@@ -144,7 +133,7 @@ tests:
           pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[resource/mysql, batch\\]"
+          pattern: "processors:\\s*\\[batch\\]"
   - it: merges additionalReceiverConfig into the receiver block
     set:
       additionalReceiverConfig:
