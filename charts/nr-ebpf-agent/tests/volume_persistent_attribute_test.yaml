@@ -6,7 +6,7 @@ release:
   namespace: my-namespace
 
 tests:
-  - it: enables kubeletstats volume-type metadata + api config
+  - it: enables kubelet_stats volume-type metadata + api config
     set: &base
       cluster: test-cluster
       licenseKey: test-license-key
@@ -32,13 +32,13 @@ tests:
           path: data["pernode.yaml"]
           pattern: 'set\(attributes\["k8s.persistent"\], "false"\) where attributes\["k8s.volume.name"\] != nil and attributes\["k8s.volume.type"\] != "persistentVolumeClaim"'
 
-  - it: wires the transform into the kubeletstats metrics/in pipeline after k8sattributes
+  - it: wires the transform into the kubelet_stats metrics/in pipeline after k8s_attributes
     set:
       <<: *base
     asserts:
       - matchRegex:
           path: data["pernode.yaml"]
-          pattern: "k8sattributes, transform/set_volume_persistent, resourcedetection/cloudproviders"
+          pattern: "k8s_attributes, transform/set_volume_persistent, resource_detection/cloudproviders"
 
   - it: is parity-always (present even when lowDataMode is off)
     set:

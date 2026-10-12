@@ -21,11 +21,11 @@ tests:
       # processor is defined
       - matchRegex:
           path: data["cluster.yaml"]
-          pattern: "metricstransform/k8s_cluster_info_from_ksm:\\s*\\n\\s*transforms:"
+          pattern: "metrics_transform/k8s_cluster_info_from_ksm:\\s*\\n\\s*transforms:"
       # ...and referenced in the KSM pipeline, right after the build_info rename
       - matchRegex:
           path: data["cluster.yaml"]
-          pattern: "metricstransform/k8s_cluster_info, metricstransform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
+          pattern: "metrics_transform/k8s_cluster_info, metrics_transform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
       # sourced from an always-present KSM series, collapsed to a single datapoint
       - matchRegex:
           path: data["cluster.yaml"]
@@ -45,7 +45,7 @@ tests:
     asserts:
       - notMatchRegex:
           path: data["cluster.yaml"]
-          pattern: "metricstransform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
+          pattern: "metrics_transform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
       # the build_info-derived path stays in the control-plane pipeline
       - matchRegex:
           path: data["cluster.yaml"]
@@ -70,7 +70,7 @@ tests:
     asserts:
       - notMatchRegex:
           path: data["cluster.yaml"]
-          pattern: "metricstransform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
+          pattern: "metrics_transform/k8s_cluster_info_from_ksm, filter/exclude_zero_value_kube_node_status_condition"
       - matchRegex:
           path: data["cluster.yaml"]
           pattern: "metrics/controlplane:"

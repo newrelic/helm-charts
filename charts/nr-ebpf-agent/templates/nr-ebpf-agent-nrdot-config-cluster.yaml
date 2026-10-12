@@ -153,7 +153,7 @@ data:
         check_interval: 1s
         limit_percentage: 80
         spike_limit_percentage: 25
-      # NOTE: no resourcedetection/cloudproviders here. This is the cluster-scoped
+      # NOTE: no resource_detection/cloudproviders here. This is the cluster-scoped
       # Deployment (KSM + events + control-plane) — it does NOT run hostNetwork, so
       # cloud IMDS is unreachable and the EKS detector falls back to its K8s-API path
       # (GetK8sInstanceMetadata), which needs a node name + AWS IAM it doesn't have and
@@ -171,7 +171,7 @@ data:
           - { key: net.host.name, action: delete }
           - { key: net.host.port, action: delete }
           - { key: http.scheme, action: delete }
-      metricstransform/kube_pod_container_status_phase:
+      metrics_transform/kube_pod_container_status_phase:
         transforms:
           - include: kube_pod_container_status_waiting
             match_type: strict
@@ -188,7 +188,7 @@ data:
             action: update
             new_name: kube_pod_container_status_phase
             operations: [{ action: add_label, new_label: container_phase, new_value: terminated }]
-      metricstransform/k8s_cluster_info:
+      metrics_transform/k8s_cluster_info:
         transforms:
           - include: kubernetes_build_info
             action: update
@@ -207,7 +207,7 @@ data:
       # metric lacks vs build_info is the K8s build/version labels (git_version, go_version,
       # major/minor, ...) on the raw metric -- not used for entity synthesis. aggregate_labels
       # collapses all datapoints to one -> +1 time series, negligible ingest.
-      metricstransform/k8s_cluster_info_from_ksm:
+      metrics_transform/k8s_cluster_info_from_ksm:
         transforms:
           - include: kube_namespace_status_phase
             match_type: strict
@@ -262,7 +262,7 @@ data:
               - set(datapoint.attributes["kube_pod_container_status_last_terminated_timestamp_formatted"], FormatTime(Unix(Int(datapoint.value_double)), "%Y-%m-%dT%H:%M:%SZ"))
       # Normalize the KSM container_id label ("containerd://<id>") into a bare
       # container_id plus a separate runtime attribute -- parity with the canonical
-      # nr-k8s-otel-collector chart. kubeletstats already emits a bare container.id;
+      # nr-k8s-otel-collector chart. kubelet_stats already emits a bare container.id;
       # only the KSM kube_pod_container_info container_id carries the runtime prefix.
       # error_mode: ignore keeps the IsMatch guard safe on datapoints without the label.
       transform/extract_runtime:
@@ -409,7 +409,7 @@ data:
         metric_statements:
           - set(resource.attributes["k8s.volume.name"], datapoint.attributes["volumename"])
           - delete_key(datapoint.attributes, "volumename")
-      k8sattributes:
+      k8s_attributes:
         auth_type: serviceAccount
         passthrough: false
         extract:
@@ -454,12 +454,12 @@ data:
         {{- end }}
     {{- end }}
     exporters:
-      otlphttp/acct-default:
+      otlp_http/acct-default:
         endpoint: ${env:NR_OTLP_ENDPOINT}
         headers: {"api-key": "${env:NEW_RELIC_LICENSE_KEY}"}
         compression: gzip
     {{- range $i, $ns := $nsKeys }}
-      otlphttp/acct-{{ $i }}:
+      otlp_http/acct-{{ $i }}:
         endpoint: ${env:NR_OTLP_ENDPOINT}
         headers: {"api-key": "${env:NR_INGEST_KEY_{{ $i }}}"}
         compression: gzip
@@ -469,28 +469,28 @@ data:
       pipelines:
         metrics/in:
           receivers: [prometheus/ksm]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/kube_pod_container_status_phase, metricstransform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metricstransform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8sattributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [{{ if $nsKeys }}routing{{ else }}otlphttp/acct-default{{ end }}]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/kube_pod_container_status_phase, metrics_transform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metrics_transform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8s_attributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
         metrics/controlplane:
           receivers: [prometheus/controlplane]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [otlphttp/acct-default]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          exporters: [otlp_http/acct-default]
         {{- end }}
         {{- if $nsKeys }}
         metrics/acct-default:
           receivers: [routing]
-          exporters: [otlphttp/acct-default]
+          exporters: [otlp_http/acct-default]
         {{- range $i, $ns := $nsKeys }}
         metrics/acct-{{ $i }}:
           receivers: [routing]
-          exporters: [otlphttp/acct-{{ $i }}]
+          exporters: [otlp_http/acct-{{ $i }}]
         {{- end }}
         {{- end }}
         logs:
           receivers: [k8s_events]
-          processors: [memory_limiter, k8sattributes, transform/events, resource/events, resource/newrelic, batch]
-          exporters: [otlphttp/acct-default]
+          processors: [memory_limiter, k8s_attributes, transform/events, resource/events, resource/newrelic, batch]
+          exporters: [otlp_http/acct-default]
     {{- else }}
     exporters:
       otlp/agent:
@@ -503,17 +503,17 @@ data:
       pipelines:
         metrics:
           receivers: [prometheus/ksm]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/kube_pod_container_status_phase, metricstransform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metricstransform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8sattributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/kube_pod_container_status_phase, metrics_transform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metrics_transform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8s_attributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
         metrics/controlplane:
           receivers: [prometheus/controlplane]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metricstransform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [otlp/agent]
         {{- end }}
         logs:
           receivers: [k8s_events]
-          processors: [memory_limiter, k8sattributes, transform/events, resource/events, resource/newrelic, batch]
+          processors: [memory_limiter, k8s_attributes, transform/events, resource/events, resource/newrelic, batch]
           exporters: [otlp/agent]
     {{- end }}
 {{- end }}

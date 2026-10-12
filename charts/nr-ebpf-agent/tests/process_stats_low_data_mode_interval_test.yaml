@@ -68,3 +68,18 @@ tests:
           content:
             name: LOW_DATA_MODE
             value: "false"
+
+  - it: an explicit nrdotCollector.lowDataMode overrides global.lowDataMode
+    set:
+      <<: *base
+      global:
+        lowDataMode: false
+      nrdotCollector:
+        lowDataMode: true
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: LOW_DATA_MODE
+            value: "true"

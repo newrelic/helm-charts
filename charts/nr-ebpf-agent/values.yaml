@@ -403,11 +403,13 @@ nrdotCollector:
   # hits the live-set floor (no further memory gain, only added GC frequency). Set to
   # "" to use the Go default (100).
   goGC: 30
-  # -- Send only the metrics required for the NR Kubernetes UI. When true
-  # (default), KSM scrape is filtered to the ~79 UI-relevant kube_* names and
-  # noisy datapoint attributes (id, name, interface, cpu) are dropped. Set false
-  # for full-fidelity KSM + cadvisor ingest (higher volume).
-  lowDataMode: true
+  # -- (bool) Send only the metrics required for the NR Kubernetes UI. When true,
+  # KSM scrape is filtered to the ~79 UI-relevant kube_* names and noisy datapoint
+  # attributes (id, name, interface, cpu) are dropped. Set false for full-fidelity
+  # KSM + cadvisor ingest (higher volume). Left unset so `global.lowDataMode` applies;
+  # a value set here overrides it.
+  # @default -- `global.lowDataMode`, else true
+  lowDataMode:
   # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape,
   # as comma-separated `label=value` pairs. Only used when relying on an EXTERNAL KSM
   # (kubeStateMetrics.mode results in no bundled KSM); when this chart deploys its own

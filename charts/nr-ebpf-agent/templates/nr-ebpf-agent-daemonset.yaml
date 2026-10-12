@@ -265,10 +265,6 @@ spec:
             value: "{{ if include "nr-ebpf-agent.lowDataMode" . }}true{{ else }}false{{ end }}"
           - name: PROCESS_STATS_LDM_INTERVAL_SECONDS
             value: "{{ .Values.processStats.lowDataModeIntervalSeconds | default 60 }}"
-          # process.owner is not sent on K8s by either side: the nrdot sidecar image has no
-          # /etc/passwd, and rows on the OTel process page merge only when both sides agree.
-          - name: PROCESS_IO_REPORT_OWNER
-            value: "false"
           - name: GENAI_CAPTURE_MESSAGE_CONTENT
             value: "{{ if hasKey .Values "genAICaptureMessageContent" }}{{ .Values.genAICaptureMessageContent }}{{ else }}false{{ end }}"
 
@@ -408,7 +404,7 @@ spec:
             readOnly: true
           {{- end }}
       {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
-      # nrdot per-node collector (kubeletstats). Non-privileged container; shares
+      # nrdot per-node collector (kubelet_stats). Non-privileged container; shares
       # the agent pod's hostNetwork (reaches the local kubelet on the node) and the
       # agent ServiceAccount (RBAC extended for nodes/stats, nodes/proxy).
       # Egress: agent mode -> localhost OTLP receiver; direct mode -> NR per-account.
@@ -452,6 +448,14 @@ spec:
           - name: host-root-volume
             mountPath: /hostfs
             readOnly: true
+          # process.owner: Go os/user reads only the container's /etc/passwd (root_path does not
+          # apply to it). The eBPF agent resolves owners from the same host file, and the OTel
+          # process page merges the two sides' rows only when the owner matches. A file mount keeps
+          # its original inode: if the host replaces the file (rather than editing it in place),
+          # users added after pod start resolve only after a pod restart.
+          - name: host-passwd
+            mountPath: /etc/passwd
+            readOnly: true
       {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
@@ -481,6 +485,10 @@ spec:
       # into the metricsgeneration scale_by fields; mounted by the sidecar.
       - name: nrdot-config-final
         emptyDir: {}
+      - name: host-passwd
+        hostPath:
+          path: /etc/passwd
+          type: File
       {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert
