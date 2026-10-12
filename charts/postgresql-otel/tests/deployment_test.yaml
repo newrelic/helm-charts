@@ -48,12 +48,12 @@ tests:
       postgresql.username: "u"
       postgresql.password: "p"
       image.repository: "newrelic/nrdot-collector"
-      image.tag: "2.4.0"
+      image.tag: "2.6.0"
       resources.limits.memory: "256Mi"
     asserts:
       - equal:
           path: spec.template.spec.containers[0].image
-          value: newrelic/nrdot-collector:2.4.0
+          value: newrelic/nrdot-collector:2.6.0
         template: templates/deployment.yaml
       - equal:
           path: spec.template.spec.containers[0].resources.limits.memory

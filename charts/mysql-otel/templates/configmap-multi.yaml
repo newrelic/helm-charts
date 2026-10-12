@@ -6,8 +6,6 @@
 {{- $receiverModes := dict -}}
 {{- $receiverContents := dict -}}
 {{- $receiverKeys := list -}}
-{{- $firstServer := "" -}}
-{{- $firstPort := 0 -}}
 {{- range $i, $db := $databases -}}
 {{- $suffix := include "mysql-otel.multi.envVarSuffix" $db.name -}}
 {{- $port := $db.port | default 3306 -}}
@@ -28,10 +26,6 @@
 {{- $receiverContents = set $receiverContents $receiverKey $full -}}
 {{- end -}}
 {{- $receiverKeys = append $receiverKeys $receiverKey -}}
-{{- if eq $i 0 -}}
-{{- $firstServer = $db.server -}}
-{{- $firstPort = $port -}}
-{{- end -}}
 {{- end -}}
 apiVersion: v1
 kind: ConfigMap
@@ -59,14 +53,6 @@ data:
       {{- end }}
     processors:
       batch:
-      resource/mysql:
-        attributes:
-          - key: server.address
-            value: {{ $firstServer | quote }}
-            action: upsert
-          - key: server.port
-            value: {{ $firstPort | int }}
-            action: upsert
     exporters:
       otlp/newrelic:
         endpoint: {{ .Values.otlpEndpoint | quote }}
@@ -82,10 +68,10 @@ data:
       pipelines:
         metrics:
           receivers: [{{ join ", " $receiverKeys }}]
-          processors: [resource/mysql, batch]
+          processors: [batch]
           exporters: [otlp/newrelic]
         logs:
           receivers: [{{ join ", " $receiverKeys }}]
-          processors: [resource/mysql, batch]
+          processors: [batch]
           exporters: [otlp/newrelic]
 {{- end }}

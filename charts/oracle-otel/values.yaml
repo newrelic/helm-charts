@@ -1,6 +1,6 @@
 image:
   repository: newrelic/nrdot-collector
-  tag: "2.4.0"
+  tag: "2.6.0"
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -20,7 +20,7 @@ oracle:
   # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
   existingSecret: ""
   # -- How often the receiver scrapes Oracle.
-  collectionInterval: 10s
+  collectionInterval: 15s
 
 oracleMulti:
   # -- Enables multi-instance mode: one release monitors every entry in oracleMulti.databases from a single collector pod.
@@ -29,12 +29,12 @@ oracleMulti:
   # -- Required when enabled. One of: cdb, pdb, rds, adb. Applies to every entry in oracleMulti.databases -- a release cannot mix topologies.
   topology: ""
   # -- Default scrape interval for every entry. Override per-entry via databases[].collectionInterval.
-  collectionInterval: 10s
+  collectionInterval: 15s
   # -- List of Oracle/RDS instances to monitor from this one release. Each entry requires: name (unique), endpoint, service, existingSecret.
   # oracleAdmin.existingSecret is required per entry only when setupJob.enabled is true.
   databases: []
 
-# -- Required. New Relic OTLP endpoint for the account's region, e.g. otlp.nr-data.net:4317
+# -- Required. New Relic OTLP/gRPC endpoint for the account's region, bare host:port with NO scheme, e.g. otlp.nr-data.net:4317
 otlpEndpoint: ""
 
 # -- Plain-value New Relic license key. Can also be set as global.licenseKey.

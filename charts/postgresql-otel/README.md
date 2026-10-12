@@ -352,14 +352,18 @@ whose own example explicitly redeclares `databases` per instance after
 the merge key, confirming it's meant to vary per instance rather than be
 shared.
 
-**Known limitation:** because every entry shares one pipeline and
-processor, that processor's `server.address`/`server.port` resource
-attributes are only correct for the *first* entry in
-`postgresqlMulti.instances` — every other entry's metrics/events carry the
-first entry's server/port. Same accepted tradeoff as `oracle-otel`'s
-`oracleMulti` and `mysql-otel`'s `mysqlMulti` — see
+Earlier versions of this chart added a `resource/postgresql` processor to
+stamp `server.address`/`server.port` resource attributes onto every entry —
+but in a shared pipeline that processor could only ever apply one value, so
+every entry after the first carried the wrong server/port. That processor
+has been removed; `server.address`/`server.port` are already valid,
+enabled-by-default resource attributes on `nrpostgresqlreceiver` itself, so
+per-instance identity now comes from each entry's own receiver config
+instead, which is correct per entry even when multiple receivers share one
+pipeline. Same fix as `oracle-otel`'s `oracleMulti` (which had the identical
+`host.address` issue) — see
 `docs/superpowers/specs/2026-09-16-postgresql-otel-multi-instance-design.md`
-for the full rationale.
+for the fuller history.
 
 ## Values
 
@@ -368,7 +372,7 @@ Shared across both modes:
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.4.0` |
+| `image.tag` | Collector image tag | `2.6.0` |
 | `otlpEndpoint` | New Relic OTLP/gRPC endpoint, bare host:port, no scheme | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrpostgresql` receiver block | `{}` |

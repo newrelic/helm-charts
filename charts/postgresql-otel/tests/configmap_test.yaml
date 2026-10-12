@@ -38,9 +38,9 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "collection_interval: 15s"
-      - matchRegex:
+      - notMatchRegex:
           path: data["config.yaml"]
-          pattern: "transport: tcp"
+          pattern: "transport:"
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "s3cret"
@@ -109,6 +109,11 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "db\\.server\\.top_query:\\s*\\n\\s*enabled: true"
+  - it: renders resource_attributes with db.system.version right after events
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "events:\\s*\\n\\s*db\\.server\\.top_query:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.query_sample:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.query_plan:\\s*\\n\\s*enabled: true\\s*\\n\\s*resource_attributes:\\s*\\n\\s*db\\.system\\.version:\\s*\\n\\s*enabled: true"
   - it: renders all seven documented metrics as enabled by default
     asserts:
       - matchRegex:
@@ -142,17 +147,6 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "postgresql\\.deadlocks:\\s*\\n\\s*enabled: false"
-  - it: renders the resource/postgresql processor with server.address and server.port
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "resource/postgresql:"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.address\\s*\\n\\s*value: \"postgresql\\.internal\"\\s*\\n\\s*action: upsert"
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "key: server\\.port\\s*\\n\\s*value: 5432\\s*\\n\\s*action: upsert"
   - it: renders the otlp/newrelic exporter with a bare endpoint and env-substitution api-key, never a literal one
     asserts:
       - matchRegex:
@@ -174,7 +168,7 @@ tests:
           pattern: "exporters:\\s*\\[otlp/newrelic\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[resource/postgresql, batch\\]"
+          pattern: "processors:\\s*\\[batch/metrics\\]"
   - it: merges additionalReceiverConfig into the receiver block
     set:
       additionalReceiverConfig:
@@ -184,3 +178,14 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "connection_pool:\\s*\\n\\s*max_open: 4"
+  - it: renders the batch/metrics processor, the exporter sending_queue, and a logs pipeline on plain batch
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "batch/metrics:\\s*\\n\\s*send_batch_size: 8192\\s*\\n\\s*send_batch_max_size: 8192\\s*\\n\\s*timeout: 10s"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "sending_queue:\\s*\\n\\s*enabled: true\\s*\\n\\s*sizer: bytes\\s*\\n\\s*queue_size: 100_000_000\\s*\\n\\s*num_consumers: 10\\s*\\n\\s*batch:\\s*\\n\\s*sizer: bytes\\s*\\n\\s*max_size: 1_000_000\\s*\\n\\s*min_size: 0\\s*\\n\\s*flush_timeout: 5s"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "logs:\\s*\\n\\s*receivers: \\[nrpostgresql\\]\\s*\\n\\s*processors: \\[batch\\]"
