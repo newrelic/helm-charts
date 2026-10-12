@@ -1,0 +1,47 @@
+name: release-otel.yml
+on: pull_request
+
+jobs:
+  generate-changelog-k8s-otel:
+#    if: contains(needs.label-charts.outputs.changed-charts, 'nr-k8s-otel-collector')
+    name: Generate changelog for nr-k8s-otel-collector
+    permissions:
+      pull-requests: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate changelog
+        id: generate-changelog
+        uses: release-drafter/release-drafter@v7
+        with:
+          config-name: 'nr-k8s-otel-collector-release-drafter.yml'
+          publish: 'false'
+          dry-run: 'true'
+      - name: Print changelog details
+        run: |
+          echo "Changelog Category: ${{ steps.generate-changelog.outputs.resolved_version }}"
+          echo "Changelog Body: ${{ steps.generate-changelog.outputs.body }}"
+      - name: Get last release tag
+        id: get-last-tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous release found, will use current version"
+            echo "tag=" >> $GITHUB_OUTPUT
+          else
+            echo "Last release tag: $LAST_TAG"
+            echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check for changes
+        id: check-changes
+        env:
+          CURRENT_VERSION: ${{ steps.get-last-tag.outputs.tag }}
+          NEW_VERSION: ${{ steps.generate-changelog.outputs.resolved_version }}
+        run: |
+          if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
+            echo "No relevant commits since last release. Skipping release."
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          else
+            echo "Relevant commits found. Proceeding with release."
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          fi

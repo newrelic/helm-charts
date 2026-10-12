@@ -57,13 +57,25 @@ jobs:
           publish: 'false'
           dry-run: 'true'
 
+      - name: Get last release tag
+        id: get-last-tag
+        run: |
+          LAST_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' 2>/dev/null || echo "")
+          if [ -z "$LAST_TAG" ]; then
+            echo "No previous release found, will use current version"
+            echo "tag=" >> $GITHUB_OUTPUT
+          else
+            echo "Last release tag: $LAST_TAG"
+            echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
+          fi
+
       - name: Check for changes
         id: check-changes
         env:
-          CHANGELOG_BODY: ${{ steps.generate-changelog.outputs.body }}
+          CURRENT_VERSION: ${{ steps.get-last-tag.outputs.tag }}
+          NEW_VERSION: ${{ steps.generate-changelog.outputs.resolved_version }}
         run: |
-          TRIMMED_CHANGELOG_BODY="$(echo -e "${CHANGELOG_BODY}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
-          if [ "$TRIMMED_CHANGELOG_BODY" = "* No changes" ]; then
+          if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
             echo "No relevant commits since last release. Skipping release."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
@@ -130,6 +142,9 @@ jobs:
           CR_TOKEN: "${{ secrets.K8S_AGENTS_BOT_TOKEN }}"
           CR_SKIP_EXISTING: true
           CR_RELEASE_NOTES_FILE: changelog.txt
+          # Workaround for chart-releaser-action bug: set latest_tag to prevent
+          # "unbound variable" error at line 111 of cr.sh when skip_packaging=true
+          latest_tag: ${{ steps.get-last-tag.outputs.tag }}
 
   notify-failure:
     if: ${{ always() && failure() }}
