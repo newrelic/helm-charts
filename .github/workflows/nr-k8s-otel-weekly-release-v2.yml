@@ -57,25 +57,13 @@ jobs:
           publish: 'false'
           dry-run: 'true'
 
-      - name: Get last release tag
-        id: get-last-tag
-        run: |
-          LAST_TAG=$(git describe --tags --abbrev=0 --match='nr-k8s-otel-collector-*' 2>/dev/null || echo "")
-          if [ -z "$LAST_TAG" ]; then
-            echo "No previous release found, will use current version"
-            echo "tag=" >> $GITHUB_OUTPUT
-          else
-            echo "Last release tag: $LAST_TAG"
-            echo "tag=$LAST_TAG" >> $GITHUB_OUTPUT
-          fi
-
       - name: Check for changes
         id: check-changes
         env:
-          CURRENT_VERSION: ${{ steps.get-last-tag.outputs.tag }}
-          NEW_VERSION: ${{ steps.generate-changelog.outputs.resolved_version }}
+          CHANGELOG_BODY: ${{ steps.generate-changelog.outputs.body }}
         run: |
-          if [ "$NEW_VERSION" = "$CURRENT_VERSION" ]; then
+          TRIMMED_CHANGELOG_BODY="$(echo -e "${CHANGELOG_BODY}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+          if [ "$TRIMMED_CHANGELOG_BODY" = "* No changes" ]; then
             echo "No relevant commits since last release. Skipping release."
             echo "has_changes=false" >> $GITHUB_OUTPUT
           else
