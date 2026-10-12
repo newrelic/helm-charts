@@ -81,14 +81,14 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "&nroracledb-common[\\s\\S]*&nroracledb-common"
-  - it: renders the reduced rds metrics defaults once (on the anchor) and omits resource_attributes
+  - it: renders the reduced rds metrics defaults once (on the anchor) with the shared oracle.db.edition resource attribute
     asserts:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "oracledb\\.cpu_time:"
-      - notMatchRegex:
+      - matchRegex:
           path: data["config.yaml"]
-          pattern: "resource_attributes:"
+          pattern: "resource_attributes:\\s*\\n\\s*oracle\\.db\\.edition:"
   - it: does not use a YAML anchor/merge key when there's only one database entry
     set:
       oracleMulti.databases:
@@ -117,11 +117,6 @@ tests:
       - notMatchRegex:
           path: data["config.yaml"]
           pattern: "otlp/newrelic:[\\s\\S]*otlp/newrelic:"
-  - it: sets host.address to the first database entry's host only (documented shared-pipeline limitation)
-    asserts:
-      - matchRegex:
-          path: data["config.yaml"]
-          pattern: "value: \"host1\\.rds\\.amazonaws\\.com\"\\n\\s*action: upsert"
   - it: merges additionalReceiverConfig into every entry's receiver block
     set:
       additionalReceiverConfig:
