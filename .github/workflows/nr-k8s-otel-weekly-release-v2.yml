@@ -43,6 +43,11 @@ jobs:
         with:
           fetch-depth: 0  # Need full history for git log and chart-releaser
 
+      - name: Configure Git
+        run: |
+          git config user.name "k8s-agents-bot"
+          git config user.email "k8s-agents-bot@users.noreply.github.com"
+
       - name: Generate changelog
         id: generate-changelog
         uses: release-drafter/release-drafter@v7
