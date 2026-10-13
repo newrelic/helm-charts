@@ -1,0 +1,58 @@
+suite: test log path validation
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: nr_license_key
+tests:
+  - it: renders with default paths
+    asserts:
+      - isKind:
+          of: ConfigMap
+  - it: fails when fluentBit.path is outside allowed prefixes
+    set:
+      fluentBit.path: /etc/passwd
+    asserts:
+      - failedTemplate:
+          errorPattern: "is not under an allowed prefix"
+  - it: fails on path traversal
+    set:
+      fluentBit.path: /var/log/../../etc/passwd
+    asserts:
+      - failedTemplate:
+          errorPattern: "is not under an allowed prefix"
+  - it: fails when an extra input tails a disallowed path
+    set:
+      fluentBit.config.extraInputs: |
+        [INPUT]
+            Name tail
+            Path /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+    asserts:
+      - failedTemplate:
+          errorPattern: "is not under an allowed prefix"
+  - it: allows an extra input under an allowed prefix
+    set:
+      fluentBit.config.extraInputs: |
+        [INPUT]
+            Name tail
+            Path /var/log/app/*.log
+    asserts:
+      - isKind:
+          of: ConfigMap
+  - it: allows custom prefixes
+    set:
+      fluentBit.path: /data/logs/*.log
+      fluentBit.windowsPath: 'C:\data\logs\*.log'
+      fluentBit.allowedLogPaths: ["/data/logs/", 'C:\data\logs\']
+    asserts:
+      - isKind:
+          of: ConfigMap
+  - it: skips validation with allowUnsafePaths
+    set:
+      fluentBit.path: /etc/passwd
+      fluentBit.allowUnsafePaths: true
+    asserts:
+      - isKind:
+          of: ConfigMap
