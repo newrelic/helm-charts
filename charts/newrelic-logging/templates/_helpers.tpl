@@ -277,3 +277,32 @@ If additionalEnvVariables is set, renames to extraEnv. Returns extraEnv.
 {{- end -}}
 
 
+
+{{/*
+Fails the render when a log path falls outside fluentBit.allowedLogPaths.
+Checks fluentBit.path, fluentBit.windowsPath and every "Path" key found in
+fluentBit.config.inputs / extraInputs. Disable with fluentBit.allowUnsafePaths.
+*/}}
+{{- define "newrelic-logging.validatePaths" -}}
+{{- if not .Values.fluentBit.allowUnsafePaths -}}
+  {{- $allowed := .Values.fluentBit.allowedLogPaths | default (list) -}}
+  {{- $paths := list .Values.fluentBit.path .Values.fluentBit.windowsPath -}}
+  {{- $inputs := printf "%s\n%s" (.Values.fluentBit.config.inputs | default "") (.Values.fluentBit.config.extraInputs | default "") -}}
+  {{- range $line := regexFindAll "(?im)^\\s*Path\\s+\\S+" $inputs -1 -}}
+    {{- $paths = append $paths (regexReplaceAll "(?i)^\\s*Path\\s+" $line "") -}}
+  {{- end -}}
+  {{- range $p := $paths -}}
+    {{- if and $p (ne $p "${PATH}") -}}
+      {{- $ok := false -}}
+      {{- if not (contains ".." $p) -}}
+        {{- range $prefix := $allowed -}}
+          {{- if hasPrefix (lower $prefix) (lower $p) -}}{{- $ok = true -}}{{- end -}}
+        {{- end -}}
+      {{- end -}}
+      {{- if not $ok -}}
+        {{- fail (printf "fluentBit log path %q is not under an allowed prefix (%s). Add it to fluentBit.allowedLogPaths or set fluentBit.allowUnsafePaths=true." $p (join ", " $allowed)) -}}
+      {{- end -}}
+    {{- end -}}
+  {{- end -}}
+{{- end -}}
+{{- end -}}

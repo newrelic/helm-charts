@@ -160,6 +160,9 @@ spec:
             - name: fb-db-pvc
               mountPath: /db
             {{- end }}
+            # Writable scratch space, the root filesystem is read-only by default
+            - name: tmp
+              mountPath: /tmp
           {{- if .Values.extraVolumeMounts }}
               {{- toYaml .Values.extraVolumeMounts | nindent 12 }}
           {{- end }}
@@ -207,6 +210,8 @@ spec:
             claimName: {{ template "newrelic-logging.fullname" . }}-pvc
             {{- end }}
         {{- end }}
+        - name: tmp
+          emptyDir: {}
       {{- if .Values.extraVolumes }}
         {{- toYaml .Values.extraVolumes | nindent 8 }}
       {{- end }}

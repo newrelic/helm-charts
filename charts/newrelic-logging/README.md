@@ -215,6 +215,14 @@ fluentBit:
   linuxMountPath: /var/log
 ```
 
+### Log path restrictions and hardening
+
+To limit which files Fluent Bit can be told to read, every log path (`fluentBit.path`, `fluentBit.windowsPath` and any `Path` key in `fluentBit.config.inputs` / `extraInputs`) must start with one of the prefixes in `fluentBit.allowedLogPaths` (default: `/var/log/`, `/var/lib/docker/containers/`, `C:\var\log\`) and must not contain `..`. Otherwise the chart fails to render. Set `fluentBit.allowUnsafePaths=true` to disable the check (not recommended).
+
+The container also runs with a read-only root filesystem, no privilege escalation and all capabilities dropped by default (`containerSecurityContext`). A writable `/tmp` is provided.
+
+The check only applies to rendered chart values. Restrict who can edit the Fluent Bit ConfigMap and who can deploy configuration with Kubernetes RBAC.
+
 ### Proxy support
 
 Since Fluent Bit Kubernetes plugin is using [newrelic-fluent-bit-output](https://github.com/newrelic/newrelic-fluent-bit-output) we can configure the [proxy support](https://github.com/newrelic/newrelic-fluent-bit-output#proxy-support) in order to set up the proxy configuration.

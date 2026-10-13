@@ -32,6 +32,14 @@ fluentBit:
   windowsPath: "C:\\var\\log\\containers\\*.log"
   db: "/var/log/flb_kube.db"
   windowsDb: "C:\\var\\log\\flb_kube.db"
+  # Log paths (fluentBit.path, windowsPath and any `Path` in config.inputs/extraInputs) must start with
+  # one of these prefixes, otherwise rendering fails. This limits which files the agent can be told to read.
+  allowedLogPaths:
+    - /var/log/
+    - /var/lib/docker/containers/
+    - 'C:\var\log\'
+  # Set to true to disable the allowedLogPaths check. Not recommended.
+  allowUnsafePaths: false
   criEnabled: true
   k8sBufferSize: "32k"
   k8sLoggingExclude: "false"
@@ -340,6 +348,16 @@ hostNetwork:
 # into the plugin.source attribute.
 # Can be set as a global: global.lowDataMode
 # lowDataMode: false
+
+# Hardened defaults for the Fluent Bit container. The root filesystem is read-only (a writable /tmp is provided)
+# so a modified configuration cannot write to, or easily read from, the image filesystem.
+# Can be set as a global: global.containerSecurityContext
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
 
 extraVolumes: []
 # - name: systemdlog
