@@ -39,17 +39,10 @@ jobs:
         run: |
           curl -fsSL https://raw.githubusercontent.com/tilt-dev/tilt/master/scripts/install.sh | bash
 
-      - name: Obtain Rust version from project
-        run: |
-          RUST_VERSION=$(grep "rust-version" Cargo.toml | cut -d "=" -f2 | tr -d "[:space:]")
-          echo "RUST_VERSION=${RUST_VERSION}" >> $GITHUB_ENV
-
-      - name: Install Rust ${{ env.RUST_VERSION }}
-        uses: dtolnay/rust-toolchain@master
+      - name: Install Rust toolchain
+        uses: newrelic/newrelic-agent-control/.github/actions/install-rust-toolchain@main
         with:
-          toolchain: ${{ env.RUST_VERSION }}
-          targets: >-
-            x86_64-unknown-linux-musl
+          targets: x86_64-unknown-linux-musl
 
       - uses: actions/cache@v6
         with:
