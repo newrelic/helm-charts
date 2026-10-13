@@ -19,14 +19,15 @@ tests:
       - isKind:
           of: ConfigMap
       - equal:
-          path: data.custom1\.yaml
-          value: |-
-            name: "custom1"
-            description: "Custom script 1"
-            frequencyS: 60
-            script: |
-              import px
-              df = px.DataFrame(table='http_events', start_time=px.plugin.start_time)
+          path: data
+          value:
+            custom1.yaml: |-
+              name: "custom1"
+              description: "Custom script 1"
+              frequencyS: 60
+              script: |
+                import px
+                df = px.DataFrame(table='http_events', start_time=px.plugin.start_time)
       - equal:
           path: metadata.name
           value: RELEASE-NAME-newrelic-pixie-scripts
