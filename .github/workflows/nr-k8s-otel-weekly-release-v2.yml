@@ -121,7 +121,8 @@ jobs:
 
       - name: Release nr-k8s-otel-collector chart
         if: steps.check-changes.outputs.has_changes == 'true'
-        uses: helm/chart-releaser-action@v1.7.0
+        # Pinned past v1.7.0: A bug fixed in helm/chart-releaser-action#202 is still unreleased at the time of writing.
+        uses: helm/chart-releaser-action@fae9146b935c45c307b67c4495043ea3fd3e3355 # main, post-v1.7.0
         with:
           charts_dir: .cr-release-packages
           skip_packaging: true
