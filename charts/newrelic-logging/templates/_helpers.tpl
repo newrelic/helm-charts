@@ -126,6 +126,8 @@ Returns nrStaging
 {{- end -}}
 
 {{/*
+TODO: Deprecate this option and only support provider support via the common library.
+See: _provider.tpl provider config + convenience functions such as newrelic.common.fargate.
 Returns fargate
 */}}
 {{- define "newrelic.fargate" -}}
