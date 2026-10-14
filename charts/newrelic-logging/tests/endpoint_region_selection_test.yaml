@@ -336,3 +336,76 @@ tests:
             name: ENDPOINT
             value: "https://log-api.eu.newrelic.com/log/v1"
         template: templates/daemonset.yaml
+
+  - it: selects staging endpoints with a custom secret and nrStaging, without a region
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      nrStaging: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://staging-log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "staging-metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+
+  - it: selects FedRAMP endpoints with a custom secret and fedramp.enabled, without a region
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      fedramp:
+        enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://gov-log-api.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: METRICS_HOST
+            value: "gov-metric-api.newrelic.com"
+        template: templates/daemonset.yaml
+
+  - it: an explicit region wins over nrStaging with a custom secret
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      nrStaging: true
+      region: EU
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: ENDPOINT
+            value: "https://log-api.eu.newrelic.com/log/v1"
+        template: templates/daemonset.yaml
+
+  - it: fails with a custom secret when only endpoint is set
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      endpoint: https://log-api.eu.newrelic.com/log/v1
+    asserts:
+      - failedTemplate:
+          errorPattern: "not able to compute the region"
+        template: templates/daemonset.yaml
+
+  - it: fails with a custom secret when only metricsEndpoint is set
+    set:
+      customSecretName: secret_name
+      customSecretLicenseKey: key_name
+      metricsEndpoint: metric-api.eu.newrelic.com
+    asserts:
+      - failedTemplate:
+          errorPattern: "not able to compute the region"
+        template: templates/daemonset.yaml
