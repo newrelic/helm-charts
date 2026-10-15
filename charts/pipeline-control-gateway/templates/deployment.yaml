@@ -1,4 +1,5 @@
 {{- if not .Values.daemonset.enabled }}
+{{- include "nrKubernetesOtel.hotReload.checkImage" . }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -126,9 +127,6 @@ spec:
           volumeMounts:
             - name: deployment-config
               mountPath: /config
-        {{- if and .Values.deployment.customConfigMap .Values.configWatcher.enabled }}
-        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.deployment.customConfigMap "root" .) | nindent 8 }}
-        {{- end }}
       volumes:
         - name: deployment-config
           {{- if .Values.deployment.customConfigMap }}
