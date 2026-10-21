@@ -88,3 +88,31 @@ tests:
       image.tag: "2.5.0"
     asserts:
       - notFailedTemplate: {}
+
+  - it: gives the liveness probe longer than the 60s reload watchdog on a Deployment
+    template: templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 15
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3
+
+  - it: gives the liveness probe longer than the 60s reload watchdog on a DaemonSet
+    template: templates/daemonset.yaml
+    set:
+      daemonset.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 15
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3
