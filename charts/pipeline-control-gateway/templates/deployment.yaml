@@ -106,7 +106,10 @@ spec:
               containerPort: {{ .Values.ports.healthHttp }}
               protocol: TCP
           livenessProbe:
-            failureThreshold: 3
+            # /health/status returns 503 while a config reload drains and restarts the
+            # pipelines. Allow longer than PCG's 60s reload watchdog so a slow but healthy
+            # drain is not killed; readiness still takes the pod out of the Service.
+            failureThreshold: 15
             httpGet:
               path: /health/status
               port: {{ .Values.ports.healthHttp }}
