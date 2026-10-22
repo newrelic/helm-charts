@@ -122,6 +122,9 @@ See [values.yaml](values.yaml) for the default values
 | `global.licenseKey` - `licenseKey`                           | The [license key](https://docs.newrelic.com/docs/accounts/install-new-relic/account-setup/license-key) for your New Relic Account. This will be the preferred configuration option if both `licenseKey` and `customSecret*` values are specified.                                                                                                                                    |                                                                                 |
 | `global.customSecretName` - `customSecretName`               | Name of the Secret object where the license key is stored                                                                                                                                                                                                                                                                                                                            |                                                                                 |
 | `global.customSecretLicenseKey` - `customSecretLicenseKey`   | Key in the Secret object where the license key is stored.                                                                                                                                                                                                                                                                                                                            |                                                                                 |
+| `global.region` - `region`                                   | New Relic region of your account: `US`, `EU`, `JP`, `STG` or `GOV`. Detected automatically from the license key prefix when the key is set with `licenseKey`. **Required when the license key is provided through `customSecretName`/`customSecretLicenseKey`**, because the region cannot be inferred from a secret; otherwise the chart fails to render. Not needed with `nrStaging` or `fedramp.enabled`, which select their own endpoints. | detected from `licenseKey` |
+| `endpoint`                                                   | Overrides the New Relic Logs API endpoint (for example `https://log-api.eu.newrelic.com/log/v1`). Advanced override; most users should set `region` instead. When the license is in a custom secret, `endpoint` and `metricsEndpoint` must both be set, otherwise the chart fails to render. | derived from the region |
+| `metricsEndpoint`                                            | Overrides the New Relic Metrics API host, without scheme (for example `metric-api.eu.newrelic.com`). Advanced override; most users should set `region` instead. When the license is in a custom secret, `endpoint` and `metricsEndpoint` must both be set, otherwise the chart fails to render. | derived from the region |
 | `global.fargate`                                             | Must be set to `true` when deploying in an EKS Fargate environment. Prevents DaemonSet pods from being scheduled in Fargate nodes.                                                                                                                                                                                                                                                   |                                                                                 |
 | `global.lowDataMode` - `lowDataMode`                         | If `true`, send minimal attributes on Kubernetes logs. Labels and annotations are not sent when lowDataMode is enabled.                                                                                                                                                                                                                                                              | `false`                                                                         |
 | `global.fedramp.enabled` - `fedramp.enabled`                 | If `true`, sends logs and metrics to New Relic's [FedRAMP-compliant endpoints](https://docs.newrelic.com/docs/security/security-privacy/compliance/fedramp-compliant-endpoints/) (`gov-log-api.newrelic.com` and `gov-metric-api.newrelic.com`). Requires a FedRAMP-authorized New Relic account. See [Enable FedRAMP-compliant endpoints](https://docs.newrelic.com/docs/kubernetes-pixie/kubernetes-integration/advanced-configuration/enable-fedramp-endpoints/).                                            | `false`                                                                         |
@@ -190,6 +193,32 @@ See [values.yaml](values.yaml) for the default values
 | `livenessProbe.timeoutSeconds`                               | Number of seconds after which the liveness probe times out.                                                                                                                                                                                                                                                                                                                          | `5`                                                                             |
 | `livenessProbe.failureThreshold`                             | When a liveness probe fails, Kubernetes will try `failureThreshold` times before giving up.                                                                                                                                                                                                                                                                                          | `3`                                                                             |
 | `fluentBit.criEnabled`                                       | We assume that `kubelet`directly communicates with the container engine using the [CRI](https://kubernetes.io/docs/concepts/overview/components/#container-runtime) specification. Set this to `false` if your K8s installation uses [dockershim](https://kubernetes.io/docs/tasks/administer-cluster/migrating-from-dockershim/) instead, in order to get the logs properly parsed. | `true`                                                                          |
+
+### Region when the license key is stored in a Secret
+
+The chart picks the New Relic endpoints (logs and metrics) from your region. When the license key is set with `licenseKey`, the region is detected from the key prefix (for example `eu...` is EU). When the key lives in a Kubernetes Secret (`customSecretName` / `customSecretLicenseKey`), the chart cannot read it, so you must tell it where to send data.
+
+> **Upgrade note:** before this version, a Secret with no region silently sent data to the US endpoints, which returned `403` for EU accounts. The chart now fails to render instead. If you use a Secret, set `region` before upgrading.
+
+| Setup | What to set |
+|---|---|
+| Key in `licenseKey` | Nothing, the region is detected from the key |
+| Key in a Secret, US / EU / JP account | `region: US`, `region: EU` or `region: JP` (also accepted as `global.region`) |
+| Key in a Secret, staging account | `nrStaging: true` (no `region` needed) |
+| Key in a Secret, FedRAMP account | `fedramp.enabled: true` (no `region` needed) |
+
+Example for an EU account:
+
+```yaml
+customSecretName: my-secret
+customSecretLicenseKey: license
+region: EU
+```
+
+Notes:
+- An explicit `region` always wins over `nrStaging`, `fedramp.enabled` and the key prefix. For a FedRAMP account, do not set `region` to anything other than `GOV`, or data goes to the commercial endpoints.
+- Supported regions are `US`, `EU`, `JP`, `GOV` and `STG` (case-insensitive). Any other value fails to render.
+- If both `nrStaging` and `fedramp.enabled` are set, staging wins.
 
 ### Fluent Bit persistence modes
 
@@ -277,3 +306,4 @@ This Helm chart deploys one `DaemonSet` for each of the Windows versions it supp
 This Helm chart currently supports the following Windows versions:
 -  Windows Server LTSC 2019, build 10.0.17763
 -  Windows Server LTSC 2022, build 10.0.20348
+-  Windows Server LTSC 2025, build 10.0.26100

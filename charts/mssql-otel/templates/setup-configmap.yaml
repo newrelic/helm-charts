@@ -1,0 +1,21 @@
+{{- if .Values.setupJob.enabled }}
+{{- if .Values.mssqlMulti.enabled -}}
+{{- include "mssql-otel.validate.mssqlMulti" . -}}
+{{- else -}}
+{{- include "mssql-otel.validate.setupJob" . -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "mssql-otel.fullname" . }}-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "mssql-otel.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  grants.sql: |
+{{ .Files.Get "files/setup/grants.sql" | indent 4 }}
+{{- end }}

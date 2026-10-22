@@ -1,0 +1,53 @@
+suite: single/multi mode exclusivity
+templates:
+  - templates/deployment.yaml
+  - templates/configmap.yaml
+  - templates/secret.yaml
+  - templates/setup-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: renders no single-instance resources when oracleMulti.enabled is true
+    set:
+      oracleMulti.enabled: true
+      oracleMulti.topology: "rds"
+      oracleMulti.databases:
+        - name: db1
+          endpoint: "host1:1521"
+          service: "ORCL1"
+          existingSecret: "db1-creds"
+      setupJob.enabled: true
+      setupJob.oracleAdmin.existingSecret: "admin-secret"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/secret.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/setup-job.yaml
+  - it: still renders single-instance resources when oracleMulti.enabled is false (default)
+    set:
+      oracle.endpoint: "db:1521"
+      oracle.service: "MYPDB"
+      oracle.topology: "pdb"
+      oracle.username: "u"
+      oracle.password: "p"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+      licenseKey: "testlicensekey"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/secret.yaml

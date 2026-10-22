@@ -1,0 +1,66 @@
+image:
+  repository: newrelic/nrdot-collector
+  tag: "2.6.0"
+  pullPolicy: IfNotPresent
+
+nameOverride: ""
+fullnameOverride: ""
+
+mssql:
+  # -- Required. One of: self-hosted, rds. Documentation/validation only today -- grants.sql and receiver defaults are identical either way.
+  topology: ""
+  # -- Required. SQL Server host/endpoint (no port).
+  server: ""
+  # -- SQL Server port.
+  port: 1433
+  # -- Plain-value monitoring username. Ignored if existingSecret is set.
+  username: ""
+  # -- Plain-value monitoring password. Ignored if existingSecret is set.
+  password: ""
+  # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
+  existingSecret: ""
+  # -- How often the receiver scrapes SQL Server.
+  collectionInterval: 15s
+
+mssqlMulti:
+  # -- Enables multi-instance mode: one release monitors every entry in mssqlMulti.databases from a single collector pod.
+  # Mutually exclusive with the mssql.* single-instance block above -- do not set mssql.server when this is true.
+  enabled: false
+  # -- Required when enabled. One of: self-hosted, rds. Kept for parity with mssql.topology -- still validation-only, no rendered effect.
+  topology: ""
+  # -- List of SQL Server instances to monitor from this one release. Each entry requires: name (unique), server, existingSecret.
+  # port defaults to 1433. sqlAdmin.existingSecret is required per entry only when setupJob.enabled is true.
+  # Scrape-behavior settings (collectionInterval, metrics, events, topQueryCollection, etc.) are NOT configurable per
+  # entry or at the mssqlMulti level -- they're fixed defaults shared by every entry (same defaults as the mssql:
+  # block above). Use additionalReceiverConfig to override any of them if you need to.
+  databases: []
+
+# -- Required. New Relic OTLP endpoint for the account's region, e.g. https://otlp.nr-data.net:4318
+otlpEndpoint: ""
+
+# -- Plain-value New Relic license key. Can also be set as global.licenseKey.
+licenseKey: ""
+# -- Name of a pre-existing Secret holding the license key. Can also be set as global.customSecretName.
+customSecretName: ""
+# -- Key inside customSecretName that holds the license key. Can also be set as global.customSecretLicenseKey.
+customSecretLicenseKey: ""
+
+# -- Escape hatch merged into the nrsqlserver receiver block (e.g. metrics, events overrides).
+additionalReceiverConfig: {}
+
+setupJob:
+  # -- If true, a Helm hook Job creates the monitoring login and grants it read-only access before install/upgrade.
+  enabled: false
+  image:
+    # -- sqlcmd image. No default -- see README for why (mcr.microsoft.com/mssql-tools:latest is freely pullable but stale/unmaintained).
+    repository: ""
+    tag: ""
+    pullPolicy: IfNotPresent
+  sqlAdmin:
+    # -- Required when setupJob.enabled is true. Name of a pre-existing Secret with keys `username` and `password`. No plain-value path. Must be a sysadmin-role login able to CREATE LOGIN and grant server-level permissions.
+    existingSecret: ""
+
+resources: {}
+nodeSelector: {}
+tolerations: []
+affinity: {}

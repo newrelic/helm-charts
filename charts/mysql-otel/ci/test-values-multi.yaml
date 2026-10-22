@@ -1,0 +1,16 @@
+mysqlMulti:
+  enabled: true
+  topology: "self-hosted"
+  databases:
+    - name: db1
+      server: "mysql-db-1.example.internal"
+      existingSecret: "mysql-otel-db1-creds"
+    - name: db2
+      server: "mysql-db-2.example.internal"
+      existingSecret: "mysql-otel-db2-creds"
+
+otlpEndpoint: "otlp.nr-data.net:4317"
+licenseKey: "0000000000000000000000000000000000000000"
+
+setupJob:
+  enabled: false

@@ -5,7 +5,11 @@
 {{- if and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpoint) }}
   {{- fail "customOtlpEndpointTlsCertSecret is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or remove the TLS cert configuration." }}
 {{- end }}
+{{- if and (hasKey .Values "agentMetadataReporting") (not (or (eq (toString .Values.agentMetadataReporting) "true") (eq (toString .Values.agentMetadataReporting) "false"))) }}
+  {{- fail (printf "agentMetadataReporting must be a boolean (true or false), got '%v'." .Values.agentMetadataReporting) }}
+{{- end }}
 {{- $region := include "newrelic.common.region" . }}
+{{- $kernelHeaderInstallerEnabled := eq (include "nr-ebpf-agent.kernelHeaderInstaller.enabled" .) "true" }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -46,6 +50,7 @@ spec:
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- if $kernelHeaderInstallerEnabled }}
       initContainers:
       - name: kernel-header-installer
         image: {{ include "nr-ebpf-agent.initContainerImage" . }}
@@ -61,6 +66,7 @@ spec:
           mountPath: /host
         - name: kernel-headers-volume
           mountPath: /kernel-headers
+      {{- end }}
 
       containers:
       - name: nr-ebpf-agent
@@ -178,6 +184,8 @@ spec:
           {{- else }}
             value: "false"
           {{- end }}
+          - name: ENABLE_AGENT_METADATA_REPORTING
+            value: "{{ if hasKey .Values "agentMetadataReporting" }}{{ .Values.agentMetadataReporting }}{{ else }}true{{ end }}"
           - name: AI_MONITORING_ENABLED
             value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.enabled | default false }}{{ else }}false{{ end }}"
           - name: AI_MONITORING_SAMPLING_LATENCY
@@ -321,10 +329,11 @@ spec:
             readOnly: true
           - name: sys-volume
             mountPath: /sys
-            readOnly: true
+          {{- if $kernelHeaderInstallerEnabled }}
           - name: kernel-headers-volume
             mountPath: /kernel-headers
             readOnly: true
+          {{- end }}
           {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
           - name: otlp-tls-cert
             mountPath: /etc/otlp-tls
@@ -336,10 +345,12 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
+      {{- if $kernelHeaderInstallerEnabled }}
       - name: installer-script
         configMap:
           name: {{ include "nr-ebpf-agent.fullname" . }}-installer-script
           defaultMode: 0755
+      {{- end }}
       - name: host-root-volume
         hostPath:
           path: /
@@ -348,8 +359,10 @@ spec:
         hostPath:
           path: /sys
           type: Directory
+      {{- if $kernelHeaderInstallerEnabled }}
       - name: kernel-headers-volume
         emptyDir: {}
+      {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert
         secret:

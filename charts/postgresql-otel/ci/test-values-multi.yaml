@@ -1,0 +1,20 @@
+postgresqlMulti:
+  enabled: true
+  topology: "self-hosted"
+  instances:
+    - name: db1
+      server: "postgresql-db-1.example.internal"
+      existingSecret: "postgresql-otel-db1-creds"
+      databases:
+        - appdb1
+    - name: db2
+      server: "postgresql-db-2.example.internal"
+      existingSecret: "postgresql-otel-db2-creds"
+      databases:
+        - appdb2
+
+otlpEndpoint: "otlp.nr-data.net:4317"
+licenseKey: "0000000000000000000000000000000000000000"
+
+setupJob:
+  enabled: false

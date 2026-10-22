@@ -1,0 +1,32 @@
+{{- if .Values.setupJob.enabled }}
+{{- $topology := "" -}}
+{{- if .Values.oracleMulti.enabled -}}
+{{- include "oracle-otel.validate.oracleMulti" . -}}
+{{- $topology = .Values.oracleMulti.topology -}}
+{{- else -}}
+{{- include "oracle-otel.validate.setupJob" . -}}
+{{- $topology = .Values.oracle.topology -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "oracle-otel.fullname" . }}-setup
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "oracle-otel.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation
+data:
+  grants.sql: |
+{{- if eq $topology "cdb" }}
+{{ .Files.Get "files/setup/cdb-grants.sql" | indent 4 }}
+{{- else if eq $topology "pdb" }}
+{{ .Files.Get "files/setup/pdb-grants.sql" | indent 4 }}
+{{- else if eq $topology "rds" }}
+{{ .Files.Get "files/setup/rds-grants.sql" | indent 4 }}
+{{- else if eq $topology "adb" }}
+{{ .Files.Get "files/setup/adb-grants.sql" | indent 4 }}
+{{- end }}
+{{- end }}
