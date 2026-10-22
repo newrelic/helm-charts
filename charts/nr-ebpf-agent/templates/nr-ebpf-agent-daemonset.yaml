@@ -201,6 +201,15 @@ spec:
                 name: nr-ebpf-agent-secrets
                 key: NAMESPACE_LICENSE_KEY_MAP
           {{- end }}
+          {{- if .Values.obi.enabled }}
+          # Inbound OTLP receiver for the OBI container; loopback-only (pod is hostNetwork).
+          - name: OTLP_RECEIVER_ENABLED
+            value: "true"
+          - name: OTLP_RECEIVER_GRPC_ADDR
+            value: "127.0.0.1:4317"
+          - name: OTLP_RECEIVER_HTTP_ADDR
+            value: "127.0.0.1:4318"
+          {{- end }}
           - name: TLS_ENABLED
             value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
@@ -444,6 +453,56 @@ spec:
             mountPath: /etc/passwd
             readOnly: true
       {{- end }}
+      {{- if .Values.obi.enabled }}
+      # OpenTelemetry eBPF Instrumentation. Instruments the node's processes (hostPID)
+      # and exports OTLP to the agent's inbound receiver on localhost (hostNetwork).
+      - name: obi
+        image: {{ include "nr-ebpf-agent.obi.image" . }}
+        imagePullPolicy: {{ include "nr-ebpf-agent.obi.imagePullPolicy" . }}
+        resources: {{ .Values.obi.resources | toYaml | nindent 10 }}
+        env:
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: "http://127.0.0.1:{{ .Values.nrdotCollector.otlpIngestPort }}"
+          # The receiver speaks gRPC; without this OBI infers the protocol from the port.
+          - name: OTEL_EXPORTER_OTLP_PROTOCOL
+            value: grpc
+          # Must precede OTEL_EXPORTER_OTLP_HEADERS, which expands it.
+          - name: NEW_RELIC_LICENSE_KEY
+            valueFrom:
+              secretKeyRef:
+                {{- if (include "newrelic.common.license._licenseKey" .) }}
+                key: NEW_RELIC_LICENSE_KEY
+                name: nr-ebpf-agent-secrets
+                {{- else }}
+                key: {{ include "newrelic.common.license._customSecretKey" . }}
+                name: {{ include "newrelic.common.license._customSecretName" . }}
+                {{- end }}
+          - name: OTEL_EXPORTER_OTLP_HEADERS
+            value: "api-key=$(NEW_RELIC_LICENSE_KEY)"
+          - name: OTEL_EBPF_KUBE_CLUSTER_NAME
+            value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+          {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+          {{- range $name, $value := omit (default dict .Values.obi.env) "OTEL_EXPORTER_OTLP_ENDPOINT" "OTEL_EXPORTER_OTLP_PROTOCOL" "OTEL_EXPORTER_OTLP_HEADERS" "NEW_RELIC_LICENSE_KEY" "OTEL_EBPF_KUBE_CLUSTER_NAME" }}
+          - name: {{ $name }}
+            value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+          {{- end }}
+        securityContext:
+          privileged: true
+        # No /var/run/docker.sock mount (docker-only): on Kubernetes OBI gets container
+        # metadata from the API server via the agent's ServiceAccount.
+        volumeMounts:
+          - name: bpf-fs-volume
+            mountPath: /sys/fs/bpf
+          - name: cgroup-volume
+            mountPath: /sys/fs/cgroup
+            readOnly: true
+          - name: debugfs-volume
+            mountPath: /sys/kernel/debug
+          # Not in the docker command: OBI >= 0.12 needs tracefs for context propagation on
+          # newer kernels (6.6.128+, 6.12.75+, 6.18.14+, 6.19+) and silently disables it otherwise.
+          - name: tracefs-volume
+            mountPath: /sys/kernel/tracing
+      {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -476,6 +535,24 @@ spec:
         hostPath:
           path: /etc/passwd
           type: File
+      {{- end }}
+      {{- if .Values.obi.enabled }}
+      - name: bpf-fs-volume
+        hostPath:
+          path: /sys/fs/bpf
+          type: Directory
+      - name: cgroup-volume
+        hostPath:
+          path: /sys/fs/cgroup
+          type: Directory
+      - name: debugfs-volume
+        hostPath:
+          path: /sys/kernel/debug
+          type: Directory
+      - name: tracefs-volume
+        hostPath:
+          path: /sys/kernel/tracing
+          type: Directory
       {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert

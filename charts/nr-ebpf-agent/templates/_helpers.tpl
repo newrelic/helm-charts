@@ -311,6 +311,36 @@ Precedence: chart-level (ebpfAgent.image.pullPolicy) > global (global.images.pul
 {{- end }}
 
 {{/*
+Return the full image reference for the OBI container.
+Precedence: chart-level (obi.image.registry) > global (global.images.registry) > default (docker.io)
+*/}}
+{{- define "nr-ebpf-agent.obi.image" -}}
+{{- $registry := .Values.obi.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.obi.image.repository .Values.obi.image.tag -}}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for the OBI container.
+Precedence: chart-level (obi.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.obi.imagePullPolicy" -}}
+{{- if .Values.obi.image.pullPolicy }}
+  {{- .Values.obi.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
 Render imagePullSecrets
 Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
 */}}

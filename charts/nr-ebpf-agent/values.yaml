@@ -459,3 +459,50 @@ nrdotCollector:
     # only needs one schedulable node, so it does NOT inherit the tolerate-all default.
     # Set this only if every node in your cluster is tainted (e.g. dedicated node pools).
     tolerations: []
+
+# =============================================================================
+# OpenTelemetry eBPF Instrumentation (OBI)
+# =============================================================================
+# -- OBI container in the eBPF agent pod: auto-instruments the node's application
+# processes and sends their OTLP traces/metrics over gRPC to the agent's inbound OTLP
+# receiver on localhost (port `nrdotCollector.otlpIngestPort`), which exports them to
+# New Relic. Enabling it turns on the agent's receiver (OTLP_RECEIVER_ENABLED).
+obi:
+  # -- Deploy the OBI container.
+  enabled: false
+  image:
+    # -- OBI image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- OBI image repository.
+    repository: otel/ebpf-instrument
+    # -- OBI image tag.
+    tag: "v0.15.2"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 1Gi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 256Mi
+  # -- OBI configuration as environment variables (see the OBI docs for the full list).
+  # OTEL_EXPORTER_OTLP_ENDPOINT, _PROTOCOL, _HEADERS, NEW_RELIC_LICENSE_KEY and
+  # OTEL_EBPF_KUBE_CLUSTER_NAME are set by the chart and ignored here.
+  env:
+    # -- Go GC target percentage. 30 keeps the heap small at the cost of more frequent
+    # collections — matches the nrdot sidecar tuning to reduce per-node memory pressure.
+    GOGC: "30"
+    OTEL_EBPF_OPEN_PORT: "1-65535"
+    OTEL_EBPF_METRICS_FEATURES: application
+    OTEL_EBPF_TRACES_INSTRUMENTATIONS: "*"
+    OTEL_EBPF_BPF_CONTEXT_PROPAGATION: all
+    OTEL_EBPF_BPF_HIGH_REQUEST_VOLUME: "true"
+    OTEL_EBPF_JAVAAGENT_ATTACH_TIMEOUT: 60s
+    OTEL_TRACES_SAMPLER: parentbased_always_on
+    OTEL_EBPF_LOG_LEVEL: info
+    OTEL_EBPF_SDK_LOG_LEVEL: info
+    OTEL_EBPF_BPF_BATCH_LENGTH: "1000"
+    OTEL_EBPF_OTLP_TRACES_BATCH_MAX_SIZE: "512"
