@@ -206,7 +206,7 @@ spec:
           - name: OTLP_RECEIVER_ENABLED
             value: "true"
           - name: OTLP_RECEIVER_GRPC_ADDR
-            value: "127.0.0.1:4317"
+            value: "127.0.0.1:{{ .Values.obi.receiverPort }}"
           - name: OTLP_RECEIVER_HTTP_ADDR
             value: "127.0.0.1:4318"
           {{- end }}
@@ -462,7 +462,7 @@ spec:
         resources: {{ .Values.obi.resources | toYaml | nindent 10 }}
         env:
           - name: OTEL_EXPORTER_OTLP_ENDPOINT
-            value: "http://127.0.0.1:{{ .Values.nrdotCollector.otlpIngestPort }}"
+            value: "http://127.0.0.1:{{ .Values.obi.receiverPort }}"
           # The receiver speaks gRPC; without this OBI infers the protocol from the port.
           - name: OTEL_EXPORTER_OTLP_PROTOCOL
             value: grpc

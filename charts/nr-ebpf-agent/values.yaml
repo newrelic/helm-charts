@@ -465,11 +465,14 @@ nrdotCollector:
 # =============================================================================
 # -- OBI container in the eBPF agent pod: auto-instruments the node's application
 # processes and sends their OTLP traces/metrics over gRPC to the agent's inbound OTLP
-# receiver on localhost (port `nrdotCollector.otlpIngestPort`), which exports them to
+# receiver on localhost (port `obi.receiverPort`), which exports them to
 # New Relic. Enabling it turns on the agent's receiver (OTLP_RECEIVER_ENABLED).
 obi:
   # -- Deploy the OBI container.
   enabled: false
+  # -- Port on which the eBPF agent's inbound OTLP gRPC receiver listens.
+  # OBI exports its traces/metrics to this port on localhost.
+  receiverPort: 4317
   image:
     # -- OBI image registry. Overrides `global.images.registry`. Defaults to docker.io
     registry: ""
