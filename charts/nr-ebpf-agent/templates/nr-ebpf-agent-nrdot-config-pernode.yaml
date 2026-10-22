@@ -1,5 +1,4 @@
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
-{{- $direct := eq .Values.nrdotCollector.egressMode "direct" }}
 {{- $nsKeys := keys .Values.namespaceLicenseKeys | sortAlpha }}
 apiVersion: v1
 kind: ConfigMap
@@ -716,7 +715,6 @@ data:
     extensions:
       health_check:
         endpoint: 0.0.0.0:13133
-    {{- if $direct }}
     {{- if $nsKeys }}
     connectors:
       routing:
@@ -783,39 +781,4 @@ data:
           exporters: [otlp_http/acct-{{ $i }}]
         {{- end }}
         {{- end }}
-    {{- else }}
-    exporters:
-      otlp/agent:
-        endpoint: ${env:AGENT_OTLP_ENDPOINT}
-        tls:
-          insecure: true
-        compression: gzip
-    service:
-      extensions: [health_check]
-      pipelines:
-        # Node-scoped (no namespace): always the default account.
-        metrics/host:
-          receivers: [host_metrics]
-          processors: [memory_limiter, metrics_transform/host, filter/host, attributes/host_paging, transform/host_paging_fault_type, transform/host_process_k8s, k8s_attributes/host_process, transform/host_process_k8s_names, resource_detection/host_system, resource/host_id, resource_detection/host_cloud, resource/host, cumulativetodelta, filter/host_drop_zero_page_faults, batch]
-          exporters: [otlp/agent]
-        metrics:
-          receivers: [kubelet_stats]
-          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8s_attributes, transform/set_volume_persistent, resource_detection/cloudproviders, resource/newrelic, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [otlp/agent]
-        # Per-node CPU/memory usage % (cluster gauge). See the direct-mode block.
-        metrics/aggregation:
-          receivers: [kubelet_stats]
-          processors: [memory_limiter, resource/node_identity, transform/strip_labels_for_per_node_aggregation, groupbyattrs/node, metrics_transform/sum_container_metrics_per_node, metricsgeneration/calculate_percentage, filter/keep_only_generated_metrics, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [otlp/agent]
-        metrics/cadvisor:
-          receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resource_detection/cloudproviders, resource/newrelic, k8s_attributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} metrics_transform/aggregate_container_network_interfaces, transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [otlp/agent]
-        # Kubelet /metrics — commented out with the prometheus/kubelet receiver above
-        # (canonical-only, high-volume). See the direct-mode block for rationale.
-        # metrics/kubelet:
-        #   receivers: [prometheus/kubelet]
-        #   processors: [memory_limiter, resource/drop_scrape_meta, resource/node_identity, resource_detection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
-        #   exporters: [otlp/agent]
-    {{- end }}
 {{- end }}

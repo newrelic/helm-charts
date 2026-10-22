@@ -85,16 +85,18 @@ spec:
 
             export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
 
-            if [[ -z "NODE_CPU_ALLOCATABLE" ]] || [[ "NODE_CPU_ALLOCATABLE" == "0" ]]; then
+            if [ -z "$NODE_CPU_ALLOCATABLE" ] || [ "$NODE_CPU_ALLOCATABLE" = "0" ]; then
               echo "Could not retrieve CPU allocatable for node $NODE_NAME"
               exit 1
             fi
 
             # Convert milliCPU values to plain CPU values
-            if [[ $NODE_CPU_ALLOCATABLE == *m ]]; then
-              # Strip the 'm' and convert the milliCPUs to CPUs
-              export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
-            fi
+            case "$NODE_CPU_ALLOCATABLE" in
+              *m)
+                # Strip the 'm' and convert the milliCPUs to CPUs
+                export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+                ;;
+            esac
 
             export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
               /Ki$/ {printf "%.0f\n", $1 * 1024; next}
@@ -104,7 +106,7 @@ spec:
               {print $1}
             ')
 
-            if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
+            if [ -z "$NODE_MEMORY_ALLOCATABLE" ] || [ "$NODE_MEMORY_ALLOCATABLE" = "0" ]; then
               echo "Could not retrieve Memory allocatable for node $NODE_NAME"
               exit 1
             fi
@@ -167,13 +169,7 @@ spec:
           - name: NEW_RELIC_LICENSE_KEY
             valueFrom:
               secretKeyRef:
-                {{- if (include "newrelic.common.license._licenseKey" .) }}
-                key: NEW_RELIC_LICENSE_KEY
-                name: nr-ebpf-agent-secrets
-                {{- else }}
-                key: {{ include "newrelic.common.license._customSecretKey" . }}
-                name: {{ include "newrelic.common.license._customSecretName" . }}
-                {{- end }}
+                {{- include "nr-ebpf-agent.licenseKeySecretRef" . | nindent 16 }}
 
           {{- if .Values.tableStoreDataLimitMB }}
           - name: TABLE_STORE_DATA_LIMIT_MB
@@ -198,21 +194,12 @@ spec:
           - name: OTLP_ENDPOINT
             value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
           {{- if .Values.namespaceLicenseKeys }}
-          # Multi-account routing map (drives routing of the agent's OWN data, and
-          # of ingested nrdot data in agent egress mode).
+          # Multi-account routing map for the agent's own data.
           - name: NAMESPACE_LICENSE_KEY_MAP
             valueFrom:
               secretKeyRef:
                 name: nr-ebpf-agent-secrets
                 key: NAMESPACE_LICENSE_KEY_MAP
-          {{- end }}
-          {{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (eq .Values.nrdotCollector.egressMode "agent") }}
-          # Turn on the inbound OTLP receiver so the nrdot sidecar/Deployment can
-          # send infra telemetry through the agent (single egress).
-          - name: ENABLE_OTLP_INGEST
-            value: "true"
-          - name: OTLP_INGEST_PORT
-            value: "{{ .Values.nrdotCollector.otlpIngestPort }}"
           {{- end }}
           - name: TLS_ENABLED
             value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
@@ -437,7 +424,7 @@ spec:
                 fieldPath: spec.nodeName
           - name: CLUSTER_NAME
             value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
-          {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "127.0.0.1:%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 10 }}
+          {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 10 }}
         volumeMounts:
           # Patched config written by the nrdot-get-allocatable init container
           # (the raw ConfigMap is mounted only on that init container).

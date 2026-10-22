@@ -123,28 +123,34 @@ Emit at column 0; call with `| nindent <n>`.
 {{- end -}}
 
 {{/*
-Mode-aware egress env for an nrdot collector container.
-Pass a dict: { "ctx": $, "agentEndpoint": "<host:port>" }.
-  agent mode  -> AGENT_OTLP_ENDPOINT=<agentEndpoint>
-  direct mode -> NR_OTLP_ENDPOINT + NEW_RELIC_LICENSE_KEY + NR_INGEST_KEY_<i>
-Emit at column 0; call with `| nindent <n>`.
+name/key of the Secret holding the default license key: the chart Secret when a
+license key is set, else the user's custom secret (customSecretName/customSecretLicenseKey).
+Shared by the eBPF agent and the nrdot collectors. Emit at column 0; call with `| nindent <n>`.
+*/}}
+{{- define "nr-ebpf-agent.licenseKeySecretRef" -}}
+{{- if (include "newrelic.common.license._licenseKey" .) -}}
+name: nr-ebpf-agent-secrets
+key: NEW_RELIC_LICENSE_KEY
+{{- else -}}
+name: {{ include "newrelic.common.license._customSecretName" . }}
+key: {{ include "newrelic.common.license._customSecretKey" . }}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Egress env for an nrdot collector container: the NR OTLP endpoint, the default
+license key and the per-namespace keys (NR_INGEST_KEY_<i>). nrdot always exports
+straight to New Relic. Emit at column 0; call with `| nindent <n>`.
 */}}
 {{- define "nr-ebpf-agent.nrdot.egressEnv" -}}
-{{- $ctx := .ctx -}}
-{{- if eq $ctx.Values.nrdotCollector.egressMode "direct" }}
 - name: NR_OTLP_ENDPOINT
-  value: {{ include "newrelic.common.otlp_endpoint" $ctx }}
+  value: {{ include "newrelic.common.otlp_endpoint" . }}
 - name: NEW_RELIC_LICENSE_KEY
   valueFrom:
     secretKeyRef:
-      name: nr-ebpf-agent-secrets
-      key: NEW_RELIC_LICENSE_KEY
-{{ include "nr-ebpf-agent.nrdot.perAccountKeyEnv" $ctx }}
-{{- else }}
-- name: AGENT_OTLP_ENDPOINT
-  value: {{ .agentEndpoint | quote }}
-{{- end }}
-{{- with $ctx.Values.nrdotCollector.goGC }}
+      {{- include "nr-ebpf-agent.licenseKeySecretRef" . | nindent 6 }}
+{{ include "nr-ebpf-agent.nrdot.perAccountKeyEnv" . }}
+{{- with .Values.nrdotCollector.goGC }}
 - name: GOGC
   value: {{ . | quote }}
 {{- end }}

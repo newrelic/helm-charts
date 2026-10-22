@@ -328,8 +328,8 @@ kubernetesClusterDomain: cluster.local
 # =============================================================================
 # -- Map of Kubernetes namespace -> New Relic license key, for routing telemetry
 # to different accounts. The customer sets this ONCE; the chart generates from it
-# both the eBPF agent's routing map (NAMESPACE_LICENSE_KEY_MAP) and, in direct
-# egress mode, the nrdot collector's per-account exporters. Namespaces not listed
+# both the eBPF agent's routing map (NAMESPACE_LICENSE_KEY_MAP) and the nrdot
+# collector's per-account exporters. Namespaces not listed
 # fall back to the default `licenseKey`. Keys are stored in the chart Secret.
 # Example: namespaceLicenseKeys: { team-a: "NRAK-aaa", team-b: "NRAK-bbb" }
 namespaceLicenseKeys: {}
@@ -361,19 +361,13 @@ nrdotCollector:
   # `infra.enabled` alias above unless you need fine-grained control; either
   # enabling this OR `infra.enabled` turns the collector on.
   enabled: false
-  # -- Egress mode (how nrdot's telemetry reaches New Relic):
-  #    "agent"  = nrdot -> eBPF agent inbound OTLP -> agent routes per-namespace -> NR
-  #               (single egress; the agent holds all keys; sets ENABLE_OTLP_INGEST=true).
-  #    "direct" = nrdot routes per-namespace itself (routingconnector) and sends
-  #               straight to NR (no agent relay; keys injected from namespaceLicenseKeys).
-  egressMode: direct
   image:
     # -- nrdot image registry. Overrides `global.images.registry`. Defaults to docker.io
     registry: ""
     # -- nrdot image repository.
     repository: newrelic/nrdot-collector
     # -- nrdot image tag.
-    tag: "1.17.0"
+    tag: "2.5.0"
     # -- Image pull policy. Overrides `global.images.pullPolicy`.
     pullPolicy: ""
   # -- Image for the `nrdot-get-allocatable` init container (needs `kubectl` + `yq`).
@@ -390,8 +384,6 @@ nrdotCollector:
     tag: "latest"
     # -- Image pull policy. Overrides `global.images.pullPolicy`.
     pullPolicy: ""
-  # -- Inbound OTLP port the agent listens on (agent mode) and that nrdot targets.
-  otlpIngestPort: 4317
   # -- Metric collection / scrape interval.
   collectionInterval: 60s
   # -- Go garbage-collection target percentage for both nrdot collectors. Lower

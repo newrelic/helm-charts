@@ -1,9 +1,8 @@
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 # Cluster-wide nrdot collector (KSM + k8s events). Single replica is REQUIRED:
 # cluster-scoped collection must happen once, else every replica duplicates it.
-# Reuses the agent ServiceAccount (RBAC extended for events + KSM scrape). In
-# agent egress mode it sends to the node-local agent via $(HOST_IP) (the agent
-# runs hostNetwork, so it listens on the node IP); in direct mode it routes to NR.
+# Reuses the agent ServiceAccount (RBAC extended for events + KSM scrape).
+# Exports straight to New Relic (per-namespace routing when namespaceLicenseKeys is set).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -58,13 +57,9 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: spec.nodeName
-            - name: HOST_IP
-              valueFrom:
-                fieldRef:
-                  fieldPath: status.hostIP
             - name: CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
-            {{- include "nr-ebpf-agent.nrdot.egressEnv" (dict "ctx" . "agentEndpoint" (printf "$(HOST_IP):%v" .Values.nrdotCollector.otlpIngestPort)) | nindent 12 }}
+            {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
           volumeMounts:
             - name: nrdot-config
               mountPath: /etc/nrdot

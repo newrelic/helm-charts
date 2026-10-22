@@ -1,5 +1,4 @@
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
-{{- $direct := eq .Values.nrdotCollector.egressMode "direct" }}
 {{- $nsKeys := keys .Values.namespaceLicenseKeys | sortAlpha }}
 apiVersion: v1
 kind: ConfigMap
@@ -440,7 +439,6 @@ data:
     extensions:
       health_check:
         endpoint: 0.0.0.0:13133
-    {{- if $direct }}
     {{- if $nsKeys }}
     connectors:
       routing:
@@ -491,29 +489,4 @@ data:
           receivers: [k8s_events]
           processors: [memory_limiter, k8s_attributes, transform/events, resource/events, resource/newrelic, batch]
           exporters: [otlp_http/acct-default]
-    {{- else }}
-    exporters:
-      otlp/agent:
-        endpoint: ${env:AGENT_OTLP_ENDPOINT}
-        tls:
-          insecure: true
-        compression: gzip
-    service:
-      extensions: [health_check]
-      pipelines:
-        metrics:
-          receivers: [prometheus/ksm]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/kube_pod_container_status_phase, metrics_transform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metrics_transform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8s_attributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [otlp/agent]
-        {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
-        metrics/controlplane:
-          receivers: [prometheus/controlplane]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
-          exporters: [otlp/agent]
-        {{- end }}
-        logs:
-          receivers: [k8s_events]
-          processors: [memory_limiter, k8s_attributes, transform/events, resource/events, resource/newrelic, batch]
-          exporters: [otlp/agent]
-    {{- end }}
 {{- end }}
