@@ -9,6 +9,7 @@
   {{- fail (printf "agentMetadataReporting must be a boolean (true or false), got '%v'." .Values.agentMetadataReporting) }}
 {{- end }}
 {{- $region := include "newrelic.common.region" . }}
+{{- $kernelHeaderInstallerEnabled := eq (include "nr-ebpf-agent.kernelHeaderInstaller.enabled" .) "true" }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -49,6 +50,7 @@ spec:
       dnsConfig:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- if $kernelHeaderInstallerEnabled }}
       initContainers:
       - name: kernel-header-installer
         image: {{ include "nr-ebpf-agent.initContainerImage" . }}
@@ -64,6 +66,7 @@ spec:
           mountPath: /host
         - name: kernel-headers-volume
           mountPath: /kernel-headers
+      {{- end }}
 
       containers:
       - name: nr-ebpf-agent
@@ -326,9 +329,11 @@ spec:
             readOnly: true
           - name: sys-volume
             mountPath: /sys
+          {{- if $kernelHeaderInstallerEnabled }}
           - name: kernel-headers-volume
             mountPath: /kernel-headers
             readOnly: true
+          {{- end }}
           {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
           - name: otlp-tls-cert
             mountPath: /etc/otlp-tls
@@ -340,10 +345,12 @@ spec:
       restartPolicy: Always
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       volumes:
+      {{- if $kernelHeaderInstallerEnabled }}
       - name: installer-script
         configMap:
           name: {{ include "nr-ebpf-agent.fullname" . }}-installer-script
           defaultMode: 0755
+      {{- end }}
       - name: host-root-volume
         hostPath:
           path: /
@@ -352,8 +359,10 @@ spec:
         hostPath:
           path: /sys
           type: Directory
+      {{- if $kernelHeaderInstallerEnabled }}
       - name: kernel-headers-volume
         emptyDir: {}
+      {{- end }}
       {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
       - name: otlp-tls-cert
         secret:

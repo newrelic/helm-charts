@@ -121,6 +121,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 | ebpfAgent.image.repository | string | `"docker.io/newrelic/newrelic-ebpf-agent"` | eBPF agent image to be deployed. |
 | ebpfAgent.image.tag | string | `"agent-nr-ebpf-agent_0.0.9"` | The tag of the eBPF agent image to be deployed. |
 | ebpfAgent.image.pullPolicy | string | `""` | Image pull policy. Overrides `global.images.pullPolicy` |
+| ebpfAgent.kernelHeaderInstaller.enabled | string | `""` | Force the kernel header installer on (`true`) or off (`false`), bypassing agent version detection. Leave empty to auto-detect based on the resolved `ebpfAgent.image.tag` / `Chart.AppVersion` (agent versions >= 1.7.0 use CO-RE/BTF and skip header installation automatically). |
 | ebpfAgent.kernelHeaderInstaller.image.pullPolicy | string | `""` | Image pull policy for kernel header installer. Overrides `global.images.pullPolicy` |
 | ebpfAgent.podAnnotations | object | `{}` | Sets ebpfAgent pod Annotations. Overrides `podAnnotations` and `global.podAnnotations` |
 | ebpfAgent.podSecurityContext | object | `{}` | Sets ebpfAgent pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod` |
@@ -182,7 +183,7 @@ Options that can be defined globally include `affinity`, `nodeSelector`, `tolera
 
 ### Exporting Errors
 
-If the `nr-ebpf-agent` container logs indicate that the scripts are failing to export data, ensure that Linux headers are installed on the host. Verify that the `nr-ebpf-agent` container logs indicate that the Linux header files were found and that the Stirling data tables were initialized. These logs should be written as the agent is booting up (towards the beginning of the output).
+If the `nr-ebpf-agent` container logs indicate that the scripts are failing to export data, and you are running an agent version older than 1.7.0, ensure that Linux headers are installed on the host. Verify that the `nr-ebpf-agent` container logs indicate that the Linux header files were found and that the Stirling data tables were initialized. These logs should be written as the agent is booting up (towards the beginning of the output). Agent versions 1.7.0 and above use CO-RE/BTF and do not require kernel headers.
 
 ## Maintainers
 

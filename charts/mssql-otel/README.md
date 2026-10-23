@@ -44,6 +44,7 @@ applied per instance in the multi case.
   Kubernetes Deployment reaching SQL Server remotely, so it implements only
   the standalone "Standard configuration" shape.
 
+
 ## Choosing the topology
 
 | Your setup | Topology value |
@@ -226,7 +227,7 @@ Relic's own documented SQL Server multi-receiver pattern.
 
 **No host-identification limitation to document here**, unlike
 `oracleMulti`/`mysqlMulti`/`postgresqlMulti`: this chart's `processors:`
-block (`memory_limiter`+`batch`) never included a per-instance
+block (`memory_limiter`) never included a per-instance
 `resource.server.address`-style attribute in the first place, even in
 single-instance mode, so there's nothing that becomes "only correct for
 the first entry" when moving to multi-instance — there was never a
@@ -239,7 +240,7 @@ Shared across both modes:
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.4.0` |
+| `image.tag` | Collector image tag | `2.6.0` |
 | `otlpEndpoint` | New Relic endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrsqlserver` receiver block | `{}` |
