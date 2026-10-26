@@ -87,7 +87,8 @@ jobs:
 
   install-test:
     name: Test chart installability
-    runs-on: ubuntu-latest
+    # pinned: manusa/actions-setup-minikube only supports Ubuntu 18/20/22/24
+    runs-on: ubuntu-24.04
     if: ${{ needs.lint-test.outputs.charts-changed == 'true' }}
     needs: [ lint-test ]
     steps:
