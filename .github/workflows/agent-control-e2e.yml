@@ -16,7 +16,8 @@ permissions:
 jobs:
   agent-control-e2e:
     name: AC e2e scenario - ${{ matrix.group }}
-    runs-on: ubuntu-latest
+    # Pinned until manusa/actions-setup-minikube supports the ubuntu-latest image (26.04)
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
@@ -25,6 +26,23 @@ jobs:
       - uses: actions/checkout@v7
         with:
           repository: newrelic/newrelic-agent-control
+
+      # The e2e values files of the Agent Control repo use ${<AGENT>_AGENT_TYPE_VERSION} placeholders that must be
+      # rendered before running the tests, as the Agent Control repo does in its own workflow. The versions snapshot
+      # is an artifact published by that repo, but its load script looks it up in $GITHUB_REPOSITORY (this repo here,
+      # and the runner does not allow overriding it), so we run the checked out script against the right repo.
+      - name: Load agent versions
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: agent-versions
+          PLATFORM: kubernetes
+          ACTION_PATH: ${{ github.workspace }}/.github/actions/agent-versions/load
+        run: |
+          sed 's#\$GITHUB_REPOSITORY#newrelic/newrelic-agent-control#g' "$ACTION_PATH/load.sh" > "$RUNNER_TEMP/load.sh"
+          bash "$RUNNER_TEMP/load.sh"
+
+      - name: Render agent versions in values files
+        run: bash test/k8s-e2e/render-agent-versions.sh
 
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.18.0
@@ -79,3 +97,13 @@ jobs:
           account_id: ${{ secrets.AC_PROD_E2E_ACCOUNT_ID }}
           api_key: ${{ secrets.AC_PROD_E2E_API_KEY }}
           license_key: ${{ secrets.AC_PROD_E2E_LICENSE_KEY }}
+
+      - name: Dump cluster state on failure
+        if: failure()
+        run: |
+          kubectl get pods -A -o wide || true
+          kubectl get events -A --sort-by=.lastTimestamp | tail -60 || true
+          kubectl describe pods -l app.kubernetes.io/name=agent-control || true
+          kubectl logs --tail=200 -l app.kubernetes.io/name=agent-control --all-containers --prefix=true --previous || true
+          kubectl logs --tail=200 -l app.kubernetes.io/name=agent-control --all-containers --prefix=true || true
+          kubectl get helmrelease,helmchart,gitrepository -A || true
