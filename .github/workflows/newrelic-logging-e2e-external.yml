@@ -21,7 +21,8 @@ jobs:
     # Skip if the PR has the skip-e2e label, or if it's an internal (non-forked) PR —
     # those run via newrelic-logging-e2e.yml instead, which doesn't need the approval gate below.
     if: ${{ !contains(github.event.pull_request.labels.*.name, 'ci/skip-e2e') && github.event.pull_request.head.repo.full_name != 'newrelic/helm-charts' }}
-    runs-on: ubuntu-latest
+    # pinned: manusa/actions-setup-minikube only supports Ubuntu 18/20/22/24
+    runs-on: ubuntu-24.04
     environment: E2E # Required so that approval is required to run this job since it is untrusted (forked).
     timeout-minutes: 20
     steps:
