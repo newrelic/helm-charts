@@ -175,70 +175,97 @@ Returns logsEndpoint
 {{- end -}}
 
 {{/*
-Returns fluentbit config to collect and forward its metrics to New Relic
+Returns the fluentbit YAML pipeline inputs to collect its own metrics
 */}}
-{{- define "newrelic-logging.fluentBit.monitoring.config" -}}
+{{- define "newrelic-logging.fluentBit.monitoring.inputs" -}}
 {{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "basic" -}}
 {{- if eq $fluentBitMetrics "advanced" }}
-[INPUT]
-    name prometheus_scrape
-    Alias fb-metrics-collector
-    host 127.0.0.1
-    port 2020
-    tag fb_metrics
-    metrics_path /api/v2/metrics/prometheus
-    scrape_interval 60s
-
-[OUTPUT]
-    Name                 prometheus_remote_write
-    Match                fb_metrics
-    Alias                fb-metrics-forwarder
-    Host                 ${METRICS_HOST}
-    Port                 443
-    Uri                  /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
-    Header               Authorization Bearer ${LICENSE_KEY}
-    Tls                  On
-    Tls.verify           Off
-    add_label            app fluent-bit
-    add_label            source kubernetes
-    add_label            pod_name ${HOSTNAME}
-    add_label            node_name ${NODE_NAME}
-    add_label            tier  advanced
-    {{- $clusterName := (include "newrelic-logging.cluster" .) -}}
-    {{- if $clusterName -}}
-    {{- printf "add_label            cluster_name %s" $clusterName | nindent 4 -}}
-    {{- else -}}
-    {{- printf "add_label            cluster_name \"%s\"" $clusterName | nindent 4 -}}
-    {{- end -}}
-    {{- printf "add_label            namespace %s" .Release.Namespace | nindent 4 -}}
-    {{- printf "add_label            daemonset_name %s" (include "newrelic-logging.fullname" .) | nindent 4 -}}
+- name: prometheus_scrape
+  alias: fb-metrics-collector
+  host: 127.0.0.1
+  port: 2020
+  tag: fb_metrics
+  metrics_path: /api/v2/metrics/prometheus
+  scrape_interval: 60s
 {{- end -}}
 {{- if eq $fluentBitMetrics "basic" }}
-[INPUT]
-    Name   dummy
-    Tag    buildInfo
-    Dummy  {"message":"trigger for basic metric at every 10 minutes scrape_interval"}
-    Interval_Sec 600
-[FILTER]
-    Name    modify
-    Match   buildInfo
-    Add     fluentBitVersion  ${FBVERSION}
-[FILTER]
-    Name    lua
-    Match   buildInfo
-    script  /fluent-bit/scripts/payload.lua
-    call    build_payload
-[OUTPUT]
-    Name    http
-    Match   buildInfo
-    Host    ${METRICS_HOST}
-    Port    443
-    URI     /metric/v1
-    Format  json
-    tls     On
-    Header  Api-Key ${LICENSE_KEY}
-    Header  Content-Type application/json
-    json_date_key false    
+- name: dummy
+  tag: buildInfo
+  dummy: '{"message":"trigger for basic metric at every 10 minutes scrape_interval"}'
+  interval_sec: 600
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the fluentbit YAML pipeline filters to collect its own metrics
+*/}}
+{{- define "newrelic-logging.fluentBit.monitoring.filters" -}}
+{{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "basic" -}}
+{{- if eq $fluentBitMetrics "basic" }}
+- name: modify
+  match: buildInfo
+  add: fluentBitVersion ${FBVERSION}
+- name: lua
+  match: buildInfo
+  script: /fluent-bit/scripts/payload.lua
+  call: build_payload
+{{- end -}}
+{{- end -}}
+
+{{/*
+Returns the fluentbit YAML pipeline outputs to forward its metrics to New Relic
+*/}}
+{{- define "newrelic-logging.fluentBit.monitoring.outputs" -}}
+{{- $fluentBitMetrics := get $.Values.fluentBit "fluentBitMetrics" | default "basic" -}}
+{{- if eq $fluentBitMetrics "advanced" }}
+- name: prometheus_remote_write
+  match: fb_metrics
+  alias: fb-metrics-forwarder
+  host: ${METRICS_HOST}
+  port: 443
+  uri: /prometheus/v1/write?prometheus_server=${CLUSTER_NAME}
+  header: Authorization Bearer ${LICENSE_KEY}
+  tls: on
+  tls.verify: off
+  add_label:
+    - app fluent-bit
+    - source kubernetes
+    - pod_name ${HOSTNAME}
+    - node_name ${NODE_NAME}
+    - tier advanced
+    {{- $clusterName := (include "newrelic-logging.cluster" .) }}
+    {{- if $clusterName }}
+    - cluster_name {{ $clusterName }}
+    {{- else }}
+    - cluster_name ""
+    {{- end }}
+    - namespace {{ .Release.Namespace }}
+    - daemonset_name {{ include "newrelic-logging.fullname" . }}
+{{- end -}}
+{{- if eq $fluentBitMetrics "basic" }}
+- name: http
+  match: buildInfo
+  host: ${METRICS_HOST}
+  port: 443
+  uri: /metric/v1
+  format: json
+  tls: on
+  header:
+    - Api-Key ${LICENSE_KEY}
+    - Content-Type application/json
+  json_date_key: false
+{{- end -}}
+{{- end -}}
+
+{{/*
+Fails the render if any fluentBit.config value still uses the classic (.conf) format,
+which is not supported anymore.
+*/}}
+{{- define "newrelic-logging.fluentBit.assertYamlConfig" -}}
+{{- range $key, $value := .Values.fluentBit.config -}}
+  {{- if and (kindIs "string" $value) (regexMatch "(?m)^\\s*(\\[(SERVICE|INPUT|FILTER|OUTPUT|PARSER|MULTILINE_PARSER)\\]|@INCLUDE|@SET)" $value) -}}
+    {{- fail (printf "fluentBit.config.%s uses the classic Fluent Bit format, which is not supported anymore. Convert it to YAML (see the chart README)." $key) -}}
+  {{- end -}}
 {{- end -}}
 {{- end -}}
 

@@ -1,0 +1,55 @@
+suite: test fluent-bit YAML config
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: nr_license_key
+tests:
+  - it: "renders fluent-bit.yaml and parsers.yaml and no classic files"
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.yaml"]
+      - isNotNull:
+          path: data["parsers.yaml"]
+      - isNull:
+          path: data["fluent-bit.conf"]
+      - isNull:
+          path: data["parsers.conf"]
+  - it: "uses all-lowercase New Relic output plugin keys"
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "licensekey: \\$\\{LICENSE_KEY\\}"
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "sendmetrics: \\$\\{SEND_OUTPUT_PLUGIN_METRICS\\}"
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "lowdatamode: \\$\\{LOW_DATA_MODE\\}"
+      - notMatchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "licenseKey|sendMetrics|lowDataMode"
+  - it: "appends extra filters to the pipeline"
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            - name: grep
+              match: '*'
+              exclude: log lvl=debug*
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "- name: grep"
+  - it: "fails when an override uses the classic format"
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name grep
+    asserts:
+      - failedTemplate:
+          errorPattern: "uses the classic Fluent Bit format"

@@ -93,116 +93,113 @@ fluentBit:
         claim: {}
 
 
-  # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
-  # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
+  # New Relic default configuration for fluent-bit.yaml (service, inputs, filters, outputs)
+  # and parsers.yaml (parsers). The configuration below is not configured for lowDataMode and will
   # send all attributes.  If custom configuration is required, update these variables.
+  # IMPORTANT: Fluent Bit classic (.conf) format is no longer supported. All values below are YAML:
+  # - `service` is the content of the top-level `service:` map.
+  # - `inputs`, `extraInputs`, `filters`, `extraFilters`, `lowDataModeFilters`, `outputs`, `extraOutputs`
+  #   are YAML list items (each starting with `- name: ...`) appended to `pipeline.inputs|filters|outputs`.
+  # - `parsers` are YAML list items appended to `parsers:` in parsers.yaml.
+  # New Relic output plugin keys must be all-lowercase (e.g. `licensekey`, `sendmetrics`, `lowdatamode`).
   config:
     # Note that Prometheus metric collection needs the HTTP server to be online at port 2020 (see fluentBit.config.metricInstrumentation)
     service: |
-      [SERVICE]
-          Flush         1
-          Log_Level     ${LOG_LEVEL}
-          Daemon        off
-          Parsers_File  parsers.conf
-          HTTP_Server   On
-          HTTP_Listen   0.0.0.0
-          HTTP_Port     2020
+      flush: 1
+      log_level: ${LOG_LEVEL}
+      daemon: off
+      parsers_file: parsers.yaml
+      http_server: on
+      http_listen: 0.0.0.0
+      http_port: 2020
 
     inputs: |
-      [INPUT]
-          Name              tail
-          Alias             pod-logs-tailer
-          Tag               kube.*
-          Path              ${PATH}
-          multiline.parser  ${LOG_PARSER}
-          DB                ${FB_DB}
-          Mem_Buf_Limit     7MB
-          Skip_Long_Lines   On
-          Refresh_Interval  10
+      - name: tail
+        alias: pod-logs-tailer
+        tag: kube.*
+        path: ${PATH}
+        multiline.parser: ${LOG_PARSER}
+        db: ${FB_DB}
+        mem_buf_limit: 7MB
+        skip_long_lines: on
+        refresh_interval: 10
 
 #    extraInputs: |
-#      [INPUT]
-#          Name   dummy
-#          Tag    dummy.log
+#      - name: dummy
+#        tag: dummy.log
 
     filters: |
-      [FILTER]
-          Name                kubernetes
-          Alias               kubernetes-enricher
-          Match               kube.*
-          # We need the full DNS suffix as Windows only supports resolving names with this suffix
-          # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-          Kube_URL            https://kubernetes.default.svc.cluster.local:443
-          Buffer_Size         ${K8S_BUFFER_SIZE}
-          K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
+      - name: kubernetes
+        alias: kubernetes-enricher
+        match: kube.*
+        # We need the full DNS suffix as Windows only supports resolving names with this suffix
+        # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+        kube_url: https://kubernetes.default.svc.cluster.local:443
+        buffer_size: ${K8S_BUFFER_SIZE}
+        k8s-logging.exclude: ${K8S_LOGGING_EXCLUDE}
 
-      [FILTER]
-          Name           record_modifier
-          Alias          node-attributes-enricher
-          Match          *
-          Record         cluster_name "${CLUSTER_NAME}"
+      - name: record_modifier
+        alias: node-attributes-enricher
+        match: '*'
+        record:
+          - cluster_name "${CLUSTER_NAME}"
 
 #    extraFilters: |
-#      [FILTER]
-#          Name   grep
-#          Match  *
-#          Exclude log lvl=debug*
+#      - name: grep
+#        match: '*'
+#        exclude: log lvl=debug*
 
     lowDataModeFilters: |
-      [FILTER]
-          Name           kubernetes
-          Match          kube.*
-          Alias          kubernetes-enricher
-          # We need the full DNS suffix as Windows only supports resolving names with this suffix
-          # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-          Kube_URL       https://kubernetes.default.svc.cluster.local:443
-          Buffer_Size    ${K8S_BUFFER_SIZE}
-          K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
-          Labels         Off
-          Annotations    Off
+      - name: kubernetes
+        alias: kubernetes-enricher
+        match: kube.*
+        # We need the full DNS suffix as Windows only supports resolving names with this suffix
+        # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+        kube_url: https://kubernetes.default.svc.cluster.local:443
+        buffer_size: ${K8S_BUFFER_SIZE}
+        k8s-logging.exclude: ${K8S_LOGGING_EXCLUDE}
+        labels: off
+        annotations: off
 
-      [FILTER]
-          Name           nest
-          Match          *
-          Alias          kubernetes-attribute-lifter
-          Operation      lift
-          Nested_under   kubernetes
+      - name: nest
+        alias: kubernetes-attribute-lifter
+        match: '*'
+        operation: lift
+        nested_under: kubernetes
 
-      [FILTER]
-          Name           record_modifier
-          Match          *
-          Alias          node-attributes-enricher-filter
-          Record         cluster_name "${CLUSTER_NAME}"
-          Allowlist_key  container_name
-          Allowlist_key  namespace_name
-          Allowlist_key  pod_name
-          Allowlist_key  stream
-          Allowlist_key  message
-          Allowlist_key  log
+      - name: record_modifier
+        alias: node-attributes-enricher-filter
+        match: '*'
+        record:
+          - cluster_name "${CLUSTER_NAME}"
+        allowlist_key:
+          - container_name
+          - namespace_name
+          - pod_name
+          - stream
+          - message
+          - log
 
     outputs: |
-      [OUTPUT]
-          Name           newrelic
-          Match          *
-          Alias          newrelic-logs-forwarder
-          licenseKey     ${LICENSE_KEY}
-          endpoint       ${ENDPOINT}
-          lowDataMode    ${LOW_DATA_MODE}
-          sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
-          Retry_Limit    ${RETRY_LIMIT}
+      - name: newrelic
+        match: '*'
+        alias: newrelic-logs-forwarder
+        licensekey: ${LICENSE_KEY}
+        endpoint: ${ENDPOINT}
+        lowdatamode: ${LOW_DATA_MODE}
+        sendmetrics: ${SEND_OUTPUT_PLUGIN_METRICS}
+        retry_limit: ${RETRY_LIMIT}
 
 #    extraOutputs: |
-#      [OUTPUT]
-#          Name null
-#          Match *
+#      - name: "null"
+#        match: '*'
 
 #    parsers: |
-#      [PARSER]
-#          Name         my_custom_parser
-#          Format       json
-#          Time_Key     time
-#          Time_Format  %Y-%m-%dT%H:%M:%S.%L
-#          Time_Keep    On
+#      - name: my_custom_parser
+#        format: json
+#        time_key: time
+#        time_format: "%Y-%m-%dT%H:%M:%S.%L"
+#        time_keep: on
 
 
 image:

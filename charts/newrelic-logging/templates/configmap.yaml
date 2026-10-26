@@ -1,3 +1,4 @@
+{{- include "newrelic-logging.fluentBit.assertYamlConfig" . -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,32 +6,47 @@ metadata:
   labels: {{ include "newrelic-logging.labels" . | indent 4 }}
   name: {{ template "newrelic-logging.fluentBitConfig" . }}
 data:
-  fluent-bit.conf: |
+  fluent-bit.yaml: |
     {{- if .Values.fluentBit.config.service }}
-      {{- .Values.fluentBit.config.service | nindent 4 }}
+    service:
+      {{- .Values.fluentBit.config.service | nindent 6 }}
     {{- end }}
-    {{- if .Values.fluentBit.config.inputs }}
-      {{- .Values.fluentBit.config.inputs | nindent 4 }}
+    pipeline:
+      inputs:
+      {{- with .Values.fluentBit.config.inputs }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.fluentBit.config.extraInputs }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with (include "newrelic-logging.fluentBit.monitoring.inputs" .) }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      filters:
+      {{- if and (include "newrelic-logging.lowDataMode" .) (.Values.fluentBit.config.lowDataModeFilters) }}
+        {{- .Values.fluentBit.config.lowDataModeFilters | nindent 8 }}
+      {{- else }}
+        {{- .Values.fluentBit.config.filters | nindent 8 }}
+      {{- end }}
+      {{- with .Values.fluentBit.config.extraFilters }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with (include "newrelic-logging.fluentBit.monitoring.filters" .) }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      outputs:
+      {{- with .Values.fluentBit.config.outputs }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.fluentBit.config.extraOutputs }}
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with (include "newrelic-logging.fluentBit.monitoring.outputs" .) }}
+        {{- . | nindent 8 }}
+      {{- end }}
+  parsers.yaml: |
+    parsers:
+    {{- with .Values.fluentBit.config.parsers }}
+      {{- . | nindent 6 }}
+    {{- else }} []
     {{- end }}
-    {{- if .Values.fluentBit.config.extraInputs }}
-      {{- .Values.fluentBit.config.extraInputs | nindent 4}}
-    {{- end }}
-    {{- if and (include "newrelic-logging.lowDataMode" .) (.Values.fluentBit.config.lowDataModeFilters) }}
-      {{- .Values.fluentBit.config.lowDataModeFilters | nindent 4 }}
-    {{- else }}
-      {{- .Values.fluentBit.config.filters | nindent 4 }}
-    {{- end }}
-    {{- if .Values.fluentBit.config.extraFilters }}
-      {{- .Values.fluentBit.config.extraFilters | nindent 4}}
-    {{- end }}
-    {{- if .Values.fluentBit.config.outputs }}
-      {{- .Values.fluentBit.config.outputs | nindent 4 }}
-    {{- end }}
-    {{- if .Values.fluentBit.config.extraOutputs }}
-      {{- .Values.fluentBit.config.extraOutputs | nindent 4}}
-    {{- end }}
-    {{- (include "newrelic-logging.fluentBit.monitoring.config" .) | nindent 4}}
-  parsers.conf: |
-  {{- if .Values.fluentBit.config.parsers }}
-    {{- .Values.fluentBit.config.parsers | nindent 4}}
-  {{- end }}
