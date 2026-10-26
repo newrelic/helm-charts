@@ -16,8 +16,7 @@ permissions:
 jobs:
   agent-control-e2e:
     name: AC e2e scenario - ${{ matrix.group }}
-    # Pinned until manusa/actions-setup-minikube supports the ubuntu-latest image (26.04)
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
@@ -47,7 +46,8 @@ jobs:
       - name: Setup Minikube
         uses: manusa/actions-setup-minikube@v2.19.0
         with:
-          minikube version: v1.39.0
+          # Keep v1.38.1: the calico manifest bundled with minikube v1.39.0 has a CRD that kubernetes v1.30 rejects
+          minikube version: v1.38.1
           kubernetes version: "v1.30.14"
           start args: '--cni=calico'
           driver: docker
