@@ -1,0 +1,17 @@
+{{- if include "nrKubernetesOtel.hotReload.watchesAPI" . }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ include "newrelic.common.naming.fullname" . }}-config-reader
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ include "newrelic.common.naming.fullname" . }}-config-reader
+subjects:
+  - kind: ServiceAccount
+    name: {{ include "newrelic.common.serviceAccount.name" . }}
+    namespace: {{ .Release.Namespace }}
+{{- end }}

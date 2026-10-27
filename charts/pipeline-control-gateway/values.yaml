@@ -47,6 +47,13 @@ daemonset:
   # @default -- `""`
   customConfigMap: ""
 
+# -- How PCG notices changes to `deployment.customConfigMap` / `daemonset.customConfigMap` (fluxless mode).
+configReload:
+  # -- `kubernetes`: PCG watches that ConfigMap through the Kubernetes API and applies a change within about a second.
+  # The chart grants read access to that one ConfigMap. If the API cannot be reached, PCG falls back to `file`.
+  # `file`: PCG watches the mounted file, which the kubelet refreshes on its periodic sync (typically within 1 to 2 minutes). No API access.
+  source: kubernetes
+
 autoscaling:
   minReplicas: 2
   maxReplicas: 10
