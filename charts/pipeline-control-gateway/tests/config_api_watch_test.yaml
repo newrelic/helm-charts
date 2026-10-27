@@ -1,0 +1,88 @@
+suite: config reload through the Kubernetes API (fluxless customConfigMap)
+templates:
+  - templates/deployment.yaml
+  - templates/daemonset.yaml
+  - templates/role.yaml
+  - templates/rolebinding.yaml
+  # Loaded for the checksum/config annotation's include.
+  - templates/deployment-configmap.yaml
+  - templates/daemonset-configmap.yaml
+release:
+  name: pcg
+  namespace: newrelic
+set:
+  cluster: test-cluster
+  licenseKey: 1234567890abcdef1234567890abcdef12345678
+tests:
+  - it: tells a Deployment to follow its customConfigMap through the API by default
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIGMAP_NAME, value: pcg-custom-config}
+
+  - it: tells a DaemonSet to follow its customConfigMap through the API by default
+    template: templates/daemonset.yaml
+    set:
+      daemonset.enabled: true
+      daemonset.customConfigMap: pcg-ds-config
+    asserts:
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIGMAP_NAME, value: pcg-ds-config}
+
+  - it: grants read-only access to that one ConfigMap
+    template: templates/role.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+    asserts:
+      - isKind: {of: Role}
+      - equal:
+          path: rules
+          value:
+            - apiGroups: [""]
+              resources: ["configmaps"]
+              resourceNames: ["pcg-custom-config"]
+              verbs: ["get", "list", "watch"]
+
+  - it: binds the Role to the chart's ServiceAccount
+    template: templates/rolebinding.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+    asserts:
+      - equal:
+          path: subjects[0].name
+          value: pipeline-control-gateway
+      - equal:
+          path: roleRef.name
+          value: pipeline-control-gateway-config-reader
+
+  - it: renders no env and no RBAC with configReload.source=file
+    templates: [templates/deployment.yaml, templates/role.yaml, templates/rolebinding.yaml]
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      configReload.source: file
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
+        template: templates/deployment.yaml
+      - hasDocuments: {count: 0}
+        template: templates/role.yaml
+      - hasDocuments: {count: 0}
+        template: templates/rolebinding.yaml
+
+  - it: renders no env and no RBAC in flux mode (no customConfigMap)
+    templates: [templates/deployment.yaml, templates/role.yaml]
+    asserts:
+      - notContains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
+        template: templates/deployment.yaml
+      - hasDocuments: {count: 0}
+        template: templates/role.yaml
