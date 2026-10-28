@@ -28,12 +28,17 @@ jobs:
           repository: newrelic/newrelic-agent-control
 
       # The e2e values files of the Agent Control repo use ${<AGENT>_AGENT_TYPE_VERSION} placeholders that must be
-      # rendered before running the tests, as the Agent Control repo does in its own workflow. The action is referenced
-      # remotely (not as a local path) so that the versions snapshot is looked up in the Agent Control repo.
+      # rendered before running the tests, as the Agent Control repo does in its own workflow. The versions snapshot
+      # is an artifact published by that repo, so the checked out load script is pointed at it explicitly: it looks it
+      # up in $GITHUB_ACTION_REPOSITORY (falling back to this repo), which the runner does not set for `run` steps of
+      # the composite action, so the upstream action cannot be used from here.
       - name: Load agent versions
-        uses: newrelic/newrelic-agent-control/.github/actions/agent-versions/load@main
-        with:
-          platform: kubernetes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_NAME: agent-versions
+          PLATFORM: kubernetes
+          ACTION_PATH: ${{ github.workspace }}/.github/actions/agent-versions/load
+        run: GITHUB_ACTION_REPOSITORY=newrelic/newrelic-agent-control bash "$ACTION_PATH/load.sh"
 
       - name: Render agent versions in values files
         run: bash test/k8s-e2e/render-agent-versions.sh
