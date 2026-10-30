@@ -1,4 +1,5 @@
 {{- if .Values.daemonset.enabled }}
+{{- include "nrKubernetesOtel.hotReload.checkImage" . }}
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -113,7 +114,10 @@ spec:
               containerPort: {{ .Values.ports.healthHttp }}
               protocol: TCP
           livenessProbe:
-            failureThreshold: 3
+            # /health/status returns 503 while a config reload drains and restarts the
+            # pipelines. Allow longer than PCG's 60s reload watchdog so a slow but healthy
+            # drain is not killed; readiness still takes the pod out of the Service.
+            failureThreshold: 15
             httpGet:
               path: /health/status
               port: {{ .Values.ports.healthHttp }}
@@ -134,9 +138,6 @@ spec:
           volumeMounts:
             - name: daemonset-config
               mountPath: /config
-        {{- if and .Values.daemonset.customConfigMap .Values.configWatcher.enabled }}
-        {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.daemonset.customConfigMap "root" .) | nindent 8 }}
-        {{- end }}
       volumes:
         - name: daemonset-config
           {{- if .Values.daemonset.customConfigMap }}
