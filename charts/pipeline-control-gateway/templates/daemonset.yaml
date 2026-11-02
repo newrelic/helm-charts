@@ -134,6 +134,9 @@ spec:
           volumeMounts:
             - name: daemonset-config
               mountPath: /config
+          {{- with .Values.daemonset.extraVolumeMounts }}
+          {{- toYaml . | nindent 12 }}
+          {{- end }}
         {{- if and .Values.daemonset.customConfigMap .Values.configWatcher.enabled }}
         {{- include "nrKubernetesOtel.configWatcher.container" (dict "customConfigMap" .Values.daemonset.customConfigMap "root" .) | nindent 8 }}
         {{- end }}
@@ -146,6 +149,9 @@ spec:
           configMap:
             name: {{ include "nrKubernetesOtel.daemonset.configMap.fullname" . }}
           {{- end }}
+        {{- with .Values.daemonset.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with include "nrKubernetesOtel.daemonset.nodeSelector" . }}
       nodeSelector:
         {{- . | nindent 8 }}

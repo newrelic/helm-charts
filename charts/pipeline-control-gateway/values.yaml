@@ -44,6 +44,12 @@ daemonset:
   # -- Custom external ConfigMap name for daemonset. Leave empty to use the chart-generated one.
   # @default -- `""`
   customConfigMap: ""
+  # -- Additional volumes for the daemonset pod, for example a CSI or Secret volume holding a TLS certificate.
+  # @default -- `[]`
+  extraVolumes: []
+  # -- Additional volume mounts for the gateway container of the daemonset. Each entry must reference a volume from `daemonset.extraVolumes`.
+  # @default -- `[]`
+  extraVolumeMounts: []
 
 # -- Config watcher sidecar settings. Applies to both deployment and daemonset when customConfigMap is set.
 # @default -- See `values.yaml`
@@ -142,6 +148,12 @@ deployment:
   # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
   # @default -- `""`
   customConfigMap: ""
+  # -- Additional volumes for the deployment pod, for example a CSI or Secret volume holding a TLS certificate.
+  # @default -- `[]`
+  extraVolumes: []
+  # -- Additional volume mounts for the gateway container of the deployment. Each entry must reference a volume from `deployment.extraVolumes`.
+  # @default -- `[]`
+  extraVolumeMounts: []
 
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
