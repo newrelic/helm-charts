@@ -100,6 +100,13 @@ nrdot cluster config name (Deployment).
 {{- end -}}
 
 {{/*
+nrdot control-plane config name (control-plane DaemonSet).
+*/}}
+{{- define "nr-ebpf-agent.nrdot.configName.controlplane" -}}
+{{- printf "%s-nrdot-controlplane" (include "nr-ebpf-agent.fullname" .) -}}
+{{- end -}}
+
+{{/*
 Cluster name (local `cluster` or `global.cluster`).
 */}}
 {{- define "nr-ebpf-agent.nrdot.clusterName" -}}

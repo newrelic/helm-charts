@@ -1,0 +1,83 @@
+{{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (include "nr-ebpf-agent.controlPlane.shouldScrape" .) }}
+# Control-plane scraper (controller-manager, scheduler, etcd): one nrdot pod per
+# control-plane node. Separate from the eBPF agent DaemonSet so it has its own
+# scheduling (control-plane affinity + tolerations) and needs no privilege, only
+# hostNetwork to reach the components on 127.0.0.1. Same model as nri-bundle's
+# control-plane DaemonSet. Reuses the agent ServiceAccount (pods list + GET /metrics).
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-nrdot-controlplane
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-nrdot-controlplane
+    component: nrdot-controlplane-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: nr-ebpf-agent-nrdot-controlplane
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent-nrdot-controlplane
+        component: nrdot-controlplane-collector
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-controlplane.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      terminationGracePeriodSeconds: 30
+      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nrdot-collector
+          image: {{ include "nr-ebpf-agent.nrdot.image" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
+          args: ["--config=/etc/nrdot/controlplane.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources: {{ .Values.nrdotCollector.controlPlane.resources | toYaml | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /, port: 13134 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /, port: 13134 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CLUSTER_NAME
+              value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+            {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
+          volumeMounts:
+            - name: nrdot-config
+              mountPath: /etc/nrdot
+              readOnly: true
+      volumes:
+        - name: nrdot-config
+          configMap:
+            name: {{ include "nr-ebpf-agent.nrdot.configName.controlplane" . }}
+      nodeSelector:
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
+      {{- with include "nrEbpfAgent.controlPlane.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.controlPlane.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}

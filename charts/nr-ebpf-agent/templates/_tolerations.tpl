@@ -31,3 +31,21 @@ A helper to return the tolerations to apply to the Otel daemonset.
     {{- include "newrelic.common.tolerations" . -}}
 {{- end -}}
 {{- end -}}
+{{- /*
+Tolerations for the control-plane DaemonSet: nrdotCollector.controlPlane.tolerations,
+else the chart/global tolerations, else tolerate all NoSchedule/NoExecute taints
+(control-plane nodes are tainted). Independent of ebpfAgent.tolerations, so
+restricting the eBPF agent does not stop control-plane scraping (as nri-bundle).
+*/ -}}
+{{- define "nrEbpfAgent.controlPlane.tolerations" -}}
+{{- if .Values.nrdotCollector.controlPlane.tolerations -}}
+    {{- toYaml .Values.nrdotCollector.controlPlane.tolerations -}}
+{{- else if include "newrelic.common.tolerations" . -}}
+    {{- include "newrelic.common.tolerations" . -}}
+{{- else -}}
+- operator: "Exists"
+  effect: "NoSchedule"
+- operator: "Exists"
+  effect: "NoExecute"
+{{- end -}}
+{{- end -}}

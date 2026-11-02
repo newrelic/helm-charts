@@ -15,13 +15,13 @@ tests:
           path: data["pernode.yaml"]
           pattern: "metrics_transform/aggregate_container_network_interfaces:"
 
-  - it: LDM on wires the processor into the cadvisor pipeline after cumulativetodelta and before low_data_mode_inator
+  - it: LDM on wires the processor into the cadvisor pipeline after cumulative_to_delta and before low_data_mode_inator
     set:
       <<: *base
     asserts:
       - matchRegex:
           path: data["pernode.yaml"]
-          pattern: "cumulativetodelta, metrics_transform/aggregate_container_network_interfaces, transform/low_data_mode_inator"
+          pattern: "cumulative_to_delta, metrics_transform/aggregate_container_network_interfaces, transform/low_data_mode_inator"
 
   - it: LDM on sums container_network_* across interfaces keyed by pod identity
     set:

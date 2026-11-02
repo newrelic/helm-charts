@@ -129,6 +129,18 @@ spec:
             export HOST_MACHINE_ID
             echo "HOST_MACHINE_ID : $HOST_MACHINE_ID"
             yq -i '(.processors.resource/host_id.attributes[] | select(.key == "host.id").value) = env(HOST_MACHINE_ID)' /final-config/pernode.yaml
+            # Reach the kubelet by node IP, as nri-kubernetes does (NRI_KUBERNETES_NODEIP).
+            # Node names aren't DNS-resolvable on every cluster (e.g. kubeadm with no node
+            # DNS records). IPv6 literals need brackets, which a ${env:} reference can't add.
+            if [ -n "$KUBE_NODE_IP" ]; then
+              case "$KUBE_NODE_IP" in
+                *:*) KUBELET_HOST="[$KUBE_NODE_IP]" ;;
+                *)   KUBELET_HOST="$KUBE_NODE_IP" ;;
+              esac
+              export KUBELET_ENDPOINT="https://${KUBELET_HOST}:10250"
+              echo "KUBELET_ENDPOINT : $KUBELET_ENDPOINT"
+              yq -i '.receivers.kubelet_stats.endpoint = env(KUBELET_ENDPOINT)' /final-config/pernode.yaml
+            fi
             cat /final-config/pernode.yaml
         env:
           - name: KUBE_NODE_NAME
@@ -136,6 +148,11 @@ spec:
               fieldRef:
                 apiVersion: v1
                 fieldPath: spec.nodeName
+          - name: KUBE_NODE_IP
+            valueFrom:
+              fieldRef:
+                apiVersion: v1
+                fieldPath: status.hostIP
         volumeMounts:
           - name: nrdot-config
             mountPath: /temp-config
@@ -403,7 +420,7 @@ spec:
       # nrdot per-node collector (kubelet_stats). Non-privileged container; shares
       # the agent pod's hostNetwork (reaches the local kubelet on the node) and the
       # agent ServiceAccount (RBAC extended for nodes/stats, nodes/proxy).
-      # Egress: agent mode -> localhost OTLP receiver; direct mode -> NR per-account.
+      # Egress: direct to NR (per-account when namespaceLicenseKeys is set).
       - name: nrdot-collector
         image: {{ include "nr-ebpf-agent.nrdot.image" . }}
         imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}

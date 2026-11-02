@@ -1,0 +1,220 @@
+{{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (include "nr-ebpf-agent.controlPlane.shouldScrape" .) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-ebpf-agent.nrdot.configName.controlplane" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  controlplane.yaml: |
+    receivers:
+      # Controller-manager, scheduler and etcd for the Control Plane Dashboard (job_label, see
+      # template-otel.json). kubeadm binds all three to 127.0.0.1 and their static pods declare
+      # no ports, so only a hostNetwork pod on the same node can scrape them. Discovery is
+      # limited to this node's kube-system pods.
+      prometheus/controlplane:
+        config:
+          scrape_configs:
+            - job_name: controller-manager
+              scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
+              metrics_path: /metrics
+              scheme: https
+              tls_config:
+                # The serving cert is self-signed by the component, not issued by the cluster CA.
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names: [kube-system]
+                  selectors:
+                    - role: pod
+                      field: spec.nodeName=${env:K8S_NODE_NAME}
+              relabel_configs:
+                # Pod labels nri-bundle's control-plane autodiscovery matches in kube-system.
+                - action: keep
+                  source_labels: [__meta_kubernetes_pod_label_component, __meta_kubernetes_pod_label_k8s_app]
+                  regex: 'kube-controller-manager;.*|.*;kube-controller-manager'
+                # instance becomes service.instance.id (the dashboard facet). Use the node IP
+                # (the static pod's IP), since __address__ is 127.0.0.1 on every CP node.
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_ip]
+                  regex: '(.+)'
+                  target_label: instance
+                  replacement: '$${1}:10257'
+                - action: replace
+                  target_label: __address__
+                  replacement: 127.0.0.1:10257
+                - action: replace
+                  source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+                - action: replace
+                  target_label: job_label
+                  replacement: controller-manager
+              {{- if include "nr-ebpf-agent.lowDataMode" . }}
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
+                  action: keep
+              {{- end }}
+            - job_name: scheduler
+              scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
+              metrics_path: /metrics
+              scheme: https
+              tls_config:
+                # The serving cert is self-signed by the component, not issued by the cluster CA.
+                insecure_skip_verify: true
+              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names: [kube-system]
+                  selectors:
+                    - role: pod
+                      field: spec.nodeName=${env:K8S_NODE_NAME}
+              relabel_configs:
+                # Pod labels nri-bundle's control-plane autodiscovery matches in kube-system.
+                - action: keep
+                  source_labels: [__meta_kubernetes_pod_label_component, __meta_kubernetes_pod_label_k8s_app]
+                  regex: 'kube-scheduler;.*|.*;kube-scheduler'
+                # instance becomes service.instance.id (the dashboard facet). Use the node IP
+                # (the static pod's IP), since __address__ is 127.0.0.1 on every CP node.
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_ip]
+                  regex: '(.+)'
+                  target_label: instance
+                  replacement: '$${1}:10259'
+                - action: replace
+                  target_label: __address__
+                  replacement: 127.0.0.1:10259
+                - action: replace
+                  source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+                - action: replace
+                  target_label: job_label
+                  replacement: scheduler
+              {{- if include "nr-ebpf-agent.lowDataMode" . }}
+              metric_relabel_configs:
+                - source_labels: [__name__]
+                  regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
+                  action: keep
+              {{- end }}
+            # etcd (kubeadm): --listen-metrics-urls=http://127.0.0.1:2381 serves /metrics over
+            # plain HTTP with no auth. The client port 2379 needs etcd client certs; not used.
+            - job_name: etcd
+              scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
+              metrics_path: /metrics
+              scheme: http
+              kubernetes_sd_configs:
+                - role: pod
+                  namespaces:
+                    names: [kube-system]
+                  selectors:
+                    - role: pod
+                      field: spec.nodeName=${env:K8S_NODE_NAME}
+              relabel_configs:
+                - action: keep
+                  source_labels: [__meta_kubernetes_pod_label_component]
+                  regex: etcd
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_ip]
+                  regex: '(.+)'
+                  target_label: instance
+                  replacement: '$${1}:2381'
+                - action: replace
+                  target_label: __address__
+                  replacement: 127.0.0.1:2381
+                - action: replace
+                  source_labels: [__meta_kubernetes_namespace]
+                  target_label: namespace
+                - action: replace
+                  source_labels: [__meta_kubernetes_pod_name]
+                  target_label: pod
+                - action: replace
+                  target_label: job_label
+                  replacement: etcd
+              {{- if include "nr-ebpf-agent.lowDataMode" . }}
+              metric_relabel_configs:
+                # The metrics nri-bundle's ETCD dashboard section reads (K8sEtcdSample).
+                - source_labels: [__name__]
+                  regex: 'etcd_server_has_leader|etcd_mvcc_db_total_size_in_bytes|etcd_server_proposals_pending|process_max_fds|process_open_fds|process_resident_memory_bytes|go_goroutines|go_threads'
+                  action: keep
+              {{- end }}
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 25
+      filter/drop_scrape_meta_metrics:
+        error_mode: ignore
+        metrics:
+          datapoint:
+            - metric.name == "up"
+            - IsMatch(metric.name, "^scrape_.*")
+      {{- if include "nr-ebpf-agent.lowDataMode" . }}
+      transform/low_data_mode_inator:
+        metric_statements:
+          - context: metric
+            statements:
+              - set(metric.description, "")
+              - set(metric.unit, "")
+          - context: datapoint
+            statements:
+              - delete_key(datapoint.attributes, "id")
+              - delete_key(datapoint.attributes, "name")
+              - delete_key(datapoint.attributes, "interface")
+              - delete_key(datapoint.attributes, "cpu")
+              - set(datapoint.attributes["low.data.mode"], "true")
+      {{- end }}
+      {{- include "nr-ebpf-agent.controlPlane.processors" . | nindent 6 }}
+      resource/newrelic:
+        attributes:
+          - key: k8s.cluster.name
+            value: ${env:CLUSTER_NAME}
+            action: upsert
+          - key: newrelic.entity.type
+            value: "k8s"
+            action: upsert
+          - key: newrelic.chart.version
+            value: {{ .Chart.Version | quote }}
+            action: upsert
+          {{- $customAttrs := include "newrelic.common.customAttributes" . | fromYaml }}
+          {{- range $key, $val := $customAttrs }}
+          - key: {{ $key }}
+            action: upsert
+            value: {{ $val | quote }}
+          {{- end }}
+      cumulative_to_delta: {}
+      batch:
+        send_batch_size: 800
+        send_batch_max_size: 1000
+        timeout: {{ .Values.nrdotCollector.collectionInterval }}
+    extensions:
+      # hostNetwork: the per-node sidecar on the same node already binds 13133.
+      health_check:
+        endpoint: 0.0.0.0:13134
+    exporters:
+      otlp_http/acct-default:
+        endpoint: ${env:NR_OTLP_ENDPOINT}
+        headers: {"api-key": "${env:NEW_RELIC_LICENSE_KEY}"}
+        compression: gzip
+    service:
+      extensions: [health_check]
+      # hostNetwork: the sidecar already binds the default 127.0.0.1:8888 telemetry port.
+      telemetry:
+        metrics:
+          level: none
+      pipelines:
+        # No namespace resource attribute, so always the default account.
+        metrics/controlplane:
+          receivers: [prometheus/controlplane]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator, resource/low_data_mode_inator,{{- end }} resource/newrelic, attributes/self, cumulative_to_delta, batch]
+          exporters: [otlp_http/acct-default]
+{{- end }}

@@ -126,6 +126,7 @@ data:
       kubelet_stats:
         collection_interval: {{ .Values.nrdotCollector.collectionInterval }}
         auth_type: serviceAccount
+        # Fallback only: the nrdot-get-allocatable init container rewrites this to the node IP.
         endpoint: "https://${env:K8S_NODE_NAME}:10250"
         insecure_skip_verify: true
         metric_groups: [node, pod, container, volume]
@@ -358,7 +359,7 @@ data:
               - set(datapoint.attributes["system.paging.fault.type"], datapoint.attributes["type"]) where metric.name == "process.paging.faults"
               - delete_key(datapoint.attributes, "type") where metric.name == "process.paging.faults"
       # A process with no page faults in the interval sends nothing, as the eBPF agent did.
-      # Must run after cumulativetodelta.
+      # Must run after cumulative_to_delta.
       filter/host_drop_zero_page_faults:
         error_mode: ignore
         metrics:
@@ -471,6 +472,10 @@ data:
       k8s_attributes:
         auth_type: serviceAccount
         passthrough: false
+        # kubelet_stats only reports this node's pods (canonical nr-k8s-otel-collector
+        # filters the same way).
+        filter:
+          node_from_env_var: K8S_NODE_NAME
         extract:
           metadata:
             - k8s.pod.name
@@ -487,6 +492,13 @@ data:
         pod_association:
           - sources: [{ from: resource_attribute, name: k8s.pod.ip }]
           - sources: [{ from: resource_attribute, name: k8s.pod.uid }]
+          # Static pods: kubelet_stats reports the config-hash UID, not the mirror pod's
+          # API UID, so the uid rule misses and k8s.node.name is never set. Name +
+          # namespace still match the mirror pod; existing attributes (the kubelet UID)
+          # are not overwritten.
+          - sources:
+            - { from: resource_attribute, name: k8s.pod.name }
+            - { from: resource_attribute, name: k8s.namespace.name }
           - sources: [{ from: connection }]
       resource_detection/cloudproviders:
         detectors: [gcp, eks, ec2, aks, azure]
@@ -564,7 +576,7 @@ data:
       # 15-20x the datapoints. No NR K8s UI facets by interface — the pod/workload overview
       # dashboards query max()/FACET k8s.pod.name — and low_data_mode_inator only deletes the
       # `interface` attr, which strips the label but does not merge the series. Summing the
-      # per-interface deltas here (runs after cumulativetodelta) yields the per-pod total.
+      # per-interface deltas here (runs after cumulative_to_delta) yields the per-pod total.
       # label_set names the pod-identity resource attrs so every leftover datapoint label
       # (interface/id/name) collapses — same idiom as metrics_transform/sum_container_metrics_per_node.
       # LDM-gated so lowDataMode=false keeps full per-interface fidelity (parity with canonical,
@@ -593,10 +605,10 @@ data:
             - metric.name == "up"
             - IsMatch(metric.name, "^scrape_.*")
       # Parity with canonical nr-k8s-otel-collector (metrics/nr_prometheus_cadv_kubelet).
-      # Drop zero-valued container network counters before cumulativetodelta — cadvisor
+      # Drop zero-valued container network counters before cumulative_to_delta — cadvisor
       # emits container_network_*_errors_total for every pod-series at a cumulative 0
       # (verified: min=max=0), which canonical drops. Family is kept; only zero datapoints
-      # are removed (UI charts render via "(... or 0)"). Must run pre-cumulativetodelta so
+      # are removed (UI charts render via "(... or 0)"). Must run pre-cumulative_to_delta so
       # value_double is the raw cumulative (a 0 delta on a nonzero counter would over-drop).
       filter/nr_exclude_container_zero_values:
         metrics:
@@ -707,7 +719,7 @@ data:
             metric_names:
               - node.cpu.usage.percentage
               - node.memory.usage.percentage
-      cumulativetodelta: {}
+      cumulative_to_delta: {}
       batch:
         send_batch_size: 800
         send_batch_max_size: 1000
@@ -744,11 +756,11 @@ data:
         # Node-scoped (no namespace): always the default account.
         metrics/host:
           receivers: [host_metrics]
-          processors: [memory_limiter, metrics_transform/host, filter/host, attributes/host_paging, transform/host_paging_fault_type, transform/host_process_k8s, k8s_attributes/host_process, transform/host_process_k8s_names, resource_detection/host_system, resource/host_id, resource_detection/host_cloud, resource/host, cumulativetodelta, filter/host_drop_zero_page_faults, batch]
+          processors: [memory_limiter, metrics_transform/host, filter/host, attributes/host_paging, transform/host_paging_fault_type, transform/host_process_k8s, k8s_attributes/host_process, transform/host_process_k8s_names, resource_detection/host_system, resource/host_id, resource_detection/host_cloud, resource/host, cumulative_to_delta, filter/host_drop_zero_page_faults, batch]
           exporters: [otlp_http/acct-default]
         metrics/in:
           receivers: [kubelet_stats]
-          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8s_attributes, transform/set_volume_persistent, resource_detection/cloudproviders, resource/newrelic, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8s_attributes, transform/set_volume_persistent, resource_detection/cloudproviders, resource/newrelic, cumulative_to_delta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         # Per-node CPU/memory usage % (cluster gauge). Separate copy of the
         # kubelet_stats stream; filter/keep_only_generated_metrics drops everything
@@ -759,7 +771,7 @@ data:
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         metrics/cadvisor:
           receivers: [prometheus/cadvisor]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resource_detection/cloudproviders, resource/newrelic, k8s_attributes/cadvisor, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} metrics_transform/aggregate_container_network_interfaces, transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics,{{- if include "nr-ebpf-agent.lowDataMode" . }} filter/nr_exclude_container_zero_values,{{- end }} resource/drop_scrape_meta, groupbyattrs, transform/cadvisor_attrs, resource_detection/cloudproviders, resource/newrelic, k8s_attributes/cadvisor, cumulative_to_delta, {{- if include "nr-ebpf-agent.lowDataMode" . }} metrics_transform/aggregate_container_network_interfaces, transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         # Kubelet /metrics (node-scoped: no pod/namespace label, so no cadvisor-style attr
         # remap). resource/node_identity stamps k8s.node.name from $K8S_NODE_NAME (this
@@ -769,7 +781,7 @@ data:
         # Re-enable together with the receiver if strict nri-bundle parity is dropped.
         # metrics/kubelet:
         #   receivers: [prometheus/kubelet]
-        #   processors: [memory_limiter, resource/drop_scrape_meta, resource/node_identity, resource_detection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
+        #   processors: [memory_limiter, resource/drop_scrape_meta, resource/node_identity, resource_detection/cloudproviders, resource/newrelic, cumulative_to_delta, batch]
         #   exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         {{- if $nsKeys }}
         metrics/acct-default:

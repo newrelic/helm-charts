@@ -46,7 +46,9 @@ data:
             - job_name: apiserver
               scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
               kubernetes_sd_configs:
-                - role: endpoints
+                # EndpointSlice, not v1 Endpoints: Endpoints is deprecated since K8s 1.33 and
+                # every list/watch returns a warning. discovery.k8s.io/v1 is GA since 1.21.
+                - role: endpointslice
                   namespaces:
                     names:
                       - default
@@ -61,8 +63,21 @@ data:
                   source_labels:
                     - __meta_kubernetes_namespace
                     - __meta_kubernetes_service_name
-                    - __meta_kubernetes_endpoint_port_name
+                    - __meta_kubernetes_endpointslice_port_name
                   regex: default;kubernetes;https
+                # Relabels below match canonical nr-k8s-otel-collector. The Control Plane
+                # Dashboard (template-otel.json) filters every panel on job_label.
+                - action: replace
+                  source_labels:
+                    - __meta_kubernetes_namespace
+                  target_label: namespace
+                - action: replace
+                  source_labels:
+                    - __meta_kubernetes_service_name
+                  target_label: service
+                - action: replace
+                  target_label: job_label
+                  replacement: apiserver
               metric_relabel_configs:
                 # TRIMMED (2026-07-20): removed apiserver_request_total,
                 # apiserver_current_inflight_requests (zero hits in cloned repos).
@@ -85,66 +100,9 @@ data:
                   regex: 'apiserver_storage_objects|kubernetes_build_info|go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
                   action: keep
                 {{- end }}
-            # Controller-manager + scheduler: kept for Control Plane Dashboard
-            # (template-otel.json query go_goroutines/
-            # go_threads/process_resident_memory_bytes per job_label).
-            # On managed CPs (EKS/AKS/GKE) these are inert (zero targets).
-            #
-            # TRIMMED (2026-07-20): workqueue_*, leader_election_master_status,
-            # node_collector_*, rest_client_requests_total, scheduler_* — verified
-            # zero hits in kubernetes-cluster-explorer/ OTel templates.
-            # Only locally cloned repos checked: container/, kubernetes-cluster-explorer/.
-            # If other NR repos query these, add them back to the keep-regex below.
-            - job_name: controller-manager
-              scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
-              metrics_path: /metrics
-              scheme: https
-              tls_config:
-                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: false
-              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-              kubernetes_sd_configs:
-                - role: pod
-                  namespaces:
-                    names:
-                      - kube-system
-              relabel_configs:
-                - action: keep
-                  source_labels: [__meta_kubernetes_pod_name, __address__]
-                  regex: '.*controller-manager.*;.*:10257$'
-              metric_relabel_configs:
-                # LDM keep-list — only when lowDataMode on. LDM-off = full scrape (parity
-                # with canonical, whose controlplane jobs have no metric_relabel keep-list).
-                {{- if include "nr-ebpf-agent.lowDataMode" . }}
-                - source_labels: [__name__]
-                  regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
-                  action: keep
-                {{- end }}
-            - job_name: scheduler
-              scrape_interval: {{ .Values.nrdotCollector.collectionInterval }}
-              metrics_path: /metrics
-              scheme: https
-              tls_config:
-                ca_file: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
-                insecure_skip_verify: false
-              bearer_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
-              kubernetes_sd_configs:
-                - role: pod
-                  namespaces:
-                    names:
-                      - kube-system
-              relabel_configs:
-                - action: keep
-                  source_labels: [__meta_kubernetes_pod_name, __address__]
-                  regex: '.*scheduler.*;.*:10259$'
-              metric_relabel_configs:
-                # LDM keep-list — only when lowDataMode on. LDM-off = full scrape (parity
-                # with canonical, whose controlplane jobs have no metric_relabel keep-list).
-                {{- if include "nr-ebpf-agent.lowDataMode" . }}
-                - source_labels: [__name__]
-                  regex: 'go_goroutines|go_threads|process_resident_memory_bytes|process_cpu_seconds_total'
-                  action: keep
-                {{- end }}
+            # Controller-manager, scheduler and etcd are scraped by the control-plane
+            # DaemonSet (nr-ebpf-agent-nrdot-config-controlplane.yaml): kubeadm binds them
+            # to 127.0.0.1, which this non-hostNetwork Deployment cannot reach.
       {{- end }}
       k8s_events: {}
     processors:
@@ -170,6 +128,9 @@ data:
           - { key: net.host.name, action: delete }
           - { key: net.host.port, action: delete }
           - { key: http.scheme, action: delete }
+      {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
+      {{- include "nr-ebpf-agent.controlPlane.processors" . | nindent 6 }}
+      {{- end }}
       metrics_transform/kube_pod_container_status_phase:
         transforms:
           - include: kube_pod_container_status_waiting
@@ -428,7 +389,7 @@ data:
           - sources:
             - { from: resource_attribute, name: k8s.pod.name }
             - { from: resource_attribute, name: k8s.namespace.name }
-      cumulativetodelta:
+      cumulative_to_delta:
         exclude:
           metrics: [kube_pod_container_status_restarts_total]
           match_type: strict
@@ -467,12 +428,12 @@ data:
       pipelines:
         metrics/in:
           receivers: [prometheus/ksm]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/kube_pod_container_status_phase, metrics_transform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metrics_transform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8s_attributes, cumulativetodelta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/kube_pod_container_status_phase, metrics_transform/k8s_cluster_info,{{- if ne (include "nr-ebpf-agent.controlPlane.shouldScrape" . | trim) "true" }} metrics_transform/k8s_cluster_info_from_ksm,{{- end }} filter/exclude_zero_value_kube_node_status_condition, filter/exclude_zero_value_kube_persistentvolumeclaim_status_phase, filter/nr_exclude_zero_value_kube_pod_container_deployment_statuses, filter/nr_exclude_zero_value_kube_jobs, transform/convert_timestamp, transform/extract_runtime, resource/newrelic, groupbyattrs, transform/ksm, transform/ksm_datapoints, k8s_attributes, cumulative_to_delta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         {{- if include "nr-ebpf-agent.controlPlane.shouldScrape" . }}
         metrics/controlplane:
           receivers: [prometheus/controlplane]
-          processors: [memory_limiter, filter/drop_scrape_meta_metrics, resource/drop_scrape_meta, metrics_transform/k8s_cluster_info, resource/newrelic, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, filter/drop_scrape_meta_metrics, metrics_transform/k8s_cluster_info, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator, resource/low_data_mode_inator,{{- end }} resource/newrelic, attributes/self, cumulative_to_delta, batch]
           exporters: [otlp_http/acct-default]
         {{- end }}
         {{- if $nsKeys }}

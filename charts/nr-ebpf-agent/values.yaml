@@ -410,8 +410,8 @@ nrdotCollector:
   # "app.kubernetes.io/instance=newrelic-bundle") — otherwise every matching KSM is
   # scraped and each cluster-wide kube_* series is ingested once per KSM (duplicate).
   ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
-  # -- Control-plane scraping (kube-apiserver/controller-manager/scheduler) by the
-  # cluster collector. Scraping kube-apiserver /metrics is expensive (~22 MB heap:
+  # -- Control-plane scraping: kube-apiserver by the cluster collector;
+  # controller-manager, scheduler and etcd by the control-plane DaemonSet. Scraping kube-apiserver /metrics is expensive (~22 MB heap:
   # the endpoint returns ~26k series with no server-side filter, the collector keeps
   # ~6, buffering the whole body + caching the dropped series). "auto" scrapes only
   # when the cluster has control-plane nodes (node-role.kubernetes.io/control-plane|
@@ -420,6 +420,18 @@ nrdotCollector:
   # force it on/off.
   controlPlane:
     mode: auto
+    # -- Control-plane DaemonSet (controller-manager, scheduler, etcd; one pod per
+    # control-plane node, hostNetwork, unprivileged) resources.
+    resources:
+      limits:
+        memory: 256Mi
+      requests:
+        cpu: 50m
+        memory: 128Mi
+    # -- Control-plane DaemonSet tolerations. Empty = chart/global `tolerations`, else tolerate all.
+    tolerations: []
+    # -- Control-plane DaemonSet affinity. Empty = control-plane nodes only.
+    affinity: {}
   # -- Bundled kube-state-metrics instance.
   kubeStateMetrics:
     # -- "always" (default) = always deploy our own KSM and pin the cluster
