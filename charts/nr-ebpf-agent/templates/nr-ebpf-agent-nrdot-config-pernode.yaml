@@ -12,8 +12,8 @@ data:
   pernode.yaml: |
     receivers:
       {{- if $otlp.enabled }}
-      # OTLP from the containers in this pod (eBPF agent, OBI). The pod is hostNetwork, so
-      # they reach it on loopback. Resource attributes are set by the sender, so the otlp
+      # OTLP from the eBPF agent and OBI on this node. Their pod and this collector's are
+      # hostNetwork, so they reach it on loopback. Resource attributes are set by the sender, so the otlp
       # pipelines don't run resource detection or k8s_attributes.
       otlp:
         protocols:
@@ -507,7 +507,7 @@ data:
         # EKS detector: on the API fallback path (when node IMDS is unreachable) it
         # reads the node name from this env var. Without it, node name is empty and the
         # collector fails to start on EKS ("can't get K8s Instance Metadata; node name
-        # is empty"). This sidecar runs hostNetwork so IMDS is normally reachable, but
+        # is empty"). This collector runs hostNetwork so IMDS is normally reachable, but
         # this keeps the fallback safe. Mirrors nr-k8s-otel-collector's eks config.
         eks:
           node_from_env_var: K8S_NODE_NAME
@@ -650,7 +650,7 @@ data:
             - { from: resource_attribute, name: k8s.namespace.name }
       # Pod request/limit ratio, divided from the kubelet_stats utilization
       # metrics enabled above (type: calculate needs the metricsgeneration
-      # MatchAttributes feature gate, set on the sidecar args).
+      # MatchAttributes feature gate, set on the collector args).
       metricsgeneration/calculate_percentage_for_pods:
         rules:
           - name: k8s.pod.memory_request_limit_ratio
@@ -668,7 +668,7 @@ data:
       # (injected into the scale_by placeholders below by the nrdot-get-allocatable
       # init container). The aggregation pipeline has no k8s_attributes processor,
       # and kubelet_stats doesn't stamp k8s.node.name on container metrics itself,
-      # so set it explicitly from this per-node sidecar's K8S_NODE_NAME env. Without
+      # so set it explicitly from this per-node collector's K8S_NODE_NAME env. Without
       # this, all containers collapse into one node-less series (cluster total ÷
       # one node's allocatable) and the UI can't attribute it to nodes.
       resource/node_identity:
@@ -805,7 +805,7 @@ data:
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         # Kubelet /metrics (node-scoped: no pod/namespace label, so no cadvisor-style attr
         # remap). resource/node_identity stamps k8s.node.name from $K8S_NODE_NAME (this
-        # sidecar is per-node). No namespace ⇒ routing sends it to the default account.
+        # collector is per-node). No namespace ⇒ routing sends it to the default account.
         # Commented out with the prometheus/kubelet receiver above — kubelet /metrics is
         # canonical-only (additive vs nri-bundle) and high-volume (e.g. go_gc_heap_*_by_size_bytes).
         # Re-enable together with the receiver if strict nri-bundle parity is dropped.

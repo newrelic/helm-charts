@@ -12,7 +12,7 @@ gates on the collector must go through this so the alias is honored everywhere.
 Effective REPORT_INFRA value for the eBPF agent.
 An explicit, non-empty `reportInfra` always wins. When it is left empty (default),
 derive it from the `infra.enabled` alias: "auto" when infra is enabled (eBPF-only process
-and cgroup metrics; host system.* metrics come from the nrdot sidecar), "false" otherwise.
+and cgroup metrics; host system.* metrics come from the per-node nrdot collector), "false" otherwise.
 */}}
 {{- define "nr-ebpf-agent.reportInfra" -}}
 {{- $ri := .Values.reportInfra | toString -}}
@@ -86,7 +86,7 @@ Precedence: local > global > IfNotPresent
 {{- end -}}
 
 {{/*
-nrdot pernode config name (DaemonSet sidecar).
+nrdot pernode config name (per-node DaemonSet).
 */}}
 {{- define "nr-ebpf-agent.nrdot.configName.pernode" -}}
 {{- printf "%s-nrdot-pernode" (include "nr-ebpf-agent.fullname" .) -}}
@@ -109,7 +109,7 @@ Cluster name (local `cluster` or `global.cluster`).
 {{/*
 Per-account license-key env vars for nrdot direct mode (NR_INGEST_KEY_<i>), sourced
 from the chart Secret. Index-aligned (sorted namespaces) with the generated config
-and the Secret data keys. Reused by the sidecar and the cluster Deployment.
+and the Secret data keys. Reused by the per-node DaemonSet and the cluster Deployment.
 Emit at column 0; call with `| nindent <n>`.
 */}}
 {{- define "nr-ebpf-agent.nrdot.perAccountKeyEnv" -}}

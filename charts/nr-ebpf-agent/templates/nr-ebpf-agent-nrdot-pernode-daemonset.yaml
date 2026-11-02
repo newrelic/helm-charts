@@ -1,0 +1,215 @@
+{{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
+# Per-node nrdot collector: host and process metrics, kubelet_stats, cAdvisor, and OTLP
+# from the eBPF agent and OBI. Non-privileged; reuses the agent ServiceAccount (RBAC
+# extended for nodes/stats, nodes/proxy) and the agent's pod-level settings (tolerations,
+# affinity, nodeSelector, pod securityContext, annotations), so it runs on every node the
+# agent does. The agent no longer emits host system.* metrics, so a node without this pod
+# has none.
+# hostNetwork is required: system.network.* is read from /hostfs/proc/net/dev, which the
+# kernel resolves to the reader's network namespace (/proc/net -> self/net); host.name is
+# the OS hostname of the pod's UTS namespace; and the agent and OBI reach the OTLP
+# receiver on loopback. hostPID is not: host and process data come from the host's /proc
+# under /hostfs (hostmetrics root_path).
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-nrdot-pernode
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-nrdot-pernode
+    component: nrdot-pernode-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: nr-ebpf-agent-nrdot-pernode
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent-nrdot-pernode
+        # Not `agent`: the agent Service selects component=agent.
+        component: nrdot-pernode-collector
+        # podLabels carry app.kubernetes.io/name=nr-ebpf-agent, which the eBPF agent's
+        # New Relic self-drop filter matches on.
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        checksum/nrdot-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-pernode.yaml") . | sha256sum }}
+        {{- with .Values.ebpfAgent.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "nrEbpfAgent.ebpfAgent.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      initContainers:
+        # Reads this node's CPU/memory allocatable from the K8s API and patches the
+        # nrdot config's metricsgeneration/calculate_percentage scale_by fields, so
+        # node.cpu.usage.percentage / node.memory.usage.percentage can be computed
+        # (these power the K8s cluster CPU/memory usage view). The collector image
+        # is locked down and can't query the API itself, and the downward API does
+        # not expose node allocatable — hence this init container (mirrors the
+        # nr-k8s-otel-collector chart's get-cpu-allocatable container).
+        - name: nrdot-get-allocatable
+          image: {{ include "nr-ebpf-agent.nrdot.kubectlImage" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.kubectlImagePullPolicy" . }}
+          command:
+            - sh
+            - -c
+            - |
+              NODE_NAME=$(echo $KUBE_NODE_NAME)
+              echo "Node Name: $KUBE_NODE_NAME"
+
+              export NODE_CPU_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.cpu}')
+
+              if [ -z "$NODE_CPU_ALLOCATABLE" ] || [ "$NODE_CPU_ALLOCATABLE" = "0" ]; then
+                echo "Could not retrieve CPU allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              # Convert milliCPU values to plain CPU values
+              case "$NODE_CPU_ALLOCATABLE" in
+                *m)
+                  # Strip the 'm' and convert the milliCPUs to CPUs
+                  export NODE_CPU_ALLOCATABLE=$(awk "BEGIN {print ${NODE_CPU_ALLOCATABLE%?} / 1000}")
+                  ;;
+              esac
+
+              export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
+                /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+                /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+                /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+                /m$/  {printf "%.0f\n", $1 / 1000; next}
+                {print $1}
+              ')
+
+              if [ -z "$NODE_MEMORY_ALLOCATABLE" ] || [ "$NODE_MEMORY_ALLOCATABLE" = "0" ]; then
+                echo "Could not retrieve Memory allocatable for node $NODE_NAME"
+                exit 1
+              fi
+
+              echo "NODE_CPU_ALLOCATABLE : $NODE_CPU_ALLOCATABLE"
+              echo "NODE_MEMORY_ALLOCATABLE : $NODE_MEMORY_ALLOCATABLE"
+              cp /temp-config/pernode.yaml /final-config
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.cpu.usage.percentage").scale_by) = env(NODE_CPU_ALLOCATABLE)' /final-config/pernode.yaml
+              yq -i '(.processors.metricsgeneration/calculate_percentage.rules[] | select(.name == "node.memory.usage.percentage").scale_by) = env(NODE_MEMORY_ALLOCATABLE)' /final-config/pernode.yaml
+              # host.id must match the eBPF agent's: machine-id, else hostname (the cloud
+              # detector overrides both with the instance id). The collector's system detector
+              # would read the container's /etc/machine-id, not the node's.
+              # Same order and trimming as the agent's ReadHostMachineId(): an empty file falls
+              # through to the next source.
+              HOST_MACHINE_ID=""
+              for f in /hostfs/etc/machine-id /hostfs/var/lib/dbus/machine-id; do
+                [ -z "$HOST_MACHINE_ID" ] && [ -r "$f" ] && HOST_MACHINE_ID=$(tr -d '[:space:]' < "$f")
+              done
+              [ -n "$HOST_MACHINE_ID" ] || HOST_MACHINE_ID=$(hostname)
+              export HOST_MACHINE_ID
+              echo "HOST_MACHINE_ID : $HOST_MACHINE_ID"
+              yq -i '(.processors.resource/host_id.attributes[] | select(.key == "host.id").value) = env(HOST_MACHINE_ID)' /final-config/pernode.yaml
+              cat /final-config/pernode.yaml
+          env:
+            - name: KUBE_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: spec.nodeName
+          volumeMounts:
+            - name: nrdot-config
+              mountPath: /temp-config
+            - name: nrdot-config-final
+              mountPath: /final-config
+            - name: host-root-volume
+              mountPath: /hostfs
+              readOnly: true
+      containers:
+        - name: nrdot-collector
+          image: {{ include "nr-ebpf-agent.nrdot.image" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
+          # Reads the init-container-patched config from the shared emptyDir (same
+          # path). MatchAttributes gate enables metricsgeneration `type: calculate`.
+          args: ["--config=/etc/nrdot/pernode.yaml", "--feature-gates=metricsgeneration.MatchAttributes"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            # The host and process scrapers only read world-readable /proc and /sys files; the
+            # process metrics that need privilege stay in the (privileged) eBPF agent.
+            capabilities:
+              drop: ["ALL"]
+          resources: {{ .Values.nrdotCollector.sidecar.resources | toYaml | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /, port: 13133 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /, port: 13133 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CLUSTER_NAME
+              value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+            {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
+          volumeMounts:
+            # Patched config written by the nrdot-get-allocatable init container
+            # (the raw ConfigMap is mounted only on that init container).
+            - name: nrdot-config-final
+              mountPath: /etc/nrdot
+              readOnly: true
+            # hostmetrics root_path: node /proc, /sys and mounts.
+            - name: host-root-volume
+              mountPath: /hostfs
+              readOnly: true
+            # process.owner: Go os/user reads only the container's /etc/passwd (root_path does not
+            # apply to it). The eBPF agent resolves owners from the same host file, and the OTel
+            # process page merges the two sides' rows only when the owner matches. A file mount keeps
+            # its original inode: if the host replaces the file (rather than editing it in place),
+            # users added after pod start resolve only after a pod restart.
+            - name: host-passwd
+              mountPath: /etc/passwd
+              readOnly: true
+      volumes:
+        - name: nrdot-config
+          configMap:
+            name: {{ include "nr-ebpf-agent.nrdot.configName.pernode" . }}
+        # Holds the config after the init container injects per-node allocatable
+        # into the metricsgeneration scale_by fields; mounted by the collector.
+        - name: nrdot-config-final
+          emptyDir: {}
+        - name: host-root-volume
+          hostPath:
+            path: /
+            type: Directory
+        - name: host-passwd
+          hostPath:
+            path: /etc/passwd
+            type: File
+      nodeSelector:
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
+      {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}

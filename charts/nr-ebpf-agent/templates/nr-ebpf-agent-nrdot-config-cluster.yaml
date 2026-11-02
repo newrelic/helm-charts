@@ -158,7 +158,7 @@ data:
       # (GetK8sInstanceMetadata), which needs a node name + AWS IAM it doesn't have and
       # crashes the collector ("node name is empty"). Cluster-scoped telemetry is
       # node-agnostic anyway; cloud/host attributes are detected per-node on the
-      # DaemonSet sidecar. Matches nr-k8s-otel-collector (no resourcedetection on its
+      # per-node DaemonSet collector. Matches nr-k8s-otel-collector (no resourcedetection on its
       # cluster Deployment). k8s.cluster.name comes from resource/newrelic (CLUSTER_NAME).
       resource/drop_scrape_meta:
         attributes:

@@ -306,8 +306,8 @@ dnsConfig: {}
 # -- Sets all pods' node selector. Can be configured also with `global.nodeSelector`
 nodeSelector: {}
 # -- Sets all pods' tolerations to node taints. Can be configured also with `global.tolerations`.
-# Defaults to tolerating ALL `NoSchedule`/`NoExecute` taints so the agent (and its in-pod
-# nrdot kubeletstats/cAdvisor sidecar) is scheduled on every node — matching nri-kubernetes.
+# Defaults to tolerating ALL `NoSchedule`/`NoExecute` taints so the agent (and the per-node
+# nrdot collector DaemonSet, which inherits the agent's tolerations) is scheduled on every node — matching nri-kubernetes.
 # This is required for full K8s infra parity: nodes carrying taints such as
 # `CriticalAddonsOnly` (e.g. AKS system pools) would otherwise be left unmonitored.
 # Set to `[]` to restrict scheduling, or override per-component via `ebpfAgent.tolerations`.
@@ -388,7 +388,7 @@ nrdotCollector:
   collectionInterval: 60s
   # -- Go garbage-collection target percentage for both nrdot collectors. Lower
   # values trade CPU for reduced memory (GC runs more often). Profiled A/B): 
-  # 50 -> 30 cut the per-node sidecar
+  # 50 -> 30 cut the per-node collector
   # working set ~19% (~41 -> ~33 MiB — more churn from cadvisor/kubeletstats means
   # more for GC to reclaim) and the cluster collector ~10% (~31 -> ~28 MiB — already
   # lean after the control-plane drop), at negligible CPU on low-churn nodes. Below 30
@@ -450,7 +450,7 @@ nrdotCollector:
     grpcPort: 4317
     # -- OTLP/HTTP port on 127.0.0.1.
     httpPort: 4318
-  # -- Per-node (sidecar) collector resources.
+  # -- Per-node collector (DaemonSet) resources. Key name kept from when it was an agent-pod sidecar.
   sidecar:
     resources:
       limits:
@@ -508,7 +508,7 @@ obi:
   # OTEL_EBPF_KUBE_CLUSTER_NAME are set by the chart and ignored here.
   env:
     # -- Go GC target percentage. 30 keeps the heap small at the cost of more frequent
-    # collections — matches the nrdot sidecar tuning to reduce per-node memory pressure.
+    # collections — matches the per-node nrdot collector tuning to reduce per-node memory pressure.
     GOGC: "30"
     OTEL_EBPF_OPEN_PORT: "1-65535"
     OTEL_EBPF_METRICS_FEATURES: application

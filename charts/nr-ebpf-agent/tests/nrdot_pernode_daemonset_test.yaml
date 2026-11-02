@@ -1,0 +1,183 @@
+suite: per-node nrdot collector runs as its own DaemonSet, not in the agent pod
+templates:
+  - templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: is not rendered when infra is off
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      ebpfAgent: {image: {tag: ""}}
+      infra: {enabled: false}
+      nrdotCollector: {enabled: false}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        hasDocuments:
+          count: 0
+
+  - it: is rendered by the granular nrdotCollector.enabled toggle too
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      ebpfAgent: {image: {tag: ""}}
+      infra: {enabled: false}
+      nrdotCollector: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        isKind:
+          of: DaemonSet
+
+  - it: runs in the host network namespace but not the host PID namespace
+    set: &on
+      cluster: test-cluster
+      licenseKey: test-license-key
+      ebpfAgent: {image: {tag: ""}}
+      infra: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: metadata.name
+          value: my-release-nr-ebpf-agent-nrdot-pernode
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.hostNetwork
+          value: true
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.dnsPolicy
+          value: ClusterFirstWithHostNet
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        notExists:
+          path: spec.template.spec.hostPID
+
+  - it: is not selected by the agent Service and keeps the label the agent's self-drop filter matches
+    set:
+      <<: *on
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.metadata.labels.component
+          value: nrdot-pernode-collector
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.metadata.labels["app.kubernetes.io/name"]
+          value: nr-ebpf-agent
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.selector.matchLabels.app
+          value: nr-ebpf-agent-nrdot-pernode
+
+  - it: carries the collector and allocatable init container, and rolls on config and Secret changes
+    set:
+      <<: *on
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].name
+          value: nrdot-collector
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.initContainers[0].name
+          value: nrdot-get-allocatable
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        isNotNullOrEmpty:
+          path: spec.template.metadata.annotations["checksum/nrdot-config"]
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        isNotNullOrEmpty:
+          path: spec.template.metadata.annotations["checksum/config"]
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.serviceAccountName
+          value: my-release-nr-ebpf-agent
+
+  - it: takes resources from nrdotCollector.sidecar.resources
+    set:
+      <<: *on
+      nrdotCollector:
+        sidecar:
+          resources:
+            limits: {memory: 300Mi}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources.limits.memory
+          value: 300Mi
+
+  - it: inherits the default tolerate-all tolerations, like the agent
+    set:
+      <<: *on
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.tolerations
+          value:
+            - operator: Exists
+              effect: NoSchedule
+            - operator: Exists
+              effect: NoExecute
+
+  - it: inherits ebpfAgent tolerations, affinity, pod securityContext and pod annotations
+    set:
+      <<: *on
+      ebpfAgent:
+        image: {tag: ""}
+        tolerations:
+          - {key: dedicated, operator: Exists}
+        affinity:
+          nodeAffinity:
+            requiredDuringSchedulingIgnoredDuringExecution:
+              nodeSelectorTerms:
+                - matchExpressions:
+                    - {key: pool, operator: Exists}
+        podSecurityContext: {fsGroup: 2000}
+        podAnnotations: {foo: bar}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.tolerations
+          value:
+            - {key: dedicated, operator: Exists}
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.affinity.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms[0].matchExpressions[0].key
+          value: pool
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.spec.securityContext.fsGroup
+          value: 2000
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        equal:
+          path: spec.template.metadata.annotations.foo
+          value: bar
+
+  - it: leaves no nrdot container, init container, volume or config checksum in the agent pod
+    set:
+      <<: *on
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        lengthEqual:
+          path: spec.template.spec.initContainers
+          count: 1
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        notContains:
+          path: spec.template.spec.volumes
+          any: true
+          content:
+            name: nrdot-config-final
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        notExists:
+          path: spec.template.metadata.annotations["checksum/nrdot-config"]
