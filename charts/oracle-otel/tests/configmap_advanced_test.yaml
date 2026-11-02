@@ -1,0 +1,101 @@
+suite: configmap (configProfile)
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracle.endpoint: "oracle-db.internal:1521"
+  oracle.service: "MYPDB"
+  oracle.topology: "pdb"
+  oracle.username: "nr_monitor"
+  oracle.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: fails when oracle.configProfile is empty
+    set:
+      oracle.configProfile: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracle.configProfile must be one of: basic, advanced"
+  - it: fails when oracle.configProfile has the wrong case
+    set:
+      oracle.configProfile: "Advanced"
+    asserts:
+      - failedTemplate:
+          errorMessage: "oracle.configProfile must be one of: basic, advanced"
+  - it: defaults to basic, which has no advanced-only metrics
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.asm\\."
+  - it: renders the full catalog and the asm metrics for pdb
+    set:
+      oracle.configProfile: advanced
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.asm\\.disk\\.errors:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.cpu_time:"
+  - it: renders the asm metrics for cdb
+    set:
+      oracle.topology: cdb
+      oracle.configProfile: advanced
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.asm\\.disk_group\\.capacity:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:"
+  - it: renders the full catalog without asm metrics for rds
+    set:
+      oracle.topology: rds
+      oracle.configProfile: advanced
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.asm\\."
+  - it: renders the full catalog without asm metrics for adb and keeps the datasource
+    set:
+      oracle.topology: adb
+      oracle.configProfile: advanced
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "datasource: \"oracle://"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.asm\\."
+  - it: additionalReceiverConfig can disable an advanced-only metric
+    set:
+      oracle.configProfile: advanced
+      additionalReceiverConfig:
+        metrics:
+          oracledb.db.time:
+            enabled: false
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:\\n\\s*enabled: false"
+  - it: ignores oracleMulti.configProfile in single mode
+    set:
+      oracleMulti.configProfile: advanced
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "oracledb\\.db\\.time:"

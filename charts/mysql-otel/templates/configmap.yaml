@@ -1,6 +1,8 @@
 {{- if not .Values.mysqlMulti.enabled }}
 {{- include "mysql-otel.validate.topology" . -}}
 {{- include "mysql-otel.validate.otlpEndpoint" . -}}
+{{- include "mysql-otel.validate.configProfile" (dict "key" "mysql.configProfile" "value" .Values.mysql.configProfile) -}}
+{{- $advanced := eq .Values.mysql.configProfile "advanced" -}}
 {{- $receiverDefaults := include "mysql-otel.multi.receiverDefaults" . | fromYaml -}}
 {{- $receiverDefaults = mergeOverwrite $receiverDefaults (dict
       "endpoint" (printf "%s:%d" .Values.mysql.server (.Values.mysql.port | int))
@@ -13,6 +15,9 @@
 ) -}}
 {{- if .Values.mysql.database }}
 {{- $receiverDefaults = set $receiverDefaults "database" .Values.mysql.database -}}
+{{- end }}
+{{- if $advanced }}
+{{- $receiverDefaults = mergeOverwrite $receiverDefaults (include "mysql-otel.receiver.advancedMetrics" . | fromYaml) -}}
 {{- end }}
 {{- $receiver := mergeOverwrite $receiverDefaults (.Values.additionalReceiverConfig | default dict) -}}
 apiVersion: v1
@@ -27,6 +32,10 @@ data:
     receivers:
       nrmysql:
 {{- include "mysql-otel.renderReceiver" (dict "receiver" $receiver) }}
+{{- if $advanced }}
+{{- include "mysql-otel.advanced.otlpReceiver" . | nindent 6 }}
+{{- include "mysql-otel.advanced.tail" (dict "otlpEndpoint" .Values.otlpEndpoint "receiverKeys" (list "nrmysql")) | nindent 4 }}
+{{- else }}
     processors:
       batch:
     exporters:
@@ -50,4 +59,5 @@ data:
           receivers: [nrmysql]
           processors: [batch]
           exporters: [otlp/newrelic]
+{{- end }}
 {{- end }}

@@ -54,6 +54,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{- define "mssql-otel.validate.configProfile" -}}
+{{- if not (has .value (list "basic" "advanced")) -}}
+{{- fail (printf "%s must be one of: basic, advanced" .key) -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 This chart's exporter is named `otlp` to match New Relic's doc example
 verbatim, but that doc example pairs `otlp:` (the real OTel Collector gRPC
@@ -90,6 +96,7 @@ required fields (name/server/existingSecret, plus sqlAdmin.existingSecret when s
 unique env-var suffixes, and no accidental mixing with the single-instance mssql.server.
 */}}
 {{- define "mssql-otel.validate.mssqlMulti" -}}
+{{- include "mssql-otel.validate.configProfile" (dict "key" "mssqlMulti.configProfile" "value" .Values.mssqlMulti.configProfile) -}}
 {{- if not (has .Values.mssqlMulti.topology (list "self-hosted" "rds")) -}}
 {{- fail "mssqlMulti.topology must be one of: self-hosted, rds" -}}
 {{- end -}}
@@ -337,6 +344,179 @@ Args (single dict): .receiver -- the entry's override-only dict (username/passwo
 {{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
 {{- end }}
 {{- end }}
+{{- end -}}
+
+{{/*
+Advanced profile metrics: New Relic's full SQL Server metric catalog, from
+https://docs.newrelic.com/docs/opentelemetry/db360/mssql/config-reference/ -- keep in sync with it.
+Merged over the basic defaults, so it replaces (never removes) the basic metrics. The common set (70
+metrics) applies to every topology; the self-hosted set below is added for self-hosted only.
+*/}}
+{{- define "mssql-otel.receiver.advancedCommonMetrics" -}}
+metrics:
+  # Database
+  sqlserver.database.count:
+    enabled: true
+  sqlserver.database.file.size:
+    enabled: true
+  sqlserver.database.io:
+    enabled: true
+  sqlserver.database.latency:
+    enabled: true
+  sqlserver.database.operations:
+    enabled: true
+  sqlserver.database.transactions.active:
+    enabled: true
+  sqlserver.database.backup_or_restore.rate:
+    enabled: true
+  sqlserver.database.full_scan.rate:
+    enabled: true
+  sqlserver.database.tempdb.space:
+    enabled: true
+  sqlserver.database.tempdb.version_store.size:
+    enabled: true
+  # Locks
+  sqlserver.lock.timeout.rate:
+    enabled: true
+  sqlserver.lock.wait.count:
+    enabled: true
+  sqlserver.deadlock.rate:
+    enabled: true
+  # Transactions
+  sqlserver.transaction.delay:
+    enabled: true
+  sqlserver.transaction.longest_running_time:
+    enabled: true
+  sqlserver.transaction.version_cleanup.rate:
+    enabled: true
+  sqlserver.transaction.version_generation.rate:
+    enabled: true
+  # Memory
+  sqlserver.memory.area:
+    enabled: true
+  sqlserver.memory.cache.object.count:
+    enabled: true
+  sqlserver.memory.grants.pending.count:
+    enabled: true
+  sqlserver.memory.page.count:
+    enabled: true
+  sqlserver.memory.usage:
+    enabled: true
+  # OS
+  sqlserver.os.memory.usage:
+    enabled: true
+  sqlserver.os.memory.utilization:
+    enabled: true
+  sqlserver.os.scheduler.runnable_tasks.count:
+    enabled: true
+  sqlserver.os.wait.duration:
+    enabled: true
+  sqlserver.os.wait.tasks.count:
+    enabled: true
+  # Pages / Buffer
+  sqlserver.page.buffer_cache.free_list.stalls.rate:
+    enabled: true
+  sqlserver.page.lookup.rate:
+    enabled: true
+  # Batch / Compilation
+  sqlserver.batch.compilation.utilization:
+    enabled: true
+  sqlserver.batch.page_split.utilization:
+    enabled: true
+  sqlserver.recompilation.ratio:
+    enabled: true
+  sqlserver.parameterization.rate:
+    enabled: true
+  sqlserver.plan.execution.rate:
+    enabled: true
+  sqlserver.attention.rate:
+    enabled: true
+  # Processes / Connections
+  sqlserver.process.count:
+    enabled: true
+  sqlserver.processes.blocked:
+    enabled: true
+  sqlserver.login.rate:
+    enabled: true
+  sqlserver.logout.rate:
+    enabled: true
+  # Thread Pool
+  sqlserver.thread_pool.tasks.count:
+    enabled: true
+  sqlserver.thread_pool.workers.count:
+    enabled: true
+  sqlserver.thread_pool.workers.max:
+    enabled: true
+  sqlserver.thread_pool.workers.utilization:
+    enabled: true
+  # TempDB
+  sqlserver.tempdb.allocation.wait_time.total:
+    enabled: true
+  sqlserver.tempdb.contention.waiters.count:
+    enabled: true
+  sqlserver.tempdb.data_files.count:
+    enabled: true
+  sqlserver.tempdb.file.size:
+    enabled: true
+  sqlserver.tempdb.space.usage:
+    enabled: true
+  # Latch
+  sqlserver.latch.superlatch.count:
+    enabled: true
+  sqlserver.latch.superlatch.transition.rate:
+    enabled: true
+  sqlserver.latch.wait.rate:
+    enabled: true
+  sqlserver.latch.wait_time.avg:
+    enabled: true
+  sqlserver.latch.wait_time.total:
+    enabled: true
+  # Index
+  sqlserver.index.search.rate:
+    enabled: true
+  # Resource Pool
+  sqlserver.resource_pool.disk.operations:
+    enabled: true
+  sqlserver.resource_pool.disk.throttled.read.rate:
+    enabled: true
+  sqlserver.resource_pool.disk.throttled.write.rate:
+    enabled: true
+  # Replica / Always-On
+  sqlserver.replica.data.rate:
+    enabled: true
+  sqlserver.failover_cluster.ag.cluster_type:
+    enabled: true
+  sqlserver.failover_cluster.ag.failure_condition_level:
+    enabled: true
+  sqlserver.failover_cluster.ag.health_check_timeout:
+    enabled: true
+  sqlserver.failover_cluster.ag.required_sync_secondaries:
+    enabled: true
+  sqlserver.failover_cluster.replica.database.queue_size:
+    enabled: true
+  sqlserver.failover_cluster.replica.database.redo.rate:
+    enabled: true
+  sqlserver.failover_cluster.replica.flow_control_time:
+    enabled: true
+  sqlserver.failover_cluster.replica.role:
+    enabled: true
+  sqlserver.failover_cluster.replica.synchronization_health:
+    enabled: true
+  # Server Properties
+  sqlserver.computer.uptime:
+    enabled: true
+  sqlserver.cpu.count:
+    enabled: true
+  # Tables
+  sqlserver.table.count:
+    enabled: true
+{{- end -}}
+
+{{/* Advanced profile metric that New Relic's doc includes for self-hosted but not rds. */}}
+{{- define "mssql-otel.receiver.advancedSelfHostedMetrics" -}}
+metrics:
+  sqlserver.database.execution.errors:
+    enabled: true
 {{- end -}}
 
 {{/*
