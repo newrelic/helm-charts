@@ -1,0 +1,17 @@
+global:
+  cluster: sa-cluster
+  licenseKey: 1234567890abcdef1234567890abcdef12345678
+
+# Exercises deployment.extraVolumes / deployment.extraVolumeMounts with an emptyDir (installable in KIND).
+# See test-values.yaml for why the preconnect validation is skipped.
+deployment:
+  envs:
+    - name: PCG_SKIP_PRECONNECT_VALIDATION
+      value: "true"
+  extraVolumes:
+    - name: extra
+      emptyDir: {}
+  extraVolumeMounts:
+    - name: extra
+      mountPath: /extra
+      readOnly: true
