@@ -10,7 +10,7 @@ metadata:
     app.kubernetes.io/managed-by: Helm
     app.kubernetes.io/name: nr-k8s-otel-collector
     app.kubernetes.io/version: 1.19.0
-    helm.sh/chart: nr-k8s-otel-collector-0.14.4
+    helm.sh/chart: nr-k8s-otel-collector-0.15.0
 spec:
   replicas: 1
   minReadySeconds: 5
@@ -26,7 +26,7 @@ spec:
         app.kubernetes.io/name: nr-k8s-otel-collector
         component: deployment
       annotations:
-        checksum/config: 066991846d2c780a471767a69f1a1f7e02d10afd85cbbc738b7ed9e266d6e208
+        checksum/config: 1ff40fadd7d2c9adf4c408b2410bc6ce99167f693ffaedaa0316a44b131c5d7f
     spec:
       serviceAccountName: nr-k8s-otel-collector
       containers:
@@ -77,3 +77,4 @@ spec:
         - name: deployment-config
           configMap:
             name: nr-k8s-otel-collector-deployment-config
+
