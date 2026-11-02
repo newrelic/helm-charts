@@ -1,5 +1,6 @@
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 {{- $nsKeys := keys .Values.namespaceLicenseKeys | sortAlpha }}
+{{- $otlp := .Values.nrdotCollector.otlpReceiver }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -10,6 +11,17 @@ metadata:
 data:
   pernode.yaml: |
     receivers:
+      {{- if $otlp.enabled }}
+      # OTLP from the containers in this pod (eBPF agent, OBI). The pod is hostNetwork, so
+      # they reach it on loopback. Resource attributes are set by the sender, so the otlp
+      # pipelines don't run resource detection or k8s_attributes.
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 127.0.0.1:{{ $otlp.grpcPort }}
+          http:
+            endpoint: 127.0.0.1:{{ $otlp.httpPort }}
+      {{- end }}
       # Host system.* and per-process CPU/memory/thread/page-fault metrics for this node. The
       # eBPF agent no longer emits these; it keeps the process metrics that need privilege or
       # eBPF. Scrapers and filters mirror the ebpf-host VM recipe so VM and K8s hosts match.
@@ -708,6 +720,22 @@ data:
               - node.cpu.usage.percentage
               - node.memory.usage.percentage
       cumulativetodelta: {}
+      {{- if $otlp.enabled }}
+      # Same limits as e-nrdot-collector's host config (distributions/e-nrdot-collector/config.yaml).
+      transform/otlp:
+        trace_statements:
+          - context: span
+            statements:
+              - truncate_all(span.attributes, 4095)
+              - truncate_all(resource.attributes, 4095)
+        log_statements:
+          - context: log
+            statements:
+              - truncate_all(log.attributes, 4095)
+              - truncate_all(resource.attributes, 4095)
+      # Default batching for OTLP; `batch` below is sized for the scrape interval.
+      batch/otlp: {}
+      {{- end }}
       batch:
         send_batch_size: 800
         send_batch_max_size: 1000
@@ -726,6 +754,20 @@ data:
             condition: attributes["k8s.namespace.name"] == {{ $ns | quote }}
             pipelines: [metrics/acct-{{ $i }}]
         {{- end }}
+      {{- if $otlp.enabled }}
+      # A routing connector routes one signal, so OTLP traces and logs get their own.
+      {{- range $signal := list "traces" "logs" }}
+      routing/{{ $signal }}:
+        error_mode: ignore
+        default_pipelines: [{{ $signal }}/acct-default]
+        table:
+        {{- range $i, $ns := $nsKeys }}
+          - context: resource
+            condition: attributes["k8s.namespace.name"] == {{ $ns | quote }}
+            pipelines: [{{ $signal }}/acct-{{ $i }}]
+        {{- end }}
+      {{- end }}
+      {{- end }}
     {{- end }}
     exporters:
       otlp_http/acct-default:
@@ -771,14 +813,31 @@ data:
         #   receivers: [prometheus/kubelet]
         #   processors: [memory_limiter, resource/drop_scrape_meta, resource/node_identity, resource_detection/cloudproviders, resource/newrelic, cumulativetodelta, batch]
         #   exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
+        {{- if $otlp.enabled }}
+        # OTLP from the eBPF agent and OBI, routed by k8s.namespace.name like the data above.
+        traces/otlp:
+          receivers: [otlp]
+          processors: [memory_limiter, transform/otlp, batch/otlp]
+          exporters: [{{ if $nsKeys }}routing/traces{{ else }}otlp_http/acct-default{{ end }}]
+        metrics/otlp:
+          receivers: [otlp]
+          processors: [memory_limiter, batch/otlp]
+          exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
+        logs/otlp:
+          receivers: [otlp]
+          processors: [memory_limiter, transform/otlp, batch/otlp]
+          exporters: [{{ if $nsKeys }}routing/logs{{ else }}otlp_http/acct-default{{ end }}]
+        {{- end }}
         {{- if $nsKeys }}
-        metrics/acct-default:
-          receivers: [routing]
+        {{- range $signal := ternary (list "metrics" "traces" "logs") (list "metrics") (not (not $otlp.enabled)) }}
+        {{ $signal }}/acct-default:
+          receivers: [{{ if eq $signal "metrics" }}routing{{ else }}routing/{{ $signal }}{{ end }}]
           exporters: [otlp_http/acct-default]
         {{- range $i, $ns := $nsKeys }}
-        metrics/acct-{{ $i }}:
-          receivers: [routing]
+        {{ $signal }}/acct-{{ $i }}:
+          receivers: [{{ if eq $signal "metrics" }}routing{{ else }}routing/{{ $signal }}{{ end }}]
           exporters: [otlp_http/acct-{{ $i }}]
+        {{- end }}
         {{- end }}
         {{- end }}
 {{- end }}

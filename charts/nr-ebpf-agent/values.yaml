@@ -438,6 +438,18 @@ nrdotCollector:
       repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
       tag: "v2.13.0"
       pullPolicy: IfNotPresent
+  # -- OTLP receiver on the per-node collector, for the containers in the same pod (eBPF
+  # agent, OBI). Binds 127.0.0.1 only: the pod is hostNetwork, so these ports are taken on
+  # the node. Data is routed by `k8s.namespace.name` like the rest (`namespaceLicenseKeys`).
+  # With `obi.enabled`, the agent's own receiver also binds 127.0.0.1:`obi.receiverPort`
+  # and :4318 until the agent and OBI export here.
+  otlpReceiver:
+    # -- Run the OTLP receiver and its traces/metrics/logs pipelines.
+    enabled: true
+    # -- OTLP/gRPC port on 127.0.0.1.
+    grpcPort: 4317
+    # -- OTLP/HTTP port on 127.0.0.1.
+    httpPort: 4318
   # -- Per-node (sidecar) collector resources.
   sidecar:
     resources:
