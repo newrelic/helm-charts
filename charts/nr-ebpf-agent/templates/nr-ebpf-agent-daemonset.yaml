@@ -67,6 +67,7 @@ spec:
         image: {{ include "nr-ebpf-agent.ebpfAgent.image" . }}
         imagePullPolicy: {{ include "nr-ebpf-agent.ebpfAgent.imagePullPolicy" . }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
+        {{- $agentEnv := .Values.ebpfAgent.env | default dict }}
         env:
           - name: PL_HOST_PATH
             value: "/host"
@@ -107,8 +108,11 @@ spec:
             valueFrom:
               fieldRef:
                 fieldPath: status.hostIP
+          {{- /* ebpfAgent.env may replace OTLP_ENDPOINT and TLS_ENABLED; it's rendered at the end. */}}
+          {{- if not (hasKey $agentEnv "OTLP_ENDPOINT") }}
           - name: OTLP_ENDPOINT
             value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
+          {{- end }}
           {{- if .Values.namespaceLicenseKeys }}
           # Multi-account routing map for the agent's own data.
           - name: NAMESPACE_LICENSE_KEY_MAP
@@ -117,8 +121,10 @@ spec:
                 name: nr-ebpf-agent-secrets
                 key: NAMESPACE_LICENSE_KEY_MAP
           {{- end }}
+          {{- if not (hasKey $agentEnv "TLS_ENABLED") }}
           - name: TLS_ENABLED
             value: '{{ if or (kindIs "invalid" .Values.customOtlpEndpointTlsEnabled) (eq (toString .Values.customOtlpEndpointTlsEnabled) "") }}true{{ else }}{{ .Values.customOtlpEndpointTlsEnabled }}{{ end }}'
+          {{- end }}
         {{- if and .Values.customOtlpEndpointTlsCertSecret .Values.customOtlpEndpointTlsCertSecretKey }}
           - name: TLS_CERT_PATH
             value: "/etc/otlp-tls/{{ .Values.customOtlpEndpointTlsCertSecretKey }}"
@@ -289,6 +295,11 @@ spec:
             value: {{ .Values.dropDataServiceNameRegex }}
           - name: ALLOW_SERVICE_NAME_REGEX
             value: {{ .Values.allowServiceNameRegex }}
+          {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+          {{- range $name, $value := $agentEnv }}
+          - name: {{ $name }}
+            value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+          {{- end }}
         securityContext:
           privileged: true
         volumeMounts:

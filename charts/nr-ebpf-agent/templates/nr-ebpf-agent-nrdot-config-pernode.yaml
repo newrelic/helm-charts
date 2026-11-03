@@ -1,6 +1,10 @@
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 {{- $nsKeys := keys .Values.namespaceLicenseKeys | sortAlpha }}
 {{- $otlp := .Values.nrdotCollector.otlpReceiver }}
+{{- $sid := .Values.nrdotCollector.serviceId | default dict }}
+{{- if and $sid.enabled (not $otlp.enabled) }}
+{{- fail "nrdotCollector.serviceId.enabled needs nrdotCollector.otlpReceiver.enabled: it rewrites the OTLP pipelines." }}
+{{- end }}
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -735,6 +739,24 @@ data:
               - truncate_all(resource.attributes, 4095)
       # Default batching for OTLP; `batch` below is sized for the scrape interval.
       batch/otlp: {}
+      {{- if $sid.enabled }}
+      # Supplies container.id (and k8s.* where the sender didn't set them; set values are kept)
+      # for nrserviceid's container rules. Every sender connects over loopback, so `connection`
+      # only matches as a last resort.
+      k8s_attributes/otlp:
+        auth_type: serviceAccount
+        passthrough: false
+        filter:
+          node_from_env_var: K8S_NODE_NAME
+        extract:
+          metadata: [k8s.namespace.name, k8s.pod.name, k8s.pod.uid, k8s.container.name, container.id]
+        pod_association:
+          - sources: [{ from: resource_attribute, name: container.id }]
+          - sources: [{ from: connection }]
+      # Rewrites service.name to the agent's name for the sending process; a miss leaves data as is.
+      nrserviceid:
+        extension: nrserviceid
+      {{- end }}
       {{- end }}
       batch:
         send_batch_size: 800
@@ -743,6 +765,13 @@ data:
     extensions:
       health_check:
         endpoint: 0.0.0.0:13133
+      {{- if $sid.enabled }}
+      # Polls the eBPF agent's entity endpoint on this node (both pods are hostNetwork).
+      nrserviceid:
+        endpoint: {{ $sid.endpoint }}
+        poll_interval: {{ $sid.pollInterval }}
+        timeout: {{ $sid.timeout }}
+      {{- end }}
     {{- if $nsKeys }}
     connectors:
       routing:
@@ -781,7 +810,7 @@ data:
         compression: gzip
     {{- end }}
     service:
-      extensions: [health_check]
+      extensions: [health_check{{ if $sid.enabled }}, nrserviceid{{ end }}]
       pipelines:
         # Node-scoped (no namespace): always the default account.
         metrics/host:
@@ -815,17 +844,18 @@ data:
         #   exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         {{- if $otlp.enabled }}
         # OTLP from the eBPF agent and OBI, routed by k8s.namespace.name like the data above.
+        {{- $sidProcs := ternary "k8s_attributes/otlp, nrserviceid, " "" (not (not $sid.enabled)) }}
         traces/otlp:
           receivers: [otlp]
-          processors: [memory_limiter, transform/otlp, batch/otlp]
+          processors: [memory_limiter, {{ $sidProcs }}transform/otlp, batch/otlp]
           exporters: [{{ if $nsKeys }}routing/traces{{ else }}otlp_http/acct-default{{ end }}]
         metrics/otlp:
           receivers: [otlp]
-          processors: [memory_limiter, batch/otlp]
+          processors: [memory_limiter, {{ $sidProcs }}batch/otlp]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         logs/otlp:
           receivers: [otlp]
-          processors: [memory_limiter, transform/otlp, batch/otlp]
+          processors: [memory_limiter, {{ $sidProcs }}transform/otlp, batch/otlp]
           exporters: [{{ if $nsKeys }}routing/logs{{ else }}otlp_http/acct-default{{ end }}]
         {{- end }}
         {{- if $nsKeys }}

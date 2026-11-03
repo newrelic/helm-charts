@@ -292,6 +292,10 @@ ebpfAgent:
   # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
   # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
   distroKernelHeadersPath: ""
+  # -- Extra environment variables for the agent container (name: value), e.g.
+  # `ENTITY_ENDPOINT_ENABLED: "true"` for `nrdotCollector.serviceId`. OTLP_ENDPOINT and TLS_ENABLED
+  # replace the chart's values; don't repeat other variables the chart sets.
+  env: {}
 # -- Image pull secrets. Overrides `global.images.pullSecrets`
 imagePullSecrets: []
 
@@ -449,6 +453,18 @@ nrdotCollector:
     grpcPort: 4317
     # -- OTLP/HTTP port on 127.0.0.1.
     httpPort: 4318
+  # -- Rewrites `service.name` on OTLP data to the eBPF agent's name for the sending process
+  # (`nrserviceid` extension + processor). Needs a collector image with those components
+  # (e-nrdot-collector; the stock nrdot image lacks them), `otlpReceiver.enabled`, and the
+  # agent's entity endpoint (`ENTITY_ENDPOINT_ENABLED=true`). Until the endpoint answers, data
+  # passes through unchanged.
+  serviceId:
+    enabled: false
+    # -- The agent's entity endpoint; the extension requests `<endpoint>/v1/entities`.
+    endpoint: http://127.0.0.1:9445
+    pollInterval: 10s
+    # -- Per-request timeout; must be less than `pollInterval`.
+    timeout: 2s
   # -- Per-node collector (DaemonSet) resources. Key name kept from when it was an agent-pod sidecar.
   sidecar:
     resources:
