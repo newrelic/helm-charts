@@ -70,6 +70,11 @@ autoscaling:
   maxReplicas: 10
   targetCPUUtilizationPercentage: 60
 
+# -- Fixed ClusterIP for the Service, for example to keep a DNS record valid after the Service is re-created.
+# Leave empty to let Kubernetes choose. The value must be a free IP in the cluster's service range; it cannot be changed on an existing Service.
+service:
+  clusterIP: ""
+
 ports:
   nrHttp: 80
   nrHttpTarget: 8080

@@ -7,6 +7,9 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 spec:
   type: ClusterIP
+  {{- with .Values.service.clusterIP }}
+  clusterIP: {{ . }}
+  {{- end }}
   ports:
     - name: nr-http
       port: {{ .Values.ports.nrHttp }}
