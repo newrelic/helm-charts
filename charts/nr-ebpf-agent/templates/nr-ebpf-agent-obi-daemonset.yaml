@@ -1,0 +1,132 @@
+{{- if .Values.obi.enabled }}
+{{- include "nr-ebpf-agent.obi.validate" . }}
+# OpenTelemetry eBPF Instrumentation (OBI), one pod per node. Instruments the node's
+# processes and exports OTLP to the per-node nrdot collector's receiver on loopback.
+# hostPID: OBI attaches to processes of every pod on the node. hostNetwork: the receiver
+# listens on 127.0.0.1, which only pods in the host network namespace can reach. Reuses the agent ServiceAccount (pods/nodes/services/replicasets for
+# Kubernetes metadata) and the agent's pod-level settings (tolerations, affinity,
+# nodeSelector, pod securityContext, annotations), so it runs on every node the agent does.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-obi
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-obi
+    component: obi
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: nr-ebpf-agent-obi
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent-obi
+        # Not `agent`: the agent Service selects component=agent.
+        component: obi
+        # podLabels carry app.kubernetes.io/name=nr-ebpf-agent, which the eBPF agent's
+        # New Relic self-drop filter matches on.
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        # The license key reaches OBI from the Secret via env.
+        checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- with .Values.ebpfAgent.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "nrEbpfAgent.ebpfAgent.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: obi
+          image: {{ include "nr-ebpf-agent.obi.image" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.obi.imagePullPolicy" . }}
+          resources: {{ .Values.obi.resources | toYaml | nindent 12 }}
+          env:
+            - name: OTEL_EXPORTER_OTLP_ENDPOINT
+              value: "http://127.0.0.1:{{ .Values.nrdotCollector.otlpReceiver.grpcPort }}"
+            # The receiver speaks gRPC; without this OBI infers the protocol from the port.
+            - name: OTEL_EXPORTER_OTLP_PROTOCOL
+              value: grpc
+            # Must precede OTEL_EXPORTER_OTLP_HEADERS, which expands it.
+            - name: NEW_RELIC_LICENSE_KEY
+              valueFrom:
+                secretKeyRef:
+                  {{- if (include "newrelic.common.license._licenseKey" .) }}
+                  key: NEW_RELIC_LICENSE_KEY
+                  name: nr-ebpf-agent-secrets
+                  {{- else }}
+                  key: {{ include "newrelic.common.license._customSecretKey" . }}
+                  name: {{ include "newrelic.common.license._customSecretName" . }}
+                  {{- end }}
+            - name: OTEL_EXPORTER_OTLP_HEADERS
+              value: "api-key=$(NEW_RELIC_LICENSE_KEY)"
+            - name: OTEL_EBPF_KUBE_CLUSTER_NAME
+              value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+            {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+            {{- range $name, $value := omit (default dict .Values.obi.env) "OTEL_EXPORTER_OTLP_ENDPOINT" "OTEL_EXPORTER_OTLP_PROTOCOL" "OTEL_EXPORTER_OTLP_HEADERS" "NEW_RELIC_LICENSE_KEY" "OTEL_EBPF_KUBE_CLUSTER_NAME" }}
+            - name: {{ $name }}
+              value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
+          securityContext:
+            privileged: true
+          # No /var/run/docker.sock mount (docker-only): on Kubernetes OBI gets container
+          # metadata from the API server via the agent's ServiceAccount.
+          volumeMounts:
+            - name: bpf-fs-volume
+              mountPath: /sys/fs/bpf
+            - name: cgroup-volume
+              mountPath: /sys/fs/cgroup
+              readOnly: true
+            - name: debugfs-volume
+              mountPath: /sys/kernel/debug
+            # Not in the docker command: OBI >= 0.12 needs tracefs for context propagation on
+            # newer kernels (6.6.128+, 6.12.75+, 6.18.14+, 6.19+) and silently disables it otherwise.
+            - name: tracefs-volume
+              mountPath: /sys/kernel/tracing
+      volumes:
+        - name: bpf-fs-volume
+          hostPath:
+            path: /sys/fs/bpf
+            type: Directory
+        - name: cgroup-volume
+          hostPath:
+            path: /sys/fs/cgroup
+            type: Directory
+        - name: debugfs-volume
+          hostPath:
+            path: /sys/kernel/debug
+            type: Directory
+        - name: tracefs-volume
+          hostPath:
+            path: /sys/kernel/tracing
+            type: Directory
+      nodeSelector:
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
+      {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}

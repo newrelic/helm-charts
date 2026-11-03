@@ -341,6 +341,17 @@ Precedence: chart-level (obi.image.pullPolicy) > global (global.images.pullPolic
 {{- end }}
 
 {{/*
+OBI exports OTLP to the per-node nrdot collector's receiver on 127.0.0.1 (both pods are
+hostNetwork), so it needs that collector with nrdotCollector.otlpReceiver enabled.
+*/}}
+{{- define "nr-ebpf-agent.obi.validate" -}}
+{{- $otlp := .Values.nrdotCollector.otlpReceiver | default dict -}}
+{{- if not (and (include "nr-ebpf-agent.nrdotCollector.enabled" .) $otlp.enabled) -}}
+  {{- fail "obi.enabled needs the per-node nrdot collector (infra.enabled or nrdotCollector.enabled) with nrdotCollector.otlpReceiver.enabled: OBI exports its OTLP there." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Render imagePullSecrets
 Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
 */}}

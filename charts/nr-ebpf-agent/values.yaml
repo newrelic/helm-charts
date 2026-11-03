@@ -438,11 +438,10 @@ nrdotCollector:
       repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
       tag: "v2.13.0"
       pullPolicy: IfNotPresent
-  # -- OTLP receiver on the per-node collector, for the containers in the same pod (eBPF
-  # agent, OBI). Binds 127.0.0.1 only: the pod is hostNetwork, so these ports are taken on
-  # the node. Data is routed by `k8s.namespace.name` like the rest (`namespaceLicenseKeys`).
-  # With `obi.enabled`, the agent's own receiver also binds 127.0.0.1:`obi.receiverPort`
-  # and :4318 until the agent and OBI export here.
+  # -- OTLP receiver on the per-node collector, for the eBPF agent and OBI on the same node.
+  # Binds 127.0.0.1 only: all three pods are hostNetwork, so they share loopback and these
+  # ports are taken on the node. Data is routed by `k8s.namespace.name` like the rest (`namespaceLicenseKeys`).
+  # Required by `obi.enabled`.
   otlpReceiver:
     # -- Run the OTLP receiver and its traces/metrics/logs pipelines.
     enabled: true
@@ -475,16 +474,13 @@ nrdotCollector:
 # =============================================================================
 # OpenTelemetry eBPF Instrumentation (OBI)
 # =============================================================================
-# -- OBI container in the eBPF agent pod: auto-instruments the node's application
-# processes and sends their OTLP traces/metrics over gRPC to the agent's inbound OTLP
-# receiver on localhost (port `obi.receiverPort`), which exports them to
-# New Relic. Enabling it turns on the agent's receiver (OTLP_RECEIVER_ENABLED).
+# -- OBI DaemonSet (`<release>-obi`, one pod per node): auto-instruments the node's application
+# processes and sends their OTLP traces/metrics over gRPC on localhost to the per-node nrdot
+# collector's receiver (`nrdotCollector.otlpReceiver.grpcPort`), which exports them to New Relic.
+# Needs the per-node collector (`infra.enabled`) with `nrdotCollector.otlpReceiver.enabled`.
 obi:
-  # -- Deploy the OBI container.
+  # -- Deploy the OBI DaemonSet.
   enabled: false
-  # -- Port on which the eBPF agent's inbound OTLP gRPC receiver listens.
-  # OBI exports its traces/metrics to this port on localhost.
-  receiverPort: 4317
   image:
     # -- OBI image registry. Overrides `global.images.registry`. Defaults to docker.io
     registry: ""
