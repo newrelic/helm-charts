@@ -42,28 +42,10 @@ daemonset:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config.
     config: {}
   # -- Custom external ConfigMap name for daemonset. Leave empty to use the chart-generated one.
+  # PCG watches the mounted ConfigMap and reloads its pipeline in place when it changes, without a pod restart.
+  # The change applies once the kubelet syncs the volume, typically within 1 to 2 minutes.
   # @default -- `""`
   customConfigMap: ""
-
-# -- Config watcher sidecar settings. Applies to both deployment and daemonset when customConfigMap is set.
-# @default -- See `values.yaml`
-configWatcher:
-  # -- Enable the config-watcher sidecar that monitors the custom ConfigMap and restarts the pod on changes
-  enabled: true
-  # -- Config watcher image repository and tag
-  image: bitnami/kubectl:latest
-  # -- Config watcher image pull policy
-  imagePullPolicy: IfNotPresent
-  # -- Grace period in seconds for pod deletion when ConfigMap changes
-  gracePeriod: 30
-  # -- Resource limits and requests for the config-watcher sidecar
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 64Mi
 
 autoscaling:
   minReplicas: 2
@@ -85,7 +67,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "2.5.0"
+  tag: "2.6.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -140,6 +122,8 @@ deployment:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
   # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
+  # PCG watches the mounted ConfigMap and reloads its pipeline in place when it changes, without a pod restart.
+  # The change applies once the kubelet syncs the volume, typically within 1 to 2 minutes.
   # @default -- `""`
   customConfigMap: ""
 
@@ -153,10 +137,6 @@ affinity: {}
 podSecurityContext: {}
 # -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
 containerSecurityContext: {}
-
-rbac:
-  # -- Specifies whether RBAC resources should be created
-  create: true
 
 # -- Settings controlling ServiceAccount creation
 # @default -- See `values.yaml`
