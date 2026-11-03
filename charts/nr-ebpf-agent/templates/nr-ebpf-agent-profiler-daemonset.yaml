@@ -1,0 +1,114 @@
+{{- if .Values.profiler.enabled }}
+{{- include "nr-ebpf-agent.profiler.validate" . }}
+# OpenTelemetry eBPF profiler, one pod per node. CPU-profiles the node's processes and
+# exports OTLP profiles to the per-node nrdot collector's receiver on loopback.
+# hostPID: it profiles every pod's processes and reads their /proc/PID/environ. hostNetwork:
+# the receiver listens on 127.0.0.1, which only pods in the host network namespace can reach.
+# Reuses the agent ServiceAccount and the agent's pod-level settings (tolerations, affinity,
+# nodeSelector, pod securityContext, annotations), so it runs on every node the agent does.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-profiler
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-profiler
+    component: profiler
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: nr-ebpf-agent-profiler
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent-profiler
+        # Not `agent`: the agent Service selects component=agent.
+        component: profiler
+        # podLabels carry app.kubernetes.io/name=nr-ebpf-agent, which the eBPF agent's
+        # New Relic self-drop filter matches on.
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/profiler-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-profiler-config.yaml") . | sha256sum }}
+        {{- with .Values.ebpfAgent.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      {{- with include "nrEbpfAgent.ebpfAgent.securityContext.pod" . }}
+      securityContext:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "newrelic.common.priorityClassName" . }}
+      priorityClassName: {{ . }}
+      {{- end }}
+      {{- $pullSecrets := include "nr-ebpf-agent.imagePullSecrets" . }}
+      {{- if or $pullSecrets .Values.profiler.imagePullSecrets }}
+      imagePullSecrets:
+        {{- with $pullSecrets }}
+        {{- . | nindent 8 }}
+        {{- end }}
+        {{- range .Values.profiler.imagePullSecrets }}
+          - name: {{ .name }}
+        {{- end }}
+      {{- end }}
+      {{- with include "newrelic.common.dnsConfig" . }}
+      dnsConfig:
+        {{- . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: profiler
+          image: {{ include "nr-ebpf-agent.profiler.image" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.profiler.imagePullPolicy" . }}
+          command: ["/profiler/otelcol-ebpf-profiler", "--config=/etc/profiler/config.yaml", "--feature-gates=+service.profilesSupport"]
+          resources: {{ .Values.profiler.resources | toYaml | nindent 12 }}
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: profiler-config
+              mountPath: /etc/profiler
+              readOnly: true
+            - name: bpf-fs-volume
+              mountPath: /sys/fs/bpf
+            - name: cgroup-volume
+              mountPath: /sys/fs/cgroup
+              readOnly: true
+            - name: debugfs-volume
+              mountPath: /sys/kernel/debug
+            - name: tracefs-volume
+              mountPath: /sys/kernel/tracing
+      volumes:
+        - name: profiler-config
+          configMap:
+            name: {{ include "nr-ebpf-agent.fullname" . }}-profiler-config
+        - name: bpf-fs-volume
+          hostPath:
+            path: /sys/fs/bpf
+            type: Directory
+        - name: cgroup-volume
+          hostPath:
+            path: /sys/fs/cgroup
+            type: Directory
+        - name: debugfs-volume
+          hostPath:
+            path: /sys/kernel/debug
+            type: Directory
+        - name: tracefs-volume
+          hostPath:
+            path: /sys/kernel/tracing
+            type: Directory
+      nodeSelector:
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
+      {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.ebpfAgent.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}

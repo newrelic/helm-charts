@@ -533,3 +533,37 @@ obi:
     OTEL_EBPF_SDK_LOG_LEVEL: info
     OTEL_EBPF_BPF_BATCH_LENGTH: "1000"
     OTEL_EBPF_OTLP_TRACES_BATCH_MAX_SIZE: "512"
+
+# =============================================================================
+# OpenTelemetry eBPF profiler
+# =============================================================================
+# -- Profiler DaemonSet (`<release>-profiler`, one pod per node): CPU-profiles the node's
+# processes and sends OTLP profiles over gRPC on localhost to the per-node nrdot collector's
+# receiver (`nrdotCollector.otlpReceiver.grpcPort`), which exports them to New Relic.
+# Needs the per-node collector with `nrdotCollector.otlpReceiver.enabled`, and a collector image
+# whose OTLP components (and, with `nrdotCollector.serviceId.enabled`, nrserviceid) support profiles.
+profiler:
+  # -- Deploy the profiler DaemonSet.
+  enabled: false
+  image:
+    # -- Profiler image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: "us-west1-docker.pkg.dev"
+    # -- Profiler image repository.
+    repository: pl-dev-infra/nr-ebpf-agent-internal/otelcol-ebpf-profiler
+    # -- Profiler image tag.
+    tag: "v162-amd64"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  # -- Pull secrets added to `imagePullSecrets` for the profiler pod only, e.g. `[{name: regcred}]`.
+  imagePullSecrets: []
+  # -- How often profiles are flushed.
+  reporterInterval: 60s
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 1Gi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 256Mi

@@ -142,8 +142,9 @@ spec:
           image: {{ include "nr-ebpf-agent.nrdot.image" . }}
           imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
           # Reads the init-container-patched config from the shared emptyDir (same
-          # path). MatchAttributes gate enables metricsgeneration `type: calculate`.
-          args: ["--config=/etc/nrdot/pernode.yaml", "--feature-gates=metricsgeneration.MatchAttributes"]
+          # path). MatchAttributes gate enables metricsgeneration `type: calculate`;
+          # profilesSupport enables the profiles pipeline.
+          args: ["--config=/etc/nrdot/pernode.yaml", "--feature-gates=metricsgeneration.MatchAttributes{{ if .Values.profiler.enabled }},service.profilesSupport{{ end }}"]
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true

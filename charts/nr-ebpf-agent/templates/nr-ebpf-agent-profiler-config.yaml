@@ -1,0 +1,31 @@
+{{- if .Values.profiler.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-profiler-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    # service.name is not set here: the profiler takes it per process from the app's
+    # OTEL_SERVICE_NAME in /proc/PID/environ (hence hostPID).
+    receivers:
+      profiling:
+        reporter_interval: {{ .Values.profiler.reporterInterval }}
+    exporters:
+      otlp:
+        # The per-node nrdot collector's receiver; both pods are hostNetwork.
+        endpoint: 127.0.0.1:{{ .Values.nrdotCollector.otlpReceiver.grpcPort }}
+        tls:
+          insecure: true
+    service:
+      telemetry:
+        # Off: under hostNetwork its :8888 telemetry endpoint would clash with the collector's.
+        metrics:
+          level: none
+      pipelines:
+        profiles:
+          receivers: [profiling]
+          exporters: [otlp]
+{{- end }}

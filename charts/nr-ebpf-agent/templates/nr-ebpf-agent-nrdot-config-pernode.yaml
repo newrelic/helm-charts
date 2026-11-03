@@ -757,6 +757,15 @@ data:
       nrserviceid:
         extension: nrserviceid
       {{- end }}
+      {{- if .Values.profiler.enabled }}
+      # The UI doesn't show profiles without `host`. Set to the node's hostname: the host.name that
+      # resource_detection/host_system (before this in the pipeline) sets the same way as for host metrics.
+      resource/profiles:
+        attributes:
+          - key: host
+            from_attribute: host.name
+            action: upsert
+      {{- end }}
       {{- end }}
       batch:
         send_batch_size: 800
@@ -809,6 +818,13 @@ data:
         headers: {"api-key": "${env:NR_INGEST_KEY_{{ $i }}}"}
         compression: gzip
     {{- end }}
+    {{- if and $otlp.enabled .Values.profiler.enabled }}
+      # Profiles over OTLP/gRPC, as in the profiler POC.
+      otlp/profiles:
+        endpoint: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
+        headers: {"api-key": "${env:NEW_RELIC_LICENSE_KEY}"}
+        compression: gzip
+    {{- end }}
     service:
       extensions: [health_check{{ if $sid.enabled }}, nrserviceid{{ end }}]
       pipelines:
@@ -857,6 +873,13 @@ data:
           receivers: [otlp]
           processors: [memory_limiter, {{ $sidProcs }}transform/otlp, batch/otlp]
           exporters: [{{ if $nsKeys }}routing/logs{{ else }}otlp_http/acct-default{{ end }}]
+        {{- if .Values.profiler.enabled }}
+        # From the profiler DaemonSet. Default account only, and no batch (profiles support neither).
+        profiles/otlp:
+          receivers: [otlp]
+          processors: [memory_limiter, {{ $sidProcs }}resource_detection/host_system, resource/host, resource/profiles]
+          exporters: [otlp/profiles]
+        {{- end }}
         {{- end }}
         {{- if $nsKeys }}
         {{- range $signal := ternary (list "metrics" "traces" "logs") (list "metrics") (not (not $otlp.enabled)) }}

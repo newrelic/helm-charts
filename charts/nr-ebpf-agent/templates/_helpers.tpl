@@ -352,6 +352,47 @@ hostNetwork), so it needs that collector with nrdotCollector.otlpReceiver enable
 {{- end -}}
 
 {{/*
+Return the profiler image name.
+Precedence: chart-level (profiler.image.registry) > global (global.images.registry) > default (docker.io)
+*/}}
+{{- define "nr-ebpf-agent.profiler.image" -}}
+{{- $registry := .Values.profiler.image.registry -}}
+{{- if not $registry -}}
+  {{- if and .Values.global .Values.global.images .Values.global.images.registry -}}
+    {{- $registry = .Values.global.images.registry -}}
+  {{- else -}}
+    {{- $registry = "docker.io" -}}
+  {{- end -}}
+{{- end -}}
+{{- printf "%s/%s:%s" $registry .Values.profiler.image.repository .Values.profiler.image.tag -}}
+{{- end }}
+
+{{/*
+Return the imagePullPolicy for the profiler container.
+Precedence: chart-level (profiler.image.pullPolicy) > global (global.images.pullPolicy) > default (IfNotPresent)
+*/}}
+{{- define "nr-ebpf-agent.profiler.imagePullPolicy" -}}
+{{- if .Values.profiler.image.pullPolicy }}
+  {{- .Values.profiler.image.pullPolicy -}}
+{{- else if and .Values.global (hasKey .Values.global "images") (hasKey .Values.global.images "pullPolicy") .Values.global.images.pullPolicy }}
+  {{- .Values.global.images.pullPolicy -}}
+{{- else }}
+  {{- "IfNotPresent" -}}
+{{- end }}
+{{- end }}
+
+{{/*
+The profiler exports OTLP profiles to the per-node nrdot collector's receiver on 127.0.0.1
+(both pods are hostNetwork), so it needs that collector with nrdotCollector.otlpReceiver enabled.
+*/}}
+{{- define "nr-ebpf-agent.profiler.validate" -}}
+{{- $otlp := .Values.nrdotCollector.otlpReceiver | default dict -}}
+{{- if not (and (include "nr-ebpf-agent.nrdotCollector.enabled" .) $otlp.enabled) -}}
+  {{- fail "profiler.enabled needs the per-node nrdot collector (infra.enabled or nrdotCollector.enabled) with nrdotCollector.otlpReceiver.enabled: the profiler exports its OTLP there." -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Render imagePullSecrets
 Precedence: chart-level (imagePullSecrets) > global (global.images.pullSecrets) > default (nothing)
 */}}
