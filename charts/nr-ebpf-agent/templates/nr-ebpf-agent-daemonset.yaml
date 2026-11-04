@@ -5,6 +5,12 @@
 {{- if and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpoint) }}
   {{- fail "customOtlpEndpointTlsCertSecret is set but customOtlpEndpoint is not provided. Please provide a customOtlpEndpoint or remove the TLS cert configuration." }}
 {{- end }}
+{{- if or (and .Values.metadataTlsCertSecret (not .Values.metadataTlsCertSecretKey)) (and (not .Values.metadataTlsCertSecret) .Values.metadataTlsCertSecretKey) }}
+  {{- fail "Both metadataTlsCertSecret and metadataTlsCertSecretKey must be provided together." }}
+{{- end }}
+{{- if or (and .Values.metadataProxy.certSecret (not .Values.metadataProxy.certSecretKey)) (and (not .Values.metadataProxy.certSecret) .Values.metadataProxy.certSecretKey) }}
+  {{- fail "Both metadataProxy.certSecret and metadataProxy.certSecretKey must be provided together." }}
+{{- end }}
 {{- if and (hasKey .Values "agentMetadataReporting") (not (or (eq (toString .Values.agentMetadataReporting) "true") (eq (toString .Values.agentMetadataReporting) "false"))) }}
   {{- fail (printf "agentMetadataReporting must be a boolean (true or false), got '%v'." .Values.agentMetadataReporting) }}
 {{- end }}
@@ -139,6 +145,12 @@ spec:
           - name: TLS_CERT_PATH
             value: "/etc/otlp-tls/{{ .Values.customOtlpEndpointTlsCertSecretKey }}"
         {{- end }}
+          - name: METADATA_ENDPOINT
+            value: {{ if .Values.metadataEndpoint }}{{ .Values.metadataEndpoint }}{{ else }}{{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443{{ end }}
+          {{- if and .Values.metadataTlsCertSecret .Values.metadataTlsCertSecretKey }}
+          - name: METADATA_TLS_CERT_PATH
+            value: "/etc/metadata-tls/{{ .Values.metadataTlsCertSecretKey }}"
+          {{- end }}
           {{- include "generateClientScriptEnvVars" . | nindent 10 }}
           {{- if .Values.protocols.global }}
           {{- if (hasKey .Values.protocols.global "max_unlinked_spans") }}
@@ -237,6 +249,45 @@ spec:
             value: "{{ .Values.otlpProxy.password }}"
           {{- end }}
           {{- end }}
+          {{- end }}
+
+          # Metadata proxy configuration
+          {{- if or .Values.metadataProxy.host .Values.metadataProxy.url }}
+          {{- if .Values.metadataProxy.host }}
+          - name: METADATA_PROXY_HOST
+            value: "{{ .Values.metadataProxy.host }}"
+          - name: METADATA_PROXY_PORT
+            value: "{{ .Values.metadataProxy.port }}"
+          - name: METADATA_PROXY_SCHEME
+            value: "{{ .Values.metadataProxy.scheme | default "http" }}"
+          {{- end }}
+          {{- if .Values.metadataProxy.url }}
+          - name: METADATA_PROXY_URL
+            value: "{{ .Values.metadataProxy.url }}"
+          {{- end }}
+          {{- if .Values.metadataProxy.existingSecret }}
+          - name: METADATA_PROXY_USER
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.metadataProxy.existingSecret }}
+                key: proxy-user
+          - name: METADATA_PROXY_PASS
+            valueFrom:
+              secretKeyRef:
+                name: {{ .Values.metadataProxy.existingSecret }}
+                key: proxy-password
+          {{- else if .Values.metadataProxy.user }}
+          - name: METADATA_PROXY_USER
+            value: "{{ .Values.metadataProxy.user }}"
+          {{- if .Values.metadataProxy.password }}
+          - name: METADATA_PROXY_PASS
+            value: "{{ .Values.metadataProxy.password }}"
+          {{- end }}
+          {{- end }}
+          {{- end }}
+          {{- if and .Values.metadataProxy.certSecret .Values.metadataProxy.certSecretKey }}
+          - name: METADATA_PROXY_CERT_PATH
+            value: "/etc/metadata-proxy-tls/{{ .Values.metadataProxy.certSecretKey }}"
           {{- end }}
 
           # ALL Data filtering configuration
@@ -341,6 +392,16 @@ spec:
             mountPath: /etc/otlp-tls
             readOnly: true
           {{- end }}
+          {{- if and .Values.metadataTlsCertSecret .Values.metadataTlsCertSecretKey }}
+          - name: metadata-tls-cert
+            mountPath: /etc/metadata-tls
+            readOnly: true
+          {{- end }}
+          {{- if and .Values.metadataProxy.certSecret .Values.metadataProxy.certSecretKey }}
+          - name: metadata-proxy-tls-cert
+            mountPath: /etc/metadata-proxy-tls
+            readOnly: true
+          {{- end }}
       dnsPolicy: ClusterFirstWithHostNet
       hostNetwork: true
       hostPID: true
@@ -372,6 +433,22 @@ spec:
           items:
           - key: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
             path: {{ .Values.customOtlpEndpointTlsCertSecretKey }}
+      {{- end }}
+      {{- if and .Values.metadataTlsCertSecret .Values.metadataTlsCertSecretKey }}
+      - name: metadata-tls-cert
+        secret:
+          secretName: {{ .Values.metadataTlsCertSecret }}
+          items:
+          - key: {{ .Values.metadataTlsCertSecretKey }}
+            path: {{ .Values.metadataTlsCertSecretKey }}
+      {{- end }}
+      {{- if and .Values.metadataProxy.certSecret .Values.metadataProxy.certSecretKey }}
+      - name: metadata-proxy-tls-cert
+        secret:
+          secretName: {{ .Values.metadataProxy.certSecret }}
+          items:
+          - key: {{ .Values.metadataProxy.certSecretKey }}
+            path: {{ .Values.metadataProxy.certSecretKey }}
       {{- end }}
       {{- with include "newrelic.common.nodeSelector" . }}
       nodeSelector:
