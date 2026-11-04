@@ -68,6 +68,10 @@ spec:
         imagePullPolicy: {{ include "nr-ebpf-agent.ebpfAgent.imagePullPolicy" . }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
         {{- $agentEnv := .Values.ebpfAgent.env | default dict }}
+        ports:
+            - name: http
+              containerPort: 9445
+              protocol: TCP
         env:
           - name: PL_HOST_PATH
             value: "/host"

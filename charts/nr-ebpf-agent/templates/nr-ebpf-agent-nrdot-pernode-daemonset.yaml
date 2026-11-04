@@ -7,9 +7,10 @@
 # has none.
 # hostNetwork is required: system.network.* is read from /hostfs/proc/net/dev, which the
 # kernel resolves to the reader's network namespace (/proc/net -> self/net); host.name is
-# the OS hostname of the pod's UTS namespace; and the agent and OBI reach the OTLP
-# receiver on loopback. hostPID is not: host and process data come from the host's /proc
-# under /hostfs (hostmetrics root_path).
+# the OS hostname of the pod's UTS namespace; and the agent reaches the OTLP receiver on
+# loopback (OBI and the profiler go through the per-node Service, which forwards to the node
+# IP). hostPID is not: host and process data come from the host's /proc under /hostfs
+# (hostmetrics root_path).
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
@@ -28,7 +29,7 @@ spec:
     metadata:
       labels:
         app: nr-ebpf-agent-nrdot-pernode
-        # Not `agent`: the agent Service selects component=agent.
+        # The per-node Service selects on app, not on this.
         component: nrdot-pernode-collector
         # podLabels carry app.kubernetes.io/name=nr-ebpf-agent, which the eBPF agent's
         # New Relic self-drop filter matches on.

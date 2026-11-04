@@ -1,0 +1,31 @@
+{{- $otlp := .Values.nrdotCollector.otlpReceiver }}
+{{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) $otlp.enabled }}
+# OTLP entry point to the per-node nrdot collector. internalTrafficPolicy: Local sends a
+# caller only to the collector on its own node (no cross-node hop), and drops the traffic if
+# that node has none. The collector is hostNetwork, so the Service forwards to
+# <node IP>:<port>; the receiver therefore binds 0.0.0.0, not 127.0.0.1.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "nr-ebpf-agent.nrdot.pernode.serviceName" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-nrdot-pernode
+    component: nrdot-pernode-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  internalTrafficPolicy: Local
+  selector:
+    app: nr-ebpf-agent-nrdot-pernode
+    {{- include "newrelic.common.labels.selectorLabels" . | nindent 4 }}
+  ports:
+    - name: otlp-grpc
+      port: {{ $otlp.grpcPort }}
+      targetPort: {{ $otlp.grpcPort }}
+      protocol: TCP
+    - name: otlp-http
+      port: {{ $otlp.httpPort }}
+      targetPort: {{ $otlp.httpPort }}
+      protocol: TCP
+{{- end }}

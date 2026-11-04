@@ -1,9 +1,11 @@
 {{- if .Values.obi.enabled }}
 {{- include "nr-ebpf-agent.obi.validate" . }}
 # OpenTelemetry eBPF Instrumentation (OBI), one pod per node. Instruments the node's
-# processes and exports OTLP to the per-node nrdot collector's receiver on loopback.
-# hostPID: OBI attaches to processes of every pod on the node. hostNetwork: the receiver
-# listens on 127.0.0.1, which only pods in the host network namespace can reach. Reuses the agent ServiceAccount (pods/nodes/services/replicasets for
+# processes and exports OTLP to the per-node nrdot collector through its node-local Service.
+# hostPID: OBI attaches to processes of every pod on the node. hostNetwork: context propagation
+# (OTEL_EBPF_BPF_CONTEXT_PROPAGATION) attaches at the network layer and needs the host network
+# namespace, as in the upstream OBI chart; dnsPolicy keeps the Service address below resolvable.
+# Reuses the agent ServiceAccount (pods/nodes/services/replicasets for
 # Kubernetes metadata) and the agent's pod-level settings (tolerations, affinity,
 # nodeSelector, pod securityContext, annotations), so it runs on every node the agent does.
 apiVersion: apps/v1
@@ -24,7 +26,6 @@ spec:
     metadata:
       labels:
         app: nr-ebpf-agent-obi
-        # Not `agent`: the agent Service selects component=agent.
         component: obi
         # podLabels carry app.kubernetes.io/name=nr-ebpf-agent, which the eBPF agent's
         # New Relic self-drop filter matches on.
@@ -62,7 +63,7 @@ spec:
           resources: {{ .Values.obi.resources | toYaml | nindent 12 }}
           env:
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
-              value: "http://127.0.0.1:{{ .Values.nrdotCollector.otlpReceiver.grpcPort }}"
+              value: "http://{{ include "nr-ebpf-agent.nrdot.pernode.otlpGrpcAddress" . }}"
             # The receiver speaks gRPC; without this OBI infers the protocol from the port.
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: grpc

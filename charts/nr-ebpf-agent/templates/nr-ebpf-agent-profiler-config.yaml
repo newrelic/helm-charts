@@ -15,13 +15,12 @@ data:
         reporter_interval: {{ .Values.profiler.reporterInterval }}
     exporters:
       otlp:
-        # The per-node nrdot collector's receiver; both pods are hostNetwork.
-        endpoint: 127.0.0.1:{{ .Values.nrdotCollector.otlpReceiver.grpcPort }}
+        # The per-node nrdot collector's receiver, through its node-local Service.
+        endpoint: {{ include "nr-ebpf-agent.nrdot.pernode.otlpGrpcAddress" . }}
         tls:
           insecure: true
     service:
       telemetry:
-        # Off: under hostNetwork its :8888 telemetry endpoint would clash with the collector's.
         metrics:
           level: none
       pipelines:

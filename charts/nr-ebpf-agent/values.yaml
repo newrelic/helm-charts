@@ -442,16 +442,19 @@ nrdotCollector:
       repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
       tag: "v2.13.0"
       pullPolicy: IfNotPresent
-  # -- OTLP receiver on the per-node collector, for the eBPF agent and OBI on the same node.
-  # Binds 127.0.0.1 only: all three pods are hostNetwork, so they share loopback and these
-  # ports are taken on the node. Data is routed by `k8s.namespace.name` like the rest (`namespaceLicenseKeys`).
+  # -- OTLP receiver on the per-node collector. The eBPF agent (hostNetwork) can reach it on
+  # 127.0.0.1; OBI, the profiler and other pods reach it through the per-node Service
+  # `<release>-nrdot-pernode` (internalTrafficPolicy: Local, so a pod reaches only the collector
+  # on its own node). Binds 0.0.0.0 on the node and is unauthenticated: restrict node ingress on
+  # these ports (security groups / NetworkPolicy) to the sources you trust. The ports are taken
+  # on the node. Data is routed by `k8s.namespace.name` like the rest (`namespaceLicenseKeys`).
   # Required by `obi.enabled`.
   otlpReceiver:
-    # -- Run the OTLP receiver and its traces/metrics/logs pipelines.
+    # -- Run the OTLP receiver, its traces/metrics/logs pipelines and the per-node Service.
     enabled: true
-    # -- OTLP/gRPC port on 127.0.0.1.
+    # -- OTLP/gRPC port (receiver and Service).
     grpcPort: 4317
-    # -- OTLP/HTTP port on 127.0.0.1.
+    # -- OTLP/HTTP port (receiver and Service).
     httpPort: 4318
   # -- Rewrites `service.name` on OTLP data to the eBPF agent's name for the sending process
   # (`nrserviceid` extension + processor). Needs a collector image with those components
@@ -491,8 +494,9 @@ nrdotCollector:
 # OpenTelemetry eBPF Instrumentation (OBI)
 # =============================================================================
 # -- OBI DaemonSet (`<release>-obi`, one pod per node): auto-instruments the node's application
-# processes and sends their OTLP traces/metrics over gRPC on localhost to the per-node nrdot
-# collector's receiver (`nrdotCollector.otlpReceiver.grpcPort`), which exports them to New Relic.
+# processes and sends their OTLP traces/metrics over gRPC to the per-node nrdot collector's
+# receiver (`nrdotCollector.otlpReceiver.grpcPort`) through its node-local Service, which exports
+# them to New Relic.
 # Needs the per-node collector (`infra.enabled`) with `nrdotCollector.otlpReceiver.enabled`.
 obi:
   # -- Deploy the OBI DaemonSet.
@@ -538,8 +542,9 @@ obi:
 # OpenTelemetry eBPF profiler
 # =============================================================================
 # -- Profiler DaemonSet (`<release>-profiler`, one pod per node): CPU-profiles the node's
-# processes and sends OTLP profiles over gRPC on localhost to the per-node nrdot collector's
-# receiver (`nrdotCollector.otlpReceiver.grpcPort`), which exports them to New Relic.
+# processes and sends OTLP profiles over gRPC to the per-node nrdot collector's receiver
+# (`nrdotCollector.otlpReceiver.grpcPort`) through its node-local Service, which exports them to
+# New Relic.
 # Needs the per-node collector with `nrdotCollector.otlpReceiver.enabled`, and a collector image
 # whose OTLP components (and, with `nrdotCollector.serviceId.enabled`, nrserviceid) support profiles.
 profiler:

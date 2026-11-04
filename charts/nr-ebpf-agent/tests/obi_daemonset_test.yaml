@@ -19,6 +19,9 @@ tests:
         hasDocuments:
           count: 0
 
+  # hostNetwork: context propagation (OTEL_EBPF_BPF_CONTEXT_PROPAGATION, on by default here) attaches
+  # at the network layer; the upstream OBI chart sets hostNetwork for it too. ClusterFirstWithHostNet
+  # keeps the per-node Service's DNS name resolvable from the host network.
   - it: runs privileged in the host PID and network namespaces
     set: &on
       cluster: test-cluster
@@ -41,6 +44,10 @@ tests:
           value: true
       - template: templates/nr-ebpf-agent-obi-daemonset.yaml
         equal:
+          path: spec.template.spec.dnsPolicy
+          value: ClusterFirstWithHostNet
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        equal:
           path: spec.template.spec.containers[0].securityContext.privileged
           value: true
       - template: templates/nr-ebpf-agent-obi-daemonset.yaml
@@ -48,7 +55,7 @@ tests:
           path: spec.template.spec.serviceAccountName
           value: my-release-nr-ebpf-agent
 
-  - it: is not selected by the agent Service and keeps the label the agent's self-drop filter matches
+  - it: keeps its own component label and the label the agent's self-drop filter matches
     set:
       <<: *on
     asserts:
@@ -109,7 +116,7 @@ tests:
           content:
             name: OTLP_RECEIVER_ENABLED
 
-  - it: exports to the per-node nrdot collector's OTLP gRPC port on loopback
+  - it: exports to the per-node nrdot collector's OTLP gRPC port through its node-local Service
     set:
       <<: *on
       nrdotCollector: {otlpReceiver: {enabled: true, grpcPort: 5317, httpPort: 5318}}
@@ -119,7 +126,19 @@ tests:
           path: spec.template.spec.containers[0].env
           content:
             name: OTEL_EXPORTER_OTLP_ENDPOINT
-            value: http://127.0.0.1:5317
+            value: http://my-release-nr-ebpf-agent-nrdot-pernode.my-namespace.svc.cluster.local:5317
+
+  - it: honours kubernetesClusterDomain in the Service address
+    set:
+      <<: *on
+      kubernetesClusterDomain: corp.internal
+    asserts:
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://my-release-nr-ebpf-agent-nrdot-pernode.my-namespace.svc.corp.internal:4317
 
   - it: fails without the per-node nrdot collector
     set:

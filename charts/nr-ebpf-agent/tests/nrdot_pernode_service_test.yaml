@@ -1,0 +1,131 @@
+suite: per-node nrdot collector Service routes OTLP to the collector on the caller's node
+templates:
+  - templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+  - templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: is not rendered when the per-node collector is off
+    set: &base
+      cluster: test-cluster
+      licenseKey: test-license-key
+      ebpfAgent: {image: {tag: ""}}
+      infra: {enabled: false}
+      nrdotCollector: {enabled: false}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        hasDocuments:
+          count: 0
+
+  - it: is not rendered when the OTLP receiver is off
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true, otlpReceiver: {enabled: false}}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        hasDocuments:
+          count: 0
+
+  - it: only sends traffic to the endpoint on the caller's node
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        isKind:
+          of: Service
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        equal:
+          path: metadata.name
+          value: my-release-nr-ebpf-agent-nrdot-pernode
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        equal:
+          path: spec.internalTrafficPolicy
+          value: Local
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        equal:
+          path: spec.type
+          value: ClusterIP
+
+  - it: selects only the per-node collector pods
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        equal:
+          path: spec.selector.app
+          value: nr-ebpf-agent-nrdot-pernode
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        equal:
+          path: spec.selector["app.kubernetes.io/name"]
+          value: nr-ebpf-agent
+
+  - it: exposes the OTLP gRPC and HTTP ports
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        contains:
+          path: spec.ports
+          content: {name: otlp-grpc, port: 4317, targetPort: 4317, protocol: TCP}
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        contains:
+          path: spec.ports
+          content: {name: otlp-http, port: 4318, targetPort: 4318, protocol: TCP}
+
+  - it: follows nrdotCollector.otlpReceiver ports
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true, otlpReceiver: {grpcPort: 14317, httpPort: 14318}}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        contains:
+          path: spec.ports
+          content: {name: otlp-grpc, port: 14317, targetPort: 14317, protocol: TCP}
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        contains:
+          path: spec.ports
+          content: {name: otlp-http, port: 14318, targetPort: 14318, protocol: TCP}
+
+  # The profiler connects from its own pod IP, not loopback. A `connection` rule would match it
+  # as the sender and stamp its container.id / k8s.* onto other processes' telemetry, which
+  # nrserviceid then keys on.
+  - it: associates senders by container.id only, never by connection source IP
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true, serviceId: {enabled: true}}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+        matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "name: container\\.id \\}\\]"
+      # Anchored after the container.id rule: the cadvisor k8s_attributes (scraped, not OTLP
+      # senders) legitimately keeps its own `connection` rule.
+      - template: templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+        notMatchRegex:
+          path: data["pernode.yaml"]
+          pattern: "name: container\\.id \\}\\]\\n\\s*- sources: \\[\\{ from: connection"
+
+  # The Service forwards to <node IP>:<port> (the pod is hostNetwork). A receiver bound to
+  # 127.0.0.1 refuses that connection, so it must listen on all interfaces.
+  - it: binds the OTLP receiver on all interfaces so the Service can reach it
+    set:
+      <<: *base
+      nrdotCollector: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+        matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "endpoint: 0\\.0\\.0\\.0:4317"
+      - template: templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+        matchRegex:
+          path: data["pernode.yaml"]
+          pattern: "endpoint: 0\\.0\\.0\\.0:4318"
+      - template: templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+        notMatchRegex:
+          path: data["pernode.yaml"]
+          pattern: "endpoint: 127\\.0\\.0\\.1:431[78]"

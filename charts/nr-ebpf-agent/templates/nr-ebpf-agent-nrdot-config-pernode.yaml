@@ -16,15 +16,16 @@ data:
   pernode.yaml: |
     receivers:
       {{- if $otlp.enabled }}
-      # OTLP from the eBPF agent and OBI on this node. Their pod and this collector's are
-      # hostNetwork, so they reach it on loopback. Resource attributes are set by the sender, so the otlp
-      # pipelines don't run resource detection or k8s_attributes.
+      # OTLP from the eBPF agent (hostNetwork, on loopback) and from OBI, the profiler and other
+      # pods via the per-node Service (which forwards to the node IP, hence 0.0.0.0). Resource
+      # attributes are set by the sender, so the otlp pipelines don't run resource detection
+      # or k8s_attributes.
       otlp:
         protocols:
           grpc:
-            endpoint: 127.0.0.1:{{ $otlp.grpcPort }}
+            endpoint: 0.0.0.0:{{ $otlp.grpcPort }}
           http:
-            endpoint: 127.0.0.1:{{ $otlp.httpPort }}
+            endpoint: 0.0.0.0:{{ $otlp.httpPort }}
       {{- end }}
       # Host system.* and per-process CPU/memory/thread/page-fault metrics for this node. The
       # eBPF agent no longer emits these; it keeps the process metrics that need privilege or
@@ -741,8 +742,9 @@ data:
       batch/otlp: {}
       {{- if $sid.enabled }}
       # Supplies container.id (and k8s.* where the sender didn't set them; set values are kept)
-      # for nrserviceid's container rules. Every sender connects over loopback, so `connection`
-      # only matches as a last resort.
+      # for nrserviceid's container rules. No `connection` association: the profiler connects
+      # from its own pod IP, so it would match that pod as the sender and stamp its
+      # container.id / k8s.* onto the telemetry of the processes it observes.
       k8s_attributes/otlp:
         auth_type: serviceAccount
         passthrough: false
@@ -752,7 +754,6 @@ data:
           metadata: [k8s.namespace.name, k8s.pod.name, k8s.pod.uid, k8s.container.name, container.id]
         pod_association:
           - sources: [{ from: resource_attribute, name: container.id }]
-          - sources: [{ from: connection }]
       # Rewrites service.name to the agent's name for the sending process; a miss leaves data as is.
       nrserviceid:
         extension: nrserviceid

@@ -1,9 +1,10 @@
 {{- if .Values.profiler.enabled }}
 {{- include "nr-ebpf-agent.profiler.validate" . }}
 # OpenTelemetry eBPF profiler, one pod per node. CPU-profiles the node's processes and
-# exports OTLP profiles to the per-node nrdot collector's receiver on loopback.
-# hostPID: it profiles every pod's processes and reads their /proc/PID/environ. hostNetwork:
-# the receiver listens on 127.0.0.1, which only pods in the host network namespace can reach.
+# exports OTLP profiles to the per-node nrdot collector through its node-local Service.
+# hostPID: it profiles every pod's processes and reads their /proc/PID/environ. Not
+# hostNetwork: it only connects out, and the Service (internalTrafficPolicy: Local) reaches
+# the collector on the same node.
 # Reuses the agent ServiceAccount and the agent's pod-level settings (tolerations, affinity,
 # nodeSelector, pod securityContext, annotations), so it runs on every node the agent does.
 apiVersion: apps/v1
@@ -24,7 +25,6 @@ spec:
     metadata:
       labels:
         app: nr-ebpf-agent-profiler
-        # Not `agent`: the agent Service selects component=agent.
         component: profiler
         # podLabels carry app.kubernetes.io/name=nr-ebpf-agent, which the eBPF agent's
         # New Relic self-drop filter matches on.
@@ -57,9 +57,7 @@ spec:
         {{- . | nindent 8 }}
       {{- end }}
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
-      hostNetwork: true
       hostPID: true
-      dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: profiler
           image: {{ include "nr-ebpf-agent.profiler.image" . }}

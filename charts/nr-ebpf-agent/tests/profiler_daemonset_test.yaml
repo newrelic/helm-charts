@@ -1,0 +1,65 @@
+suite: profiler runs as its own DaemonSet and exports through the per-node collector Service
+templates:
+  - templates/nr-ebpf-agent-profiler-daemonset.yaml
+  - templates/nr-ebpf-agent-profiler-config.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: is not rendered when the profiler is off
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      ebpfAgent: {image: {tag: ""}}
+      profiler: {enabled: false}
+    asserts:
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        hasDocuments:
+          count: 0
+
+  - it: runs privileged in the host PID namespace but not the host network
+    set: &on
+      cluster: test-cluster
+      licenseKey: test-license-key
+      ebpfAgent: {image: {tag: ""}}
+      infra: {enabled: true}
+      profiler: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        equal:
+          path: spec.template.spec.hostPID
+          value: true
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        notExists:
+          path: spec.template.spec.hostNetwork
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        notExists:
+          path: spec.template.spec.dnsPolicy
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].securityContext.privileged
+          value: true
+
+  - it: exports to the per-node nrdot collector's OTLP gRPC port through its node-local Service
+    set:
+      <<: *on
+      nrdotCollector: {otlpReceiver: {enabled: true, grpcPort: 5317, httpPort: 5318}}
+    asserts:
+      - template: templates/nr-ebpf-agent-profiler-config.yaml
+        matchRegex:
+          path: data["config.yaml"]
+          pattern: "endpoint: my-release-nr-ebpf-agent-nrdot-pernode\\.my-namespace\\.svc\\.cluster\\.local:5317"
+      - template: templates/nr-ebpf-agent-profiler-config.yaml
+        notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "127\\.0\\.0\\.1"
+
+  - it: fails without the per-node nrdot collector
+    set:
+      <<: *on
+      infra: {enabled: false}
+    asserts:
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        failedTemplate:
+          errorPattern: needs the per-node nrdot collector

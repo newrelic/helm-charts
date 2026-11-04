@@ -341,8 +341,8 @@ Precedence: chart-level (obi.image.pullPolicy) > global (global.images.pullPolic
 {{- end }}
 
 {{/*
-OBI exports OTLP to the per-node nrdot collector's receiver on 127.0.0.1 (both pods are
-hostNetwork), so it needs that collector with nrdotCollector.otlpReceiver enabled.
+OBI exports OTLP to the per-node nrdot collector's receiver through its Service, so it needs
+that collector with nrdotCollector.otlpReceiver enabled.
 */}}
 {{- define "nr-ebpf-agent.obi.validate" -}}
 {{- $otlp := .Values.nrdotCollector.otlpReceiver | default dict -}}
@@ -382,8 +382,8 @@ Precedence: chart-level (profiler.image.pullPolicy) > global (global.images.pull
 {{- end }}
 
 {{/*
-The profiler exports OTLP profiles to the per-node nrdot collector's receiver on 127.0.0.1
-(both pods are hostNetwork), so it needs that collector with nrdotCollector.otlpReceiver enabled.
+The profiler exports OTLP profiles to the per-node nrdot collector's receiver through its
+Service, so it needs that collector with nrdotCollector.otlpReceiver enabled.
 */}}
 {{- define "nr-ebpf-agent.profiler.validate" -}}
 {{- $otlp := .Values.nrdotCollector.otlpReceiver | default dict -}}

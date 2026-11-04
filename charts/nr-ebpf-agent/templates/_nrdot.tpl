@@ -93,6 +93,21 @@ nrdot pernode config name (per-node DaemonSet).
 {{- end -}}
 
 {{/*
+Name of the per-node nrdot collector's Service.
+*/}}
+{{- define "nr-ebpf-agent.nrdot.pernode.serviceName" -}}
+{{- printf "%s-nrdot-pernode" (include "nr-ebpf-agent.fullname" .) -}}
+{{- end -}}
+
+{{/*
+host:port of the per-node collector's OTLP/gRPC receiver through that Service. Its
+internalTrafficPolicy is Local, so a caller reaches the collector on its own node.
+*/}}
+{{- define "nr-ebpf-agent.nrdot.pernode.otlpGrpcAddress" -}}
+{{- printf "%s.%s.svc.%s:%v" (include "nr-ebpf-agent.nrdot.pernode.serviceName" .) .Release.Namespace .Values.kubernetesClusterDomain .Values.nrdotCollector.otlpReceiver.grpcPort -}}
+{{- end -}}
+
+{{/*
 nrdot cluster config name (Deployment).
 */}}
 {{- define "nr-ebpf-agent.nrdot.configName.cluster" -}}
