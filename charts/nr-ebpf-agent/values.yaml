@@ -391,7 +391,7 @@ nrdotCollector:
   # -- Metric collection / scrape interval.
   collectionInterval: 60s
   # -- Go garbage-collection target percentage for both nrdot collectors. Lower
-  # values trade CPU for reduced memory (GC runs more often). Profiled A/B): 
+  # values trade CPU for reduced memory (GC runs more often). Profiled A/B):
   # 50 -> 30 cut the per-node collector
   # working set ~19% (~41 -> ~33 MiB — more churn from cadvisor/kubeletstats means
   # more for GC to reclaim) and the cluster collector ~10% (~31 -> ~28 MiB — already
@@ -563,6 +563,13 @@ profiler:
   imagePullSecrets: []
   # -- How often profiles are flushed.
   reporterInterval: 60s
+  # -- Entity-name allow-list. Only profiles whose service.name is in this list are exported; all others are dropped by
+  # a filter processor in the profiler. Empty list [] = no filtering (export everything).
+  # Example:
+  #   entityNameFilter:
+  #     - "checkout-service"
+  #     - "payments-service"
+  entityNameFilter: []
   resources:
     limits:
       # -- Max memory allocated to the container.
