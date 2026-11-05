@@ -15,6 +15,10 @@ metadata:
 spec:
   updateStrategy:
     type: {{ $.Values.updateStrategy }}
+    {{- if and (eq $.Values.updateStrategy "RollingUpdate") $.Values.rollingUpdate }}
+    rollingUpdate:
+      {{- toYaml $.Values.rollingUpdate | nindent 6 }}
+    {{- end }}
   selector:
     matchLabels:
       app: {{ template "newrelic-logging.name" $ }}

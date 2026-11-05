@@ -1,0 +1,160 @@
+suite: test DaemonSet update strategy
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: preserves the default update strategy
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+
+  - it: preserves the string strategy with an empty rollingUpdate object
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      updateStrategy: RollingUpdate
+      rollingUpdate: {}
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+
+  - it: renders an integer unavailable budget and preserves zero surge
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      rollingUpdate:
+        maxUnavailable: 3
+        maxSurge: 0
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: 3
+              maxSurge: 0
+
+  - it: renders a percentage unavailable budget
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      rollingUpdate:
+        maxUnavailable: "10%"
+        maxSurge: 0
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: "10%"
+              maxSurge: 0
+
+  - it: renders an integer surge budget and preserves zero unavailable
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      rollingUpdate:
+        maxUnavailable: 0
+        maxSurge: 2
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: 0
+              maxSurge: 2
+
+  - it: renders a percentage surge budget
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      rollingUpdate:
+        maxUnavailable: 0
+        maxSurge: "10%"
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: 0
+              maxSurge: "10%"
+
+  - it: leaves omitted rolling update parameters to Kubernetes
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      rollingUpdate:
+        maxUnavailable: "10%"
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: RollingUpdate
+            rollingUpdate:
+              maxUnavailable: "10%"
+
+  - it: preserves the existing OnDelete strategy
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      updateStrategy: OnDelete
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: OnDelete
+
+  - it: ignores rolling update parameters with OnDelete
+    templates:
+      - templates/daemonset.yaml
+      - templates/daemonset-windows.yaml
+    set:
+      licenseKey: nr_license_key
+      enableWindows: true
+      updateStrategy: OnDelete
+      rollingUpdate:
+        maxUnavailable: "10%"
+        maxSurge: 0
+    asserts:
+      - equal:
+          path: spec.updateStrategy
+          value:
+            type: OnDelete
