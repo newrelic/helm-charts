@@ -60,42 +60,6 @@ otlpProxy:
   # -- Name of existing Kubernetes secret containing proxy credentials.
   # Secret must contain keys: 'proxy-user' and 'proxy-password'.
   existingSecret: ""
-# -- Custom endpoint for agent/entity metadata reporting. If empty, resolves from region
-# independently of customOtlpEndpoint (metadata always goes to the regional NR endpoint
-# even when OTLP telemetry is routed through a custom collector).
-metadataEndpoint: ""
-# -- Name of the Kubernetes secret containing the CA certificate for the metadata endpoint.
-# Must be provided together with metadataTlsCertSecretKey.
-metadataTlsCertSecret: ""
-# -- Key within the secret that contains the CA certificate for the metadata endpoint.
-# Must be provided together with metadataTlsCertSecret.
-metadataTlsCertSecretKey: ""
-# -- HTTP/HTTPS proxy configuration for metadata reporting. Independent of otlpProxy above.
-# Falls back to HTTP_PROXY/HTTPS_PROXY when not set. Does NOT inherit from otlpProxy.
-metadataProxy:
-  # -- Proxy hostname (e.g., proxy.example.com). If empty, no proxy is used.
-  host: ""
-  # -- Proxy port (e.g., 8080). Required when host is set.
-  port: ""
-  # -- Proxy URL scheme: http or https (default: http)
-  scheme: "http"
-  # -- Username for proxy Basic Authentication (optional). If empty, no authentication is used.
-  user: ""
-  # -- Password for proxy Basic Authentication (optional). Only used with user.
-  # Recommended: Use existingSecret instead for security.
-  password: ""
-  # -- Alternative: Complete proxy URL (overrides individual settings above).
-  # Format: http://[user:pass@]host:port
-  url: ""
-  # -- Name of existing Kubernetes secret containing proxy credentials.
-  # Secret must contain keys: 'proxy-user' and 'proxy-password'.
-  existingSecret: ""
-  # -- Name of the Kubernetes secret containing the CA certificate for the HTTPS metadata proxy.
-  # Must be provided together with certSecretKey.
-  certSecret: ""
-  # -- Key within the secret that contains the CA certificate for the HTTPS metadata proxy.
-  # Must be provided together with certSecret.
-  certSecretKey: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: ""
