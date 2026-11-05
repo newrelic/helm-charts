@@ -19,6 +19,15 @@ data:
         endpoint: 127.0.0.1:{{ .Values.nrdotCollector.otlpReceiver.grpcPort }}
         tls:
           insecure: true
+    {{- if .Values.profiler.entityNameFilter }}
+    processors:
+      # Entity-name allow-list. A profile is dropped when its service.name matches none of the allowed names.
+      filter/entity:
+        error_mode: ignore
+        profile_conditions:
+          - conditions:
+              - {{ range $i, $n := .Values.profiler.entityNameFilter }}{{ if $i }} and {{ end }}resource.attributes["service.name"] != {{ $n | quote }}{{ end }}
+    {{- end }}
     service:
       telemetry:
         # Off: under hostNetwork its :8888 telemetry endpoint would clash with the collector's.
@@ -27,5 +36,8 @@ data:
       pipelines:
         profiles:
           receivers: [profiling]
+          {{- if .Values.profiler.entityNameFilter }}
+          processors: [filter/entity]
+          {{- end }}
           exporters: [otlp]
 {{- end }}

@@ -558,6 +558,13 @@ profiler:
   imagePullSecrets: []
   # -- How often profiles are flushed.
   reporterInterval: 60s
+  # -- Entity-name allow-list. Only profiles whose service.name is in this list are exported; all others are dropped by
+  # a filter processor in the profiler. Empty list [] = no filtering (export everything).
+  # Example:
+  #   entityNameFilter:
+  #     - "checkout-service"
+  #     - "payments-service"
+  entityNameFilter: []
   resources:
     limits:
       # -- Max memory allocated to the container.
