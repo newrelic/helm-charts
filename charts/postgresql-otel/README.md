@@ -96,6 +96,29 @@ way, but it does not currently change any rendered output. It exists for
 documentation clarity and as a validated, forward-compatible schema slot,
 the same precedent as `mssql-otel`'s and `mysql-otel`'s `topology`.
 
+## Choosing the config profile
+
+`postgresql.configProfile` (single-instance) or
+`postgresqlMulti.configProfile` (multi-instance, applies to every instance)
+selects how many metrics the receiver collects. Both default to `basic`.
+
+| Profile | Metrics collected |
+|---|---|
+| `basic` | The 7 core metrics (locks, deadlocks, function calls, query conflicts, sequential scans, temp I/O, temp files) |
+| `advanced` | New Relic's [full PostgreSQL metric catalog](https://docs.newrelic.com/docs/opentelemetry/db360/postgresql/config-reference/): 21 metrics, adding block hits/reads, tuple counters, query execution time, WAL delay and the `pgvector` metrics |
+
+The Advanced catalog is the same for `self-hosted` and `rds`. Only the
+receiver's `metrics` block differs; events, query collection, resource
+attributes, the exporter and the setup job are identical. Start with `basic`
+and move to `advanced` once collection is verified.
+`additionalReceiverConfig` still overrides either profile.
+
+```yaml
+postgresql:
+  topology: "rds"
+  configProfile: "advanced"
+```
+
 ## `databases` and `excludeDatabases`
 
 In single-instance mode, `postgresql.databases` is a **required,
@@ -372,7 +395,7 @@ Shared across both modes:
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.6.0` |
+| `image.tag` | Collector image tag | `2.7.3` |
 | `otlpEndpoint` | New Relic OTLP/gRPC endpoint, bare host:port, no scheme | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrpostgresql` receiver block | `{}` |
@@ -387,6 +410,7 @@ Single-instance schema (`postgresql:`, ignored when `postgresqlMulti.enabled: tr
 | Key | Description | Default |
 |---|---|---|
 | `postgresql.topology` | `self-hosted` or `rds` — always required | `""` |
+| `postgresql.configProfile` | `basic` or `advanced` — see "Choosing the config profile" | `basic` |
 | `postgresql.server` | PostgreSQL host/endpoint | `""` |
 | `postgresql.port` | PostgreSQL port | `5432` |
 | `postgresql.username` / `password` | Plain-value monitoring credentials | `""` |
@@ -408,4 +432,5 @@ Multi-instance schema (`postgresqlMulti:`, mutually exclusive with `postgresql.*
 |---|---|---|
 | `postgresqlMulti.enabled` | Enables multi-instance mode | `false` |
 | `postgresqlMulti.topology` | `self-hosted` or `rds` — kept for parity, no rendered effect | `""` |
+| `postgresqlMulti.configProfile` | `basic` or `advanced` — applies to every instance | `basic` |
 | `postgresqlMulti.instances` | List of `{name, server, port, existingSecret, databases, postgresAdmin.existingSecret}` entries, one per monitored instance. Each entry's `databases` must be a non-empty list, same rule as `postgresql.databases` | `[]` |

@@ -1,6 +1,10 @@
 {{- if .Values.mysqlMulti.enabled }}
 {{- include "mysql-otel.validate.mysqlMulti" . -}}
 {{- $sharedDefaults := include "mysql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- $advanced := eq .Values.mysqlMulti.configProfile "advanced" -}}
+{{- if $advanced -}}
+{{- $sharedDefaults = mergeOverwrite $sharedDefaults (include "mysql-otel.receiver.advancedMetrics" . | fromYaml) -}}
+{{- end -}}
 {{- $databases := .Values.mysqlMulti.databases -}}
 {{- $multiEntry := gt (len $databases) 1 -}}
 {{- $receiverModes := dict -}}
@@ -51,6 +55,10 @@ data:
 {{- include "mysql-otel.renderReceiver" (dict "receiver" (index $receiverContents $key)) }}
       {{- end }}
       {{- end }}
+{{- if $advanced }}
+{{- include "mysql-otel.advanced.otlpReceiver" . | nindent 6 }}
+{{- include "mysql-otel.advanced.tail" (dict "otlpEndpoint" .Values.otlpEndpoint "receiverKeys" $receiverKeys) | nindent 4 }}
+{{- else }}
     processors:
       batch:
     exporters:
@@ -74,4 +82,5 @@ data:
           receivers: [{{ join ", " $receiverKeys }}]
           processors: [batch]
           exporters: [otlp/newrelic]
+{{- end }}
 {{- end }}

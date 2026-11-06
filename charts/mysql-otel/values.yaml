@@ -1,6 +1,6 @@
 image:
   repository: newrelic/nrdot-collector
-  tag: "2.6.0"
+  tag: "2.7.3"
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -9,6 +9,8 @@ fullnameOverride: ""
 mysql:
   # -- Required. One of: self-hosted, rds. Documentation/validation only -- no rendered difference.
   topology: ""
+  # -- One of: basic, advanced. basic = the 4 core metrics and a metrics+logs pipeline; advanced = New Relic's full MySQL config: the 71-metric catalog, exporter sending_queue, resource_detection processors, a health_check extension and an app-facing OTLP receiver (ports 4317/4318, exposed by a ClusterIP Service) feeding traces/metrics/logs pipelines. Same for self-hosted and rds. Collector config only -- the setup job is unaffected.
+  configProfile: basic
   # -- Required. MySQL host/endpoint (no port).
   server: ""
   # -- MySQL port.
@@ -36,6 +38,8 @@ mysqlMulti:
   enabled: false
   # -- Required when enabled. One of: self-hosted, rds. Kept for parity with mysql.topology -- still validation-only, no rendered effect.
   topology: ""
+  # -- One of: basic, advanced. Applies to every entry in mysqlMulti.databases. See mysql.configProfile.
+  configProfile: basic
   # -- List of MySQL instances to monitor from this one release. Each entry requires: name (unique), server, existingSecret.
   # port defaults to 3306. mysqlAdmin.existingSecret is required per entry only when setupJob.enabled is true.
   # Scrape-behavior settings (allowNativePasswords, collectionInterval, initialDelay, explainMode, etc.) are

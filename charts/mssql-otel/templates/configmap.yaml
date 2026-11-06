@@ -1,8 +1,15 @@
 {{- if not .Values.mssqlMulti.enabled }}
 {{- include "mssql-otel.validate.topology" . -}}
 {{- include "mssql-otel.validate.otlpEndpoint" . -}}
+{{- include "mssql-otel.validate.configProfile" (dict "key" "mssql.configProfile" "value" .Values.mssql.configProfile) -}}
 {{- $receiver := dict -}}
 {{- $receiver = mergeOverwrite $receiver (include "mssql-otel.receiver.defaults" . | fromYaml) -}}
+{{- if eq .Values.mssql.configProfile "advanced" -}}
+{{- $receiver = mergeOverwrite $receiver (include "mssql-otel.receiver.advancedCommonMetrics" . | fromYaml) -}}
+{{- if eq .Values.mssql.topology "self-hosted" -}}
+{{- $receiver = mergeOverwrite $receiver (include "mssql-otel.receiver.advancedSelfHostedMetrics" . | fromYaml) -}}
+{{- end -}}
+{{- end -}}
 {{- $receiver = mergeOverwrite $receiver (dict
       "server" .Values.mssql.server
       "port" (.Values.mssql.port | int)

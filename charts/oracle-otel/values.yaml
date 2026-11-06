@@ -1,6 +1,6 @@
 image:
   repository: newrelic/nrdot-collector
-  tag: "2.6.0"
+  tag: "2.7.3"
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -9,6 +9,8 @@ fullnameOverride: ""
 oracle:
   # -- Required. One of: cdb, pdb, rds, adb. Selects the nroracledb receiver's default metrics/events for config.yaml, and (when setupJob.enabled) which grant script runs.
   topology: ""
+  # -- One of: basic, advanced. basic = the 30 core metrics for the topology; advanced = New Relic's full Oracle metric catalog (135 for cdb/pdb, 130 for rds/adb). Receiver config only -- the setup job is unaffected.
+  configProfile: basic
   # -- Required. host:port of the Oracle listener.
   endpoint: ""
   # -- Required. CDB/PDB service name, or the RDS DB name.
@@ -28,6 +30,8 @@ oracleMulti:
   enabled: false
   # -- Required when enabled. One of: cdb, pdb, rds, adb. Applies to every entry in oracleMulti.databases -- a release cannot mix topologies.
   topology: ""
+  # -- One of: basic, advanced. Applies to every entry in oracleMulti.databases. See oracle.configProfile.
+  configProfile: basic
   # -- Default scrape interval for every entry. Override per-entry via databases[].collectionInterval.
   collectionInterval: 15s
   # -- List of Oracle/RDS instances to monitor from this one release. Each entry requires: name (unique), endpoint, service, existingSecret.
