@@ -4,9 +4,6 @@ templates:
   - templates/daemonset.yaml
   - templates/role.yaml
   - templates/rolebinding.yaml
-  # Loaded for the checksum/config annotation's include.
-  - templates/deployment-configmap.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: pcg
   namespace: newrelic
@@ -91,13 +88,3 @@ tests:
         template: templates/role.yaml
       - hasDocuments: {count: 0}
         template: templates/rolebinding.yaml
-
-  - it: renders no env and no RBAC in flux mode (no customConfigMap)
-    templates: [templates/deployment.yaml, templates/role.yaml]
-    asserts:
-      - notContains:
-          path: spec.template.spec.containers[0].env
-          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
-        template: templates/deployment.yaml
-      - hasDocuments: {count: 0}
-        template: templates/role.yaml

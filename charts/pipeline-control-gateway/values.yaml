@@ -46,7 +46,9 @@ daemonset:
   # @default -- `""`
   customConfigMap: ""
 
-# -- How PCG notices changes to `deployment.customConfigMap` / `daemonset.customConfigMap` (fluxless mode).
+# -- PCG applies config changes in place, without a pod restart: changes to `customConfigMap` (fluxless mode), and to
+# the ConfigMap this chart renders (flux mode, where a config-only upgrade updates just that ConfigMap).
+# Image, env and resource changes still roll the pods.
 configReload:
   # -- `kubernetes`: PCG watches that ConfigMap through the Kubernetes API and applies a change within about a second.
   # The chart grants read access to that one ConfigMap (see `rbac.create`). If PCG is not allowed to read it, PCG logs an

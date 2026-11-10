@@ -2,9 +2,6 @@ suite: config hot reload (fluxless customConfigMap)
 templates:
   - templates/deployment.yaml
   - templates/daemonset.yaml
-  # Loaded for the checksum/config annotation's include.
-  - templates/deployment-configmap.yaml
-  - templates/daemonset-configmap.yaml
 release:
   name: pcg
   namespace: newrelic
@@ -117,13 +114,6 @@ tests:
       - matchRegex:
           path: spec.template.spec.containers[0].image
           pattern: ':3\.3\.0$'
-
-  - it: does not check the image without a customConfigMap
-    template: templates/deployment.yaml
-    set:
-      image.tag: "2.5.0"
-    asserts:
-      - notFailedTemplate: {}
 
   - it: gives the liveness probe longer than the 60s reload watchdog on a Deployment
     template: templates/deployment.yaml

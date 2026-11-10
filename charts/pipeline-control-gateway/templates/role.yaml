@@ -1,5 +1,5 @@
 {{- if and .Values.rbac.create (include "nrKubernetesOtel.hotReload.watchesAPI" .) }}
-# Read-only access to the one customConfigMap, so PCG can follow it through the API.
+# Read-only access to the one ConfigMap PCG reloads, so it can follow it through the API.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
@@ -11,6 +11,6 @@ rules:
   - apiGroups: [""]
     resources: ["configmaps"]
     resourceNames:
-      - {{ include "nrKubernetesOtel.hotReload.customConfigMap" . | quote }}
+      - {{ include "nrKubernetesOtel.hotReload.watchedConfigMap" . | quote }}
     verbs: ["get", "list", "watch"]
 {{- end }}

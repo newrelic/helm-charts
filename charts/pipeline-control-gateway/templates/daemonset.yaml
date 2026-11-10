@@ -23,11 +23,10 @@ spec:
       labels:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
         component: daemonset
+      {{- with .Values.daemonset.podAnnotations }}
       annotations:
-        checksum/config: {{ include (print $.Template.BasePath "/daemonset-configmap.yaml") . | sha256sum }}
-        {{- with .Values.daemonset.podAnnotations }}
         {{- toYaml . | nindent 8 }}
-        {{- end }}
+      {{- end }}
     spec:
       serviceAccountName: {{ include "newrelic.common.serviceAccount.name" . }}
       {{- with include "nrKubernetesOtel.daemonset.securityContext.pod" . }}

@@ -1,0 +1,93 @@
+suite: config reload for the chart-rendered config (flux mode)
+templates:
+  - templates/deployment.yaml
+  - templates/daemonset.yaml
+  - templates/role.yaml
+  - templates/rolebinding.yaml
+release:
+  name: pcg
+  namespace: newrelic
+set:
+  cluster: test-cluster
+  licenseKey: 1234567890abcdef1234567890abcdef12345678
+tests:
+  - it: reloads the chart ConfigMap in place instead of rolling the pods
+    template: templates/deployment.yaml
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIGMAP_NAME, value: pipeline-control-gateway-config}
+
+  - it: grants read-only access to the chart ConfigMap only
+    template: templates/role.yaml
+    asserts:
+      - equal:
+          path: rules
+          value:
+            - apiGroups: [""]
+              resources: ["configmaps"]
+              resourceNames: ["pipeline-control-gateway-config"]
+              verbs: ["get", "list", "watch"]
+
+  - it: binds that Role to the chart's ServiceAccount
+    template: templates/rolebinding.yaml
+    asserts:
+      - equal:
+          path: roleRef.name
+          value: pipeline-control-gateway-config-reader
+
+  - it: reloads the DaemonSet's chart ConfigMap in place
+    template: templates/daemonset.yaml
+    set:
+      daemonset.enabled: true
+    asserts:
+      - notExists:
+          path: spec.template.metadata.annotations
+      - contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIGMAP_NAME, value: pipeline-control-gateway-daemonset-config}
+
+  - it: grants access to the DaemonSet's chart ConfigMap
+    template: templates/role.yaml
+    set:
+      daemonset.enabled: true
+    asserts:
+      - equal:
+          path: rules[0].resourceNames
+          value: ["pipeline-control-gateway-daemonset-config"]
+
+  - it: keeps user pod annotations
+    template: templates/deployment.yaml
+    set:
+      deployment.podAnnotations:
+        team: pcon
+    asserts:
+      - equal:
+          path: spec.template.metadata.annotations
+          value: {team: pcon}
+
+  - it: watches the mounted file without RBAC when source is file
+    set:
+      configReload.source: file
+    asserts:
+      - template: templates/deployment.yaml
+        notContains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
+      - template: templates/role.yaml
+        hasDocuments: {count: 0}
+      - template: templates/rolebinding.yaml
+        hasDocuments: {count: 0}
+
+  - it: refuses an image that cannot reload, since nothing else would apply a config change
+    template: templates/deployment.yaml
+    set:
+      image.tag: 3.2.0
+    asserts:
+      - failedTemplate:
+          errorPattern: image.tag "3.2.0" does not reload config changes in place.*ConfigMap "pipeline-control-gateway-config"
