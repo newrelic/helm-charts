@@ -1,5 +1,6 @@
 {{- if not .Values.oracleMulti.enabled }}
 {{- include "oracle-otel.validate.topology" . -}}
+{{- include "oracle-otel.validate.configProfile" (dict "key" "oracle.configProfile" "value" .Values.oracle.configProfile) -}}
 {{- $isAdb := eq .Values.oracle.topology "adb" -}}
 {{- $isRds := eq .Values.oracle.topology "rds" -}}
 {{- $receiver := dict -}}
@@ -10,6 +11,12 @@
 {{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.adbDefaults" . | fromYaml) -}}
 {{- else -}}
 {{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.cdbPdbDefaults" . | fromYaml) -}}
+{{- end -}}
+{{- if eq .Values.oracle.configProfile "advanced" -}}
+{{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.advancedCommonMetrics" . | fromYaml) -}}
+{{- if not (or $isRds $isAdb) -}}
+{{- $receiver = mergeOverwrite $receiver (include "oracle-otel.receiver.advancedAsmMetrics" . | fromYaml) -}}
+{{- end -}}
 {{- end -}}
 {{- if $isAdb -}}
 {{- $datasource := print "oracle://${env:ORACLE_USERNAME}:${env:ORACLE_PASSWORD}@" .Values.oracle.endpoint "/" .Values.oracle.service "?ssl=true&ssl%20verify=true" -}}

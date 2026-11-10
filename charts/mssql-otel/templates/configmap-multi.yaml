@@ -1,6 +1,12 @@
 {{- if .Values.mssqlMulti.enabled }}
 {{- include "mssql-otel.validate.mssqlMulti" . -}}
 {{- $sharedDefaults := include "mssql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- if eq .Values.mssqlMulti.configProfile "advanced" -}}
+{{- $sharedDefaults = mergeOverwrite $sharedDefaults (include "mssql-otel.receiver.advancedCommonMetrics" . | fromYaml) -}}
+{{- if eq .Values.mssqlMulti.topology "self-hosted" -}}
+{{- $sharedDefaults = mergeOverwrite $sharedDefaults (include "mssql-otel.receiver.advancedSelfHostedMetrics" . | fromYaml) -}}
+{{- end -}}
+{{- end -}}
 {{- $databases := .Values.mssqlMulti.databases -}}
 {{- $multiEntry := gt (len $databases) 1 -}}
 {{- $receiverModes := dict -}}
