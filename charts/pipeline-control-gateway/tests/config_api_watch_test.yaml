@@ -62,6 +62,21 @@ tests:
           path: roleRef.name
           value: pipeline-control-gateway-config-reader
 
+  - it: keeps following the ConfigMap through the API but creates no RBAC with rbac.create=false
+    templates: [templates/deployment.yaml, templates/role.yaml, templates/rolebinding.yaml]
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      rbac.create: false
+    asserts:
+      - template: templates/deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: PCG_CONFIG_SOURCE, value: kubernetes}
+      - template: templates/role.yaml
+        hasDocuments: {count: 0}
+      - template: templates/rolebinding.yaml
+        hasDocuments: {count: 0}
+
   - it: renders no env and no RBAC with configReload.source=file
     templates: [templates/deployment.yaml, templates/role.yaml, templates/rolebinding.yaml]
     set:

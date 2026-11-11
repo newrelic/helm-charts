@@ -1,4 +1,4 @@
-{{- if include "nrKubernetesOtel.hotReload.watchesAPI" . }}
+{{- if and .Values.rbac.create (include "nrKubernetesOtel.hotReload.watchesAPI" .) }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:

@@ -42,15 +42,16 @@ daemonset:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config.
     config: {}
   # -- Custom external ConfigMap name for daemonset. Leave empty to use the chart-generated one.
-  # PCG watches the mounted ConfigMap and reloads its pipeline in place when it changes, without a pod restart.
-  # The change applies once the kubelet syncs the volume, typically within 1 to 2 minutes.
+  # PCG reloads its pipeline in place when this ConfigMap changes, without a pod restart (see `configReload`).
   # @default -- `""`
   customConfigMap: ""
 
 # -- How PCG notices changes to `deployment.customConfigMap` / `daemonset.customConfigMap` (fluxless mode).
 configReload:
   # -- `kubernetes`: PCG watches that ConfigMap through the Kubernetes API and applies a change within about a second.
-  # The chart grants read access to that one ConfigMap. If the API cannot be reached, PCG falls back to `file`.
+  # The chart grants read access to that one ConfigMap (see `rbac.create`). If PCG is not allowed to read it, PCG logs an
+  # error and watches the mounted file instead. If the API is unreachable, PCG keeps its config and applies the latest
+  # one once the API answers.
   # `file`: PCG watches the mounted file, which the kubelet refreshes on its periodic sync (typically within 1 to 2 minutes). No API access.
   source: kubernetes
 
@@ -129,8 +130,7 @@ deployment:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
   # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
-  # PCG watches the mounted ConfigMap and reloads its pipeline in place when it changes, without a pod restart.
-  # The change applies once the kubelet syncs the volume, typically within 1 to 2 minutes.
+  # PCG reloads its pipeline in place when this ConfigMap changes, without a pod restart (see `configReload`).
   # @default -- `""`
   customConfigMap: ""
 
@@ -144,6 +144,11 @@ affinity: {}
 podSecurityContext: {}
 # -- Sets all security context (at container level). Can be configured also with `global.securityContext.container`
 containerSecurityContext: {}
+
+rbac:
+  # -- Create the Role and RoleBinding that let PCG read the ConfigMap it reloads (`configReload.source: kubernetes`).
+  # Set to `false` to grant `get`, `list` and `watch` on that ConfigMap yourself; without them PCG watches the mounted file instead.
+  create: true
 
 # -- Settings controlling ServiceAccount creation
 # @default -- See `values.yaml`

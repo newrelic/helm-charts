@@ -89,7 +89,9 @@ spec:
               value: "{{ .Values.fleet_id }}"
             - name: CLUSTER_NAME
               value: {{ include "newrelic.common.cluster" . }}
-            {{- include "nrKubernetesOtel.hotReload.env" . | nindent 12 }}
+            {{- with include "nrKubernetesOtel.hotReload.env" . | trim }}
+            {{- . | nindent 12 }}
+            {{- end }}
             {{- with .Values.deployment.envs }}
             {{- . | toYaml | nindent 12 }}
             {{- end }}
