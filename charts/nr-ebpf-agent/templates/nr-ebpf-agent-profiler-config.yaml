@@ -25,8 +25,7 @@ data:
       filter/entity:
         error_mode: ignore
         profile_conditions:
-          - conditions:
-              - {{ range $i, $n := .Values.profiler.entityNameFilter }}{{ if $i }} and {{ end }}resource.attributes["service.name"] != {{ $n | quote }}{{ end }}
+          - {{ range $i, $n := .Values.profiler.entityNameFilter }}{{ if $i }} and {{ end }}resource.attributes["service.name"] != {{ $n | quote }}{{ end }}
     {{- end }}
     service:
       telemetry:
