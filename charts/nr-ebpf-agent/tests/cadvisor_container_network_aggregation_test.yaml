@@ -10,6 +10,8 @@ tests:
     set: &base
       cluster: test-cluster
       licenseKey: test-license-key
+      nrdotCollector:
+        enabled: true
     asserts:
       - matchRegex:
           path: data["pernode.yaml"]
@@ -36,8 +38,10 @@ tests:
 
   - it: LDM off retains full per-interface fidelity (aggregation absent)
     set:
-      <<: *base
+      cluster: test-cluster
+      licenseKey: test-license-key
       nrdotCollector:
+        enabled: true
         lowDataMode: false
     asserts:
       - notMatchRegex:
