@@ -164,12 +164,23 @@ Returns lowDataMode
 {{- end -}}
 
 {{/*
+Fails when the region cannot be computed (license set through a custom secret and no region provided).
+nrStaging and fedramp.enabled already decide the region, so the check is skipped for them.
+*/}}
+{{- define "newrelic-logging.failIfRegionUnresolvable" -}}
+{{- if not (or (include "newrelic.common.nrStaging" .) (include "newrelic.common.fedramp.enabled" .)) -}}
+{{- include "newrelic.common.region.fail_if_unresolvable" . -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
 Returns logsEndpoint
 */}}
 {{- define "newrelic-logging.logsEndpoint" -}}
 {{- if .Values.endpoint -}}
 {{ .Values.endpoint -}}
 {{- else -}}
+{{- include "newrelic-logging.failIfRegionUnresolvable" . -}}
 {{ (include "newrelic.common.log_api_endpoint" .) | default "https://log-api.newrelic.com" }}/log/v1
 {{- end -}}
 {{- end -}}
@@ -249,6 +260,7 @@ Returns metricsHost
 {{- if .Values.metricsEndpoint -}}
 {{ .Values.metricsEndpoint -}}
 {{- else -}}
+{{- include "newrelic-logging.failIfRegionUnresolvable" . -}}
 {{- (include "newrelic.common.metric_api_endpoint" .) | default "https://metric-api.newrelic.com" | trimPrefix "https://" | trimPrefix "http://" -}}
 {{- end -}}
 {{- end -}}

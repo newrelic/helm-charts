@@ -1,0 +1,98 @@
+suite: setup job resource (mssqlMulti)
+templates:
+  - templates/setup-job-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mssqlMulti.enabled: true
+  mssqlMulti.topology: "self-hosted"
+  mssqlMulti.databases:
+    - name: db1
+      server: "host1"
+      existingSecret: "db1-creds"
+      sqlAdmin:
+        existingSecret: "db1-admin"
+    - name: db2
+      server: "host2"
+      existingSecret: "db2-creds"
+      sqlAdmin:
+        existingSecret: "db2-admin"
+  otlpEndpoint: "https://otlp.nr-data.net:4318"
+  setupJob.image.repository: "mcr.microsoft.com/mssql-tools"
+  setupJob.image.tag: "latest"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders one Job per database entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: names each Job after its database entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-mssql-otel-setup-db1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: my-release-mssql-otel-setup-db2
+        documentIndex: 1
+  - it: wires each Job's admin and monitoring credentials from that entry's own secrets
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db1-admin
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db1-creds
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db2-admin
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db2-creds
+        documentIndex: 1
+  - it: uses each entry's own server/port for the connection
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: "host1"
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[4].value
+          value: "host2"
+        documentIndex: 1
+  - it: mounts the same shared grants.sql ConfigMap for every instance
+    set:
+      setupJob.enabled: true
+    asserts:
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: setup
+            configMap:
+              name: my-release-mssql-otel-setup
+        documentIndex: 0
+      - contains:
+          path: spec.template.spec.volumes
+          content:
+            name: setup
+            configMap:
+              name: my-release-mssql-otel-setup
+        documentIndex: 1

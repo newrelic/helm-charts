@@ -1,4 +1,4 @@
-{{- if .Values.setupJob.enabled }}
+{{- if and .Values.setupJob.enabled (not .Values.mysqlMulti.enabled) }}
 {{- include "mysql-otel.validate.setupJob" . -}}
 apiVersion: batch/v1
 kind: Job

@@ -1,5 +1,9 @@
 {{- if .Values.setupJob.enabled }}
+{{- if .Values.mssqlMulti.enabled -}}
+{{- include "mssql-otel.validate.mssqlMulti" . -}}
+{{- else -}}
 {{- include "mssql-otel.validate.setupJob" . -}}
+{{- end -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:

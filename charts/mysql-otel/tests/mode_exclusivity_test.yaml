@@ -1,0 +1,51 @@
+suite: single/multi mode exclusivity
+templates:
+  - templates/deployment.yaml
+  - templates/configmap.yaml
+  - templates/secret.yaml
+  - templates/setup-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: renders no single-instance resources when mysqlMulti.enabled is true
+    set:
+      mysqlMulti.enabled: true
+      mysqlMulti.topology: "self-hosted"
+      mysqlMulti.databases:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+      setupJob.enabled: true
+      setupJob.mysqlAdmin.existingSecret: "admin-secret"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/secret.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/setup-job.yaml
+  - it: still renders single-instance resources when mysqlMulti.enabled is false (default)
+    set:
+      mysql.server: "mysql.example.internal"
+      mysql.topology: "self-hosted"
+      mysql.username: "u"
+      mysql.password: "p"
+      otlpEndpoint: "otlp.nr-data.net:4317"
+      licenseKey: "testlicensekey"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/secret.yaml

@@ -1,0 +1,18 @@
+oracleMulti:
+  enabled: true
+  topology: "rds"
+  databases:
+    - name: db1
+      endpoint: "oracle-db-1.example.internal:1521"
+      service: "TESTPDB1"
+      existingSecret: "oracle-otel-db1-creds"
+    - name: db2
+      endpoint: "oracle-db-2.example.internal:1521"
+      service: "TESTPDB2"
+      existingSecret: "oracle-otel-db2-creds"
+
+otlpEndpoint: "otlp.nr-data.net:4317"
+licenseKey: "0000000000000000000000000000000000000000"
+
+setupJob:
+  enabled: false

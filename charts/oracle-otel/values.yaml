@@ -1,6 +1,6 @@
 image:
   repository: newrelic/nrdot-collector
-  tag: "2.4.0"
+  tag: "2.7.3"
   pullPolicy: IfNotPresent
 
 nameOverride: ""
@@ -9,6 +9,8 @@ fullnameOverride: ""
 oracle:
   # -- Required. One of: cdb, pdb, rds, adb. Selects the nroracledb receiver's default metrics/events for config.yaml, and (when setupJob.enabled) which grant script runs.
   topology: ""
+  # -- One of: basic, advanced. basic = the 30 core metrics for the topology; advanced = New Relic's full Oracle metric catalog (135 for cdb/pdb, 130 for rds/adb). Receiver config only -- the setup job is unaffected.
+  configProfile: basic
   # -- Required. host:port of the Oracle listener.
   endpoint: ""
   # -- Required. CDB/PDB service name, or the RDS DB name.
@@ -20,9 +22,23 @@ oracle:
   # -- Name of a pre-existing Secret with keys `username` and `password`. Wins over the plain values above if set.
   existingSecret: ""
   # -- How often the receiver scrapes Oracle.
-  collectionInterval: 10s
+  collectionInterval: 15s
 
-# -- Required. New Relic OTLP endpoint for the account's region, e.g. otlp.nr-data.net:4317
+oracleMulti:
+  # -- Enables multi-instance mode: one release monitors every entry in oracleMulti.databases from a single collector pod.
+  # Mutually exclusive with the oracle.* single-instance block above -- do not set oracle.endpoint when this is true.
+  enabled: false
+  # -- Required when enabled. One of: cdb, pdb, rds, adb. Applies to every entry in oracleMulti.databases -- a release cannot mix topologies.
+  topology: ""
+  # -- One of: basic, advanced. Applies to every entry in oracleMulti.databases. See oracle.configProfile.
+  configProfile: basic
+  # -- Default scrape interval for every entry. Override per-entry via databases[].collectionInterval.
+  collectionInterval: 15s
+  # -- List of Oracle/RDS instances to monitor from this one release. Each entry requires: name (unique), endpoint, service, existingSecret.
+  # oracleAdmin.existingSecret is required per entry only when setupJob.enabled is true.
+  databases: []
+
+# -- Required. New Relic OTLP/gRPC endpoint for the account's region, bare host:port with NO scheme, e.g. otlp.nr-data.net:4317
 otlpEndpoint: ""
 
 # -- Plain-value New Relic license key. Can also be set as global.licenseKey.

@@ -23,8 +23,7 @@ BEGIN
   rdsadmin.rdsadmin_util.grant_sys_object('V_$OSSTAT', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('V_$SGAINFO', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('V_$SQL', UPPER('&monitor_user'), 'SELECT', FALSE);
-  rdsadmin.rdsadmin_util.grant_sys_object('V_$SQLSTATS', UPPER('&monitor_user'), 'SELECT', FALSE);
-  rdsadmin.rdsadmin_util.grant_sys_object('V_$SQL_PLAN', UPPER('&monitor_user'), 'SELECT', FALSE);
+  rdsadmin.rdsadmin_util.grant_sys_object('V_$SQL_PLAN_STATISTICS_ALL', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('V_$PARAMETER', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('V_$ROWCACHE', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('V_$RESOURCE_LIMIT', UPPER('&monitor_user'), 'SELECT', FALSE);
@@ -43,6 +42,8 @@ BEGIN
   rdsadmin.rdsadmin_util.grant_sys_object('CDB_TABLESPACE_USAGE_METRICS', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('CDB_TABLESPACES', UPPER('&monitor_user'), 'SELECT', FALSE);
   rdsadmin.rdsadmin_util.grant_sys_object('CDB_SERVICES', UPPER('&monitor_user'), 'SELECT', FALSE);
+  rdsadmin.rdsadmin_util.grant_sys_object('V_$PROCESS', UPPER('&monitor_user'), 'SELECT', FALSE);
+  rdsadmin.rdsadmin_util.grant_sys_object('V_$TRANSACTION', UPPER('&monitor_user'), 'SELECT', FALSE);
 END;
 /
 EXIT;

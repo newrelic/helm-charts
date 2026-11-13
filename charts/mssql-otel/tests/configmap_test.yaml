@@ -78,6 +78,9 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "api-key: \\$\\{env:NEW_RELIC_LICENSE_KEY\\}"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "sending_queue:\\s*\\n\\s*enabled: true\\s*\\n\\s*sizer: bytes\\s*\\n\\s*queue_size: 100_000_000\\s*\\n\\s*num_consumers: 10\\s*\\n\\s*batch:\\s*\\n\\s*sizer: bytes\\s*\\n\\s*max_size: 1_000_000\\s*\\n\\s*min_size: 0\\s*\\n\\s*flush_timeout: 5s"
   - it: wires the metrics and logs pipelines to the receiver, processors, and exporter
     asserts:
       - matchRegex:
@@ -88,7 +91,7 @@ tests:
           pattern: "exporters:\\s*\\[otlp\\]"
       - matchRegex:
           path: data["config.yaml"]
-          pattern: "processors:\\s*\\[memory_limiter, batch\\]"
+          pattern: "processors:\\s*\\[memory_limiter\\]"
   - it: renders the standard-configuration metrics/events defaults
     asserts:
       - matchRegex:
@@ -106,6 +109,25 @@ tests:
       - matchRegex:
           path: data["config.yaml"]
           pattern: "nr_service_guid"
+  - it: renders events in query_sample/top_query/query_plan/top_procedure order, and top_query_collection/query_sample_collection with nested collect_full_query_text and allowed_comment_keys
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "events:\\s*\\n\\s*db\\.server\\.query_sample:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.top_query:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.query_plan:\\s*\\n\\s*enabled: true\\s*\\n\\s*db\\.server\\.top_procedure:\\s*\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "top_query_collection:\\s*\\n\\s*lookback_time: 60s\\s*\\n\\s*max_query_sample_count: 1000\\s*\\n\\s*top_query_count: 250\\s*\\n\\s*collection_interval: 60s\\s*\\n\\s*collect_full_query_text: true\\s*\\n\\s*allowed_comment_keys:\\s*\\n\\s*- nr_service_guid"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "query_sample_collection:\\s*\\n\\s*max_rows_per_query: 100\\s*\\n\\s*collect_full_query_text: true\\s*\\n\\s*allowed_comment_keys:\\s*\\n\\s*- nr_service_guid"
+  - it: renders top_procedure_collection and resource_attributes
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "top_procedure_collection:\\s*\\n\\s*max_procedure_sample_count: 1000\\s*\\n\\s*top_procedure_count: 250\\s*\\n\\s*collection_interval: 60s"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "resource_attributes:\\s*\\n\\s*db\\.system\\.version:\\s*\\n\\s*enabled: true\\s*\\n\\s*sqlserver\\.db\\.edition:\\s*\\n\\s*enabled: true"
   - it: same topology renders identically for self-hosted and rds
     set:
       mssql.topology: "rds"

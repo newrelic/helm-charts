@@ -54,6 +54,12 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end -}}
 {{- end -}}
 
+{{- define "mssql-otel.validate.configProfile" -}}
+{{- if not (has .value (list "basic" "advanced")) -}}
+{{- fail (printf "%s must be one of: basic, advanced" .key) -}}
+{{- end -}}
+{{- end -}}
+
 {{/*
 This chart's exporter is named `otlp` to match New Relic's doc example
 verbatim, but that doc example pairs `otlp:` (the real OTel Collector gRPC
@@ -80,11 +86,447 @@ telemetry export in this configuration is unconfirmed/likely broken. See README.
 {{- end -}}
 {{- end -}}
 
+{{- define "mssql-otel.multi.envVarSuffix" -}}
+{{- regexReplaceAll "[^A-Za-z0-9]" (upper .) "_" -}}
+{{- end -}}
+
+{{/*
+Validates .Values.mssqlMulti when mssqlMulti.enabled is true: topology, non-empty databases list, each entry's
+required fields (name/server/existingSecret, plus sqlAdmin.existingSecret when setupJob.enabled), unique names,
+unique env-var suffixes, and no accidental mixing with the single-instance mssql.server.
+*/}}
+{{- define "mssql-otel.validate.mssqlMulti" -}}
+{{- include "mssql-otel.validate.configProfile" (dict "key" "mssqlMulti.configProfile" "value" .Values.mssqlMulti.configProfile) -}}
+{{- if not (has .Values.mssqlMulti.topology (list "self-hosted" "rds")) -}}
+{{- fail "mssqlMulti.topology must be one of: self-hosted, rds" -}}
+{{- end -}}
+{{- if not .Values.mssqlMulti.databases -}}
+{{- fail "mssqlMulti.databases must contain at least one entry when mssqlMulti.enabled is true" -}}
+{{- end -}}
+{{- if .Values.mssql.server -}}
+{{- fail "mssqlMulti.enabled and mssql.server are mutually exclusive -- use one mode or the other in a single release" -}}
+{{- end -}}
+{{- $seenNames := dict -}}
+{{- $seenSuffixes := dict -}}
+{{- range $i, $db := .Values.mssqlMulti.databases -}}
+{{- if not $db.name -}}
+{{- fail (printf "mssqlMulti.databases[%d].name is required" $i) -}}
+{{- end -}}
+{{- if not $db.server -}}
+{{- fail (printf "mssqlMulti.databases[%d].server is required" $i) -}}
+{{- end -}}
+{{- if not $db.existingSecret -}}
+{{- fail (printf "mssqlMulti.databases[%d].existingSecret is required" $i) -}}
+{{- end -}}
+{{- if $.Values.setupJob.enabled -}}
+{{- $admin := $db.sqlAdmin | default dict -}}
+{{- if not $admin.existingSecret -}}
+{{- fail (printf "mssqlMulti.databases[%d].sqlAdmin.existingSecret is required when setupJob.enabled is true" $i) -}}
+{{- end -}}
+{{- end -}}
+{{- if hasKey $seenNames $db.name -}}
+{{- fail (printf "mssqlMulti.databases[%d].name %q duplicates an earlier entry's name" $i $db.name) -}}
+{{- end -}}
+{{- $seenNames = set $seenNames $db.name true -}}
+{{- $suffix := include "mssql-otel.multi.envVarSuffix" $db.name -}}
+{{- if hasKey $seenSuffixes $suffix -}}
+{{- fail (printf "mssqlMulti.databases[%d].name %q collides with another entry's name after env-var sanitization (%q) -- choose more distinct names" $i $db.name $suffix) -}}
+{{- end -}}
+{{- $seenSuffixes = set $seenSuffixes $suffix true -}}
+{{- end -}}
+{{- end -}}
+
+{{/*
+Fixed scrape-behavior defaults for every mssqlMulti entry -- same values as the single-instance mssql: block's
+own defaults, but not user-configurable in multi-instance mode (matches oracle-otel/mysql-otel/postgresql-otel's
+pattern of hardcoded shared defaults rather than per-field values.yaml knobs). additionalReceiverConfig remains
+the one escape hatch for overriding any of this.
+
+*/}}
+{{- define "mssql-otel.multi.receiverDefaults" -}}
+collection_interval: 15s
+metrics:
+  sqlserver.database.count:
+    enabled: true
+  sqlserver.database.io:
+    enabled: true
+  sqlserver.database.latency:
+    enabled: true
+  sqlserver.database.operations:
+    enabled: true
+  sqlserver.database.tempdb.space:
+    enabled: true
+  sqlserver.database.tempdb.version_store.size:
+    enabled: true
+  sqlserver.deadlock.rate:
+    enabled: true
+  sqlserver.os.wait.duration:
+    enabled: true
+  sqlserver.processes.blocked:
+    enabled: true
+  sqlserver.memory.grants.pending.count:
+    enabled: true
+  sqlserver.database.file.size:
+    enabled: true
+  sqlserver.memory.area:
+    enabled: true
+events:
+  db.server.query_sample:
+    enabled: true
+  db.server.top_query:
+    enabled: true
+  db.server.query_plan:
+    enabled: true
+  db.server.top_procedure:
+    enabled: true
+top_query_collection:
+  lookback_time: 60s
+  max_query_sample_count: 1000
+  top_query_count: 250
+  collection_interval: 60s
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
+query_sample_collection:
+  max_rows_per_query: 100
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
+top_procedure_collection:
+  max_procedure_sample_count: 1000
+  top_procedure_count: 250
+  collection_interval: 60s
+resource_attributes:
+  db.system.version:
+    enabled: true
+  sqlserver.db.edition:
+    enabled: true
+{{- end -}}
+
+{{/*
+Renders one receiver's field block in the same order as the single-instance configmap.yaml: collection_interval/
+username/password/server/port, metrics, events, top_query_collection, query_sample_collection,
+top_procedure_collection, resource_attributes, falling back to alphabetical order for any other field.
+Deliberately uses the same unquoted toYaml rendering as the single-instance chart for scalar fields (including
+username/password/server) rather than forcing `| quote`, to match this chart's own existing style exactly.
+Caller emits the `      <receiverKey>:` line itself and invokes this with `{{- include ... }}` immediately
+after it.
+
+Args (single dict): .receiver -- the merged receiver config dict.
+*/}}
+{{- define "mssql-otel.renderReceiver" -}}
+{{- $receiver := .receiver -}}
+{{- $orderedKeys := list "collection_interval" "username" "password" "server" "port" "metrics" "events" "top_query_collection" "query_sample_collection" "top_procedure_collection" "resource_attributes" -}}
+{{- $metricsOrder := list "sqlserver.database.count" "sqlserver.database.io" "sqlserver.database.latency" "sqlserver.database.operations" "sqlserver.database.tempdb.space" "sqlserver.database.tempdb.version_store.size" "sqlserver.deadlock.rate" "sqlserver.os.wait.duration" "sqlserver.processes.blocked" "sqlserver.memory.grants.pending.count" "sqlserver.database.file.size" "sqlserver.memory.area" -}}
+{{- $eventsOrder := list "db.server.query_sample" "db.server.top_query" "db.server.query_plan" "db.server.top_procedure" -}}
+{{- $topQueryOrder := list "lookback_time" "max_query_sample_count" "top_query_count" "collection_interval" "collect_full_query_text" "allowed_comment_keys" -}}
+{{- $querySampleOrder := list "max_rows_per_query" "collect_full_query_text" "allowed_comment_keys" -}}
+{{- $topProcedureOrder := list "max_procedure_sample_count" "top_procedure_count" "collection_interval" -}}
+{{- $emitted := list -}}
+{{- range $key := $orderedKeys }}
+{{- if hasKey $receiver $key }}
+{{- if eq $key "metrics" }}
+        metrics:
+{{- $mval := index $receiver $key }}
+{{- $memitted := list }}
+{{- range $mkey := $metricsOrder }}
+{{- if hasKey $mval $mkey }}
+{{ toYaml (dict $mkey (index $mval $mkey)) | indent 10 }}
+{{- $memitted = append $memitted $mkey }}
+{{- end }}
+{{- end }}
+{{- range $mkey := (keys $mval | sortAlpha) }}
+{{- if not (has $mkey $memitted) }}
+{{ toYaml (dict $mkey (index $mval $mkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "events" }}
+        events:
+{{- $eval := index $receiver $key }}
+{{- $eemitted := list }}
+{{- range $ekey := $eventsOrder }}
+{{- if hasKey $eval $ekey }}
+{{ toYaml (dict $ekey (index $eval $ekey)) | indent 10 }}
+{{- $eemitted = append $eemitted $ekey }}
+{{- end }}
+{{- end }}
+{{- range $ekey := (keys $eval | sortAlpha) }}
+{{- if not (has $ekey $eemitted) }}
+{{ toYaml (dict $ekey (index $eval $ekey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "top_query_collection" }}
+        top_query_collection:
+{{- $tval := index $receiver $key }}
+{{- $temitted := list }}
+{{- range $tkey := $topQueryOrder }}
+{{- if hasKey $tval $tkey }}
+{{- if eq $tkey "allowed_comment_keys" }}
+          allowed_comment_keys:
+{{- range $item := (index $tval $tkey) }}
+            - {{ $item }}
+{{- end }}
+{{- else }}
+{{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- end }}
+{{- $temitted = append $temitted $tkey }}
+{{- end }}
+{{- end }}
+{{- range $tkey := (keys $tval | sortAlpha) }}
+{{- if not (has $tkey $temitted) }}
+{{ toYaml (dict $tkey (index $tval $tkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "query_sample_collection" }}
+        query_sample_collection:
+{{- $qval := index $receiver $key }}
+{{- $qemitted := list }}
+{{- range $qkey := $querySampleOrder }}
+{{- if hasKey $qval $qkey }}
+{{- if eq $qkey "allowed_comment_keys" }}
+          allowed_comment_keys:
+{{- range $item := (index $qval $qkey) }}
+            - {{ $item }}
+{{- end }}
+{{- else }}
+{{ toYaml (dict $qkey (index $qval $qkey)) | indent 10 }}
+{{- end }}
+{{- $qemitted = append $qemitted $qkey }}
+{{- end }}
+{{- end }}
+{{- range $qkey := (keys $qval | sortAlpha) }}
+{{- if not (has $qkey $qemitted) }}
+{{ toYaml (dict $qkey (index $qval $qkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else if eq $key "top_procedure_collection" }}
+        top_procedure_collection:
+{{- $pval := index $receiver $key }}
+{{- $pemitted := list }}
+{{- range $pkey := $topProcedureOrder }}
+{{- if hasKey $pval $pkey }}
+{{ toYaml (dict $pkey (index $pval $pkey)) | indent 10 }}
+{{- $pemitted = append $pemitted $pkey }}
+{{- end }}
+{{- end }}
+{{- range $pkey := (keys $pval | sortAlpha) }}
+{{- if not (has $pkey $pemitted) }}
+{{ toYaml (dict $pkey (index $pval $pkey)) | indent 10 }}
+{{- end }}
+{{- end }}
+{{- else }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- $emitted = append $emitted $key }}
+{{- end }}
+{{- end }}
+{{- range $key := (keys $receiver | sortAlpha) }}
+{{- if not (has $key $emitted) }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Renders just the fields that vary between multi-instance database entries when 2+ entries share one receiver's
+scrape-behavior block via a `<<: *nrsqlserver-common` merge key (see configmap-multi.yaml): username/password/
+server/port. Deliberately does not touch collection_interval/metrics/events/top_query_collection/
+query_sample_collection/top_procedure_collection/resource_attributes, since those are inherited via the merge
+key rather than repeated per entry. Same unquoted toYaml rendering as renderReceiver, for consistency.
+
+Args (single dict): .receiver -- the entry's override-only dict (username/password/server/port)
+*/}}
+{{- define "mssql-otel.renderReceiverOverride" -}}
+{{- $receiver := .receiver -}}
+{{- $orderedKeys := list "username" "password" "server" "port" -}}
+{{- range $key := $orderedKeys }}
+{{- if hasKey $receiver $key }}
+{{ toYaml (dict $key (index $receiver $key)) | indent 8 }}
+{{- end }}
+{{- end }}
+{{- end -}}
+
+{{/*
+Advanced profile metrics: New Relic's full SQL Server metric catalog, from
+https://docs.newrelic.com/docs/opentelemetry/db360/mssql/config-reference/ -- keep in sync with it.
+Merged over the basic defaults, so it replaces (never removes) the basic metrics. The common set (70
+metrics) applies to every topology; the self-hosted set below is added for self-hosted only.
+*/}}
+{{- define "mssql-otel.receiver.advancedCommonMetrics" -}}
+metrics:
+  # Database
+  sqlserver.database.count:
+    enabled: true
+  sqlserver.database.file.size:
+    enabled: true
+  sqlserver.database.io:
+    enabled: true
+  sqlserver.database.latency:
+    enabled: true
+  sqlserver.database.operations:
+    enabled: true
+  sqlserver.database.transactions.active:
+    enabled: true
+  sqlserver.database.backup_or_restore.rate:
+    enabled: true
+  sqlserver.database.full_scan.rate:
+    enabled: true
+  sqlserver.database.tempdb.space:
+    enabled: true
+  sqlserver.database.tempdb.version_store.size:
+    enabled: true
+  # Locks
+  sqlserver.lock.timeout.rate:
+    enabled: true
+  sqlserver.lock.wait.count:
+    enabled: true
+  sqlserver.deadlock.rate:
+    enabled: true
+  # Transactions
+  sqlserver.transaction.delay:
+    enabled: true
+  sqlserver.transaction.longest_running_time:
+    enabled: true
+  sqlserver.transaction.version_cleanup.rate:
+    enabled: true
+  sqlserver.transaction.version_generation.rate:
+    enabled: true
+  # Memory
+  sqlserver.memory.area:
+    enabled: true
+  sqlserver.memory.cache.object.count:
+    enabled: true
+  sqlserver.memory.grants.pending.count:
+    enabled: true
+  sqlserver.memory.page.count:
+    enabled: true
+  sqlserver.memory.usage:
+    enabled: true
+  # OS
+  sqlserver.os.memory.usage:
+    enabled: true
+  sqlserver.os.memory.utilization:
+    enabled: true
+  sqlserver.os.scheduler.runnable_tasks.count:
+    enabled: true
+  sqlserver.os.wait.duration:
+    enabled: true
+  sqlserver.os.wait.tasks.count:
+    enabled: true
+  # Pages / Buffer
+  sqlserver.page.buffer_cache.free_list.stalls.rate:
+    enabled: true
+  sqlserver.page.lookup.rate:
+    enabled: true
+  # Batch / Compilation
+  sqlserver.batch.compilation.utilization:
+    enabled: true
+  sqlserver.batch.page_split.utilization:
+    enabled: true
+  sqlserver.recompilation.ratio:
+    enabled: true
+  sqlserver.parameterization.rate:
+    enabled: true
+  sqlserver.plan.execution.rate:
+    enabled: true
+  sqlserver.attention.rate:
+    enabled: true
+  # Processes / Connections
+  sqlserver.process.count:
+    enabled: true
+  sqlserver.processes.blocked:
+    enabled: true
+  sqlserver.login.rate:
+    enabled: true
+  sqlserver.logout.rate:
+    enabled: true
+  # Thread Pool
+  sqlserver.thread_pool.tasks.count:
+    enabled: true
+  sqlserver.thread_pool.workers.count:
+    enabled: true
+  sqlserver.thread_pool.workers.max:
+    enabled: true
+  sqlserver.thread_pool.workers.utilization:
+    enabled: true
+  # TempDB
+  sqlserver.tempdb.allocation.wait_time.total:
+    enabled: true
+  sqlserver.tempdb.contention.waiters.count:
+    enabled: true
+  sqlserver.tempdb.data_files.count:
+    enabled: true
+  sqlserver.tempdb.file.size:
+    enabled: true
+  sqlserver.tempdb.space.usage:
+    enabled: true
+  # Latch
+  sqlserver.latch.superlatch.count:
+    enabled: true
+  sqlserver.latch.superlatch.transition.rate:
+    enabled: true
+  sqlserver.latch.wait.rate:
+    enabled: true
+  sqlserver.latch.wait_time.avg:
+    enabled: true
+  sqlserver.latch.wait_time.total:
+    enabled: true
+  # Index
+  sqlserver.index.search.rate:
+    enabled: true
+  # Resource Pool
+  sqlserver.resource_pool.disk.operations:
+    enabled: true
+  sqlserver.resource_pool.disk.throttled.read.rate:
+    enabled: true
+  sqlserver.resource_pool.disk.throttled.write.rate:
+    enabled: true
+  # Replica / Always-On
+  sqlserver.replica.data.rate:
+    enabled: true
+  sqlserver.failover_cluster.ag.cluster_type:
+    enabled: true
+  sqlserver.failover_cluster.ag.failure_condition_level:
+    enabled: true
+  sqlserver.failover_cluster.ag.health_check_timeout:
+    enabled: true
+  sqlserver.failover_cluster.ag.required_sync_secondaries:
+    enabled: true
+  sqlserver.failover_cluster.replica.database.queue_size:
+    enabled: true
+  sqlserver.failover_cluster.replica.database.redo.rate:
+    enabled: true
+  sqlserver.failover_cluster.replica.flow_control_time:
+    enabled: true
+  sqlserver.failover_cluster.replica.role:
+    enabled: true
+  sqlserver.failover_cluster.replica.synchronization_health:
+    enabled: true
+  # Server Properties
+  sqlserver.computer.uptime:
+    enabled: true
+  sqlserver.cpu.count:
+    enabled: true
+  # Tables
+  sqlserver.table.count:
+    enabled: true
+{{- end -}}
+
+{{/* Advanced profile metric that New Relic's doc includes for self-hosted but not rds. */}}
+{{- define "mssql-otel.receiver.advancedSelfHostedMetrics" -}}
+metrics:
+  sqlserver.database.execution.errors:
+    enabled: true
+{{- end -}}
+
 {{/*
 metrics + events + collection tuning for the nrsqlserver receiver's "Standard configuration".
-Verbatim from New Relic's otel-mssql docs. Needs ct install verification against the real
-collector schema before this is trusted -- see the design spec's schema-drift lesson from
-oracle-otel's resource_attributes/oracle.db.pdb failure.
+Verbatim from New Relic's otel-mssql docs, duplicated from mssql-otel.multi.receiverDefaults for the
+single-instance path -- keep both in sync. See the KNOWN ISSUE note on mssql-otel.multi.receiverDefaults
+above for exactly which keys here are unverified against nrsqlserverreceiver v0.158.3 (events.db.server.
+query_plan/top_procedure, top_procedure_collection, resource_attributes.db.system.version/sqlserver.db.
+edition, and collect_full_query_text/allowed_comment_keys nested under top_query_collection/
+query_sample_collection instead of top-level).
 */}}
 {{- define "mssql-otel.receiver.defaults" -}}
 metrics:
@@ -117,14 +559,30 @@ events:
     enabled: true
   db.server.top_query:
     enabled: true
+  db.server.query_plan:
+    enabled: true
+  db.server.top_procedure:
+    enabled: true
 top_query_collection:
   lookback_time: 60s
   max_query_sample_count: 1000
   top_query_count: 250
   collection_interval: 60s
-collect_full_query_text: true
-allowed_comment_keys:
-  - nr_service_guid
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
 query_sample_collection:
   max_rows_per_query: 100
+  collect_full_query_text: true
+  allowed_comment_keys:
+    - nr_service_guid
+top_procedure_collection:
+  max_procedure_sample_count: 1000
+  top_procedure_count: 250
+  collection_interval: 60s
+resource_attributes:
+  db.system.version:
+    enabled: true
+  sqlserver.db.edition:
+    enabled: true
 {{- end -}}

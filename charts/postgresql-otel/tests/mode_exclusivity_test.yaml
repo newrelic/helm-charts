@@ -1,0 +1,55 @@
+suite: single/multi mode exclusivity
+templates:
+  - templates/deployment.yaml
+  - templates/configmap.yaml
+  - templates/secret.yaml
+  - templates/setup-job.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+tests:
+  - it: renders no single-instance resources when postgresqlMulti.enabled is true
+    set:
+      postgresqlMulti.enabled: true
+      postgresqlMulti.topology: "self-hosted"
+      postgresqlMulti.instances:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+          databases: ["appdb"]
+      setupJob.enabled: true
+      setupJob.postgresAdmin.existingSecret: "admin-secret"
+      setupJob.image.repository: "postgres"
+      setupJob.image.tag: "16"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/secret.yaml
+      - hasDocuments:
+          count: 0
+        template: templates/setup-job.yaml
+  - it: still renders single-instance resources when postgresqlMulti.enabled is false (default)
+    set:
+      postgresql.server: "postgresql.example.internal"
+      postgresql.topology: "self-hosted"
+      postgresql.username: "u"
+      postgresql.password: "p"
+      postgresql.databases: ["appdb"]
+      otlpEndpoint: "otlp.nr-data.net:4317"
+      licenseKey: "testlicensekey"
+    asserts:
+      - hasDocuments:
+          count: 1
+        template: templates/deployment.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/configmap.yaml
+      - hasDocuments:
+          count: 1
+        template: templates/secret.yaml

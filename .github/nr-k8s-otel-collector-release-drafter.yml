@@ -1,0 +1,41 @@
+# Release Drafter configuration
+tag-prefix: 'nr-k8s-otel-collector-'
+categories:
+  - type: 'pre-include'
+    when:
+      - label: 'nr-k8s-otel-collector'
+  - type: 'pre-exclude'
+    when:
+      - labels:
+          - 'skip-changelog'
+  - title: '💥 Breaking Changes'
+    semver-increment: major
+    when:
+      - labels:
+          - 'type/breaking'
+  - title: '🚀 Features'
+    semver-increment: minor
+    when:
+      - labels:
+          - 'type/feature'
+  - title: '🐛 Bug Fixes'
+    when:
+      - labels:
+          - 'type/fix'
+  - title: '🧰 Maintenance'
+    when:
+      - labels:
+          - 'type/maintenance'
+
+change-template: '- $TITLE (#$NUMBER) $AUTHORS'
+change-title-escapes: '\<*_&'
+replacers:
+  # Remove conventional commit prefix
+  - search: '/^- [a-zA-Z]+(\([a-zA-Z]+\))?!?:\s*/gm'
+    replace: '- '
+  # Uppercase the first letter of each changelog entry
+  - search: '/- ([a-z])/g'
+    replace: '- \u$1'
+
+template: |
+  $CHANGES

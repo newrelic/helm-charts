@@ -1,0 +1,78 @@
+suite: setup job resource (oracleMulti)
+templates:
+  - templates/setup-job-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  oracleMulti.enabled: true
+  oracleMulti.topology: "rds"
+  oracleMulti.databases:
+    - name: db1
+      endpoint: "host1:1521"
+      service: "ORCL1"
+      existingSecret: "db1-creds"
+      oracleAdmin:
+        existingSecret: "db1-admin"
+    - name: db2
+      endpoint: "host2:1521"
+      service: "ORCL2"
+      existingSecret: "db2-creds"
+      oracleAdmin:
+        existingSecret: "db2-admin"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  setupJob.image.repository: "container-registry.oracle.com/database/instantclient"
+  setupJob.image.tag: "21.13"
+tests:
+  - it: renders nothing when setupJob.enabled is false
+    set:
+      setupJob.enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
+  - it: renders one Job per database entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - hasDocuments:
+          count: 2
+  - it: names each Job after its database entry
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: metadata.name
+          value: my-release-oracle-otel-setup-db1
+        documentIndex: 0
+      - equal:
+          path: metadata.name
+          value: my-release-oracle-otel-setup-db2
+        documentIndex: 1
+  - it: wires each Job's admin and monitoring credentials from that entry's own secrets
+    set:
+      setupJob.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db1-admin
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db1-creds
+        documentIndex: 0
+      - equal:
+          path: spec.template.spec.containers[0].env[0].valueFrom.secretKeyRef.name
+          value: db2-admin
+        documentIndex: 1
+      - equal:
+          path: spec.template.spec.containers[0].env[2].valueFrom.secretKeyRef.name
+          value: db2-creds
+        documentIndex: 1
+  - it: does not connect AS SYSDBA for rds topology
+    set:
+      setupJob.enabled: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: "CONNECT \\$\\{ORACLE_ADMIN_USERNAME\\}/\\$\\{ORACLE_ADMIN_PASSWORD\\}@\\$\\{ORACLE_ENDPOINT\\}/\\$\\{ORACLE_SERVICE\\}\\n"
+        documentIndex: 0
