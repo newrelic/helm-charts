@@ -20,6 +20,11 @@ customOtlpEndpointTlsCertSecret: ""
 # -- Key within the secret that contains the CA certificate.
 # Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecret.
 customOtlpEndpointTlsCertSecretKey: ""
+# -- Endpoint for agent/entity metadata reporting. If empty, resolves from region, independently of otlpEndpoint.
+metadataEndpoint: ""
+# -- CA cert for the metadata endpoint's own TLS. Independent of
+# customOtlpEndpointTlsCertPath; if empty, uses the embedded bundle.
+metadataTlsCertPath: ""
 # -- HTTP/HTTPS proxy configuration for OTLP endpoint.
 # Allows routing telemetry data through corporate proxies.
 otlpProxy:
@@ -40,6 +45,23 @@ otlpProxy:
   # -- Name of existing Kubernetes secret containing proxy credentials.
   # Secret must contain keys: 'proxy-user' and 'proxy-password'.
   existingSecret: ""
+# -- HTTP/HTTPS proxy for agent/entity metadata reporting.
+# Independent of otlpProxy: use when metadata and OTLP telemetry must route through different proxies.
+# Falls back to HTTP_PROXY/HTTPS_PROXY when unset (never inherits from otlpProxy).
+metadataProxy:
+  # -- Proxy hostname (e.g., proxy.example.com). If empty, no metadata-specific proxy is used.
+  host: ""
+  # -- Proxy port. Required when host is set.
+  port: ""
+  # -- Proxy URL scheme: http or https (default: http)
+  scheme: "http"
+  # -- Username for proxy Basic Authentication (optional).
+  user: ""
+  # -- Password for proxy Basic Authentication (optional).
+  password: ""
+  # -- Alternative: Complete proxy URL (overrides individual settings above).
+  # Format: http://[user:pass@]host:port
+  url: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: ""
@@ -384,8 +406,8 @@ nrdotCollector:
     registry: ""
     # -- kubectl image repository (must include `yq`).
     repository: bitnami/kubectl
-    # -- kubectl image tag.
-    tag: "latest"
+    # -- kubectl image tag. Pinned to avoid breakage from mutable latest tag.
+    tag: "1.33.0"
     # -- Image pull policy. Overrides `global.images.pullPolicy`.
     pullPolicy: ""
   # -- Metric collection / scrape interval.
