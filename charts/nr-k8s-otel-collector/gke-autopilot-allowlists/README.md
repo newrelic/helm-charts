@@ -15,9 +15,8 @@ and asserts the metrics that variant should produce. Not wired into CI. The CI e
 | node | `../e2e/e2e-values-gke-autopilot-node.yml` (`+ daemonset.hostPID/hostNetwork: true`) | `newrelic-nr-k8s-otel-collector-hostnet-on` | node `system.network.*` + partial `process.cpu.time` |
 
 The node variant is scenario 4 (`node`). It sets the daemonset `hostPID`/`hostNetwork` flags from
-PR #2403 (`otel/daemonset-host-namespaces`) and uses the `newrelic-nr-k8s-otel-collector-hostnet-on`
-CR. It only passes once PR #2403 is merged: without those flags the chart renders `hostNetwork:false`,
-which Warden exact-matches and denies under the node CR. Live-verified on GKE Autopilot 2026-09-09
+PR #2403 (merged) and uses the `newrelic-nr-k8s-otel-collector-hostnet-on` CR. Without those flags the
+chart renders `hostNetwork:false`, which Warden exact-matches and denies under the node CR. Live-verified on GKE Autopilot 2026-09-09
 (daemonset pods admitted on the node network, `system.network.*` re-scoped to the node, 30 host
 interfaces incl. `cilium_*`/`lxc*`).
 
@@ -51,3 +50,6 @@ kube-context or any identity.
   Assertions use `filter(...)` so the e2e-action's appended cluster filter is the only `WHERE`.
 - Managed control-plane metrics (apiserver/scheduler/etcd) are not collected on Autopilot, as expected.
 - To validate your own collector build, push it and set `COLLECTOR_REGISTRY`/`COLLECTOR_TAG` in `.env`.
+  The approved CRs pin the images to `^(docker\.io/)?newrelic/nrdot-collector$` and
+  `^(docker\.io/)?bitnami/kubectl$`, so an image from any other registry is denied by Warden unless you
+  loosen the `image` regex in a local copy of the CR.
