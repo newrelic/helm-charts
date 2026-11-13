@@ -40,6 +40,23 @@ otlpProxy:
   # -- Name of existing Kubernetes secret containing proxy credentials.
   # Secret must contain keys: 'proxy-user' and 'proxy-password'.
   existingSecret: ""
+# -- HTTP/HTTPS proxy for agent/entity metadata reporting.
+# Independent of otlpProxy: use when metadata and OTLP telemetry must route through different proxies.
+# Falls back to HTTP_PROXY/HTTPS_PROXY when unset (never inherits from otlpProxy).
+metadataProxy:
+  # -- Proxy hostname (e.g., proxy.example.com). If empty, no metadata-specific proxy is used.
+  host: ""
+  # -- Proxy port. Required when host is set.
+  port: ""
+  # -- Proxy URL scheme: http or https (default: http)
+  scheme: "http"
+  # -- Username for proxy Basic Authentication (optional).
+  user: ""
+  # -- Password for proxy Basic Authentication (optional).
+  password: ""
+  # -- Alternative: Complete proxy URL (overrides individual settings above).
+  # Format: http://[user:pass@]host:port
+  url: ""
 # -- To configure the log level in increasing order of verboseness.
 # -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
 logLevel: ""

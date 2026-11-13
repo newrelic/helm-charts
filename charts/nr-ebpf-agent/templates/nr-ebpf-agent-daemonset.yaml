@@ -117,6 +117,16 @@ spec:
           - name: OTLP_ENDPOINT
             value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
           {{- end }}
+          {{- /* METADATA_ENDPOINT is independent of OTLP_ENDPOINT (PR #1303). Set it from the
+               region-based NR endpoint when no customOtlpEndpoint is in use -- that covers US,
+               EU, JP, GOV. When customOtlpEndpoint is set the agent falls back to its US default;
+               override via ebpfAgent.env.METADATA_ENDPOINT if needed. */}}
+          {{- if not (hasKey $agentEnv "METADATA_ENDPOINT") }}
+          {{- if not .Values.customOtlpEndpoint }}
+          - name: METADATA_ENDPOINT
+            value: {{ include "newrelic.common.otlp_endpoint" . | trimPrefix "https://" }}:443
+          {{- end }}
+          {{- end }}
           {{- if .Values.namespaceLicenseKeys }}
           # Multi-account routing map for the agent's own data.
           - name: NAMESPACE_LICENSE_KEY_MAP
@@ -211,6 +221,29 @@ spec:
           {{- if .Values.otlpProxy.password }}
           - name: NEW_RELIC_PROXY_PASS
             value: "{{ .Values.otlpProxy.password }}"
+          {{- end }}
+          {{- end }}
+          {{- end }}
+
+          {{- if or ((.Values.metadataProxy).host) ((.Values.metadataProxy).url) }}
+          {{- if (.Values.metadataProxy).host }}
+          - name: METADATA_PROXY_HOST
+            value: "{{ .Values.metadataProxy.host }}"
+          - name: METADATA_PROXY_PORT
+            value: "{{ .Values.metadataProxy.port }}"
+          - name: METADATA_PROXY_SCHEME
+            value: "{{ .Values.metadataProxy.scheme | default "http" }}"
+          {{- end }}
+          {{- if (.Values.metadataProxy).url }}
+          - name: METADATA_PROXY_URL
+            value: "{{ .Values.metadataProxy.url }}"
+          {{- end }}
+          {{- if (.Values.metadataProxy).user }}
+          - name: METADATA_PROXY_USER
+            value: "{{ .Values.metadataProxy.user }}"
+          {{- if (.Values.metadataProxy).password }}
+          - name: METADATA_PROXY_PASS
+            value: "{{ .Values.metadataProxy.password }}"
           {{- end }}
           {{- end }}
           {{- end }}
