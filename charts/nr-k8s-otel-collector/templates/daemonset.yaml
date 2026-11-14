@@ -73,12 +73,23 @@ spec:
               fi
 
               export NODE_MEMORY_ALLOCATABLE=$(kubectl get node $NODE_NAME -o jsonpath='{.status.allocatable.memory}' | awk '
-                /Ki$/ {printf "%.0f\n", $1 * 1024; next}
-                /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
-                /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
-                /m$/  {printf "%.0f\n", $1 / 1000; next}
-                {print $1}
+                  /Ki$/ {printf "%.0f\n", $1 * 1024; next}
+                  /Mi$/ {printf "%.0f\n", $1 * 1024^2; next}
+                  /Gi$/ {printf "%.0f\n", $1 * 1024^3; next}
+                  /Ti$/ {printf "%.0f\n", $1 * 1024^4; next}
+                  /Pi$/ {printf "%.0f\n", $1 * 1024^5; next}
+                  /Ei$/ {printf "%.0f\n", $1 * 1024^6; next}
+                  /m$/  {printf "%.0f\n", $1 / 1e-3; next}
+                  /k$/  {printf "%.0f\n", $1 * 1e3; next}
+                  /M$/  {printf "%.0f\n", $1 * 1e6; next}
+                  /G$/  {printf "%.0f\n", $1 * 1e9; next}
+                  /T$/  {printf "%.0f\n", $1 * 1e12; next}
+                  /P$/  {printf "%.0f\n", $1 * 1e15; next}
+                  /E$/  {printf "%.0f\n", $1 * 1e18; next}
+                  { printf "%.0f\n", $1}
               ')
+              # Note: printf automatically converts scientfic notation for us.
+              # As a result this should cover all possible returned number formats
 
               if [[ -z "NODE_MEMORY_ALLOCATABLE" ]] || [[ "NODE_MEMORY_ALLOCATABLE" == "0" ]]; then
                 echo "Could not retrieve Memory allocatable for node $NODE_NAME"
