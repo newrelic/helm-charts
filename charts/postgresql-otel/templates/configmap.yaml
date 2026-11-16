@@ -1,7 +1,11 @@
 {{- if not .Values.postgresqlMulti.enabled }}
 {{- include "postgresql-otel.validate.topology" . -}}
+{{- include "postgresql-otel.validate.configProfile" (dict "key" "postgresql.configProfile" "value" .Values.postgresql.configProfile) -}}
 {{- include "postgresql-otel.validate.otlpEndpoint" . -}}
 {{- $receiverDefaults := include "postgresql-otel.multi.receiverDefaults" . | fromYaml -}}
+{{- if eq .Values.postgresql.configProfile "advanced" -}}
+{{- $receiverDefaults = mergeOverwrite $receiverDefaults (include "postgresql-otel.receiver.advancedMetrics" . | fromYaml) -}}
+{{- end -}}
 {{- $receiverDefaults = mergeOverwrite $receiverDefaults (dict
       "endpoint" (printf "%s:%d" .Values.postgresql.server (.Values.postgresql.port | int))
       "username" "${env:POSTGRESQL_USERNAME}"

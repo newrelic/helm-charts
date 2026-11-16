@@ -1,0 +1,79 @@
+suite: configmap (configProfile)
+templates:
+  - templates/configmap.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  postgresql.server: "postgresql.internal"
+  postgresql.topology: "self-hosted"
+  postgresql.username: "nr_monitor"
+  postgresql.password: "s3cret"
+  postgresql.databases: ["appdb"]
+  otlpEndpoint: "otlp.nr-data.net:4317"
+tests:
+  - it: fails when postgresql.configProfile is empty
+    set:
+      postgresql.configProfile: ""
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresql.configProfile must be one of: basic, advanced"
+  - it: fails when postgresql.configProfile has the wrong case
+    set:
+      postgresql.configProfile: "Advanced"
+    asserts:
+      - failedTemplate:
+          errorMessage: "postgresql.configProfile must be one of: basic, advanced"
+  - it: defaults to basic, which has no advanced-only metrics
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.wal\\.delay:"
+  - it: renders the full catalog for self-hosted
+    set:
+      postgresql.configProfile: advanced
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.wal\\.delay:\\n\\s*enabled: true"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.vector\\.search\\.rows_returned:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.blks_hit:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.deadlocks:"
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "exclude_databases"
+  - it: renders the full catalog for rds and keeps exclude_databases
+    set:
+      postgresql.topology: rds
+      postgresql.configProfile: advanced
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.wal\\.delay:"
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "exclude_databases:\\n\\s*- rdsadmin"
+  - it: additionalReceiverConfig can disable an advanced-only metric
+    set:
+      postgresql.configProfile: advanced
+      additionalReceiverConfig:
+        metrics:
+          postgresql.wal.delay:
+            enabled: false
+    asserts:
+      - matchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.wal\\.delay:\\n\\s*enabled: false"
+  - it: ignores postgresqlMulti.configProfile in single mode
+    set:
+      postgresqlMulti.configProfile: advanced
+    asserts:
+      - notMatchRegex:
+          path: data["config.yaml"]
+          pattern: "postgresql\\.wal\\.delay:"

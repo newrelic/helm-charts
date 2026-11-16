@@ -4,6 +4,9 @@
 {{- if eq .Values.postgresqlMulti.topology "rds" -}}
 {{- $sharedDefaults = set $sharedDefaults "exclude_databases" (list "rdsadmin") -}}
 {{- end -}}
+{{- if eq .Values.postgresqlMulti.configProfile "advanced" -}}
+{{- $sharedDefaults = mergeOverwrite $sharedDefaults (include "postgresql-otel.receiver.advancedMetrics" . | fromYaml) -}}
+{{- end -}}
 {{- $instances := .Values.postgresqlMulti.instances -}}
 {{- $multiEntry := gt (len $instances) 1 -}}
 {{- $receiverModes := dict -}}
