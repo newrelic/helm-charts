@@ -182,7 +182,7 @@ spec:
           {{- else if hasKey .Values "logReporting" }}
             value: "{{ .Values.logReporting }}"
           {{- else }}
-            value: "false"
+            value: "auto"
           {{- end }}
           - name: ENABLE_AGENT_METADATA_REPORTING
             value: "{{ if hasKey .Values "agentMetadataReporting" }}{{ .Values.agentMetadataReporting }}{{ else }}true{{ end }}"
