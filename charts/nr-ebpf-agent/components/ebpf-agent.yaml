@@ -1,0 +1,317 @@
+---
+# Default values for the eBPF agent DaemonSet (`ebpfAgent`) and the agent-level
+# settings it reads: OTLP/metadata endpoints and proxies, report* toggles, data
+# filters and protocol tracing.
+#
+# These are defaults only. Override any key in your own values file, with --set,
+# or under `nr-ebpf-agent:` in a parent chart; user values always take precedence.
+# Settings shared by all components live in the chart's values.yaml.
+# -- Custom OTLP endpoint URL. When set, this takes precedence over the region-based static endpoints.
+customOtlpEndpoint: ""
+# -- Whether TLS is enabled on the OTLP endpoint. Defaults to true.
+# Only overridden when both customOtlpEndpoint and this field are explicitly set.
+customOtlpEndpointTlsEnabled: true
+# -- Name of the Kubernetes secret containing the CA certificate for the custom OTLP endpoint.
+# Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecretKey.
+customOtlpEndpointTlsCertSecret: ""
+# -- Key within the secret that contains the CA certificate.
+# Only used when customOtlpEndpoint is set. Must be provided together with customOtlpEndpointTlsCertSecret.
+customOtlpEndpointTlsCertSecretKey: ""
+# -- Endpoint for agent/entity metadata reporting. If empty, resolves from region, independently of otlpEndpoint.
+metadataEndpoint: ""
+# -- CA cert for the metadata endpoint's own TLS. Independent of
+# customOtlpEndpointTlsCertPath; if empty, uses the embedded bundle.
+metadataTlsCertPath: ""
+# -- HTTP/HTTPS proxy configuration for OTLP endpoint.
+# Allows routing telemetry data through corporate proxies.
+otlpProxy:
+  # -- Proxy hostname (e.g., proxy.example.com). If empty, no proxy is used.
+  host: ""
+  # -- Proxy port (e.g., 8080). Required when host is set.
+  port: ""
+  # -- Proxy URL scheme: http or https (default: http)
+  scheme: "http"
+  # -- Username for proxy Basic Authentication (optional). If empty, no authentication is used.
+  user: ""
+  # -- Password for proxy Basic Authentication (optional). Only used with user.
+  # Recommended: Use existingSecret instead for security.
+  password: ""
+  # -- Alternative: Complete proxy URL (overrides individual settings above).
+  # Format: http://[user:pass@]host:port
+  url: ""
+  # -- Name of existing Kubernetes secret containing proxy credentials.
+  # Secret must contain keys: 'proxy-user' and 'proxy-password'.
+  existingSecret: ""
+# -- HTTP/HTTPS proxy for agent/entity metadata reporting.
+# Independent of otlpProxy: use when metadata and OTLP telemetry must route through different proxies.
+# Falls back to HTTP_PROXY/HTTPS_PROXY when unset (never inherits from otlpProxy).
+metadataProxy:
+  # -- Proxy hostname (e.g., proxy.example.com). If empty, no metadata-specific proxy is used.
+  host: ""
+  # -- Proxy port. Required when host is set.
+  port: ""
+  # -- Proxy URL scheme: http or https (default: http)
+  scheme: "http"
+  # -- Username for proxy Basic Authentication (optional).
+  user: ""
+  # -- Password for proxy Basic Authentication (optional).
+  password: ""
+  # -- Alternative: Complete proxy URL (overrides individual settings above).
+  # Format: http://[user:pass@]host:port
+  url: ""
+# -- To configure the log level in increasing order of verboseness.
+# -- OFF, FATAL, ERROR, WARNING, INFO, DEBUG
+logLevel: ""
+# -- To configure log file path of eBPF Agent. If logging to this path fails, logs will be directed to stdout.
+logFilePath: ""
+# -- Enable APM data reporting. When enabled, the agent collects and reports application performance monitoring data. Controls APM data reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
+reportApmData: "auto"
+# -- Enable network metrics reporting. When enabled, the agent collects and reports network metrics including TCP statistics. Controls network metrics reporting. Accepted values: 'true' (always send), 'false' (never send) and 'auto'
+reportNetworkMetrics: "auto"
+# -- Enable log reporting. When enabled, the agent collects and reports logs. Controls log reporting. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
+reportLogs: "false"
+# -- Enable AI monitoring. When enabled, the agent collects and reports AI monitoring data. Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when neither APM nor OTel agent is attached)
+reportAiMetrics: "false"
+# -- Enable eBPF-agent host/infrastructure metrics reporting (system.*/host.* → HOST entity).
+# Accepted values: 'true' (always send), 'false' (never send), 'auto' (send only when
+# an INFRA agent is not attached). Leave "" (default) to derive from the `infra.enabled`
+# alias: "auto" when infra.enabled is true, "false" otherwise.
+reportInfra: ""
+# -- Enable GenAI capture message content. When enabled, the agent captures message content for GenAI interactions. Use with caution.
+genAICaptureMessageContent: false
+
+# -- Process metrics (process-stats) cadence tuning.
+processStats:
+  # -- When low data mode is enabled, run the process-stats script every this many seconds
+  # instead of the default 15s, reducing per-process ingest (30s ≈ halves it, 60s ≈ quarters it).
+  # Rounded down to a multiple of the 15s base scheduler interval; values <30 fall back to 15s.
+  # Ignored when low data mode is off — process-stats then always runs every 15s. Only
+  # process-stats is affected; all other eBPF scripts keep their normal cadence in both modes.
+  lowDataModeIntervalSeconds: 60
+
+# -- Custom labels to be added to all entities reported by the eBPF agent.
+# These labels are sent as the NEW_RELIC_LABELS environment variable in the format "key1:value1;key2:value2".
+# Example:
+# entityLabels:
+#   datacenter: "us-east-1"
+#   cluster: "prod-cluster"
+#   environment: "production"
+entityLabels: {}
+
+
+# -- All data drop filters configuration
+# Configure filters to drop all types of data (Network Metrics and APM data) based on config provided
+allDataFilters:
+  # -- Drop data from the newrelic namespace and newrelic-bundle services.
+  # RENAMED from 'dropDataNewRelic' for clarity. The old name is deprecated but still supported for backward compatibility.
+  dropNewRelicBundle: true
+  # -- List of Kubernetes namespaces for which all data should be dropped by the agent.
+  # Use either dropNamespaces or keepNamespaces to filter namespaces, not both. If both are provided, keepNamespaces takes precedence.
+  dropNamespaces: ["kube-system"]
+  # -- List of Kubernetes namespaces for which all data should be sent by the agent.
+  # Use either dropNamespaces or keepNamespaces to filter namespaces, not both. If both are provided, keepNamespaces takes precedence.
+  keepNamespaces: []
+  # -- Pod labels to match for filtering all data. Empty map means no label-based filtering
+  # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  # Use either dropPodLabels or keepPodLabels to filter based on pod labels, not both. If both are provided, keepPodLabels takes precedence.
+  dropPodLabels: {}
+  # -- Pod labels to match for keeping all data. Empty map means no label-based filtering
+  # Example: keepPodLabels: { "app": "frontend", "env": "production" }
+  # Use either dropPodLabels or keepPodLabels to filter based on pod labels, not both. If both are provided, keepPodLabels takes precedence.
+  keepPodLabels: {}
+  # -- Define a regex to match k8s service names to drop. Example "kube-dns|otel-collector|\\bblah\\b"
+  # Use either dropServiceNameRegex or keepServiceNameRegex to filter service names, not both.
+  # If both are provided, keepServiceNameRegex takes precedence.
+  dropServiceNameRegex: ""
+  # -- This config acts as a bypass for the dropServiceNameRegex config.
+  # Service names that match this regex will not have their data dropped by the dropServiceNameRegex.
+  # Use either dropServiceNameRegex or keepServiceNameRegex to filter service names, not both.
+  # If both are provided, keepServiceNameRegex takes precedence.
+  # RENAMED from 'allowServiceNameRegex' for clarity. The old name is deprecated but still supported for backward compatibility.
+  keepServiceNameRegex: ""
+  # -- Drop all data for applications/entities that have NewRelic/OTEL APM agents running
+  dropApmAgentEnabledEntity: false
+
+# -- APM data filters configuration
+# Configure filters to drop ebpf APM data based on config provided
+apmDataFilters:
+  # -- Pod labels to match for filtering APM data. Empty map means no label-based filtering
+  # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  dropPodLabels: {}
+  # -- List of entity names to drop ebpf APM data for
+  dropEntityName: []
+  # -- List of entity names to always keep APM data. By default all entities are kept/enabled
+  # -- This config bypasses dropEntityName filter.
+  keepEntityName: []
+  # -- Enable JVM metrics reporting. When enabled, the agent collects and reports JVM metrics for Java applications
+  jvmMetricsReporting: true
+
+# -- Network metrics Data filter / TCP stats filters
+# Configure filters to drop/keep Network metrics data based on config provided
+networkMetricsDataFilter:
+  # -- Pod labels to match for filtering Network metrics data. Empty map means no label-based filtering
+  # Example: dropPodLabels: { "app": "frontend", "env": "production" }
+  dropPodLabels: {}
+  # -- List of entity names to drop Network metrics data for
+  dropEntityName: []
+  # -- List of entity names to always keep Network metrics data. By default all entities are kept/enabled
+  # -- This config bypasses dropEntityName filter.
+  keepEntityName: []
+
+# -- Log data filters configuration
+# Configure filters to drop/keep log data based on the config provided
+logDataFilters:
+  # -- Application/entity log reporting filters
+  applicationLogReporting:
+    # -- Enable log reporting for entity monitored by eBPF Agent
+    enabled: true
+    # -- Regex to match log file path to include for entity log reporting
+    fileRegex: ".*.log$"
+    # -- Minimum log level to report (e.g., TRACE, DEBUG, INFO, WARN, ERROR). Default: INFO
+    logLevelThreshold: "INFO"
+    # -- Maximum number of log samples to collect per minute from an entity.
+    # The internal maxSamplesStored is calculated proportionally based on the harvest cycle (5 seconds):
+    # maxSamplesStored = maxSamplesPerMinute / (60 / 5) = maxSamplesPerMinute / 12
+    # For the default value of 10000, this results in ~833 samples stored per harvest cycle.
+    # Once this limit is reached, events are sampled to maintain an even distribution across the harvest cycle.
+    maxSamplesPerMinute: 10000
+    # -- The eBPF agent collects and reports STDOUT/STDERR STREAM logs to New Relic for entities that match this regex.
+    # The entities are identified by their "NEW_RELIC_APP_NAME" (if provided) or their Kubernetes service name.
+    # To forward logs for all entities, use the regex .*
+    keepStdStreamEntityRegex: ".*"
+    # -- The eBPF agent collects and reports FILE logs to New Relic for entities that match this regex.
+    # The entities are identified by their "NEW_RELIC_APP_NAME" (if provided) or their Kubernetes service name.
+    # To forward logs for all entities, use the regex .*
+    keepFileEntityRegex: ".*"
+
+# The protocols to enable for tracing in the socket_tracer. There is an ability to configure span export if it is enabled.
+# Each protocol has the flexibility to selectively enable the type of OTLP data to export.
+# Metrics are sent by default when a protocol is enabled and it supports metrics. Note: AMQP, Kafka, DNS do not report metrics.
+# samplingLatency represents the sampling latency threshold for the spans to export.
+# Options: p1, p10, p50, p90, p99.
+protocols:
+  global:
+    # Controls maximum unlinked spans reported per protocol. Set to 0 to disable limit.
+    # Unlinked spans are spans that the eBPF agent captures but cannot associate with its parent.
+    max_unlinked_spans: "100"
+    # Reserves a configurable percentage of the unlinked span quota for error spans, ensuring error visibility even when normal spans arrive first.
+    unlinked_spans_error_quota_percentage: "30"
+  http:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+      # -- samplingErrorRate represents the error rate threshold for an HTTP route where surpassing it would mean the corresponds spans of the route are exported.
+      # Options: 1-100
+      samplingErrorRate: ""
+  thrift:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+      samplingErrorRate: ""
+  mysql:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  pgsql:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  cass:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  redis:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  mongodb:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  kafka:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  amqp:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  dns:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  dynamodb:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+  mssql:
+    enabled: true
+    spans:
+      enabled: true
+      samplingLatency: "p50"
+
+# Configuration to apply on the eBPF agent daemonset.
+ebpfAgent:
+  image:
+    # -- eBPF agent image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- eBPF agent image repository (path only, no registry prefix).
+    repository: newrelic/newrelic-ebpf-agent
+    # -- The tag of the eBPF agent image to be deployed. If empty, uses Chart.AppVersion.
+    tag: ""
+    # -- Image pull policy. Overrides `global.images.pullPolicy`
+    pullPolicy: ""
+  # -- Configuration for the kernel header installer init container
+  kernelHeaderInstaller:
+    image:
+      # -- Kernel header installer image registry. Overrides `global.images.registry`. Defaults to docker.io
+      registry: ""
+      # -- Kernel header installer image repository (path only, no registry prefix).
+      repository: newrelic/newrelic-ebpf-agent
+      # -- The tag of the kernel header installer image. Defaults to agent-base-image-latest
+      tag: agent-base-image-latest
+      # -- Image pull policy for kernel header installer. Overrides `global.images.pullPolicy`
+      pullPolicy: ""
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 2Gi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 250Mi
+  serviceAccount:
+    annotations: {}
+  # -- Sets ebpfAgent pod tolerations. Overrides `tolerations` and `global.tolerations`
+  tolerations: []
+  # -- Sets ebpfAgent pod affinities. Overrides `affinity` and `global.affinity`
+  affinity: {}
+  # -- Sets ebpfAgent pod Annotations. Overrides `podAnnotations` and `global.podAnnotations`
+  podAnnotations: {}
+  # -- Sets ebpfAgent pod podSecurityContext. Overrides `podSecurityContext` and `global.securityContext.pod`
+  podSecurityContext: {}
+  # Sets the absolute path of the complete directory where the required linux headers are manually downloaded and placed for the eBPF agent to use.
+  # This is useful under restricted environments where agent is not able to download required linux headers. The required headers are identified by the agent based on the kernel version.
+  # The absolute path in case of K8s should also be prepended with /host when necessary.
+  # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
+  downloadedPackagedHeadersPath: ""
+  # Sets the absolute path of the complete directory where the linux headers are present for the eBPF agent to use.
+  # This is useful where required linux headers could not be installed or path could not be determined. The absolute path in case of K8s should also be prepended with /host when necessary.
+  # ---- USE ONLY AFTER NEW RELIC SUPPORT RECOMMENDATION. ----
+  distroKernelHeadersPath: ""
+  # -- Extra environment variables for the agent container (name: value), e.g.
+  # `ENTITY_ENDPOINT_ENABLED: "true"` for `nrdotCollector.serviceId`. OTLP_ENDPOINT and TLS_ENABLED
+  # replace the chart's values; don't repeat other variables the chart sets.
+  env: {}

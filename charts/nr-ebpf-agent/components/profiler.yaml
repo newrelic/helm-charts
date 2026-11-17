@@ -1,0 +1,45 @@
+---
+# Default values for the OpenTelemetry eBPF profiler DaemonSet.
+#
+# These are defaults only. Override any key in your own values file, with --set,
+# or under `nr-ebpf-agent:` in a parent chart; user values always take precedence.
+# Settings shared by all components live in the chart's values.yaml.
+
+# -- Profiler DaemonSet (`<release>-profiler`, one pod per node): CPU-profiles the node's
+# processes and sends OTLP profiles over gRPC to the per-node nrdot collector's receiver
+# (`nrdotCollector.otlpReceiver.grpcPort`) through its node-local Service, which exports them to
+# New Relic.
+# Needs the per-node collector with `nrdotCollector.otlpReceiver.enabled`, and a collector image
+# whose OTLP components (and, with `nrdotCollector.serviceId.enabled`, nrserviceid) support profiles.
+profiler:
+  # -- Deploy the profiler DaemonSet.
+  enabled: false
+  image:
+    # -- Profiler image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: "us-west1-docker.pkg.dev"
+    # -- Profiler image repository.
+    repository: pl-dev-infra/nr-ebpf-agent-internal/otelcol-ebpf-profiler
+    # -- Profiler image tag.
+    tag: "v162-amd64"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  # -- Pull secrets added to `imagePullSecrets` for the profiler pod only, e.g. `[{name: regcred}]`.
+  imagePullSecrets: []
+  # -- How often profiles are flushed.
+  reporterInterval: 60s
+  # -- Entity-name allow-list. Only profiles whose service.name is in this list are exported; all others are dropped by
+  # a filter processor in the profiler. Empty list [] = no filtering (export everything).
+  # Example:
+  #   entityNameFilter:
+  #     - "checkout-service"
+  #     - "payments-service"
+  entityNameFilter: []
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 1Gi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 256Mi
