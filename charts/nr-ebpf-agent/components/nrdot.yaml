@@ -67,6 +67,12 @@ nrdotCollector:
   # hits the live-set floor (no further memory gain, only added GC frequency). Set to
   # "" to use the Go default (100).
   goGC: 30
+  # -- Extra environment variables (name: value) for both nrdot collector containers (per-node
+  # DaemonSet and cluster Deployment). Values must be strings, numbers or bools.
+  # K8S_NODE_NAME, CLUSTER_NAME, NR_OTLP_ENDPOINT, NEW_RELIC_LICENSE_KEY, NR_INGEST_KEY_<i> and GOGC
+  # are set by the chart (use `goGC`, `namespaceLicenseKeys`, ...): if set here they are ignored and
+  # a WARNING is printed at install/upgrade.
+  env: {}
   # -- (bool) Send only the metrics required for the NR Kubernetes UI. When true,
   # KSM scrape is filtered to the ~79 UI-relevant kube_* names and noisy datapoint
   # attributes (id, name, interface, cpu) are dropped. Set false for full-fidelity

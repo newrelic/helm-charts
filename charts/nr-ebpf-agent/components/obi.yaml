@@ -33,7 +33,8 @@ obi:
       memory: 256Mi
   # -- OBI configuration as environment variables (see the OBI docs for the full list).
   # OTEL_EXPORTER_OTLP_ENDPOINT, _PROTOCOL, _HEADERS, NEW_RELIC_LICENSE_KEY and
-  # OTEL_EBPF_KUBE_CLUSTER_NAME are set by the chart and ignored here.
+  # OTEL_EBPF_KUBE_CLUSTER_NAME are set by the chart: if set here they are ignored and a WARNING
+  # is printed at install/upgrade.
   env:
     # -- Go GC target percentage. 30 keeps the heap small at the cost of more frequent
     # collections — matches the per-node nrdot collector tuning to reduce per-node memory pressure.

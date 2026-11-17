@@ -164,6 +164,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           env:
+            {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -171,6 +172,14 @@ spec:
             - name: CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
+            {{- /* nrdotCollector.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+            {{- $nrdotEnv := dict }}
+            {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "nrdotCollector.env" "into" $nrdotEnv) }}
+            {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+            {{- range $name, $value := $nrdotEnv }}
+            - name: {{ $name }}
+              value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
           volumeMounts:
             # Patched config written by the nrdot-get-allocatable init container
             # (the raw ConfigMap is mounted only on that init container).

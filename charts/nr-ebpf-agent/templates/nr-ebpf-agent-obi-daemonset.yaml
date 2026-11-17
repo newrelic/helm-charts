@@ -63,6 +63,7 @@ spec:
           imagePullPolicy: {{ include "nr-ebpf-agent.obi.imagePullPolicy" . }}
           resources: {{ .Values.obi.resources | toYaml | nindent 12 }}
           env:
+            {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://{{ include "nr-ebpf-agent.nrdot.pernode.otlpGrpcAddress" . }}"
             # The receiver speaks gRPC; without this OBI infers the protocol from the port.
@@ -84,7 +85,10 @@ spec:
             - name: OTEL_EBPF_KUBE_CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
-            {{- range $name, $value := omit (default dict .Values.obi.env) "OTEL_EXPORTER_OTLP_ENDPOINT" "OTEL_EXPORTER_OTLP_PROTOCOL" "OTEL_EXPORTER_OTLP_HEADERS" "NEW_RELIC_LICENSE_KEY" "OTEL_EBPF_KUBE_CLUSTER_NAME" }}
+            {{- /* obi.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+            {{- $obiEnv := dict }}
+            {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "obi.env" "into" $obiEnv) }}
+            {{- range $name, $value := $obiEnv }}
             - name: {{ $name }}
               value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
             {{- end }}
