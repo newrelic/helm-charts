@@ -27,6 +27,7 @@ Component defaults (components/*.yaml) must not contain protected keys; the
 obi.env:
   keys:
     - OTEL_EXPORTER_OTLP_ENDPOINT
+    - OTEL_EXPORTER_OTLP_HTTP_ENDPOINT
     - OTEL_EXPORTER_OTLP_PROTOCOL
     - OTEL_EXPORTER_OTLP_HEADERS
     - NEW_RELIC_LICENSE_KEY
@@ -53,11 +54,10 @@ nrdotCollector.env:
     # Per-account keys from namespaceLicenseKeys (NR_INGEST_KEY_<i>).
     - '^NR_INGEST_KEY_'
 
-# Profiler container (templates/nr-ebpf-agent-profiler-daemonset.yaml). The chart
-# configures the profiler through its ConfigMap and sets no env vars, so nothing is
-# protected yet. Add keys here when the chart starts setting some.
+# Profiler container (templates/nr-ebpf-agent-profiler-daemonset.yaml).
 profiler.env:
-  keys: []
+  keys:
+    - PROFILER_OTLP_ENDPOINT
 {{- end -}}
 
 {{/*

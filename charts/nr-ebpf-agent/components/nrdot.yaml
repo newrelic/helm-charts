@@ -29,6 +29,17 @@ infra:
   enabled: false
 
 nrdotCollector:
+  goGC: 30
+  kubectlImage:
+    repository: alpine/k8s
+    tag: "1.32.3"
+  sidecar:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
   # -- Master toggle for K8s infrastructure collection via nrdot. Prefer the
   # `infra.enabled` alias above unless you need fine-grained control; either
   # enabling this OR `infra.enabled` turns the collector on.

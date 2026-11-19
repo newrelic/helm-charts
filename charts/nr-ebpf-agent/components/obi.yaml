@@ -5,11 +5,6 @@
 # or under `nr-ebpf-agent:` in a parent chart; user values always take precedence.
 # Settings shared by all components live in the chart's values.yaml.
 
-# -- OBI DaemonSet (`<release>-obi`, one pod per node): auto-instruments the node's application
-# processes and sends their OTLP traces/metrics over gRPC to the per-node nrdot collector's
-# receiver (`nrdotCollector.otlpReceiver.grpcPort`) through its node-local Service, which exports
-# them to New Relic.
-# Needs the per-node collector (`infra.enabled`) with `nrdotCollector.otlpReceiver.enabled`.
 obi:
   # -- Deploy the OBI DaemonSet.
   enabled: false
@@ -31,13 +26,23 @@ obi:
       cpu: 100m
       # -- Min memory allocated to the container.
       memory: 256Mi
-  # -- OBI configuration as environment variables (see the OBI docs for the full list).
-  # OTEL_EXPORTER_OTLP_ENDPOINT, _PROTOCOL, _HEADERS, NEW_RELIC_LICENSE_KEY and
-  # OTEL_EBPF_KUBE_CLUSTER_NAME are set by the chart: if set here they are ignored and a WARNING
-  # is printed at install/upgrade.
+  # -- Observability mode. Same values as the OSS opentelemetry-ebpf-instrumentation chart.
+  # "application" (default): instruments K8s app processes — HTTP/gRPC/DB traces and metrics.
+  # "network": also enables TCP/DNS network-level capture.
+  #   Ignored when obi.config.data is set (obi.config.data takes full precedence).
+  preset: "application"
+  # -- Full OBI config v2 YAML. Mirrors the OSS chart's `config:` block exactly.
+  # Paste your OSS `config:` section here verbatim — only change the exporter endpoints:
+  #   gRPC: ${OTEL_EXPORTER_OTLP_ENDPOINT}         (auto-injected, protected)
+  #   HTTP: ${OTEL_EXPORTER_OTLP_HTTP_ENDPOINT}     (auto-injected, protected)
+  config:
+    data: {}
+  # -- OBI env vars. Paste the OSS `env:` block here verbatim.
+  # The following keys are set by the chart and will be ignored with a WARNING if supplied:
+  #   OTEL_EXPORTER_OTLP_ENDPOINT, OTEL_EXPORTER_OTLP_HTTP_ENDPOINT,
+  #   OTEL_EXPORTER_OTLP_PROTOCOL, OTEL_EXPORTER_OTLP_HEADERS,
+  #   NEW_RELIC_LICENSE_KEY, OTEL_EBPF_KUBE_CLUSTER_NAME
   env:
-    # -- Go GC target percentage. 30 keeps the heap small at the cost of more frequent
-    # collections — matches the per-node nrdot collector tuning to reduce per-node memory pressure.
     GOGC: "30"
     OTEL_EBPF_OPEN_PORT: "1-65535"
     OTEL_EBPF_METRICS_FEATURES: application
@@ -50,3 +55,5 @@ obi:
     OTEL_EBPF_SDK_LOG_LEVEL: info
     OTEL_EBPF_BPF_BATCH_LENGTH: "1000"
     OTEL_EBPF_OTLP_TRACES_BATCH_MAX_SIZE: "512"
+  # -- OBI env vars sourced from Secrets or ConfigMaps. Paste the OSS `envValueFrom:` block verbatim.
+  envValueFrom: {}

@@ -5,12 +5,6 @@
 # or under `nr-ebpf-agent:` in a parent chart; user values always take precedence.
 # Settings shared by all components live in the chart's values.yaml.
 
-# -- Profiler DaemonSet (`<release>-profiler`, one pod per node): CPU-profiles the node's
-# processes and sends OTLP profiles over gRPC to the per-node nrdot collector's receiver
-# (`nrdotCollector.otlpReceiver.grpcPort`) through its node-local Service, which exports them to
-# New Relic.
-# Needs the per-node collector with `nrdotCollector.otlpReceiver.enabled`, and a collector image
-# whose OTLP components (and, with `nrdotCollector.serviceId.enabled`, nrserviceid) support profiles.
 profiler:
   # -- Deploy the profiler DaemonSet.
   enabled: false
@@ -23,20 +17,22 @@ profiler:
     tag: "v162-amd64"
     # -- Image pull policy. Overrides `global.images.pullPolicy`.
     pullPolicy: ""
-  # -- Pull secrets added to `imagePullSecrets` for the profiler pod only, e.g. `[{name: regcred}]`.
+  # -- Pull secrets for the profiler pod only, e.g. `[{name: regcred}]`.
   imagePullSecrets: []
-  # -- How often profiles are flushed.
+  # -- Full profiler config in the same structure as the OSS local.example.yaml.
+  # When set, used verbatim as the ConfigMap; reporterInterval, receiverConfig,
+  # and entityNameFilter are ignored.
+  # Only change from OSS: replace exporter endpoint with ${PROFILER_OTLP_ENDPOINT}.
+  config: {}
+  # -- How often profiles are flushed. Used only when profiler.config is not set.
   reporterInterval: 60s
-  # -- Entity-name allow-list. Only profiles whose service.name is in this list are exported; all others are dropped by
-  # a filter processor in the profiler. Empty list [] = no filtering (export everything).
-  # Example:
-  #   entityNameFilter:
-  #     - "checkout-service"
-  #     - "payments-service"
+  # -- Raw receiver config merged into the profiling receiver block.
+  # Used only when profiler.config is not set.
+  receiverConfig: {}
+  # -- Entity-name allow-list. Used only when profiler.config is not set.
   entityNameFilter: []
-  # -- Extra environment variables (name: value) for the profiler container. Values must be
-  # strings, numbers or bools. The chart sets none today; any it sets in future are ignored if set
-  # here, and a WARNING is printed at install/upgrade.
+  # -- Extra environment variables for the profiler container.
+  # PROFILER_OTLP_ENDPOINT is set by the chart: if set here it is ignored with a WARNING.
   env: {}
   resources:
     limits:

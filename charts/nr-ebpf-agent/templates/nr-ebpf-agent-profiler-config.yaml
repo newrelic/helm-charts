@@ -9,10 +9,19 @@ metadata:
     {{- include "newrelic.common.labels" . | nindent 4 }}
 data:
   config.yaml: |
+    {{- if .Values.profiler.config }}
+    {{- /* Full config supplied: use verbatim. User references ${PROFILER_OTLP_ENDPOINT}
+         for the exporter endpoint — the chart injects it as a pod env var. */}}
+    {{- toYaml .Values.profiler.config | nindent 4 }}
+    {{- else }}
+    {{- /* Generated config from individual keys (backward-compatible path). */}}
     # service.name is not set here: the profiler takes it per process from the app's
     # OTEL_SERVICE_NAME in /proc/PID/environ (hence hostPID).
     receivers:
       profiling:
+        {{- with omit .Values.profiler.receiverConfig "reporter_interval" }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
         reporter_interval: {{ .Values.profiler.reporterInterval }}
     exporters:
       otlp:
@@ -39,4 +48,5 @@ data:
           processors: [filter/entity]
           {{- end }}
           exporters: [otlp]
+    {{- end }}
 {{- end }}
