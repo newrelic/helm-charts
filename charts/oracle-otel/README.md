@@ -60,9 +60,31 @@ This is `oracle.topology` in single-instance mode, or `oracleMulti.topology`
 way. It selects the `nroracledb` receiver's default `metrics`/
 `resource_attributes` block for `config.yaml`:
 
-- **CDB/PDB**: same 30-metric baseline set.
+- **CDB/PDB**: 30-metric baseline set (`basic`).
 - **RDS**: same 30-metric baseline set as CDB/PDB.
 - **ADB**: same 30-metric baseline set as CDB/PDB.
+
+### Choosing the config profile
+
+`oracle.configProfile` (single-instance) or `oracleMulti.configProfile`
+(multi-instance, applies to every entry) selects how many metrics the
+receiver collects. Both default to `basic`.
+
+| Profile | Metrics collected |
+|---|---|
+| `basic` | The 30-metric baseline set per topology (above) |
+| `advanced` | New Relic's [full Oracle metric catalog](https://docs.newrelic.com/docs/opentelemetry/db360/oracle/config-reference/): 135 metrics for `cdb`/`pdb` (including 5 ASM metrics), 130 for `rds`/`adb` |
+
+Only the receiver's `metrics` block differs; events, query collection,
+resource attributes, the exporter and the setup job are identical. Start with
+`basic` and move to `advanced` once collection is verified.
+`additionalReceiverConfig` still overrides either profile.
+
+```yaml
+oracle:
+  topology: "pdb"
+  configProfile: "advanced"
+```
 
 `resource_attributes` (just `oracle.db.edition`) comes from a block shared
 across all four topologies, not the per-topology defaults above.
@@ -265,7 +287,7 @@ Shared across both modes:
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.6.0` |
+| `image.tag` | Collector image tag | `2.7.3` |
 | `otlpEndpoint` | New Relic OTLP/gRPC endpoint, bare host:port, no scheme (e.g. `otlp.nr-data.net:4317`) | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nroracledb` receiver block | `{}` |
@@ -278,6 +300,7 @@ Single-instance schema (`oracle:`, ignored when `oracleMulti.enabled: true`):
 | Key | Description | Default |
 |---|---|---|
 | `oracle.topology` | `cdb`, `pdb`, `rds`, or `adb` — always required | `""` |
+| `oracle.configProfile` | `basic` or `advanced` — see "Choosing the config profile" | `basic` |
 | `oracle.endpoint` | Oracle listener `host:port` | `""` |
 | `oracle.service` | CDB/PDB service name, RDS DB name, or ADB service name | `""` |
 | `oracle.username` / `oracle.password` | Plain-value monitoring credentials | `""` |
@@ -291,5 +314,6 @@ Multi-instance schema (`oracleMulti:`, mutually exclusive with `oracle.*`):
 |---|---|---|
 | `oracleMulti.enabled` | Enables multi-instance mode | `false` |
 | `oracleMulti.topology` | `cdb`, `pdb`, `rds`, or `adb` — applies to every entry | `""` |
+| `oracleMulti.configProfile` | `basic` or `advanced` — applies to every entry | `basic` |
 | `oracleMulti.collectionInterval` | Default scrape interval for every entry, overridable per entry | `15s` |
 | `oracleMulti.databases` | List of `{name, endpoint, service, existingSecret, collectionInterval, oracleAdmin.existingSecret}` entries, one per monitored database | `[]` |

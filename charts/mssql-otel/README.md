@@ -53,14 +53,38 @@ applied per instance in the multi case.
 | Self-hosted SQL Server (Linux or Windows, reached over the network) | `self-hosted` |
 
 This is `mssql.topology` in single-instance mode, or `mssqlMulti.topology`
-in multi-instance mode — always required either way, but — unlike
-`oracle-otel`'s `oracle.topology` — it does not currently change any
-rendered output. The grant script and receiver defaults are identical for
-`self-hosted` and `rds` (the grant script's system-database exclusion list
-always excludes `rdsadmin`, which is a harmless no-op on self-hosted
-instances where that database simply doesn't exist). It's validated and
-required anyway, for documentation clarity and to leave room for a future
-difference without a breaking change.
+in multi-instance mode — always required either way. With the default
+`basic` config profile it does not change any rendered output: the grant
+script and receiver defaults are identical for `self-hosted` and `rds` (the
+grant script's system-database exclusion list always excludes `rdsadmin`,
+which is a harmless no-op on self-hosted instances where that database
+simply doesn't exist). With the `advanced` profile it decides one metric
+(see "Choosing the config profile").
+
+## Choosing the config profile
+
+`mssql.configProfile` (single-instance) or `mssqlMulti.configProfile`
+(multi-instance, applies to every entry) selects how many metrics the
+receiver collects. Both default to `basic`.
+
+| Profile | Metrics collected |
+|---|---|
+| `basic` | The 12 core metrics |
+| `advanced` | New Relic's [full SQL Server metric catalog](https://docs.newrelic.com/docs/opentelemetry/db360/mssql/config-reference/): 71 metrics for `self-hosted`, 70 for `rds` |
+
+The only topology difference in the Advanced catalog is
+`sqlserver.database.execution.errors`, which New Relic's doc includes for
+self-hosted SQL Server but not for RDS. Only the receiver's `metrics` block
+differs between profiles; events, query collection, resource attributes, the
+exporter, pipelines and the setup job are identical. Start with `basic` and
+move to `advanced` once collection is verified. `additionalReceiverConfig`
+still overrides either profile.
+
+```yaml
+mssql:
+  topology: "rds"
+  configProfile: "advanced"
+```
 
 ## Networking prerequisites
 
@@ -240,7 +264,7 @@ Shared across both modes:
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.6.0` |
+| `image.tag` | Collector image tag | `2.7.3` |
 | `otlpEndpoint` | New Relic endpoint for your account's region, full URL with scheme required (e.g. `https://otlp.nr-data.net:4318` for US) — validated at render time | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrsqlserver` receiver block | `{}` |
@@ -253,6 +277,7 @@ Single-instance schema (`mssql:`, ignored when `mssqlMulti.enabled: true`):
 | Key | Description | Default |
 |---|---|---|
 | `mssql.topology` | `self-hosted` or `rds` — always required | `""` |
+| `mssql.configProfile` | `basic` or `advanced` — see "Choosing the config profile" | `basic` |
 | `mssql.server` | SQL Server host/endpoint | `""` |
 | `mssql.port` | SQL Server port | `1433` |
 | `mssql.username` / `mssql.password` | Plain-value monitoring credentials | `""` |
@@ -265,5 +290,6 @@ Multi-instance schema (`mssqlMulti:`, mutually exclusive with `mssql.*`):
 | Key | Description | Default |
 |---|---|---|
 | `mssqlMulti.enabled` | Enables multi-instance mode | `false` |
-| `mssqlMulti.topology` | `self-hosted` or `rds` — kept for parity, no rendered effect | `""` |
+| `mssqlMulti.topology` | `self-hosted` or `rds` — applies to every entry; only affects the `advanced` profile | `""` |
+| `mssqlMulti.configProfile` | `basic` or `advanced` — applies to every entry | `basic` |
 | `mssqlMulti.databases` | List of `{name, server, port, existingSecret, sqlAdmin.existingSecret}` entries, one per monitored instance | `[]` |

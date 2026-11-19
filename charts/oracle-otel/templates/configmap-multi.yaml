@@ -11,6 +11,12 @@
 {{- else -}}
 {{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.cdbPdbDefaults" . | fromYaml) -}}
 {{- end -}}
+{{- if eq .Values.oracleMulti.configProfile "advanced" -}}
+{{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.advancedCommonMetrics" . | fromYaml) -}}
+{{- if not (or $isRds $isAdb) -}}
+{{- $topologyDefaults = mergeOverwrite $topologyDefaults (include "oracle-otel.receiver.advancedAsmMetrics" . | fromYaml) -}}
+{{- end -}}
+{{- end -}}
 {{- $databases := .Values.oracleMulti.databases -}}
 {{- $multiEntry := gt (len $databases) 1 -}}
 {{- $receiverModes := dict -}}

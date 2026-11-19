@@ -62,6 +62,12 @@ The otlp (gRPC) exporter takes a bare host:port target and rejects a full URL --
 the exact opposite of mssql-otel's otlphttp exporter, which requires a scheme.
 Catch a copy-pasted scheme'd endpoint at render time rather than at runtime.
 */}}
+{{- define "postgresql-otel.validate.configProfile" -}}
+{{- if not (has .value (list "basic" "advanced")) -}}
+{{- fail (printf "%s must be one of: basic, advanced" .key) -}}
+{{- end -}}
+{{- end -}}
+
 {{- define "postgresql-otel.validate.otlpEndpoint" -}}
 {{- if not .Values.otlpEndpoint -}}
 {{- fail "otlpEndpoint is required" -}}
@@ -93,6 +99,7 @@ setupJob.enabled), setupJob image when setupJob.enabled, unique names, unique en
 mixing with the single-instance postgresql.server.
 */}}
 {{- define "postgresql-otel.validate.postgresqlMulti" -}}
+{{- include "postgresql-otel.validate.configProfile" (dict "key" "postgresqlMulti.configProfile" "value" .Values.postgresqlMulti.configProfile) -}}
 {{- if not (has .Values.postgresqlMulti.topology (list "self-hosted" "rds")) -}}
 {{- fail "postgresqlMulti.topology must be one of: self-hosted, rds" -}}
 {{- end -}}
@@ -187,6 +194,58 @@ metrics:
 {{- end -}}
 
 {{/*
+Advanced profile metrics: New Relic's full PostgreSQL metric catalog, from
+https://docs.newrelic.com/docs/opentelemetry/db360/postgresql/config-reference/ -- keep in sync with it.
+Identical for self-hosted and rds. Merged over multi.receiverDefaults, so it replaces (never removes)
+the basic metrics.
+*/}}
+{{- define "postgresql-otel.receiver.advancedMetrics" -}}
+metrics:
+  postgresql.blks_hit:
+    enabled: true
+  postgresql.blks_read:
+    enabled: true
+  postgresql.database.locks:
+    enabled: true
+  postgresql.deadlocks:
+    enabled: true
+  postgresql.function.calls:
+    enabled: true
+  postgresql.query.conflicts:
+    enabled: true
+  postgresql.query.execution.time:
+    enabled: true
+  postgresql.sequential_scans:
+    enabled: true
+  postgresql.temp.io:
+    enabled: true
+  postgresql.temp_files:
+    enabled: true
+  postgresql.tup_deleted:
+    enabled: true
+  postgresql.tup_fetched:
+    enabled: true
+  postgresql.tup_inserted:
+    enabled: true
+  postgresql.tup_returned:
+    enabled: true
+  postgresql.tup_updated:
+    enabled: true
+  postgresql.vector.insert.duration:
+    enabled: true
+  postgresql.vector.insert.rows:
+    enabled: true
+  postgresql.vector.search.calls:
+    enabled: true
+  postgresql.vector.search.duration:
+    enabled: true
+  postgresql.vector.search.rows_returned:
+    enabled: true
+  postgresql.wal.delay:
+    enabled: true
+{{- end -}}
+
+{{/*
 Renders one receiver's field block in the same order as the single-instance configmap.yaml: endpoint/
 username/password/databases/exclude_databases, collection_interval, events, top_query_collection,
 query_sample_collection, metrics, falling back to alphabetical order for any other field (e.g. from
@@ -251,6 +310,12 @@ Args (single dict): .receiver -- the merged receiver config dict.
           {{- range $mk := $metricsOrder }}
           {{ $mk }}:
             enabled: {{ index (index $metrics $mk) "enabled" }}
+          {{- end }}
+          {{- range $mk := (keys $metrics | sortAlpha) }}
+          {{- if not (has $mk $metricsOrder) }}
+          {{ $mk }}:
+            enabled: {{ index (index $metrics $mk) "enabled" }}
+          {{- end }}
           {{- end }}
 {{- else if has $key (list "endpoint" "username" "password") }}
         {{ $key }}: {{ (index $receiver $key) | quote }}

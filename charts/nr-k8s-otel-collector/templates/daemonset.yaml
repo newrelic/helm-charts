@@ -31,6 +31,16 @@ spec:
       securityContext:
         {{- . | nindent 8 }}
       {{- end }}
+      {{- if .Values.daemonset.hostPID }}
+      hostPID: true
+      {{- end }}
+      {{- if .Values.daemonset.hostNetwork }}
+      hostNetwork: true
+      # With hostNetwork, the default ClusterFirst policy falls back to the node resolver and loses cluster DNS.
+      # ClusterFirstWithHostNet keeps it so the cadvisor/kubelet scrapes resolve kubernetes.default.svc on
+      # GKE Standard, EKS, AKS, etc. On GKE Autopilot the scrapes direct-dial the kubelet, so this has no effect.
+      dnsPolicy: ClusterFirstWithHostNet
+      {{- end }}
       {{- with include "newrelic.common.priorityClassName" . }}
       priorityClassName: {{ . }}
       {{- end }}
@@ -151,7 +161,7 @@ spec:
             {{- . | toYaml | nindent 12 }}
             {{- end }}
           volumeMounts:
-            {{- if not ( include "newrelic.common.gkeAutopilot" . ) }}
+            {{- if or (not (include "newrelic.common.gkeAutopilot" .)) (and (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.gkeAutopilotAllowlist" .)) }}
             - name: host-fs
               mountPath: /hostfs
               readOnly: true
@@ -171,7 +181,7 @@ spec:
             {{- toYaml . | nindent 12 }}
             {{- end }}
       volumes:
-        {{- if not (include "newrelic.common.gkeAutopilot" .) }}
+        {{- if or (not (include "newrelic.common.gkeAutopilot" .)) (and (include "newrelic.common.gkeAutopilot" .) (include "newrelic.common.gkeAutopilotAllowlist" .)) }}
         - name: host-fs
           hostPath:
             path: /

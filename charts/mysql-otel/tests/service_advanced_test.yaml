@@ -1,0 +1,99 @@
+suite: service and ports (configProfile)
+templates:
+  - templates/service.yaml
+  - templates/deployment.yaml
+  - templates/deployment-multi.yaml
+  - templates/configmap.yaml
+  - templates/configmap-multi.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  mysql.server: "mysql.internal"
+  mysql.topology: "self-hosted"
+  mysql.username: "nr_monitor"
+  mysql.password: "s3cret"
+  otlpEndpoint: "otlp.nr-data.net:4317"
+  licenseKey: "testlicensekey"
+tests:
+  - it: renders no Service and no container ports for basic
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/service.yaml
+      - notExists:
+          path: spec.template.spec.containers[0].ports
+        template: templates/deployment.yaml
+  - it: renders a ClusterIP Service exposing the otlp ports for advanced
+    set:
+      mysql.configProfile: advanced
+    asserts:
+      - equal:
+          path: spec.type
+          value: ClusterIP
+        template: templates/service.yaml
+      - equal:
+          path: spec.ports
+          value:
+            - name: otlp-grpc
+              port: 4317
+              targetPort: otlp-grpc
+              protocol: TCP
+            - name: otlp-http
+              port: 4318
+              targetPort: otlp-http
+              protocol: TCP
+        template: templates/service.yaml
+      - equal:
+          path: spec.selector
+          value:
+            app.kubernetes.io/name: mysql-otel
+            app.kubernetes.io/instance: my-release
+        template: templates/service.yaml
+  - it: declares the otlp container ports for advanced
+    set:
+      mysql.configProfile: advanced
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].ports
+          value:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+        template: templates/deployment.yaml
+  - it: multi mode follows mysqlMulti.configProfile for the Service and ports
+    set:
+      mysql.server: ""
+      mysqlMulti.enabled: true
+      mysqlMulti.topology: "self-hosted"
+      mysqlMulti.configProfile: advanced
+      mysqlMulti.databases:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+    asserts:
+      - equal:
+          path: spec.ports[0].port
+          value: 4317
+        template: templates/service.yaml
+      - equal:
+          path: spec.template.spec.containers[0].ports[0].containerPort
+          value: 4317
+        template: templates/deployment-multi.yaml
+  - it: multi mode renders no Service when mysqlMulti.configProfile is basic even if mysql.configProfile is advanced
+    set:
+      mysql.server: ""
+      mysql.configProfile: advanced
+      mysqlMulti.enabled: true
+      mysqlMulti.topology: "self-hosted"
+      mysqlMulti.databases:
+        - name: db1
+          server: "host1"
+          existingSecret: "db1-creds"
+    asserts:
+      - hasDocuments:
+          count: 0
+        template: templates/service.yaml

@@ -27,11 +27,10 @@ just applied per instance in the multi case.
   MySQL. This chart runs the collector as a Kubernetes Deployment reaching
   MySQL remotely over the network, so `transport` is always `tcp` and is
   not exposed as a value at all.
-- Report host/infrastructure metrics for the machine(s) MySQL runs on. New
-  Relic's docs show a "Full-feature configuration" that adds a
-  `host_metrics` receiver and split host/db/traces pipelines — that only
-  makes sense for a collector running directly on the MySQL host's own OS.
-  This chart implements only the standalone "Standard configuration" shape.
+- Report host/infrastructure metrics for the machine(s) MySQL runs on. A
+  `host_metrics` receiver only makes sense for a collector running directly
+  on the MySQL host's own OS, so this chart never adds one, in either
+  config profile.
 - Auto-select an Amazon RDS CA bundle for you. `additionalReceiverConfig.tls.ca_file`
   is a plain value you supply — a chart-hardcoded default risks going
   stale as Amazon rotates CA bundles.
@@ -48,6 +47,37 @@ in multi-instance mode — always required either way, but it does not
 currently change any rendered output. It exists for documentation clarity
 and as a validated, forward-compatible schema slot, same precedent as
 `mssql-otel`'s `mssql.topology`.
+
+## Choosing the config profile
+
+`mysql.configProfile` (single-instance) or `mysqlMulti.configProfile`
+(multi-instance, applies to every entry) selects how much of the collector
+config is rendered. Both default to `basic`.
+
+| Profile | What you get |
+|---|---|
+| `basic` | The 4 core metrics, one `batch` processor, and `metrics` + `logs` pipelines |
+| `advanced` | New Relic's [full MySQL configuration](https://docs.newrelic.com/docs/opentelemetry/db360/mysql/config-reference/): the 71-metric catalog; exporter `sending_queue`; `resource_detection` processors (system, cloud, env); a `health_check` extension; and an app-facing OTLP receiver feeding `traces`, `metrics` and `logs` pipelines |
+
+The Advanced config is the same for `self-hosted` and `rds`, and the setup
+job is unaffected.
+
+With `advanced`, the collector Pod also listens for application telemetry
+on OTLP gRPC `4317` and HTTP `4318` (bound to `0.0.0.0`, because the
+receiver's localhost default would be unreachable from other Pods). The chart
+adds a `ClusterIP` Service named after the release for in-cluster access.
+Nothing authenticates those ports, so reach them only from trusted
+workloads, and use a NetworkPolicy if you need to restrict who can send.
+Telemetry sent there is forwarded to your New Relic account. Start with
+`basic` and move to `advanced` once collection is verified.
+`additionalReceiverConfig` overrides the `nrmysql` receiver under either
+profile.
+
+```yaml
+mysql:
+  topology: "rds"
+  configProfile: "advanced"
+```
 
 ## Networking prerequisites
 
@@ -266,7 +296,7 @@ Shared across both modes:
 | Key | Description | Default |
 |---|---|---|
 | `image.repository` | Collector image | `newrelic/nrdot-collector` |
-| `image.tag` | Collector image tag | `2.6.0` |
+| `image.tag` | Collector image tag | `2.7.3` |
 | `otlpEndpoint` | New Relic OTLP/gRPC endpoint, bare host:port, no scheme | `""` |
 | `licenseKey` / `customSecretName` / `customSecretLicenseKey` | New Relic license key, standard `common-library` fields | `""` |
 | `additionalReceiverConfig` | Merged into every `nrmysql` receiver block | `{}` |
@@ -280,6 +310,7 @@ Single-instance schema (`mysql:`, ignored when `mysqlMulti.enabled: true`):
 | Key | Description | Default |
 |---|---|---|
 | `mysql.topology` | `self-hosted` or `rds` — always required | `""` |
+| `mysql.configProfile` | `basic` or `advanced` — see "Choosing the config profile" | `basic` |
 | `mysql.server` | MySQL host/endpoint | `""` |
 | `mysql.port` | MySQL port | `3306` |
 | `mysql.username` / `mysql.password` | Plain-value monitoring credentials | `""` |
@@ -306,6 +337,7 @@ Multi-instance schema (`mysqlMulti:`, mutually exclusive with `mysql.*`):
 |---|---|---|
 | `mysqlMulti.enabled` | Enables multi-instance mode | `false` |
 | `mysqlMulti.topology` | `self-hosted` or `rds` — kept for parity, no rendered effect | `""` |
+| `mysqlMulti.configProfile` | `basic` or `advanced` — applies to every entry | `basic` |
 | `mysqlMulti.databases` | List of `{name, server, port, existingSecret, database, mysqlAdmin.existingSecret}` entries, one per monitored instance | `[]` |
 
 Scrape-behavior settings (`allowNativePasswords`, `collectionInterval`,

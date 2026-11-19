@@ -25,6 +25,15 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           args:
             - --config=/etc/mysql-otel/config.yaml
+          {{- if eq .Values.mysql.configProfile "advanced" }}
+          ports:
+            - name: otlp-grpc
+              containerPort: 4317
+              protocol: TCP
+            - name: otlp-http
+              containerPort: 4318
+              protocol: TCP
+          {{- end }}
           env:
             - name: MYSQL_USERNAME
               valueFrom:

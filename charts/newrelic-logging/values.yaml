@@ -325,7 +325,8 @@ updateStrategy: RollingUpdate
 
 # Sends data to staging, can be set as a global.
 # global.nrStaging
-nrStaging: false
+# Note: this must be left unset (nil) rather than `false` so that `global.nrStaging` is not shadowed.
+nrStaging:
 
 daemonSet:
   # Annotations to add to the DaemonSet.
