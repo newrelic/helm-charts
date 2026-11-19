@@ -42,28 +42,20 @@ daemonset:
     # -- OpenTelemetry config for the daemonset. If set, overrides default config.
     config: {}
   # -- Custom external ConfigMap name for daemonset. Leave empty to use the chart-generated one.
+  # PCG reloads its pipeline in place when this ConfigMap changes, without a pod restart (see `configReload`).
   # @default -- `""`
   customConfigMap: ""
 
-# -- Config watcher sidecar settings. Applies to both deployment and daemonset when customConfigMap is set.
-# @default -- See `values.yaml`
-configWatcher:
-  # -- Enable the config-watcher sidecar that monitors the custom ConfigMap and restarts the pod on changes
-  enabled: true
-  # -- Config watcher image repository and tag
-  image: bitnami/kubectl:latest
-  # -- Config watcher image pull policy
-  imagePullPolicy: IfNotPresent
-  # -- Grace period in seconds for pod deletion when ConfigMap changes
-  gracePeriod: 30
-  # -- Resource limits and requests for the config-watcher sidecar
-  resources:
-    limits:
-      cpu: 100m
-      memory: 128Mi
-    requests:
-      cpu: 10m
-      memory: 64Mi
+# -- PCG applies config changes in place, without a pod restart: changes to `customConfigMap` (fluxless mode), and to
+# the ConfigMap this chart renders (flux mode, where a config-only upgrade updates just that ConfigMap).
+# Image, env and resource changes still roll the pods.
+configReload:
+  # -- `kubernetes`: PCG watches that ConfigMap through the Kubernetes API and applies a change within about a second.
+  # The chart grants read access to that one ConfigMap (see `rbac.create`). If PCG is not allowed to read it, PCG logs an
+  # error and watches the mounted file instead. If the API is unreachable, PCG keeps its config and applies the latest
+  # one once the API answers.
+  # `file`: PCG watches the mounted file, which the kubelet refreshes on its periodic sync (typically within 1 to 2 minutes). No API access.
+  source: kubernetes
 
 autoscaling:
   minReplicas: 2
@@ -85,7 +77,7 @@ image:
   # -- The pull policy is defaulted to IfNotPresent, which skips pulling an image if it already exists. If pullPolicy is defined without a specific value, it is also set to Always.
   pullPolicy: IfNotPresent
   # --  Overrides the image tag whose default is the chart appVersion.
-  tag: "3.2.1"
+  tag: "3.3.0"
 
 # -- Name of the Kubernetes cluster monitored. Mandatory. Can be configured also with `global.cluster`
 cluster: ""
@@ -140,6 +132,7 @@ deployment:
     # -- OpenTelemetry config for the deployment. If set, overrides default config and disables configuration parameters for the deployment.
     config: {}
   # -- Custom external ConfigMap name to use instead of the chart-generated one. Leave empty to use the internal ConfigMap.
+  # PCG reloads its pipeline in place when this ConfigMap changes, without a pod restart (see `configReload`).
   # @default -- `""`
   customConfigMap: ""
 
@@ -155,7 +148,8 @@ podSecurityContext: {}
 containerSecurityContext: {}
 
 rbac:
-  # -- Specifies whether RBAC resources should be created
+  # -- Create the Role and RoleBinding that let PCG read the ConfigMap it reloads (`configReload.source: kubernetes`).
+  # Set to `false` to grant `get`, `list` and `watch` on that ConfigMap yourself; without them PCG watches the mounted file instead.
   create: true
 
 # -- Settings controlling ServiceAccount creation

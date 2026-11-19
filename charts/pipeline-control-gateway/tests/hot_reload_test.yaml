@@ -1,0 +1,144 @@
+suite: config hot reload (fluxless customConfigMap)
+templates:
+  - templates/deployment.yaml
+  - templates/daemonset.yaml
+release:
+  name: pcg
+  namespace: newrelic
+set:
+  cluster: test-cluster
+  licenseKey: 1234567890abcdef1234567890abcdef12345678
+tests:
+  - it: renders only the gateway container for a Deployment with a customConfigMap
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: pipeline-control-gateway
+      - equal:
+          path: spec.template.spec.volumes[0].configMap.name
+          value: pcg-custom-config
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[0].subPath
+
+  - it: renders only the gateway container for a DaemonSet with a customConfigMap
+    template: templates/daemonset.yaml
+    set:
+      daemonset.enabled: true
+      daemonset.customConfigMap: pcg-custom-config
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.containers
+          count: 1
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: pipeline-control-gateway
+      - equal:
+          path: spec.template.spec.volumes[0].configMap.name
+          value: pcg-custom-config
+      - notExists:
+          path: spec.template.spec.containers[0].volumeMounts[0].subPath
+
+  - it: fails for a release image older than the first hot-reload release
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      image.tag: "2.5.0"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'image.tag "2.5.0" does not reload config changes in place'
+
+  - it: fails for an old release image on a DaemonSet
+    template: templates/daemonset.yaml
+    set:
+      daemonset.enabled: true
+      daemonset.customConfigMap: pcg-custom-config
+      image.tag: "v2.2.0"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'image.tag "2.2.0" does not reload config changes in place'
+
+  - it: fails for the last release before hot reload
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      image.tag: "3.2.0"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'image.tag "3.2.0" does not reload config changes in place.*Use image.tag 3.3.0 or later'
+
+  - it: accepts the first hot-reload release image
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      image.tag: "3.3.0"
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: fails for a pre-release build of an older version
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      image.tag: "3.2.0-fedlogs-lp"
+    asserts:
+      - failedTemplate:
+          errorPattern: 'image.tag "3.2.0-fedlogs-lp" does not reload config changes in place'
+
+  - it: accepts a pre-release build of the first hot-reload version
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      image.tag: "3.3.0-rc.1"
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: does not check tags that are not versions
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+      image.tag: "pr-612"
+    asserts:
+      - notFailedTemplate: {}
+
+  - it: defaults to an image that reloads
+    template: templates/deployment.yaml
+    set:
+      deployment.customConfigMap: pcg-custom-config
+    asserts:
+      - notFailedTemplate: {}
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: ':3\.3\.0$'
+
+  - it: gives the liveness probe longer than the 60s reload watchdog on a Deployment
+    template: templates/deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 15
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3
+
+  - it: gives the liveness probe longer than the 60s reload watchdog on a DaemonSet
+    template: templates/daemonset.yaml
+    set:
+      daemonset.enabled: true
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.failureThreshold
+          value: 15
+      - equal:
+          path: spec.template.spec.containers[0].livenessProbe.periodSeconds
+          value: 5
+      - equal:
+          path: spec.template.spec.containers[0].readinessProbe.failureThreshold
+          value: 3
