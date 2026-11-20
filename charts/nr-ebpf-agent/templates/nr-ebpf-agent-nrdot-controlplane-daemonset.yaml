@@ -1,10 +1,24 @@
 {{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 {{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (include "nr-ebpf-agent.controlPlane.shouldScrape" .) }}
-# Control-plane scraper (controller-manager, scheduler, etcd): one nrdot pod per
-# control-plane node. Separate from the eBPF agent and per-node nrdot DaemonSets so it has its own
-# scheduling (control-plane affinity + tolerations) and needs no privilege, only
-# hostNetwork to reach the components on 127.0.0.1. Same model as nri-bundle's
-# control-plane DaemonSet. Reuses the agent ServiceAccount (pods list + GET /metrics).
+# Control-plane scraper (controller-manager, scheduler, etcd): one unprivileged nrdot pod
+# per control-plane node. Same model as nri-bundle's control-plane DaemonSet. Reuses the
+# agent ServiceAccount (pods list + GET /metrics). kube-apiserver listens on 0.0.0.0:6443,
+# so the cluster collector scrapes it instead.
+#
+# Why not the cluster collector: kubeadm binds controller-manager :10257, scheduler :10259
+# and etcd metrics :2381 to 127.0.0.1 on control-plane nodes. Only a hostNetwork pod on
+# that node can reach them.
+#
+# Why not the per-node nrdot DaemonSet (also hostNetwork, so it could reach them):
+# - Scheduling: it reuses the eBPF agent's tolerations and affinity. Control-plane nodes
+#   are tainted and it lands there only through the tolerate-all default, so a user who
+#   restricts `tolerations`, `ebpfAgent.tolerations` or the node selector would silently
+#   lose all control-plane metrics. This DaemonSet has its own
+#   `nrdotCollector.controlPlane.{tolerations,affinity}`.
+# - Footprint: the per-node collector runs on every node; this runs only on control-plane
+#   nodes, with its own resources.
+# The health check is on 13134 and internal telemetry is off because the per-node
+# collector already holds 13133 and 127.0.0.1:8888 in the host network namespace.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
