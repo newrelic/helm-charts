@@ -492,13 +492,6 @@ data:
         pod_association:
           - sources: [{ from: resource_attribute, name: k8s.pod.ip }]
           - sources: [{ from: resource_attribute, name: k8s.pod.uid }]
-          # Static pods: kubelet_stats reports the config-hash UID, not the mirror pod's
-          # API UID, so the uid rule misses and k8s.node.name is never set. Name +
-          # namespace still match the mirror pod; existing attributes (the kubelet UID)
-          # are not overwritten.
-          - sources:
-            - { from: resource_attribute, name: k8s.pod.name }
-            - { from: resource_attribute, name: k8s.namespace.name }
           - sources: [{ from: connection }]
       resource_detection/cloudproviders:
         detectors: [gcp, eks, ec2, aks, azure]
@@ -676,6 +669,17 @@ data:
           - key: k8s.node.name
             value: ${env:K8S_NODE_NAME}
             action: upsert
+      # Static pods (apiserver, etcd, controller-manager, scheduler): kubelet_stats
+      # reports the kubelet's config-hash UID, not the mirror pod's API UID, so
+      # k8s_attributes finds no pod and sets no k8s.node.name. It picks the first
+      # pod_association rule whose attributes are present (uid) and never falls back,
+      # so a name/namespace rule after uid can't help. kubelet_stats only reports this
+      # node's pods, so fill the node name from env; insert never overwrites.
+      resource/node_name_fallback:
+        attributes:
+          - key: k8s.node.name
+            value: ${env:K8S_NODE_NAME}
+            action: insert
       transform/strip_labels_for_per_node_aggregation:
         metric_statements:
           - context: datapoint
@@ -760,7 +764,7 @@ data:
           exporters: [otlp_http/acct-default]
         metrics/in:
           receivers: [kubelet_stats]
-          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8s_attributes, transform/set_volume_persistent, resource_detection/cloudproviders, resource/newrelic, cumulative_to_delta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
+          processors: [memory_limiter, metricsgeneration/calculate_percentage_for_pods, k8s_attributes, resource/node_name_fallback, transform/set_volume_persistent, resource_detection/cloudproviders, resource/newrelic, cumulative_to_delta, {{- if include "nr-ebpf-agent.lowDataMode" . }} transform/low_data_mode_inator,{{- end }} batch]
           exporters: [{{ if $nsKeys }}routing{{ else }}otlp_http/acct-default{{ end }}]
         # Per-node CPU/memory usage % (cluster gauge). Separate copy of the
         # kubelet_stats stream; filter/keep_only_generated_metrics drops everything
