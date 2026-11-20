@@ -113,24 +113,24 @@ spec:
               containerPort: {{ .Values.ports.healthHttp }}
               protocol: TCP
           livenessProbe:
-            failureThreshold: 3
             httpGet:
               path: /health/status
               port: {{ .Values.ports.healthHttp }}
               scheme: HTTP
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
             successThreshold: 1
-            timeoutSeconds: 1
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
           readinessProbe:
             httpGet:
               path: /health/status
               port: {{ .Values.ports.healthHttp }}
-            initialDelaySeconds: 5
-            periodSeconds: 5
-            timeoutSeconds: 1
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
             successThreshold: 1
-            failureThreshold: 3
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
           volumeMounts:
             - name: daemonset-config
               mountPath: /config

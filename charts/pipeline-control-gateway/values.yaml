@@ -78,6 +78,24 @@ ports:
   healthHttp: 13133
   prometheus: 8888
 
+# -- Liveness probe on `/health/status`, applied to the deployment and the daemonset. A failing liveness probe restarts the container
+# and loses its in-memory data, so the timeout is long enough for a busy gateway to answer. The container is restarted after
+# `failureThreshold` consecutive failures, about 30 s with the defaults.
+# @default -- See `values.yaml`
+livenessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# -- Readiness probe on `/health/status`, applied to the deployment and the daemonset. A failing probe only removes the pod from the Service.
+# @default -- See `values.yaml`
+readinessProbe:
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
 
 image:
   # -- OTel collector image to be deployed. You can use your own collector as long it accomplish the following requirements mentioned below.
