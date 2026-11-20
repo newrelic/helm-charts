@@ -1,3 +1,4 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 # Cluster-wide nrdot collector (KSM + k8s events). Single replica is REQUIRED:
 # cluster-scoped collection must happen once, else every replica duplicates it.
@@ -26,6 +27,7 @@ spec:
         {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
       annotations:
         checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-cluster.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
     spec:
       serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
       terminationGracePeriodSeconds: 60
@@ -53,6 +55,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           env:
+            {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -60,6 +63,14 @@ spec:
             - name: CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
+            {{- /* nrdotCollector.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+            {{- $nrdotEnv := dict }}
+            {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "nrdotCollector.env" "into" $nrdotEnv) }}
+            {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+            {{- range $name, $value := $nrdotEnv }}
+            - name: {{ $name }}
+              value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
           volumeMounts:
             - name: nrdot-config
               mountPath: /etc/nrdot

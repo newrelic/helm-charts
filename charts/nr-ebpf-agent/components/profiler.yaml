@@ -1,0 +1,45 @@
+---
+# Default values for the OpenTelemetry eBPF profiler DaemonSet.
+#
+# These are defaults only. Override any key in your own values file, with --set,
+# or under `nr-ebpf-agent:` in a parent chart; user values always take precedence.
+# Settings shared by all components live in the chart's values.yaml.
+
+profiler:
+  # -- Deploy the profiler DaemonSet.
+  enabled: false
+  image:
+    # -- Profiler image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: "us-west1-docker.pkg.dev"
+    # -- Profiler image repository.
+    repository: pl-dev-infra/nr-ebpf-agent-internal/otelcol-ebpf-profiler
+    # -- Profiler image tag.
+    tag: "v162-amd64"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  # -- Pull secrets for the profiler pod only, e.g. `[{name: regcred}]`.
+  imagePullSecrets: []
+  # -- Full profiler config in the same structure as the OSS local.example.yaml.
+  # When set, used verbatim as the ConfigMap; reporterInterval, receiverConfig,
+  # and entityNameFilter are ignored.
+  # Only change from OSS: replace exporter endpoint with ${PROFILER_OTLP_ENDPOINT}.
+  config: {}
+  # -- How often profiles are flushed. Used only when profiler.config is not set.
+  reporterInterval: 60s
+  # -- Raw receiver config merged into the profiling receiver block.
+  # Used only when profiler.config is not set.
+  receiverConfig: {}
+  # -- Entity-name allow-list. Used only when profiler.config is not set.
+  entityNameFilter: []
+  # -- Extra environment variables for the profiler container.
+  # PROFILER_OTLP_ENDPOINT is set by the chart: if set here it is ignored with a WARNING.
+  env: {}
+  resources:
+    limits:
+      # -- Max memory allocated to the container.
+      memory: 1Gi
+    requests:
+      # -- Min CPU allocated to the container.
+      cpu: 100m
+      # -- Min memory allocated to the container.
+      memory: 256Mi

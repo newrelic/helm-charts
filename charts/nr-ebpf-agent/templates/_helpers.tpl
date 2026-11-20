@@ -70,13 +70,6 @@ Return the cluster name
 
 
 {{/*
-Create otel collector receiver endpoint
-*/}}
-{{- define "nr-otel-collector-receiver.endpoint" -}}
-{{- printf "dns:///%s.%s.svc.%s:%v" (include "otel-collector.service.name" .) .Release.Namespace .Values.kubernetesClusterDomain .Values.otelCollector.receiverPort }}
-{{- end }}
-
-{{/*
 Validates that user-provided tags don't contain "agent-" prefix for chart version >= 0.4.0
 Also validates agent version compatibility for chart version >= 1.0.0
 */}}
@@ -182,15 +175,6 @@ Validate the user inputted value when sampling by error rate.
 {{- end -}}
 {{- end -}}
 
-{{/*
-Validate that receiverPort is not less than 1024 (privileged port range).
-*/}}
-{{- define "validate.receiverPort" -}}
-{{- $port := .Values.otelCollector.receiverPort | int -}}
-{{- if lt $port 1025 -}}
-{{- fail (printf "Error: receiverPort must be > 1024 (got %d). Ports below 1024 are privileged ports and should not be used." $port) -}}
-{{- end -}}
-{{- end -}}
 
 {{/*
 Return the log level.

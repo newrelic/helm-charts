@@ -1,3 +1,4 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 {{- if .Values.obi.enabled }}
 {{- include "nr-ebpf-agent.obi.validate" . }}
 # OpenTelemetry eBPF Instrumentation (OBI), one pod per node. Instruments the node's
@@ -33,6 +34,9 @@ spec:
       annotations:
         # The license key reaches OBI from the Secret via env.
         checksum/config: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+        {{- if or (and .Values.obi.config .Values.obi.config.data (not (empty .Values.obi.config.data))) (eq .Values.obi.preset "network") }}
+        checksum/obi-config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-obi-config.yaml") . | sha256sum }}
+        {{- end }}
         {{- with .Values.ebpfAgent.podAnnotations }}
         {{- toYaml . | nindent 8 }}
         {{- end }}
@@ -62,8 +66,12 @@ spec:
           imagePullPolicy: {{ include "nr-ebpf-agent.obi.imagePullPolicy" . }}
           resources: {{ .Values.obi.resources | toYaml | nindent 12 }}
           env:
+            {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
             - name: OTEL_EXPORTER_OTLP_ENDPOINT
               value: "http://{{ include "nr-ebpf-agent.nrdot.pernode.otlpGrpcAddress" . }}"
+            # HTTP endpoint for the meter_provider in obi.config.data — reference as ${OTEL_EXPORTER_OTLP_HTTP_ENDPOINT}.
+            - name: OTEL_EXPORTER_OTLP_HTTP_ENDPOINT
+              value: "http://{{ include "nr-ebpf-agent.nrdot.pernode.serviceName" . }}.{{ .Release.Namespace }}.svc.{{ .Values.kubernetesClusterDomain }}:{{ .Values.nrdotCollector.otlpReceiver.httpPort }}"
             # The receiver speaks gRPC; without this OBI infers the protocol from the port.
             - name: OTEL_EXPORTER_OTLP_PROTOCOL
               value: grpc
@@ -83,9 +91,20 @@ spec:
             - name: OTEL_EBPF_KUBE_CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
-            {{- range $name, $value := omit (default dict .Values.obi.env) "OTEL_EXPORTER_OTLP_ENDPOINT" "OTEL_EXPORTER_OTLP_PROTOCOL" "OTEL_EXPORTER_OTLP_HEADERS" "NEW_RELIC_LICENSE_KEY" "OTEL_EBPF_KUBE_CLUSTER_NAME" }}
+            {{- /* obi.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+            {{- $obiEnv := dict }}
+            {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "obi.env" "into" $obiEnv) }}
+            {{- range $name, $value := $obiEnv }}
             - name: {{ $name }}
               value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
+            {{- range $name, $source := .Values.obi.envValueFrom }}
+            - name: {{ $name }}
+              valueFrom: {{ toYaml $source | nindent 16 }}
+            {{- end }}
+            {{- if or (and .Values.obi.config .Values.obi.config.data (not (empty .Values.obi.config.data))) (eq .Values.obi.preset "network") }}
+            - name: OTEL_EBPF_CONFIG_PATH
+              value: /etc/ebpf-instrument/config/ebpf-instrument-config.yml
             {{- end }}
           securityContext:
             privileged: true
@@ -103,6 +122,11 @@ spec:
             # newer kernels (6.6.128+, 6.12.75+, 6.18.14+, 6.19+) and silently disables it otherwise.
             - name: tracefs-volume
               mountPath: /sys/kernel/tracing
+            {{- if or (and .Values.obi.config .Values.obi.config.data (not (empty .Values.obi.config.data))) (eq .Values.obi.preset "network") }}
+            - name: obi-config-volume
+              mountPath: /etc/ebpf-instrument/config
+              readOnly: true
+            {{- end }}
       volumes:
         - name: bpf-fs-volume
           hostPath:
@@ -120,6 +144,11 @@ spec:
           hostPath:
             path: /sys/kernel/tracing
             type: Directory
+        {{- if or (and .Values.obi.config .Values.obi.config.data (not (empty .Values.obi.config.data))) (eq .Values.obi.preset "network") }}
+        - name: obi-config-volume
+          configMap:
+            name: {{ include "nr-ebpf-agent.fullname" . }}-obi-config
+        {{- end }}
       nodeSelector:
         {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
       {{- with include "nrEbpfAgent.ebpfAgent.affinity" . }}

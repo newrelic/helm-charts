@@ -20,14 +20,3 @@ tolerations only when nrdotCollector.clusterCollector.tolerations is explicitly 
     {{- toYaml . -}}
 {{- end -}}
 {{- end -}}
-
-{{- /*
-A helper to return the tolerations to apply to the Otel daemonset.
-*/ -}}
-{{- define "nrEbpfAgent.otelCollector.tolerations" -}}
-{{- if .Values.otelCollector.tolerations -}}
-    {{- toYaml .Values.otelCollector.tolerations -}}
-{{- else if include "newrelic.common.tolerations" . -}}
-    {{- include "newrelic.common.tolerations" . -}}
-{{- end -}}
-{{- end -}}

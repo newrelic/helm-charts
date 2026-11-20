@@ -1,0 +1,28 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
+{{- $hasExplicitConfig := and .Values.obi.config .Values.obi.config.data (not (empty .Values.obi.config.data)) -}}
+{{- $isNetworkPreset := and (eq .Values.obi.preset "network") (not $hasExplicitConfig) -}}
+{{- if and .Values.obi.enabled (or $hasExplicitConfig $isNetworkPreset) }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-obi-config
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-obi
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+data:
+  {{- /* Key matches the OSS chart so customers can copy their config block verbatim. */}}
+  ebpf-instrument-config.yml: |
+  {{- if $isNetworkPreset }}
+    {{- /* network preset: enable TCP/DNS network capture. Equivalent to OSS preset:network. */}}
+    extensions:
+      obi:
+        version: "2.0"
+        capture:
+          network:
+            capture:
+              enabled: true
+  {{- else }}
+    {{- toYaml .Values.obi.config.data | nindent 4 }}
+  {{- end }}
+{{- end }}

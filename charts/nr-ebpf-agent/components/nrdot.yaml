@@ -1,0 +1,177 @@
+---
+# Default values for the nrdot Kubernetes-infrastructure collectors: the per-node
+# DaemonSet, the cluster Deployment and the bundled kube-state-metrics.
+#
+# These are defaults only. Override any key in your own values file, with --set,
+# or under `nr-ebpf-agent:` in a parent chart; user values always take precedence.
+# Settings shared by all components live in the chart's values.yaml.
+
+# -- nrdot collector for Kubernetes infrastructure telemetry (kubeletstats, KSM,
+# k8s events) — the nri-kubernetes replacement half of the agent. When disabled,
+# only the eBPF agent runs (no K8s infra collection); zero added overhead.
+# -- Kubernetes infrastructure monitoring via eBPF+nrdot (the nri-kubernetes
+# replacement). This is a convenience alias for the "Enable eBPF for K8s
+# infrastructure" choice: setting `infra.enabled: true` turns on the nrdot
+# collector (`nrdotCollector.enabled`) and eBPF-agent host stats
+# (`reportInfra: auto`), using `nrdotCollector` defaults for everything else
+# (its own kube-state-metrics, direct egress, low-data-mode). Advanced users can
+# ignore this and drive `nrdotCollector.*` / `reportInfra` directly — those keys
+# still work and take precedence.
+#
+# Platform capability (eBPF needs a supported kernel/OS/arch + privilege) is
+# gated BEFORE install — by the install wizard's config-time platform check and the
+# `linux` nodeSelector on the eBPF workloads — NOT by a runtime auto-fallback here.
+# Runtime "detect the cluster can't run eBPF, then switch to nri-kubernetes" is not
+# doable via Helm (a chart can't re-render its own subchart enablement based on a
+# live probe), so it is intentionally absent, and the Guided/CLI + Manifest install
+# paths are held to the same behavior for parity.
+infra:
+  enabled: false
+
+nrdotCollector:
+  goGC: 30
+  kubectlImage:
+    repository: alpine/k8s
+    tag: "1.32.3"
+  sidecar:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  # -- Master toggle for K8s infrastructure collection via nrdot. Prefer the
+  # `infra.enabled` alias above unless you need fine-grained control; either
+  # enabling this OR `infra.enabled` turns the collector on.
+  enabled: false
+  image:
+    # -- nrdot image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- nrdot image repository.
+    repository: newrelic/nrdot-collector
+    # -- nrdot image tag.
+    tag: "2.5.0"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  # -- Image for the `nrdot-get-allocatable` init container (needs `kubectl` + `yq`).
+  #    It reads this node's CPU/memory allocatable from the K8s API and injects it
+  #    into the collector's metricsgeneration `scale_by` fields, enabling
+  #    node.cpu.usage.percentage / node.memory.usage.percentage (the K8s cluster
+  #    CPU/memory usage gauges). Mirrors nr-k8s-otel-collector's `images.kubectl`.
+  kubectlImage:
+    # -- kubectl image registry. Overrides `global.images.registry`. Defaults to docker.io
+    registry: ""
+    # -- kubectl image repository (must include `yq`).
+    repository: bitnami/kubectl
+    # -- kubectl image tag. Pinned to avoid breakage from mutable latest tag.
+    tag: "1.33.0"
+    # -- Image pull policy. Overrides `global.images.pullPolicy`.
+    pullPolicy: ""
+  # -- Metric collection / scrape interval.
+  collectionInterval: 60s
+  # -- Go garbage-collection target percentage for both nrdot collectors. Lower
+  # values trade CPU for reduced memory (GC runs more often). Profiled A/B):
+  # 50 -> 30 cut the per-node collector
+  # working set ~19% (~41 -> ~33 MiB — more churn from cadvisor/kubeletstats means
+  # more for GC to reclaim) and the cluster collector ~10% (~31 -> ~28 MiB — already
+  # lean after the control-plane drop), at negligible CPU on low-churn nodes. Below 30
+  # hits the live-set floor (no further memory gain, only added GC frequency). Set to
+  # "" to use the Go default (100).
+  goGC: 30
+  # -- Extra environment variables (name: value) for both nrdot collector containers (per-node
+  # DaemonSet and cluster Deployment). Values must be strings, numbers or bools.
+  # K8S_NODE_NAME, CLUSTER_NAME, NR_OTLP_ENDPOINT, NEW_RELIC_LICENSE_KEY, NR_INGEST_KEY_<i> and GOGC
+  # are set by the chart (use `goGC`, `namespaceLicenseKeys`, ...): if set here they are ignored and
+  # a WARNING is printed at install/upgrade.
+  env: {}
+  # -- (bool) Send only the metrics required for the NR Kubernetes UI. When true,
+  # KSM scrape is filtered to the ~79 UI-relevant kube_* names and noisy datapoint
+  # attributes (id, name, interface, cpu) are dropped. Set false for full-fidelity
+  # KSM + cadvisor ingest (higher volume). Left unset so `global.lowDataMode` applies;
+  # a value set here overrides it.
+  # @default -- `global.lowDataMode`, else true
+  lowDataMode:
+  # -- kube-state-metrics pod label selector for the cluster collector's KSM scrape,
+  # as comma-separated `label=value` pairs. Only used when relying on an EXTERNAL KSM
+  # (kubeStateMetrics.mode results in no bundled KSM); when this chart deploys its own
+  # KSM the scrape is auto-pinned to that instance. If the cluster has MULTIPLE KSM
+  # instances, tighten this to a single one (e.g.
+  # "app.kubernetes.io/instance=newrelic-bundle") — otherwise every matching KSM is
+  # scraped and each cluster-wide kube_* series is ingested once per KSM (duplicate).
+  ksmSelector: "app.kubernetes.io/name=kube-state-metrics"
+  # -- Control-plane scraping (kube-apiserver/controller-manager/scheduler) by the
+  # cluster collector. Scraping kube-apiserver /metrics is expensive (~22 MB heap:
+  # the endpoint returns ~26k series with no server-side filter, the collector keeps
+  # ~6, buffering the whole body + caching the dropped series). "auto" scrapes only
+  # when the cluster has control-plane nodes (node-role.kubernetes.io/control-plane|
+  # controlplane|master|etcd) — managed control planes (EKS/GKE/AKS) have none, so
+  # control plane is not scraped, matching nri-bundle's behaviour. "always"/"never"
+  # force it on/off.
+  controlPlane:
+    mode: auto
+  # -- Bundled kube-state-metrics instance.
+  kubeStateMetrics:
+    # -- "always" (default) = always deploy our own KSM and pin the cluster
+    # collector's scrape to it (app.kubernetes.io/instance=<release>). This is the
+    # zero-config, robust default: it guarantees exactly one KSM scrape target even
+    # when other KSM instances exist on the cluster (e.g. nri-bundle's during a
+    # migration, or another collector's) — otherwise each KSM exposes identical
+    # cluster-wide series and every kube_* metric is ingested once per KSM. Mirrors
+    # nri-bundle, which also ships its own KSM by default.
+    # "auto" = deploy only if no existing KSM Deployment is found cluster-wide (via
+    # lookup) — reuses an external KSM to save ~16Mi, but if MULTIPLE external KSMs
+    # exist you must set `ksmSelector` to one instance to avoid double-scraping.
+    # "never" = never deploy; rely on an external KSM matched by `ksmSelector`.
+    mode: always
+    image:
+      repository: registry.k8s.io/kube-state-metrics/kube-state-metrics
+      tag: "v2.13.0"
+      pullPolicy: IfNotPresent
+  # -- OTLP receiver on the per-node collector. The eBPF agent (hostNetwork) can reach it on
+  # 127.0.0.1; OBI, the profiler and other pods reach it through the per-node Service
+  # `<release>-nrdot-pernode` (internalTrafficPolicy: Local, so a pod reaches only the collector
+  # on its own node). Binds 0.0.0.0 on the node and is unauthenticated: restrict node ingress on
+  # these ports (security groups / NetworkPolicy) to the sources you trust. The ports are taken
+  # on the node. Data is routed by `k8s.namespace.name` like the rest (`namespaceLicenseKeys`).
+  # Required by `obi.enabled`.
+  otlpReceiver:
+    # -- Run the OTLP receiver, its traces/metrics/logs pipelines and the per-node Service.
+    enabled: true
+    # -- OTLP/gRPC port (receiver and Service).
+    grpcPort: 4317
+    # -- OTLP/HTTP port (receiver and Service).
+    httpPort: 4318
+  # -- Rewrites `service.name` on OTLP data to the eBPF agent's name for the sending process
+  # (`nrserviceid` extension + processor). Needs a collector image with those components
+  # (e-nrdot-collector; the stock nrdot image lacks them), `otlpReceiver.enabled`, and the
+  # agent's entity endpoint (`ENTITY_ENDPOINT_ENABLED=true`). Until the endpoint answers, data
+  # passes through unchanged.
+  serviceId:
+    enabled: false
+    # -- The agent's entity endpoint; the extension requests `<endpoint>/v1/entities`.
+    endpoint: http://127.0.0.1:9445
+    pollInterval: 10s
+    # -- Per-request timeout; must be less than `pollInterval`.
+    timeout: 2s
+  # -- Per-node collector (DaemonSet) resources. Key name kept from when it was an agent-pod sidecar.
+  sidecar:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+  # -- Cluster (Deployment) collector resources.
+  clusterCollector:
+    resources:
+      limits:
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 256Mi
+    # -- Tolerations for the cluster collector Deployment. Unlike the per-node DaemonSet
+    # (which tolerates all taints so it lands on every node), this is a single pod that
+    # only needs one schedulable node, so it does NOT inherit the tolerate-all default.
+    # Set this only if every node in your cluster is tainted (e.g. dedicated node pools).
+    tolerations: []
+

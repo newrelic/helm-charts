@@ -1,0 +1,195 @@
+suite: chart-managed keys in component env maps are ignored, with a WARNING in NOTES
+templates:
+  - templates/NOTES.txt
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/nr-ebpf-agent-obi-daemonset.yaml
+  - templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+  - templates/nr-ebpf-agent-nrdot-deployment.yaml
+  - templates/nr-ebpf-agent-profiler-daemonset.yaml
+  - templates/nr-ebpf-agent-profiler-config.yaml
+  - templates/nr-ebpf-agent-nrdot-config-pernode.yaml
+  - templates/nr-ebpf-agent-nrdot-config-cluster.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  # Also proves components/*.yaml defaults contain no protected keys.
+  - it: prints no notes by default, with every component on
+    set: &all
+      cluster: test-cluster
+      licenseKey: test-license-key
+      infra: {enabled: true}
+      obi: {enabled: true}
+      profiler: {enabled: true}
+    asserts:
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: ""
+
+  # --- obi.env ---------------------------------------------------------------
+  - it: keeps the chart's OBI endpoint and warns when obi.env sets it
+    set:
+      <<: *all
+      obi:
+        enabled: true
+        env: {OTEL_EXPORTER_OTLP_ENDPOINT: "http://elsewhere:4317", MY_SETTING: "x"}
+    asserts:
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: http://my-release-nr-ebpf-agent-nrdot-pernode.my-namespace.svc.cluster.local:4317
+          count: 1
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        notContains:
+          path: spec.template.spec.containers[0].env
+          content: {name: OTEL_EXPORTER_OTLP_ENDPOINT, value: "http://elsewhere:4317"}
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: MY_SETTING, value: "x"}
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: "WARNING: 'obi.env.OTEL_EXPORTER_OTLP_ENDPOINT' is managed by the chart and was ignored; your value was not applied. Configure it through the chart's settings instead."
+
+  # --- nrdotCollector.env ----------------------------------------------------
+  - it: adds nrdotCollector.env to both nrdot collectors
+    set:
+      <<: *all
+      nrdotCollector: {env: {GOMEMLIMIT: 400MiB, MY_NUMBER: 1000000}}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: GOMEMLIMIT, value: 400MiB}
+      - template: templates/nr-ebpf-agent-nrdot-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: GOMEMLIMIT, value: 400MiB}
+      - template: templates/nr-ebpf-agent-nrdot-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: MY_NUMBER, value: "1000000"}
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: ""
+
+  - it: keeps the chart's nrdot egress env and warns when nrdotCollector.env sets it
+    set:
+      <<: *all
+      nrdotCollector: {env: {NR_OTLP_ENDPOINT: "https://elsewhere", GOGC: "100"}}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: NR_OTLP_ENDPOINT, value: "https://otlp.nr-data.net"}
+          count: 1
+      - template: templates/nr-ebpf-agent-nrdot-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: NR_OTLP_ENDPOINT, value: "https://otlp.nr-data.net"}
+          count: 1
+      - template: templates/nr-ebpf-agent-nrdot-deployment.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: GOGC, value: "30"}
+          count: 1
+      - template: templates/nr-ebpf-agent-nrdot-deployment.yaml
+        notContains:
+          path: spec.template.spec.containers[0].env
+          content: {name: GOGC, value: "100"}
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: |-
+            WARNING: 'nrdotCollector.env.GOGC' is managed by the chart and was ignored; your value was not applied. Configure it through the chart's settings instead.
+            WARNING: 'nrdotCollector.env.NR_OTLP_ENDPOINT' is managed by the chart and was ignored; your value was not applied. Configure it through the chart's settings instead.
+
+  - it: protects the generated per-account keys through registry patterns
+    set:
+      <<: *all
+      namespaceLicenseKeys: {team-a: "key-a"}
+      nrdotCollector: {env: {NR_INGEST_KEY_0: "user-key"}}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content:
+            name: NR_INGEST_KEY_0
+            valueFrom: {secretKeyRef: {name: nr-ebpf-agent-secrets, key: NR_INGEST_KEY_0}}
+          count: 1
+      - template: templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml
+        notContains:
+          path: spec.template.spec.containers[0].env
+          content: {name: NR_INGEST_KEY_0, value: "user-key"}
+      - template: templates/NOTES.txt
+        matchRegexRaw:
+          pattern: "^WARNING: 'nrdotCollector.env.NR_INGEST_KEY_0' is managed by the chart"
+
+  # --- profiler.env ----------------------------------------------------------
+  - it: renders no env block on the profiler by default
+    set: *all
+    asserts:
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        notExists:
+          path: spec.template.spec.containers[0].env
+
+  - it: adds profiler.env to the profiler container
+    set:
+      <<: *all
+      profiler: {enabled: true, env: {MY_PROFILER_SETTING: "x", MY_FLAG: true}}
+    asserts:
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: MY_PROFILER_SETTING, value: "x"}
+      - template: templates/nr-ebpf-agent-profiler-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: MY_FLAG, value: "true"}
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: ""
+
+  # --- ebpfAgent.env ---------------------------------------------------------
+  # The agent has no protected env vars: every ebpfAgent.env entry is applied, without a warning.
+  - it: applies every ebpfAgent.env entry, without a warning
+    set:
+      <<: *all
+      ebpfAgent:
+        env: {OTLP_ENDPOINT: "otlp.example:443", ENTITY_ENDPOINT_ENABLED: "true", NEW_RELIC_LICENSE_KEY: "agent-key"}
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: OTLP_ENDPOINT, value: "otlp.example:443"}
+          count: 1
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: ENTITY_ENDPOINT_ENABLED, value: "true"}
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: NEW_RELIC_LICENSE_KEY, value: "agent-key"}
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: ""
+
+  # --- all components --------------------------------------------------------
+  - it: prints one WARNING per ignored key across components, sorted by path then key
+    set:
+      <<: *all
+      nrdotCollector: {env: {CLUSTER_NAME: x}}
+      obi:
+        enabled: true
+        env: {OTEL_EXPORTER_OTLP_HEADERS: h, NEW_RELIC_LICENSE_KEY: k, MY_SETTING: ok}
+    asserts:
+      - template: templates/NOTES.txt
+        equalRaw:
+          value: |-
+            WARNING: 'nrdotCollector.env.CLUSTER_NAME' is managed by the chart and was ignored; your value was not applied. Configure it through the chart's settings instead.
+            WARNING: 'obi.env.NEW_RELIC_LICENSE_KEY' is managed by the chart and was ignored; your value was not applied. Configure it through the chart's settings instead.
+            WARNING: 'obi.env.OTEL_EXPORTER_OTLP_HEADERS' is managed by the chart and was ignored; your value was not applied. Configure it through the chart's settings instead.

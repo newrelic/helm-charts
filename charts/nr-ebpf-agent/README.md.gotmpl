@@ -23,6 +23,26 @@ helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -f your-custom-values.yaml -n 
 
 {{ template "chart.sourcesSection" . }}
 
+## Component configuration
+
+The chart deploys several components with a single install. Each component keeps its default configuration in its own file under [`components/`](https://github.com/newrelic/helm-charts/tree/master/charts/nr-ebpf-agent/components):
+
+| Component | Defaults file | Top-level keys |
+|-----------|---------------|----------------|
+| eBPF agent DaemonSet | [`components/ebpf-agent.yaml`](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/components/ebpf-agent.yaml) | `ebpfAgent`, `protocols`, `allDataFilters`, `apmDataFilters`, `networkMetricsDataFilter`, `logDataFilters`, `processStats`, `entityLabels`, `report*`, `logLevel`, `logFilePath`, `genAICaptureMessageContent`, `customOtlpEndpoint*`, `metadataEndpoint`, `metadataTlsCertPath`, `otlpProxy`, `metadataProxy` |
+| nrdot collectors + kube-state-metrics | [`components/nrdot.yaml`](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/components/nrdot.yaml) | `infra`, `nrdotCollector` |
+| OpenTelemetry eBPF Instrumentation (OBI) | [`components/obi.yaml`](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/components/obi.yaml) | `obi` |
+| OpenTelemetry eBPF profiler | [`components/profiler.yaml`](https://github.com/newrelic/helm-charts/blob/master/charts/nr-ebpf-agent/components/profiler.yaml) | `profiler` |
+
+`values.yaml` holds only the settings shared by all components (cluster, license key, scheduling, labels, multi-account routing). The values table below lists every option with its default; each component file holds the defaults for its own keys.
+
+The chart merges the component defaults under your values at render time, so you override component keys as usual: in your values file, with `--set`, or under `nr-ebpf-agent:` in a parent chart. Your values always take precedence. To keep your own configuration split by component, pass one file per component in a single command:
+
+```sh
+helm upgrade nr-ebpf-agent newrelic/nr-ebpf-agent -n newrelic --create-namespace --install \
+  -f common.yaml -f ebpf-agent.yaml -f nrdot.yaml -f obi.yaml -f profiler.yaml
+```
+
 ## Confirm installation
 ### Watch pods spin up:
 
