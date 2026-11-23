@@ -39,9 +39,10 @@ obi.env:
 ebpfAgent.env:
   keys: []
 
-# nrdot collector containers: per-node DaemonSet and cluster Deployment
+# nrdot collector containers: per-node DaemonSet, cluster Deployment and control-plane DaemonSet
 # (templates/nr-ebpf-agent-nrdot-pernode-daemonset.yaml, nr-ebpf-agent-nrdot-deployment.yaml,
-# egress env from "nr-ebpf-agent.nrdot.egressEnv" in _nrdot.tpl).
+# nr-ebpf-agent-nrdot-controlplane-daemonset.yaml; egress env from
+# "nr-ebpf-agent.nrdot.egressEnv" in _nrdot.tpl).
 nrdotCollector.env:
   keys:
     - K8S_NODE_NAME

@@ -1,0 +1,108 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
+{{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) (include "nr-ebpf-agent.controlPlane.shouldScrape" .) }}
+# Control-plane scraper (controller-manager, scheduler, etcd): one unprivileged nrdot pod
+# per control-plane node. Same model as nri-bundle's control-plane DaemonSet. Reuses the
+# agent ServiceAccount (pods list + GET /metrics). kube-apiserver listens on 0.0.0.0:6443,
+# so the cluster collector scrapes it instead.
+#
+# Why not the cluster collector: kubeadm binds controller-manager :10257, scheduler :10259
+# and etcd metrics :2381 to 127.0.0.1 on control-plane nodes. Only a hostNetwork pod on
+# that node can reach them.
+#
+# Why not the per-node nrdot DaemonSet (also hostNetwork, so it could reach them):
+# - Scheduling: it reuses the eBPF agent's tolerations and affinity. Control-plane nodes
+#   are tainted and it lands there only through the tolerate-all default, so a user who
+#   restricts `tolerations`, `ebpfAgent.tolerations` or the node selector would silently
+#   lose all control-plane metrics. This DaemonSet has its own
+#   `nrdotCollector.controlPlane.{tolerations,affinity}`.
+# - Footprint: the per-node collector runs on every node; this runs only on control-plane
+#   nodes, with its own resources.
+# The health check is on 13134 and internal telemetry is off because the per-node
+# collector already holds 13133 and 127.0.0.1:8888 in the host network namespace.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: {{ include "nr-ebpf-agent.fullname" . }}-nrdot-controlplane
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app: nr-ebpf-agent-nrdot-controlplane
+    component: nrdot-controlplane-collector
+    {{- include "newrelic.common.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app: nr-ebpf-agent-nrdot-controlplane
+      {{- include "newrelic.common.labels.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        app: nr-ebpf-agent-nrdot-controlplane
+        component: nrdot-controlplane-collector
+        {{- include "newrelic.common.labels.podLabels" . | nindent 8 }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/nr-ebpf-agent-nrdot-config-controlplane.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/secrets.yaml") . | sha256sum }}
+    spec:
+      serviceAccountName: {{ include "nr-ebpf-agent.service.name" . }}
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      terminationGracePeriodSeconds: 30
+      {{- with include "nr-ebpf-agent.imagePullSecrets" . }}
+      imagePullSecrets:
+        {{- . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: nrdot-collector
+          image: {{ include "nr-ebpf-agent.nrdot.image" . }}
+          imagePullPolicy: {{ include "nr-ebpf-agent.nrdot.imagePullPolicy" . }}
+          args: ["--config=/etc/nrdot/controlplane.yaml"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          resources: {{ .Values.nrdotCollector.controlPlane.resources | toYaml | nindent 12 }}
+          livenessProbe:
+            httpGet: { path: /, port: 13134 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          readinessProbe:
+            httpGet: { path: /, port: 13134 }
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          env:
+            {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: CLUSTER_NAME
+              value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
+            {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
+            {{- /* nrdotCollector.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+            {{- $nrdotEnv := dict }}
+            {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "nrdotCollector.env" "into" $nrdotEnv) }}
+            {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+            {{- range $name, $value := $nrdotEnv }}
+            - name: {{ $name }}
+              value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
+          volumeMounts:
+            - name: nrdot-config
+              mountPath: /etc/nrdot
+              readOnly: true
+      volumes:
+        - name: nrdot-config
+          configMap:
+            name: {{ include "nr-ebpf-agent.nrdot.configName.controlplane" . }}
+      nodeSelector:
+        {{- include "nrEbpfAgent.linuxNodeSelector" . | nindent 8 }}
+      {{- with include "nrEbpfAgent.controlPlane.affinity" . }}
+      affinity:
+        {{- . | nindent 8 }}
+      {{- end }}
+      {{- with include "nrEbpfAgent.controlPlane.tolerations" . }}
+      tolerations:
+        {{- . | nindent 8 }}
+      {{- end }}
+{{- end }}
