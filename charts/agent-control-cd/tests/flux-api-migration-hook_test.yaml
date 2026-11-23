@@ -1,0 +1,71 @@
+suite: Flux API migration hook
+templates:
+  - templates/flux-api-migration-hook.yaml
+release:
+  namespace: newrelic
+  isUpgrade: true
+tests:
+  - it: should render a post-upgrade Job with its RBAC by default
+    asserts:
+      - hasDocuments:
+          count: 4
+      - documentSelector:
+          path: kind
+          value: Job
+        equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-upgrade
+      - documentSelector:
+          path: kind
+          value: Job
+        equal:
+          path: metadata.name
+          value: agent-control-cd-flux-api-migration
+      - documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+        equal:
+          path: subjects[0].namespace
+          value: newrelic
+
+  - it: should run every hook resource after the upgrade
+    asserts:
+      - equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: post-upgrade
+
+  - it: should only run flux migrate in the main container
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - notExists:
+          path: spec.template.spec.initContainers
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: migrate
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: flux migrate
+
+  - it: should use the configured image
+    set:
+      fluxApiMigration:
+        image:
+          repository: registry.example.com/flux-cli
+          tag: v9.9.9
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example.com/flux-cli:v9.9.9
+
+  - it: should not render when flux2 is disabled
+    set:
+      flux2:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0

@@ -1,0 +1,91 @@
+{{- $m := default dict .Values.fluxApiMigration -}}
+{{- if .Values.flux2.enabled }}
+{{- $image := default dict $m.image -}}
+{{- $name := "agent-control-cd-flux-api-migration" }}
+# Runs after Helm has applied the Flux CRDs of this release. Flux 2.6 serves the stable API versions next to the beta
+# ones and stores the stable ones, but the beta versions stay listed in status.storedVersions. Newer Flux CRDs drop the
+# beta versions and the API server refuses that while they are still listed, so `flux migrate` clears them here to
+# allow a later upgrade to a newer Flux. It is mandatory: it cannot be disabled while this chart installs Flux.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions", "customresourcedefinitions/status"]
+    verbs: ["get", "list", "watch", "update", "patch"]
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+      - kustomize.toolkit.fluxcd.io
+      - image.toolkit.fluxcd.io
+      - notification.toolkit.fluxcd.io
+    resources: ["*"]
+    verbs: ["get", "list", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $name }}
+      containers:
+        - name: migrate
+          image: {{ default "ghcr.io/fluxcd/flux-cli" $image.repository }}:{{ default "v2.9.0" $image.tag }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              flux migrate
+              # flux migrate rewrites the stored objects. Verify no beta version is left as a stored version.
+              left=""
+              for crd in $(kubectl get crd -o name | grep -E '\.(source|helm|kustomize|image|notification)\.toolkit\.fluxcd\.io$'); do
+                stored=$(kubectl get "$crd" -o jsonpath='{.status.storedVersions[*]}')
+                case " $stored " in *" v1beta"*|*" v2beta"*) left="$left $crd($stored)";; esac
+              done
+              if [ -n "$left" ]; then
+                echo "Beta versions still stored in:$left" >&2
+                exit 1
+              fi
+              echo "Flux API migration done"
+{{- end }}

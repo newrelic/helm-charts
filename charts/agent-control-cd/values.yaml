@@ -79,3 +79,16 @@ flux2:
   # user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on
   # the whole cluster.
   watchAllNamespaces: false
+
+# -- Migration run after every upgrade of this chart, as a Helm `post-upgrade` hook. Flux 2.6 serves the stable CRD API
+# versions next to the beta ones, but the beta versions stay in the CRD `status.storedVersions`. Newer Flux releases
+# remove the beta APIs from their CRDs, and the API server rejects that change while the old versions are still listed
+# there. The hook runs `flux migrate` so a later upgrade to a newer Flux succeeds. It is mandatory and always runs when
+# `flux2.enabled` is true.
+# @default -- See `values.yaml`
+fluxApiMigration:
+  image:
+    # -- Image providing the `flux` and `kubectl` binaries used by the hook.
+    repository: ghcr.io/fluxcd/flux-cli
+    # -- Tag of the image. It must be a Flux version that includes `flux migrate`.
+    tag: v2.9.0

@@ -20,6 +20,9 @@ This chart is not intended to be installed on its own. Instead, it is designed t
 | flux2.rbac | object | Enabled (See `values.yaml`) | Create RBAC rules for FluxCD is able to deploy all kind of workloads on the cluster. |
 | flux2.sourceController | object | Enabled | Source controller provides a way to fetch artifacts to the rest of controllers. The source API (which reference [can be read here](https://fluxcd.io/flux/components/source/api/v1/)) is used by admins and various automated operators to offload the Git, OCO, and Helm repositories management. |
 | flux2.watchAllNamespaces | bool | `false` | As we are using Flux as a tool from the agent control to release new workloads, we do not want Flux to listen to all CRs created on the whole cluster. If the user does not want to use Flux and is only using it because of the agent control, this is the way to go so the cluster has deployed all operators needed by the agent control. But if the user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on the whole cluster. |
+| fluxApiMigration | object | See `values.yaml` | Migration run after every upgrade of this chart, as a Helm `post-upgrade` hook. Flux 2.6 serves the stable CRD API versions next to the beta ones, but the beta versions stay in the CRD `status.storedVersions`. Newer Flux releases remove the beta APIs from their CRDs, and the API server rejects that change while the old versions are still listed there. The hook runs `flux migrate` so a later upgrade to a newer Flux succeeds. It is mandatory and always runs when `flux2.enabled` is true. |
+| fluxApiMigration.image.repository | string | `"ghcr.io/fluxcd/flux-cli"` | Image providing the `flux` and `kubectl` binaries used by the hook. |
+| fluxApiMigration.image.tag | string | `"v2.9.0"` | Tag of the image. It must be a Flux version that includes `flux migrate`. |
 
 ## Maintainers
 
