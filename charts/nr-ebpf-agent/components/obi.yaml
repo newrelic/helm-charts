@@ -50,7 +50,12 @@ obi:
     OTEL_EBPF_BPF_CONTEXT_PROPAGATION: all
     OTEL_EBPF_BPF_HIGH_REQUEST_VOLUME: "true"
     OTEL_EBPF_JAVAAGENT_ATTACH_TIMEOUT: 60s
+    # -- Trace sampler. Use parentbased_traceidratio with OTEL_TRACES_SAMPLER_ARG
+    # to sample a fraction of root traces (e.g. 0.1 = 10%).
     OTEL_TRACES_SAMPLER: parentbased_always_on
+    # -- Sampler argument. Required when OTEL_TRACES_SAMPLER is parentbased_traceidratio.
+    # Set to a value between 0.0 and 1.0 (e.g. "0.1" to sample 10% of root traces).
+    OTEL_TRACES_SAMPLER_ARG: ""
     OTEL_EBPF_LOG_LEVEL: info
     OTEL_EBPF_SDK_LOG_LEVEL: info
     OTEL_EBPF_BPF_BATCH_LENGTH: "1000"
