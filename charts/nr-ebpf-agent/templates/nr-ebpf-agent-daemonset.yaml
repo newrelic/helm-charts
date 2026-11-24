@@ -182,10 +182,12 @@ spec:
           {{- else if hasKey .Values "logReporting" }}
             value: "{{ .Values.logReporting }}"
           {{- else }}
-            value: "false"
+            value: "auto"
           {{- end }}
           - name: ENABLE_AGENT_METADATA_REPORTING
             value: "{{ if hasKey .Values "agentMetadataReporting" }}{{ .Values.agentMetadataReporting }}{{ else }}true{{ end }}"
+          - name: HIGH_SECURITY_MODE
+            value: "{{ .Values.highSecurityMode | default false }}"
           - name: AI_MONITORING_ENABLED
             value: "{{ if .Values.ai_monitoring }}{{ .Values.ai_monitoring.enabled | default false }}{{ else }}false{{ end }}"
           - name: AI_MONITORING_SAMPLING_LATENCY
