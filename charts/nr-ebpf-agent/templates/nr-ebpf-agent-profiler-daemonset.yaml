@@ -1,3 +1,4 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 {{- if .Values.profiler.enabled }}
 {{- include "nr-ebpf-agent.profiler.validate" . }}
 # OpenTelemetry eBPF profiler, one pod per node. CPU-profiles the node's processes and
@@ -64,6 +65,18 @@ spec:
           imagePullPolicy: {{ include "nr-ebpf-agent.profiler.imagePullPolicy" . }}
           command: ["/profiler/otelcol-ebpf-profiler", "--config=/etc/profiler/config.yaml", "--feature-gates=+service.profilesSupport"]
           resources: {{ .Values.profiler.resources | toYaml | nindent 12 }}
+          {{- $profilerEnv := dict }}
+          {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "profiler.env" "into" $profilerEnv) }}
+          env:
+            {{- /* PROFILER_OTLP_ENDPOINT: reference as ${PROFILER_OTLP_ENDPOINT} in profiler.config
+                 to route profiles to the per-node nrdot collector. Protected — ignored if set in profiler.env. */}}
+            - name: PROFILER_OTLP_ENDPOINT
+              value: {{ include "nr-ebpf-agent.nrdot.pernode.otlpGrpcAddress" . | quote }}
+            {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+            {{- range $name, $value := $profilerEnv }}
+            - name: {{ $name }}
+              value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
           securityContext:
             privileged: true
           volumeMounts:

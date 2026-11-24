@@ -1,0 +1,91 @@
+suite: component defaults (components/*.yaml) are merged under user values
+templates:
+  - templates/nr-ebpf-agent-daemonset.yaml
+  - templates/nr-ebpf-agent-obi-daemonset.yaml
+  - templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+  - templates/secrets.yaml
+release:
+  name: my-release
+  namespace: my-namespace
+
+tests:
+  - it: applies component defaults when the user sets nothing for the component
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      infra: {enabled: true}
+      obi: {enabled: true}
+    asserts:
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].image
+          value: docker.io/otel/ebpf-instrument:v0.15.2
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        hasDocuments:
+          count: 1
+
+  - it: keeps sibling defaults when the user overrides one nested key
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      infra: {enabled: true}
+      obi:
+        enabled: true
+        resources: {limits: {memory: 3Gi}}
+    asserts:
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        equal:
+          path: spec.template.spec.containers[0].resources
+          value:
+            limits: {memory: 3Gi}
+            requests: {cpu: 100m, memory: 256Mi}
+
+  # sprig merge/mergeOverwrite would treat false as empty and put the default (true) back.
+  - it: lets a user false override a default of true
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      infra: {enabled: true}
+      nrdotCollector: {otlpReceiver: {enabled: false}}
+      allDataFilters: {dropNewRelicBundle: false}
+    asserts:
+      - template: templates/nr-ebpf-agent-nrdot-pernode-service.yaml
+        hasDocuments:
+          count: 0
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: DROP_ALL_DATA_FOR_NEW_RELIC, value: "false"}
+
+  - it: lets a user empty list override a non-empty default
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      allDataFilters: {dropNamespaces: []}
+    asserts:
+      - template: templates/nr-ebpf-agent-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: DROP_ALL_DATA_FOR_NAMESPACES, value: ""}
+
+  - it: merges user-added map entries with the default map
+    set:
+      cluster: test-cluster
+      licenseKey: test-license-key
+      infra: {enabled: true}
+      obi:
+        enabled: true
+        env: {GOGC: "50", EXTRA_SETTING: "x"}
+    asserts:
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: GOGC, value: "50"}
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: EXTRA_SETTING, value: "x"}
+      - template: templates/nr-ebpf-agent-obi-daemonset.yaml
+        contains:
+          path: spec.template.spec.containers[0].env
+          content: {name: OTEL_EBPF_LOG_LEVEL, value: info}

@@ -1,3 +1,4 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 ---
 {{- if or (and .Values.customOtlpEndpointTlsCertSecret (not .Values.customOtlpEndpointTlsCertSecretKey)) (and (not .Values.customOtlpEndpointTlsCertSecret) .Values.customOtlpEndpointTlsCertSecretKey) }}
   {{- fail "Both customOtlpEndpointTlsCertSecret and customOtlpEndpointTlsCertSecretKey must be provided together." }}
@@ -67,12 +68,15 @@ spec:
         image: {{ include "nr-ebpf-agent.ebpfAgent.image" . }}
         imagePullPolicy: {{ include "nr-ebpf-agent.ebpfAgent.imagePullPolicy" . }}
         resources: {{ .Values.ebpfAgent.resources | toYaml | nindent 10 }}
-        {{- $agentEnv := .Values.ebpfAgent.env | default dict }}
+        {{- /* ebpfAgent.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+        {{- $agentEnv := dict }}
+        {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "ebpfAgent.env" "into" $agentEnv) }}
         ports:
             - name: http
               containerPort: 9445
               protocol: TCP
         env:
+          {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
           - name: PL_HOST_PATH
             value: "/host"
           - name: PL_STIRLING_SOURCES

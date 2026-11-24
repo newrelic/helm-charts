@@ -1,3 +1,4 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 {{- $otlp := .Values.nrdotCollector.otlpReceiver }}
 {{- if and (include "nr-ebpf-agent.nrdotCollector.enabled" .) $otlp.enabled }}
 # OTLP entry point to the per-node nrdot collector. internalTrafficPolicy: Local sends a

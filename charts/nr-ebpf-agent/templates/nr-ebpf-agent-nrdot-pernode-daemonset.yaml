@@ -1,3 +1,4 @@
+{{- include "nr-ebpf-agent.loadComponentDefaults" . -}}
 {{- if (include "nr-ebpf-agent.nrdotCollector.enabled" .) }}
 # Per-node nrdot collector: host and process metrics, kubelet_stats, cAdvisor, and OTLP
 # from the eBPF agent and OBI. Non-privileged; reuses the agent ServiceAccount (RBAC
@@ -123,6 +124,18 @@ spec:
               export HOST_MACHINE_ID
               echo "HOST_MACHINE_ID : $HOST_MACHINE_ID"
               yq -i '(.processors.resource/host_id.attributes[] | select(.key == "host.id").value) = env(HOST_MACHINE_ID)' /final-config/pernode.yaml
+              # Reach the kubelet by node IP, as nri-kubernetes does (NRI_KUBERNETES_NODEIP).
+              # Node names aren't DNS-resolvable on every cluster (e.g. kubeadm with no node
+              # DNS records). IPv6 literals need brackets, which a ${env:} reference can't add.
+              if [ -n "$KUBE_NODE_IP" ]; then
+                case "$KUBE_NODE_IP" in
+                  *:*) KUBELET_HOST="[$KUBE_NODE_IP]" ;;
+                  *)   KUBELET_HOST="$KUBE_NODE_IP" ;;
+                esac
+                export KUBELET_ENDPOINT="https://${KUBELET_HOST}:10250"
+                echo "KUBELET_ENDPOINT : $KUBELET_ENDPOINT"
+                yq -i '.receivers.kubelet_stats.endpoint = env(KUBELET_ENDPOINT)' /final-config/pernode.yaml
+              fi
               cat /final-config/pernode.yaml
           env:
             - name: KUBE_NODE_NAME
@@ -130,6 +143,11 @@ spec:
                 fieldRef:
                   apiVersion: v1
                   fieldPath: spec.nodeName
+            - name: KUBE_NODE_IP
+              valueFrom:
+                fieldRef:
+                  apiVersion: v1
+                  fieldPath: status.hostIP
           volumeMounts:
             - name: nrdot-config
               mountPath: /temp-config
@@ -163,6 +181,7 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           env:
+            {{- /* Adding a chart-managed variable? Protect it in "nr-ebpf-agent.protectedValues" (_protected.tpl). */}}
             - name: K8S_NODE_NAME
               valueFrom:
                 fieldRef:
@@ -170,6 +189,14 @@ spec:
             - name: CLUSTER_NAME
               value: {{ include "nr-ebpf-agent.nrdot.clusterName" . | quote }}
             {{- include "nr-ebpf-agent.nrdot.egressEnv" . | nindent 12 }}
+            {{- /* nrdotCollector.env minus the keys the chart manages; those are dropped and reported in NOTES.txt. */}}
+            {{- $nrdotEnv := dict }}
+            {{- include "nr-ebpf-agent.protected.userMap" (dict "context" . "path" "nrdotCollector.env" "into" $nrdotEnv) }}
+            {{- /* toJson: values-file numbers are float64, which `quote` alone renders as 1e+06. */}}
+            {{- range $name, $value := $nrdotEnv }}
+            - name: {{ $name }}
+              value: {{ ternary $value (toJson $value) (kindIs "string" $value) | quote }}
+            {{- end }}
           volumeMounts:
             # Patched config written by the nrdot-get-allocatable init container
             # (the raw ConfigMap is mounted only on that init container).
