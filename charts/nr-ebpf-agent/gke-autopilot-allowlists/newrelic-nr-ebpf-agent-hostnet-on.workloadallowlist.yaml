@@ -1,0 +1,96 @@
+# nr-ebpf-agent — single hardcoded shape (no values toggle). Install the chart normally
+# (cluster + licenseKey); privilege, hostNetwork, and hostPID are always on because eBPF
+# requires them: BPF map access needs privilege, host namespaces expose node-wide network
+# flows, and the init container writes the host root to stage kernel headers. No hostnet-off
+# pair exists — the suffix is kept only for naming consistency.
+apiVersion: auto.gke.io/v1
+kind: WorkloadAllowlist
+minGKEVersion: 1.32.2-gke.1652000
+metadata:
+  name: newrelic-nr-ebpf-agent-hostnet-on
+  annotations:
+    autopilot.gke.io/no-connect: "true"
+    # provenance — informational only, not part of matchingCriteria (last live-verified)
+    newrelic.com/tested-chart-version: "1.6.1"
+    newrelic.com/tested-app-version: "1.6.0"
+    newrelic.com/tested-images: "newrelic/newrelic-ebpf-agent:1.6.0; newrelic/newrelic-ebpf-agent:agent-base-image-latest"
+    newrelic.com/tested-gke-version: "1.35.6-gke.125x000"
+    newrelic.com/tested-date: "2026-09-09"
+exemptions:
+  - autogke-disallow-privilege
+  - autogke-disallow-hostnamespaces
+  - autogke-no-write-mode-hostpath
+matchingCriteria:
+  hostNetwork: true
+  hostPID: true
+  initContainers:
+    - name: kernel-header-installer
+      image: ^(.*/)?newrelic/newrelic-ebpf-agent$
+      command:
+        - /scripts/install-headers.sh
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: installer-script
+          mountPath: /scripts
+          readOnly: true
+        - name: host-root-volume
+          mountPath: /host
+          readOnly: false
+        - name: kernel-headers-volume
+          mountPath: /kernel-headers
+          readOnly: false
+  containers:
+    - name: nr-ebpf-agent
+      image: ^(.*/)?newrelic/newrelic-ebpf-agent$
+      env:
+        - name: ^PL_.*$
+        - name: ^NEW_RELIC_.*$
+        - name: ^PROTOCOLS_.*$
+        - name: ^REPORT_.*$
+        - name: ^AI_MONITORING_.*$
+        - name: ^DROP_.*$
+        - name: ^KEEP_.*$
+        - name: ^APPLICATION_.*$
+        - name: ^.*_REPORTING$
+        - name: KUBERNETES_CLUSTER_DOMAIN
+        - name: DEPLOYMENT_NAME
+        - name: HOST_IP
+        - name: OTLP_ENDPOINT
+        - name: TLS_ENABLED
+        - name: NAMESPACE
+        - name: AGENT_SERVICE_NAME
+        - name: HTTP_BODY_LIMIT_BYTES
+        - name: MAX_LOG_SAMPLES_PER_MINUTE
+        - name: ALLOW_SERVICE_NAME_REGEX
+      securityContext:
+        privileged: true
+      volumeMounts:
+        - name: host-root-volume
+          mountPath: /host
+          readOnly: true
+        - name: sys-volume
+          mountPath: /sys
+          readOnly: true
+        - name: kernel-headers-volume
+          mountPath: /kernel-headers
+          readOnly: true
+  volumes:
+    - name: host-root-volume
+      hostPath:
+        path: /
+    - name: sys-volume
+      hostPath:
+        path: /sys
+    # Per the WorkloadAllowlist CRD, every `volumes` entry in the workload must
+    # match a `volumes` entry here, even non-sensitive ones. configMap.name is
+    # left unset since it's release-name-dependent; emptyDir has no matching
+    # type field in the CRD, so `name` alone is the correct way to declare it.
+    - name: installer-script
+      # defaultMode 493 (octal 0755) is REQUIRED here, not optional: install-headers.sh
+      # must be executable. Per the CRD, omitting defaultMode only matches the 0644
+      # default — so an empty `configMap: {}` would reject this workload. Confirmed
+      # against Google's own generated allowlist (validation/14-ebpf-*, 2026-07-30).
+      configMap:
+        defaultMode: 493
+    - name: kernel-headers-volume
