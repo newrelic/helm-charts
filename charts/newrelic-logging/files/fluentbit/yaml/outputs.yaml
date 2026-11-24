@@ -1,0 +1,11 @@
+# The New Relic output plugin keys must be all lowercase in YAML: Fluent Bit rewrites
+# camelCase keys to snake_case before the plugin reads them, so `licenseKey` would be
+# read as `license_key` and not found.
+- name: newrelic
+  match: '*'
+  alias: newrelic-logs-forwarder
+  licensekey: ${LICENSE_KEY}
+  endpoint: ${ENDPOINT}
+  lowdatamode: ${LOW_DATA_MODE}
+  sendmetrics: ${SEND_OUTPUT_PLUGIN_METRICS}
+  retry_limit: ${RETRY_LIMIT}

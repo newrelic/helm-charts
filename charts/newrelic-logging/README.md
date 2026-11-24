@@ -174,15 +174,16 @@ See [values.yaml](values.yaml) for the default values
 | `hostNetwork`                                                | Set the hostNetwork property for fluentbit pods.                                                                                                                                                                                                                                                                                                                                     |                                                                                 |
 | `enableLinux`                                                | Enable log collection from Linux containers. This is the default behavior. In case you are only interested of collecting logs from Windows containers, set this to `false`.                                                                                                                                                                                                          | `true`                                                                          |
 | `enableWindows`                                              | Enable log collection from Windows containers. Please refer to the [Windows support](#windows-support) section for more details.                                                                                                                                                                                                                                                     | `false`                                                                         |
-| `fluentBit.config.service`                                   | Contains fluent-bit.conf Service config                                                                                                                                                                                                                                                                                                                                              |                                                                                 |
-| `fluentBit.config.inputs`                                    | Contains fluent-bit.conf Inputs config                                                                                                                                                                                                                                                                                                                                               |                                                                                 |
-| `fluentBit.config.extraInputs`                               | Contains extra fluent-bit.conf Inputs config                                                                                                                                                                                                                                                                                                                                         |                                                                                 |
-| `fluentBit.config.filters`                                   | Contains fluent-bit.conf Filters config                                                                                                                                                                                                                                                                                                                                              |                                                                                 |
-| `fluentBit.config.extraFilters`                              | Contains extra fluent-bit.conf Filters config                                                                                                                                                                                                                                                                                                                                        |                                                                                 |
-| `fluentBit.config.lowDataModeFilters`                        | Contains fluent-bit.conf Filters config for lowDataMode                                                                                                                                                                                                                                                                                                                              |                                                                                 |
-| `fluentBit.config.outputs`                                   | Contains fluent-bit.conf Outputs config                                                                                                                                                                                                                                                                                                                                              |                                                                                 |
-| `fluentBit.config.extraOutputs`                              | Contains extra fluent-bit.conf Outputs config                                                                                                                                                                                                                                                                                                                                        |                                                                                 |
-| `fluentBit.config.parsers`                                   | Contains parsers.conf Parsers config                                                                                                                                                                                                                                                                                                                                                 |                                                                                 |
+| `fluentBit.configFormat`                                     | Format of the chart defaults: `yaml` or `conf`. It only applies when you have no `fluentBit.config.*` overrides. Your overrides decide the format otherwise. Empty means `yaml`.                                                                                                                                                                                                                                                           |                                                                                 |
+| `fluentBit.config.service`                                   | Fluent Bit `service` settings. YAML: the content of `service:`. Unset uses the chart default.                                                                                                                                                                                                                                                                                                                                              |                                                                                 |
+| `fluentBit.config.inputs`                                    | Fluent Bit inputs. YAML: list items (`- name: ...`). Unset uses the chart default.                                                                                                                                                                                                                                                                                                                                               |                                                                                 |
+| `fluentBit.config.extraInputs`                               | Extra Fluent Bit inputs, added after `inputs`.                                                                                                                                                                                                                                                                                                                                         |                                                                                 |
+| `fluentBit.config.filters`                                   | Fluent Bit filters. YAML: list items. Unset uses the chart default.                                                                                                                                                                                                                                                                                                                                              |                                                                                 |
+| `fluentBit.config.extraFilters`                              | Extra Fluent Bit filters, added after `filters`.                                                                                                                                                                                                                                                                                                                                        |                                                                                 |
+| `fluentBit.config.lowDataModeFilters`                        | Fluent Bit filters used when `lowDataMode` is on. Unset uses the chart default.                                                                                                                                                                                                                                                                                                                              |                                                                                 |
+| `fluentBit.config.outputs`                                   | Fluent Bit outputs. YAML: list items. Unset uses the chart default.                                                                                                                                                                                                                                                                                                                                              |                                                                                 |
+| `fluentBit.config.extraOutputs`                              | Extra Fluent Bit outputs, added after `outputs`.                                                                                                                                                                                                                                                                                                                                        |                                                                                 |
+| `fluentBit.config.parsers`                                   | Fluent Bit parsers. YAML: list items added to `parsers:`.                                                                                                                                                                                                                                                                                                                                                 |                                                                                 |
 | `fluentBit.retryLimit`                                       | Amount of times to retry sending a given batch of logs to New Relic. This prevents data loss if there is a temporary network disruption, if a request to the Logs API is lost or when receiving a recoverable HTTP response. Set it to "False" for unlimited retries.                                                                                                                | 5                                                                               |
 | `fluentBit.sendMetrics`                                      | Enable the collection of newrelic-fluent-bit-output internal plugin metrics. See [this documentation page](https://docs.newrelic.com/docs/logs/forward-logs/kubernetes-plugin-log-forwarding/#troubleshoot-installation) for more details.                                                                                                                                           | `false`                                                                         |
 | `fluentBit.fluentBitMetrics`                                 | Controls sending Fluent Bit metrics to New Relic. Allowed values: `none`, `basic`, `advanced`. `none`: No metrics sent. `basic`: Only build info metric sent. `advanced`: All metrics sent at 1 minute intervals. Default is `basic`.                                                                                                                                                | `basic`                                                                         |
@@ -294,6 +295,54 @@ fluentBit:
            caBundleFile   /proxyConfig/caBundleFile.pem
 ```
 
+
+
+### Fluent Bit configuration format
+
+The chart renders the Fluent Bit configuration as YAML (`fluent-bit.yaml` and `parsers.yaml`). Fluent Bit deprecates its classic `.conf` format at the end of 2026.
+
+Your `fluentBit.config.*` overrides decide the format. `fluentBit.configFormat` (`yaml` or `conf`) only picks the chart defaults when you have no overrides.
+
+| Your overrides | `fluentBit.configFormat` | Rendered config |
+| --- | --- | --- |
+| None | not set or `yaml` | YAML |
+| None | `conf` | Classic defaults, with a deprecation warning |
+| YAML only | any | YAML. With `conf`, the notes say that `configFormat` is ignored. |
+| Any override in the classic format | any | Classic (`fluent-bit.conf`, `parsers.conf`), with a deprecation warning that names the overrides. With `yaml`, the notes say that `configFormat` is ignored. |
+| A mix of classic and YAML | any | The render fails and names the key: Fluent Bit cannot mix both formats in one config |
+
+Any other value of `fluentBit.configFormat` fails the render.
+
+If the YAML config causes a problem in your cluster, set `fluentBit.configFormat: conf` and upgrade again, or run `helm rollback`.
+
+The chart has no YAML `includes:` key. If you need to include other files, use the classic format with `@INCLUDE`.
+
+The default values moved to `files/fluentbit/` inside the chart, so `helm show values` no longer lists them.
+
+If you use classic overrides, they keep working for now. To migrate, convert every override to YAML and keep the New Relic output plugin keys all lowercase (`licensekey`, `sendmetrics`, `lowdatamode`):
+
+```yaml
+# Classic
+fluentBit:
+  config:
+    extraFilters: |
+      [FILTER]
+          Name     grep
+          Match    *
+          Exclude  log lvl=debug*
+```
+
+```yaml
+# YAML
+fluentBit:
+  config:
+    extraFilters: |
+      - name: grep
+        match: '*'
+        exclude: log lvl=debug*
+```
+
+The chart defaults are in `files/fluentbit/`. Setting a `fluentBit.config.*` value replaces the default for that block. Fluent Bit 3.2 or newer is required for YAML. The chart image ships a newer version, so this only matters if you override `image.tag` with an older one.
 
 ## Windows support
 

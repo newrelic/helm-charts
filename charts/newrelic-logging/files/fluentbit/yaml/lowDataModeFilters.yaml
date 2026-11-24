@@ -1,0 +1,27 @@
+- name: kubernetes
+  match: kube.*
+  alias: kubernetes-enricher
+  # We need the full DNS suffix as Windows only supports resolving names with this suffix
+  # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
+  kube_url: https://kubernetes.default.svc.cluster.local:443
+  buffer_size: ${K8S_BUFFER_SIZE}
+  k8s-logging.exclude: ${K8S_LOGGING_EXCLUDE}
+  labels: off
+  annotations: off
+- name: nest
+  match: '*'
+  alias: kubernetes-attribute-lifter
+  operation: lift
+  nested_under: kubernetes
+- name: record_modifier
+  match: '*'
+  alias: node-attributes-enricher-filter
+  record:
+    - cluster_name "${CLUSTER_NAME}"
+  allowlist_key:
+    - container_name
+    - namespace_name
+    - pod_name
+    - stream
+    - message
+    - log

@@ -16,3 +16,32 @@ Then run:
         newrelic/newrelic-logging
 
 {{- end -}}
+
+{{- $format := include "newrelic-logging.fluentBit.format" . -}}
+{{- $classicKeys := include "newrelic-logging.fluentBit.classicKeys" . -}}
+{{- $configFormat := .Values.fluentBit.configFormat | default "" | toString -}}
+{{- if eq $format "classic" }}
+
+##############################################################################
+####     WARNING: Fluent Bit classic (.conf) configuration in use.        ####
+##############################################################################
+
+{{ if $classicKeys -}}
+The chart renders fluent-bit.conf and parsers.conf because these fluentBit.config
+overrides use the classic Fluent Bit format: {{ $classicKeys | replace " " ", " }}.
+{{- else -}}
+The chart renders fluent-bit.conf and parsers.conf because fluentBit.configFormat is "conf".
+{{- end }}
+Fluent Bit deprecates this format at the end of 2026. Convert your fluentBit.config
+overrides to YAML to avoid breakage when classic support is removed. See the
+"Fluent Bit configuration format" section of the chart README for the YAML equivalents.
+{{- if eq $configFormat "yaml" }}
+
+fluentBit.configFormat is "yaml", but the classic overrides decide the format, so it is ignored.
+{{- end }}
+{{- else if eq $configFormat "conf" }}
+
+NOTE: fluentBit.configFormat is "conf", but your fluentBit.config overrides ({{ include "newrelic-logging.fluentBit.overrideKeys" . | replace " " ", " }}) are in YAML,
+so the chart renders YAML and ignores fluentBit.configFormat. To use classic, write the overrides in the
+classic format, or remove them.
+{{- end }}

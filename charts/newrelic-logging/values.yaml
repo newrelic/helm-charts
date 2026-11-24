@@ -105,119 +105,60 @@ fluentBit:
         claim: {}
 
 
-  # New Relic default configuration for fluent-bit.conf (service, inputs, filters, outputs)
-  # and parsers.conf (parsers). The configuration below is not configured for lowDataMode and will
-  # send all attributes.  If custom configuration is required, update these variables.
-  config:
-    # Note that Prometheus metric collection needs the HTTP server to be online at port 2020 (see fluentBit.config.metricInstrumentation)
-    service: |
-      [SERVICE]
-          Flush         1
-          Log_Level     ${LOG_LEVEL}
-          Daemon        off
-          Parsers_File  parsers.conf
-          HTTP_Server   On
-          # Listening on :: binds a dual-stack socket, so the health check
-          # (and liveness probe) works on IPv4-only, IPv6-only, and dual-stack clusters.
-          HTTP_Listen   ::
-          HTTP_Port     2020
-          Health_Check  On
+  # Fluent Bit configuration. By default the chart renders a YAML config (fluent-bit.yaml and parsers.yaml)
+  # with New Relic's defaults, which send all attributes (lowDataMode uses `lowDataModeFilters`).
+  # The defaults ship inside the chart (files/fluentbit/yaml). Set any value below to override or extend them.
+  #
+  # Your overrides decide which format is rendered, whatever fluentBit.configFormat says:
+  # - No overrides, or only YAML overrides: fluent-bit.yaml and parsers.yaml (recommended).
+  # - Any override in the classic (.conf) format: the whole config is rendered as fluent-bit.conf and
+  #   parsers.conf, and the chart prints a deprecation warning, naming the overrides, on install and upgrade.
+  #   Fluent Bit deprecates the classic format at the end of 2026. Migrate your overrides to YAML.
+  # Classic and YAML cannot be mixed: if one override is classic, all your overrides must be classic.
+  #
+  # fluentBit.configFormat ("yaml" or "conf") only picks the chart defaults when you have no overrides.
+  # Set it to "conf" to go back to the classic defaults. Empty means "yaml".
+  configFormat: ""
+  #
+  # YAML overrides:
+  # - `service` is the content of the top-level `service:` map.
+  # - `inputs`, `extraInputs`, `filters`, `extraFilters`, `lowDataModeFilters`, `outputs`, `extraOutputs`
+  #   are YAML list items (each starting with `- name: ...`) added to `pipeline.inputs|filters|outputs`.
+  # - `parsers` are YAML list items added to `parsers:` in parsers.yaml.
+  # - New Relic output plugin keys must be all lowercase (`licensekey`, `sendmetrics`, `lowdatamode`).
+  # Note that Prometheus metric collection needs the HTTP server to be online at port 2020 (see fluentBit.config.metricInstrumentation)
+  config: {}
 
-    inputs: |
-      [INPUT]
-          Name              tail
-          Alias             pod-logs-tailer
-          Tag               kube.*
-          Path              ${PATH}
-          multiline.parser  ${LOG_PARSER}
-          DB                ${FB_DB}
-          Mem_Buf_Limit     7MB
-          Skip_Long_Lines   On
-          Refresh_Interval  10
+#    service: |
+#      flush: 1
+#      log_level: ${LOG_LEVEL}
+#      parsers_file: parsers.yaml
+#      http_server: on
+
+#    inputs: |
+#      - name: tail
+#        tag: kube.*
+#        path: ${PATH}
 
 #    extraInputs: |
-#      [INPUT]
-#          Name   dummy
-#          Tag    dummy.log
-
-    filters: |
-      [FILTER]
-          Name                kubernetes
-          Alias               kubernetes-enricher
-          Match               kube.*
-          # We need the full DNS suffix as Windows only supports resolving names with this suffix
-          # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-          Kube_URL            https://kubernetes.default.svc.cluster.local:443
-          Buffer_Size         ${K8S_BUFFER_SIZE}
-          K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
-
-      [FILTER]
-          Name           record_modifier
-          Alias          node-attributes-enricher
-          Match          *
-          Record         cluster_name "${CLUSTER_NAME}"
+#      - name: dummy
+#        tag: dummy.log
 
 #    extraFilters: |
-#      [FILTER]
-#          Name   grep
-#          Match  *
-#          Exclude log lvl=debug*
-
-    lowDataModeFilters: |
-      [FILTER]
-          Name           kubernetes
-          Match          kube.*
-          Alias          kubernetes-enricher
-          # We need the full DNS suffix as Windows only supports resolving names with this suffix
-          # See: https://kubernetes.io/docs/setup/production-environment/windows/intro-windows-in-kubernetes/#dns-limitations
-          Kube_URL       https://kubernetes.default.svc.cluster.local:443
-          Buffer_Size    ${K8S_BUFFER_SIZE}
-          K8S-Logging.Exclude ${K8S_LOGGING_EXCLUDE}
-          Labels         Off
-          Annotations    Off
-
-      [FILTER]
-          Name           nest
-          Match          *
-          Alias          kubernetes-attribute-lifter
-          Operation      lift
-          Nested_under   kubernetes
-
-      [FILTER]
-          Name           record_modifier
-          Match          *
-          Alias          node-attributes-enricher-filter
-          Record         cluster_name "${CLUSTER_NAME}"
-          Allowlist_key  container_name
-          Allowlist_key  namespace_name
-          Allowlist_key  pod_name
-          Allowlist_key  stream
-          Allowlist_key  message
-          Allowlist_key  log
-
-    outputs: |
-      [OUTPUT]
-          Name           newrelic
-          Match          *
-          Alias          newrelic-logs-forwarder
-          licenseKey     ${LICENSE_KEY}
-          endpoint       ${ENDPOINT}
-          lowDataMode    ${LOW_DATA_MODE}
-          sendMetrics    ${SEND_OUTPUT_PLUGIN_METRICS}
-          Retry_Limit    ${RETRY_LIMIT}
+#      - name: grep
+#        match: '*'
+#        exclude: log lvl=debug*
 
 #    extraOutputs: |
-#      [OUTPUT]
-#          Name null
-#          Match *
+#      - name: "null"
+#        match: '*'
 
 #    parsers: |
-#      [PARSER]
-#          Name         my_custom_parser
-#          Format       json
-#          Time_Key     time
-#          Time_Format  %Y-%m-%dT%H:%M:%S.%L
-#          Time_Keep    On
+#      - name: my_custom_parser
+#        format: json
+#        time_key: time
+#        time_format: "%Y-%m-%dT%H:%M:%S.%L"
+#        time_keep: on
 
 
 image:

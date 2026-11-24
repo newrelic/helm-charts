@@ -144,7 +144,7 @@ spec:
           command:
             - /fluent-bit/bin/fluent-bit
             - -c
-            - /fluent-bit/etc/fluent-bit.conf
+            - /fluent-bit/etc/{{ include "newrelic-logging.fluentBit.configFile" . }}
             - -e
             - /fluent-bit/bin/out_newrelic.so
           volumeMounts:

@@ -1,0 +1,474 @@
+suite: test fluent-bit config format selection
+templates:
+  - templates/configmap.yaml
+  - templates/daemonset.yaml
+  - templates/daemonset-windows.yaml
+  - templates/NOTES.txt
+release:
+  name: my-release
+  namespace: my-namespace
+set:
+  licenseKey: nr_license_key
+  cluster: my-cluster
+tests:
+  # ---- defaults: YAML, no warning
+  - it: "renders YAML by default, with no classic files"
+    template: templates/configmap.yaml
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.yaml"]
+      - isNotNull:
+          path: data["parsers.yaml"]
+      - isNull:
+          path: data["fluent-bit.conf"]
+      - isNull:
+          path: data["parsers.conf"]
+  - it: "uses all-lowercase New Relic output plugin keys by default"
+    template: templates/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "licensekey: \\$\\{LICENSE_KEY\\}"
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "sendmetrics: \\$\\{SEND_OUTPUT_PLUGIN_METRICS\\}"
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "lowdatamode: \\$\\{LOW_DATA_MODE\\}"
+      - notMatchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "licenseKey: |sendMetrics: |lowDataMode: "
+  - it: "keeps the dual-stack listener and health check in the default YAML service"
+    template: templates/configmap.yaml
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "http_listen: '::'"
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "health_check: on"
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "parsers_file: parsers.yaml"
+  - it: "uses the low data mode filters in YAML"
+    template: templates/configmap.yaml
+    set:
+      lowDataMode: true
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "name: nest"
+  - it: "does not log a deprecation warning with the defaults"
+    template: templates/configmap.yaml
+    asserts:
+      - notMatchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "nr.config.deprecation|classic"
+  - it: "does not print the deprecation warning with the defaults"
+    template: templates/NOTES.txt
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "WARNING|classic|deprecat"
+  - it: "starts both daemonsets with fluent-bit.yaml by default"
+    set:
+      enableWindows: true
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "fluent-bit\\.yaml$"
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "fluent-bit\\.yaml$"
+        template: templates/daemonset-windows.yaml
+        documentIndex: 0
+
+  # ---- YAML overrides: YAML, no warning
+  - it: "adds a YAML extra filter to the pipeline"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            - name: grep
+              match: '*'
+              exclude: log lvl=debug*
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "- name: grep"
+      - isNull:
+          path: data["fluent-bit.conf"]
+  - it: "uses a full YAML override instead of the default"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          outputs: |
+            - name: stdout
+              match: '*'
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "- name: stdout"
+      - notMatchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "name: newrelic"
+  - it: "adds YAML parsers"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          parsers: |
+            - name: my_parser
+              format: json
+    asserts:
+      - matchRegex:
+          path: data["parsers.yaml"]
+          pattern: "(?s)parsers:\\n\\s+- name: my_parser"
+  - it: "does not log a deprecation warning with YAML overrides"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            - name: grep
+              match: '*'
+              exclude: log lvl=debug*
+    asserts:
+      - notMatchRegex:
+          path: data["fluent-bit.yaml"]
+          pattern: "nr.config.deprecation|classic"
+  - it: "does not print the deprecation warning with YAML overrides"
+    template: templates/NOTES.txt
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            - name: grep
+              match: '*'
+              exclude: log lvl=debug*
+    asserts:
+      - notMatchRegex:
+          path: raw
+          pattern: "WARNING|classic|deprecat"
+
+  # ---- classic overrides: classic for the whole config, with a warning
+  - it: "treats a copied classic default block as a classic override"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          service: |
+            [SERVICE]
+                Flush         1
+                Log_Level     ${LOG_LEVEL}
+                Parsers_File  parsers.conf
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.conf"]
+      - isNull:
+          path: data["fluent-bit.yaml"]
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Parsers_File  parsers.conf"
+  - it: "renders the whole config as classic when one override is classic"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+                Exclude log lvl=debug*
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.conf"]
+      - isNotNull:
+          path: data["parsers.conf"]
+      - isNull:
+          path: data["fluent-bit.yaml"]
+      - isNull:
+          path: data["parsers.yaml"]
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Parsers_File  parsers.conf"
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "licenseKey     \\$\\{LICENSE_KEY\\}"
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "(?s)Name                kubernetes.*Exclude log lvl=debug\\*"
+  - it: "uses the classic low data mode filters for a classic config"
+    template: templates/configmap.yaml
+    set:
+      lowDataMode: true
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Name           nest"
+  - it: "keeps a full classic override and the default classic blocks"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          filters: |
+            [FILTER]
+                Name    record_modifier
+                Match   *
+                Record  foo bar
+          parsers: |
+            [PARSER]
+                Name    p
+                Format  json
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Record  foo bar"
+      - notMatchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "kubernetes-enricher"
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Name           newrelic"
+      - matchRegex:
+          path: data["parsers.conf"]
+          pattern: "\\[PARSER\\]"
+  - it: "detects @INCLUDE and @SET as classic"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraInputs: "@INCLUDE /fluent-bit/extra/my.conf"
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.conf"]
+  - it: "logs a warn level deprecation record with a classic override"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+    asserts:
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "(?s)Name          dummy\\n\\s+Tag           nr.config.deprecation\\n\\s+Dummy         \\{\"level\":\"warn\",\"message\":\"WARN: Fluent Bit classic"
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Samples       1"
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "(?s)Name    stdout\\n\\s+Match   nr.config.deprecation"
+  - it: "prints the deprecation warning with a classic override"
+    template: templates/NOTES.txt
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "WARNING: Fluent Bit classic \\(\\.conf\\) configuration in use"
+      - matchRegex:
+          path: raw
+          pattern: "deprecates this format at the\\s+end of 2026"
+  - it: "starts both daemonsets with fluent-bit.conf for a classic config"
+    set:
+      enableWindows: true
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "fluent-bit\\.conf$"
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "fluent-bit\\.conf$"
+        template: templates/daemonset-windows.yaml
+        documentIndex: 0
+
+  # ---- mixed formats: fail
+  - it: "fails when classic and YAML overrides are mixed"
+    template: templates/daemonset.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+          extraOutputs: |
+            - name: "null"
+              match: '*'
+    asserts:
+      - failedTemplate:
+          errorPattern: "fluentBit.config.extraOutputs is not in the classic Fluent Bit format"
+
+  # ---- fluentBit.configFormat: the overrides decide, configFormat picks the defaults
+  - it: "renders YAML with configFormat yaml and no overrides"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        configFormat: yaml
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.yaml"]
+      - isNull:
+          path: data["fluent-bit.conf"]
+  - it: "renders the classic defaults with configFormat conf and no overrides"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        configFormat: conf
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.conf"]
+      - isNull:
+          path: data["fluent-bit.yaml"]
+      - matchRegex:
+          path: data["fluent-bit.conf"]
+          pattern: "Name           newrelic"
+  - it: "starts both daemonsets with fluent-bit.conf with configFormat conf"
+    set:
+      enableWindows: true
+      fluentBit:
+        configFormat: conf
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "fluent-bit\\.conf$"
+        template: templates/daemonset.yaml
+      - matchRegex:
+          path: spec.template.spec.containers[0].command[2]
+          pattern: "fluent-bit\\.conf$"
+        template: templates/daemonset-windows.yaml
+        documentIndex: 0
+  - it: "warns about classic with configFormat conf and no overrides"
+    template: templates/NOTES.txt
+    set:
+      fluentBit:
+        configFormat: conf
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "because fluentBit.configFormat is \"conf\""
+  - it: "renders classic with configFormat yaml and a classic override"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        configFormat: yaml
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.conf"]
+      - isNull:
+          path: data["fluent-bit.yaml"]
+  - it: "names the classic overrides in the warning and says configFormat is ignored"
+    template: templates/NOTES.txt
+    set:
+      fluentBit:
+        configFormat: yaml
+        config:
+          extraFilters: |
+            [FILTER]
+                Name   grep
+                Match  *
+          parsers: |
+            [PARSER]
+                Name    p
+                Format  json
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "classic Fluent Bit format: extraFilters, parsers\\."
+      - matchRegex:
+          path: raw
+          pattern: "fluentBit.configFormat is \"yaml\", but the classic overrides decide the format"
+  - it: "renders YAML with configFormat conf and YAML overrides, and says configFormat is ignored"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        configFormat: conf
+        config:
+          extraFilters: |
+            - name: grep
+              match: "*"
+              exclude: log lvl=debug*
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.yaml"]
+      - isNull:
+          path: data["fluent-bit.conf"]
+  - it: "notes that configFormat conf is ignored with YAML overrides"
+    template: templates/NOTES.txt
+    set:
+      fluentBit:
+        configFormat: conf
+        config:
+          extraFilters: |
+            - name: grep
+              match: "*"
+    asserts:
+      - matchRegex:
+          path: raw
+          pattern: "fluentBit.configFormat is \"conf\", but your fluentBit.config overrides \\(extraFilters\\) are in YAML"
+      - notMatchRegex:
+          path: raw
+          pattern: "WARNING: Fluent Bit classic"
+  - it: "fails with an invalid configFormat"
+    template: templates/daemonset.yaml
+    set:
+      fluentBit:
+        configFormat: toml
+    asserts:
+      - failedTemplate:
+          errorPattern: "fluentBit.configFormat must be"
+
+  # ---- detection edge cases
+  - it: "does not treat a commented section header in YAML as classic"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+            # [FILTER] was the classic way
+            - name: grep
+              match: "*"
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.yaml"]
+  - it: "detects a classic header that is indented"
+    template: templates/configmap.yaml
+    set:
+      fluentBit:
+        config:
+          extraFilters: |
+              [FILTER]
+                  Name   grep
+                  Match  *
+    asserts:
+      - isNotNull:
+          path: data["fluent-bit.conf"]
