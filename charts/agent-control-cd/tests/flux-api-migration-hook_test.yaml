@@ -1,0 +1,81 @@
+suite: Flux API migration hook
+templates:
+  - templates/flux-api-migration-hook.yaml
+release:
+  namespace: newrelic
+  isUpgrade: true
+tests:
+  - it: should render a pre-upgrade Job with its RBAC by default
+    asserts:
+      - hasDocuments:
+          count: 5
+      - documentSelector:
+          path: kind
+          value: Job
+        equal:
+          path: metadata.annotations["helm.sh/hook"]
+          value: pre-upgrade
+      - documentSelector:
+          path: kind
+          value: Job
+        equal:
+          path: metadata.name
+          value: agent-control-cd-flux-api-migration
+      - documentSelector:
+          path: kind
+          value: ClusterRoleBinding
+        equal:
+          path: subjects[0].namespace
+          value: newrelic
+
+  - it: should prepare the CRDs in an initContainer and migrate in the main container
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].name
+          value: prepare-crds
+      - equal:
+          path: spec.template.spec.containers[0].name
+          value: migrate
+      - matchRegex:
+          path: spec.template.spec.containers[0].args[0]
+          pattern: flux migrate
+
+  - it: should ship the OCIRepository CRD serving the stable and beta versions
+    documentSelector:
+      path: kind
+      value: ConfigMap
+    asserts:
+      - matchRegex:
+          path: data["ocirepositories-crd-flux-2.6.yaml"]
+          pattern: "name: v1\\n"
+      - matchRegex:
+          path: data["ocirepositories-crd-flux-2.6.yaml"]
+          pattern: "name: v1beta2\\n"
+
+  - it: should use the configured image
+    set:
+      fluxApiMigration:
+        image:
+          repository: registry.example.com/flux-cli
+          tag: v9.9.9
+    documentSelector:
+      path: kind
+      value: Job
+    asserts:
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example.com/flux-cli:v9.9.9
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: registry.example.com/flux-cli:v9.9.9
+
+  - it: should not render when flux2 is disabled
+    set:
+      flux2:
+        enabled: false
+    asserts:
+      - hasDocuments:
+          count: 0
