@@ -176,6 +176,12 @@ spec:
           {{- else }}
             value: "auto"
           {{- end }}
+          - name: REPORT_HOST_WIDE_NETWORK_METRIC
+          {{- if hasKey .Values "reportHostWideNetworkMetric" }}
+            value: "{{ .Values.reportHostWideNetworkMetric }}"
+          {{- else }}
+            value: "true"
+          {{- end }}
           - name: REPORT_LOGS
           {{- if hasKey .Values "reportLogs" }}
             value: "{{ .Values.reportLogs }}"
