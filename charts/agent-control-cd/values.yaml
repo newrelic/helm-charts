@@ -1,4 +1,4 @@
-# -- Default Values for the Flux chart. Full list Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.10.2/charts/flux2/values.yaml
+# -- Default Values for the Flux chart. Full list Ref.: https://github.com/fluxcd-community/helm-charts/blob/flux2-2.20.0/charts/flux2/values.yaml
 # @default -- See `values.yaml`
 flux2:
   # -- Enable or disable FluxCD installation. New Relic' Agent Control need Flux to work, but the user can use an already
@@ -79,3 +79,16 @@ flux2:
   # user want to use Flux for other purposes besides the agent control, this toggle can be used to allow Flux to work on
   # the whole cluster.
   watchAllNamespaces: false
+
+# -- Migration run before every upgrade of this chart, as a Helm `pre-upgrade` hook. Newer Flux releases remove the
+# beta APIs from their CRDs, and the API server rejects that change while the old versions are still listed in the
+# CRD `status.storedVersions`. The hook applies the intermediate CRD needed by clusters running Flux older than 2.6
+# and runs `flux migrate`, so upgrading Flux across the beta API removals succeeds.
+# It is always run, except when `flux2.enabled` is false.
+# @default -- See `values.yaml`
+fluxApiMigration:
+  image:
+    # -- Image providing the `flux` and `kubectl` binaries used by the hook.
+    repository: ghcr.io/fluxcd/flux-cli
+    # -- Tag of the image. It must be a Flux version that includes `flux migrate`.
+    tag: v2.9.0

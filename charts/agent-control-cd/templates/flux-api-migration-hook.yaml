@@ -1,0 +1,148 @@
+{{- $m := default dict .Values.fluxApiMigration -}}
+{{- if .Values.flux2.enabled }}
+{{- $image := default dict $m.image -}}
+{{- $name := "agent-control-cd-flux-api-migration" }}
+# Runs before Helm touches the Flux CRDs of this release. Newer Flux CRDs drop the beta API versions, and the API
+# server refuses that while the old versions are still listed in status.storedVersions.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: {{ $name }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+rules:
+  - apiGroups: ["apiextensions.k8s.io"]
+    resources: ["customresourcedefinitions", "customresourcedefinitions/status"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+  - apiGroups:
+      - source.toolkit.fluxcd.io
+      - helm.toolkit.fluxcd.io
+      - kustomize.toolkit.fluxcd.io
+      - image.toolkit.fluxcd.io
+      - notification.toolkit.fluxcd.io
+    resources: ["*"]
+    verbs: ["get", "list", "patch", "update"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: {{ $name }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: {{ $name }}
+subjects:
+  - kind: ServiceAccount
+    name: {{ $name }}
+    namespace: {{ .Release.Namespace }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $name }}-crds
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "-10"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+data:
+  ocirepositories-crd-flux-2.6.yaml: |
+{{ .Files.Get "files/ocirepositories-crd-flux-2.6.yaml" | indent 4 }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $name }}
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": pre-upgrade
+    "helm.sh/hook-weight": "0"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ $name }}
+      initContainers:
+        # Clusters running Flux older than 2.6 serve OCIRepository only as v1beta2, so there is no stable version to
+        # migrate to. Apply the Flux 2.6 OCIRepository CRD (stable and beta versions served) as an intermediate step.
+        - name: prepare-crds
+          image: {{ default "ghcr.io/fluxcd/flux-cli" $image.repository }}:{{ default "v2.9.0" $image.tag }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              crd=ocirepositories.source.toolkit.fluxcd.io
+              if ! kubectl get crd "$crd" >/dev/null 2>&1; then
+                echo "Flux CRDs are not installed, nothing to prepare"
+                exit 0
+              fi
+              if kubectl get crd "$crd" -o jsonpath='{.spec.versions[*].name}' | tr ' ' '\n' | grep -qx v1; then
+                echo "Flux CRDs already serve the stable API versions"
+                exit 0
+              fi
+              echo "Applying the intermediate Flux 2.6 OCIRepository CRD"
+              kubectl apply --server-side --force-conflicts -f /crds/ocirepositories-crd-flux-2.6.yaml
+              kubectl wait --for=condition=Established --timeout=60s crd/"$crd"
+          volumeMounts:
+            - name: crds
+              mountPath: /crds
+      containers:
+        - name: migrate
+          image: {{ default "ghcr.io/fluxcd/flux-cli" $image.repository }}:{{ default "v2.9.0" $image.tag }}
+          command: ["/bin/sh", "-ec"]
+          args:
+            - |
+              if ! kubectl get crd ocirepositories.source.toolkit.fluxcd.io >/dev/null 2>&1; then
+                echo "Flux CRDs are not installed, nothing to migrate"
+                exit 0
+              fi
+              flux migrate
+              # flux migrate rewrites the stored objects. Verify no beta version is left as a stored version.
+              # Controllers enabled by default (source, helm, kustomize) serve a stable version in every supported
+              # Flux release, so a leftover beta version means the migration did not complete.
+              left=""
+              for crd in $(kubectl get crd -o name | grep -E '\.(source|helm|kustomize)\.toolkit\.fluxcd\.io$'); do
+                stored=$(kubectl get "$crd" -o jsonpath='{.status.storedVersions[*]}')
+                case " $stored " in *" v1beta"*|*" v2beta"*) left="$left $crd($stored)";; esac
+              done
+              if [ -n "$left" ]; then
+                echo "Beta versions still stored in:$left" >&2
+                exit 1
+              fi
+              # The image and notification CRDs of older Flux releases have no stable version to migrate to, and this
+              # hook does not ship intermediate CRDs for them. Fail early with a clear message instead of letting the
+              # API server reject the CRD update later.
+              unsupported=""
+              for crd in $(kubectl get crd -o name | grep -E '\.(image|notification)\.toolkit\.fluxcd\.io$'); do
+                stored=$(kubectl get "$crd" -o jsonpath='{.status.storedVersions[*]}')
+                case " $stored " in *" v1beta"*|*" v2beta"*) unsupported="$unsupported $crd($stored)";; esac
+              done
+              if [ -n "$unsupported" ]; then
+                echo "Upgrading is not supported while these CRDs store beta versions:$unsupported" >&2
+                echo "They belong to the optional Flux image/notification controllers; upgrade them manually first." >&2
+                exit 1
+              fi
+              echo "Flux API migration done"
+      volumes:
+        - name: crds
+          configMap:
+            name: {{ $name }}-crds
+{{- end }}
