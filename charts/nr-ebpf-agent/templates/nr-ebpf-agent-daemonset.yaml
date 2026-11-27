@@ -204,6 +204,14 @@ spec:
           {{- end }}
           - name: HTTP_BODY_LIMIT_BYTES
             value: "{{ .Values.httpBodyLimitBytes }}"
+          {{- if hasKey .Values.protocols.websocket "includeServerLocalPort" }}
+          - name: PROTOCOLS_WEBSOCKET_INCLUDE_SERVER_LOCAL_PORT
+            value: "{{ .Values.protocols.websocket.includeServerLocalPort }}"
+          {{- end }}
+          {{- if hasKey .Values.protocols.websocket "includeClientRemotePort" }}
+          - name: PROTOCOLS_WEBSOCKET_INCLUDE_CLIENT_REMOTE_PORT
+            value: "{{ .Values.protocols.websocket.includeClientRemotePort }}"
+          {{- end }}
 
           {{- if or .Values.otlpProxy.host .Values.otlpProxy.url }}
           {{- if .Values.otlpProxy.host }}
